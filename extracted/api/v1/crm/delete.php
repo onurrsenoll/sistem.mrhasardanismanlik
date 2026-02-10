@@ -21,8 +21,15 @@ $stmt->execute([$id]);
 $crm = $stmt->fetch();
 if (!$crm) json_error('CRM kaydı bulunamadı', 404);
 
-$stmt = $db->prepare('DELETE FROM crm WHERE id = ?');
-$stmt->execute([$id]);
+try {
+    $db->exec("SET FOREIGN_KEY_CHECKS = 0");
+    $stmt = $db->prepare('DELETE FROM crm WHERE id = ?');
+    $stmt->execute([$id]);
+    $db->exec("SET FOREIGN_KEY_CHECKS = 1");
+} catch (Exception $e) {
+    $db->exec("SET FOREIGN_KEY_CHECKS = 1");
+    json_error('Silme hatası: ' . $e->getMessage(), 500);
+}
 
 log_action($user['id'], 'crm_sil', "CRM silindi: {$crm['ad_soyad']}", 'crm', $id);
 

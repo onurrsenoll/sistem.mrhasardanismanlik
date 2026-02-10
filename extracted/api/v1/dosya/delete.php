@@ -33,9 +33,16 @@ foreach ($evraklar as $evrak) {
     }
 }
 
-// Dosyayı sil (CASCADE ile tüm ilişkili kayıtlar silinir)
-$stmt = $db->prepare('DELETE FROM dosyalar WHERE id = ?');
-$stmt->execute([$id]);
+// Dosyayı sil (FK constraint'leri geçici devre dışı)
+try {
+    $db->exec("SET FOREIGN_KEY_CHECKS = 0");
+    $stmt = $db->prepare('DELETE FROM dosyalar WHERE id = ?');
+    $stmt->execute([$id]);
+    $db->exec("SET FOREIGN_KEY_CHECKS = 1");
+} catch (Exception $e) {
+    $db->exec("SET FOREIGN_KEY_CHECKS = 1");
+    json_error('Silme hatası: ' . $e->getMessage(), 500);
+}
 
 log_action($user['id'], 'dosya_sil', "Dosya silindi: {$dosya['dosya_no']}", 'dosyalar', $id);
 

@@ -27,8 +27,15 @@ if (file_exists($filePath)) {
     unlink($filePath);
 }
 
-$stmt = $db->prepare('DELETE FROM evraklar WHERE id = ?');
-$stmt->execute([$id]);
+try {
+    $db->exec("SET FOREIGN_KEY_CHECKS = 0");
+    $stmt = $db->prepare('DELETE FROM evraklar WHERE id = ?');
+    $stmt->execute([$id]);
+    $db->exec("SET FOREIGN_KEY_CHECKS = 1");
+} catch (Exception $e) {
+    $db->exec("SET FOREIGN_KEY_CHECKS = 1");
+    json_error('Silme hatası: ' . $e->getMessage(), 500);
+}
 
 log_action($user['id'], 'evrak_sil', "{$evrak['dosya_no']} - {$evrak['dosya_adi']}", 'evraklar', $id);
 

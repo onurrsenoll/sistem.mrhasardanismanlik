@@ -58,11 +58,22 @@ if (!move_uploaded_file($file['tmp_name'], $filepath)) {
     json_error('DOSYA YÜKLEME HATASI');
 }
 
-// Update ayarlar
+// Update ayarlar (INSERT yoksa oluştur, varsa güncelle)
 $db = getDB();
 $logoUrl = 'uploads/logo/' . $filename;
-$stmt = $db->prepare('UPDATE ayarlar SET deger = ? WHERE anahtar = ?');
-$stmt->execute([$logoUrl, 'logo_url']);
+
+// Tablo yoksa oluştur
+$db->exec("CREATE TABLE IF NOT EXISTS ayarlar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    anahtar VARCHAR(100) NOT NULL UNIQUE,
+    deger TEXT,
+    tip ENUM('text','number','color','json','image') DEFAULT 'text',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
+
+$stmt = $db->prepare('INSERT INTO ayarlar (anahtar, deger, tip) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE deger = VALUES(deger)');
+$stmt->execute(['logo_url', $logoUrl, 'image']);
 
 log_action($user['id'], 'LOGO_YUKLE', 'Firma logosu güncellendi', 'SİSTEM', null);
 
