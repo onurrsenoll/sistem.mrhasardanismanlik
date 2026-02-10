@@ -198,6 +198,23 @@ const TopNav = ({user, page, setPage, onLogout}) => {
         ))}
       </div>
 
+      {/* TEMA TOGGLE */}
+      <div onClick={() => {
+        const yeniTema = MR.tema === 'koyu' ? 'acik' : 'koyu';
+        MR.setTema(yeniTema);
+        setMenuOpen(null);
+        /* App'i yeniden render et */
+        window.dispatchEvent(new Event('mr-tema-degisti'));
+      }} style={{
+        width: 36, height: 36, borderRadius: 8, cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: MR.tema === 'koyu' ? `${C.warning}22` : `${C.purple}22`,
+        border: `1px solid ${MR.tema === 'koyu' ? C.warning + '44' : C.purple + '44'}`,
+        marginRight: 8, transition: 'all .2s'
+      }} title={MR.tema === 'koyu' ? 'AÇIK TEMA' : 'KOYU TEMA'}>
+        <LIcon name={MR.tema === 'koyu' ? 'Sun' : 'Moon'} size={16} color={MR.tema === 'koyu' ? C.warning : C.purple}/>
+      </div>
+
       {/* PROFİL */}
       <div style={{position: 'relative'}}>
         <div onClick={() => setProfilOpen(!profilOpen)} style={{
@@ -459,6 +476,7 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState('home');
   const [loading, setLoading] = useState(true);
+  const [, forceUpdate] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -469,6 +487,13 @@ const App = () => {
       }
       setLoading(false);
     })();
+  }, []);
+
+  /* TEMA DEĞİŞİMİ DİNLEYİCİ */
+  useEffect(() => {
+    const handler = () => forceUpdate(n => n + 1);
+    window.addEventListener('mr-tema-degisti', handler);
+    return () => window.removeEventListener('mr-tema-degisti', handler);
   }, []);
 
   const logout = () => {

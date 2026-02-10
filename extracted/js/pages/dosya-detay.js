@@ -2,13 +2,18 @@ const MR = window.MR || (window.MR = {});
 const {useState, useEffect} = React;
 
 MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
-  const {C, S, LIcon, Badge, SectionTitle, EmptyState, Loading, Modal, FormGroup, Confirm, api, fmt, MASRAF_K, EVRAK_T, today} = MR;
+  const {C, S, LIcon, Badge, SectionTitle, EmptyState, Loading, Modal, FormGroup, Confirm, api, fmt, MASRAF_K, EVRAK_T, ILLER, SIGORTA, today} = MR;
   const [dosya, setDosya] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('bilgi');
   const [masrafM, setMasrafM] = useState(false);
   const [evrakM, setEvrakM] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [editM, setEditM] = useState(false);
+  const [editForm, setEditForm] = useState({});
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [dosyaSilConfirm, setDosyaSilConfirm] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -32,6 +37,45 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const evrakSil = async (id) => {
     const r = await api.evrakDelete(id);
     if (r?.success) { load(); setDeleteConfirm(null); }
+  };
+
+  const openEditModal = () => {
+    setEditForm({
+      dosya_turu: dosya.dosya_turu || '',
+      sigorta_sirket: dosya.sigorta_sirket || '',
+      hasar_no: dosya.hasar_no || '',
+      magdur_ad_soyad: dosya.magdur?.ad_soyad || '',
+      magdur_tc_kimlik: dosya.magdur?.tc_kimlik || '',
+      magdur_telefon: dosya.magdur?.telefon || '',
+      magdur_il: dosya.magdur?.il || '',
+      plaka: dosya.plaka || ''
+    });
+    setEditError('');
+    setEditM(true);
+  };
+
+  const dosyaGuncelle = async () => {
+    setEditLoading(true);
+    setEditError('');
+    const r = await api.dosyaUpdate({
+      id: dosya.id,
+      dosya_turu: editForm.dosya_turu,
+      sigorta_sirket: editForm.sigorta_sirket,
+      hasar_no: editForm.hasar_no,
+      magdur_ad_soyad: editForm.magdur_ad_soyad,
+      magdur_tc_kimlik: editForm.magdur_tc_kimlik,
+      magdur_telefon: editForm.magdur_telefon,
+      magdur_il: editForm.magdur_il,
+      plaka: editForm.plaka
+    });
+    if (r?.success) { load(); setEditM(false); }
+    else setEditError(r?.error || 'GÜNCELLEME HATASI');
+    setEditLoading(false);
+  };
+
+  const dosyaSil = async () => {
+    const r = await api.dosyaDelete(dosya.id);
+    if (r?.success) { setDosyaSilConfirm(false); setPage('dosya-liste'); }
   };
 
   if (loading) return <Loading/>;
@@ -67,6 +111,10 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <option key={a} value={a}>{a}</option>
               )}
             </select>
+            <button style={{...S.btn,fontSize:11,padding:'8px 14px',background:`${C.danger}22`,color:C.danger,border:`1px solid ${C.danger}44`,borderRadius:8,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}
+              onClick={() => setDosyaSilConfirm(true)}>
+              <LIcon name="Trash2" size={14} color={C.danger}/> DOSYA SİL
+            </button>
           </div>
         </div>
       </div>
@@ -83,13 +131,16 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
       {tab === 'bilgi' && (
         <div style={S.card}>
-          <SectionTitle icon="FileText" title="DOSYA BİLGİLERİ"/>
+          <SectionTitle icon="FileText" title="DOSYA BİLGİLERİ"
+            right={<button style={{...S.btn,...S.btnP,fontSize:11,padding:'6px 14px'}} onClick={openEditModal}>
+              <LIcon name="Edit2" size={14} color="#fff"/> DÜZENLE
+            </button>}/>
           <div style={{...S.cardBody,display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
             {[
               ['DOSYA NO', dosya.dosya_no], ['DOSYA TÜRÜ', dosya.dosya_turu], ['AŞAMA', dosya.asama],
               ['SİGORTA', dosya.sigorta_sirket], ['HASAR NO', dosya.hasar_no], ['AÇILIŞ', dosya.acilis_tarihi],
               ['MAĞDUR', dosya.magdur?.ad_soyad], ['TC', dosya.magdur?.tc_kimlik], ['TELEFON', dosya.magdur?.telefon],
-              ['İL', dosya.magdur?.il], ['AVUKAT', dosya.avukat_adi], ['TOPLAM MASRAF', fmt(dosya.toplam_masraf || 0)]
+              ['İL', dosya.magdur?.il], ['PLAKA', dosya.plaka], ['TOPLAM MASRAF', fmt(dosya.toplam_masraf || 0)]
             ].map(([k, v], i) => (
               <div key={i} style={{padding:12,background:C.bgInput,borderRadius:8}}>
                 <div style={{fontSize:10,color:C.textMuted,marginBottom:4}}>{k}</div>
@@ -177,12 +228,64 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
       <MR.MasrafEkle open={masrafM} onClose={() => setMasrafM(false)} dosyaId={dosya.id} onOk={load}/>
       <MR.EvrakYukle open={evrakM} onClose={() => setEvrakM(false)} dosyaId={dosya.id} onOk={load}/>
+
+      {/* MASRAF / EVRAK SİL ONAY */}
       <Confirm open={!!deleteConfirm} message={deleteConfirm ? `"${deleteConfirm.text}" SİLİNSİN Mİ?` : ''}
         onCancel={() => setDeleteConfirm(null)}
         onConfirm={() => {
           if (deleteConfirm.type === 'masraf') masrafSil(deleteConfirm.id);
           else if (deleteConfirm.type === 'evrak') evrakSil(deleteConfirm.id);
         }}/>
+
+      {/* DOSYA SİL ONAY */}
+      <Confirm open={dosyaSilConfirm} message={`"${dosya.dosya_no}" DOSYASI TAMAMEN SİLİNSİN Mİ? BU İŞLEM GERİ ALINAMAZ!`}
+        onCancel={() => setDosyaSilConfirm(false)}
+        onConfirm={dosyaSil}/>
+
+      {/* DOSYA BİLGİLERİ DÜZENLEME MODAL */}
+      <Modal open={editM} onClose={() => setEditM(false)} title="DOSYA BİLGİLERİ DÜZENLE" width="600px">
+        {editError && <div style={{padding:10,background:`${C.danger}22`,borderRadius:8,marginBottom:12,fontSize:12,color:C.danger}}>{editError}</div>}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+          <FormGroup label="DOSYA TÜRÜ">
+            <select value={editForm.dosya_turu} onChange={e => setEditForm({...editForm,dosya_turu:e.target.value})} style={S.select}>
+              <option value="ADK">ADK</option>
+              <option value="BH">BH</option>
+            </select>
+          </FormGroup>
+          <FormGroup label="SİGORTA ŞİRKETİ">
+            <select value={editForm.sigorta_sirket} onChange={e => setEditForm({...editForm,sigorta_sirket:e.target.value})} style={S.select}>
+              <option value="">SEÇİNİZ</option>
+              {(SIGORTA || []).map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </FormGroup>
+          <FormGroup label="HASAR NO">
+            <input value={editForm.hasar_no || ''} onChange={e => setEditForm({...editForm,hasar_no:e.target.value})} placeholder="HASAR NO" style={S.input}/>
+          </FormGroup>
+          <FormGroup label="MAĞDUR AD SOYAD">
+            <input value={editForm.magdur_ad_soyad || ''} onChange={e => setEditForm({...editForm,magdur_ad_soyad:e.target.value})} placeholder="AD SOYAD" style={S.input}/>
+          </FormGroup>
+          <FormGroup label="TC KİMLİK NO">
+            <input value={editForm.magdur_tc_kimlik || ''} onChange={e => setEditForm({...editForm,magdur_tc_kimlik:e.target.value})} placeholder="TC KİMLİK" maxLength={11} style={S.input}/>
+          </FormGroup>
+          <FormGroup label="TELEFON">
+            <input value={editForm.magdur_telefon || ''} onChange={e => setEditForm({...editForm,magdur_telefon:e.target.value})} placeholder="05XX XXX XX XX" style={S.input}/>
+          </FormGroup>
+          <FormGroup label="İL">
+            <select value={editForm.magdur_il} onChange={e => setEditForm({...editForm,magdur_il:e.target.value})} style={S.select}>
+              <option value="">SEÇİNİZ</option>
+              {(ILLER || []).map(il => <option key={il} value={il}>{il}</option>)}
+            </select>
+          </FormGroup>
+          <FormGroup label="PLAKA">
+            <input value={editForm.plaka || ''} onChange={e => setEditForm({...editForm,plaka:e.target.value})} placeholder="PLAKA" style={S.input}/>
+          </FormGroup>
+        </div>
+        <div style={{marginTop:16}}>
+          <button onClick={dosyaGuncelle} disabled={editLoading} style={{...S.btn,...S.btnS,justifyContent:'center',padding:14,width:'100%'}}>
+            {editLoading ? 'KAYDEDİLİYOR...' : 'DEĞİŞİKLİKLERİ KAYDET'}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };

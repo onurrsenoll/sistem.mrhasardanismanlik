@@ -128,8 +128,8 @@ MR.api = {
   sablonDelete(id) { return this.req('/sablon/delete.php?id=' + id, { method: 'DELETE' }); },
 };
 
-// ═══ RENKLER ═══
-MR.C = {
+// ═══ TEMA SİSTEMİ ═══
+const KOYU_TEMA = {
   bg: '#0B1120', bgCard: '#111827', bgHover: '#1F2937', bgInput: '#1a2332',
   border: '#1F2937', borderLight: '#374151',
   accent: '#2563eb', accentLight: '#3b82f6',
@@ -137,6 +137,47 @@ MR.C = {
   purple: '#8b5cf6', cyan: '#06b6d4', pink: '#ec4899', gold: '#fbbf24',
   text: '#f1f5f9', textSec: '#94a3b8', textMuted: '#64748b',
   headerBg: '#0f1729', navBg: '#111d33'
+};
+
+const ACIK_TEMA = {
+  bg: '#f1f5f9', bgCard: '#ffffff', bgHover: '#f1f5f9', bgInput: '#f8fafc',
+  border: '#e2e8f0', borderLight: '#cbd5e1',
+  accent: '#2563eb', accentLight: '#3b82f6',
+  success: '#059669', warning: '#d97706', danger: '#dc2626',
+  purple: '#7c3aed', cyan: '#0891b2', pink: '#db2777', gold: '#ca8a04',
+  text: '#0f172a', textSec: '#475569', textMuted: '#94a3b8',
+  headerBg: '#ffffff', navBg: '#f8fafc'
+};
+
+MR.TEMALAR = { koyu: KOYU_TEMA, acik: ACIK_TEMA };
+MR.tema = localStorage.getItem('mr_tema') || 'koyu';
+
+// ═══ RENKLER ═══
+MR.C = { ...MR.TEMALAR[MR.tema] };
+
+// ═══ TEMA DEĞİŞTİRME ═══
+MR._stilGuncelle = () => {
+  const C = MR.C;
+  MR.S.page = { minHeight: '100vh', background: C.bg, color: C.text };
+  MR.S.card = { background: C.bgCard, borderRadius: 12, border: `1px solid ${C.border}`, overflow: 'hidden' };
+  MR.S.cardHead = { padding: '14px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 10, background: MR.tema === 'koyu' ? 'rgba(37,99,235,0.05)' : 'rgba(37,99,235,0.03)' };
+  MR.S.cardBody = { padding: 20 };
+  MR.S.input = { width: '100%', padding: '10px 14px', background: C.bgInput, border: `1px solid ${C.borderLight}`, borderRadius: 8, color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' };
+  MR.S.select = { width: '100%', padding: '10px 14px', background: C.bgInput, border: `1px solid ${C.borderLight}`, borderRadius: 8, color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' };
+  MR.S.label = { fontSize: 11, fontWeight: 600, color: C.textSec, marginBottom: 6, display: 'block', letterSpacing: 0.5 };
+  MR.S.btnG = { background: C.borderLight, color: C.textSec };
+  MR.S.stat = { background: C.bgCard, borderRadius: 12, padding: '18px 20px', border: `1px solid ${C.border}` };
+  document.body.style.background = C.bg;
+  document.body.style.color = C.text;
+  const selStyle = document.getElementById('mr-select-style');
+  if (selStyle) selStyle.textContent = `select option{background:${C.bgCard};color:${C.text}}`;
+};
+
+MR.setTema = (t) => {
+  MR.tema = t;
+  localStorage.setItem('mr_tema', t);
+  Object.assign(MR.C, MR.TEMALAR[t] || MR.TEMALAR.koyu);
+  MR._stilGuncelle();
 };
 
 // ═══ STİLLER ═══
@@ -157,3 +198,6 @@ MR.S = {
   badge: c => ({ padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, background: `${c}22`, color: c, border: `1px solid ${c}33`, display: 'inline-block' }),
   stat: { background: MR.C.bgCard, borderRadius: 12, padding: '18px 20px', border: `1px solid ${MR.C.border}` }
 };
+
+// İLK TEMA UYGULAMASI
+MR._stilGuncelle();
