@@ -9,7 +9,7 @@ define('JWT_EXPIRE', 86400);
 
 define('UPLOAD_DIR', dirname(__DIR__, 2) . '/uploads/');
 define('MAX_FILE_SIZE', 20 * 1024 * 1024);
-define('ALLOWED_TYPES', array('application/pdf'));
+define('ALLOWED_TYPES', array('application/pdf', 'image/jpeg', 'image/png', 'image/svg+xml', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'));
 
 date_default_timezone_set('Europe/Istanbul');
 
@@ -22,11 +22,13 @@ function getDB() {
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
-                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_turkish_ci"
+                PDO::ATTR_PERSISTENT => true,
+                PDO::ATTR_TIMEOUT => 10,
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_turkish_ci, SESSION wait_timeout=300, SESSION interactive_timeout=300"
             ));
         } catch (PDOException $e) {
             http_response_code(500);
-            echo json_encode(array('error' => 'Veritabani baglanti hatasi', 'detail' => $e->getMessage()));
+            echo json_encode(array('success' => false, 'error' => 'VERITABANI BAGLANTI HATASI'));
             exit;
         }
     }

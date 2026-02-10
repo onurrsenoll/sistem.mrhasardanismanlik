@@ -11,3 +11,48 @@ RewriteRule ^ - [L]
 
 # Diğer her şeyi index.html'e yönlendir (React SPA)
 RewriteRule ^ index.html [L]
+
+# ═══ CACHE KONTROL ═══
+# JS dosyalarını cache'leme (her zaman güncel versiyon)
+<FilesMatch "\.(js|jsx)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</FilesMatch>
+
+# HTML dosyalarını cache'leme
+<FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</FilesMatch>
+
+# API yanıtlarını cache'leme
+<FilesMatch "\.php$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</FilesMatch>
+
+# Görseller ve statik dosyalar 1 gün cache
+<FilesMatch "\.(png|jpg|jpeg|gif|svg|ico|css|woff|woff2|ttf)$">
+    Header set Cache-Control "public, max-age=86400"
+</FilesMatch>
+
+# ═══ PERFORMANS VE GÜVENLİK ═══
+# Gzip sıkıştırma
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css application/json application/javascript text/javascript
+</IfModule>
+
+# Güvenlik başlıkları
+Header set X-Content-Type-Options "nosniff"
+Header set X-Frame-Options "SAMEORIGIN"
+Header set X-XSS-Protection "1; mode=block"
+
+# uploads klasöründe PHP çalıştırmayı engelle
+<Directory "uploads">
+    <FilesMatch "\.php$">
+        Deny from all
+    </FilesMatch>
+</Directory>

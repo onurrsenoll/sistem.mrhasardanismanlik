@@ -13,13 +13,18 @@ try {
     $user = auth_required();
 } catch (Exception $e) {}
 
-$stmt = $db->query('SELECT anahtar, deger, tip FROM ayarlar ORDER BY id');
-$items = $stmt->fetchAll();
+try {
+    $stmt = $db->query('SELECT anahtar, deger, tip FROM ayarlar ORDER BY id');
+    $items = $stmt->fetchAll();
 
-// Convert to key-value object
-$result = [];
-foreach ($items as $item) {
-    $result[$item['anahtar']] = $item['deger'];
+    // Convert to key-value object
+    $result = [];
+    foreach ($items as $item) {
+        $result[$item['anahtar']] = $item['deger'];
+    }
+
+    json_success($result);
+} catch (Exception $e) {
+    // Tablo yoksa boş döndür
+    json_success([]);
 }
-
-json_success($result);

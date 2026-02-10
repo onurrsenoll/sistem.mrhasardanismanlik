@@ -53,6 +53,8 @@ const MENU = [
   ]},
   {id:'sistem', label:'SİSTEM', icon:'Shield', sub:[
     {id:'sistem-kullanici', label:'KULLANICI YÖNETİMİ', icon:'UserCog'},
+    {id:'sistem-yetki', label:'YETKİ YÖNETİMİ', icon:'KeyRound'},
+    {id:'sistem-ayarlar', label:'FİRMA AYARLARI', icon:'Settings'},
     {id:'sistem-log', label:'LOG KAYITLARI', icon:'FileText'}
   ]}
 ];

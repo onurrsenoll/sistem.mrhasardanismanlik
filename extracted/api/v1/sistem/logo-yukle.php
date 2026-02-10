@@ -64,7 +64,7 @@ $logoUrl = 'uploads/logo/' . $filename;
 $stmt = $db->prepare('UPDATE ayarlar SET deger = ? WHERE anahtar = ?');
 $stmt->execute([$logoUrl, 'logo_url']);
 
-log_islem($db, $user['id'], 'LOGO_YUKLE', 'Firma logosu güncellendi', 'SİSTEM', null);
+log_action($user['id'], 'LOGO_YUKLE', 'Firma logosu güncellendi', 'SİSTEM', null);
 
 json_success([
     'message' => 'LOGO BAŞARIYLA YÜKLENDİ',

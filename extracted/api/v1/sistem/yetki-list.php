@@ -19,8 +19,12 @@ if (!$kullanici_id) {
     json_error('KULLANICI ID GEREKLİ');
 }
 
-$stmt = $db->prepare('SELECT modul, islem, izin FROM yetkiler WHERE kullanici_id = ? ORDER BY modul, islem');
-$stmt->execute([$kullanici_id]);
-$items = $stmt->fetchAll();
-
-json_success(['items' => $items]);
+try {
+    $stmt = $db->prepare('SELECT modul, islem, izin FROM yetkiler WHERE kullanici_id = ? ORDER BY modul, islem');
+    $stmt->execute([$kullanici_id]);
+    $items = $stmt->fetchAll();
+    json_success(['items' => $items]);
+} catch (Exception $e) {
+    // Tablo yoksa boş döndür
+    json_success(['items' => []]);
+}

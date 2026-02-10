@@ -10,12 +10,20 @@ MR.api = {
   token: localStorage.getItem('mr_token'),
   setToken(t) { this.token = t; if (t) localStorage.setItem('mr_token', t); else localStorage.removeItem('mr_token'); },
   async req(ep, o = {}) {
-    const h = { 'Content-Type': 'application/json' };
-    if (this.token) h['Authorization'] = 'Bearer ' + this.token;
-    const r = await fetch(API_BASE + ep, { ...o, headers: { ...h, ...o.headers } });
-    if (r.status === 401) { this.setToken(null); location.reload(); return null; }
-    const t = await r.text();
-    try { return JSON.parse(t); } catch (e) { return { success: false, error: 'SUNUCU YANIT HATASI' }; }
+    try {
+      const h = { 'Content-Type': 'application/json' };
+      if (this.token) h['Authorization'] = 'Bearer ' + this.token;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const r = await fetch(API_BASE + ep, { ...o, headers: { ...h, ...o.headers }, signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (r.status === 401) { this.setToken(null); location.reload(); return null; }
+      const t = await r.text();
+      try { return JSON.parse(t); } catch (e) { return { success: false, error: 'SUNUCU YANIT HATASI' }; }
+    } catch (e) {
+      if (e.name === 'AbortError') return { success: false, error: 'İSTEK ZAMAN AŞIMINA UĞRADI' };
+      return { success: false, error: 'BAĞLANTI HATASI' };
+    }
   },
   // AUTH
   login(e, s) { return this.req('/auth/login.php', { method: 'POST', body: JSON.stringify({ email: e, sifre: s }) }); },
@@ -134,8 +142,9 @@ MR.api = {
   ayarlarGuncelle(d) { return this.req('/sistem/ayarlar-guncelle.php', { method: 'POST', body: JSON.stringify(d) }); },
   logoYukle(file) {
     const fd = new FormData(); fd.append('logo', file);
-    return fetch(this.base + '/sistem/logo-yukle.php', {
-      method: 'POST', headers: {'Authorization': 'Bearer ' + this.token}, body: fd
+    const h = {}; if (this.token) h['Authorization'] = 'Bearer ' + this.token;
+    return fetch(API_BASE + '/sistem/logo-yukle.php', {
+      method: 'POST', headers: h, body: fd
     }).then(r => r.json()).catch(() => ({success: false, error: 'BAĞLANTI HATASI'}));
   },
 };

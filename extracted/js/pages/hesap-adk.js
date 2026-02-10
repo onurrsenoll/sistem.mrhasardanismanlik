@@ -189,7 +189,122 @@ MR.HesapADKPage = ({setPage, user}) => {
 
   /* ---------- PDF ÇIKTI ---------- */
   const pdfCikti = () => {
-    alert('PDF ÇIKTI FONKSİYONU YAKINDA AKTİF OLACAKTIR.\nHESAPLAMA SONUÇLARI PDF OLARAK İNDİRİLEBİLECEKTİR.');
+    if (!sonuc) return;
+    const tarih = new Date().toLocaleDateString('tr-TR');
+    const saat = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
+
+    const html = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>ADK HESAPLAMA RAPORU - ${sonuc.marka} ${sonuc.model}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','Arial',sans-serif;color:#1a1a1a;font-size:12px;line-height:1.5;padding:20px 30px}
+.header{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #2563eb;padding-bottom:12px;margin-bottom:16px}
+.header h1{font-size:16px;color:#2563eb;letter-spacing:1px}
+.header .info{text-align:right;font-size:10px;color:#666}
+.section{margin-bottom:14px;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden}
+.section-head{background:#2563eb;color:#fff;padding:8px 14px;font-weight:700;font-size:11px;letter-spacing:0.5px}
+.section-head.green{background:#059669}
+.section-head.orange{background:#d97706}
+.section-body{padding:10px 14px}
+table{width:100%;border-collapse:collapse}
+table th,table td{padding:6px 10px;border-bottom:1px solid #eee;text-align:left;font-size:11px}
+table th{background:#f8fafc;font-weight:600;color:#475569;font-size:10px}
+.val{font-weight:700;text-align:right}
+.big{font-size:24px;font-weight:900;color:#059669;text-align:center;padding:16px 0}
+.sub{font-size:10px;color:#666;text-align:center}
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-weight:700;font-size:10px}
+.badge-green{background:#d1fae5;color:#059669}
+.badge-orange{background:#fef3c7;color:#d97706}
+.badge-red{background:#fee2e2;color:#dc2626}
+.footer{text-align:center;font-size:9px;color:#999;border-top:1px solid #e0e0e0;padding-top:10px;margin-top:16px}
+.note{background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:8px 12px;font-size:10px;color:#0369a1;margin-top:10px}
+@media print{body{padding:10px 20px}@page{size:A4;margin:10mm}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>MR HASAR DANISMANLIK</h1>
+    <div style="font-size:10px;color:#666;margin-top:2px">ARAC DEGER KAYBI HESAPLAMA RAPORU</div>
+  </div>
+  <div class="info">
+    <div>TARIH: ${tarih}</div>
+    <div>SAAT: ${saat}</div>
+    <div>RAPOR NO: ADK-${Date.now().toString(36).toUpperCase()}</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-head">ARAC BILGILERI</div>
+  <div class="section-body">
+    <table>
+      <tr><td>MARKA / MODEL</td><td class="val">${sonuc.marka} ${sonuc.model} ${sonuc.premiumMi ? '<span class="badge badge-orange">PREMIUM</span>' : ''}</td></tr>
+      <tr><td>MODEL YILI</td><td class="val">${sonuc.modelYili}</td></tr>
+      <tr><td>ARAC YASI</td><td class="val">${sonuc.aracYasi} YIL</td></tr>
+      <tr><td>KILOMETRE</td><td class="val">${sonuc.km > 0 ? sonuc.km.toLocaleString('tr-TR') + ' KM' : 'BELIRTILMEDI'}</td></tr>
+      <tr><td>KAZA TARIHI</td><td class="val">${sonuc.kazaTarihi}</td></tr>
+      <tr><td>HASAR BOLGESI</td><td class="val">${sonuc.hasarBolgesi}</td></tr>
+      <tr><td>ONCEKI HASAR SAYISI</td><td class="val">${sonuc.oncekiHasar}</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-head orange">HESAPLAMA PARAMETRELERI</div>
+  <div class="section-body">
+    <table>
+      <tr><td>RAYIC DEGER</td><td class="val">${fmtK(sonuc.rayic)}</td></tr>
+      <tr><td>ONARIM BEDELI</td><td class="val">${fmtK(sonuc.onarim)}</td></tr>
+      <tr><td>ONARIM / RAYIC ORANI</td><td class="val">%${(sonuc.onarimOrani * 100).toFixed(1)}</td></tr>
+      <tr><td>YAS ORANI</td><td class="val">%${(sonuc.yasOrani * 100).toFixed(1)}</td></tr>
+      <tr><td>BOLGE KATSAYISI (${sonuc.hasarBolgesi})</td><td class="val">x${sonuc.bolgeKatsayisi.toFixed(2)}</td></tr>
+      <tr><td>KM FAKTORU</td><td class="val">x${sonuc.kmFaktoru.toFixed(2)}</td></tr>
+      <tr><td>ONARIM FAKTORU</td><td class="val">x${sonuc.onarimFaktoru.toFixed(2)}</td></tr>
+      <tr><td>ONCEKI HASAR FAKTORU</td><td class="val">x${sonuc.oncekiHasarFaktoru.toFixed(2)}</td></tr>
+      <tr><td>PREMIUM BONUS</td><td class="val">${sonuc.premiumMi ? 'x1.15' : 'x1.00'}</td></tr>
+      <tr><td>KUSUR ORANI</td><td class="val">%${sonuc.kusurOrani}</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-head green">HESAPLAMA SONUCU</div>
+  <div class="section-body">
+    <table>
+      <tr><td>YONTEM</td><td class="val"><span class="badge ${sonuc.yontem === 'PERT TOTAL' ? 'badge-red' : sonuc.yontem === 'PERT FARKI' ? 'badge-orange' : 'badge-green'}">${sonuc.yontem}</span></td></tr>
+      <tr><td>TEMEL DEGER KAYBI</td><td class="val">${fmtK(sonuc.temelDK)}</td></tr>
+      <tr><td>KUSURSUZ TUTAR</td><td class="val">${fmtK(sonuc.degerKaybi)}</td></tr>
+      ${sonuc.pertFarki > 0 ? '<tr><td>PERT FARKI</td><td class="val">' + fmtK(sonuc.pertFarki) + '</td></tr>' : ''}
+    </table>
+    <div class="big">${fmtK(sonuc.kusurluTutar)}</div>
+    <div class="sub">HESAPLANAN DEGER KAYBI TUTARI ${sonuc.kusurOrani < 100 ? '(KUSUR ORANI %' + sonuc.kusurOrani + ' UYGULANMISTIR)' : ''}</div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>ONEMLI NOT:</strong> BU RAPOR MR HASAR DANISMANLIK DOSYA TAKIP SISTEMI TARAFINDAN
+  OTOMATIK OLARAK OLUSTURULMUSTUR. HESAPLAMA SONUCLARI EMSAL KARARLAR VE GUNCEL
+  PIYASA DEGERLERI REFERANS ALINARAK HAZIRLANMISTIR. KESIN TUTAR MAHKEME VEYA
+  TAHKIM KOMISYONU KARARIYLA BELIRLENIR.
+</div>
+
+<div class="footer">
+  MR HASAR DANISMANLIK &copy; ${new Date().getFullYear()} - DOSYA TAKIP SISTEMI - HERZAMAN FARK EDER
+</div>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank', 'width=800,height=1000');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => win.print(), 500);
+    } else {
+      alert('PDF OLUSTURMAK ICIN POP-UP ENGELLEYICINIZI KAPATINIZ');
+    }
   };
 
   /* ---------- DOSYAYA KAYDET ---------- */
