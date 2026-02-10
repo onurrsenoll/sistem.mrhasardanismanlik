@@ -31,7 +31,7 @@ MR.HomePage = ({setPage, user}) => {
         <StatCard icon="FileCheck" label="AÇIK DOSYA" value={d.acik || 0} color={C.success}/>
         <StatCard icon="Clock" label="BU AY YENİ" value={d.bu_ay || 0} color={C.warning}/>
         <StatCard icon="Users" label="CRM KAYIT" value={crm.toplam || 0} color={C.purple}/>
-        <StatCard icon="DollarSign" label="TOPLAM BAKİYE" value={fmt(m.toplam_bakiye || 0)} color={C.cyan}/>
+        <StatCard icon="TurkishLira" label="TOPLAM BAKİYE" value={fmt(m.toplam_bakiye || 0)} color={C.cyan}/>
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:20}}>

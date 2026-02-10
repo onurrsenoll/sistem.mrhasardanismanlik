@@ -19,6 +19,7 @@ MR.ICONS = {
   Heart:'M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z',
   Landmark:'M3 22h18 M5 22V8l7-5 7 5v14 M9 22v-6h6v6',
   DollarSign:'M12 1v22 M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6',
+  TurkishLira:'M12 2v20 M8 7l8 0 M8 12l8 0 M17 6L7 18',
   CreditCard:'M1 4h22v16H1z M1 10h22',
   TrendingUp:'M23 6l-9.5 9.5-5-5L1 18 M17 6h6v6',
   TrendingDown:'M23 18l-9.5-9.5-5 5L1 6 M17 18h6v-6',

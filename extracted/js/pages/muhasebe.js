@@ -704,7 +704,7 @@ const KomisyonPrim = ({setPage, user}) => {
         <StatCard icon="Percent" label="TOPLAM KOMİSYON" value={fmt(istatistik.toplam)} color={C.accent}/>
         <StatCard icon="Clock" label="BEKLEYEN" value={fmt(istatistik.bekleyen)} color={C.warning}/>
         <StatCard icon="CheckCircle" label="ONAYLI" value={fmt(istatistik.onayli)} color={C.cyan}/>
-        <StatCard icon="CircleDollarSign" label="ÖDENEN" value={fmt(istatistik.odenen)} color={C.success}/>
+        <StatCard icon="TurkishLira" label="ÖDENEN" value={fmt(istatistik.odenen)} color={C.success}/>
       </div>
 
       {/* KOMİSYON LİSTESİ */}

@@ -391,7 +391,7 @@ const ServisListesi = ({setPage, user}) => {
           <div>
             {/* DETAY SEKMELERİ */}
             <div style={{display:'flex',gap:4,marginBottom:20}}>
-              {[{key:'bilgi',label:'SERVİS BİLGİLERİ',icon:'Info'},{key:'ihbar',label:'İHBAR YÖNETİMİ',icon:'AlertTriangle'},{key:'finans',label:'FİNANSAL ÖZET',icon:'DollarSign'}].map(t => (
+              {[{key:'bilgi',label:'SERVİS BİLGİLERİ',icon:'Info'},{key:'ihbar',label:'İHBAR YÖNETİMİ',icon:'AlertTriangle'},{key:'finans',label:'FİNANSAL ÖZET',icon:'TurkishLira'}].map(t => (
                 <div key={t.key} onClick={() => setDetayTab(t.key)}
                   style={{padding:'10px 20px',borderRadius:8,cursor:'pointer',fontSize:11,fontWeight:detayTab===t.key?700:500,
                     background:detayTab===t.key?`${C.accent}22`:'transparent',color:detayTab===t.key?C.accent:C.textSec,
@@ -582,7 +582,7 @@ const ServisListesi = ({setPage, user}) => {
                 </div>
 
                 <div style={S.card}>
-                  <SectionTitle icon="DollarSign" title="KOMİSYON BİLGİSİ" sub="SERVİS KOMİSYON DETAYI"/>
+                  <SectionTitle icon="TurkishLira" title="KOMİSYON BİLGİSİ" sub="SERVİS KOMİSYON DETAYI"/>
                   <div style={S.cardBody}>
                     <div style={{display:'flex',alignItems:'center',gap:20}}>
                       <div style={{width:80,height:80,borderRadius:'50%',background:`${C.accent}22`,border:`3px solid ${C.accent}`,display:'flex',alignItems:'center',justifyContent:'center'}}>

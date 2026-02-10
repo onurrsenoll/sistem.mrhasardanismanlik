@@ -526,7 +526,7 @@ table th{background:#f8fafc;font-weight:600;color:#475569;font-size:10px}
                   {[
                     {label: 'KAZA ANI YAŞI', value: sonuc.yas + ' YAŞ', icon: 'User', color: C.accent},
                     {label: 'MALULİYET ORANI', value: '%' + sonuc.maluliyet, icon: 'Heart', color: C.danger},
-                    {label: 'AYLIK GELİR (' + sonuc.gelirKaynagi + ')', value: fmtK(sonuc.aylikGelir), icon: 'DollarSign', color: C.success},
+                    {label: 'AYLIK GELİR (' + sonuc.gelirKaynagi + ')', value: fmtK(sonuc.aylikGelir), icon: 'TurkishLira', color: C.success},
                     {label: 'YILLIK GELİR', value: fmtK(sonuc.yillikGelir), icon: 'TrendingUp', color: C.success},
                     {label: 'PMF TABLOSU', value: sonuc.pmfTablosu, icon: 'Database', color: C.purple},
                     {label: 'KALAN ÖMÜR (PMF)', value: sonuc.kalanOmur.toFixed(2) + ' YIL', icon: 'Clock', color: C.cyan},

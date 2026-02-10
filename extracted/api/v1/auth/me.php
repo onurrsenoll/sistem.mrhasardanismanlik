@@ -24,11 +24,11 @@ try {
     $stmt = $db->query('SELECT COUNT(*) as total FROM dosyalar');
     $dosyaTotal = $stmt->fetch()['total'];
 
-    $stmt = $db->query("SELECT COUNT(*) as c FROM dosyalar WHERE asama != 'Dosya Kapandı'");
+    $stmt = $db->query("SELECT COUNT(*) as c FROM dosyalar WHERE UPPER(asama) != 'DOSYA KAPANDI'");
     $dosyaOpen = $stmt->fetch()['c'];
 
     // Bildirim sayisi
-    $stmt = $db->prepare('SELECT COUNT(*) as c FROM bildirimler WHERE kullanici_id = ? AND okundu = 0');
+    $stmt = $db->prepare('SELECT COUNT(*) as c FROM bildirimler WHERE alici_id = ? AND okundu = 0');
     $stmt->execute(array($user['id']));
     $row = $stmt->fetch();
     $bildirimSayisi = $row ? $row['c'] : 0;
@@ -53,6 +53,7 @@ try {
     ));
 
 } catch (Exception $e) {
+    // İstatistik hatası user verisini engellemez, varsayılan stats ile devam
     echo json_encode(array(
         'success' => true,
         'data' => array(

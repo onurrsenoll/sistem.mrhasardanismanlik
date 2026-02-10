@@ -521,7 +521,7 @@ table th{background:#f8fafc;font-weight:600;color:#475569;font-size:10px}
                   <div style={{fontSize: 11, fontWeight: 700, color: C.textMuted, marginBottom: 10, letterSpacing: 0.5}}>HESAPLAMA DETAYLARI</div>
 
                   {[
-                    {label: 'RAYİÇ DEĞER', value: fmtK(sonuc.rayic), icon: 'DollarSign', color: C.accent},
+                    {label: 'RAYİÇ DEĞER', value: fmtK(sonuc.rayic), icon: 'TurkishLira', color: C.accent},
                     {label: 'ONARIM BEDELİ', value: fmtK(sonuc.onarim), icon: 'Briefcase', color: C.warning},
                     {label: 'ONARIM / RAYİÇ ORANI', value: '%' + (sonuc.onarimOrani * 100).toFixed(1), icon: 'Percent', color: C.purple},
                     {label: 'YAŞ ORANI', value: '%' + (sonuc.yasOrani * 100).toFixed(1), icon: 'Clock', color: C.cyan},

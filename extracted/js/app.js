@@ -88,12 +88,12 @@ const TopNav = ({user, page, setPage, onLogout}) => {
     const sayacGuncelle = async () => {
       try {
         const [r1, r2] = await Promise.all([
-          api.bildirimList({okunmamis: 1, limit: 1}),
+          api.bildirimList({okundu: 0, limit: 1}),
           api.mesajList({okunmamis: 1, limit: 1}).catch(() => null)
         ]);
         let toplam = 0;
-        if (r1?.success) toplam += (r1.data?.total || 0);
-        if (r2?.success) toplam += (r2.data?.total || 0);
+        if (r1?.success) toplam += (r1.data?.pagination?.total || 0);
+        if (r2?.success) toplam += (r2.data?.okunmamis_sayisi || r2.data?.pagination?.total || 0);
         setBildirimSayisi(toplam);
       } catch(e) {}
     };
@@ -118,36 +118,41 @@ const TopNav = ({user, page, setPage, onLogout}) => {
   return (
     <div ref={navRef} style={{
       background: C.headerBg, borderBottom: `1px solid ${C.border}`,
-      display: 'flex', alignItems: 'center', padding: '0 20px', height: 56,
-      position: 'sticky', top: 0, zIndex: 1000
+      display: 'flex', alignItems: 'center', padding: '0 12px', height: 54,
+      position: 'sticky', top: 0, zIndex: 1000, gap: 0
     }}>
-      {/* LOGO */}
+      {/* LOGO - SABİT ALAN */}
       <div onClick={() => setPage('home')} style={{
-        display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginRight: 30
+        display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+        width: 150, minWidth: 150, flexShrink: 0, marginRight: 8
       }}>
         <div style={{
-          width: 36, height: 36, borderRadius: 10,
+          width: 34, height: 34, minWidth: 34, borderRadius: 8,
           background: `${C.accent}22`, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', fontSize: 14, fontWeight: 900, color: C.accent
+          justifyContent: 'center', fontSize: 13, fontWeight: 900, color: C.accent
         }}>MR</div>
-        <div>
-          <div style={{fontSize: 12, fontWeight: 800, color: C.accent, letterSpacing: 1}}>MR HASAR</div>
-          <div style={{fontSize: 8, color: C.textMuted, letterSpacing: 2}}>DANIŞMANLIK</div>
+        <div style={{overflow: 'hidden'}}>
+          <div style={{fontSize: 11, fontWeight: 800, color: C.accent, letterSpacing: 0.5, whiteSpace: 'nowrap'}}>MR HASAR</div>
+          <div style={{fontSize: 7, color: C.textMuted, letterSpacing: 1.5, whiteSpace: 'nowrap'}}>DANIŞMANLIK</div>
         </div>
       </div>
 
-      {/* MENÜ */}
-      <div style={{display: 'flex', gap: 2, flex: 1}}>
+      {/* MENÜ - ESNEK ALAN, TEK SATIR */}
+      <div style={{
+        display: 'flex', flex: 1, alignItems: 'center',
+        justifyContent: 'center', gap: 1, overflow: 'hidden'
+      }}>
         {filteredMenu.map(m => (
-          <div key={m.id} style={{position: 'relative'}}>
+          <div key={m.id} style={{position: 'relative', flexShrink: 0}}>
             <div
               onClick={() => {
                 if (m.sub) { setMenuOpen(menuOpen === m.id ? null : m.id); }
                 else { setPage(m.id); setMenuOpen(null); }
               }}
               style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px',
-                borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 600,
+                display: 'flex', alignItems: 'center', gap: 4,
+                padding: '6px 8px', borderRadius: 6, cursor: 'pointer',
+                fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap',
                 color: isActive(m) ? C.accent : C.textSec,
                 background: isActive(m) ? `${C.accent}15` : 'transparent',
                 transition: 'all .2s', position: 'relative'
@@ -155,17 +160,17 @@ const TopNav = ({user, page, setPage, onLogout}) => {
               onMouseEnter={e => { if (!isActive(m)) e.currentTarget.style.background = `${C.accent}08`; }}
               onMouseLeave={e => { if (!isActive(m)) e.currentTarget.style.background = 'transparent'; }}
             >
-              <LIcon name={m.icon} size={14} color={isActive(m) ? C.accent : C.textMuted}/>
+              <LIcon name={m.icon} size={13} color={isActive(m) ? C.accent : C.textMuted}/>
               <span>{m.label}</span>
               {m.id === 'mesajlar' && bildirimSayisi > 0 && (
                 <span style={{
-                  position: 'absolute', top: 2, right: 2,
-                  width: 16, height: 16, borderRadius: '50%',
-                  background: C.danger, color: '#fff', fontSize: 9,
+                  position: 'absolute', top: 0, right: 0,
+                  width: 14, height: 14, borderRadius: '50%',
+                  background: C.danger, color: '#fff', fontSize: 8,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700
                 }}>{bildirimSayisi > 9 ? '9+' : bildirimSayisi}</span>
               )}
-              {m.sub && <LIcon name="ChevronDown" size={12} color={C.textMuted}/>}
+              {m.sub && <LIcon name="ChevronDown" size={10} color={C.textMuted}/>}
             </div>
 
             {/* DROPDOWN */}
@@ -173,7 +178,7 @@ const TopNav = ({user, page, setPage, onLogout}) => {
               <div style={{
                 position: 'absolute', top: '100%', left: 0, marginTop: 4,
                 background: C.bgCard, border: `1px solid ${C.border}`,
-                borderRadius: 10, padding: 6, minWidth: 200,
+                borderRadius: 10, padding: 6, minWidth: 210,
                 boxShadow: '0 10px 40px rgba(0,0,0,.5)', zIndex: 1001
               }}>
                 {m.sub.map(s => (
@@ -200,67 +205,70 @@ const TopNav = ({user, page, setPage, onLogout}) => {
         ))}
       </div>
 
-      {/* TEMA TOGGLE */}
-      <div onClick={() => {
-        const yeniTema = MR.tema === 'koyu' ? 'acik' : 'koyu';
-        MR.setTema(yeniTema);
-        setMenuOpen(null);
-        /* App'i yeniden render et */
-        window.dispatchEvent(new Event('mr-tema-degisti'));
-      }} style={{
-        width: 36, height: 36, borderRadius: 8, cursor: 'pointer',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: MR.tema === 'koyu' ? `${C.warning}22` : `${C.purple}22`,
-        border: `1px solid ${MR.tema === 'koyu' ? C.warning + '44' : C.purple + '44'}`,
-        marginRight: 8, transition: 'all .2s'
-      }} title={MR.tema === 'koyu' ? 'AÇIK TEMA' : 'KOYU TEMA'}>
-        <LIcon name={MR.tema === 'koyu' ? 'Sun' : 'Moon'} size={16} color={MR.tema === 'koyu' ? C.warning : C.purple}/>
-      </div>
-
-      {/* PROFİL */}
-      <div style={{position: 'relative'}}>
-        <div onClick={() => setProfilOpen(!profilOpen)} style={{
-          display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px',
-          borderRadius: 8, cursor: 'pointer', border: `1px solid ${C.border}`
-        }}>
-          <div style={{
-            width: 30, height: 30, borderRadius: 8,
-            background: `${C.accent}22`, display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-            fontSize: 12, fontWeight: 700, color: C.accent
-          }}>{(user?.ad_soyad || 'U')[0]}</div>
-          <div>
-            <div style={{fontSize: 11, fontWeight: 600}}>{user?.ad_soyad}</div>
-            <div style={{fontSize: 9, color: C.textMuted}}>{(user?.rol || '').toUpperCase()}</div>
-          </div>
-          <LIcon name="ChevronDown" size={12} color={C.textMuted}/>
+      {/* SAĞ TARAF - SABİT ALAN */}
+      <div style={{display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 8}}>
+        {/* TEMA TOGGLE */}
+        <div onClick={() => {
+          const yeniTema = MR.tema === 'koyu' ? 'acik' : 'koyu';
+          MR.setTema(yeniTema);
+          setMenuOpen(null);
+          window.dispatchEvent(new Event('mr-tema-degisti'));
+        }} style={{
+          width: 34, height: 34, minWidth: 34, borderRadius: 8, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: MR.tema === 'koyu' ? `${C.warning}22` : `${C.purple}22`,
+          border: `1px solid ${MR.tema === 'koyu' ? C.warning + '44' : C.purple + '44'}`,
+          transition: 'all .2s'
+        }} title={MR.tema === 'koyu' ? 'AÇIK TEMA' : 'KOYU TEMA'}>
+          <LIcon name={MR.tema === 'koyu' ? 'Sun' : 'Moon'} size={15} color={MR.tema === 'koyu' ? C.warning : C.purple}/>
         </div>
 
-        {profilOpen && (
-          <div style={{
-            position: 'absolute', top: '100%', right: 0, marginTop: 8,
-            background: C.bgCard, border: `1px solid ${C.border}`,
-            borderRadius: 10, padding: 6, minWidth: 200,
-            boxShadow: '0 10px 40px rgba(0,0,0,.5)', zIndex: 1001
+        {/* PROFİL */}
+        <div style={{position: 'relative'}}>
+          <div onClick={() => setProfilOpen(!profilOpen)} style={{
+            display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px',
+            borderRadius: 8, cursor: 'pointer', border: `1px solid ${C.border}`,
+            height: 34
           }}>
-            <div style={{padding: '10px 14px', borderBottom: `1px solid ${C.border}`, marginBottom: 4}}>
-              <div style={{fontSize: 12, fontWeight: 600}}>{user?.ad_soyad}</div>
-              <div style={{fontSize: 10, color: C.textMuted}}>{user?.email}</div>
+            <div style={{
+              width: 26, height: 26, minWidth: 26, borderRadius: 6,
+              background: `${C.accent}22`, display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 700, color: C.accent
+            }}>{(user?.ad_soyad || 'U')[0]}</div>
+            <div style={{overflow: 'hidden'}}>
+              <div style={{fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 100}}>{user?.ad_soyad}</div>
+              <div style={{fontSize: 8, color: C.textMuted, whiteSpace: 'nowrap'}}>{(user?.rol || '').toUpperCase()}</div>
             </div>
-            <div onClick={() => { setPage('profil'); setProfilOpen(false); }}
-              style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12, color: C.textSec}}
-              onMouseEnter={e => e.currentTarget.style.background = `${C.accent}10`}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-              <LIcon name="User" size={14} color={C.textMuted}/> PROFİL
-            </div>
-            <div onClick={onLogout}
-              style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12, color: C.danger}}
-              onMouseEnter={e => e.currentTarget.style.background = `${C.danger}10`}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-              <LIcon name="LogOut" size={14} color={C.danger}/> ÇIKIŞ YAP
-            </div>
+            <LIcon name="ChevronDown" size={10} color={C.textMuted}/>
           </div>
-        )}
+
+          {profilOpen && (
+            <div style={{
+              position: 'absolute', top: '100%', right: 0, marginTop: 8,
+              background: C.bgCard, border: `1px solid ${C.border}`,
+              borderRadius: 10, padding: 6, minWidth: 200,
+              boxShadow: '0 10px 40px rgba(0,0,0,.5)', zIndex: 1001
+            }}>
+              <div style={{padding: '10px 14px', borderBottom: `1px solid ${C.border}`, marginBottom: 4}}>
+                <div style={{fontSize: 12, fontWeight: 600}}>{user?.ad_soyad}</div>
+                <div style={{fontSize: 10, color: C.textMuted}}>{user?.email}</div>
+              </div>
+              <div onClick={() => { setPage('profil'); setProfilOpen(false); }}
+                style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12, color: C.textSec}}
+                onMouseEnter={e => e.currentTarget.style.background = `${C.accent}10`}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <LIcon name="User" size={14} color={C.textMuted}/> PROFİL
+              </div>
+              <div onClick={onLogout}
+                style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12, color: C.danger}}
+                onMouseEnter={e => e.currentTarget.style.background = `${C.danger}10`}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <LIcon name="LogOut" size={14} color={C.danger}/> ÇIKIŞ YAP
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -484,7 +492,7 @@ const App = () => {
     (async () => {
       if (api.token) {
         const r = await api.me();
-        if (r?.success) { setUser(r.data); }
+        if (r?.success) { setUser(r.data?.user || r.data); }
         else { api.setToken(null); }
       }
       setLoading(false);
@@ -530,7 +538,7 @@ const App = () => {
         textAlign: 'center', padding: '20px 0', borderTop: `1px solid ${C.border}`,
         fontSize: 10, color: C.textMuted, letterSpacing: 1
       }}>
-        MR HASAR DANIŞMANLIK © 2025 — DOSYA TAKİP SİSTEMİ — HER ZAMAN FARK EDER
+        MR HASAR DANIŞMANLIK © {new Date().getFullYear()} — DOSYA TAKİP SİSTEMİ — HER ZAMAN FARK EDER
       </div>
     </div>
   );
