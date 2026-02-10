@@ -211,7 +211,7 @@ const KullaniciTab = () => {
   const silKullanici = (user) => {
     setConfirmState({
       open: true, id: user.id,
-      msg: `"${user.ad_soyad}" KULLANICISINI SİLMEK İSTEDİĞİNİZDEN EMİN MİSİNİZ? (PASİF YAPILACAKTIR)`,
+      msg: `"${user.ad_soyad}" KULLANICISINI KALICI OLARAK SİLMEK İSTEDİĞİNİZDEN EMİN MİSİNİZ? BU İŞLEM GERİ ALINAMAZ!`,
       action: 'delete'
     });
   };
@@ -221,7 +221,8 @@ const KullaniciTab = () => {
     if (confirmState.action === 'toggle') {
       await api.kullaniciUpdate({id: confirmState.id, aktif: confirmState.aktif});
     } else if (confirmState.action === 'delete') {
-      await api.kullaniciDelete(confirmState.id);
+      /* KALICI SİLME - mode=hard */
+      await api.req('/sistem/kullanici-delete.php?id=' + confirmState.id + '&mode=hard', {method: 'DELETE'});
     }
     setConfirmState({open: false, id: null, msg: ''});
     await load();
