@@ -1,0 +1,13 @@
+RewriteEngine On
+
+# API isteklerini olduğu gibi bırak
+RewriteCond %{REQUEST_URI} ^/api/ [NC]
+RewriteRule ^ - [L]
+
+# Gerçek dosyalar varsa sun
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Diğer her şeyi index.html'e yönlendir (React SPA)
+RewriteRule ^ index.html [L]

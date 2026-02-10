@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MR HASAR DANIŞMANLIK - DOSYA TAKİP SİSTEMİ</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAABfSURBVFhH7c0xDQAgEETRO4WLuLESewgG8sM0XTHJ5J8AAAAAAOAP22m8y3+0/qN1j3b9MLoH0D1a92jdo3WP1j1a92jdo3WP1j1a92jdA+geAAAAAAAAcMLsHQjnOx/o5nQEAAAAAElFTkSuQmCC">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','Roboto',sans-serif;background:#0B1120;color:#f1f5f9;overflow-x:hidden;text-transform:uppercase}
+input,select,textarea{text-transform:uppercase;font-family:inherit}
+input[type="password"]{text-transform:none}
+select option{background:#111827;color:#f1f5f9}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#111827}
+::-webkit-scrollbar-thumb{background:#374151;border-radius:3px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .3s ease}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- MODÜLER YAPI: HER DOSYA BAĞIMSIZ BİR MODÜL -->
+<script type="text/babel" src="js/config.js"></script>
+<script type="text/babel" src="js/icons.js"></script>
+<script type="text/babel" src="js/data.js"></script>
+<script type="text/babel" src="js/utils.js"></script>
+<script type="text/babel" src="js/components.js"></script>
+<script type="text/babel" src="js/pages/home.js"></script>
+<script type="text/babel" src="js/pages/dosya-liste.js"></script>
+<script type="text/babel" src="js/pages/dosya-detay.js"></script>
+<script type="text/babel" src="js/pages/dosya-yeni.js"></script>
+<script type="text/babel" src="js/pages/crm.js"></script>
+<script type="text/babel" src="js/pages/hesap-adk.js"></script>
+<script type="text/babel" src="js/pages/hesap-bh.js"></script>
+<script type="text/babel" src="js/pages/muhasebe.js"></script>
+<script type="text/babel" src="js/pages/ajanda.js"></script>
+<script type="text/babel" src="js/pages/bildirim.js"></script>
+<script type="text/babel" src="js/pages/sistem.js"></script>
+<script type="text/babel" src="js/app.js"></script>
+</body>
+</html>
