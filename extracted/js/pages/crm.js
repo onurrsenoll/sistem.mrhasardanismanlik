@@ -1,7 +1,12 @@
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect} = React;
 
-MR.CRMListesi = ({setPage}) => {
+MR.CrmPage = ({setPage, user, view, crmId}) => {
+  if (view === 'yeni') return <MR._CRMYeniInner setPage={setPage}/>;
+  return <MR._CRMListesiInner setPage={setPage}/>;
+};
+
+MR._CRMListesiInner = ({setPage}) => {
   const {C, S, LIcon, Badge, StatCard, Loading, EmptyState, api} = MR;
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -110,7 +115,7 @@ MR.CRMListesi = ({setPage}) => {
   );
 };
 
-MR.CRMYeni = ({setPage}) => {
+MR._CRMYeniInner = ({setPage}) => {
   const {C, S, LIcon, SectionTitle, FormGroup, api, ILLER} = MR;
   const [f, sF] = useState({ad_soyad:'', telefon:'', email:'', il:'', ilce:'', dosya_turu:'ADK', kaynak:'TELEFON', not_text:''});
   const [loading, setLoading] = useState(false);

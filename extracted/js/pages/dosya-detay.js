@@ -1,7 +1,7 @@
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect} = React;
 
-MR.DosyaDetay = ({dosyaId, setPage}) => {
+MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const {C, S, LIcon, Badge, SectionTitle, EmptyState, Loading, Modal, FormGroup, Confirm, api, fmt, MASRAF_K, EVRAK_T, today} = MR;
   const [dosya, setDosya] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -1,7 +1,7 @@
 const MR = window.MR || (window.MR = {});
 const {useState} = React;
 
-MR.YeniDosya = ({setPage}) => {
+MR.DosyaYeniPage = ({setPage, user}) => {
   const {C, S, LIcon, Badge, SectionTitle, FormGroup, api, ARAC_DB, SIGORTA, ILLER, formatPlaka} = MR;
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);

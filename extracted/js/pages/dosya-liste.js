@@ -1,7 +1,12 @@
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect} = React;
 
-MR.DosyaListesi = ({setPage, onSelect}) => {
+MR.DosyaListePage = ({setPage, user}) => {
+  const onSelect = (id) => setPage('dosya-detay-' + id);
+  return <MR._DosyaListesiInner setPage={setPage} onSelect={onSelect}/>;
+};
+
+MR._DosyaListesiInner = ({setPage, onSelect}) => {
   const {C, S, LIcon, Badge, Loading, EmptyState, api} = MR;
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
