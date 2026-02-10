@@ -126,6 +126,18 @@ MR.api = {
   sablonCreate(d) { return this.req('/sablon/create.php', { method: 'POST', body: JSON.stringify(d) }); },
   sablonUpdate(d) { return this.req('/sablon/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
   sablonDelete(id) { return this.req('/sablon/delete.php?id=' + id, { method: 'DELETE' }); },
+  // YETKİ
+  yetkiList(p = {}) { return this.req('/sistem/yetki-list.php?' + new URLSearchParams(p)); },
+  yetkiGuncelle(d) { return this.req('/sistem/yetki-guncelle.php', { method: 'POST', body: JSON.stringify(d) }); },
+  // AYARLAR
+  ayarlarList() { return this.req('/sistem/ayarlar-list.php'); },
+  ayarlarGuncelle(d) { return this.req('/sistem/ayarlar-guncelle.php', { method: 'POST', body: JSON.stringify(d) }); },
+  logoYukle(file) {
+    const fd = new FormData(); fd.append('logo', file);
+    return fetch(this.base + '/sistem/logo-yukle.php', {
+      method: 'POST', headers: {'Authorization': 'Bearer ' + this.token}, body: fd
+    }).then(r => r.json()).catch(() => ({success: false, error: 'BAĞLANTI HATASI'}));
+  },
 };
 
 // ═══ TEMA SİSTEMİ ═══

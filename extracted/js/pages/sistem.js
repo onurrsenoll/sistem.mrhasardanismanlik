@@ -3,22 +3,8 @@ const {useState, useEffect, useCallback, useRef} = React;
 
 /* ════════════════════════════════════════════════════════════════
    MR HASAR DANIŞMANLIK - SİSTEM YÖNETİMİ SAYFASI
-   TANIMLAMALAR | KULLANICI YÖNETİMİ | LOG KAYITLARI
+   KULLANICI YÖNETİMİ | YETKİ YÖNETİMİ | FİRMA AYARLARI | LOG KAYITLARI
    ════════════════════════════════════════════════════════════════ */
-
-/* ─── TANIMLAMALAR KATEGORİ HARİTASI ─── */
-const TANIM_KATEGORILER = [
-  {key: 'dosya_turu',       label: 'DOSYA TÜRÜ',        icon: 'Folder'},
-  {key: 'asama',            label: 'AŞAMA',             icon: 'Layers'},
-  {key: 'sigorta_sirketi',  label: 'SİGORTA ŞİRKETİ',  icon: 'Shield'},
-  {key: 'hasar_turu',       label: 'HASAR TÜRÜ',        icon: 'AlertCircle'},
-  {key: 'evrak_turu',       label: 'EVRAK TÜRÜ',        icon: 'FileText'},
-  {key: 'masraf_kalemi',    label: 'MASRAF KALEMİ',     icon: 'Receipt'},
-  {key: 'oncelik',          label: 'ÖNCELİK',           icon: 'Zap'},
-  {key: 'crm_durum',        label: 'CRM DURUM',         icon: 'Target'},
-  {key: 'crm_kaynak',       label: 'CRM KAYNAK',        icon: 'Globe'},
-  {key: 'il',               label: 'İL',                icon: 'MapPin'}
-];
 
 /* ─── ROL RENK HARİTASI ─── */
 const ROL_RENK = {
@@ -51,247 +37,71 @@ const LOG_ISLEM_RENK = (islem) => {
   return MR.C.cyan;
 };
 
-/* ════════════════════════════════════════════════════════════════
-   TAB 1 - TANIMLAMALAR
-   ════════════════════════════════════════════════════════════════ */
-const TanimlamalarTab = () => {
-  const {C, S, LIcon, Badge, Loading, EmptyState, Modal, Confirm, api} = MR;
-  const [seciliKat, setSeciliKat] = useState(TANIM_KATEGORILER[0].key);
-  const [degerler, setDegerler] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editItem, setEditItem] = useState(null);
-  const [formDeger, setFormDeger] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [confirmState, setConfirmState] = useState({open: false, id: null});
-  const [dragIdx, setDragIdx] = useState(null);
-
-  const seciliLabel = TANIM_KATEGORILER.find(k => k.key === seciliKat)?.label || '';
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    const r = await api.tanimList({kategori: seciliKat});
-    if (r?.success) {
-      const items = r.data?.items || r.data || [];
-      setDegerler(Array.isArray(items) ? items : []);
-    } else {
-      setDegerler([]);
-    }
-    setLoading(false);
-  }, [seciliKat]);
-
-  useEffect(() => { load(); }, [load]);
-
-  const yeniEkle = () => {
-    setEditItem(null);
-    setFormDeger('');
-    setModalOpen(true);
-  };
-
-  const duzenle = (item) => {
-    setEditItem(item);
-    setFormDeger(item.deger || '');
-    setModalOpen(true);
-  };
-
-  const kaydet = async () => {
-    if (!formDeger.trim()) return;
-    setSaving(true);
-    let r;
-    if (editItem) {
-      r = await api.tanimUpdate({id: editItem.id, deger: formDeger.trim()});
-    } else {
-      r = await api.tanimCreate({kategori: seciliKat, deger: formDeger.trim()});
-    }
-    if (r?.success) {
-      setModalOpen(false);
-      setFormDeger('');
-      setEditItem(null);
-      await load();
-    }
-    setSaving(false);
-  };
-
-  const toggleAktif = async (item) => {
-    await api.tanimUpdate({id: item.id, aktif: item.aktif ? 0 : 1});
-    await load();
-  };
-
-  const silOnayla = (id) => {
-    setConfirmState({open: true, id});
-  };
-
-  const sil = async () => {
-    if (confirmState.id) {
-      await api.tanimDelete(confirmState.id);
-      setConfirmState({open: false, id: null});
-      await load();
-    }
-  };
-
-  /* ─── SIRALAMA (DRAG & DROP) ─── */
-  const handleDragStart = (idx) => {
-    setDragIdx(idx);
-  };
-
-  const handleDragOver = (e, idx) => {
-    e.preventDefault();
-    if (dragIdx === null || dragIdx === idx) return;
-    const yeni = [...degerler];
-    const [moved] = yeni.splice(dragIdx, 1);
-    yeni.splice(idx, 0, moved);
-    setDegerler(yeni);
-    setDragIdx(idx);
-  };
-
-  const handleDragEnd = async () => {
-    setDragIdx(null);
-    for (let i = 0; i < degerler.length; i++) {
-      if (degerler[i].sira !== i + 1) {
-        await api.tanimUpdate({id: degerler[i].id, sira: i + 1});
-      }
-    }
-  };
-
-  return (
-    <div style={{display:'grid', gridTemplateColumns:'240px 1fr', gap:16, minHeight:500}}>
-      {/* SOL PANEL - KATEGORİLER */}
-      <div style={{...S.card, height:'fit-content'}}>
-        <div style={{...S.cardHead, padding:'12px 16px'}}>
-          <LIcon name="Database" size={14} color={C.accent}/>
-          <span style={{fontSize:12, fontWeight:700}}>KATEGORİLER</span>
-        </div>
-        <div style={{padding:8}}>
-          {TANIM_KATEGORILER.map(kat => {
-            const aktif = seciliKat === kat.key;
-            return (
-              <div key={kat.key} onClick={() => setSeciliKat(kat.key)}
-                style={{
-                  display:'flex', alignItems:'center', gap:10, padding:'10px 12px',
-                  borderRadius:8, cursor:'pointer', marginBottom:2, transition:'all .2s',
-                  background: aktif ? `${C.accent}18` : 'transparent',
-                  borderLeft: aktif ? `3px solid ${C.accent}` : '3px solid transparent',
-                  color: aktif ? C.accent : C.textSec
-                }}
-                onMouseEnter={e => { if (!aktif) e.currentTarget.style.background = C.bgHover; }}
-                onMouseLeave={e => { if (!aktif) e.currentTarget.style.background = 'transparent'; }}>
-                <LIcon name={kat.icon} size={14} color={aktif ? C.accent : C.textMuted}/>
-                <span style={{fontSize:11, fontWeight: aktif ? 700 : 500}}>{kat.label}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* SAG PANEL - DEGERLER */}
-      <div style={S.card}>
-        <div style={{...S.cardHead, justifyContent:'space-between'}}>
-          <div style={{display:'flex', alignItems:'center', gap:10}}>
-            <LIcon name="List" size={14} color={C.accent}/>
-            <span style={{fontSize:13, fontWeight:700}}>{seciliLabel}</span>
-            <Badge text={`${degerler.length} KAYIT`} color={C.accent}/>
-          </div>
-          <button style={{...S.btn, ...S.btnP, fontSize:11, padding:'8px 16px'}} onClick={yeniEkle}>
-            <LIcon name="Plus" size={14} color="#fff"/> YENİ EKLE
-          </button>
-        </div>
-
-        {loading ? <Loading/> : degerler.length === 0 ? (
-          <EmptyState icon="Database" title="TANIMLAMA BULUNAMADI" desc={`${seciliLabel} KATEGORİSİNDE HENÜZ KAYIT YOK`}/>
-        ) : (
-          <div style={{padding:12}}>
-            {degerler.map((item, idx) => (
-              <div key={item.id || idx}
-                draggable
-                onDragStart={() => handleDragStart(idx)}
-                onDragOver={(e) => handleDragOver(e, idx)}
-                onDragEnd={handleDragEnd}
-                style={{
-                  display:'flex', alignItems:'center', gap:12, padding:'12px 14px',
-                  borderRadius:8, marginBottom:4, transition:'all .2s',
-                  background: dragIdx === idx ? `${C.accent}11` : 'transparent',
-                  border: `1px solid ${dragIdx === idx ? C.accent + '44' : C.border}`,
-                  opacity: item.aktif === 0 ? 0.5 : 1
-                }}
-                onMouseEnter={e => { if (dragIdx === null) e.currentTarget.style.background = C.bgHover; }}
-                onMouseLeave={e => { if (dragIdx === null) e.currentTarget.style.background = 'transparent'; }}>
-
-                {/* SIRALAMA TUTAMACI */}
-                <div style={{cursor:'grab', color:C.textMuted, display:'flex', flexDirection:'column', gap:1, padding:'0 4px'}}
-                  title="SIRALAMA">
-                  <LIcon name="Menu" size={14} color={C.textMuted}/>
-                </div>
-
-                {/* SIRA NO */}
-                <span style={{fontSize:10, color:C.textMuted, fontWeight:600, minWidth:20, textAlign:'center'}}>
-                  {idx + 1}
-                </span>
-
-                {/* DEGER */}
-                <span style={{flex:1, fontSize:13, fontWeight:600, color: item.aktif === 0 ? C.textMuted : C.text}}>
-                  {item.deger}
-                </span>
-
-                {/* AKTİF/PASİF TOGGLE */}
-                <div onClick={() => toggleAktif(item)} style={{cursor:'pointer', padding:'4px 10px', borderRadius:20, fontSize:10, fontWeight:700,
-                  background: item.aktif !== 0 ? `${C.success}22` : `${C.danger}22`,
-                  color: item.aktif !== 0 ? C.success : C.danger,
-                  border: `1px solid ${item.aktif !== 0 ? C.success + '33' : C.danger + '33'}`}}>
-                  {item.aktif !== 0 ? 'AKTİF' : 'PASİF'}
-                </div>
-
-                {/* DÜZENLE */}
-                <div onClick={() => duzenle(item)} style={{cursor:'pointer', padding:6, borderRadius:6, transition:'all .2s'}}
-                  onMouseEnter={e => e.currentTarget.style.background = `${C.accent}22`}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  title="DÜZENLE">
-                  <LIcon name="Edit" size={14} color={C.accent}/>
-                </div>
-
-                {/* SİL */}
-                <div onClick={() => silOnayla(item.id)} style={{cursor:'pointer', padding:6, borderRadius:6, transition:'all .2s'}}
-                  onMouseEnter={e => e.currentTarget.style.background = `${C.danger}22`}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  title="SİL">
-                  <LIcon name="Trash2" size={14} color={C.danger}/>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* EKLEME / DÜZENLEME MODAL */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)}
-        title={editItem ? 'TANIMLAMA DÜZENLE' : 'YENİ TANIMLAMA EKLE'} width="440px">
-        <div>
-          <label style={S.label}>DEĞER</label>
-          <input style={S.input} value={formDeger} onChange={e => setFormDeger(e.target.value)}
-            placeholder="DEĞER GİRİNİZ" autoFocus
-            onKeyDown={e => { if (e.key === 'Enter') kaydet(); }}/>
-          <div style={{fontSize:10, color:C.textMuted, marginTop:8}}>
-            KATEGORİ: <strong style={{color:C.accent}}>{seciliLabel}</strong>
-          </div>
-          <div style={{marginTop:20, display:'flex', gap:8, justifyContent:'flex-end'}}>
-            <button style={{...S.btn, ...S.btnG, fontSize:12}} onClick={() => setModalOpen(false)}>İPTAL</button>
-            <button style={{...S.btn, ...S.btnS, fontSize:12, opacity: saving ? 0.7 : 1}} onClick={kaydet} disabled={saving}>
-              <LIcon name="Save" size={14} color="#fff"/> {saving ? 'KAYDEDİLİYOR...' : 'KAYDET'}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* SİLME ONAYI */}
-      <Confirm open={confirmState.open}
-        message="BU TANIMLAMAYI SİLMEK İSTEDİĞİNİZDEN EMİN MİSİNİZ?"
-        onConfirm={sil}
-        onCancel={() => setConfirmState({open: false, id: null})}/>
-    </div>
-  );
-};
+/* ─── YETKİ MODÜL HARİTASI ─── */
+const MODUL_YETKILERI = [
+  {modul: 'dosya', label: 'DOSYA İŞLEMLERİ', icon: 'FolderOpen', islemler: [
+    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
+    {key: 'ekle', label: 'EKLE'},
+    {key: 'duzenle', label: 'DÜZENLE'},
+    {key: 'sil', label: 'SİL'}
+  ]},
+  {modul: 'crm', label: 'CRM', icon: 'Users', islemler: [
+    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
+    {key: 'ekle', label: 'EKLE'},
+    {key: 'duzenle', label: 'DÜZENLE'},
+    {key: 'sil', label: 'SİL'},
+    {key: 'donustur', label: 'DÖNÜŞTÜR'}
+  ]},
+  {modul: 'hesaplamalar', label: 'HESAPLAMALAR', icon: 'Calculator', islemler: [
+    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
+    {key: 'kullan', label: 'HESAPLA'}
+  ]},
+  {modul: 'servis', label: 'SERVİSLER', icon: 'Wrench', islemler: [
+    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
+    {key: 'ekle', label: 'EKLE'},
+    {key: 'duzenle', label: 'DÜZENLE'},
+    {key: 'sil', label: 'SİL'}
+  ]},
+  {modul: 'ortaklar', label: 'ORTAKLAR', icon: 'Handshake', islemler: [
+    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
+    {key: 'ekle', label: 'EKLE'},
+    {key: 'duzenle', label: 'DÜZENLE'},
+    {key: 'sil', label: 'SİL'}
+  ]},
+  {modul: 'muhasebe', label: 'MUHASEBE', icon: 'Landmark', islemler: [
+    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
+    {key: 'ekle', label: 'EKLE'},
+    {key: 'duzenle', label: 'DÜZENLE'},
+    {key: 'sil', label: 'SİL'},
+    {key: 'rapor', label: 'RAPOR'}
+  ]},
+  {modul: 'tanimlamalar', label: 'TANIMLAMALAR', icon: 'Database', islemler: [
+    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
+    {key: 'ekle', label: 'EKLE'},
+    {key: 'duzenle', label: 'DÜZENLE'},
+    {key: 'sil', label: 'SİL'}
+  ]},
+  {modul: 'ajanda', label: 'AJANDA', icon: 'Calendar', islemler: [
+    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
+    {key: 'ekle', label: 'EKLE'},
+    {key: 'duzenle', label: 'DÜZENLE'},
+    {key: 'sil', label: 'SİL'}
+  ]},
+  {modul: 'mesajlar', label: 'MESAJLAR', icon: 'Mail', islemler: [
+    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
+    {key: 'gonder', label: 'GÖNDER'},
+    {key: 'sil', label: 'SİL'}
+  ]},
+  {modul: 'sistem', label: 'SİSTEM', icon: 'Shield', islemler: [
+    {key: 'kullanici_yonet', label: 'KULLANICI YÖNETİMİ'},
+    {key: 'yetki_yonet', label: 'YETKİ YÖNETİMİ'},
+    {key: 'ayarlar', label: 'AYARLAR'},
+    {key: 'log', label: 'LOG GÖRÜNTÜLE'}
+  ]}
+];
 
 /* ════════════════════════════════════════════════════════════════
-   TAB 2 - KULLANICI YÖNETİMİ
+   TAB 1 - KULLANICI YÖNETİMİ
    ════════════════════════════════════════════════════════════════ */
 const KullaniciTab = () => {
   const {C, S, LIcon, Badge, StatCard, Loading, EmptyState, Modal, FormGroup, Confirm, api} = MR;
@@ -561,7 +371,654 @@ const KullaniciTab = () => {
 };
 
 /* ════════════════════════════════════════════════════════════════
-   TAB 3 - LOG KAYITLARI
+   TAB 2 - YETKİ YÖNETİMİ
+   ════════════════════════════════════════════════════════════════ */
+const YetkiTab = () => {
+  const {C, S, LIcon, Badge, Loading, EmptyState, api} = MR;
+  const [kullanicilar, setKullanicilar] = useState([]);
+  const [seciliKullanici, setSeciliKullanici] = useState('');
+  const [yetkiler, setYetkiler] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [mesaj, setMesaj] = useState({type: '', text: ''});
+  const [kullaniciLoading, setKullaniciLoading] = useState(true);
+
+  /* KULLANICI LİSTESİ YÜKLE */
+  useEffect(() => {
+    (async () => {
+      setKullaniciLoading(true);
+      const r = await api.kullaniciList();
+      if (r?.success) {
+        const items = r.data?.items || r.data || [];
+        setKullanicilar(Array.isArray(items) ? items : []);
+      }
+      setKullaniciLoading(false);
+    })();
+  }, []);
+
+  /* SEÇİLİ KULLANICI DEĞİŞTİĞİNDE YETKİLERİ YÜKLE */
+  useEffect(() => {
+    if (!seciliKullanici) {
+      setYetkiler({});
+      return;
+    }
+    (async () => {
+      setLoading(true);
+      setMesaj({type: '', text: ''});
+      const r = await api.yetkiList({kullanici_id: seciliKullanici});
+      if (r?.success) {
+        const items = r.data?.items || r.data || [];
+        const yMap = {};
+        if (Array.isArray(items)) {
+          items.forEach(y => {
+            const key = `${y.modul}_${y.islem}`;
+            yMap[key] = y.izin === 1 || y.izin === true || y.izin === '1';
+          });
+        }
+        setYetkiler(yMap);
+      } else {
+        setYetkiler({});
+      }
+      setLoading(false);
+    })();
+  }, [seciliKullanici]);
+
+  /* TEK YETKİ TOGGLE */
+  const toggleYetki = (modul, islem) => {
+    const key = `${modul}_${islem}`;
+    setYetkiler(p => ({...p, [key]: !p[key]}));
+  };
+
+  /* MODÜL BAZLI TÜMÜNÜ SEÇ/KALDIR */
+  const toggleModul = (modul, islemler) => {
+    const hepsiSecili = islemler.every(i => yetkiler[`${modul}_${i.key}`]);
+    const yeni = {...yetkiler};
+    islemler.forEach(i => {
+      yeni[`${modul}_${i.key}`] = !hepsiSecili;
+    });
+    setYetkiler(yeni);
+  };
+
+  /* MASTER TÜMÜNÜ SEÇ/KALDIR */
+  const toggleHepsi = () => {
+    let toplamIslem = 0;
+    let seciliIslem = 0;
+    MODUL_YETKILERI.forEach(m => {
+      m.islemler.forEach(i => {
+        toplamIslem++;
+        if (yetkiler[`${m.modul}_${i.key}`]) seciliIslem++;
+      });
+    });
+    const hepsiSecili = toplamIslem === seciliIslem;
+    const yeni = {};
+    MODUL_YETKILERI.forEach(m => {
+      m.islemler.forEach(i => {
+        yeni[`${m.modul}_${i.key}`] = !hepsiSecili;
+      });
+    });
+    setYetkiler(yeni);
+  };
+
+  /* KAYDET */
+  const kaydet = async () => {
+    if (!seciliKullanici) return;
+    setSaving(true);
+    setMesaj({type: '', text: ''});
+
+    const yetkiArr = [];
+    MODUL_YETKILERI.forEach(m => {
+      m.islemler.forEach(i => {
+        yetkiArr.push({
+          modul: m.modul,
+          islem: i.key,
+          izin: yetkiler[`${m.modul}_${i.key}`] ? 1 : 0
+        });
+      });
+    });
+
+    const r = await api.yetkiGuncelle({
+      kullanici_id: seciliKullanici,
+      yetkiler: yetkiArr
+    });
+
+    if (r?.success) {
+      setMesaj({type: 'success', text: 'YETKİLER BAŞARIYLA KAYDEDİLDİ'});
+    } else {
+      setMesaj({type: 'error', text: r?.error || 'YETKİLER KAYDEDİLİRKEN HATA OLUŞTU'});
+    }
+    setSaving(false);
+    setTimeout(() => setMesaj({type: '', text: ''}), 4000);
+  };
+
+  /* SEÇİLİ KULLANICI BİLGİSİ */
+  const seciliUser = kullanicilar.find(u => String(u.id) === String(seciliKullanici));
+
+  /* İSTATİSTİKLER */
+  let toplamIslem = 0;
+  let seciliIslem = 0;
+  MODUL_YETKILERI.forEach(m => {
+    m.islemler.forEach(i => {
+      toplamIslem++;
+      if (yetkiler[`${m.modul}_${i.key}`]) seciliIslem++;
+    });
+  });
+
+  /* CHECKBOX BİLEŞENİ */
+  const Checkbox = ({checked, onChange, label}) => (
+    <div onClick={() => onChange(!checked)} style={{
+      display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', cursor: 'pointer'
+    }}>
+      <div style={{
+        width: 20, height: 20, borderRadius: 4, border: `2px solid ${checked ? C.accent : C.borderLight}`,
+        background: checked ? C.accent : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'all .2s', flexShrink: 0
+      }}>
+        {checked && <LIcon name="Check" size={14} color="#fff"/>}
+      </div>
+      <span style={{fontSize: 12, fontWeight: 500, color: checked ? C.text : C.textMuted}}>{label}</span>
+    </div>
+  );
+
+  return (
+    <div>
+      {/* KULLANICI SEÇİCİ */}
+      <div style={{...S.card, marginBottom: 16}}>
+        <div style={{...S.cardHead, padding: '12px 16px'}}>
+          <LIcon name="KeyRound" size={14} color={C.accent}/>
+          <span style={{fontSize: 12, fontWeight: 700}}>KULLANICI SEÇİN</span>
+        </div>
+        <div style={{padding: 16}}>
+          {kullaniciLoading ? <Loading/> : (
+            <div style={{display: 'flex', alignItems: 'center', gap: 16}}>
+              <select style={{...S.select, flex: 1, maxWidth: 400}}
+                value={seciliKullanici}
+                onChange={e => setSeciliKullanici(e.target.value)}>
+                <option value="">-- KULLANICI SEÇİNİZ --</option>
+                {kullanicilar.map(u => (
+                  <option key={u.id} value={u.id}>
+                    {u.ad_soyad} ({ROL_LABEL[u.rol] || (u.rol || '').toUpperCase()})
+                  </option>
+                ))}
+              </select>
+              {seciliUser && (
+                <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 8,
+                    background: `${ROL_RENK[seciliUser.rol] || C.accent}22`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 14, fontWeight: 800, color: ROL_RENK[seciliUser.rol] || C.accent
+                  }}>
+                    {(seciliUser.ad_soyad || '?')[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{fontSize: 13, fontWeight: 700}}>{seciliUser.ad_soyad}</div>
+                    <div style={{fontSize: 10, color: C.textMuted}}>{seciliUser.email}</div>
+                  </div>
+                  <Badge text={ROL_LABEL[seciliUser.rol] || (seciliUser.rol || '').toUpperCase()}
+                    color={ROL_RENK[seciliUser.rol] || C.accent}/>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* MESAJ */}
+      {mesaj.text && (
+        <div style={{
+          padding: '12px 16px', borderRadius: 8, marginBottom: 16, fontSize: 12, fontWeight: 600,
+          background: mesaj.type === 'success' ? `${C.success}22` : `${C.danger}22`,
+          border: `1px solid ${mesaj.type === 'success' ? C.success + '44' : C.danger + '44'}`,
+          color: mesaj.type === 'success' ? C.success : C.danger,
+          display: 'flex', alignItems: 'center', gap: 8
+        }}>
+          <LIcon name={mesaj.type === 'success' ? 'CheckCircle' : 'AlertCircle'} size={16}
+            color={mesaj.type === 'success' ? C.success : C.danger}/>
+          {mesaj.text}
+        </div>
+      )}
+
+      {!seciliKullanici ? (
+        <EmptyState icon="KeyRound" title="KULLANICI SEÇİN"
+          desc="YETKİLERİ DÜZENLEMEK İÇİN YUKARIDAKI LİSTEDEN BİR KULLANICI SEÇİNİZ"/>
+      ) : loading ? <Loading/> : (
+        <div>
+          {/* BİLGİ BANNER */}
+          <div style={{
+            padding: '12px 16px', borderRadius: 8, marginBottom: 16,
+            background: `${C.accent}11`, border: `1px solid ${C.accent}22`,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+          }}>
+            <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+              <LIcon name="Info" size={16} color={C.accent}/>
+              <span style={{fontSize: 12, color: C.textSec}}>
+                <strong style={{color: C.text}}>{seciliUser?.ad_soyad}</strong> İÇİN YETKİLERİ DÜZENLİYORSUNUZ
+                &nbsp;&middot;&nbsp; <strong style={{color: C.accent}}>{seciliIslem}</strong> / {toplamIslem} İZİN AKTİF
+              </span>
+            </div>
+            <Checkbox checked={toplamIslem === seciliIslem && toplamIslem > 0}
+              onChange={toggleHepsi} label="TÜMÜNÜ SEÇ"/>
+          </div>
+
+          {/* MODÜL KARTLARI */}
+          <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 20}}>
+            {MODUL_YETKILERI.map(m => {
+              const hepsiSecili = m.islemler.every(i => yetkiler[`${m.modul}_${i.key}`]);
+              const birkacSecili = m.islemler.some(i => yetkiler[`${m.modul}_${i.key}`]) && !hepsiSecili;
+              const seciliSay = m.islemler.filter(i => yetkiler[`${m.modul}_${i.key}`]).length;
+
+              return (
+                <div key={m.modul} style={{
+                  ...S.card, overflow: 'hidden',
+                  border: hepsiSecili ? `1px solid ${C.accent}44` :
+                    birkacSecili ? `1px solid ${C.warning}44` : `1px solid ${C.border}`
+                }}>
+                  {/* MODÜL BAŞLIĞI */}
+                  <div style={{
+                    padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    background: hepsiSecili ? `${C.accent}11` : birkacSecili ? `${C.warning}08` : C.bgHover,
+                    borderBottom: `1px solid ${C.border}`
+                  }}>
+                    <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 8,
+                        background: hepsiSecili ? `${C.accent}22` : `${C.textMuted}15`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <LIcon name={m.icon} size={16} color={hepsiSecili ? C.accent : C.textMuted}/>
+                      </div>
+                      <div>
+                        <div style={{fontSize: 12, fontWeight: 700, color: hepsiSecili ? C.accent : C.text}}>
+                          {m.label}
+                        </div>
+                        <div style={{fontSize: 10, color: C.textMuted}}>
+                          {seciliSay} / {m.islemler.length} İZİN AKTİF
+                        </div>
+                      </div>
+                    </div>
+                    <div onClick={() => toggleModul(m.modul, m.islemler)} style={{
+                      cursor: 'pointer', padding: '4px 10px', borderRadius: 6, fontSize: 10, fontWeight: 700,
+                      background: hepsiSecili ? `${C.danger}22` : `${C.accent}22`,
+                      color: hepsiSecili ? C.danger : C.accent,
+                      border: `1px solid ${hepsiSecili ? C.danger + '33' : C.accent + '33'}`,
+                      transition: 'all .2s'
+                    }}>
+                      {hepsiSecili ? 'TÜMÜNÜ KALDIR' : 'TÜMÜNÜ SEÇ'}
+                    </div>
+                  </div>
+
+                  {/* İŞLEM CHECKBOX'LARI */}
+                  <div style={{padding: '8px 16px 12px'}}>
+                    {m.islemler.map(i => (
+                      <Checkbox key={i.key}
+                        checked={!!yetkiler[`${m.modul}_${i.key}`]}
+                        onChange={() => toggleYetki(m.modul, i.key)}
+                        label={i.label}/>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* KAYDET BUTONU */}
+          <div style={{
+            ...S.card, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+          }}>
+            <div style={{fontSize: 12, color: C.textMuted}}>
+              <LIcon name="Info" size={14} color={C.textMuted} style={{verticalAlign: 'middle'}}/>{' '}
+              DEĞİŞİKLİKLERİ KAYDETMEK İÇİN AŞAĞIDAKI BUTONA BASIN
+            </div>
+            <button style={{
+              ...S.btn, ...S.btnP, fontSize: 13, padding: '12px 32px', fontWeight: 700,
+              opacity: saving ? 0.7 : 1
+            }} onClick={kaydet} disabled={saving}>
+              <LIcon name="Save" size={16} color="#fff"/>
+              {saving ? 'KAYDEDİLİYOR...' : 'YETKİLERİ KAYDET'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════════════════════════
+   TAB 3 - FİRMA AYARLARI
+   ════════════════════════════════════════════════════════════════ */
+const AyarlarTab = () => {
+  const {C, S, LIcon, Badge, Loading, api} = MR;
+  const [ayarlar, setAyarlar] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [mesaj, setMesaj] = useState({type: '', text: ''});
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState('');
+  const [logoUploading, setLogoUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  /* AYARLAR YÜKLE */
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const r = await api.ayarlarList();
+      if (r?.success) {
+        const data = r.data || {};
+        setAyarlar(data);
+        if (data.logo_url) setLogoPreview(data.logo_url);
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  const up = (k, v) => setAyarlar(p => ({...p, [k]: v}));
+
+  /* AYARLARI KAYDET */
+  const kaydet = async () => {
+    setSaving(true);
+    setMesaj({type: '', text: ''});
+    const r = await api.ayarlarGuncelle(ayarlar);
+    if (r?.success) {
+      setMesaj({type: 'success', text: 'AYARLAR BAŞARIYLA KAYDEDİLDİ'});
+    } else {
+      setMesaj({type: 'error', text: r?.error || 'AYARLAR KAYDEDİLİRKEN HATA OLUŞTU'});
+    }
+    setSaving(false);
+    setTimeout(() => setMesaj({type: '', text: ''}), 4000);
+  };
+
+  /* LOGO DOSYA SEÇ */
+  const handleLogoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    /* DOSYA TİPİ KONTROL */
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];
+    if (!validTypes.includes(file.type)) {
+      setMesaj({type: 'error', text: 'GEÇERSİZ DOSYA TİPİ. SADECE PNG, JPG VEYA SVG KABUL EDİLİR'});
+      setTimeout(() => setMesaj({type: '', text: ''}), 4000);
+      return;
+    }
+
+    /* BOYUT KONTROL (MAX 2MB) */
+    if (file.size > 2 * 1024 * 1024) {
+      setMesaj({type: 'error', text: 'DOSYA BOYUTU ÇOK BÜYÜK. MAKSİMUM 2MB KABUL EDİLİR'});
+      setTimeout(() => setMesaj({type: '', text: ''}), 4000);
+      return;
+    }
+
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setLogoPreview(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  /* LOGO YÜKLE */
+  const logoYukle = async () => {
+    if (!logoFile) return;
+    setLogoUploading(true);
+    setMesaj({type: '', text: ''});
+    const r = await api.logoYukle(logoFile);
+    if (r?.success) {
+      setMesaj({type: 'success', text: 'LOGO BAŞARIYLA YÜKLENDİ'});
+      setLogoFile(null);
+      if (r.data?.logo_url) {
+        setLogoPreview(r.data.logo_url);
+        up('logo_url', r.data.logo_url);
+      }
+    } else {
+      setMesaj({type: 'error', text: r?.error || 'LOGO YÜKLENİRKEN HATA OLUŞTU'});
+    }
+    setLogoUploading(false);
+    setTimeout(() => setMesaj({type: '', text: ''}), 4000);
+  };
+
+  /* LOGO KALDIR */
+  const logoKaldir = () => {
+    setLogoPreview('');
+    setLogoFile(null);
+    up('logo_url', '');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  if (loading) return <Loading/>;
+
+  /* GÖRÜNÜM AYARLARI VARSAYILAN DEĞERLER */
+  const baslikFontBoyut = parseInt(ayarlar.baslik_font_boyut) || 22;
+  const baslikRenk = ayarlar.baslik_renk || '#ffffff';
+  const sloganFontBoyut = parseInt(ayarlar.slogan_font_boyut) || 10;
+  const sloganRenk = ayarlar.slogan_renk || '#94a3b8';
+
+  return (
+    <div>
+      {/* MESAJ */}
+      {mesaj.text && (
+        <div style={{
+          padding: '12px 16px', borderRadius: 8, marginBottom: 16, fontSize: 12, fontWeight: 600,
+          background: mesaj.type === 'success' ? `${C.success}22` : `${C.danger}22`,
+          border: `1px solid ${mesaj.type === 'success' ? C.success + '44' : C.danger + '44'}`,
+          color: mesaj.type === 'success' ? C.success : C.danger,
+          display: 'flex', alignItems: 'center', gap: 8
+        }}>
+          <LIcon name={mesaj.type === 'success' ? 'CheckCircle' : 'AlertCircle'} size={16}
+            color={mesaj.type === 'success' ? C.success : C.danger}/>
+          {mesaj.text}
+        </div>
+      )}
+
+      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16}}>
+        {/* ─── BÖLÜM 1: FİRMA BİLGİLERİ ─── */}
+        <div style={{...S.card, gridColumn: '1 / -1'}}>
+          <div style={{...S.cardHead, padding: '12px 16px'}}>
+            <LIcon name="Building2" size={14} color={C.accent}/>
+            <span style={{fontSize: 12, fontWeight: 700}}>FİRMA BİLGİLERİ</span>
+          </div>
+          <div style={{padding: 16}}>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
+              <div>
+                <label style={S.label}>FİRMA ADI</label>
+                <input style={S.input} value={ayarlar.firma_adi || ''}
+                  onChange={e => up('firma_adi', e.target.value)} placeholder="FİRMA ADI GİRİNİZ"/>
+              </div>
+              <div>
+                <label style={S.label}>SLOGAN</label>
+                <input style={S.input} value={ayarlar.slogan || ''}
+                  onChange={e => up('slogan', e.target.value)} placeholder="FİRMA SLOGANI"/>
+              </div>
+              <div>
+                <label style={S.label}>TELEFON</label>
+                <input style={S.input} type="tel" value={ayarlar.firma_telefon || ''}
+                  onChange={e => up('firma_telefon', e.target.value)} placeholder="0XXX XXX XXXX"/>
+              </div>
+              <div>
+                <label style={S.label}>E-POSTA</label>
+                <input style={S.input} type="email" value={ayarlar.firma_email || ''}
+                  onChange={e => up('firma_email', e.target.value)} placeholder="INFO@FIRMA.COM"/>
+              </div>
+              <div style={{gridColumn: '1 / -1'}}>
+                <label style={S.label}>ADRES</label>
+                <textarea style={{...S.input, minHeight: 60, resize: 'vertical'}} value={ayarlar.firma_adres || ''}
+                  onChange={e => up('firma_adres', e.target.value)} placeholder="FİRMA ADRESİ GİRİNİZ"/>
+              </div>
+              <div>
+                <label style={S.label}>İL</label>
+                <select style={S.select} value={ayarlar.firma_il || ''}
+                  onChange={e => up('firma_il', e.target.value)}>
+                  <option value="">İL SEÇİNİZ</option>
+                  {(MR.ILLER || []).map(il => <option key={il} value={il}>{il}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={S.label}>VERGİ DAİRESİ</label>
+                <input style={S.input} value={ayarlar.vergi_dairesi || ''}
+                  onChange={e => up('vergi_dairesi', e.target.value)} placeholder="VERGİ DAİRESİ"/>
+              </div>
+              <div>
+                <label style={S.label}>VERGİ NO</label>
+                <input style={S.input} value={ayarlar.vergi_no || ''}
+                  onChange={e => up('vergi_no', e.target.value)} placeholder="VERGİ NUMARASI"/>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── BÖLÜM 2: LOGO YÖNETİMİ ─── */}
+        <div style={S.card}>
+          <div style={{...S.cardHead, padding: '12px 16px'}}>
+            <LIcon name="Image" size={14} color={C.accent}/>
+            <span style={{fontSize: 12, fontWeight: 700}}>LOGO YÖNETİMİ</span>
+          </div>
+          <div style={{padding: 16}}>
+            {/* LOGO ÖNİZLEME */}
+            <div style={{
+              width: '100%', minHeight: 120, borderRadius: 8,
+              border: `2px dashed ${C.borderLight}`, background: C.bgHover,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginBottom: 16, overflow: 'hidden'
+            }}>
+              {logoPreview ? (
+                <img src={logoPreview} alt="LOGO" style={{maxWidth: '100%', maxHeight: 120, objectFit: 'contain'}}/>
+              ) : (
+                <div style={{textAlign: 'center', padding: 20}}>
+                  <LIcon name="Image" size={32} color={C.textMuted}/>
+                  <div style={{fontSize: 11, color: C.textMuted, marginTop: 8}}>LOGO YÜKLENMEMİŞ</div>
+                </div>
+              )}
+            </div>
+
+            <div style={{fontSize: 10, color: C.textMuted, marginBottom: 12}}>
+              KABUL EDİLEN FORMATLAR: PNG, JPG, SVG &middot; MAKSİMUM 2MB
+            </div>
+
+            <input type="file" ref={fileInputRef} accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+              style={{display: 'none'}} onChange={handleLogoSelect}/>
+
+            <div style={{display: 'flex', gap: 8}}>
+              <button style={{...S.btn, ...S.btnP, fontSize: 11, padding: '8px 16px', flex: 1}}
+                onClick={() => fileInputRef.current?.click()}>
+                <LIcon name="Upload" size={14} color="#fff"/> LOGO SEÇ
+              </button>
+              {logoFile && (
+                <button style={{...S.btn, ...S.btnS, fontSize: 11, padding: '8px 16px', flex: 1,
+                  opacity: logoUploading ? 0.7 : 1}}
+                  onClick={logoYukle} disabled={logoUploading}>
+                  <LIcon name="Save" size={14} color="#fff"/>
+                  {logoUploading ? 'YÜKLENİYOR...' : 'LOGOYU YÜKLE'}
+                </button>
+              )}
+              {logoPreview && (
+                <button style={{...S.btn, ...S.btnG, fontSize: 11, padding: '8px 16px',
+                  color: C.danger, borderColor: C.danger + '33'}}
+                  onClick={logoKaldir}>
+                  <LIcon name="Trash2" size={14} color={C.danger}/> KALDIR
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ─── BÖLÜM 3: GÖRÜNÜM AYARLARI ─── */}
+        <div style={S.card}>
+          <div style={{...S.cardHead, padding: '12px 16px'}}>
+            <LIcon name="Palette" size={14} color={C.accent}/>
+            <span style={{fontSize: 12, fontWeight: 700}}>GÖRÜNÜM AYARLARI</span>
+          </div>
+          <div style={{padding: 16}}>
+            {/* CANLI ÖNİZLEME */}
+            <div style={{
+              background: '#0f172a', borderRadius: 8, padding: '16px 20px', marginBottom: 16,
+              display: 'flex', alignItems: 'center', gap: 12
+            }}>
+              {logoPreview && (
+                <img src={logoPreview} alt="LOGO" style={{width: 36, height: 36, objectFit: 'contain', borderRadius: 4}}/>
+              )}
+              <div>
+                <div style={{
+                  fontSize: baslikFontBoyut, fontWeight: 800, color: baslikRenk,
+                  lineHeight: 1.2, letterSpacing: '-0.5px'
+                }}>
+                  {ayarlar.firma_adi || 'MR HASAR'}
+                </div>
+                <div style={{
+                  fontSize: sloganFontBoyut, fontWeight: 500, color: sloganRenk,
+                  letterSpacing: '1px', marginTop: 2
+                }}>
+                  {ayarlar.slogan || 'DANIŞMANLIK'}
+                </div>
+              </div>
+            </div>
+
+            {/* BAŞLIK FONT BOYUTU */}
+            <div style={{marginBottom: 16}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6}}>
+                <label style={{...S.label, margin: 0}}>BAŞLIK FONT BOYUTU</label>
+                <span style={{fontSize: 11, fontWeight: 700, color: C.accent}}>{baslikFontBoyut}PX</span>
+              </div>
+              <input type="range" min="14" max="30" value={baslikFontBoyut}
+                onChange={e => up('baslik_font_boyut', e.target.value)}
+                style={{width: '100%', accentColor: C.accent}}/>
+            </div>
+
+            {/* BAŞLIK RENGİ */}
+            <div style={{marginBottom: 16}}>
+              <label style={S.label}>BAŞLIK RENGİ</label>
+              <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+                <input type="color" value={baslikRenk}
+                  onChange={e => up('baslik_renk', e.target.value)}
+                  style={{width: 40, height: 32, border: 'none', borderRadius: 4, cursor: 'pointer', padding: 0}}/>
+                <input style={{...S.input, flex: 1, fontFamily: 'monospace', fontSize: 11}} value={baslikRenk}
+                  onChange={e => up('baslik_renk', e.target.value)} placeholder="#FFFFFF"/>
+              </div>
+            </div>
+
+            {/* SLOGAN FONT BOYUTU */}
+            <div style={{marginBottom: 16}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6}}>
+                <label style={{...S.label, margin: 0}}>SLOGAN FONT BOYUTU</label>
+                <span style={{fontSize: 11, fontWeight: 700, color: C.accent}}>{sloganFontBoyut}PX</span>
+              </div>
+              <input type="range" min="8" max="16" value={sloganFontBoyut}
+                onChange={e => up('slogan_font_boyut', e.target.value)}
+                style={{width: '100%', accentColor: C.accent}}/>
+            </div>
+
+            {/* SLOGAN RENGİ */}
+            <div>
+              <label style={S.label}>SLOGAN RENGİ</label>
+              <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+                <input type="color" value={sloganRenk}
+                  onChange={e => up('slogan_renk', e.target.value)}
+                  style={{width: 40, height: 32, border: 'none', borderRadius: 4, cursor: 'pointer', padding: 0}}/>
+                <input style={{...S.input, flex: 1, fontFamily: 'monospace', fontSize: 11}} value={sloganRenk}
+                  onChange={e => up('slogan_renk', e.target.value)} placeholder="#94A3B8"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* KAYDET BUTONU */}
+      <div style={{
+        ...S.card, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+      }}>
+        <div style={{fontSize: 12, color: C.textMuted}}>
+          <LIcon name="Info" size={14} color={C.textMuted} style={{verticalAlign: 'middle'}}/>{' '}
+          TÜM AYARLARI KAYDETMEK İÇİN BUTONA BASIN
+        </div>
+        <button style={{
+          ...S.btn, ...S.btnP, fontSize: 13, padding: '12px 32px', fontWeight: 700,
+          opacity: saving ? 0.7 : 1
+        }} onClick={kaydet} disabled={saving}>
+          <LIcon name="Save" size={16} color="#fff"/>
+          {saving ? 'KAYDEDİLİYOR...' : 'AYARLARI KAYDET'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════════════════════════
+   TAB 4 - LOG KAYITLARI
    ════════════════════════════════════════════════════════════════ */
 const LogTab = () => {
   const {C, S, LIcon, Badge, Loading, EmptyState, api} = MR;
@@ -842,13 +1299,15 @@ MR.SistemPage = ({setPage, user, subPage}) => {
 
   /* ─── TAB TANIMLAMALARI ─── */
   const tabs = [
-    {key: 'kullanici',    label: 'KULLANICI YÖNETİMİ', icon: 'Users',        desc: 'KULLANICI OLUŞTUR, DÜZENLE, YÖNETİMİ'},
-    {key: 'log',          label: 'LOG KAYITLARI',       icon: 'Activity',     desc: 'SİSTEM OLAY GEÇMİŞİ'}
+    {key: 'kullanici', label: 'KULLANICI YÖNETİMİ', icon: 'Users',     desc: 'KULLANICI OLUŞTUR, DÜZENLE, YÖNETİMİ'},
+    {key: 'yetki',     label: 'YETKİ YÖNETİMİ',     icon: 'KeyRound',  desc: 'MODÜL BAZLI İZİN YÖNETİMİ'},
+    {key: 'ayarlar',   label: 'FİRMA AYARLARI',      icon: 'Settings',  desc: 'LOGO, ÜNVAN, SLOGAN, BİLGİLER'},
+    {key: 'log',       label: 'LOG KAYITLARI',        icon: 'Activity',  desc: 'SİSTEM OLAY GEÇMİŞİ'}
   ];
 
-  /* ADMİN DEĞİLSE KULLANICI TAB'INI GİZLE */
+  /* ADMİN DEĞİLSE SADECE LOG TAB'INI GÖSTER */
   const isAdmin = user?.rol === 'admin';
-  const gorunenTabs = isAdmin ? tabs : tabs.filter(t => t.key !== 'kullanici');
+  const gorunenTabs = isAdmin ? tabs : tabs.filter(t => t.key === 'log');
 
   /* AKTİF TAB */
   const [aktifTab, setAktifTab] = useState(() => {
@@ -877,7 +1336,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
             </div>
             <div>
               <div style={{fontSize:16, fontWeight:800}}>SİSTEM YÖNETİMİ</div>
-              <div style={{fontSize:11, color:C.textMuted}}>KULLANICILAR VE SİSTEM LOGLARI</div>
+              <div style={{fontSize:11, color:C.textMuted}}>KULLANICILAR, YETKİLER, AYARLAR VE SİSTEM LOGLARI</div>
             </div>
           </div>
           {user && (
@@ -890,7 +1349,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
         </div>
 
         {/* TAB MENÜSÜ */}
-        <div style={{display:'flex', borderBottom:`1px solid ${C.border}`, padding:'0 16px'}}>
+        <div style={{display:'flex', borderBottom:`1px solid ${C.border}`, padding:'0 16px', overflowX:'auto'}}>
           {gorunenTabs.map(tab => {
             const aktif = aktifTab === tab.key;
             return (
@@ -899,7 +1358,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
                   display:'flex', alignItems:'center', gap:8, padding:'14px 20px',
                   cursor:'pointer', position:'relative', transition:'all .2s',
                   color: aktif ? C.accent : C.textSec,
-                  fontWeight: aktif ? 700 : 500, fontSize:12,
+                  fontWeight: aktif ? 700 : 500, fontSize:12, whiteSpace:'nowrap',
                   borderBottom: aktif ? `2px solid ${C.accent}` : '2px solid transparent'
                 }}
                 onMouseEnter={e => { if (!aktif) e.currentTarget.style.color = C.text; }}
@@ -915,6 +1374,8 @@ MR.SistemPage = ({setPage, user, subPage}) => {
       {/* TAB İÇERİĞİ */}
       <div key={aktifTab} className="fade-in">
         {aktifTab === 'kullanici' && isAdmin && <KullaniciTab/>}
+        {aktifTab === 'yetki' && isAdmin && <YetkiTab/>}
+        {aktifTab === 'ayarlar' && isAdmin && <AyarlarTab/>}
         {aktifTab === 'log' && <LogTab/>}
       </div>
     </div>
