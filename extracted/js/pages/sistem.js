@@ -842,7 +842,6 @@ MR.SistemPage = ({setPage, user, subPage}) => {
 
   /* ─── TAB TANIMLAMALARI ─── */
   const tabs = [
-    {key: 'tanimlamalar', label: 'TANIMLAMALAR',       icon: 'Database',     desc: 'KATEGORİ VE DEĞER YÖNETİMİ'},
     {key: 'kullanici',    label: 'KULLANICI YÖNETİMİ', icon: 'Users',        desc: 'KULLANICI OLUŞTUR, DÜZENLE, YÖNETİMİ'},
     {key: 'log',          label: 'LOG KAYITLARI',       icon: 'Activity',     desc: 'SİSTEM OLAY GEÇMİŞİ'}
   ];
@@ -854,7 +853,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
   /* AKTİF TAB */
   const [aktifTab, setAktifTab] = useState(() => {
     if (subPage && gorunenTabs.some(t => t.key === subPage)) return subPage;
-    return gorunenTabs[0]?.key || 'tanimlamalar';
+    return gorunenTabs[0]?.key || 'kullanici';
   });
 
   /* subPage DEĞİŞTİĞİNDE TAB GÜNCELLE */
@@ -878,7 +877,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
             </div>
             <div>
               <div style={{fontSize:16, fontWeight:800}}>SİSTEM YÖNETİMİ</div>
-              <div style={{fontSize:11, color:C.textMuted}}>TANIMLAMALAR, KULLANICILAR VE SİSTEM LOGLARI</div>
+              <div style={{fontSize:11, color:C.textMuted}}>KULLANICILAR VE SİSTEM LOGLARI</div>
             </div>
           </div>
           {user && (
@@ -915,7 +914,6 @@ MR.SistemPage = ({setPage, user, subPage}) => {
 
       {/* TAB İÇERİĞİ */}
       <div key={aktifTab} className="fade-in">
-        {aktifTab === 'tanimlamalar' && <TanimlamalarTab/>}
         {aktifTab === 'kullanici' && isAdmin && <KullaniciTab/>}
         {aktifTab === 'log' && <LogTab/>}
       </div>

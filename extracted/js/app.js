@@ -20,17 +20,38 @@ const MENU = [
     {id:'hesap-adk', label:'ARAÇ DEĞER KAYBI', icon:'Car'},
     {id:'hesap-bh', label:'BEDENİ HASAR', icon:'Heart'}
   ]},
+  {id:'servis', label:'SERVİSLER', icon:'Wrench', sub:[
+    {id:'servis-liste', label:'SERVİS LİSTESİ', icon:'List'},
+    {id:'servis-yeni', label:'YENİ SERVİS', icon:'Plus'},
+    {id:'servis-rapor', label:'SERVİS RAPORLARI', icon:'BarChart3'}
+  ]},
+  {id:'ortaklar', label:'ORTAKLAR', icon:'Handshake', sub:[
+    {id:'ortaklar-ortaklar', label:'İŞ ORTAKLARI', icon:'Briefcase'},
+    {id:'ortaklar-paydaslar', label:'İŞ PAYDAŞLARI', icon:'Network'}
+  ]},
   {id:'muhasebe', label:'MUHASEBE', icon:'Landmark', sub:[
-    {id:'muhasebe-kasa', label:'KASA YÖNETİMİ', icon:'Wallet'},
-    {id:'muhasebe-hareketler', label:'HAREKETLER', icon:'ArrowLeftRight'},
-    {id:'muhasebe-gelir', label:'GELİR EKLE', icon:'TrendingUp'},
-    {id:'muhasebe-transfer', label:'TRANSFER', icon:'Repeat'},
-    {id:'muhasebe-rapor', label:'RAPOR', icon:'BarChart3'}
+    {id:'muhasebe-gelir', label:'GELİR YÖNETİMİ', icon:'TrendingUp'},
+    {id:'muhasebe-gider', label:'GİDER YÖNETİMİ', icon:'TrendingDown'},
+    {id:'muhasebe-komisyon', label:'KOMİSYON / PRİM', icon:'Percent'},
+    {id:'muhasebe-kasa', label:'KASA / BANKA', icon:'Wallet'},
+    {id:'muhasebe-maliyet', label:'MALİYET ANALİZİ', icon:'PieChart'},
+    {id:'muhasebe-rapor', label:'FİNANSAL RAPORLAR', icon:'BarChart3'}
+  ]},
+  {id:'tanimlamalar', label:'TANIMLAMALAR', icon:'Database', sub:[
+    {id:'tanimlamalar-dosya', label:'DOSYA TANIMLAMALARI', icon:'Folder'},
+    {id:'tanimlamalar-evrak', label:'EVRAK TANIMLAMALARI', icon:'FileText'},
+    {id:'tanimlamalar-finansal', label:'FİNANSAL TANIMLAMALAR', icon:'Wallet'},
+    {id:'tanimlamalar-sablon', label:'MATBU EVRAK / SÖZLEŞME', icon:'FileSignature'},
+    {id:'tanimlamalar-genel', label:'GENEL TANIMLAMALAR', icon:'Settings'}
   ]},
   {id:'ajanda', label:'AJANDA', icon:'CalendarDays'},
-  {id:'bildirim', label:'BİLDİRİMLER', icon:'Bell'},
+  {id:'mesajlar', label:'MESAJLAR', icon:'Mail', sub:[
+    {id:'mesajlar-gelen', label:'GELEN KUTUSU', icon:'Inbox'},
+    {id:'mesajlar-giden', label:'GİDEN KUTUSU', icon:'Send'},
+    {id:'mesajlar-yeni', label:'YENİ MESAJ', icon:'PenSquare'},
+    {id:'mesajlar-sistem', label:'SİSTEM BİLDİRİMLERİ', icon:'Bell'}
+  ]},
   {id:'sistem', label:'SİSTEM', icon:'Shield', sub:[
-    {id:'sistem-tanimlamalar', label:'TANIMLAMALAR', icon:'Database'},
     {id:'sistem-kullanici', label:'KULLANICI YÖNETİMİ', icon:'UserCog'},
     {id:'sistem-log', label:'LOG KAYITLARI', icon:'FileText'}
   ]}
@@ -39,11 +60,11 @@ const MENU = [
 /* ═══ ROL BAZLI ERİŞİM ═══ */
 const ROL_ERISIM = {
   admin: null,
-  avukat: ['home','dosya','crm','hesap','ajanda','bildirim'],
-  uzman: ['home','dosya','hesap','ajanda','bildirim'],
-  personel: ['home','dosya','ajanda','bildirim'],
-  muhasebe: ['home','dosya','muhasebe','ajanda','bildirim'],
-  portal: ['home','dosya','bildirim']
+  avukat: ['home','dosya','crm','hesap','servis','ortaklar','ajanda','mesajlar'],
+  uzman: ['home','dosya','hesap','servis','ajanda','mesajlar'],
+  personel: ['home','dosya','ajanda','mesajlar'],
+  muhasebe: ['home','dosya','muhasebe','ortaklar','tanimlamalar','ajanda','mesajlar'],
+  portal: ['home','dosya','mesajlar']
 };
 
 function menuErisim(user) {
@@ -62,14 +83,20 @@ const TopNav = ({user, page, setPage, onLogout}) => {
   const filteredMenu = menuErisim(user);
 
   useEffect(() => {
-    (async () => {
-      const r = await api.bildirimList({okunmamis: 1, limit: 1});
-      if (r?.success) setBildirimSayisi(r.data?.total || 0);
-    })();
-    const iv = setInterval(async () => {
-      const r = await api.bildirimList({okunmamis: 1, limit: 1});
-      if (r?.success) setBildirimSayisi(r.data?.total || 0);
-    }, 60000);
+    const sayacGuncelle = async () => {
+      try {
+        const [r1, r2] = await Promise.all([
+          api.bildirimList({okunmamis: 1, limit: 1}),
+          api.mesajList({okunmamis: 1, limit: 1}).catch(() => null)
+        ]);
+        let toplam = 0;
+        if (r1?.success) toplam += (r1.data?.total || 0);
+        if (r2?.success) toplam += (r2.data?.total || 0);
+        setBildirimSayisi(toplam);
+      } catch(e) {}
+    };
+    sayacGuncelle();
+    const iv = setInterval(sayacGuncelle, 60000);
     return () => clearInterval(iv);
   }, []);
 
@@ -128,7 +155,7 @@ const TopNav = ({user, page, setPage, onLogout}) => {
             >
               <LIcon name={m.icon} size={14} color={isActive(m) ? C.accent : C.textMuted}/>
               <span>{m.label}</span>
-              {m.id === 'bildirim' && bildirimSayisi > 0 && (
+              {m.id === 'mesajlar' && bildirimSayisi > 0 && (
                 <span style={{
                   position: 'absolute', top: 2, right: 2,
                   width: 16, height: 16, borderRadius: '50%',
@@ -367,28 +394,58 @@ const PageRouter = ({page, setPage, user}) => {
   const crmIdMatch = page.match(/^crm-detay-(\d+)$/);
 
   if (page === 'home') return <MR.HomePage setPage={setPage} user={user}/>;
+
+  /* DOSYA */
   if (page === 'dosya-liste') return <MR.DosyaListePage setPage={setPage} user={user}/>;
   if (page === 'dosya-yeni') return <MR.DosyaYeniPage setPage={setPage} user={user}/>;
   if (dosyaIdMatch) return <MR.DosyaDetayPage setPage={setPage} user={user} dosyaId={parseInt(dosyaIdMatch[1])}/>;
 
+  /* CRM */
   if (page === 'crm-liste') return <MR.CrmPage setPage={setPage} user={user} view="liste"/>;
   if (page === 'crm-yeni') return <MR.CrmPage setPage={setPage} user={user} view="yeni"/>;
   if (crmIdMatch) return <MR.CrmPage setPage={setPage} user={user} view="detay" crmId={parseInt(crmIdMatch[1])}/>;
 
+  /* HESAPLAMALAR */
   if (page === 'hesap-adk') return <MR.HesapADKPage setPage={setPage} user={user}/>;
   if (page === 'hesap-bh') return <MR.HesapBHPage setPage={setPage} user={user}/>;
 
-  if (page.startsWith('muhasebe')) {
-    const sub = page.replace('muhasebe-', '') || 'kasa';
-    return <MR.MuhasebePage setPage={setPage} user={user} subPage={sub === 'muhasebe' ? 'kasa' : sub}/>;
+  /* SERVİSLER */
+  if (page.startsWith('servis')) {
+    const sub = page.replace('servis-', '') || 'liste';
+    return <MR.ServisPage setPage={setPage} user={user} subPage={sub === 'servis' ? 'liste' : sub}/>;
   }
 
-  if (page === 'ajanda') return <MR.AjandaPage setPage={setPage} user={user}/>;
-  if (page === 'bildirim') return <MR.BildirimPage setPage={setPage} user={user}/>;
+  /* ORTAKLAR */
+  if (page.startsWith('ortaklar')) {
+    const sub = page.replace('ortaklar-', '') || 'ortaklar';
+    return <MR.OrtaklarPage setPage={setPage} user={user} subPage={sub === 'ortaklar' ? 'ortaklar' : sub}/>;
+  }
 
+  /* MUHASEBE */
+  if (page.startsWith('muhasebe')) {
+    const sub = page.replace('muhasebe-', '') || 'gelir';
+    return <MR.MuhasebePage setPage={setPage} user={user} subPage={sub === 'muhasebe' ? 'gelir' : sub}/>;
+  }
+
+  /* TANIMLAMALAR */
+  if (page.startsWith('tanimlamalar')) {
+    const sub = page.replace('tanimlamalar-', '') || 'dosya';
+    return <MR.TanimlamalarPage setPage={setPage} user={user} subPage={sub === 'tanimlamalar' ? 'dosya' : sub}/>;
+  }
+
+  /* AJANDA */
+  if (page === 'ajanda') return <MR.AjandaPage setPage={setPage} user={user}/>;
+
+  /* MESAJLAR */
+  if (page.startsWith('mesajlar')) {
+    const sub = page.replace('mesajlar-', '') || 'gelen';
+    return <MR.MesajlarPage setPage={setPage} user={user} subPage={sub === 'mesajlar' ? 'gelen' : sub}/>;
+  }
+
+  /* SİSTEM */
   if (page.startsWith('sistem')) {
-    const sub = page.replace('sistem-', '') || 'tanimlamalar';
-    return <MR.SistemPage setPage={setPage} user={user} subPage={sub === 'sistem' ? 'tanimlamalar' : sub}/>;
+    const sub = page.replace('sistem-', '') || 'kullanici';
+    return <MR.SistemPage setPage={setPage} user={user} subPage={sub === 'sistem' ? 'kullanici' : sub}/>;
   }
 
   if (page === 'profil') return <ProfilPage user={user}/>;
