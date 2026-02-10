@@ -75,6 +75,12 @@ function menuErisim(user) {
   return MENU.filter(m => izin.some(i => m.id === i || m.id.startsWith(i)));
 }
 
+/* ═══ URL HASH ROUTING ═══ */
+function getPageFromHash() {
+  const h = window.location.hash.replace(/^#\/?/, '');
+  return h || 'home';
+}
+
 /* ═══ ÜST NAVİGASYON ═══ */
 const TopNav = ({user, page, setPage, onLogout}) => {
   const {C, LIcon, api} = MR;
@@ -140,10 +146,10 @@ const TopNav = ({user, page, setPage, onLogout}) => {
       {/* MENÜ - ESNEK ALAN, TEK SATIR */}
       <div style={{
         display: 'flex', flex: 1, alignItems: 'center',
-        justifyContent: 'center', gap: 1, overflow: 'hidden'
+        justifyContent: 'center', gap: 1, overflow: 'visible'
       }}>
         {filteredMenu.map(m => (
-          <div key={m.id} style={{position: 'relative', flexShrink: 0}}>
+          <div key={m.id} style={{position: 'relative'}}>
             <div
               onClick={() => {
                 if (m.sub) { setMenuOpen(menuOpen === m.id ? null : m.id); }
@@ -484,9 +490,27 @@ const PageRouter = ({page, setPage, user}) => {
 const App = () => {
   const {C, api, LoginScreen} = MR;
   const [user, setUser] = useState(null);
-  const [page, setPage] = useState('home');
+  const [page, setPageState] = useState(getPageFromHash());
   const [loading, setLoading] = useState(true);
   const [, forceUpdate] = useState(0);
+
+  /* URL HASH ROUTING - SAYFA DEĞİŞİNCE URL GÜNCELLENİR */
+  const setPage = useCallback((p) => {
+    setPageState(p);
+    const hash = p === 'home' ? '/' : '/' + p;
+    window.history.pushState({page: p}, '', '#' + hash);
+    window.scrollTo(0, 0);
+  }, []);
+
+  /* TARAYıCı GERİ/İLERİ TUŞLARI */
+  useEffect(() => {
+    const onPopState = () => {
+      setPageState(getPageFromHash());
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   useEffect(() => {
     (async () => {
