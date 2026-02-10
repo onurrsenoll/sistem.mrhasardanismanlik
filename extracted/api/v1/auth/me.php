@@ -39,10 +39,24 @@ try {
     $row2 = $stmt->fetch();
     $gorevSayisi = $row2 ? $row2['c'] : 0;
 
+    // Kullanıcının yetkileri (menü filtreleme için)
+    $yetkiler = array();
+    try {
+        $stmt = $db->prepare('SELECT modul, islem, izin FROM yetkiler WHERE kullanici_id = ?');
+        $stmt->execute(array($user['id']));
+        $yetkiItems = $stmt->fetchAll();
+        foreach ($yetkiItems as $y) {
+            $yetkiler[$y['modul'] . '_' . $y['islem']] = (int)$y['izin'];
+        }
+    } catch (Exception $e2) {}
+
+    $userData = $user;
+    $userData['yetkiler'] = $yetkiler;
+
     echo json_encode(array(
         'success' => true,
         'data' => array(
-            'user' => $user,
+            'user' => $userData,
             'stats' => array(
                 'dosya_total' => (int)$dosyaTotal,
                 'dosya_open' => (int)$dosyaOpen,

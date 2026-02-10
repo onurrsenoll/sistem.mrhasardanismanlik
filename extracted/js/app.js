@@ -69,7 +69,40 @@ const ROL_ERISIM = {
   portal: ['home','dosya','mesajlar']
 };
 
+/* MENÜ ID → VERİTABANI MODÜL ADI EŞLEMESİ */
+const MENU_MODUL = {
+  dosya: 'dosya',
+  crm: 'crm',
+  hesap: 'hesaplamalar',
+  servis: 'servis',
+  ortaklar: 'ortaklar',
+  muhasebe: 'muhasebe',
+  tanimlamalar: 'tanimlamalar',
+  ajanda: 'ajanda',
+  mesajlar: 'mesajlar',
+  sistem: 'sistem'
+};
+
 function menuErisim(user) {
+  /* ADMIN HER ZAMAN TÜM MENÜYÜ GÖRÜR */
+  if (user?.rol === 'admin') return MENU;
+
+  const yetkiler = user?.yetkiler;
+
+  /* YETKİLER VARSA VERİTABANINDAKİ İZİNLERE GÖRE FİLTRELE */
+  if (yetkiler && Object.keys(yetkiler).length > 0) {
+    return MENU.filter(m => {
+      /* ANA SAYFA HER ZAMAN GÖRÜNSİN */
+      if (m.id === 'home') return true;
+      /* MODÜL ADINI BUL */
+      const modul = MENU_MODUL[m.id];
+      if (!modul) return false;
+      /* modul_goruntule = 1 İSE GÖSTER */
+      return yetkiler[modul + '_goruntule'] === 1;
+    });
+  }
+
+  /* YETKİLER YOKSA STATİK ROL ERİŞİMİNE GERİ DÖN */
   const izin = ROL_ERISIM[user?.rol];
   if (!izin) return MENU;
   return MENU.filter(m => izin.some(i => m.id === i || m.id.startsWith(i)));
@@ -547,7 +580,16 @@ const App = () => {
     );
   }
 
-  if (!user) return <LoginScreen onLogin={setUser}/>;
+  /* LOGIN SONRASI ME.PHP'DEN YETKİLERİ ÇEK */
+  const handleLogin = useCallback(async (u) => {
+    setUser(u);
+    try {
+      const r = await api.me();
+      if (r?.success) { setUser(r.data?.user || r.data); }
+    } catch(e) {}
+  }, []);
+
+  if (!user) return <LoginScreen onLogin={handleLogin}/>;
 
   return (
     <div style={{minHeight: '100vh', background: C.bg, color: C.text}}>
