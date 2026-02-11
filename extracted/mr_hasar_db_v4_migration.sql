@@ -354,7 +354,47 @@ INSERT IGNORE INTO tanimlamalar (kategori, deger, sira) VALUES
 -- ============================================================
 -- ADIM 6: MAGDURLAR TABLOSUNA EMAİL SÜTUNU EKLE
 -- ============================================================
-ALTER TABLE magdurlar ADD COLUMN email VARCHAR(100) DEFAULT NULL AFTER telefon2;
+ALTER TABLE magdurlar ADD COLUMN IF NOT EXISTS email VARCHAR(100) DEFAULT NULL AFTER telefon2;
+
+-- ============================================================
+-- ADIM 7: DOSYALAR TABLOSUNA PLAKA SÜTUNU EKLE
+-- ============================================================
+ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS plaka VARCHAR(15) DEFAULT NULL AFTER kaza_ilce;
+
+-- ============================================================
+-- ADIM 8: V_DOSYA_OZET VIEW GÜNCELLE (plaka COALESCE)
+-- ============================================================
+CREATE OR REPLACE VIEW v_dosya_ozet AS
+SELECT
+    d.id,
+    d.dosya_no,
+    d.dosya_turu,
+    d.talep_turu,
+    d.asama,
+    d.hasar_no,
+    d.sigorta_sirket,
+    d.haklilik,
+    d.kaza_tarihi,
+    d.acilis_tarihi,
+    d.kapanma_tarihi,
+    d.dosya_kaynagi,
+    m.tc_kimlik,
+    m.ad_soyad AS magdur_adi,
+    m.telefon AS magdur_tel,
+    COALESCE(d.plaka, a.plaka) AS plaka,
+    a.marka,
+    a.model,
+    av.ad_soyad AS avukat_adi,
+    s.ad_soyad AS sorumlu_adi,
+    (SELECT COUNT(*) FROM masraflar ms WHERE ms.dosya_id = d.id) AS masraf_sayisi,
+    (SELECT COALESCE(SUM(ms.tutar), 0) FROM masraflar ms WHERE ms.dosya_id = d.id) AS toplam_masraf,
+    (SELECT COUNT(*) FROM evraklar ev WHERE ev.dosya_id = d.id) AS evrak_sayisi,
+    d.created_at
+FROM dosyalar d
+LEFT JOIN magdurlar m ON m.dosya_id = d.id
+LEFT JOIN araclar a ON a.dosya_id = d.id AND a.taraf = 'magdur'
+LEFT JOIN users av ON av.id = d.avukat_id
+LEFT JOIN users s ON s.id = d.sorumlu_id;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -364,4 +404,6 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- 4 tablo kontrol edildi (yoksa oluşturuldu)
 -- Yetkiler ve ayarlar eklendi
 -- magdurlar tablosuna email sütunu eklendi
+-- dosyalar tablosuna plaka sütunu eklendi
+-- v_dosya_ozet view güncellendi (COALESCE plaka)
 -- ============================================================

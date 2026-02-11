@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS dosyalar (
     kaza_tarihi DATE DEFAULT NULL,
     kaza_il VARCHAR(50) DEFAULT NULL,
     kaza_ilce VARCHAR(50) DEFAULT NULL,
+    plaka VARCHAR(15) DEFAULT NULL,
     -- BH özel alanlar
     pozisyon VARCHAR(20) DEFAULT NULL,
     kusur_durumu VARCHAR(20) DEFAULT NULL,
@@ -697,7 +698,7 @@ SELECT
     m.tc_kimlik,
     m.ad_soyad AS magdur_adi,
     m.telefon AS magdur_tel,
-    a.plaka,
+    COALESCE(d.plaka, a.plaka) AS plaka,
     a.marka,
     a.model,
     av.ad_soyad AS avukat_adi,

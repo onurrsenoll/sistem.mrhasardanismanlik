@@ -3,6 +3,16 @@ const {useState, useEffect} = React;
 
 const ASAMALAR = ['DOSYA AÇIK','EVRAK BEKLENİYOR','BAŞVURU HAZIRLANIYOR','SİGORTA BAŞVURUSU','TAHKİM BAŞVURUSU','DAVA AÇILDI','BİLİRKİŞİ AŞAMASI','KARAR BEKLENİYOR','ÖDEME BEKLENİYOR','ÖDEME ALINDI','DOSYA KAPANDI'];
 
+const asamaRenk = (a) => {
+  const m = {
+    'DOSYA AÇIK':'#3b82f6','EVRAK BEKLENİYOR':'#f59e0b','BAŞVURU HAZIRLANIYOR':'#8b5cf6',
+    'SİGORTA BAŞVURUSU':'#06b6d4','TAHKİM BAŞVURUSU':'#6366f1','DAVA AÇILDI':'#ef4444',
+    'BİLİRKİŞİ AŞAMASI':'#d97706','KARAR BEKLENİYOR':'#ec4899',
+    'ÖDEME BEKLENİYOR':'#84cc16','ÖDEME ALINDI':'#22c55e','DOSYA KAPANDI':'#6b7280'
+  };
+  return m[a] || '#6b7280';
+};
+
 MR.DosyaListePage = ({setPage, user}) => {
   const onSelect = (id) => setPage('dosya-detay-' + id);
   return <MR._DosyaListesiInner setPage={setPage} onSelect={onSelect}/>;
@@ -41,74 +51,128 @@ MR._DosyaListesiInner = ({setPage, onSelect}) => {
   const bhDosya = data.filter(d => d.dosya_turu === 'BH').length;
   const acikDosya = data.filter(d => d.asama !== 'DOSYA KAPANDI').length;
 
+  const thS = {padding:'8px 6px',textAlign:'left',fontWeight:600,fontSize:9,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color:C.textMuted,position:'sticky',top:0,background:C.bgCard,zIndex:1};
+  const tdS = {padding:'6px 6px',fontSize:10,whiteSpace:'nowrap',borderBottom:`1px solid ${C.border}22`};
+
   return (
     <div className="fade-in">
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:16}}>
+      {/* ÖZET KARTLAR */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:12}}>
         <StatCard icon="Folder" label="TOPLAM DOSYA" value={toplamDosya} color={C.accent}/>
         <StatCard icon="Shield" label="ADK DOSYA" value={adkDosya} color={C.cyan}/>
         <StatCard icon="Heart" label="BH DOSYA" value={bhDosya} color={C.purple}/>
         <StatCard icon="FolderOpen" label="AÇIK DOSYA" value={acikDosya} color={C.success}/>
       </div>
 
+      {/* DOSYA LİSTESİ */}
       <div style={S.card}>
-        <div style={{...S.cardHead, justifyContent:'space-between'}}>
-          <div style={{display:'flex',alignItems:'center',gap:10}}>
-            <LIcon name="List" size={16} color={C.accent}/>
-            <div style={{fontSize:14,fontWeight:700}}>DOSYA LİSTESİ</div>
-            <Badge text={`${data.length} DOSYA`} color={C.accent}/>
+        {/* FİLTRELER */}
+        <div style={{padding:'10px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:`1px solid ${C.border}`,flexWrap:'wrap',gap:8}}>
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            <LIcon name="List" size={14} color={C.accent}/>
+            <span style={{fontSize:13,fontWeight:700}}>DOSYA LİSTESİ</span>
+            <span style={{padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:600,background:`${C.accent}18`,color:C.accent}}>{data.length} DOSYA</span>
           </div>
-          <div style={{display:'flex',gap:8}}>
+          <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
             <input placeholder="ARA (TC, İSİM, DOSYA NO, PLAKA)" value={search} onChange={e => setSearch(e.target.value)}
-              style={{...S.input, width:260, fontSize:11}}/>
-            <select value={turF} onChange={e => setTurF(e.target.value)} style={{...S.select, width:120, fontSize:11}}>
+              style={{...S.input, width:200, fontSize:10, padding:'6px 10px'}}/>
+            <select value={turF} onChange={e => setTurF(e.target.value)} style={{...S.select, width:90, fontSize:10, padding:'6px 8px'}}>
               <option value="">TÜR: TÜMÜ</option>
               <option value="ADK">ADK</option>
               <option value="BH">BH</option>
             </select>
-            <select value={asamaF} onChange={e => setAsamaF(e.target.value)} style={{...S.select, width:180, fontSize:11}}>
+            <select value={asamaF} onChange={e => setAsamaF(e.target.value)} style={{...S.select, width:155, fontSize:10, padding:'6px 8px'}}>
               <option value="">AŞAMA: TÜMÜ</option>
               {ASAMALAR.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
-            <button style={{...S.btn,...S.btnP,fontSize:11}} onClick={() => setPage('dosya-yeni')}>
-              <LIcon name="Plus" size={14} color="#fff"/> YENİ
+            <button style={{...S.btn,...S.btnP,fontSize:10,padding:'6px 14px'}} onClick={() => setPage('dosya-yeni')}>
+              <LIcon name="Plus" size={12} color="#fff"/> YENİ
             </button>
           </div>
         </div>
-        {loading ? <Loading/> : (
-          <div style={{overflowX:'auto'}}>
-            <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:900}}>
+
+        {/* TABLO */}
+        {loading ? <Loading/> : data.length === 0 ? (
+          <EmptyState icon="FolderOpen" title="DOSYA BULUNAMADI" desc="FİLTRELERİ KONTROL EDİN VEYA YENİ DOSYA OLUŞTURUN"/>
+        ) : (
+          <div style={{overflowX:'auto',maxHeight:'calc(100vh - 300px)'}}>
+            <table style={{width:'100%',borderCollapse:'collapse',minWidth:1350}}>
               <thead>
-                <tr style={{background:C.bgHover}}>
-                  {['DOSYA NO','MAĞDUR','TÜR','SİGORTA','AŞAMA','AÇILIŞ','İŞLEM'].map(h =>
-                    <th key={h} style={{padding:'10px 8px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
-                  )}
+                <tr>
+                  <th style={{...thS,minWidth:80}}>DOSYA NO</th>
+                  <th style={{...thS,minWidth:85}}>T.C. NO</th>
+                  <th style={{...thS,minWidth:110}}>ADI SOYADI</th>
+                  <th style={{...thS,minWidth:85}}>DOSYA KAYNAĞI</th>
+                  <th style={{...thS,minWidth:90}}>AVUKATI</th>
+                  <th style={{...thS,minWidth:55,textAlign:'center'}}>DOSYA TÜRÜ</th>
+                  <th style={{...thS,minWidth:90}}>BAŞVURU TÜRÜ</th>
+                  <th style={{...thS,minWidth:100}}>DAVALI ŞİRKET</th>
+                  <th style={{...thS,minWidth:100}}>SİGORTA HASAR NO</th>
+                  <th style={{...thS,minWidth:75}}>AÇILIŞ TARİHİ</th>
+                  <th style={{...thS,minWidth:110}}>DOSYA AŞAMA DURUMU</th>
+                  <th style={{...thS,minWidth:75}}>KAYIT TARİHİ</th>
+                  <th style={{...thS,minWidth:50,textAlign:'center'}}>İŞLEM</th>
                 </tr>
               </thead>
               <tbody>
-                {data.length === 0 ? (
-                  <tr><td colSpan={7}><EmptyState icon="FolderOpen" title="DOSYA BULUNAMADI" desc="YENİ DOSYA OLUŞTURUN"/></td></tr>
-                ) : data.map((d, i) => (
-                  <tr key={i} style={{borderBottom:`1px solid ${C.border}`,cursor:'pointer'}}
-                    onClick={() => onSelect(d.dosya_id || d.id)}
-                    onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{padding:'10px 8px',fontWeight:700,color:C.accent}}>{d.dosya_no}</td>
-                    <td style={{padding:'10px 8px'}}>{d.magdur_adi || '-'}</td>
-                    <td style={{padding:'10px 8px'}}><Badge text={d.dosya_turu} color={d.dosya_turu === 'ADK' ? C.accent : C.purple}/></td>
-                    <td style={{padding:'10px 8px',color:C.textSec}}>{d.sigorta_sirket || '-'}</td>
-                    <td style={{padding:'10px 8px'}}><Badge text={d.asama || 'AÇIK'} color={C.cyan}/></td>
-                    <td style={{padding:'10px 8px',color:C.textMuted}}>{d.acilis_tarihi || d.created_at?.split(' ')[0] || '-'}</td>
-                    <td style={{padding:'10px 8px'}}>
-                      <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                        <LIcon name="Eye" size={14} color={C.accent}/>
-                        <span onClick={(e) => { e.stopPropagation(); setDeleteConfirm({id: d.dosya_id || d.id, text: d.dosya_no}); }}
-                          style={{cursor:'pointer',display:'flex',alignItems:'center'}}>
-                          <LIcon name="Trash2" size={14} color={C.danger}/>
+                {data.map((d, i) => {
+                  const ac = asamaRenk(d.asama);
+                  return (
+                    <tr key={d.id || i}
+                      style={{cursor:'pointer',background:i%2===1?`${C.bgHover}66`:'transparent',transition:'background .15s'}}
+                      onClick={() => onSelect(d.id)}
+                      onMouseEnter={e => e.currentTarget.style.background=`${C.accent}0a`}
+                      onMouseLeave={e => e.currentTarget.style.background=i%2===1?`${C.bgHover}66`:'transparent'}>
+                      {/* DOSYA NO */}
+                      <td style={{...tdS,fontWeight:700,color:C.accent}}>{d.dosya_no}</td>
+                      {/* T.C. NO */}
+                      <td style={{...tdS,fontFamily:'monospace',fontSize:10,color:C.textSec,letterSpacing:0.3}}>{d.tc_kimlik || '-'}</td>
+                      {/* ADI SOYADI */}
+                      <td style={{...tdS,fontWeight:600,maxWidth:130,overflow:'hidden',textOverflow:'ellipsis'}}>{d.magdur_adi || '-'}</td>
+                      {/* DOSYA KAYNAĞI */}
+                      <td style={{...tdS,color:C.textSec,fontSize:9}}>{d.dosya_kaynagi || '-'}</td>
+                      {/* AVUKATI */}
+                      <td style={{...tdS,color:C.textSec,maxWidth:100,overflow:'hidden',textOverflow:'ellipsis'}}>{d.avukat_adi || '-'}</td>
+                      {/* DOSYA TÜRÜ */}
+                      <td style={{...tdS,textAlign:'center'}}>
+                        <span style={{display:'inline-block',padding:'2px 8px',borderRadius:4,fontSize:9,fontWeight:700,
+                          background:d.dosya_turu==='ADK'?`${C.accent}18`:d.dosya_turu==='BH'?`${C.purple}18`:'#6b728018',
+                          color:d.dosya_turu==='ADK'?C.accent:d.dosya_turu==='BH'?C.purple:'#6b7280'}}>
+                          {d.dosya_turu || '-'}
                         </span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      {/* BAŞVURU TÜRÜ */}
+                      <td style={{...tdS,color:C.textSec,fontSize:9,maxWidth:100,overflow:'hidden',textOverflow:'ellipsis'}}>{d.talep_turu || '-'}</td>
+                      {/* DAVALI ŞİRKET */}
+                      <td style={{...tdS,fontSize:9,maxWidth:110,overflow:'hidden',textOverflow:'ellipsis'}}>{d.sigorta_sirket || '-'}</td>
+                      {/* SİGORTA HASAR NO */}
+                      <td style={{...tdS,fontFamily:'monospace',fontSize:9,color:C.textSec}}>{d.hasar_no || '-'}</td>
+                      {/* AÇILIŞ TARİHİ */}
+                      <td style={{...tdS,color:C.textMuted,fontSize:10}}>{d.acilis_tarihi || '-'}</td>
+                      {/* DOSYA AŞAMA DURUMU */}
+                      <td style={tdS}>
+                        <span style={{display:'inline-block',padding:'2px 6px',borderRadius:4,fontSize:8,fontWeight:600,
+                          background:ac+'18',color:ac,whiteSpace:'nowrap',border:`1px solid ${ac}33`}}>
+                          {d.asama || '-'}
+                        </span>
+                      </td>
+                      {/* KAYIT TARİHİ */}
+                      <td style={{...tdS,color:C.textMuted,fontSize:10}}>{d.created_at?.split(' ')[0] || '-'}</td>
+                      {/* İŞLEM */}
+                      <td style={{...tdS,textAlign:'center'}}>
+                        <div style={{display:'flex',gap:6,justifyContent:'center',alignItems:'center'}}>
+                          <span title="GÖRÜNTÜLE" style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.accent}11`}}>
+                            <LIcon name="Eye" size={12} color={C.accent}/>
+                          </span>
+                          <span title="SİL" onClick={(e) => { e.stopPropagation(); setDeleteConfirm({id: d.id, text: d.dosya_no}); }}
+                            style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.danger}11`}}>
+                            <LIcon name="Trash2" size={12} color={C.danger}/>
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
