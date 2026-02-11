@@ -143,7 +143,6 @@ MR.HesapADKPage = () => {
       const h = {};
       if (MR.api.token) h['Authorization'] = 'Bearer ' + MR.api.token;
       const resp = await fetch('/api/v1/hesap/ocr-analiz.php', { method: 'POST', headers: h, body: fd });
-      if (!resp.ok) { alert('OCR SERVİSİ HATASI: ' + resp.status); setOcrYukleniyor(false); return; }
       const data = await resp.json();
       if (data.success && data.data) {
         setOcrSonuc(data.data);
@@ -155,7 +154,7 @@ MR.HesapADKPage = () => {
         if (data.data.hasar_tutari) setOnarim(MR.fmtInput(String(data.data.hasar_tutari)));
         if (data.data.km) setKm(MR.fmtInput(String(data.data.km)));
       }
-    } catch (e) { console.error('OCR HATA:', e); }
+    } catch (e) { console.error('OCR HATA:', e); alert('OCR HATASI: ' + e.message); }
     setOcrYukleniyor(false);
   };
 

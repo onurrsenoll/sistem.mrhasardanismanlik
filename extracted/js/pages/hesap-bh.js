@@ -102,7 +102,6 @@
           body: fd
         });
 
-        if (!resp.ok) { alert('OCR SERVİSİ HATASI: ' + resp.status); setOcrYukleniyor(false); return; }
         const data = await resp.json();
 
         if (data.success && data.data) {
@@ -123,7 +122,7 @@
         }
       } catch (err) {
         console.error('OCR hatası:', err);
-        alert('OCR ANALİZİ SIRASINDA HATA OLUŞTU');
+        alert('OCR ANALİZİ SIRASINDA HATA OLUŞTU: ' + err.message);
       } finally {
         setOcrYukleniyor(false);
       }

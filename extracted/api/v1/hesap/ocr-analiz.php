@@ -2,8 +2,23 @@
 /**
  * MR HASAR DANIŞMANLIK - OCR EVRAK ANALİZ ENDPOINTİ
  * Google Gemini Vision API ile evrak OCR okuma
- * Ruhsat, hasar raporu, sağlık raporu, maluliyet raporu analizi
  */
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
+// Global hata yakalama
+set_exception_handler(function($e) {
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(200);
+    echo json_encode(['success' => false, 'error' => 'SUNUCU HATASI: ' . $e->getMessage()]);
+    exit;
+});
+
+set_error_handler(function($severity, $message, $file, $line) {
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
+
+try {
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/auth.php';
@@ -34,14 +49,14 @@ try {
     $apiKey = '';
 }
 
-if (empty($apiKey) || !str_starts_with($apiKey, 'AIzaSy')) {
+if (empty($apiKey) || substr($apiKey, 0, 6) !== 'AIzaSy') {
     echo json_encode(['success' => false, 'error' => 'GEMİNİ API KEY BULUNAMADI. SİSTEM AYARLARINDAN AI_API_KEY TANIMLAYIN.']);
     exit;
 }
 
 // Dosya tipini belirle (adk veya bh)
-$tip = $_POST['tip'] ?? 'adk';
-$dosyaSayisi = intval($_POST['dosya_sayisi'] ?? 1);
+$tip = isset($_POST['tip']) ? $_POST['tip'] : 'adk';
+$dosyaSayisi = intval(isset($_POST['dosya_sayisi']) ? $_POST['dosya_sayisi'] : 1);
 
 // Dosyaları oku ve base64'e çevir
 $images = [];
@@ -60,11 +75,7 @@ for ($i = 0; $i < $dosyaSayisi; $i++) {
     $content = file_get_contents($file['tmp_name']);
     if ($content === false) continue;
 
-    // PDF ise ilk sayfayı image olarak çeviremiyoruz, direkt gönder
     $mimeType = $mime;
-    if ($mime === 'application/pdf') {
-        $mimeType = 'application/pdf';
-    }
 
     $images[] = [
         'inline_data' => [
@@ -75,7 +86,7 @@ for ($i = 0; $i < $dosyaSayisi; $i++) {
 }
 
 if (empty($images)) {
-    echo json_encode(['success' => false, 'error' => 'GEÇERLİ DOSYA BULUNAMADI. PDF, JPG VEYA PNG YÜKLEYİN.']);
+    echo json_encode(['success' => false, 'error' => 'GEÇERLİ DOSYA BULUNAMADI. PDF, JPG VEYA PNG YÜKLEYİN. Dosya sayısı: ' . $dosyaSayisi . ', FILES: ' . json_encode(array_keys($_FILES))]);
     exit;
 }
 
@@ -84,19 +95,20 @@ if ($tip === 'bh') {
     $prompt = 'Bu belgeyi analiz et. Bedeni hasar / sağlık / maluliyet raporu olarak incele.
 Aşağıdaki bilgileri JSON formatında döndür:
 {
-  "magdur_adi": "kişinin adı soyadı",
-  "dogum_tarihi": "YYYY-MM-DD formatında",
+  "magdurAdi": "kişinin adı soyadı",
+  "dogumTarihi": "YYYY-MM-DD formatında",
   "cinsiyet": "ERKEK veya KADIN",
-  "tc_no": "TC kimlik no varsa",
-  "maluliyet_orani": sayısal değer (1-100),
+  "tcNo": "TC kimlik no varsa",
+  "maluliyetOrani": sayısal değer (1-100),
   "meslek": "meslek bilgisi",
-  "kaza_tarihi": "YYYY-MM-DD formatında",
+  "kazaTarihi": "YYYY-MM-DD formatında",
   "tani": "tıbbi tanı/teşhis",
   "tedavi": "uygulanan tedavi",
   "hastane": "hastane adı",
+  "aylikGelir": sayısal değer varsa,
   "guven": güven yüzdesi (1-100)
 }
-Bulamadiğın alanları null yap. Sadece JSON döndür, başka metin yazma.';
+Bulamadığın alanları null yap. Sadece JSON döndür, başka metin yazma.';
 } else {
     $prompt = 'Bu belgeyi analiz et. Araç ruhsatı, hasar raporu veya onarım faturası olarak incele.
 Aşağıdaki bilgileri JSON formatında döndür:
@@ -115,7 +127,7 @@ Aşağıdaki bilgileri JSON formatında döndür:
   "renk": "araç rengi",
   "guven": güven yüzdesi (1-100)
 }
-Bulamadiğın alanları null yap. Sadece JSON döndür, başka metin yazma.';
+Bulamadığın alanları null yap. Sadece JSON döndür, başka metin yazma.';
 }
 
 // Gemini Vision API çağrısı
@@ -141,13 +153,20 @@ $payload = [
     ]
 ];
 
+$jsonPayload = json_encode($payload);
+if ($jsonPayload === false) {
+    echo json_encode(['success' => false, 'error' => 'JSON ENCODE HATASI: ' . json_last_error_msg()]);
+    exit;
+}
+
 $ch = curl_init($url);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST => true,
     CURLOPT_TIMEOUT => 60,
     CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-    CURLOPT_POSTFIELDS => json_encode($payload)
+    CURLOPT_POSTFIELDS => $jsonPayload,
+    CURLOPT_SSL_VERIFYPEER => false
 ]);
 
 $response = curl_exec($ch);
@@ -164,7 +183,7 @@ if ($httpCode !== 200 || !$response) {
 }
 
 $data = json_decode($response, true);
-$text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+$text = isset($data['candidates'][0]['content']['parts'][0]['text']) ? $data['candidates'][0]['content']['parts'][0]['text'] : '';
 
 if (empty($text)) {
     echo json_encode(['success' => false, 'error' => 'GEMİNİ YANIT ALINAMADI']);
@@ -190,4 +209,9 @@ if ($parsed) {
     echo json_encode(['success' => true, 'data' => $parsed]);
 } else {
     echo json_encode(['success' => false, 'error' => 'EVRAK ANALİZ EDİLEMEDİ. LÜTFEN DAHA NET BİR GÖRÜNTÜ YÜKLEYİN.', 'raw' => $text]);
+}
+
+} catch (Throwable $e) {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'error' => 'PHP HATASI: ' . $e->getMessage() . ' (Satır: ' . $e->getLine() . ')']);
 }
