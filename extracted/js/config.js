@@ -130,6 +130,7 @@ MR.api = {
   mesajOku(d) { return this.req('/mesaj/oku.php', { method: 'PUT', body: JSON.stringify(d) }); },
   // HESAP (AI)
   adkAiAnaliz(d) { return this.req('/hesap/ai-analiz.php', { method: 'POST', body: JSON.stringify(d) }); },
+  bhAiAnaliz(d) { return this.req('/hesap/bh-ai-analiz.php', { method: 'POST', body: JSON.stringify(d) }); },
   // ŞABLON
   sablonList(p = {}) { return this.req('/sablon/list.php?' + new URLSearchParams(p)); },
   sablonGet(id) { return this.req('/sablon/get.php?id=' + id); },

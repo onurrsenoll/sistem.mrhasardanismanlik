@@ -47,14 +47,23 @@ MR.TAHKIM_EMSALLERI = [
   {dosyaNo:"GETZ-2006",aracTipi:"EKONOMİK",aracYasi:19,kmOrtalama:324468,onarimBedeli:13742,rayicDeger:403333,degerKaybi:4000,kusurOrani:100,oncekiHasar:4,hasarBolgesi:"ÖN",yontem:"NİSBİ YÖNTEM"}
 ];
 
-/* ---------- BEDENİ HASAR EMSAL KARARLARI ---------- */
+/* ---------- BEDENİ HASAR EMSAL KARARLARI (GENİŞLETİLMİŞ) ---------- */
 MR.BH_EMSAL = [
-  {kaynak:'STK',yil:'2024',maluliyet:15,tutar:285000,detay:'%15 MALULİYET, 32 YAŞ'},
-  {kaynak:'YARGITAY',yil:'2023',maluliyet:20,tutar:420000,detay:'%20 MALULİYET, 28 YAŞ'},
-  {kaynak:'STK',yil:'2024',maluliyet:10,tutar:165000,detay:'%10 MALULİYET, 45 YAŞ'},
-  {kaynak:'YARGITAY',yil:'2023',maluliyet:25,tutar:580000,detay:'%25 MALULİYET, 35 YAŞ'},
-  {kaynak:'STK',yil:'2024',maluliyet:30,tutar:720000,detay:'%30 MALULİYET, 40 YAŞ'},
-  {kaynak:'YARGITAY',yil:'2023',maluliyet:5,tutar:85000,detay:'%5 MALULİYET, 50 YAŞ'}
+  {kaynak:'STK',yil:'2025',maluliyet:12,yas:29,cinsiyet:'E',tutar:325000,gelir:22104,pmf:'TRH2010',detay:'%12 MALULİYET, 29 YAŞ, ERKEK, İŞÇİ'},
+  {kaynak:'STK',yil:'2025',maluliyet:8,yas:42,cinsiyet:'K',tutar:145000,gelir:22104,pmf:'TRH2010',detay:'%8 MALULİYET, 42 YAŞ, KADIN, EV HANIMI'},
+  {kaynak:'STK',yil:'2024',maluliyet:15,yas:32,cinsiyet:'E',tutar:385000,gelir:17002,pmf:'TRH2010',detay:'%15 MALULİYET, 32 YAŞ, ERKEK, ŞOFÖR'},
+  {kaynak:'YARGITAY',yil:'2024',maluliyet:20,yas:28,cinsiyet:'E',tutar:520000,gelir:25000,pmf:'TRH2010',detay:'%20 MALULİYET, 28 YAŞ, ERKEK, MÜHENDİS'},
+  {kaynak:'STK',yil:'2024',maluliyet:10,yas:45,cinsiyet:'K',tutar:185000,gelir:17002,pmf:'TRH2010',detay:'%10 MALULİYET, 45 YAŞ, KADIN, MEMUR'},
+  {kaynak:'YARGITAY',yil:'2024',maluliyet:25,yas:35,cinsiyet:'E',tutar:680000,gelir:30000,pmf:'TRH2010',detay:'%25 MALULİYET, 35 YAŞ, ERKEK, ESNAF'},
+  {kaynak:'STK',yil:'2024',maluliyet:30,yas:40,cinsiyet:'E',tutar:820000,gelir:22104,pmf:'TRH2010',detay:'%30 MALULİYET, 40 YAŞ, ERKEK, İNŞAAT İŞÇİSİ'},
+  {kaynak:'YARGITAY',yil:'2024',maluliyet:5,yas:50,cinsiyet:'K',tutar:95000,gelir:17002,pmf:'TRH2010',detay:'%5 MALULİYET, 50 YAŞ, KADIN, TERZİ'},
+  {kaynak:'STK',yil:'2024',maluliyet:18,yas:22,cinsiyet:'E',tutar:625000,gelir:17002,pmf:'TRH2010',detay:'%18 MALULİYET, 22 YAŞ, ERKEK, ÖĞRENCİ'},
+  {kaynak:'YARGITAY',yil:'2023',maluliyet:40,yas:38,cinsiyet:'E',tutar:1250000,gelir:15000,pmf:'TRH2010',detay:'%40 MALULİYET, 38 YAŞ, ERKEK, ÇALIŞAN'},
+  {kaynak:'STK',yil:'2024',maluliyet:7,yas:55,cinsiyet:'E',tutar:72000,gelir:17002,pmf:'TRH2010',detay:'%7 MALULİYET, 55 YAŞ, ERKEK, EMEKLİ'},
+  {kaynak:'YARGITAY',yil:'2023',maluliyet:35,yas:25,cinsiyet:'K',tutar:980000,gelir:13414,pmf:'TRH2010',detay:'%35 MALULİYET, 25 YAŞ, KADIN, HEMŞİRE'},
+  {kaynak:'STK',yil:'2025',maluliyet:22,yas:33,cinsiyet:'E',tutar:580000,gelir:22104,pmf:'TRH2010',detay:'%22 MALULİYET, 33 YAŞ, ERKEK, KURYE'},
+  {kaynak:'STK',yil:'2024',maluliyet:50,yas:30,cinsiyet:'E',tutar:1850000,gelir:20000,pmf:'TRH2010',detay:'%50 MALULİYET, 30 YAŞ, ERKEK, OPERATÖR'},
+  {kaynak:'YARGITAY',yil:'2024',maluliyet:3,yas:60,cinsiyet:'K',tutar:35000,gelir:17002,pmf:'TRH2010',detay:'%3 MALULİYET, 60 YAŞ, KADIN, EMEKLİ'}
 ];
 
 /* ---------- ARAÇ VERİ TABANI (GENİŞLETİLMİŞ) ---------- */
