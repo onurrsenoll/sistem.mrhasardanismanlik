@@ -304,7 +304,8 @@ INSERT IGNORE INTO ayarlar (anahtar, deger, tip) VALUES
 ('baslik_renk', '#2563eb', 'color'),
 ('slogan_renk', '#94a3b8', 'color'),
 ('slogan_font_boyut', '10', 'number'),
-('openai_api_key', '', 'text');
+('openai_api_key', '', 'text'),
+('ai_api_key', 'AIzaSyAMq-aAlg4hWd7mSQubrAciwry55KzjBO8', 'text');
 
 -- ADMIN YETKİLERİ (kullanici_id = 1)
 INSERT IGNORE INTO yetkiler (kullanici_id, modul, islem, izin) VALUES

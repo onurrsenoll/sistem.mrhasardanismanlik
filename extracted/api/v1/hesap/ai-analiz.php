@@ -1,7 +1,8 @@
 <?php
 /**
  * MR HASAR DANIŞMANLIK - AI ADK ANALİZ ENDPOINTİ
- * OpenAI API ile araç değer kaybı analizi
+ * Google Gemini + OpenAI destekli araç değer kaybı analizi
+ * Key prefix ile otomatik API seçimi: AIzaSy = Gemini, sk- = OpenAI
  */
 
 require_once __DIR__ . '/../../config/database.php';
@@ -30,75 +31,134 @@ if (!$input) {
 }
 
 // API Key'i ayarlardan çek
+$apiKey = '';
 try {
     $db = getDB();
-    $stmt = $db->prepare("SELECT deger FROM ayarlar WHERE anahtar = 'openai_api_key'");
+    // Önce ai_api_key, yoksa openai_api_key dene
+    $stmt = $db->prepare("SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('ai_api_key', 'openai_api_key') ORDER BY anahtar ASC");
     $stmt->execute();
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    $apiKey = $row ? trim($row['deger']) : '';
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($rows as $row) {
+        if (!empty(trim($row['deger']))) {
+            $apiKey = trim($row['deger']);
+            break;
+        }
+    }
 } catch (Exception $e) {
     $apiKey = '';
 }
 
 if (empty($apiKey)) {
-    // API key yoksa yerel analiz yap
     $analiz = yerselAnaliz($input);
     echo json_encode(['success' => true, 'data' => ['analiz' => $analiz, 'kaynak' => 'yerel']]);
     exit;
 }
 
-// OpenAI API çağrısı
 $prompt = buildPrompt($input);
+$systemPrompt = 'Sen bir Türk sigorta hukuku ve araç değer kaybı uzmanısın. Araç değer kaybı (ADK) hesaplamaları konusunda detaylı analiz yapıyorsun. Tahkim komisyonu kararları ve Yargıtay içtihatlarına hakimsin. Yanıtlarını Türkçe ve profesyonel bir dille ver. Kısa ve öz tut, madde madde yaz. Başlıkları büyük harfle yaz.';
 
-$ch = curl_init('https://api.openai.com/v1/chat/completions');
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_POST => true,
-    CURLOPT_TIMEOUT => 30,
-    CURLOPT_HTTPHEADER => [
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . $apiKey
-    ],
-    CURLOPT_POSTFIELDS => json_encode([
-        'model' => 'gpt-4o-mini',
-        'messages' => [
-            [
-                'role' => 'system',
-                'content' => 'Sen bir Türk sigorta hukuku ve araç değer kaybı uzmanısın. Araç değer kaybı (ADK) hesaplamaları konusunda detaylı analiz yapıyorsun. Tahkim komisyonu kararları ve Yargıtay içtihatlarına hakimsin. Yanıtlarını Türkçe ve profesyonel bir dille ver. Kısa ve öz tut, madde madde yaz.'
-            ],
-            [
-                'role' => 'user',
-                'content' => $prompt
-            ]
-        ],
-        'max_tokens' => 800,
-        'temperature' => 0.3
-    ])
-]);
-
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
-
-if ($httpCode === 200 && $response) {
-    $data = json_decode($response, true);
-    $aiText = $data['choices'][0]['message']['content'] ?? '';
-
-    if (!empty($aiText)) {
-        echo json_encode(['success' => true, 'data' => ['analiz' => $aiText, 'kaynak' => 'ai']]);
-    } else {
-        $analiz = yerselAnaliz($input);
-        echo json_encode(['success' => true, 'data' => ['analiz' => $analiz, 'kaynak' => 'yerel']]);
-    }
+// API tipi belirle: AIzaSy = Google Gemini, sk- = OpenAI
+if (str_starts_with($apiKey, 'AIzaSy')) {
+    $result = callGemini($apiKey, $systemPrompt, $prompt);
+} elseif (str_starts_with($apiKey, 'sk-')) {
+    $result = callOpenAI($apiKey, $systemPrompt, $prompt);
 } else {
-    // API hatası - yerel analiz yap
+    // Bilinmeyen key tipi - Gemini dene
+    $result = callGemini($apiKey, $systemPrompt, $prompt);
+}
+
+if ($result !== null) {
+    echo json_encode(['success' => true, 'data' => ['analiz' => $result, 'kaynak' => 'ai']]);
+} else {
     $analiz = yerselAnaliz($input);
     echo json_encode(['success' => true, 'data' => ['analiz' => $analiz, 'kaynak' => 'yerel']]);
 }
 
-/**
- * AI prompt oluştur
- */
+/* ═══════════════════════════════════════════
+   GOOGLE GEMİNİ API
+   ═══════════════════════════════════════════ */
+function callGemini($apiKey, $systemPrompt, $userPrompt) {
+    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
+
+    $payload = [
+        'contents' => [
+            [
+                'role' => 'user',
+                'parts' => [['text' => $userPrompt]]
+            ]
+        ],
+        'systemInstruction' => [
+            'parts' => [['text' => $systemPrompt]]
+        ],
+        'generationConfig' => [
+            'temperature' => 0.3,
+            'maxOutputTokens' => 1024,
+            'topP' => 0.8
+        ]
+    ];
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+        CURLOPT_POSTFIELDS => json_encode($payload)
+    ]);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($httpCode === 200 && $response) {
+        $data = json_decode($response, true);
+        $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+        return !empty($text) ? $text : null;
+    }
+
+    return null;
+}
+
+/* ═══════════════════════════════════════════
+   OPENAI API
+   ═══════════════════════════════════════════ */
+function callOpenAI($apiKey, $systemPrompt, $userPrompt) {
+    $ch = curl_init('https://api.openai.com/v1/chat/completions');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $apiKey
+        ],
+        CURLOPT_POSTFIELDS => json_encode([
+            'model' => 'gpt-4o-mini',
+            'messages' => [
+                ['role' => 'system', 'content' => $systemPrompt],
+                ['role' => 'user', 'content' => $userPrompt]
+            ],
+            'max_tokens' => 800,
+            'temperature' => 0.3
+        ])
+    ]);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($httpCode === 200 && $response) {
+        $data = json_decode($response, true);
+        $text = $data['choices'][0]['message']['content'] ?? '';
+        return !empty($text) ? $text : null;
+    }
+
+    return null;
+}
+
+/* ═══════════════════════════════════════════
+   PROMPT OLUŞTURUCU
+   ═══════════════════════════════════════════ */
 function buildPrompt($d) {
     $marka = $d['marka'] ?? '-';
     $model = $d['model'] ?? '-';
@@ -146,15 +206,16 @@ HESAPLAMA SONUÇLARI:
 {$emsalBilgi}
 
 Lütfen şunları analiz et:
-1. Hesaplama sonuçlarının uygunluğu
-2. Tahkim başvurusu için tavsiyeler
+1. Hesaplama sonuçlarının uygunluğu ve doğruluğu
+2. Sigorta Tahkim Komisyonu başvurusu için tavsiyeler
 3. Dikkat edilmesi gereken hukuki noktalar
-4. Emsal kararlarla karşılaştırma";
+4. Emsal kararlarla karşılaştırma ve değerlendirme
+5. Onarım/Rayiç oranı değerlendirmesi";
 }
 
-/**
- * API key yoksa yerel analiz üret
- */
+/* ═══════════════════════════════════════════
+   YEREL ANALİZ (API yoksa fallback)
+   ═══════════════════════════════════════════ */
 function yerselAnaliz($d) {
     $marka = $d['marka'] ?? '-';
     $model = $d['model'] ?? '-';
@@ -174,7 +235,6 @@ function yerselAnaliz($d) {
     $analiz .= "ARAÇ: {$marka} {$model} ({$yil})\n";
     $analiz .= "ARAÇ YAŞI: {$aracYasi} YIL\n\n";
 
-    // ONARIM ORANI DEĞERLENDİRME
     if ($onarimOrani > 60) {
         $analiz .= "PERT TOTAL DURUMU: Onarım bedeli rayiç değerin %{$onarimOrani}'sini oluşturmaktadır. Bu oran %60'ın üzerinde olup araç ekonomik ömrünü tamamlamış sayılabilir.\n\n";
     } elseif ($onarimOrani > 40) {
@@ -183,17 +243,14 @@ function yerselAnaliz($d) {
         $analiz .= "GENEL HASAR: Onarım/Rayiç oranı %{$onarimOrani} olup normal seviyededir.\n\n";
     }
 
-    // PREMIUM ARAÇ
     if ($premium) {
         $analiz .= "PREMIUM SEGMENT: {$marka} premium segment araç olarak sınıflandırılmıştır. Premium araçlarda değer kaybı oranları genellikle %10-15 daha yüksek uygulanmaktadır.\n\n";
     }
 
-    // ÖNCEKİ HASAR
     if ($onceki > 0) {
         $analiz .= "ÖNCEKİ HASAR: Araçta daha önce {$onceki} adet hasar kaydı bulunmaktadır. Bu durum değer kaybı hesaplamasında indirim faktörü olarak uygulanmıştır.\n\n";
     }
 
-    // TAVSİYE
     $analiz .= "TAVSİYELER:\n";
     $analiz .= "- Sigorta Tahkim Komisyonu'na başvuru yapılması önerilir.\n";
     $analiz .= "- Hesaplanan değer kaybı tutarı " . number_format($kusurApplied, 0, ',', '.') . " TL olup, benzer emsal kararlara uygun görülmektedir.\n";
