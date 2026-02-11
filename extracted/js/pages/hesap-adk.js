@@ -143,6 +143,7 @@ MR.HesapADKPage = () => {
       const h = {};
       if (MR.api.token) h['Authorization'] = 'Bearer ' + MR.api.token;
       const resp = await fetch('/api/v1/hesap/ocr-analiz.php', { method: 'POST', headers: h, body: fd });
+      if (!resp.ok) { alert('OCR SERVİSİ HATASI: ' + resp.status); setOcrYukleniyor(false); return; }
       const data = await resp.json();
       if (data.success && data.data) {
         setOcrSonuc(data.data);

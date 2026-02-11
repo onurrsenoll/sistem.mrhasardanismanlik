@@ -102,6 +102,7 @@
           body: fd
         });
 
+        if (!resp.ok) { alert('OCR SERVİSİ HATASI: ' + resp.status); setOcrYukleniyor(false); return; }
         const data = await resp.json();
 
         if (data.success && data.data) {

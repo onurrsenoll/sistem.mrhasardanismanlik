@@ -8,19 +8,13 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/helpers.php';
 
-header('Content-Type: application/json; charset=utf-8');
+setup_headers();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['success' => false, 'error' => 'GEÇERSİZ İSTEK YÖNTEMİ']);
-    exit;
+    json_error('GEÇERSİZ İSTEK YÖNTEMİ', 405);
 }
 
-$user = authenticate();
-if (!$user) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'YETKİSİZ ERİŞİM']);
-    exit;
-}
+$user = auth_required();
 
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input) {
