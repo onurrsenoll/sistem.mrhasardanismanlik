@@ -120,8 +120,22 @@ const TopNav = ({user, page, setPage, onLogout}) => {
   const [menuOpen, setMenuOpen] = useState(null);
   const [bildirimSayisi, setBildirimSayisi] = useState(0);
   const [profilOpen, setProfilOpen] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(MR.logoUrl || '');
   const navRef = useRef(null);
   const filteredMenu = menuErisim(user);
+
+  /* LOGO URL'İNİ AYARLARDAN ÇEK */
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await api.ayarlarList();
+        if (r?.success && r.data?.logo_url) {
+          setLogoUrl(r.data.logo_url);
+          MR.logoUrl = r.data.logo_url;
+        }
+      } catch(e) {}
+    })();
+  }, []);
 
   useEffect(() => {
     const sayacGuncelle = async () => {
@@ -160,20 +174,23 @@ const TopNav = ({user, page, setPage, onLogout}) => {
       display: 'flex', alignItems: 'center', padding: '0 12px', height: 54,
       position: 'sticky', top: 0, zIndex: 1000, gap: 0
     }}>
-      {/* LOGO - SABİT ALAN */}
+      {/* LOGO */}
       <div onClick={() => setPage('home')} style={{
-        display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
-        width: 150, minWidth: 150, flexShrink: 0, marginRight: 8
+        display: 'flex', alignItems: 'center', cursor: 'pointer',
+        height: 42, marginRight: 8, flexShrink: 0
       }}>
-        <div style={{
-          width: 34, height: 34, minWidth: 34, borderRadius: 8,
-          background: `${C.accent}22`, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', fontSize: 13, fontWeight: 900, color: C.accent
-        }}>MR</div>
-        <div style={{overflow: 'hidden'}}>
-          <div style={{fontSize: 11, fontWeight: 800, color: C.accent, letterSpacing: 0.5, whiteSpace: 'nowrap'}}>MR HASAR</div>
-          <div style={{fontSize: 7, color: C.textMuted, letterSpacing: 1.5, whiteSpace: 'nowrap'}}>DANIŞMANLIK</div>
-        </div>
+        {logoUrl ? (
+          <img src={logoUrl} alt="LOGO" style={{
+            height: 38, width: 'auto', maxWidth: 140, objectFit: 'contain',
+            filter: MR.tema === 'koyu' ? 'brightness(0) invert(1)' : 'none'
+          }}/>
+        ) : (
+          <div style={{
+            width: 34, height: 34, minWidth: 34, borderRadius: 8,
+            background: `${C.accent}22`, display: 'flex', alignItems: 'center',
+            justifyContent: 'center', fontSize: 13, fontWeight: 900, color: C.accent
+          }}>MR</div>
+        )}
       </div>
 
       {/* MENÜ - ESNEK ALAN, TEK SATIR */}
