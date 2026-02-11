@@ -564,13 +564,13 @@ const App = () => {
   }, []);
 
   /* LOGIN SONRASI ME.PHP'DEN YETKİLERİ ÇEK */
-  const handleLogin = useCallback(async (u) => {
+  const handleLogin = async (u) => {
     setUser(u);
     try {
       const r = await api.me();
       if (r?.success) { setUser(r.data?.user || r.data); }
     } catch(e) {}
-  }, []);
+  };
 
   const logout = () => {
     api.setToken(null);
