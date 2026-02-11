@@ -76,7 +76,7 @@ const bolgeLabel = b => ({on:'ÖN KISIM',arka:'ARKA KISIM',yan:'YAN KISIM',tavan
 /* ═══════════════════════════════════════════════════════════
    ANA COMPONENT
    ═══════════════════════════════════════════════════════════ */
-MR.HesapADK = () => {
+MR.HesapADKPage = () => {
   const C = MR.C, S = MR.S;
   const [mod, setMod] = useState('hizli'); // hizli | detayli
   // FORM
@@ -323,7 +323,7 @@ MR.HesapADK = () => {
             <MR.SectionTitle icon="Car" title="ARAÇ BİLGİLERİ" sub="TAHKİM EMSAL RAYİÇ (2024-2025)"/>
             <div style={{...S.cardBody}}>
               <div style={gridS}>
-                <MR.FormGroup label={<>MARKA {isPremium && <span style={tagS(`${C.gold}22`, C.gold)}>PREMİUM</span>}</>}>
+                <MR.FormGroup label={<span>MARKA {isPremium && <span style={tagS(`${C.gold}22`, C.gold)}>PREMİUM</span>}</span>}>
                   <select value={marka} onChange={e => {setMarka(e.target.value); setModel('');}} style={S.select}>
                     <option value="">MARKA SEÇİNİZ</option>
                     {Object.keys(MR.ARAC_DB || {}).sort().map(m => <option key={m} value={m}>{m}{MR.ARAC_DB[m].premium ? ' ★' : ''}</option>)}
@@ -369,7 +369,7 @@ MR.HesapADK = () => {
                   )}
 
                   {emsaller.length > 0 && (
-                    <>
+                    <div>
                       <div style={{textAlign:'center', padding:12, background:'rgba(0,0,0,0.15)', borderRadius:10, marginBottom:10}}>
                         <div style={{fontSize:24, fontWeight:800, color:C.gold}}>{fmtMoney(Math.max(...emsaller.slice(0,3).map(e=>e.rayic)))}</div>
                         <div style={{fontSize:9, color:C.textMuted}}>TOP 3 EMSAL EN ÜST DEĞER</div>
@@ -386,25 +386,25 @@ MR.HesapADK = () => {
                           </div>
                         ))}
                       </div>
-                    </>
+                    </div>
                   )}
 
                   <button onClick={emsalAra} disabled={!marka || !yil || !km || emsalYukleniyor}
                     style={{...S.btn, width:'100%', justifyContent:'center', marginTop:10,
                       background:`linear-gradient(135deg, ${C.gold}, ${C.warning})`, color:'#1a1a2e',
                       opacity: (!marka || !yil || !km || emsalYukleniyor) ? 0.5 : 1}}>
-                    {emsalYukleniyor ? <><div style={{width:14,height:14,border:'2px solid rgba(0,0,0,.3)',borderTopColor:'#1a1a2e',borderRadius:'50%',animation:'spin 1s linear infinite'}}/> TARANIYOR...</>
-                      : <><MR.LIcon name="Scale" size={14} color="#1a1a2e"/> TAHKİM EMSAL ARA (2024-2025)</>}
+                    {emsalYukleniyor ? <span><div style={{width:14,height:14,border:'2px solid rgba(0,0,0,.3)',borderTopColor:'#1a1a2e',borderRadius:'50%',animation:'spin 1s linear infinite'}}/> TARANIYOR...</span>
+                      : <span><MR.LIcon name="Scale" size={14} color="#1a1a2e"/> TAHKİM EMSAL ARA (2024-2025)</span>}
                   </button>
                 </div>
 
-                <MR.FormGroup label={<>RAYİÇ DEĞER <span style={tagS(`${C.gold}22`, C.gold)}>TAHKİM</span></>}>
+                <MR.FormGroup label={<span>RAYİÇ DEĞER <span style={tagS(`${C.gold}22`, C.gold)}>TAHKİM</span></span>}>
                   <input value={rayic} onChange={e => setRayic(MR.fmtInput(e.target.value))} placeholder="TAHKİM EMSALİNDEN" style={{...S.input, borderColor: emsaller.length > 0 ? C.success : C.borderLight, background: emsaller.length > 0 ? `${C.success}11` : C.bgInput}}/>
                 </MR.FormGroup>
                 <MR.FormGroup label="ONARIM BEDELİ">
                   <input value={onarim} onChange={e => setOnarim(MR.fmtInput(e.target.value))} placeholder="HASAR TUTARI" style={S.input}/>
                 </MR.FormGroup>
-                <MR.FormGroup label={<>KUSUR ORANI <span style={tagS(`${C.danger}22`, C.danger)}>ÖNEMLİ</span></>}>
+                <MR.FormGroup label={<span>KUSUR ORANI <span style={tagS(`${C.danger}22`, C.danger)}>ÖNEMLİ</span></span>}>
                   <select value={kusur} onChange={e => setKusur(e.target.value)} style={S.select}>
                     <option value="100">%100 HAKLI</option>
                     <option value="75">%75 HAKLI</option>
@@ -431,7 +431,7 @@ MR.HesapADK = () => {
                 </MR.FormGroup>
 
                 {mod === 'detayli' && (
-                  <>
+                  <div>
                     <MR.FormGroup label="PLAKA">
                       <input value={plaka} onChange={e => setPlaka(e.target.value.toUpperCase())} placeholder="34 ABC 123" style={S.input}/>
                     </MR.FormGroup>
@@ -440,7 +440,7 @@ MR.HesapADK = () => {
                         <textarea value={notlar} onChange={e => setNotlar(e.target.value)} placeholder="EK NOTLAR..." style={{...S.input, minHeight:60, resize:'vertical'}}/>
                       </MR.FormGroup>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
 
@@ -451,8 +451,8 @@ MR.HesapADK = () => {
                 </button>
                 <button onClick={hesapla} disabled={hesapYukleniyor}
                   style={{...S.btn, flex:2, justifyContent:'center', background:`linear-gradient(135deg, ${C.accent}, ${C.purple})`, color:'#fff', opacity: hesapYukleniyor ? 0.6 : 1}}>
-                  {hesapYukleniyor ? <><div style={{width:14,height:14,border:'2px solid rgba(255,255,255,.3)',borderTopColor:'#fff',borderRadius:'50%',animation:'spin 1s linear infinite'}}/> HESAPLANIYOR...</>
-                    : <><MR.LIcon name="Calculator" size={14} color="#fff"/> HESAPLA + AI ANALİZ</>}
+                  {hesapYukleniyor ? <span><div style={{width:14,height:14,border:'2px solid rgba(255,255,255,.3)',borderTopColor:'#fff',borderRadius:'50%',animation:'spin 1s linear infinite'}}/> HESAPLANIYOR...</span>
+                    : <span><MR.LIcon name="Calculator" size={14} color="#fff"/> HESAPLA + AI ANALİZ</span>}
                 </button>
               </div>
             </div>
@@ -472,7 +472,7 @@ MR.HesapADK = () => {
               {hesapYukleniyor && <MR.Loading/>}
 
               {sonuc && !hesapYukleniyor && (
-                <>
+                <div>
                   {/* ARAÇ BAR */}
                   <div style={{display:'flex', gap:10, flexWrap:'wrap', padding:'10px 14px', background:C.bgInput, borderRadius:10, marginBottom:14, fontSize:11}}>
                     <span><span style={{color:C.textMuted, fontSize:9}}>ARAÇ: </span><b>{marka} {model}</b></span>
@@ -586,10 +586,10 @@ MR.HesapADK = () => {
                   {/* PDF BUTON */}
                   <button onClick={pdfIndir} disabled={pdfYukleniyor}
                     style={{...S.btn, width:'100%', justifyContent:'center', background:`linear-gradient(135deg, ${C.success}, ${C.cyan})`, color:'#fff', padding:14, fontSize:13, opacity: pdfYukleniyor ? 0.6 : 1}}>
-                    {pdfYukleniyor ? <><div style={{width:14,height:14,border:'2px solid rgba(255,255,255,.3)',borderTopColor:'#fff',borderRadius:'50%',animation:'spin 1s linear infinite'}}/> PDF OLUŞTURULUYOR...</>
-                      : <><MR.LIcon name="Download" size={16} color="#fff"/> PDF RAPOR İNDİR</>}
+                    {pdfYukleniyor ? <span><div style={{width:14,height:14,border:'2px solid rgba(255,255,255,.3)',borderTopColor:'#fff',borderRadius:'50%',animation:'spin 1s linear infinite'}}/> PDF OLUŞTURULUYOR...</span>
+                      : <span><MR.LIcon name="Download" size={16} color="#fff"/> PDF RAPOR İNDİR</span>}
                   </button>
-                </>
+                </div>
               )}
             </div>
           </div>
