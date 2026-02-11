@@ -563,6 +563,15 @@ const App = () => {
     return () => window.removeEventListener('mr-tema-degisti', handler);
   }, []);
 
+  /* LOGIN SONRASI ME.PHP'DEN YETKİLERİ ÇEK */
+  const handleLogin = useCallback(async (u) => {
+    setUser(u);
+    try {
+      const r = await api.me();
+      if (r?.success) { setUser(r.data?.user || r.data); }
+    } catch(e) {}
+  }, []);
+
   const logout = () => {
     api.setToken(null);
     setUser(null);
@@ -579,15 +588,6 @@ const App = () => {
       </div>
     );
   }
-
-  /* LOGIN SONRASI ME.PHP'DEN YETKİLERİ ÇEK */
-  const handleLogin = useCallback(async (u) => {
-    setUser(u);
-    try {
-      const r = await api.me();
-      if (r?.success) { setUser(r.data?.user || r.data); }
-    } catch(e) {}
-  }, []);
 
   if (!user) return <LoginScreen onLogin={handleLogin}/>;
 
