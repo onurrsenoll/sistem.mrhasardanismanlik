@@ -7,7 +7,6 @@ const {useState, useEffect, useCallback, useRef} = React;
 
 /* ═══ MENÜ YAPILANDIRMASI ═══ */
 const MENU = [
-  {id:'home', label:'ANA SAYFA', icon:'Home'},
   {id:'dosya', label:'DOSYA İŞLEMLERİ', icon:'FolderOpen', sub:[
     {id:'dosya-liste', label:'DOSYA LİSTESİ', icon:'List'},
     {id:'dosya-yeni', label:'YENİ DOSYA', icon:'Plus'}
@@ -333,6 +332,10 @@ const TopNav = ({user, page, setPage, onLogout}) => {
 /* ═══ BREADCRUMB ═══ */
 const Breadcrumb = ({page, setPage}) => {
   const {C, LIcon} = MR;
+
+  /* ANA SAYFADA BREADCRUMB GÖSTERİLMEZ */
+  if (page === 'home') return null;
+
   const parts = [];
   parts.push({label: 'ANA SAYFA', id: 'home'});
 
@@ -370,7 +373,7 @@ const Breadcrumb = ({page, setPage}) => {
     parts.push({label: 'PROFİL', id: 'profil'});
   }
 
-  if (parts.length <= 1 && page === 'home') return null;
+  if (parts.length <= 1) return null;
 
   return (
     <div style={{
@@ -616,13 +619,15 @@ const App = () => {
         <PageRouter page={page} setPage={setPage} user={user}/>
       </div>
 
-      {/* FOOTER */}
-      <div style={{
-        textAlign: 'center', padding: '20px 0', borderTop: `1px solid ${C.border}`,
-        fontSize: 10, color: C.textMuted, letterSpacing: 1
-      }}>
-        MR HASAR DANIŞMANLIK © {new Date().getFullYear()} — DOSYA TAKİP SİSTEMİ — HER ZAMAN FARK EDER
-      </div>
+      {/* FOOTER - ANA SAYFADA GÖSTERİLMEZ (SLOGAN SABİT) */}
+      {page !== 'home' && (
+        <div style={{
+          textAlign: 'center', padding: '20px 0', borderTop: `1px solid ${C.border}`,
+          fontSize: 10, color: C.textMuted, letterSpacing: 1
+        }}>
+          MR HASAR DANIŞMANLIK © {new Date().getFullYear()} — DOSYA TAKİP SİSTEMİ
+        </div>
+      )}
     </div>
   );
 };

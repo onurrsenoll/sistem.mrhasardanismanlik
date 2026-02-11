@@ -21,24 +21,28 @@ MR.HomePage = ({setPage, user}) => {
   return (
     <div className="fade-in" style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', minHeight: 'calc(100vh - 140px)',
+      justifyContent: 'center',
+      minHeight: 'calc(100vh - 100px)',
       position: 'relative'
     }}>
       {/* YARI ŞEFFAF WATERMARK LOGO */}
       {logoUrl && (
         <img src={logoUrl} alt="" style={{
-          maxWidth: '65vw', maxHeight: '65vh', width: 'auto', height: 'auto',
-          opacity: MR.tema === 'koyu' ? 0.05 : 0.07,
+          width: '50vw', maxWidth: 500, height: 'auto',
+          opacity: MR.tema === 'koyu' ? 0.07 : 0.10,
           filter: MR.tema === 'koyu' ? 'brightness(0) invert(1)' : 'none',
           pointerEvents: 'none', userSelect: 'none'
         }}/>
       )}
 
-      {/* SLOGAN */}
+      {/* SLOGAN - EN ALTTA SABİT */}
       <div style={{
-        position: 'absolute', bottom: 30, left: 0, right: 0,
-        textAlign: 'center', fontSize: 14, fontWeight: 700,
-        color: C.textMuted, letterSpacing: 6
+        position: 'fixed', bottom: 0, left: 0, right: 0,
+        textAlign: 'center', padding: '16px 0',
+        fontSize: 13, fontWeight: 700,
+        color: C.textMuted, letterSpacing: 6,
+        background: `linear-gradient(transparent, ${C.bg})`,
+        zIndex: 10
       }}>
         HER ZAMAN FARK EDER
       </div>
