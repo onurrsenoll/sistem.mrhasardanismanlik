@@ -67,7 +67,7 @@ try {
     }
 
     // Mağdur güncelle
-    $magdurFields = ['tc_kimlik', 'ad_soyad', 'telefon', 'telefon2', 'iban', 'adres',
+    $magdurFields = ['tc_kimlik', 'ad_soyad', 'telefon', 'telefon2', 'email', 'iban', 'adres',
         'il', 'ilce', 'dogum_tarihi', 'cinsiyet', 'meslek', 'gelir_durumu', 'gelir_tutari'];
 
     $mSets = [];

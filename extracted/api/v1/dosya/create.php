@@ -62,12 +62,14 @@ try {
     $dosyaId = (int)$db->lastInsertId();
     
     // 3. Mağdur kaydı
-    $stmt = $db->prepare('INSERT INTO magdurlar (dosya_id, tc_kimlik, ad_soyad, telefon, iban, adres, il, ilce, dogum_tarihi, cinsiyet, meslek, gelir_durumu) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt = $db->prepare('INSERT INTO magdurlar (dosya_id, tc_kimlik, ad_soyad, telefon, telefon2, email, iban, adres, il, ilce, dogum_tarihi, cinsiyet, meslek, gelir_durumu) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $stmt->execute([
         $dosyaId,
         clean($body['tc_kimlik'] ?? ''),
         clean($body['ad_soyad']),
         clean($body['telefon'] ?? ''),
+        clean($body['telefon2'] ?? ''),
+        clean($body['email'] ?? ''),
         clean($body['iban'] ?? ''),
         clean($body['adres'] ?? ''),
         clean($body['il'] ?? ''),

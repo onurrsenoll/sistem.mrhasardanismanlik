@@ -73,12 +73,16 @@ CREATE TABLE ortak_hareketleri (
 CREATE TABLE paydaslar (
     id INT AUTO_INCREMENT PRIMARY KEY,
     ad VARCHAR(200) NOT NULL,
-    tur ENUM('yonlendiren','kaportaci','acente','diger') NOT NULL DEFAULT 'diger',
+    tur VARCHAR(50) NOT NULL DEFAULT 'diger',
     yetkili VARCHAR(100) DEFAULT NULL,
     telefon VARCHAR(20) DEFAULT NULL,
+    telefon2 VARCHAR(20) DEFAULT NULL,
     email VARCHAR(100) DEFAULT NULL,
     adres TEXT DEFAULT NULL,
     il VARCHAR(50) DEFAULT NULL,
+    ilce VARCHAR(50) DEFAULT NULL,
+    vergi_no VARCHAR(20) DEFAULT NULL,
+    iban VARCHAR(34) DEFAULT NULL,
     komisyon_orani DECIMAL(5,2) DEFAULT 0.00,
     durum ENUM('aktif','pasif') NOT NULL DEFAULT 'aktif',
     notlar TEXT DEFAULT NULL,
@@ -166,7 +170,7 @@ CREATE TABLE komisyonlar (
     ortak_id INT DEFAULT NULL,
     paydas_id INT DEFAULT NULL,
     personel_id INT DEFAULT NULL,
-    komisyon_turu ENUM('ortak_pay','paydas_komisyon','personel_prim') NOT NULL,
+    komisyon_turu VARCHAR(50) NOT NULL,
     tutar DECIMAL(12,2) NOT NULL,
     oran DECIMAL(5,2) DEFAULT NULL,
     odendi TINYINT(1) NOT NULL DEFAULT 0,
@@ -347,6 +351,11 @@ INSERT IGNORE INTO tanimlamalar (kategori, deger, sira) VALUES
 ('sablon_kategori', 'TUTANAK', 5),
 ('sablon_kategori', 'DİĞER', 6);
 
+-- ============================================================
+-- ADIM 6: MAGDURLAR TABLOSUNA EMAİL SÜTUNU EKLE
+-- ============================================================
+ALTER TABLE magdurlar ADD COLUMN email VARCHAR(100) DEFAULT NULL AFTER telefon2;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
@@ -354,4 +363,5 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- 7 tablo yeniden oluşturuldu (doğru sütun adlarıyla)
 -- 4 tablo kontrol edildi (yoksa oluşturuldu)
 -- Yetkiler ve ayarlar eklendi
+-- magdurlar tablosuna email sütunu eklendi
 -- ============================================================
