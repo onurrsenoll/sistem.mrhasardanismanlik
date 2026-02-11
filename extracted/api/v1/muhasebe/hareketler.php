@@ -15,7 +15,8 @@ $db = getDB();
 $pag = get_pagination();
 
 $kasaId = (int)($_GET['kasa_id'] ?? 0);
-$islemTuru = clean($_GET['islem_turu'] ?? '');
+// Frontend 'tur' filtresi gönderir
+$islemTuru = clean($_GET['islem_turu'] ?? $_GET['tur'] ?? '');
 $baslangic = clean($_GET['baslangic'] ?? '');
 $bitis = clean($_GET['bitis'] ?? '');
 $dosyaId = (int)($_GET['dosya_id'] ?? 0);
@@ -64,5 +65,12 @@ $stmt = $db->prepare("SELECT kh.*, k.ad as kasa_adi, u.ad_soyad as kullanici_adi
     LIMIT {$pag['limit']} OFFSET {$pag['offset']}");
 $stmt->execute($params);
 $items = $stmt->fetchAll();
+
+// Frontend 'tur' ve 'tarih' bekler
+foreach ($items as &$item) {
+    $item['tur'] = $item['islem_turu'] ?? '';
+    $item['tarih'] = $item['created_at'] ? substr($item['created_at'], 0, 10) : '';
+}
+unset($item);
 
 paginated_response($items, $total, $pag);

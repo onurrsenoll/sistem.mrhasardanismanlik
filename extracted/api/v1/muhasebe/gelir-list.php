@@ -77,6 +77,13 @@ $stmt = $db->prepare("SELECT g.*, d.dosya_no, k.ad as kasa_adi, u.ad_soyad as ku
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 
+// Frontend 'tur' ve 'tarih' bekler
+foreach ($items as &$item) {
+    $item['tur'] = $item['gelir_turu'] ?? '';
+    $item['tarih'] = $item['fatura_tarihi'] ?? ($item['created_at'] ? substr($item['created_at'], 0, 10) : '');
+}
+unset($item);
+
 json_success([
     'items' => $items,
     'totals' => [

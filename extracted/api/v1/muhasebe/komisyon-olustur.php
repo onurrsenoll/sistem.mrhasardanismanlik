@@ -2,8 +2,9 @@
 /**
  * POST /api/v1/muhasebe/komisyon-olustur.php
  * Yeni komisyon kaydı oluştur
- * Body: { "komisyon_turu": "...", "tutar": 2000, "dosya_id": null, "ortak_id": null,
- *         "paydas_id": null, "personel_id": null, "oran": 10, "aciklama": "..." }
+ * Body: { "ilgili_tip": "ortak|paydas", "ilgili_id": 1, "tutar": 2000, "dosya_id": null,
+ *         "oran": 10, "aciklama": "..." }
+ * Eski format da desteklenir: { "komisyon_turu": "...", "ortak_id": 1, ... }
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -14,6 +15,23 @@ require_method('POST');
 
 $user = auth_required(['admin', 'muhasebe']);
 $body = get_json_body();
+
+// Frontend 'ilgili_tip' + 'ilgili_id' gönderir → backend alanlarına map et
+if (isset($body['ilgili_tip']) && isset($body['ilgili_id'])) {
+    $ilgiliTip = strtolower($body['ilgili_tip']);
+    $ilgiliId = (int)$body['ilgili_id'];
+    if ($ilgiliTip === 'ortak') {
+        $body['komisyon_turu'] = $body['komisyon_turu'] ?? 'ortak_pay';
+        $body['ortak_id'] = $ilgiliId;
+    } elseif ($ilgiliTip === 'paydas') {
+        $body['komisyon_turu'] = $body['komisyon_turu'] ?? 'paydas_komisyon';
+        $body['paydas_id'] = $ilgiliId;
+    } else {
+        $body['komisyon_turu'] = $body['komisyon_turu'] ?? 'personel_prim';
+        $body['personel_id'] = $ilgiliId;
+    }
+}
+
 require_fields($body, ['komisyon_turu', 'tutar']);
 
 $db = getDB();
@@ -36,18 +54,27 @@ if ($dosyaId) {
     if (!$dosya) json_error('Dosya bulunamadı', 404);
 }
 
-// Ortak kontrolü
+// Ortak kontrolü (ortaklar tablosundan)
 if ($ortakId) {
-    $stmt = $db->prepare('SELECT id, ad_soyad FROM users WHERE id = ?');
+    $stmt = $db->prepare('SELECT id, ad_soyad FROM ortaklar WHERE id = ?');
     $stmt->execute([$ortakId]);
-    if (!$stmt->fetch()) json_error('Ortak bulunamadı', 404);
+    if (!$stmt->fetch()) {
+        // users tablosundan da dene
+        $stmt = $db->prepare('SELECT id, ad_soyad FROM users WHERE id = ?');
+        $stmt->execute([$ortakId]);
+        if (!$stmt->fetch()) json_error('Ortak bulunamadı', 404);
+    }
 }
 
-// Paydaş kontrolü
+// Paydaş kontrolü (paydaslar tablosundan)
 if ($paydasId) {
-    $stmt = $db->prepare('SELECT id, ad_soyad FROM users WHERE id = ?');
+    $stmt = $db->prepare('SELECT id, ad FROM paydaslar WHERE id = ?');
     $stmt->execute([$paydasId]);
-    if (!$stmt->fetch()) json_error('Paydaş bulunamadı', 404);
+    if (!$stmt->fetch()) {
+        $stmt = $db->prepare('SELECT id, ad_soyad FROM users WHERE id = ?');
+        $stmt->execute([$paydasId]);
+        if (!$stmt->fetch()) json_error('Paydaş bulunamadı', 404);
+    }
 }
 
 // Personel kontrolü

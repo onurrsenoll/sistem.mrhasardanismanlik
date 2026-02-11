@@ -14,6 +14,11 @@ require_method('POST');
 
 $user = auth_required(['admin', 'muhasebe']);
 $body = get_json_body();
+
+// Frontend 'tur' gönderir, backend 'gelir_turu' bekler
+if (!isset($body['gelir_turu']) && isset($body['tur'])) {
+    $body['gelir_turu'] = $body['tur'];
+}
 require_fields($body, ['gelir_turu', 'tutar', 'kasa_id']);
 
 $db = getDB();
@@ -23,8 +28,9 @@ $kasaId = (int)$body['kasa_id'];
 $dosyaId = !empty($body['dosya_id']) ? (int)$body['dosya_id'] : null;
 $aciklama = clean($body['aciklama'] ?? '');
 $faturaNo = clean($body['fatura_no'] ?? '');
-$faturaTarihi = !empty($body['fatura_tarihi']) ? clean($body['fatura_tarihi']) : null;
-$tahsilatDurumu = clean($body['tahsilat_durumu'] ?? 'bekliyor');
+// Frontend 'tarih' gönderir
+$faturaTarihi = !empty($body['fatura_tarihi']) ? clean($body['fatura_tarihi']) : (!empty($body['tarih']) ? clean($body['tarih']) : null);
+$tahsilatDurumu = clean($body['tahsilat_durumu'] ?? 'tahsil_edildi');
 $tahsilatTarihi = !empty($body['tahsilat_tarihi']) ? clean($body['tahsilat_tarihi']) : null;
 
 if ($tutar <= 0) json_error('Tutar 0\'dan büyük olmalı', 422);

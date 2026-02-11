@@ -13,6 +13,20 @@ require_method('POST');
 
 $user = auth_required(['admin', 'uzman', 'personel']);
 $body = get_json_body();
+
+// Frontend 'hedef_id' gönderir, backend 'alici_id' bekler
+if (!isset($body['alici_id']) && isset($body['hedef_id'])) {
+    $body['alici_id'] = $body['hedef_id'];
+}
+// Frontend 'mesaj' gönderir, backend 'icerik' bekler
+if (!isset($body['icerik']) && isset($body['mesaj'])) {
+    $body['icerik'] = $body['mesaj'];
+}
+// Frontend 'tur' gönderir, backend 'tip' bekler
+if (!isset($body['tip']) && isset($body['tur'])) {
+    $body['tip'] = $body['tur'];
+}
+
 require_fields($body, ['alici_id', 'baslik']);
 
 $db = getDB();
@@ -25,7 +39,7 @@ $alici = $stmt->fetch();
 if (!$alici) json_error('Alıcı bulunamadı', 404);
 
 $tip = $body['tip'] ?? 'bildirim';
-if (!in_array($tip, ['bildirim', 'mesaj', 'uyari', 'sistem'])) {
+if (!in_array($tip, ['bildirim', 'mesaj', 'uyari', 'sistem', 'bilgi', 'basari', 'acil'])) {
     $tip = 'bildirim';
 }
 

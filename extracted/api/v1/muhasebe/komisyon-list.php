@@ -2,7 +2,7 @@
 /**
  * GET /api/v1/muhasebe/komisyon-list.php
  * Komisyon kayıtları listesi
- * Params: dosya_id, komisyon_turu, odendi, ortak_id, paydas_id, page, limit
+ * Params: dosya_id, durum, ilgili_tip, komisyon_turu, odendi, ortak_id, paydas_id, page, limit
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -20,6 +20,9 @@ $komisyonTuru = clean($_GET['komisyon_turu'] ?? '');
 $odendi = isset($_GET['odendi']) ? (int)$_GET['odendi'] : -1;
 $ortakId = (int)($_GET['ortak_id'] ?? 0);
 $paydasId = (int)($_GET['paydas_id'] ?? 0);
+// Frontend filtreleri
+$durumF = clean($_GET['durum'] ?? '');
+$ilgiliTipF = clean($_GET['ilgili_tip'] ?? '');
 
 $where = [];
 $params = [];
@@ -34,9 +37,25 @@ if ($komisyonTuru !== '') {
     $params[] = $komisyonTuru;
 }
 
-if ($odendi >= 0) {
+// Frontend durum filtresi: bekliyor, onaylandi, odendi
+if ($durumF !== '') {
+    if ($durumF === 'odendi') {
+        $where[] = 'k.odendi = 1';
+    } elseif ($durumF === 'bekliyor' || $durumF === 'onaylandi') {
+        $where[] = 'k.odendi = 0';
+    }
+} elseif ($odendi >= 0) {
     $where[] = 'k.odendi = ?';
     $params[] = $odendi;
+}
+
+// Frontend ilgili_tip filtresi: ortak, paydas
+if ($ilgiliTipF !== '') {
+    if ($ilgiliTipF === 'ortak') {
+        $where[] = 'k.ortak_id IS NOT NULL';
+    } elseif ($ilgiliTipF === 'paydas') {
+        $where[] = 'k.paydas_id IS NOT NULL';
+    }
 }
 
 if ($ortakId) {
@@ -56,17 +75,17 @@ $stmt = $db->prepare("SELECT COUNT(*) as total FROM komisyonlar k $whereSQL");
 $stmt->execute($params);
 $total = (int)$stmt->fetch()['total'];
 
-// Liste
+// Liste - ortaklar ve paydaslar tablolarından da JOIN
 $stmt = $db->prepare("SELECT k.*,
     d.dosya_no,
     ortak.ad_soyad as ortak_adi,
-    paydas.ad_soyad as paydas_adi,
+    pds.ad as paydas_adi_tbl,
     personel.ad_soyad as personel_adi,
     kas.ad as kasa_adi
     FROM komisyonlar k
     LEFT JOIN dosyalar d ON d.id = k.dosya_id
-    LEFT JOIN users ortak ON ortak.id = k.ortak_id
-    LEFT JOIN users paydas ON paydas.id = k.paydas_id
+    LEFT JOIN ortaklar ortak ON ortak.id = k.ortak_id
+    LEFT JOIN paydaslar pds ON pds.id = k.paydas_id
     LEFT JOIN users personel ON personel.id = k.personel_id
     LEFT JOIN kasalar kas ON kas.id = k.kasa_id
     $whereSQL
@@ -74,6 +93,39 @@ $stmt = $db->prepare("SELECT k.*,
     LIMIT {$pag['limit']} OFFSET {$pag['offset']}");
 $stmt->execute($params);
 $items = $stmt->fetchAll();
+
+// Frontend uyumlu alanlar ekle
+foreach ($items as &$item) {
+    // ilgili_tip ve ilgili_adi hesapla
+    if (!empty($item['ortak_id'])) {
+        $item['ilgili_tip'] = 'ortak';
+        $item['ilgili_id'] = $item['ortak_id'];
+        $item['ilgili_adi'] = $item['ortak_adi'] ?? '';
+    } elseif (!empty($item['paydas_id'])) {
+        $item['ilgili_tip'] = 'paydas';
+        $item['ilgili_id'] = $item['paydas_id'];
+        $item['ilgili_adi'] = $item['paydas_adi_tbl'] ?? '';
+    } elseif (!empty($item['personel_id'])) {
+        $item['ilgili_tip'] = 'personel';
+        $item['ilgili_id'] = $item['personel_id'];
+        $item['ilgili_adi'] = $item['personel_adi'] ?? '';
+    } else {
+        $item['ilgili_tip'] = '';
+        $item['ilgili_id'] = null;
+        $item['ilgili_adi'] = '';
+    }
+
+    // durum alanı: odendi (1) → 'odendi', (0) → 'bekliyor'
+    if ($item['odendi'] == 1) {
+        $item['durum'] = 'odendi';
+    } else {
+        $item['durum'] = 'bekliyor';
+    }
+
+    // Gereksiz alan temizliği
+    unset($item['paydas_adi_tbl']);
+}
+unset($item);
 
 // Toplamlar
 $stmt = $db->prepare("SELECT

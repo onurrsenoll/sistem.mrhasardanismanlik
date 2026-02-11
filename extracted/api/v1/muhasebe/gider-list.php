@@ -16,7 +16,8 @@ $db = getDB();
 $pag = get_pagination();
 
 $dosyaId = (int)($_GET['dosya_id'] ?? 0);
-$giderTuru = clean($_GET['gider_turu'] ?? '');
+// Frontend 'kategori' filtresi gönderir
+$giderTuru = clean($_GET['gider_turu'] ?? $_GET['kategori'] ?? '');
 $baslangic = clean($_GET['baslangic'] ?? '');
 $bitis = clean($_GET['bitis'] ?? '');
 
@@ -66,6 +67,13 @@ $stmt = $db->prepare("SELECT g.*, d.dosya_no, k.ad as kasa_adi, u.ad_soyad as ku
     LIMIT {$pag['limit']} OFFSET {$pag['offset']}");
 $stmt->execute($params);
 $items = $stmt->fetchAll();
+
+// Frontend 'kategori' ve 'tarih' bekler
+foreach ($items as &$item) {
+    $item['kategori'] = $item['gider_turu'] ?? '';
+    $item['tarih'] = $item['islem_tarihi'] ?? '';
+}
+unset($item);
 
 json_success([
     'items' => $items,

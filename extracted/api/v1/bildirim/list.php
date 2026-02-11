@@ -46,4 +46,11 @@ $stmt = $db->prepare("SELECT b.*, g.ad_soyad as gonderen_adi, d.dosya_no
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 
+// Frontend 'mesaj' ve 'tur' bekler
+foreach ($items as &$item) {
+    $item['mesaj'] = $item['icerik'] ?? '';
+    $item['tur'] = $item['tip'] ?? 'bildirim';
+}
+unset($item);
+
 paginated_response($items, $total, $pag);

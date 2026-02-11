@@ -14,7 +14,19 @@ require_method('POST');
 
 $user = auth_required(['admin', 'muhasebe']);
 $body = get_json_body();
-require_fields($body, ['gider_turu', 'tutar', 'kasa_id', 'islem_tarihi']);
+
+// Frontend 'kategori' gönderir, backend 'gider_turu' bekler
+if (!isset($body['gider_turu']) && isset($body['kategori'])) {
+    $body['gider_turu'] = $body['kategori'];
+}
+// Frontend 'tarih' gönderir, backend 'islem_tarihi' bekler
+if (!isset($body['islem_tarihi']) && isset($body['tarih'])) {
+    $body['islem_tarihi'] = $body['tarih'];
+}
+if (empty($body['islem_tarihi'])) {
+    $body['islem_tarihi'] = date('Y-m-d');
+}
+require_fields($body, ['gider_turu', 'tutar', 'kasa_id']);
 
 $db = getDB();
 $giderTuru = clean($body['gider_turu']);

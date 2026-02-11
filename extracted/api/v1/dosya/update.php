@@ -26,11 +26,19 @@ if (!$dosya) json_error('Dosya bulunamadı', 404);
 try {
     $db->beginTransaction();
 
+    // Frontend alias'ları backend alanlarına map et
+    if (!isset($body['dosya_kaynagi']) && isset($body['dosya_kaynak'])) {
+        $body['dosya_kaynagi'] = $body['dosya_kaynak'];
+    }
+    if (!isset($body['komisyon_orani']) && isset($body['komisyon'])) {
+        $body['komisyon_orani'] = $body['komisyon'];
+    }
+
     // Dosya güncelle
     $dosyaFields = ['asama', 'talep_turu', 'sigorta_sirket', 'police_no', 'sigorta_turu',
         'dosya_kaynagi', 'avukat_id', 'sorumlu_id', 'haklilik', 'komisyon_orani',
         'kaza_tarihi', 'kaza_il', 'kaza_ilce', 'pozisyon', 'kusur_durumu',
-        'sakatlik_aciklama', 'notlar', 'kapanma_tarihi'];
+        'sakatlik_aciklama', 'notlar', 'kapanma_tarihi', 'plaka'];
 
     $sets = [];
     $params = [];
