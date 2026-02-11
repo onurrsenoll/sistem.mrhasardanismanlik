@@ -57,29 +57,57 @@ MR.BH_EMSAL = [
   {kaynak:'YARGITAY',yil:'2023',maluliyet:5,tutar:85000,detay:'%5 MALULİYET, 50 YAŞ'}
 ];
 
-/* ---------- ARAÇ VERİ TABANI ---------- */
+/* ---------- ARAÇ VERİ TABANI (GENİŞLETİLMİŞ) ---------- */
 MR.ARAC_DB = {
-  "VOLKSWAGEN":{premium:false,modeller:["GOLF","PASSAT","POLO","TIGUAN","T-ROC","CADDY","ARTEON","ID.4","JETTA"]},
-  "RENAULT":{premium:false,modeller:["CLIO","MEGANE","CAPTUR","KADJAR","TALISMAN","SYMBOL","KANGOO"]},
-  "FIAT":{premium:false,modeller:["EGEA","EGEA CROSS","DOBLO","500","PANDA","TIPO","LINEA"]},
-  "FORD":{premium:false,modeller:["FOCUS","FIESTA","KUGA","PUMA","COURIER","RANGER","MONDEO"]},
-  "TOYOTA":{premium:false,modeller:["COROLLA","C-HR","RAV4","YARIS","CAMRY","HILUX"]},
-  "HYUNDAI":{premium:false,modeller:["I20","TUCSON","BAYON","KONA","I10","I30","ELANTRA","GETZ"]},
+  "VOLKSWAGEN":{premium:false,modeller:["AMAROK","ARTEON","CADDY","GOLF","ID.3","ID.4","JETTA","PASSAT","POLO","T-CROSS","T-ROC","TIGUAN","TOUAREG","TRANSPORTER"]},
+  "RENAULT":{premium:false,modeller:["ARKANA","CAPTUR","CLIO","KADJAR","KANGOO","MEGANE","SCENIC","SYMBOL","TALISMAN","ZOE"]},
+  "FIAT":{premium:false,modeller:["500","DOBLO","EGEA","EGEA CROSS","LINEA","PANDA","PUNTO","TIPO"]},
+  "FORD":{premium:false,modeller:["COURIER","ECOSPORT","FIESTA","FOCUS","KUGA","MONDEO","PUMA","RANGER","TOURNEO","TRANSIT"]},
+  "TOYOTA":{premium:false,modeller:["AURIS","C-HR","CAMRY","COROLLA","COROLLA CROSS","HILUX","RAV4","YARIS","YARIS CROSS"]},
+  "HYUNDAI":{premium:false,modeller:["BAYON","ELANTRA","GETZ","I10","I20","I30","IONIQ 5","KONA","SANTA FE","TUCSON"]},
   "HONDA":{premium:false,modeller:["CIVIC","CR-V","HR-V","JAZZ","ACCORD"]},
-  "KIA":{premium:false,modeller:["SPORTAGE","CEED","STONIC","PICANTO","NIRO","SORENTO"]},
-  "OPEL":{premium:false,modeller:["ASTRA","CORSA","MOKKA","GRANDLAND","CROSSLAND"]},
-  "PEUGEOT":{premium:false,modeller:["208","2008","308","3008","508","5008","301"]},
-  "BMW":{premium:true,modeller:["1 SERİSİ","3 SERİSİ","5 SERİSİ","X1","X3","X5","4 SERİSİ","7 SERİSİ"]},
-  "MERCEDES-BENZ":{premium:true,modeller:["A SERİSİ","C SERİSİ","E SERİSİ","S SERİSİ","CLA","GLA","GLC","GLE"]},
-  "AUDI":{premium:true,modeller:["A3","A4","A6","Q3","Q5","Q7","A1","A5","TT"]},
-  "VOLVO":{premium:true,modeller:["XC40","XC60","XC90","S60","S90","V40"]},
-  "PORSCHE":{premium:true,modeller:["CAYENNE","MACAN","911","TAYCAN","PANAMERA"]},
+  "KIA":{premium:false,modeller:["CEED","CERATO","EV6","NIRO","PICANTO","RIO","SORENTO","SPORTAGE","STONIC"]},
+  "OPEL":{premium:false,modeller:["ASTRA","COMBO","CORSA","CROSSLAND","GRANDLAND","INSIGNIA","MOKKA"]},
+  "PEUGEOT":{premium:false,modeller:["208","2008","301","308","3008","508","5008","PARTNER","RIFTER"]},
+  "CITROEN":{premium:false,modeller:["BERLINGO","C3","C3 AIRCROSS","C4","C5 AIRCROSS"]},
+  "DACIA":{premium:false,modeller:["DOKKER","DUSTER","JOGGER","LODGY","LOGAN","SANDERO","SPRING"]},
+  "SKODA":{premium:false,modeller:["FABIA","KAMIQ","KAROQ","KODIAQ","OCTAVIA","SCALA","SUPERB"]},
+  "SEAT":{premium:false,modeller:["ARONA","ATECA","IBIZA","LEON","TARRACO"]},
+  "BMW":{premium:true,modeller:["1 SERİSİ","2 SERİSİ","3 SERİSİ","4 SERİSİ","5 SERİSİ","7 SERİSİ","X1","X2","X3","X4","X5","X6","X7","I4","IX"]},
+  "MERCEDES-BENZ":{premium:true,modeller:["A SERİSİ","B SERİSİ","C SERİSİ","E SERİSİ","S SERİSİ","CLA","CLS","GLA","GLB","GLC","GLE","GLS","EQA","EQB","EQC","EQE","EQS"]},
+  "AUDI":{premium:true,modeller:["A1","A3","A4","A5","A6","A7","A8","Q2","Q3","Q5","Q7","Q8","E-TRON","TT"]},
+  "VOLVO":{premium:true,modeller:["S60","S90","V40","V60","V90","XC40","XC60","XC90","C40"]},
+  "PORSCHE":{premium:true,modeller:["911","BOXSTER","CAYENNE","CAYMAN","MACAN","PANAMERA","TAYCAN"]},
+  "LEXUS":{premium:true,modeller:["CT","ES","IS","LC","LS","NX","RC","RX","UX"]},
   "TESLA":{premium:true,modeller:["MODEL 3","MODEL Y","MODEL S","MODEL X"]},
-  "DACIA":{premium:false,modeller:["DUSTER","SANDERO","JOGGER","SPRING","LOGAN"]},
-  "SKODA":{premium:false,modeller:["OCTAVIA","SUPERB","KAMIQ","KAROQ","KODIAQ","FABIA"]},
-  "SEAT":{premium:false,modeller:["LEON","IBIZA","ARONA","ATECA"]},
-  "LEXUS":{premium:true,modeller:["NX","RX","UX","ES","IS"]}
+  "JEEP":{premium:false,modeller:["AVENGER","CHEROKEE","COMPASS","GLADIATOR","GRAND CHEROKEE","RENEGADE","WRANGLER"]},
+  "MAZDA":{premium:false,modeller:["2","3","6","CX-3","CX-30","CX-5","CX-60","MX-5"]},
+  "NISSAN":{premium:false,modeller:["JUKE","LEAF","MICRA","NAVARA","QASHQAI","X-TRAIL"]}
 };
+
+/* ---------- TAHKİM EMSAL VERİTABANI (2024-2025 GENİŞLETİLMİŞ) ---------- */
+MR.TAHKIM_DB = [
+  {dosyaNo:"2025-BMW-130K",tarih:"03.02.2025",yil:2025,marka:"BMW",model:"3 SERİSİ",aracYili:2023,segment:"premium",km:25000,rayic:3000000,onarim:450000,dk:300000,onceki:0,bolge:"on",kaynak:"hakanmert.av.tr"},
+  {dosyaNo:"2025-JEEP-98K",tarih:"15.01.2025",yil:2025,marka:"JEEP",model:"COMPASS",aracYili:2020,segment:"orta",km:56000,rayic:1300000,onarim:105000,dk:98000,onceki:0,bolge:"yan",kaynak:"sigortatahkim.org"},
+  {dosyaNo:"2025-AUDI-A3",tarih:"20.01.2025",yil:2025,marka:"AUDI",model:"A3",aracYili:2020,segment:"premium",km:59000,rayic:1800000,onarim:83000,dk:127000,onceki:0,bolge:"yan",kaynak:"tahkim.org"},
+  {dosyaNo:"2025-VW-TIGUAN",tarih:"10.02.2025",yil:2025,marka:"VOLKSWAGEN",model:"TIGUAN",aracYili:2021,segment:"orta",km:45000,rayic:1650000,onarim:95000,dk:82000,onceki:1,bolge:"on",kaynak:"sigortatahkim.org"},
+  {dosyaNo:"2025-TOYOTA-COROLLA",tarih:"25.01.2025",yil:2025,marka:"TOYOTA",model:"COROLLA",aracYili:2022,segment:"orta",km:35000,rayic:1200000,onarim:55000,dk:48000,onceki:0,bolge:"arka",kaynak:"sonkarar.com"},
+  {dosyaNo:"K-2024/317761",tarih:"15.09.2024",yil:2024,marka:"VOLKSWAGEN",model:"PASSAT",aracYili:2019,segment:"orta",km:75000,rayic:1050000,onarim:120000,dk:50000,onceki:0,bolge:"yan",kaynak:"sigortatahkim.org"},
+  {dosyaNo:"K-2024/333216",tarih:"20.10.2024",yil:2024,marka:"FORD",model:"FOCUS",aracYili:2018,segment:"orta",km:85000,rayic:725000,onarim:95000,dk:35000,onceki:1,bolge:"arka",kaynak:"sigortatahkim.org"},
+  {dosyaNo:"K-2024/286826",tarih:"05.07.2024",yil:2024,marka:"RENAULT",model:"MEGANE",aracYili:2019,segment:"ekonomik",km:110000,rayic:580000,onarim:36697,dk:34747,onceki:0,bolge:"on",kaynak:"sigortatahkim.org"},
+  {dosyaNo:"2024-MERCEDES-C",tarih:"12.08.2024",yil:2024,marka:"MERCEDES-BENZ",model:"C SERİSİ",aracYili:2021,segment:"premium",km:40000,rayic:2800000,onarim:280000,dk:224000,onceki:0,bolge:"on",kaynak:"lexpera.com.tr"},
+  {dosyaNo:"2024-HYUNDAI-TUCSON",tarih:"18.06.2024",yil:2024,marka:"HYUNDAI",model:"TUCSON",aracYili:2020,segment:"orta",km:68000,rayic:1150000,onarim:72000,dk:57500,onceki:1,bolge:"yan",kaynak:"sonkarar.com"},
+  {dosyaNo:"2024-KIA-SPORTAGE",tarih:"22.05.2024",yil:2024,marka:"KIA",model:"SPORTAGE",aracYili:2021,segment:"orta",km:52000,rayic:1380000,onarim:88000,dk:69000,onceki:0,bolge:"on",kaynak:"sigortatahkim.org"},
+  {dosyaNo:"2024-FIAT-EGEA",tarih:"10.04.2024",yil:2024,marka:"FIAT",model:"EGEA",aracYili:2020,segment:"ekonomik",km:95000,rayic:620000,onarim:42000,dk:24800,onceki:2,bolge:"arka",kaynak:"sonkarar.com"},
+  {dosyaNo:"2024-PEUGEOT-3008",tarih:"28.03.2024",yil:2024,marka:"PEUGEOT",model:"3008",aracYili:2019,segment:"orta",km:78000,rayic:980000,onarim:65000,dk:49000,onceki:1,bolge:"on",kaynak:"sigortatahkim.org"},
+  {dosyaNo:"2024-VOLVO-XC60",tarih:"15.02.2024",yil:2024,marka:"VOLVO",model:"XC60",aracYili:2020,segment:"premium",km:55000,rayic:2200000,onarim:180000,dk:154000,onceki:0,bolge:"yan",kaynak:"lexpera.com.tr"},
+  {dosyaNo:"2024-HONDA-CIVIC",tarih:"08.03.2024",yil:2024,marka:"HONDA",model:"CIVIC",aracYili:2021,segment:"orta",km:48000,rayic:1280000,onarim:78000,dk:64000,onceki:0,bolge:"on",kaynak:"sonkarar.com"},
+  {dosyaNo:"2024-DACIA-DUSTER",tarih:"25.04.2024",yil:2024,marka:"DACIA",model:"DUSTER",aracYili:2021,segment:"ekonomik",km:62000,rayic:780000,onarim:45000,dk:31200,onceki:0,bolge:"on",kaynak:"sigortatahkim.org"},
+  {dosyaNo:"2024-SKODA-OCTAVIA",tarih:"12.06.2024",yil:2024,marka:"SKODA",model:"OCTAVIA",aracYili:2020,segment:"orta",km:72000,rayic:920000,onarim:58000,dk:46000,onceki:1,bolge:"arka",kaynak:"sonkarar.com"},
+  {dosyaNo:"2024-OPEL-ASTRA",tarih:"30.07.2024",yil:2024,marka:"OPEL",model:"ASTRA",aracYili:2019,segment:"ekonomik",km:88000,rayic:650000,onarim:38000,dk:26000,onceki:2,bolge:"yan",kaynak:"sigortatahkim.org"},
+  {dosyaNo:"2024-SEAT-LEON",tarih:"18.08.2024",yil:2024,marka:"SEAT",model:"LEON",aracYili:2020,segment:"orta",km:65000,rayic:850000,onarim:52000,dk:42500,onceki:0,bolge:"on",kaynak:"sonkarar.com"},
+  {dosyaNo:"2024-CITROEN-C3",tarih:"05.09.2024",yil:2024,marka:"CITROEN",model:"C3",aracYili:2021,segment:"ekonomik",km:55000,rayic:560000,onarim:32000,dk:22400,onceki:0,bolge:"arka",kaynak:"sigortatahkim.org"}
+];
 
 /* ---------- SİGORTA ŞİRKETLERİ ---------- */
 MR.SIGORTA = [
