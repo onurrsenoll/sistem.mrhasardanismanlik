@@ -2,7 +2,7 @@
 /**
  * PUT /api/v1/paydas/update.php
  * Paydaş güncelle
- * Body: { "id": 1, "firma_adi": "...", ... }
+ * Body: { "id": 1, "ad": "...", ... }
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -23,7 +23,7 @@ $stmt->execute([$id]);
 $paydas = $stmt->fetch();
 if (!$paydas) json_error('Paydaş bulunamadı', 404);
 
-$fields = ['firma_adi', 'tip', 'yetkili_adi', 'telefon', 'telefon2', 'email', 'adres', 'il', 'ilce', 'vergi_no', 'iban', 'komisyon_orani', 'notlar', 'durum'];
+$fields = ['ad', 'tur', 'yetkili', 'telefon', 'telefon2', 'email', 'adres', 'il', 'ilce', 'vergi_no', 'iban', 'komisyon_orani', 'notlar', 'durum'];
 
 $sets = [];
 $params = [];
@@ -45,6 +45,6 @@ $params[] = $id;
 $stmt = $db->prepare('UPDATE paydaslar SET ' . implode(', ', $sets) . ' WHERE id = ?');
 $stmt->execute($params);
 
-log_action($user['id'], 'paydas_guncelle', "Paydaş güncellendi: {$paydas['firma_adi']}", 'paydaslar', $id);
+log_action($user['id'], 'paydas_guncelle', "Paydaş güncellendi: {$paydas['ad']}", 'paydaslar', $id);
 
 json_success(['id' => $id], 'Paydaş güncellendi');

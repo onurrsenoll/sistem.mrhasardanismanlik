@@ -2,7 +2,7 @@
 /**
  * POST /api/v1/paydas/create.php
  * Yeni paydaş kaydı oluştur
- * Body: { "firma_adi": "...", "tip": "avukat", ... }
+ * Body: { "ad": "...", "tur": "avukat", "yetkili": "...", ... }
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -15,17 +15,17 @@ $user = auth_required(['admin', 'uzman', 'personel']);
 $body = get_json_body();
 
 // Zorunlu alanlar
-require_fields($body, ['firma_adi', 'tip']);
+require_fields($body, ['ad']);
 
 $db = getDB();
 
 try {
-    $stmt = $db->prepare('INSERT INTO paydaslar (firma_adi, tip, yetkili_adi, telefon, telefon2, email, adres, il, ilce, vergi_no, iban, komisyon_orani, notlar, durum, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt = $db->prepare('INSERT INTO paydaslar (ad, tur, yetkili, telefon, telefon2, email, adres, il, ilce, vergi_no, iban, komisyon_orani, notlar, durum, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 
     $stmt->execute([
-        clean($body['firma_adi']),
-        clean($body['tip']),
-        clean($body['yetkili_adi'] ?? ''),
+        clean($body['ad']),
+        clean($body['tur'] ?? 'sigorta_acentesi'),
+        clean($body['yetkili'] ?? ''),
         clean($body['telefon'] ?? ''),
         clean($body['telefon2'] ?? ''),
         clean($body['email'] ?? ''),
@@ -36,13 +36,13 @@ try {
         clean($body['iban'] ?? ''),
         isset($body['komisyon_orani']) ? (float)$body['komisyon_orani'] : 0,
         clean($body['notlar'] ?? ''),
-        'aktif',
+        clean($body['durum'] ?? 'aktif'),
         $user['id']
     ]);
 
     $paydasId = (int)$db->lastInsertId();
 
-    log_action($user['id'], 'paydas_olustur', "Paydaş oluşturuldu: " . clean($body['firma_adi']), 'paydaslar', $paydasId);
+    log_action($user['id'], 'paydas_olustur', "Paydaş oluşturuldu: " . clean($body['ad']), 'paydaslar', $paydasId);
 
     json_success([
         'id' => $paydasId

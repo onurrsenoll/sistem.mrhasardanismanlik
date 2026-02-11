@@ -23,7 +23,7 @@ $stmt->execute([$id]);
 $ortak = $stmt->fetch();
 if (!$ortak) json_error('Ortak bulunamadı', 404);
 
-$fields = ['ad_soyad', 'unvan', 'baro', 'sicil_no', 'telefon', 'telefon2', 'email', 'adres', 'il', 'iban', 'vergi_no', 'pay_orani', 'kasa_id', 'notlar', 'durum'];
+$fields = ['ad_soyad', 'firma', 'baro', 'sicil_no', 'telefon', 'telefon2', 'email', 'adres', 'il', 'iban', 'vergi_no', 'odeme_orani', 'kasa_id', 'notlar', 'durum'];
 
 $sets = [];
 $params = [];
@@ -31,7 +31,7 @@ $params = [];
 foreach ($fields as $field) {
     if (array_key_exists($field, $body)) {
         $sets[] = "$field = ?";
-        if ($field === 'pay_orani') {
+        if ($field === 'odeme_orani') {
             $params[] = (float)$body[$field];
         } elseif ($field === 'kasa_id') {
             $params[] = !empty($body[$field]) ? (int)$body[$field] : null;

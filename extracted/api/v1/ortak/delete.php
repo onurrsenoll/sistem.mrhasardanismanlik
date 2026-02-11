@@ -27,7 +27,6 @@ $stmt->execute([$id]);
 $hareketSayisi = (int)$stmt->fetch()['total'];
 
 if ($hareketSayisi > 0) {
-    // Hareketleri varsa soft delete — durumu pasif yap
     $stmt = $db->prepare("UPDATE ortaklar SET durum = 'pasif' WHERE id = ?");
     $stmt->execute([$id]);
 
@@ -35,7 +34,6 @@ if ($hareketSayisi > 0) {
 
     json_success(['id' => $id], 'Ortağın hareketleri bulunduğu için pasife alındı');
 } else {
-    // Hareketleri yoksa kalıcı sil
     $stmt = $db->prepare('DELETE FROM ortaklar WHERE id = ?');
     $stmt->execute([$id]);
 

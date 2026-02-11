@@ -2,7 +2,7 @@
 /**
  * POST /api/v1/ortak/create.php
  * Yeni ortak kaydı oluştur
- * Body: { "ad_soyad": "...", "unvan": "...", ... }
+ * Body: { "ad_soyad": "...", "firma": "...", ... }
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -20,11 +20,11 @@ require_fields($body, ['ad_soyad']);
 $db = getDB();
 
 try {
-    $stmt = $db->prepare('INSERT INTO ortaklar (ad_soyad, unvan, baro, sicil_no, telefon, telefon2, email, adres, il, iban, vergi_no, pay_orani, kasa_id, notlar, durum, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt = $db->prepare('INSERT INTO ortaklar (ad_soyad, firma, baro, sicil_no, telefon, telefon2, email, adres, il, iban, vergi_no, odeme_orani, kasa_id, notlar, durum, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 
     $stmt->execute([
         clean($body['ad_soyad']),
-        clean($body['unvan'] ?? ''),
+        clean($body['firma'] ?? ''),
         clean($body['baro'] ?? ''),
         clean($body['sicil_no'] ?? ''),
         clean($body['telefon'] ?? ''),
@@ -34,10 +34,10 @@ try {
         clean($body['il'] ?? ''),
         clean($body['iban'] ?? ''),
         clean($body['vergi_no'] ?? ''),
-        isset($body['pay_orani']) ? (float)$body['pay_orani'] : 0,
+        isset($body['odeme_orani']) ? (float)$body['odeme_orani'] : 0,
         !empty($body['kasa_id']) ? (int)$body['kasa_id'] : null,
         clean($body['notlar'] ?? ''),
-        'aktif',
+        clean($body['durum'] ?? 'aktif'),
         $user['id']
     ]);
 

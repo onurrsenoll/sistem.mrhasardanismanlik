@@ -2,9 +2,9 @@
 /**
  * GET /api/v1/ortak/list.php
  * Ortak listesi — arama, filtreleme, sayfalama
- * Toplam pay tutarlarını dahil eder
+ * Toplam ödeme tutarlarını dahil eder
  *
- * Query params: ?durum=aktif&arama=xyz&page=1&limit=25
+ * Query params: ?durum=aktif&q=xyz&page=1&limit=25
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -19,7 +19,8 @@ $pag = get_pagination();
 
 // Filtreler
 $durum = clean($_GET['durum'] ?? '');
-$arama = clean($_GET['arama'] ?? '');
+$arama = clean($_GET['q'] ?? $_GET['arama'] ?? '');
+$il = clean($_GET['il'] ?? '');
 
 $where = [];
 $params = [];
@@ -29,10 +30,15 @@ if ($durum !== '') {
     $params[] = $durum;
 }
 
+if ($il !== '') {
+    $where[] = 'o.il = ?';
+    $params[] = $il;
+}
+
 if ($arama !== '') {
     $search = "%$arama%";
-    $where[] = '(o.ad_soyad LIKE ? OR o.unvan LIKE ? OR o.telefon LIKE ? OR o.email LIKE ?)';
-    $params = array_merge($params, [$search, $search, $search, $search]);
+    $where[] = '(o.ad_soyad LIKE ? OR o.firma LIKE ? OR o.telefon LIKE ? OR o.email LIKE ? OR o.baro LIKE ?)';
+    $params = array_merge($params, [$search, $search, $search, $search, $search]);
 }
 
 $whereSQL = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
@@ -42,11 +48,13 @@ $stmt = $db->prepare("SELECT COUNT(*) as total FROM ortaklar o $whereSQL");
 $stmt->execute($params);
 $total = (int)$stmt->fetch()['total'];
 
-// Veri çek — toplam pay tutarları dahil
+// Veri çek — toplam ödeme tutarları dahil
 $stmt = $db->prepare("SELECT o.*,
-    COALESCE((SELECT SUM(oh.tutar) FROM ortak_hareketleri oh WHERE oh.ortak_id = o.id AND oh.islem_turu = 'pay'), 0) as toplam_pay,
-    COALESCE((SELECT SUM(oh.tutar) FROM ortak_hareketleri oh WHERE oh.ortak_id = o.id AND oh.islem_turu = 'odeme'), 0) as toplam_odeme
+    COALESCE(k.ad, '') as kasa_adi,
+    COALESCE((SELECT SUM(oh.tutar) FROM ortak_hareketleri oh WHERE oh.ortak_id = o.id AND oh.tur = 'odeme'), 0) as toplam_odeme,
+    COALESCE((SELECT SUM(oh.tutar) FROM ortak_hareketleri oh WHERE oh.ortak_id = o.id AND oh.tur = 'tahsilat'), 0) as toplam_tahsilat
     FROM ortaklar o
+    LEFT JOIN kasalar k ON k.id = o.kasa_id
     $whereSQL
     ORDER BY o.created_at DESC
     LIMIT {$pag['limit']} OFFSET {$pag['offset']}");

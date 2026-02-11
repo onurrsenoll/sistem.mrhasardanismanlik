@@ -3,7 +3,7 @@
  * GET /api/v1/paydas/komisyon-list.php
  * Paydaş komisyon listesi — filtreleme, sayfalama
  *
- * Query params: ?paydas_id=1&dosya_id=5&odendi=0&page=1&limit=25
+ * Query params: ?paydas_id=1&dosya_id=5&durum=bekliyor&page=1&limit=25
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -19,7 +19,7 @@ $pag = get_pagination();
 // Filtreler
 $paydasId = (int)($_GET['paydas_id'] ?? 0);
 $dosyaId  = (int)($_GET['dosya_id'] ?? 0);
-$odendi   = isset($_GET['odendi']) ? clean($_GET['odendi']) : '';
+$durum    = clean($_GET['durum'] ?? '');
 
 $where = [];
 $params = [];
@@ -34,9 +34,9 @@ if ($dosyaId) {
     $params[] = $dosyaId;
 }
 
-if ($odendi !== '') {
-    $where[] = 'pk.odendi = ?';
-    $params[] = (int)$odendi;
+if ($durum !== '') {
+    $where[] = 'pk.durum = ?';
+    $params[] = $durum;
 }
 
 $whereSQL = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
@@ -47,7 +47,7 @@ $stmt->execute($params);
 $total = (int)$stmt->fetch()['total'];
 
 // Veri çek
-$stmt = $db->prepare("SELECT pk.*, p.firma_adi as paydas_adi, d.dosya_no
+$stmt = $db->prepare("SELECT pk.*, p.ad as paydas_adi, d.dosya_no
     FROM paydas_komisyonlari pk
     LEFT JOIN paydaslar p ON p.id = pk.paydas_id
     LEFT JOIN dosyalar d ON d.id = pk.dosya_id

@@ -4,7 +4,7 @@
  * Paydaş listesi — arama, filtreleme, sayfalama
  * Komisyon toplamlarını dahil eder
  *
- * Query params: ?tip=avukat&durum=aktif&arama=xyz&page=1&limit=25
+ * Query params: ?tur=avukat&durum=aktif&q=xyz&page=1&limit=25
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -18,16 +18,16 @@ $db = getDB();
 $pag = get_pagination();
 
 // Filtreler
-$tip   = clean($_GET['tip'] ?? '');
+$tur   = clean($_GET['tur'] ?? $_GET['tip'] ?? '');
 $durum = clean($_GET['durum'] ?? '');
-$arama = clean($_GET['arama'] ?? '');
+$arama = clean($_GET['q'] ?? $_GET['arama'] ?? '');
 
 $where = [];
 $params = [];
 
-if ($tip !== '') {
-    $where[] = 'p.tip = ?';
-    $params[] = $tip;
+if ($tur !== '') {
+    $where[] = 'p.tur = ?';
+    $params[] = $tur;
 }
 
 if ($durum !== '') {
@@ -37,7 +37,7 @@ if ($durum !== '') {
 
 if ($arama !== '') {
     $search = "%$arama%";
-    $where[] = '(p.firma_adi LIKE ? OR p.yetkili_adi LIKE ? OR p.telefon LIKE ? OR p.email LIKE ?)';
+    $where[] = '(p.ad LIKE ? OR p.yetkili LIKE ? OR p.telefon LIKE ? OR p.email LIKE ?)';
     $params = array_merge($params, [$search, $search, $search, $search]);
 }
 
@@ -51,8 +51,8 @@ $total = (int)$stmt->fetch()['total'];
 // Veri çek — komisyon toplamları dahil
 $stmt = $db->prepare("SELECT p.*,
     COALESCE((SELECT SUM(pk.tutar) FROM paydas_komisyonlari pk WHERE pk.paydas_id = p.id), 0) as toplam_komisyon,
-    COALESCE((SELECT SUM(pk.tutar) FROM paydas_komisyonlari pk WHERE pk.paydas_id = p.id AND pk.odendi = 1), 0) as odenen_komisyon,
-    COALESCE((SELECT SUM(pk.tutar) FROM paydas_komisyonlari pk WHERE pk.paydas_id = p.id AND pk.odendi = 0), 0) as bekleyen_komisyon
+    COALESCE((SELECT SUM(pk.tutar) FROM paydas_komisyonlari pk WHERE pk.paydas_id = p.id AND pk.durum = 'odendi'), 0) as odenen_komisyon,
+    COALESCE((SELECT SUM(pk.tutar) FROM paydas_komisyonlari pk WHERE pk.paydas_id = p.id AND pk.durum = 'bekliyor'), 0) as bekleyen_komisyon
     FROM paydaslar p
     $whereSQL
     ORDER BY p.created_at DESC

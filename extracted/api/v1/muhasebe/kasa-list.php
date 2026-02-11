@@ -30,4 +30,10 @@ $stmt = $db->prepare("SELECT k.*,
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 
+// Frontend 'tur' (küçük harf) bekler, DB 'tip' döndürür
+foreach ($items as &$item) {
+    $item['tur'] = strtolower($item['tip']);
+}
+unset($item);
+
 json_success($items);

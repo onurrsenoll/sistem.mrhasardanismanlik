@@ -26,8 +26,8 @@ if (!$paydas) json_error('Paydaş bulunamadı', 404);
 // Komisyon özeti
 $stmt = $db->prepare("SELECT
     COALESCE(SUM(tutar), 0) as toplam_komisyon,
-    COALESCE(SUM(CASE WHEN odendi = 1 THEN tutar ELSE 0 END), 0) as odenen_komisyon,
-    COALESCE(SUM(CASE WHEN odendi = 0 THEN tutar ELSE 0 END), 0) as bekleyen_komisyon,
+    COALESCE(SUM(CASE WHEN durum = 'odendi' THEN tutar ELSE 0 END), 0) as odenen_komisyon,
+    COALESCE(SUM(CASE WHEN durum = 'bekliyor' THEN tutar ELSE 0 END), 0) as bekleyen_komisyon,
     COUNT(*) as toplam_kayit
     FROM paydas_komisyonlari WHERE paydas_id = ?");
 $stmt->execute([$id]);

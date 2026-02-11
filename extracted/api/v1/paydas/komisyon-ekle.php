@@ -2,9 +2,9 @@
 /**
  * POST /api/v1/paydas/komisyon-ekle.php
  * Paydaşa komisyon kaydı ekle
- * Body: { "paydas_id": 1, "tutar": 5000, "dosya_id": null, "odendi": 0, "odeme_tarihi": null, "kasa_id": null, "aciklama": "..." }
+ * Body: { "paydas_id": 1, "tutar": 5000, "dosya_id": null, "durum": "bekliyor", "tarih": "2025-01-01", "kasa_id": null, "aciklama": "..." }
  *
- * odendi=1 ve kasa_id varsa, kasa bakiyesinden düşülür
+ * durum='odendi' ve kasa_id varsa, kasa bakiyesinden düşülür
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -24,15 +24,21 @@ $db = getDB();
 $paydasId    = (int)$body['paydas_id'];
 $tutar       = (float)$body['tutar'];
 $dosyaId     = !empty($body['dosya_id']) ? (int)$body['dosya_id'] : null;
-$odendi      = !empty($body['odendi']) ? 1 : 0;
+$durum       = clean($body['durum'] ?? 'bekliyor');
+$tarih       = !empty($body['tarih']) ? $body['tarih'] : date('Y-m-d');
 $odemeTarihi = !empty($body['odeme_tarihi']) ? $body['odeme_tarihi'] : null;
 $kasaId      = !empty($body['kasa_id']) ? (int)$body['kasa_id'] : null;
 $aciklama    = clean($body['aciklama'] ?? '');
 
+// Eski format uyumluluğu: odendi=1 → durum='odendi'
+if (isset($body['odendi'])) {
+    $durum = $body['odendi'] ? 'odendi' : 'bekliyor';
+}
+
 if ($tutar <= 0) json_error('Tutar 0\'dan büyük olmalı', 422);
 
 // Paydaş kontrolü
-$stmt = $db->prepare('SELECT id, firma_adi FROM paydaslar WHERE id = ?');
+$stmt = $db->prepare('SELECT id, ad FROM paydaslar WHERE id = ?');
 $stmt->execute([$paydasId]);
 $paydas = $stmt->fetch();
 if (!$paydas) json_error('Paydaş bulunamadı', 404);
@@ -56,13 +62,14 @@ if ($kasaId) {
 $db->beginTransaction();
 try {
     // Komisyon kaydı
-    $stmt = $db->prepare('INSERT INTO paydas_komisyonlari (paydas_id, dosya_id, tutar, odendi, odeme_tarihi, kasa_id, aciklama, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt = $db->prepare('INSERT INTO paydas_komisyonlari (paydas_id, dosya_id, tutar, durum, tarih, odeme_tarihi, kasa_id, aciklama, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $stmt->execute([
         $paydasId,
         $dosyaId,
         $tutar,
-        $odendi,
-        $odendi ? ($odemeTarihi ?: date('Y-m-d')) : null,
+        $durum,
+        $tarih,
+        $durum === 'odendi' ? ($odemeTarihi ?: date('Y-m-d')) : null,
         $kasaId,
         $aciklama,
         $user['id']
@@ -71,7 +78,7 @@ try {
     $komisyonId = (int)$db->lastInsertId();
 
     // Eğer ödendi ve kasa seçildiyse, kasa bakiyesinden düş
-    if ($odendi && $kasa) {
+    if ($durum === 'odendi' && $kasa) {
         $yeniBakiye = $kasa['bakiye'] - $tutar;
 
         $stmt = $db->prepare('UPDATE kasalar SET bakiye = ? WHERE id = ?');
@@ -84,14 +91,14 @@ try {
             'masraf',
             $tutar,
             $yeniBakiye,
-            "Paydaş komisyon: {$paydas['firma_adi']} - $aciklama",
+            "Paydaş komisyon: {$paydas['ad']} - $aciklama",
             $user['id']
         ]);
     }
 
     $db->commit();
 
-    log_action($user['id'], 'komisyon_ekle', "Komisyon eklendi: {$paydas['firma_adi']} - {$tutar} ₺", 'paydas_komisyonlari', $komisyonId);
+    log_action($user['id'], 'komisyon_ekle', "Komisyon eklendi: {$paydas['ad']} - {$tutar} ₺", 'paydas_komisyonlari', $komisyonId);
 
     json_success([
         'id' => $komisyonId

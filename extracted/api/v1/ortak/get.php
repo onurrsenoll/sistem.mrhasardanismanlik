@@ -25,15 +25,17 @@ if (!$ortak) json_error('Ortak bulunamadı', 404);
 
 // Hareket özeti
 $stmt = $db->prepare("SELECT
-    COALESCE(SUM(CASE WHEN islem_turu = 'pay' THEN tutar ELSE 0 END), 0) as toplam_pay,
-    COALESCE(SUM(CASE WHEN islem_turu = 'odeme' THEN tutar ELSE 0 END), 0) as toplam_odeme,
+    COALESCE(SUM(CASE WHEN tur = 'tahsilat' THEN tutar ELSE 0 END), 0) as toplam_tahsilat,
+    COALESCE(SUM(CASE WHEN tur = 'odeme' THEN tutar ELSE 0 END), 0) as toplam_odeme,
+    COALESCE(SUM(CASE WHEN tur = 'masraf' THEN tutar ELSE 0 END), 0) as toplam_masraf,
     COUNT(*) as toplam_hareket
     FROM ortak_hareketleri WHERE ortak_id = ?");
 $stmt->execute([$id]);
 $hareket = $stmt->fetch();
-$ortak['toplam_pay'] = (float)$hareket['toplam_pay'];
+$ortak['toplam_tahsilat'] = (float)$hareket['toplam_tahsilat'];
 $ortak['toplam_odeme'] = (float)$hareket['toplam_odeme'];
-$ortak['bakiye'] = $ortak['toplam_pay'] - $ortak['toplam_odeme'];
+$ortak['toplam_masraf'] = (float)$hareket['toplam_masraf'];
+$ortak['bakiye'] = $ortak['toplam_tahsilat'] - $ortak['toplam_odeme'] - $ortak['toplam_masraf'];
 $ortak['toplam_hareket'] = (int)$hareket['toplam_hareket'];
 
 // Dosya sayısı (hareketlerden distinct)

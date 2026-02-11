@@ -2,7 +2,8 @@
 /**
  * POST /api/v1/crm/donustur.php
  * CRM kaydını dosyaya dönüştür
- * Body: { "crm_id": 1, "dosya_turu": "ADK", ... (dosya create alanları) }
+ * Body: { "crm_id": 1 }
+ * dosya_turu CRM kaydından alınır (opsiyonel olarak body'den de gönderilebilir)
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -13,7 +14,7 @@ require_method('POST');
 
 $user = auth_required(['admin', 'uzman', 'personel']);
 $body = get_json_body();
-require_fields($body, ['crm_id', 'dosya_turu']);
+require_fields($body, ['crm_id']);
 
 $db = getDB();
 $crmId = (int)$body['crm_id'];
@@ -23,6 +24,9 @@ $stmt->execute([$crmId]);
 $crm = $stmt->fetch();
 if (!$crm) json_error('CRM kaydı bulunamadı', 404);
 if ($crm['donusen_dosya_id']) json_error('Bu kayıt zaten dosyaya dönüştürülmüş', 409);
+
+// dosya_turu: body'den gelirse onu kullan, yoksa CRM kaydındakini, o da yoksa ADK
+$dosyaTuru = clean($body['dosya_turu'] ?? $crm['dosya_turu'] ?? 'ADK');
 
 try {
     $db->beginTransaction();
@@ -34,7 +38,7 @@ try {
     $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, talep_turu, asama, sigorta_sirket, police_no, dosya_kaynagi, avukat_id, sorumlu_id, haklilik, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), ?)');
     $stmt->execute([
         $dosyaNo,
-        clean($body['dosya_turu']),
+        $dosyaTuru,
         clean($body['talep_turu'] ?? ''),
         'Dosya Açık',
         clean($body['sigorta_sirket'] ?? ''),
@@ -44,8 +48,8 @@ try {
         !empty($body['sorumlu_id']) ? (int)$body['sorumlu_id'] : $user['id'],
         (int)($body['haklilik'] ?? 100),
         !empty($body['kaza_tarihi']) ? $body['kaza_tarihi'] : null,
-        clean($body['kaza_il'] ?? $crm['il']),
-        clean($body['kaza_ilce'] ?? $crm['ilce']),
+        clean($body['kaza_il'] ?? $crm['il'] ?? ''),
+        clean($body['kaza_ilce'] ?? $crm['ilce'] ?? ''),
         $hasar_no,
         $user['id']
     ]);

@@ -3,7 +3,7 @@
  * GET /api/v1/ortak/hareket-list.php
  * Ortak hareket listesi — filtreleme, sayfalama
  *
- * Query params: ?ortak_id=1&dosya_id=5&islem_turu=pay&page=1&limit=25
+ * Query params: ?ortak_id=1&dosya_id=5&tur=odeme&page=1&limit=25
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -17,9 +17,9 @@ $db = getDB();
 $pag = get_pagination();
 
 // Filtreler
-$ortakId   = (int)($_GET['ortak_id'] ?? 0);
-$dosyaId   = (int)($_GET['dosya_id'] ?? 0);
-$islemTuru = clean($_GET['islem_turu'] ?? '');
+$ortakId = (int)($_GET['ortak_id'] ?? 0);
+$dosyaId = (int)($_GET['dosya_id'] ?? 0);
+$tur     = clean($_GET['tur'] ?? $_GET['islem_turu'] ?? '');
 
 $where = [];
 $params = [];
@@ -34,9 +34,9 @@ if ($dosyaId) {
     $params[] = $dosyaId;
 }
 
-if ($islemTuru !== '') {
-    $where[] = 'oh.islem_turu = ?';
-    $params[] = $islemTuru;
+if ($tur !== '') {
+    $where[] = 'oh.tur = ?';
+    $params[] = $tur;
 }
 
 $whereSQL = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';

@@ -1,10 +1,8 @@
 <?php
 /**
  * POST /api/v1/ortak/hareket-ekle.php
- * Ortağa hareket ekle (pay veya ödeme)
- * Body: { "ortak_id": 1, "islem_turu": "pay", "tutar": 5000, "dosya_id": null, "aciklama": "...", "kasa_id": null }
- *
- * islem_turu='odeme' ve kasa_id varsa, kasa bakiyesinden düşülür
+ * Ortağa hareket ekle (ödeme, tahsilat, masraf)
+ * Body: { "ortak_id": 1, "tur": "odeme", "tutar": 5000, "tarih": "2025-01-01", "dosya_id": null, "aciklama": "..." }
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -17,13 +15,14 @@ $user = auth_required(['admin', 'uzman', 'muhasebe']);
 $body = get_json_body();
 
 // Zorunlu alanlar
-require_fields($body, ['ortak_id', 'islem_turu', 'tutar']);
+require_fields($body, ['ortak_id', 'tutar']);
 
 $db = getDB();
 
 $ortakId   = (int)$body['ortak_id'];
-$islemTuru = clean($body['islem_turu']);
+$tur       = clean($body['tur'] ?? $body['islem_turu'] ?? 'odeme');
 $tutar     = (float)$body['tutar'];
+$tarih     = !empty($body['tarih']) ? $body['tarih'] : date('Y-m-d');
 $dosyaId   = !empty($body['dosya_id']) ? (int)$body['dosya_id'] : null;
 $aciklama  = clean($body['aciklama'] ?? '');
 $kasaId    = !empty($body['kasa_id']) ? (int)$body['kasa_id'] : null;
@@ -55,12 +54,13 @@ if ($kasaId) {
 $db->beginTransaction();
 try {
     // Hareket kaydet
-    $stmt = $db->prepare('INSERT INTO ortak_hareketleri (ortak_id, dosya_id, islem_turu, tutar, aciklama, kasa_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    $stmt = $db->prepare('INSERT INTO ortak_hareketleri (ortak_id, dosya_id, tur, tutar, tarih, aciklama, kasa_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
     $stmt->execute([
         $ortakId,
         $dosyaId,
-        $islemTuru,
+        $tur,
         $tutar,
+        $tarih,
         $aciklama,
         $kasaId,
         $user['id']
@@ -69,7 +69,7 @@ try {
     $hareketId = (int)$db->lastInsertId();
 
     // Eğer ödeme ise ve kasa seçildiyse, kasa bakiyesinden düş
-    if ($islemTuru === 'odeme' && $kasa) {
+    if ($tur === 'odeme' && $kasa) {
         $yeniBakiye = $kasa['bakiye'] - $tutar;
 
         $stmt = $db->prepare('UPDATE kasalar SET bakiye = ? WHERE id = ?');
@@ -89,7 +89,7 @@ try {
 
     $db->commit();
 
-    log_action($user['id'], 'ortak_hareket', "Ortak hareket: {$ortak['ad_soyad']} - $islemTuru {$tutar} ₺", 'ortak_hareketleri', $hareketId);
+    log_action($user['id'], 'ortak_hareket', "Ortak hareket: {$ortak['ad_soyad']} - $tur {$tutar} ₺", 'ortak_hareketleri', $hareketId);
 
     json_success([
         'id' => $hareketId

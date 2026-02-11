@@ -16,7 +16,7 @@ $db = getDB();
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) json_error('Paydaş ID gerekli', 422);
 
-$stmt = $db->prepare('SELECT id, firma_adi FROM paydaslar WHERE id = ?');
+$stmt = $db->prepare('SELECT id, ad FROM paydaslar WHERE id = ?');
 $stmt->execute([$id]);
 $paydas = $stmt->fetch();
 if (!$paydas) json_error('Paydaş bulunamadı', 404);
@@ -25,6 +25,6 @@ if (!$paydas) json_error('Paydaş bulunamadı', 404);
 $stmt = $db->prepare("UPDATE paydaslar SET durum = 'pasif' WHERE id = ?");
 $stmt->execute([$id]);
 
-log_action($user['id'], 'paydas_sil', "Paydaş pasife alındı: {$paydas['firma_adi']}", 'paydaslar', $id);
+log_action($user['id'], 'paydas_sil', "Paydaş pasife alındı: {$paydas['ad']}", 'paydaslar', $id);
 
 json_success(['id' => $id], 'Paydaş pasife alındı');

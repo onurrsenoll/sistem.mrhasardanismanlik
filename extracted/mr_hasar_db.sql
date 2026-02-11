@@ -366,6 +366,164 @@ CREATE TABLE IF NOT EXISTS oturumlar (
     FOREIGN KEY (kullanici_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
+-- ═══════════════════════════════════════════
+-- 17. ORTAKLAR (İŞ ORTAKLARI - AVUKATLAR)
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS ortaklar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad_soyad VARCHAR(100) NOT NULL,
+    firma VARCHAR(200) DEFAULT '',
+    baro VARCHAR(100) DEFAULT '',
+    sicil_no VARCHAR(50) DEFAULT '',
+    telefon VARCHAR(20) DEFAULT NULL,
+    telefon2 VARCHAR(20) DEFAULT NULL,
+    email VARCHAR(100) DEFAULT NULL,
+    adres TEXT DEFAULT NULL,
+    il VARCHAR(50) DEFAULT NULL,
+    iban VARCHAR(34) DEFAULT NULL,
+    vergi_no VARCHAR(30) DEFAULT NULL,
+    odeme_orani DECIMAL(5,2) DEFAULT 0.00,
+    kasa_id INT DEFAULT NULL,
+    notlar TEXT DEFAULT NULL,
+    durum ENUM('aktif','pasif') NOT NULL DEFAULT 'aktif',
+    created_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_ad (ad_soyad),
+    INDEX idx_durum (durum),
+    INDEX idx_il (il),
+    FOREIGN KEY (kasa_id) REFERENCES kasalar(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 18. ORTAK HAREKETLERİ (FİNANSAL)
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS ortak_hareketleri (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ortak_id INT NOT NULL,
+    dosya_id INT DEFAULT NULL,
+    tur VARCHAR(30) NOT NULL DEFAULT 'odeme',
+    tutar DECIMAL(12,2) NOT NULL,
+    tarih DATE DEFAULT NULL,
+    aciklama VARCHAR(500) DEFAULT '',
+    kasa_id INT DEFAULT NULL,
+    created_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_ortak (ortak_id),
+    INDEX idx_dosya (dosya_id),
+    INDEX idx_tur (tur),
+    FOREIGN KEY (ortak_id) REFERENCES ortaklar(id) ON DELETE CASCADE,
+    FOREIGN KEY (dosya_id) REFERENCES dosyalar(id) ON DELETE SET NULL,
+    FOREIGN KEY (kasa_id) REFERENCES kasalar(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 19. PAYDAŞLAR (İŞ PAYDAŞLARI)
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS paydaslar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad VARCHAR(200) NOT NULL,
+    tur VARCHAR(50) NOT NULL DEFAULT 'sigorta_acentesi',
+    yetkili VARCHAR(100) DEFAULT '',
+    telefon VARCHAR(20) DEFAULT NULL,
+    telefon2 VARCHAR(20) DEFAULT NULL,
+    email VARCHAR(100) DEFAULT NULL,
+    adres TEXT DEFAULT NULL,
+    il VARCHAR(50) DEFAULT NULL,
+    ilce VARCHAR(50) DEFAULT NULL,
+    vergi_no VARCHAR(30) DEFAULT NULL,
+    iban VARCHAR(34) DEFAULT NULL,
+    komisyon_orani DECIMAL(5,2) DEFAULT 0.00,
+    notlar TEXT DEFAULT NULL,
+    durum ENUM('aktif','pasif') NOT NULL DEFAULT 'aktif',
+    created_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_ad (ad),
+    INDEX idx_tur (tur),
+    INDEX idx_durum (durum),
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 20. PAYDAŞ KOMİSYONLARI
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS paydas_komisyonlari (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    paydas_id INT NOT NULL,
+    dosya_id INT DEFAULT NULL,
+    tutar DECIMAL(12,2) NOT NULL,
+    durum ENUM('bekliyor','odendi') NOT NULL DEFAULT 'bekliyor',
+    tarih DATE DEFAULT NULL,
+    odeme_tarihi DATE DEFAULT NULL,
+    kasa_id INT DEFAULT NULL,
+    aciklama VARCHAR(500) DEFAULT '',
+    created_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_paydas (paydas_id),
+    INDEX idx_dosya (dosya_id),
+    INDEX idx_durum (durum),
+    FOREIGN KEY (paydas_id) REFERENCES paydaslar(id) ON DELETE CASCADE,
+    FOREIGN KEY (dosya_id) REFERENCES dosyalar(id) ON DELETE SET NULL,
+    FOREIGN KEY (kasa_id) REFERENCES kasalar(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 21. SERVİSLER
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS servisler (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    firma_adi VARCHAR(200) NOT NULL,
+    yetkili_adi VARCHAR(100) DEFAULT '',
+    telefon VARCHAR(20) DEFAULT NULL,
+    telefon2 VARCHAR(20) DEFAULT NULL,
+    email VARCHAR(100) DEFAULT NULL,
+    adres TEXT DEFAULT NULL,
+    il VARCHAR(50) DEFAULT NULL,
+    ilce VARCHAR(50) DEFAULT NULL,
+    vergi_no VARCHAR(30) DEFAULT NULL,
+    hizmet_turleri JSON DEFAULT NULL,
+    anlasma_kosullari TEXT DEFAULT NULL,
+    komisyon_orani DECIMAL(5,2) DEFAULT 0.00,
+    notlar TEXT DEFAULT NULL,
+    durum ENUM('aktif','pasif') NOT NULL DEFAULT 'aktif',
+    created_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_firma (firma_adi),
+    INDEX idx_durum (durum),
+    INDEX idx_il (il),
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 22. SERVİS İHBARLARI
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS servis_ihbarlari (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    servis_id INT NOT NULL,
+    dosya_id INT DEFAULT NULL,
+    ihbar_turu VARCHAR(50) DEFAULT '',
+    plaka VARCHAR(15) DEFAULT NULL,
+    arac_bilgi VARCHAR(200) DEFAULT '',
+    hasar_aciklama TEXT DEFAULT NULL,
+    asistans_durumu VARCHAR(50) DEFAULT '',
+    notlar TEXT DEFAULT NULL,
+    durum ENUM('beklemede','devam_ediyor','tamamlandi','iptal') NOT NULL DEFAULT 'beklemede',
+    created_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_servis (servis_id),
+    INDEX idx_dosya (dosya_id),
+    INDEX idx_durum (durum),
+    FOREIGN KEY (servis_id) REFERENCES servisler(id) ON DELETE CASCADE,
+    FOREIGN KEY (dosya_id) REFERENCES dosyalar(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
 -- ═══════════════════════════════════════════════════════════════
 -- VARSAYILAN VERİLER
 -- ═══════════════════════════════════════════════════════════════
