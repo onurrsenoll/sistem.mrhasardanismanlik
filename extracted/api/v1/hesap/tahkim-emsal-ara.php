@@ -104,23 +104,56 @@ if ($httpCode !== 200 || !$response) {
 }
 
 $data = json_decode($response, true);
-// Gemini 2.5 Flash thinking model - son metin parçasını al
-$text = '';
+// Gemini 2.5 Flash - TÜM parçaları topla
 $allParts = $data['candidates'][0]['content']['parts'] ?? [];
+$text = '';
+$allTexts = [];
 foreach ($allParts as $part) {
-    if (isset($part['text']) && empty($part['thought'])) $text = $part['text'];
+    if (isset($part['text'])) $allTexts[] = $part['text'];
 }
+$text = !empty($allTexts) ? end($allTexts) : '';
 $webSources = [];
 
-// JSON parse
-$text = trim($text);
-if (preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $text, $m)) {
-    $text = trim($m[1]);
-}
-$text = preg_replace('/^[^{]*/', '', $text);
-$text = preg_replace('/[^}]*$/', '', $text);
+// JSON parse - çoklu strateji
+$result = null;
 
-$result = json_decode($text, true);
+// Strateji 1: Direkt
+$result = json_decode(trim($text), true);
+
+// Strateji 2: Markdown code block
+if (!$result) {
+    if (preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $text, $m)) {
+        $result = json_decode(trim($m[1]), true);
+    }
+}
+
+// Strateji 3: İlk { son }
+if (!$result) {
+    $first = strpos($text, '{');
+    $last = strrpos($text, '}');
+    if ($first !== false && $last !== false && $last > $first) {
+        $result = json_decode(substr($text, $first, $last - $first + 1), true);
+    }
+}
+
+// Strateji 4: Tüm parçalarda JSON ara
+if (!$result) {
+    foreach ($allTexts as $t) {
+        $t = trim($t);
+        $r = json_decode($t, true);
+        if ($r && (isset($r['kararlar']) || isset($r['KARARLAR']))) { $result = $r; break; }
+        if (preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $t, $m2)) {
+            $r = json_decode(trim($m2[1]), true);
+            if ($r && (isset($r['kararlar']) || isset($r['KARARLAR']))) { $result = $r; break; }
+        }
+        $f = strpos($t, '{'); $l = strrpos($t, '}');
+        if ($f !== false && $l !== false && $l > $f) {
+            $r = json_decode(substr($t, $f, $l - $f + 1), true);
+            if ($r && (isset($r['kararlar']) || isset($r['KARARLAR']))) { $result = $r; break; }
+        }
+    }
+}
+
 // Key'leri lowercase'e çevir
 if ($result) {
     $result = array_change_key_case($result, CASE_LOWER);

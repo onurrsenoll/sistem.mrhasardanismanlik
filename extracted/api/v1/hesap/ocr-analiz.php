@@ -183,35 +183,45 @@ if ($httpCode !== 200 || !$response) {
 }
 
 $data = json_decode($response, true);
-// Gemini 2.5 Flash thinking model - son metin parçasını al
-$text = '';
+// Gemini 2.5 Flash - TÜM parçaları topla
+$allTexts = [];
 $allParts = isset($data['candidates'][0]['content']['parts']) ? $data['candidates'][0]['content']['parts'] : [];
 foreach ($allParts as $part) {
-    if (isset($part['text']) && empty($part['thought'])) $text = $part['text'];
+    if (isset($part['text'])) $allTexts[] = $part['text'];
 }
+$text = !empty($allTexts) ? end($allTexts) : '';
 
 if (empty($text)) {
     echo json_encode(['success' => false, 'error' => 'GEMİNİ YANIT ALINAMADI']);
     exit;
 }
 
-// JSON parse et (Gemini bazen ```json ... ``` ile sarar)
-$text = trim($text);
-$text = preg_replace('/^```json\s*/i', '', $text);
-$text = preg_replace('/\s*```$/i', '', $text);
-$text = trim($text);
+// JSON parse - çoklu strateji
+$parsed = null;
 
-$parsed = json_decode($text, true);
-if (!$parsed) {
-    // Tekrar dene - belki içeride JSON var
-    preg_match('/\{[^{}]*\}/s', $text, $matches);
-    if (!empty($matches[0])) {
-        $parsed = json_decode($matches[0], true);
+// Tüm parçalarda JSON ara
+foreach ($allTexts as $t) {
+    $t = trim($t);
+    // Direkt
+    $r = json_decode($t, true);
+    if ($r && is_array($r)) { $parsed = $r; }
+    // Markdown code block
+    if (!$parsed && preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $t, $m)) {
+        $r = json_decode(trim($m[1]), true);
+        if ($r && is_array($r)) { $parsed = $r; }
     }
+    // İlk { son }
+    if (!$parsed) {
+        $f = strpos($t, '{'); $l = strrpos($t, '}');
+        if ($f !== false && $l !== false && $l > $f) {
+            $r = json_decode(substr($t, $f, $l - $f + 1), true);
+            if ($r && is_array($r)) { $parsed = $r; }
+        }
+    }
+    if ($parsed) break;
 }
 
 if ($parsed) {
-    // Key'leri lowercase'e çevir
     $parsed = array_change_key_case($parsed, CASE_LOWER);
     echo json_encode(['success' => true, 'data' => $parsed]);
 } else {
