@@ -175,14 +175,14 @@ const TopNav = ({user, page, setPage, onLogout}) => {
                 display: 'flex', alignItems: 'center', gap: 4,
                 padding: '6px 8px', borderRadius: 6, cursor: 'pointer',
                 fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap',
-                color: isActive(m) ? C.accent : '#fff',
+                color: isActive(m) ? C.accent : C.text,
                 background: isActive(m) ? `${C.accent}15` : 'transparent',
                 transition: 'all .2s', position: 'relative'
               }}
               onMouseEnter={e => { if (!isActive(m)) e.currentTarget.style.background = `${C.accent}08`; }}
               onMouseLeave={e => { if (!isActive(m)) e.currentTarget.style.background = 'transparent'; }}
             >
-              <LIcon name={m.icon} size={13} color={isActive(m) ? C.accent : '#ffffffcc'}/>
+              <LIcon name={m.icon} size={13} color={isActive(m) ? C.accent : C.textSec}/>
               <span>{m.label}</span>
               {m.id === 'mesajlar' && bildirimSayisi > 0 && (
                 <span style={{
