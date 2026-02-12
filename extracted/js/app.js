@@ -544,8 +544,9 @@ const App = () => {
     return () => window.removeEventListener('mr-tema-degisti', handler);
   }, []);
 
-  /* ARKA PLAN LOGO URL */
+  /* ARKA PLAN LOGO URL - SADECE GİRİŞ YAPILDIKTAN SONRA */
   useEffect(() => {
+    if (!user) return;
     if (MR.logoUrl) { setBgLogoUrl(MR.logoUrl); return; }
     (async () => {
       try {
@@ -556,7 +557,7 @@ const App = () => {
         }
       } catch(e) {}
     })();
-  }, []);
+  }, [user]);
 
   /* LOGIN SONRASI ME.PHP'DEN YETKİLERİ ÇEK */
   const handleLogin = async (u) => {
