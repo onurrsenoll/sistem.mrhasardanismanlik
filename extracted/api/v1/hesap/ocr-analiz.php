@@ -131,7 +131,7 @@ Bulamadığın alanları null yap. Sadece JSON döndür, başka metin yazma.';
 }
 
 // Gemini Vision API çağrısı
-$url = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=' . urlencode($apiKey);
+$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . urlencode($apiKey);
 
 $parts = [];
 foreach ($images as $img) {
