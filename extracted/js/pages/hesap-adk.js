@@ -203,81 +203,158 @@ MR.HesapADKPage = () => {
     setPdfLoading(true);
     const raporNo = 'MR-ADK-' + Date.now().toString().slice(-8);
     const tarih = new Date().toLocaleDateString('tr-TR');
+    const saat = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit',minute:'2-digit'});
     const r = MR.parseNum(rayicDeger), o = MR.parseNum(onarim);
-
-    // İLAN TABLOSU
-    let ilanHtml = '';
-    if (rayicData?.ilanlar?.length > 0) {
-      ilanHtml = '<h3 style="font-size:14px;color:#2563eb;margin-bottom:10px;">PİYASA RAYİÇ ANALİZİ - GERÇEK İLAN VERİLERİ</h3>';
-      ilanHtml += '<table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:15px;"><thead><tr style="background:#e0e7ff;">';
-      ilanHtml += '<th style="padding:6px;border:1px solid #ccc;text-align:left;">#</th><th style="padding:6px;border:1px solid #ccc;">KAYNAK</th><th style="padding:6px;border:1px solid #ccc;">BAŞLIK</th><th style="padding:6px;border:1px solid #ccc;">FİYAT</th><th style="padding:6px;border:1px solid #ccc;">KM</th><th style="padding:6px;border:1px solid #ccc;">ŞEHİR</th>';
-      ilanHtml += '</tr></thead><tbody>';
-      rayicData.ilanlar.forEach((il, i) => {
-        ilanHtml += '<tr><td style="padding:4px 6px;border:1px solid #eee;">' + (i+1) + '</td><td style="padding:4px 6px;border:1px solid #eee;">' + (il.kaynak||'-') + '</td><td style="padding:4px 6px;border:1px solid #eee;">' + (il.baslik||'-') + '</td><td style="padding:4px 6px;border:1px solid #eee;font-weight:700;">' + fmtM(il.fiyat) + '</td><td style="padding:4px 6px;border:1px solid #eee;">' + (il.km||0).toLocaleString('tr-TR') + '</td><td style="padding:4px 6px;border:1px solid #eee;">' + (il.sehir||'-') + '</td></tr>';
-      });
-      ilanHtml += '</tbody></table>';
-      ilanHtml += '<div style="text-align:center;background:#f0f9ff;padding:12px;border-radius:6px;margin-bottom:20px;"><b>ORTALAMA RAYİÇ DEĞER: ' + fmtM(rayicData.ortalama) + '</b> (EN YÜKSEK FİYATLI ' + rayicData.ilanlar.length + ' İLAN)</div>';
-    }
-
-    // EMSAL TABLOSU
-    let emsalHtml = '';
-    if (emsalData?.kararlar?.length > 0) {
-      emsalHtml = '<h3 style="font-size:14px;color:#d97706;margin-bottom:10px;">TAHKİM EMSAL KARARLARI</h3>';
-      emsalData.kararlar.forEach((k, i) => {
-        emsalHtml += '<div style="padding:10px;background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;margin-bottom:8px;font-size:11px;">';
-        emsalHtml += '<div style="font-weight:700;color:#b45309;">' + (i+1) + '. ' + (k.dosya_no||'') + '</div>';
-        emsalHtml += '<div>ARAÇ: ' + (k.marka||'') + ' ' + (k.model||'') + ' (' + (k.yil||'') + ') | KM: ' + ((k.km||0).toLocaleString('tr-TR')) + ' | RAYİÇ: ' + fmtM(k.rayic) + '</div>';
-        emsalHtml += '<div style="font-weight:700;color:#059669;">HÜKMEDİLEN DK: ' + fmtM(k.deger_kaybi) + '</div>';
-        if (k.ozet) emsalHtml += '<div style="color:#64748b;font-size:10px;margin-top:4px;">' + k.ozet + '</div>';
-        emsalHtml += '</div>';
-      });
-      emsalHtml += '<div style="text-align:center;background:#f0fdf4;padding:12px;border-radius:6px;margin-bottom:20px;"><b>EMSAL ORTALAMASI: ' + fmtM(emsalData.ortalama_dk) + '</b></div>';
-    }
-
-    // 3 YÖNTEM
+    const aracYasi = new Date().getFullYear() - parseInt(yil);
+    const hasarOrani = r > 0 ? ((o/r)*100).toFixed(1) : '0';
     const yontemler = [tahkimSonuc, yargitaySonuc, emsalSonuc].filter(Boolean);
-    let yontemHtml = '<h3 style="font-size:14px;color:#059669;margin-bottom:10px;">HESAPLAMA SONUÇLARI - 3 YÖNTEM KARŞILAŞTIRMASI</h3>';
-    yontemHtml += '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:15px;"><thead><tr style="background:#d1fae5;"><th style="padding:10px;border:1px solid #ccc;">YÖNTEM</th><th style="padding:10px;border:1px solid #ccc;">DEĞER KAYBI</th><th style="padding:10px;border:1px solid #ccc;">KUSUR SONRASI (%' + kusur + ')</th></tr></thead><tbody>';
-    yontemler.forEach(y => {
-      yontemHtml += '<tr><td style="padding:8px;border:1px solid #eee;font-weight:600;">' + y.ad + '</td><td style="padding:8px;border:1px solid #eee;text-align:center;font-weight:700;color:#2563eb;">' + fmtM(y.degerKaybi) + '</td><td style="padding:8px;border:1px solid #eee;text-align:center;font-weight:700;color:#059669;">' + fmtM(y.kusurSonrasi) + '</td></tr>';
-    });
-    yontemHtml += '</tbody></table>';
+    const renkY = ['#2563eb','#7c3aed','#d97706'];
+    const ilanlar = rayicData?.ilanlar || [];
 
-    // FORMÜL DETAYLARI
-    let formulHtml = '<h3 style="font-size:13px;color:#7c3aed;margin-bottom:10px;">FORMÜL DETAYLARI</h3>';
-    yontemler.forEach(y => {
-      formulHtml += '<div style="padding:10px;background:#f5f3ff;border:1px solid #c4b5fd;border-radius:6px;margin-bottom:8px;font-size:10px;">';
-      formulHtml += '<div style="font-weight:700;color:#6d28d9;">' + y.ad + '</div>';
-      formulHtml += '<div style="color:#475569;">' + y.formul + '</div>';
-      if (y.aciklama) formulHtml += '<div style="color:#64748b;font-style:italic;">' + y.aciklama + '</div>';
-      formulHtml += '</div>';
+    // 3 YÖNTEM KUTULARI
+    let yontemBoxes = '<table style="width:100%;border-collapse:separate;border-spacing:6px 0;margin:0 0 8px;"><tr>';
+    yontemler.forEach((s,i) => {
+      yontemBoxes += '<td style="background:'+renkY[i]+'08;border:2px solid '+renkY[i]+'55;border-radius:6px;padding:8px 6px;text-align:center;width:33%;">'
+        + '<div style="font-size:7px;font-weight:700;color:'+renkY[i]+';letter-spacing:0.5px;margin-bottom:4px;">'+s.ad+'</div>'
+        + '<div style="font-size:16px;font-weight:800;color:'+renkY[i]+';">'+fmtM(s.kusurSonrasi)+'</div>'
+        + '<div style="font-size:7px;color:#94a3b8;margin-top:2px;">%100: '+fmtM(s.degerKaybi)+'</div>'
+        + '</td>';
     });
+    yontemBoxes += '</tr></table>';
 
-    const html = '<div style="font-family:Arial,sans-serif;padding:40px;max-width:900px;margin:0 auto;color:#1a1a2e;">'
-      + '<div style="border-bottom:3px solid #2563eb;padding-bottom:20px;margin-bottom:25px;">'
-      + '<h1 style="color:#2563eb;font-size:22px;margin:0;">MR HASAR DANIŞMANLIK</h1>'
-      + '<h2 style="color:#333;font-size:16px;margin:6px 0 0;">ARAÇ DEĞER KAYBI HESAPLAMA RAPORU</h2>'
-      + '<p style="color:#64748b;font-size:11px;margin-top:8px;">RAPOR NO: ' + raporNo + ' | TARİH: ' + tarih + '</p>'
+    // İLAN TABLOSU (max 10)
+    let ilanRows = '';
+    if (ilanlar.length > 0) {
+      ilanlar.forEach((il, i) => {
+        const bg = i%2===0 ? '#f8fafc' : '#ffffff';
+        ilanRows += '<tr style="background:'+bg+';">'
+          + '<td style="padding:2px 4px;border-bottom:1px solid #f0f0f0;font-size:7px;color:#64748b;width:14px;">'+(i+1)+'</td>'
+          + '<td style="padding:2px 4px;border-bottom:1px solid #f0f0f0;font-size:7px;width:55px;">'+((il.kaynak||'').replace('.com',''))+'</td>'
+          + '<td style="padding:2px 4px;border-bottom:1px solid #f0f0f0;font-size:7px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:180px;">'+((il.baslik||'').substring(0,50))+'</td>'
+          + '<td style="padding:2px 4px;border-bottom:1px solid #f0f0f0;font-size:7px;font-weight:700;color:#059669;text-align:right;white-space:nowrap;">'+fmtM(il.fiyat)+'</td>'
+          + '<td style="padding:2px 4px;border-bottom:1px solid #f0f0f0;font-size:7px;text-align:right;color:#64748b;">'+((il.km||0)/1000).toFixed(0)+'K</td>'
+          + '<td style="padding:2px 4px;border-bottom:1px solid #f0f0f0;font-size:7px;color:#64748b;">'+((il.sehir||'').substring(0,10))+'</td>'
+          + '</tr>';
+      });
+    }
+
+    // EMSAL SATIR
+    let emsalRows = '';
+    if (emsalData?.kararlar?.length > 0) {
+      emsalData.kararlar.forEach((k, i) => {
+        emsalRows += '<tr style="background:'+(i%2===0?'#fffbeb':'#fff')+';">'
+          + '<td style="padding:2px 4px;font-size:7px;font-weight:600;color:#b45309;border-bottom:1px solid #fef3c7;">'+(k.dosya_no||'-')+'</td>'
+          + '<td style="padding:2px 4px;font-size:7px;border-bottom:1px solid #fef3c7;">'+(k.marka||'')+' '+(k.model||'')+' ('+(k.yil||'')+')</td>'
+          + '<td style="padding:2px 4px;font-size:7px;text-align:right;border-bottom:1px solid #fef3c7;">'+fmtM(k.rayic)+'</td>'
+          + '<td style="padding:2px 4px;font-size:7px;font-weight:700;color:#059669;text-align:right;border-bottom:1px solid #fef3c7;">'+fmtM(k.deger_kaybi)+'</td>'
+          + '</tr>';
+      });
+    }
+
+    const html = '<div style="font-family:Arial,Helvetica,sans-serif;padding:14px 18px;max-width:780px;margin:0 auto;color:#1e293b;font-size:8px;line-height:1.4;">'
+
+      // ═══ HEADER ═══
+      + '<div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;padding:12px 16px;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">'
+      + '<div>'
+      + '<div style="font-size:15px;font-weight:800;letter-spacing:1px;">MR HASAR DANIŞMANLIK</div>'
+      + '<div style="font-size:9px;opacity:0.85;margin-top:2px;">ARAÇ DEĞER KAYBI HESAPLAMA RAPORU</div>'
       + '</div>'
-      + '<div style="background:#f0f9ff;padding:16px;border-radius:8px;margin-bottom:20px;">'
-      + '<h3 style="font-size:14px;margin-bottom:10px;">ARAÇ BİLGİLERİ</h3>'
-      + '<table style="width:100%;font-size:12px;border-collapse:collapse;">'
-      + '<tr><td style="padding:4px 8px;color:#64748b;width:140px;">MARKA/MODEL:</td><td style="font-weight:600;">' + marka + ' ' + model + '</td><td style="color:#64748b;width:140px;">MODEL YILI:</td><td style="font-weight:600;">' + yil + '</td></tr>'
-      + '<tr><td style="padding:4px 8px;color:#64748b;">KİLOMETRE:</td><td style="font-weight:600;">' + MR.parseNum(km).toLocaleString('tr-TR') + ' KM</td><td style="color:#64748b;">PLAKA:</td><td style="font-weight:600;">' + (plaka||'-') + '</td></tr>'
-      + '<tr><td style="padding:4px 8px;color:#64748b;">RAYİÇ DEĞER:</td><td style="font-weight:600;color:#2563eb;">' + fmtM(r) + '</td><td style="color:#64748b;">ONARIM BEDELİ:</td><td style="font-weight:600;color:#dc2626;">' + fmtM(o) + '</td></tr>'
-      + '<tr><td style="padding:4px 8px;color:#64748b;">KUSUR ORANI:</td><td style="font-weight:600;">%' + kusur + '</td><td style="color:#64748b;">KAZA TARİHİ:</td><td style="font-weight:600;">' + (kazaTarihi||'-') + '</td></tr>'
-      + '</table></div>'
-      + ilanHtml + emsalHtml + yontemHtml + formulHtml
-      + (aiAnaliz ? '<div style="background:#f0fdf4;padding:16px;border-radius:8px;border:1px solid #86efac;margin-bottom:20px;"><h3 style="font-size:13px;color:#059669;margin-bottom:10px;">AI ANALİZ RAPORU</h3><div style="font-size:11px;line-height:1.7;white-space:pre-wrap;">' + aiAnaliz + '</div></div>' : '')
-      + '<div style="margin-top:30px;padding-top:15px;border-top:2px solid #e0e7ff;text-align:center;font-size:9px;color:#64748b;">'
-      + '<p><strong>MR HASAR DANIŞMANLIK</strong> - ARAÇ DEĞER KAYBI HESAPLAMA RAPORU</p>'
-      + '<p>BU RAPOR BİLGİLENDİRME AMAÇLIDIR. RESMİ İŞLEMLERDE SİGORTA TAHKİM KOMİSYONU KARARLARI ESAS ALINIR.</p>'
-      + '</div></div>';
+      + '<div style="text-align:right;font-size:7px;opacity:0.8;line-height:1.6;">'
+      + '<div>RAPOR: <b>'+raporNo+'</b></div>'
+      + '<div>TARİH: <b>'+tarih+' '+saat+'</b></div>'
+      + '</div>'
+      + '</div>'
+
+      // ═══ ARAÇ + HASAR BİLGİLERİ (YAN YANA) ═══
+      + '<div style="display:flex;gap:8px;margin-bottom:8px;">'
+      // Sol: Araç
+      + '<div style="flex:1;background:#f0f9ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px 10px;">'
+      + '<div style="font-size:8px;font-weight:800;color:#2563eb;margin-bottom:5px;border-bottom:1px solid #bfdbfe;padding-bottom:3px;">ARAÇ BİLGİLERİ</div>'
+      + '<table style="width:100%;font-size:7.5px;border-collapse:collapse;">'
+      + '<tr><td style="padding:1.5px 0;color:#64748b;width:65px;">MARKA/MODEL:</td><td style="font-weight:700;">'+marka+' '+model+'</td></tr>'
+      + '<tr><td style="padding:1.5px 0;color:#64748b;">MODEL YILI:</td><td style="font-weight:600;">'+yil+' ('+aracYasi+' YAŞ)</td></tr>'
+      + '<tr><td style="padding:1.5px 0;color:#64748b;">KİLOMETRE:</td><td style="font-weight:600;">'+MR.parseNum(km).toLocaleString('tr-TR')+' KM</td></tr>'
+      + '<tr><td style="padding:1.5px 0;color:#64748b;">PLAKA:</td><td style="font-weight:600;">'+(plaka||'-')+'</td></tr>'
+      + '<tr><td style="padding:1.5px 0;color:#64748b;">KAZA TARİHİ:</td><td style="font-weight:600;">'+(kazaTarihi||'-')+'</td></tr>'
+      + '</table>'
+      + '</div>'
+      // Sağ: Hasar
+      + '<div style="flex:1;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px 10px;">'
+      + '<div style="font-size:8px;font-weight:800;color:#dc2626;margin-bottom:5px;border-bottom:1px solid #fecaca;padding-bottom:3px;">HASAR BİLGİLERİ</div>'
+      + '<table style="width:100%;font-size:7.5px;border-collapse:collapse;">'
+      + '<tr><td style="padding:1.5px 0;color:#64748b;width:75px;">RAYİÇ DEĞER:</td><td style="font-weight:700;color:#2563eb;">'+fmtM(r)+'</td></tr>'
+      + '<tr><td style="padding:1.5px 0;color:#64748b;">ONARIM BEDELİ:</td><td style="font-weight:700;color:#dc2626;">'+fmtM(o)+'</td></tr>'
+      + '<tr><td style="padding:1.5px 0;color:#64748b;">HASAR ORANI:</td><td style="font-weight:600;">%'+hasarOrani+'</td></tr>'
+      + '<tr><td style="padding:1.5px 0;color:#64748b;">KUSUR ORANI:</td><td style="font-weight:600;">%'+kusur+(parseInt(kusur)===100?' (KUSURSUZ)':'')+'</td></tr>'
+      + '<tr><td style="padding:1.5px 0;color:#64748b;">ÖNCEKİ HASAR:</td><td style="font-weight:600;">'+(parseInt(onceki)===0?'YOK':onceki+' ADET')+'</td></tr>'
+      + '<tr><td style="padding:1.5px 0;color:#64748b;">HASARLI BÖLGE:</td><td style="font-weight:600;">'+({on:'ÖN',arka:'ARKA',yan:'YAN',tavan:'TAVAN'}[bolge]||bolge).toUpperCase()+'</td></tr>'
+      + '</table>'
+      + '</div>'
+      + '</div>'
+
+      // ═══ 3 YÖNTEM KARŞILAŞTIRMA ═══
+      + '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:8px 10px;margin-bottom:8px;">'
+      + '<div style="font-size:8px;font-weight:800;color:#059669;margin-bottom:6px;border-bottom:1px solid #86efac;padding-bottom:3px;">HESAPLAMA SONUÇLARI - 3 YÖNTEM KARŞILAŞTIRMASI</div>'
+      + yontemBoxes
+      + '</div>'
+
+      // ═══ FORMÜL DETAYLARI ═══
+      + '<div style="display:flex;gap:8px;margin-bottom:8px;">'
+      + yontemler.map((y,i) => '<div style="flex:1;background:'+renkY[i]+'06;border:1px solid '+renkY[i]+'33;border-radius:5px;padding:6px 8px;">'
+        + '<div style="font-size:7px;font-weight:700;color:'+renkY[i]+';margin-bottom:3px;">'+y.ad+'</div>'
+        + '<div style="font-size:6.5px;color:#475569;line-height:1.5;">'+y.formul+'</div>'
+        + '</div>').join('')
+      + '</div>'
+
+      // ═══ İLAN VE EMSAL (YAN YANA) ═══
+      + '<div style="display:flex;gap:8px;margin-bottom:8px;">'
+      // Sol: İlanlar
+      + (ilanlar.length > 0 ? '<div style="flex:1.3;border:1px solid #bfdbfe;border-radius:6px;overflow:hidden;">'
+        + '<div style="background:#2563eb;color:#fff;padding:4px 8px;font-size:7.5px;font-weight:700;display:flex;justify-content:space-between;">'
+        + '<span>PİYASA RAYİÇ ANALİZİ</span><span>'+ilanlar.length+' İLAN</span></div>'
+        + '<table style="width:100%;border-collapse:collapse;"><tbody>'+ilanRows+'</tbody></table>'
+        + '<div style="background:#eff6ff;padding:5px;text-align:center;font-size:8px;font-weight:700;color:#2563eb;">ORT: '+fmtM(rayicData?.ortalama||0)+' | DÜŞÜK: '+fmtM(rayicData?.en_dusuk||0)+' | YÜKSEK: '+fmtM(rayicData?.en_yuksek||0)+'</div>'
+        + '</div>' : '')
+      // Sağ: Emsal
+      + (emsalData?.kararlar?.length > 0 ? '<div style="flex:1;border:1px solid #fcd34d;border-radius:6px;overflow:hidden;">'
+        + '<div style="background:#d97706;color:#fff;padding:4px 8px;font-size:7.5px;font-weight:700;display:flex;justify-content:space-between;">'
+        + '<span>TAHKİM EMSAL KARARLARI</span><span>'+emsalData.kararlar.length+' KARAR</span></div>'
+        + '<table style="width:100%;border-collapse:collapse;">'
+        + '<thead><tr style="background:#fef3c7;"><th style="padding:2px 4px;font-size:6.5px;text-align:left;">DOSYA NO</th><th style="padding:2px 4px;font-size:6.5px;text-align:left;">ARAÇ</th><th style="padding:2px 4px;font-size:6.5px;text-align:right;">RAYİÇ</th><th style="padding:2px 4px;font-size:6.5px;text-align:right;">DK</th></tr></thead>'
+        + '<tbody>'+emsalRows+'</tbody></table>'
+        + '<div style="background:#fef3c7;padding:5px;text-align:center;font-size:8px;font-weight:700;color:#b45309;">EMSAL ORTALAMASI: '+fmtM(emsalData?.ortalama_dk||0)+'</div>'
+        + '</div>' : '')
+      + '</div>'
+
+      // ═══ AI ANALİZ ═══
+      + (aiAnaliz ? '<div style="border:1px solid #c4b5fd;border-radius:6px;overflow:hidden;margin-bottom:8px;">'
+        + '<div style="background:#7c3aed;color:#fff;padding:4px 8px;font-size:7.5px;font-weight:700;">AI ANALİZ RAPORU</div>'
+        + '<div style="padding:6px 8px;font-size:7px;line-height:1.6;color:#334155;white-space:pre-wrap;max-height:120px;overflow:hidden;">'+aiAnaliz.substring(0,800)+'</div>'
+        + '</div>' : '')
+
+      // ═══ FOOTER ═══
+      + '<div style="border-top:2px solid #e2e8f0;padding-top:5px;display:flex;justify-content:space-between;align-items:center;">'
+      + '<div style="font-size:6.5px;color:#94a3b8;">BU RAPOR BİLGİLENDİRME AMAÇLIDIR. RESMİ İŞLEMLERDE SİGORTA TAHKİM KOMİSYONU KARARLARI ESAS ALINIR.</div>'
+      + '<div style="font-size:7px;font-weight:700;color:#2563eb;">MR HASAR DANIŞMANLIK</div>'
+      + '</div>'
+
+      + '</div>';
 
     const el = document.createElement('div');
     el.innerHTML = html;
+    el.style.position = 'fixed';
+    el.style.left = '-9999px';
+    el.style.top = '0';
+    el.style.width = '780px';
     document.body.appendChild(el);
-    html2pdf().set({ margin: 10, filename: 'MR_ADK_Rapor_' + raporNo + '.pdf', image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'mm',format:'a4',orientation:'portrait'} }).from(el).save().then(() => { document.body.removeChild(el); setPdfLoading(false); }).catch(() => { document.body.removeChild(el); setPdfLoading(false); });
+    html2pdf().set({
+      margin: [5, 5, 5, 5],
+      filename: 'MR_ADK_Rapor_' + raporNo + '.pdf',
+      image: {type:'jpeg', quality:0.98},
+      html2canvas: {scale:2, useCORS:true, width:780},
+      jsPDF: {unit:'mm', format:'a4', orientation:'portrait'},
+      pagebreak: {mode:['avoid-all']}
+    }).from(el).save().then(() => { document.body.removeChild(el); setPdfLoading(false); }).catch(() => { document.body.removeChild(el); setPdfLoading(false); });
   };
 
   /* ═══════════════ RENDER ═══════════════ */
