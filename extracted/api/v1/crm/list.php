@@ -24,8 +24,8 @@ $params = [];
 
 if ($q !== '') {
     $search = "%$q%";
-    $where[] = '(c.ad_soyad LIKE ? OR c.telefon LIKE ? OR c.email LIKE ? OR c.il LIKE ?)';
-    $params = array_merge($params, [$search, $search, $search, $search]);
+    $where[] = '(c.ad_soyad LIKE ? OR c.telefon LIKE ? OR c.email LIKE ? OR c.il LIKE ? OR c.plaka LIKE ? OR c.tc_vergi_no LIKE ?)';
+    $params = array_merge($params, [$search, $search, $search, $search, $search, $search]);
 }
 
 if ($durum !== '') {

@@ -216,14 +216,23 @@ CREATE TABLE IF NOT EXISTS kasa_hareketleri (
 CREATE TABLE IF NOT EXISTS crm (
     id INT AUTO_INCREMENT PRIMARY KEY,
     ad_soyad VARCHAR(100) NOT NULL,
+    tc_vergi_no VARCHAR(20) DEFAULT NULL,
     telefon VARCHAR(20) DEFAULT NULL,
     telefon2 VARCHAR(20) DEFAULT NULL,
     email VARCHAR(100) DEFAULT NULL,
     il VARCHAR(50) DEFAULT NULL,
     ilce VARCHAR(50) DEFAULT NULL,
+    plaka VARCHAR(20) DEFAULT NULL,
+    marka VARCHAR(50) DEFAULT NULL,
+    model_adi VARCHAR(50) DEFAULT NULL,
+    arac_yili SMALLINT DEFAULT NULL,
+    arac_km INT DEFAULT NULL,
+    olay_aciklama TEXT DEFAULT NULL,
     kaynak VARCHAR(50) DEFAULT NULL,
     dosya_turu VARCHAR(20) DEFAULT NULL,
     durum ENUM('Yeni','Takipte','Olumlu','Olumsuz') NOT NULL DEFAULT 'Yeni',
+    oncelik VARCHAR(20) DEFAULT 'NORMAL',
+    taslak TINYINT DEFAULT 0,
     not_text TEXT DEFAULT NULL,
     atanan_id INT DEFAULT NULL,
     son_iletisim DATE DEFAULT NULL,
@@ -235,10 +244,27 @@ CREATE TABLE IF NOT EXISTS crm (
     INDEX idx_kaynak (kaynak),
     INDEX idx_atanan (atanan_id),
     INDEX idx_ad (ad_soyad),
+    INDEX idx_plaka (plaka),
+    INDEX idx_tc (tc_vergi_no),
+    INDEX idx_taslak (taslak),
     FOREIGN KEY (atanan_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (donusen_dosya_id) REFERENCES dosyalar(id) ON DELETE SET NULL,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- CRM TABLO GÜNCELLEMESİ (MEVCUT VERİTABANINDA ÇALIŞTIRIN)
+-- ALTER TABLE crm ADD COLUMN tc_vergi_no VARCHAR(20) DEFAULT NULL AFTER ad_soyad;
+-- ALTER TABLE crm ADD COLUMN plaka VARCHAR(20) DEFAULT NULL AFTER ilce;
+-- ALTER TABLE crm ADD COLUMN marka VARCHAR(50) DEFAULT NULL AFTER plaka;
+-- ALTER TABLE crm ADD COLUMN model_adi VARCHAR(50) DEFAULT NULL AFTER marka;
+-- ALTER TABLE crm ADD COLUMN arac_yili SMALLINT DEFAULT NULL AFTER model_adi;
+-- ALTER TABLE crm ADD COLUMN arac_km INT DEFAULT NULL AFTER arac_yili;
+-- ALTER TABLE crm ADD COLUMN olay_aciklama TEXT DEFAULT NULL AFTER arac_km;
+-- ALTER TABLE crm ADD COLUMN oncelik VARCHAR(20) DEFAULT 'NORMAL' AFTER durum;
+-- ALTER TABLE crm ADD COLUMN taslak TINYINT DEFAULT 0 AFTER oncelik;
+-- ALTER TABLE crm ADD INDEX idx_plaka (plaka);
+-- ALTER TABLE crm ADD INDEX idx_tc (tc_vergi_no);
+-- ALTER TABLE crm ADD INDEX idx_taslak (taslak);
 
 -- ═══════════════════════════════════════════
 -- 10. CRM NOTLARI
