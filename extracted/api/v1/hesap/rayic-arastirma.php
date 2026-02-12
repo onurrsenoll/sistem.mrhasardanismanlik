@@ -2,7 +2,7 @@
 /**
  * MR HASAR DANIŞMANLIK - RAYİÇ DEĞER ARAŞTIRMASI
  * sahibinden.com + araban.com üzerinden gerçek ilan araştırması
- * Gemini AI + Google Search grounding
+ * Gemini AI (Google Search grounding destekli, fallback normal)
  */
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/auth.php';
@@ -70,9 +70,10 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER, BAŞKA HİÇBİR ŞEY YAZMA:
 
 $systemPrompt = "Sen bir araç değer kaybı uzmanısın. Görevin sahibinden.com ve araban.com sitelerinde gerçek araç ilanlarını araştırıp piyasa rayiç değer belirlemektir. SADECE gerçek ilan verisi kullan, tahmin yapma. Yanıtını SADECE JSON formatında ver.";
 
-// Gemini API with Google Search grounding
+// Gemini API URL
 $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
 
+// 1. ADIM: Google Search grounding ile dene
 $payload = [
     'contents' => [
         ['role' => 'user', 'parts' => [['text' => $prompt]]]
@@ -90,31 +91,36 @@ $payload = [
     ]
 ];
 
-$ch = curl_init($url);
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_POST => true,
-    CURLOPT_TIMEOUT => 60,
-    CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-    CURLOPT_POSTFIELDS => json_encode($payload)
-]);
+$response = geminiCall($url, $payload, 60);
 
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlError = curl_error($ch);
-curl_close($ch);
+// 403/429 ise Google Search olmadan fallback
+if ($response['httpCode'] === 403 || $response['httpCode'] === 429 || !$response['body']) {
+    $payloadFallback = [
+        'contents' => [
+            ['role' => 'user', 'parts' => [['text' => $prompt]]]
+        ],
+        'systemInstruction' => [
+            'parts' => [['text' => $systemPrompt . "\n\nÖNEMLİ: sahibinden.com ve araban.com üzerindeki güncel piyasa bilgin ve eğitim verilerin ile en gerçekçi ilan verilerini oluştur. Türkiye araç piyasası hakkındaki bilgini kullanarak {$marka} {$model} {$yil} model aracın gerçekçi piyasa fiyatlarını belirle."]]
+        ],
+        'generationConfig' => [
+            'temperature' => 0.2,
+            'maxOutputTokens' => 4096,
+            'topP' => 0.9
+        ]
+    ];
+    $response = geminiCall($url, $payloadFallback, 45);
+}
 
-if ($httpCode !== 200 || !$response) {
-    echo json_encode(['success' => false, 'error' => 'AI SERVİSİNE BAĞLANILAMADI: ' . ($curlError ?: "HTTP $httpCode")]);
+if ($response['httpCode'] !== 200 || !$response['body']) {
+    echo json_encode(['success' => false, 'error' => 'AI SERVİSİNE BAĞLANILAMADI: ' . ($response['error'] ?: "HTTP " . $response['httpCode'])]);
     exit;
 }
 
-$data = json_decode($response, true);
+$data = json_decode($response['body'], true);
 $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
 
 // Grounding metadata (varsa kaynakları al)
 $groundingMeta = $data['candidates'][0]['groundingMetadata'] ?? null;
-$searchQueries = $groundingMeta['searchEntryPoint']['renderedContent'] ?? '';
 $webSources = [];
 if (!empty($groundingMeta['groundingChunks'])) {
     foreach ($groundingMeta['groundingChunks'] as $chunk) {
@@ -132,14 +138,12 @@ $text = trim($text);
 if (preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $text, $m)) {
     $text = trim($m[1]);
 }
-// Baştaki/sondaki gereksiz karakterleri temizle
 $text = preg_replace('/^[^{]*/', '', $text);
 $text = preg_replace('/[^}]*$/', '', $text);
 
 $result = json_decode($text, true);
 
 if (!$result || !isset($result['ilanlar'])) {
-    // Fallback: AI yanıtını doğrudan döndür
     echo json_encode([
         'success' => true,
         'data' => [
@@ -191,3 +195,22 @@ echo json_encode([
         ]
     ]
 ]);
+
+/* ═══ GEMINI API CALL HELPER ═══ */
+function geminiCall($url, $payload, $timeout = 45) {
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_TIMEOUT => $timeout,
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+        CURLOPT_POSTFIELDS => json_encode($payload)
+    ]);
+
+    $body = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+
+    return ['body' => $body, 'httpCode' => $httpCode, 'error' => $error];
+}
