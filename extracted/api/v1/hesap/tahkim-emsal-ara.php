@@ -96,7 +96,12 @@ $curlError = curl_error($ch);
 curl_close($ch);
 
 if ($httpCode !== 200 || !$response) {
-    echo json_encode(['success' => false, 'error' => 'AI SERVİSİNE BAĞLANILAMADI: ' . ($curlError ?: "HTTP $httpCode")]);
+    $errDetail = '';
+    if ($response) {
+        $errData = json_decode($response, true);
+        $errDetail = $errData['error']['message'] ?? $errData['error']['status'] ?? substr($response, 0, 300);
+    }
+    echo json_encode(['success' => false, 'error' => 'AI HATA (HTTP ' . $httpCode . '): ' . ($errDetail ?: $curlError ?: 'YANIT YOK')]);
     exit;
 }
 
