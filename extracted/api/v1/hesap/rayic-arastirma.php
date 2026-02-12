@@ -71,7 +71,7 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER, BAŞKA HİÇBİR ŞEY YAZMA:
 $systemPrompt = "Sen bir araç değer kaybı uzmanısın. Görevin sahibinden.com ve araban.com sitelerinde gerçek araç ilanlarını araştırıp piyasa rayiç değer belirlemektir. SADECE gerçek ilan verisi kullan, tahmin yapma. Yanıtını SADECE JSON formatında ver.";
 
 // Gemini API - ai-analiz.php ile aynı çalışan yapı
-$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . urlencode($apiKey);
+$url = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=' . urlencode($apiKey);
 
 $payload = [
     'contents' => [
