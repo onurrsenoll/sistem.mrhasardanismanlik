@@ -119,22 +119,8 @@ const TopNav = ({user, page, setPage, onLogout}) => {
   const [menuOpen, setMenuOpen] = useState(null);
   const [bildirimSayisi, setBildirimSayisi] = useState(0);
   const [profilOpen, setProfilOpen] = useState(false);
-  const [logoUrl, setLogoUrl] = useState(MR.logoUrl || '');
   const navRef = useRef(null);
   const filteredMenu = menuErisim(user);
-
-  /* LOGO URL'İNİ AYARLARDAN ÇEK */
-  useEffect(() => {
-    (async () => {
-      try {
-        const r = await api.ayarlarList();
-        if (r?.success && r.data?.logo_url) {
-          setLogoUrl(r.data.logo_url);
-          MR.logoUrl = r.data.logo_url;
-        }
-      } catch(e) {}
-    })();
-  }, []);
 
   useEffect(() => {
     const sayacGuncelle = async () => {
@@ -173,28 +159,6 @@ const TopNav = ({user, page, setPage, onLogout}) => {
       display: 'flex', alignItems: 'center', padding: '0 12px', height: 48,
       position: 'sticky', top: 0, zIndex: 1000, gap: 0
     }}>
-      {/* LOGO - BAĞIMSIZ BOYUT, NAVBAR YÜKSEKLIĞINI ETKİLEMEZ */}
-      <div onClick={() => setPage('home')} style={{
-        display: 'flex', alignItems: 'center', cursor: 'pointer',
-        marginRight: 12, flexShrink: 0, position: 'relative', zIndex: 1001
-      }}>
-        {logoUrl ? (
-          <img src={logoUrl} alt="LOGO" style={{
-            height: 114, width: 'auto', maxWidth: 420, objectFit: 'contain',
-            filter: MR.tema === 'koyu' ? 'brightness(0) invert(1)' : 'none',
-            position: 'absolute', top: '50%', left: 0, transform: 'translateY(-50%)'
-          }}/>
-        ) : (
-          <div style={{
-            width: 102, height: 102, minWidth: 102, borderRadius: 16,
-            background: `${C.accent}22`, display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontSize: 36, fontWeight: 900, color: C.accent,
-            position: 'absolute', top: '50%', left: 0, transform: 'translateY(-50%)'
-          }}>MR</div>
-        )}
-        <div style={{width: logoUrl ? 140 : 110, height: 1}}/>
-      </div>
-
       {/* MENÜ - ESNEK ALAN, TEK SATIR */}
       <div style={{
         display: 'flex', flex: 1, alignItems: 'center',
@@ -284,21 +248,14 @@ const TopNav = ({user, page, setPage, onLogout}) => {
         {/* PROFİL */}
         <div style={{position: 'relative'}}>
           <div onClick={() => setProfilOpen(!profilOpen)} style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px',
-            borderRadius: 8, cursor: 'pointer', border: `1px solid ${C.border}`,
-            height: 34
-          }}>
+            width: 34, height: 34, minWidth: 34, borderRadius: 8, cursor: 'pointer',
+            border: `1px solid ${C.border}`, display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            background: `${C.accent}22`
+          }} title={user?.ad_soyad || 'PROFİL'}>
             <div style={{
-              width: 26, height: 26, minWidth: 26, borderRadius: 6,
-              background: `${C.accent}22`, display: 'flex',
-              alignItems: 'center', justifyContent: 'center',
-              fontSize: 11, fontWeight: 700, color: C.accent
+              fontSize: 13, fontWeight: 700, color: C.accent
             }}>{(user?.ad_soyad || 'U')[0]}</div>
-            <div style={{overflow: 'hidden'}}>
-              <div style={{fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 100}}>{user?.ad_soyad}</div>
-              <div style={{fontSize: 8, color: C.textMuted, whiteSpace: 'nowrap'}}>{(user?.rol || '').toUpperCase()}</div>
-            </div>
-            <LIcon name="ChevronDown" size={10} color={C.textMuted}/>
           </div>
 
           {profilOpen && (
@@ -549,6 +506,7 @@ const App = () => {
   const [page, setPageState] = useState(getPageFromHash());
   const [loading, setLoading] = useState(true);
   const [, forceUpdate] = useState(0);
+  const [bgLogoUrl, setBgLogoUrl] = useState(MR.logoUrl || '');
 
   /* URL HASH ROUTING - SAYFA DEĞİŞİNCE URL GÜNCELLENİR */
   const setPage = useCallback((p) => {
@@ -586,6 +544,20 @@ const App = () => {
     return () => window.removeEventListener('mr-tema-degisti', handler);
   }, []);
 
+  /* ARKA PLAN LOGO URL */
+  useEffect(() => {
+    if (MR.logoUrl) { setBgLogoUrl(MR.logoUrl); return; }
+    (async () => {
+      try {
+        const r = await api.ayarlarList();
+        if (r?.success && r.data?.logo_url) {
+          setBgLogoUrl(r.data.logo_url);
+          MR.logoUrl = r.data.logo_url;
+        }
+      } catch(e) {}
+    })();
+  }, []);
+
   /* LOGIN SONRASI ME.PHP'DEN YETKİLERİ ÇEK */
   const handleLogin = async (u) => {
     setUser(u);
@@ -615,22 +587,42 @@ const App = () => {
   if (!user) return <LoginScreen onLogin={handleLogin}/>;
 
   return (
-    <div style={{minHeight: '100vh', background: C.bg, color: C.text}}>
+    <div style={{minHeight: '100vh', background: C.bg, color: C.text, position: 'relative', overflow: 'hidden'}}>
       <TopNav user={user} page={page} setPage={setPage} onLogout={logout}/>
-      <div style={{maxWidth: 1400, margin: '0 auto', padding: '0 24px 40px'}}>
+
+      {/* ARKA PLAN WATERMARK LOGO - TÜM SAYFALARDA */}
+      {bgLogoUrl && (
+        <div style={{
+          position: 'fixed', top: 48, left: 0, right: 0, bottom: 50,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none', zIndex: 0
+        }}>
+          <img src={bgLogoUrl} alt="" style={{
+            maxWidth: '60vw', maxHeight: '70vh', width: 'auto', height: 'auto',
+            objectFit: 'contain',
+            opacity: MR.tema === 'koyu' ? 0.07 : 0.10,
+            filter: MR.tema === 'koyu' ? 'brightness(0) invert(1)' : 'none',
+            pointerEvents: 'none', userSelect: 'none'
+          }}/>
+        </div>
+      )}
+
+      <div style={{maxWidth: 1400, margin: '0 auto', padding: '0 24px 40px', position: 'relative', zIndex: 1}}>
         <Breadcrumb page={page} setPage={setPage}/>
         <PageRouter page={page} setPage={setPage} user={user}/>
       </div>
 
-      {/* FOOTER - ANA SAYFADA GÖSTERİLMEZ (SLOGAN SABİT) */}
-      {page !== 'home' && (
-        <div style={{
-          textAlign: 'center', padding: '20px 0', borderTop: `1px solid ${C.border}`,
-          fontSize: 10, color: C.textMuted, letterSpacing: 1
-        }}>
-          MR HASAR DANIŞMANLIK © {new Date().getFullYear()} — DOSYA TAKİP SİSTEMİ
-        </div>
-      )}
+      {/* SLOGAN - TÜM SAYFALARDA ALT KISIMDA */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0,
+        textAlign: 'center', padding: '14px 0',
+        fontSize: 12, fontWeight: 700,
+        color: C.textMuted, letterSpacing: 5,
+        background: `linear-gradient(transparent, ${C.bg})`,
+        zIndex: 10
+      }}>
+        HER ZAMAN FARK EDER
+      </div>
     </div>
   );
 };
