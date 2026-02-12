@@ -38,7 +38,7 @@ try {
     $dosyaFields = ['asama', 'talep_turu', 'sigorta_sirket', 'police_no', 'sigorta_turu',
         'dosya_kaynagi', 'avukat_id', 'sorumlu_id', 'haklilik', 'komisyon_orani',
         'kaza_tarihi', 'kaza_il', 'kaza_ilce', 'pozisyon', 'kusur_durumu',
-        'sakatlik_aciklama', 'notlar', 'kapanma_tarihi', 'plaka'];
+        'sakatlik_aciklama', 'notlar', 'kapanma_tarihi', 'plaka', 'hak_mahrumiyet'];
 
     $sets = [];
     $params = [];
@@ -48,7 +48,7 @@ try {
             $sets[] = "$field = ?";
             if (in_array($field, ['avukat_id', 'sorumlu_id'])) {
                 $params[] = !empty($body[$field]) ? (int)$body[$field] : null;
-            } elseif (in_array($field, ['haklilik'])) {
+            } elseif (in_array($field, ['haklilik', 'hak_mahrumiyet'])) {
                 $params[] = (int)$body[$field];
             } elseif (in_array($field, ['komisyon_orani'])) {
                 $params[] = (float)$body[$field];

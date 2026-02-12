@@ -170,26 +170,29 @@ const TopNav = ({user, page, setPage, onLogout}) => {
   return (
     <div ref={navRef} style={{
       background: C.headerBg, borderBottom: `1px solid ${C.border}`,
-      display: 'flex', alignItems: 'center', padding: '6px 12px', minHeight: 54,
+      display: 'flex', alignItems: 'center', padding: '0 12px', height: 48,
       position: 'sticky', top: 0, zIndex: 1000, gap: 0
     }}>
-      {/* LOGO */}
+      {/* LOGO - BAĞIMSIZ BOYUT, NAVBAR YÜKSEKLIĞINI ETKİLEMEZ */}
       <div onClick={() => setPage('home')} style={{
         display: 'flex', alignItems: 'center', cursor: 'pointer',
-        height: 'auto', marginRight: 12, flexShrink: 0
+        marginRight: 12, flexShrink: 0, position: 'relative', zIndex: 1001
       }}>
         {logoUrl ? (
           <img src={logoUrl} alt="LOGO" style={{
             height: 114, width: 'auto', maxWidth: 420, objectFit: 'contain',
-            filter: MR.tema === 'koyu' ? 'brightness(0) invert(1)' : 'none'
+            filter: MR.tema === 'koyu' ? 'brightness(0) invert(1)' : 'none',
+            position: 'absolute', top: '50%', left: 0, transform: 'translateY(-50%)'
           }}/>
         ) : (
           <div style={{
             width: 102, height: 102, minWidth: 102, borderRadius: 16,
             background: `${C.accent}22`, display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontSize: 36, fontWeight: 900, color: C.accent
+            justifyContent: 'center', fontSize: 36, fontWeight: 900, color: C.accent,
+            position: 'absolute', top: '50%', left: 0, transform: 'translateY(-50%)'
           }}>MR</div>
         )}
+        <div style={{width: logoUrl ? 140 : 110, height: 1}}/>
       </div>
 
       {/* MENÜ - ESNEK ALAN, TEK SATIR */}
@@ -207,15 +210,15 @@ const TopNav = ({user, page, setPage, onLogout}) => {
               style={{
                 display: 'flex', alignItems: 'center', gap: 4,
                 padding: '6px 8px', borderRadius: 6, cursor: 'pointer',
-                fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap',
-                color: isActive(m) ? C.accent : C.textSec,
+                fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap',
+                color: isActive(m) ? C.accent : '#fff',
                 background: isActive(m) ? `${C.accent}15` : 'transparent',
                 transition: 'all .2s', position: 'relative'
               }}
               onMouseEnter={e => { if (!isActive(m)) e.currentTarget.style.background = `${C.accent}08`; }}
               onMouseLeave={e => { if (!isActive(m)) e.currentTarget.style.background = 'transparent'; }}
             >
-              <LIcon name={m.icon} size={13} color={isActive(m) ? C.accent : C.textMuted}/>
+              <LIcon name={m.icon} size={13} color={isActive(m) ? C.accent : '#ffffffcc'}/>
               <span>{m.label}</span>
               {m.id === 'mesajlar' && bildirimSayisi > 0 && (
                 <span style={{

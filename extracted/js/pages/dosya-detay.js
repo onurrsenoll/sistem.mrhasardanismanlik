@@ -30,6 +30,16 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const [editError, setEditError] = useState('');
   const [dosyaSilConfirm, setDosyaSilConfirm] = useState(false);
 
+  // DOSYA KAPAT STATE
+  const [kapatModal, setKapatModal] = useState(false);
+  const [kapatForm, setKapatForm] = useState({
+    tazminat: '', vekalet_ucreti: '', faiz: '', stopaj: '', kdv_oran: '20',
+    noter_masrafi: '', cezaevi_harci: '', diger_masraf: '',
+    dosya_basi_odenen: '0', kasa_id: 1, pay_orani: '50'
+  });
+  const [kapatLoading, setKapatLoading] = useState(false);
+  const [kasalar, setKasalar] = useState([]);
+
   const load = async () => {
     setLoading(true);
     const r = await api.dosyaGet(dosyaId);
@@ -68,6 +78,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       kaza_il: dosya.kaza_il || '',
       haklilik: dosya.haklilik || 100,
       komisyon_orani: dosya.komisyon_orani || 0,
+      hak_mahrumiyet: dosya.hak_mahrumiyet ? 1 : 0,
       plaka: getPlaka(),
       notlar: dosya.notlar || '',
       magdur_ad_soyad: magdur.ad_soyad || '',
@@ -97,6 +108,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       kaza_il: editForm.kaza_il,
       haklilik: parseInt(editForm.haklilik) || 100,
       komisyon_orani: parseFloat(editForm.komisyon_orani) || 0,
+      hak_mahrumiyet: parseInt(editForm.hak_mahrumiyet) || 0,
       plaka: editForm.plaka,
       notlar: editForm.notlar,
       magdur_ad_soyad: editForm.magdur_ad_soyad,
@@ -138,7 +150,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const tabs = [
     {id:'bilgi', l:'DOSYA BİLGİLERİ', ic:'FileText'},
     {id:'masraf', l:`MASRAFLAR (${dosya.masraflar?.length || 0})`, ic:'Receipt'},
-    {id:'evrak', l:`EVRAKLAR (${dosya.evraklar?.length || 0})`, ic:'Folder'}
+    {id:'evrak', l:`EVRAKLAR (${dosya.evraklar?.length || 0})`, ic:'Folder'},
+    {id:'hesap', l:'DOSYA HESABI', ic:'Calculator'}
   ];
 
   return (
@@ -224,6 +237,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <InfoRow label="KAZA İLİ" value={dosya.kaza_il}/>
               <InfoRow label="HAKLILIK" value={`%${dosya.haklilik || 0}`} bold color={C.success}/>
               <InfoRow label="KOMİSYON" value={`%${dosya.komisyon_orani || 0}`}/>
+              <InfoRow label="HAK MAHRUMİYET TALEP" value={dosya.hak_mahrumiyet ? 'VAR' : 'YOK'} bold color={dosya.hak_mahrumiyet ? C.success : C.textMuted}/>
               {dosya.notlar && <div style={{marginTop:8,padding:8,background:C.bgInput,borderRadius:6,fontSize:10,color:C.textSec}}>{dosya.notlar}</div>}
             </div>
           </div>
@@ -381,6 +395,210 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
         </div>
       )}
 
+      {/* DOSYA HESABI TAB */}
+      {tab === 'hesap' && (
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          {/* MASRAF ÖZETİ */}
+          <div style={S.card}>
+            <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`${C.danger}06`}}>
+              <LIcon name="Receipt" size={14} color={C.danger}/>
+              <span style={{fontSize:12,fontWeight:700}}>DOSYA MASRAFLARI</span>
+            </div>
+            <div style={{padding:'10px 14px'}}>
+              {dosya.masraflar?.length > 0 ? dosya.masraflar.map((m,i) => (
+                <InfoRow key={i} label={m.masraf_kalemi} value={fmt(m.tutar)} color={C.danger}/>
+              )) : <div style={{fontSize:11,color:C.textMuted,padding:10,textAlign:'center'}}>MASRAF KAYDI YOK</div>}
+              <div style={{marginTop:8,paddingTop:8,borderTop:`2px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontSize:12,fontWeight:800}}>TOPLAM MASRAF</span>
+                <span style={{fontSize:14,fontWeight:800,color:C.danger}}>{fmt(dosya.toplam_masraf || 0)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* DOSYA KAPAT */}
+          <div style={S.card}>
+            <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',background:`${C.success}06`}}>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                <LIcon name="CheckCircle" size={14} color={C.success}/>
+                <span style={{fontSize:12,fontWeight:700}}>DOSYA KAPAT - HESAP ÖZETİ</span>
+              </div>
+              {dosya.asama !== 'DOSYA KAPANDI' && (
+                <button style={{...S.btn,...S.btnS,fontSize:10,padding:'5px 12px'}} onClick={() => {
+                  api.kasaList().then(r => { if(r?.success) setKasalar(r.data||[]); });
+                  setKapatForm({
+                    tazminat:'', vekalet_ucreti:'', faiz:'', stopaj:'', kdv_oran:'20',
+                    noter_masrafi:'', cezaevi_harci:'', diger_masraf:'',
+                    dosya_basi_odenen:'0', kasa_id:1, pay_orani: String(dosya.komisyon_orani || 50)
+                  });
+                  setKapatModal(true);
+                }}>
+                  <LIcon name="Lock" size={12} color="#fff"/> DOSYAYI KAPAT
+                </button>
+              )}
+            </div>
+            <div style={{padding:'14px'}}>
+              {dosya.asama === 'DOSYA KAPANDI' ? (
+                <div style={{textAlign:'center',padding:20}}>
+                  <div style={{width:60,height:60,borderRadius:'50%',background:`${C.success}22`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px'}}>
+                    <LIcon name="Check" size={28} color={C.success}/>
+                  </div>
+                  <div style={{fontSize:16,fontWeight:800,color:C.success,marginBottom:4}}>DOSYA KAPANDI</div>
+                  <div style={{fontSize:11,color:C.textMuted}}>KAPANMA TARİHİ: {dosya.kapanma_tarihi || '-'}</div>
+                </div>
+              ) : (
+                <div style={{textAlign:'center',padding:30,color:C.textMuted}}>
+                  <LIcon name="Calculator" size={36} color={C.textMuted} style={{opacity:0.3,marginBottom:10}}/>
+                  <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>DOSYA HENÜZ KAPANMADI</div>
+                  <div style={{fontSize:11}}>DOSYAYI KAPATMAK İÇİN YUKARIDAKI BUTONA TIKLAYIN</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DOSYA KAPAT MODAL */}
+      <Modal open={kapatModal} onClose={() => setKapatModal(false)} title="DOSYA KAPAT - HESAP ÖZETİ" width="700px">
+        {(() => {
+          const t = parseFloat(kapatForm.tazminat) || 0;
+          const sozlesmeOran = parseFloat(kapatForm.pay_orani) || 0;
+          const sozlesme = t * sozlesmeOran / 100;
+          const noter = parseFloat(kapatForm.noter_masrafi) || 0;
+          const cezaevi = parseFloat(kapatForm.cezaevi_harci) || 0;
+          const digerM = parseFloat(kapatForm.diger_masraf) || 0;
+          const toplamEkMasraf = noter + cezaevi + digerM;
+          const muvekkileHavale = t - sozlesme - toplamEkMasraf;
+          const vekalet = parseFloat(kapatForm.vekalet_ucreti) || 0;
+          const faiz = parseFloat(kapatForm.faiz) || 0;
+          const stopaj = parseFloat(kapatForm.stopaj) || 0;
+          const kdvOran = parseFloat(kapatForm.kdv_oran) || 0;
+          const kdv = sozlesme * kdvOran / 100;
+          const toplamKazanc = sozlesme + vekalet + faiz;
+          const netKazanc = toplamKazanc - stopaj;
+          const dosyaBasi = parseFloat(kapatForm.dosya_basi_odenen) || 0;
+          const dosyaSonunda = netKazanc - dosyaBasi;
+          const dosyaMasraflari = dosya.toplam_masraf || 0;
+          const kF = (k,v) => setKapatForm(p=>({...p,[k]:v}));
+
+          const hesapRow = (label, val, opts={}) => (
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',
+              borderBottom:opts.border?`2px solid ${C.border}`:`1px solid ${C.border}22`}}>
+              <span style={{fontSize:11,fontWeight:opts.bold?800:500,color:opts.color||C.text}}>{label}</span>
+              <span style={{fontSize:opts.big?16:12,fontWeight:opts.bold?800:600,color:opts.color||C.text,fontFamily:'monospace'}}>
+                {fmt(val)}
+              </span>
+            </div>
+          );
+
+          const dosyaKapat = async () => {
+            if (!t || t <= 0) { alert('TAZMİNAT TUTARI GİRMENİZ GEREKLİ'); return; }
+            setKapatLoading(true);
+            const gelirR = await api.gelirCreate({
+              dosya_id: dosya.id, gelir_turu: 'TAZMİNAT ÖDEMESİ',
+              tutar: dosyaSonunda > 0 ? dosyaSonunda : netKazanc,
+              kasa_id: parseInt(kapatForm.kasa_id), aciklama: `${dosya.dosya_no} DOSYA KAPATMA - TAZMİNAT: ${fmt(t)}, KAZANÇ: ${fmt(netKazanc)}`,
+              tahsilat_durumu: 'tahsil_edildi'
+            });
+            const kapatR = await api.dosyaUpdate({
+              id: dosya.id, asama: 'DOSYA KAPANDI',
+              kapanma_tarihi: new Date().toISOString().split('T')[0]
+            });
+            if (kapatR?.success) { load(); setKapatModal(false); }
+            else alert(kapatR?.error || 'DOSYA KAPATMA HATASI');
+            setKapatLoading(false);
+          };
+
+          return (
+            <div>
+              {/* GİRİŞ ALANLARI */}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
+                <FormGroup label="SİGORTA TAZMİNATI (ÇIKAN ÖDEME) *">
+                  <input type="number" value={kapatForm.tazminat} onChange={e=>kF('tazminat',e.target.value)} placeholder="17.635,00" style={{...S.input,padding:'8px 10px',fontSize:12,fontWeight:700}}/>
+                </FormGroup>
+                <FormGroup label={`SÖZLEŞME ORANI (%${sozlesmeOran})`}>
+                  <input type="number" min="0" max="100" value={kapatForm.pay_orani} onChange={e=>kF('pay_orani',e.target.value)} placeholder="20" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
+                </FormGroup>
+                <FormGroup label="KARŞI VEKALET ÜCRETİ">
+                  <input type="number" value={kapatForm.vekalet_ucreti} onChange={e=>kF('vekalet_ucreti',e.target.value)} placeholder="8.817,00" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
+                </FormGroup>
+                <FormGroup label="FAİZ">
+                  <input type="number" value={kapatForm.faiz} onChange={e=>kF('faiz',e.target.value)} placeholder="580,00" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
+                </FormGroup>
+                <FormGroup label="STOPAJ">
+                  <input type="number" value={kapatForm.stopaj} onChange={e=>kF('stopaj',e.target.value)} placeholder="2.939,00" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
+                </FormGroup>
+                <FormGroup label="KDV ORANI (%)">
+                  <input type="number" value={kapatForm.kdv_oran} onChange={e=>kF('kdv_oran',e.target.value)} placeholder="20" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
+                </FormGroup>
+                <FormGroup label="NOTER MASRAFI">
+                  <input type="number" value={kapatForm.noter_masrafi} onChange={e=>kF('noter_masrafi',e.target.value)} placeholder="0" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
+                </FormGroup>
+                <FormGroup label="CEZAEVİ HARCI">
+                  <input type="number" value={kapatForm.cezaevi_harci} onChange={e=>kF('cezaevi_harci',e.target.value)} placeholder="0" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
+                </FormGroup>
+                <FormGroup label="DİĞER MASRAF">
+                  <input type="number" value={kapatForm.diger_masraf} onChange={e=>kF('diger_masraf',e.target.value)} placeholder="0" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
+                </FormGroup>
+                <FormGroup label="DOSYA BAŞI ÖDENEN">
+                  <input type="number" value={kapatForm.dosya_basi_odenen} onChange={e=>kF('dosya_basi_odenen',e.target.value)} placeholder="0" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
+                </FormGroup>
+              </div>
+
+              {/* HESAP ÖZETİ */}
+              <div style={{background:C.bgInput,borderRadius:10,padding:16,border:`1px solid ${C.border}`,marginBottom:16}}>
+                <div style={{fontSize:12,fontWeight:800,color:C.accent,marginBottom:10,display:'flex',alignItems:'center',gap:6}}>
+                  <LIcon name="Calculator" size={14} color={C.accent}/> HESAP ÖZETİ
+                </div>
+                {hesapRow('SİGORTA ÖDEMESİ (TAZMİNAT)', t, {bold:true,color:C.accent})}
+                {hesapRow(`SÖZLEŞME (%${sozlesmeOran})`, sozlesme)}
+                {noter > 0 && hesapRow('NOTER MASRAFI', noter, {color:C.danger})}
+                {cezaevi > 0 && hesapRow('CEZAEVİ HARCI', cezaevi, {color:C.danger})}
+                {digerM > 0 && hesapRow('DİĞER MASRAF', digerM, {color:C.danger})}
+                {hesapRow('MÜVEKKİLE HAVALE', muvekkileHavale, {bold:true,border:true})}
+
+                <div style={{marginTop:10}}/>
+                {hesapRow('NET VEKALET ÜCRETİ', vekalet)}
+                {hesapRow('FAİZ', faiz)}
+                {hesapRow('STOPAJ', stopaj, {color:C.danger})}
+                <div style={{marginTop:6}}/>
+                {hesapRow(`KDV %${kdvOran}`, kdv)}
+
+                <div style={{marginTop:10,paddingTop:10,borderTop:`2px solid ${C.accent}44`}}/>
+                {hesapRow('TOPLAM KAZANÇ', toplamKazanc, {bold:true,color:C.success})}
+                {hesapRow('NET TOPLAM KAZANÇ', netKazanc, {bold:true,color:C.success,big:true})}
+
+                <div style={{marginTop:10,paddingTop:10,borderTop:`2px solid ${C.warning}44`}}/>
+                {hesapRow('DOSYA MASRAFLARI (SİSTEMDEN)', dosyaMasraflari, {color:C.danger})}
+                {hesapRow('DOSYA BAŞI ÖDENEN', dosyaBasi)}
+                {hesapRow('DOSYA SONUNDA ÖDENEN', dosyaSonunda, {bold:true,color:C.success,big:true,border:true})}
+              </div>
+
+              {/* KASA SEÇİMİ */}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
+                <FormGroup label="KAZANÇ AKTARILACAK KASA">
+                  <select value={kapatForm.kasa_id} onChange={e=>kF('kasa_id',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:12}}>
+                    {kasalar.map(k => <option key={k.id} value={k.id}>{k.ad} ({fmt(k.bakiye)})</option>)}
+                  </select>
+                </FormGroup>
+                <div style={{display:'flex',alignItems:'flex-end',paddingBottom:2}}>
+                  <div style={{padding:'10px 16px',background:`${C.success}11`,borderRadius:8,border:`1px solid ${C.success}33`,width:'100%'}}>
+                    <div style={{fontSize:9,color:C.textMuted,marginBottom:2}}>KASAYA AKTARILACAK</div>
+                    <div style={{fontSize:16,fontWeight:800,color:C.success}}>{fmt(dosyaSonunda > 0 ? dosyaSonunda : netKazanc)}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ONAYLA */}
+              <button onClick={dosyaKapat} disabled={kapatLoading || !t}
+                style={{...S.btn,...S.btnS,justifyContent:'center',padding:14,width:'100%',fontSize:13,fontWeight:800}}>
+                <LIcon name="CheckCircle" size={16} color="#fff"/>
+                {kapatLoading ? 'KAPATILIYOR...' : 'DOSYAYI KAPAT VE KAZANCI KASAYA AKTAR'}
+              </button>
+            </div>
+          );
+        })()}
+      </Modal>
+
       {/* MODALLER */}
       <MR.MasrafEkle open={masrafM} onClose={() => setMasrafM(false)} dosyaId={dosya.id} onOk={load}/>
       <MR.EvrakYukle open={evrakM} onClose={() => setEvrakM(false)} dosyaId={dosya.id} onOk={load}/>
@@ -451,6 +669,20 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           </FormGroup>
           <FormGroup label="KOMİSYON (%)">
             <input type="number" min="0" max="100" step="0.1" value={editForm.komisyon_orani} onChange={e => u('komisyon_orani',e.target.value)} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+          </FormGroup>
+          <FormGroup label="HAK MAHRUMİYET TALEP">
+            <div style={{display:'flex',gap:8,alignItems:'center',paddingTop:4}}>
+              <div onClick={() => u('hak_mahrumiyet', 1)}
+                style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
+                  background:editForm.hak_mahrumiyet==1?`${C.success}22`:'transparent',
+                  color:editForm.hak_mahrumiyet==1?C.success:C.textMuted,
+                  border:`1px solid ${editForm.hak_mahrumiyet==1?C.success+'66':C.border}`}}>VAR</div>
+              <div onClick={() => u('hak_mahrumiyet', 0)}
+                style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
+                  background:editForm.hak_mahrumiyet==0?`${C.danger}22`:'transparent',
+                  color:editForm.hak_mahrumiyet==0?C.danger:C.textMuted,
+                  border:`1px solid ${editForm.hak_mahrumiyet==0?C.danger+'66':C.border}`}}>YOK</div>
+            </div>
           </FormGroup>
         </div>
 

@@ -9,7 +9,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
   const [error, setError] = useState('');
   const [form, setForm] = useState({
     ad_soyad:'', tc_kimlik:'', telefon:'', iban:'', adres:'', il:'', ilce:'',
-    dosya_turu:'ADK', talep_turu:'', kaza_tarihi:'', haklilik:'100', meslek:'', komisyon:'',
+    dosya_turu:'ADK', talep_turu:'', kaza_tarihi:'', haklilik:'100', hak_mahrumiyet:'0', meslek:'', komisyon:'',
     ma_plaka:'', ma_marka:'', ma_model:'', ma_yil:'',
     ka_plaka:'', ka_marka:'', ka_yil:'', ka_trafik:'',
     sigorta_sirket:'', dosya_kaynak:'', notlar:''
@@ -82,6 +82,20 @@ MR.DosyaYeniPage = ({setPage, user}) => {
           </FormGroup>
           <FormGroup label="MESLEK"><input style={S.input} value={form.meslek} onChange={e=>u('meslek',e.target.value)} placeholder="MESLEK"/></FormGroup>
           <FormGroup label="KOMİSYON (%)"><input type="number" style={S.input} value={form.komisyon} onChange={e=>u('komisyon',e.target.value)} placeholder="20"/></FormGroup>
+          <FormGroup label="HAK MAHRUMİYET TALEP">
+            <div style={{display:'flex',gap:8,alignItems:'center'}}>
+              <div onClick={() => u('hak_mahrumiyet','1')}
+                style={{padding:'8px 20px',borderRadius:8,fontSize:12,fontWeight:700,cursor:'pointer',
+                  background:form.hak_mahrumiyet==='1'?`${C.success}22`:'transparent',
+                  color:form.hak_mahrumiyet==='1'?C.success:C.textMuted,
+                  border:`1px solid ${form.hak_mahrumiyet==='1'?C.success+'66':C.border}`}}>VAR</div>
+              <div onClick={() => u('hak_mahrumiyet','0')}
+                style={{padding:'8px 20px',borderRadius:8,fontSize:12,fontWeight:700,cursor:'pointer',
+                  background:form.hak_mahrumiyet!=='1'?`${C.danger}22`:'transparent',
+                  color:form.hak_mahrumiyet!=='1'?C.danger:C.textMuted,
+                  border:`1px solid ${form.hak_mahrumiyet!=='1'?C.danger+'66':C.border}`}}>YOK</div>
+            </div>
+          </FormGroup>
         </div>
       );
       case 2:
