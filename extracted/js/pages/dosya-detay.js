@@ -1,19 +1,29 @@
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect} = React;
 
-const ASAMALAR = ['DOSYA AÇIK','EVRAK BEKLENİYOR','BAŞVURU HAZIRLANIYOR','SİGORTA BAŞVURUSU','TAHKİM BAŞVURUSU','DAVA AÇILDI','BİLİRKİŞİ AŞAMASI','KARAR BEKLENİYOR','ÖDEME BEKLENİYOR','ÖDEME ALINDI','DOSYA KAPANDI'];
+const ASAMALAR = MR.ASAMALAR || [];
 const ADK_TT = ['TRAFİK SİGORTASI BAŞVURUSU','KASKO BAŞVURUSU','TAHKİM BAŞVURUSU','DAVA YOLU'];
 const BH_TT = ['MALULİYET TAZMİNATI','GEÇİCİ İŞ GÖREMEZLİK','DESTEKTEN YOKSUN KALMA','BAKICI GİDERİ','TEDAVİ GİDERLERİ'];
 const KAYNAKLAR = ['OFİS CRM','YÖNLENDİREN','SAHA PERSONEL'];
 
 const asamaRenk = (a) => {
-  const m = {
-    'DOSYA AÇIK':'#3b82f6','EVRAK BEKLENİYOR':'#f59e0b','BAŞVURU HAZIRLANIYOR':'#8b5cf6',
-    'SİGORTA BAŞVURUSU':'#06b6d4','TAHKİM BAŞVURUSU':'#6366f1','DAVA AÇILDI':'#ef4444',
-    'BİLİRKİŞİ AŞAMASI':'#d97706','KARAR BEKLENİYOR':'#ec4899',
-    'ÖDEME BEKLENİYOR':'#84cc16','ÖDEME ALINDI':'#22c55e','DOSYA KAPANDI':'#6b7280'
-  };
-  return m[a] || '#6b7280';
+  if (!a) return '#6b7280';
+  const s = a.toUpperCase();
+  if (s.includes('KAPANDI') || s.includes('TAHSİL KABİLİYETİ YOK')) return '#6b7280';
+  if (s.includes('ÖDEME ALINDI')) return '#22c55e';
+  if (s.includes('ÖDEME BEKLEN')) return '#84cc16';
+  if (s.includes('AÇIK') || s.includes('EVRAK BEKLEN')) return '#3b82f6';
+  if (s.includes('TAHKİM') || s.includes('HAKEM')) return '#6366f1';
+  if (s.includes('DAVA') || s.includes('HUKUK')) return '#ef4444';
+  if (s.includes('BİLİRKİŞİ') || s.includes('HESAP') || s.includes('AKTÜER')) return '#d97706';
+  if (s.includes('KARAR') || s.includes('TEMYİZ') || s.includes('İSTİNAF')) return '#ec4899';
+  if (s.includes('ADLİ TIP') || s.includes('MALULİYET') || s.includes('KUSUR') || s.includes('SAKATLIK')) return '#a855f7';
+  if (s.includes('ARABULUCULUK')) return '#14b8a6';
+  if (s.includes('BAŞVURU') || s.includes('SİGORTA')) return '#06b6d4';
+  if (s.includes('İCRA') || s.includes('TAKİP') || s.includes('AZİLNAME')) return '#f97316';
+  if (s.includes('İTİRAZ')) return '#e11d48';
+  if (s.includes('KEŞİF') || s.includes('SEVK') || s.includes('ÖN İNCELEME')) return '#8b5cf6';
+  return '#6b7280';
 };
 
 MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
@@ -189,7 +199,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           </div>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             <select value={dosya.asama} onChange={e => asamaDegistir(e.target.value)}
-              style={{...S.select,width:180,fontSize:10,padding:'6px 10px',background:`${ac}11`,border:`1px solid ${ac}33`,color:ac,fontWeight:600}}>
+              style={{...S.select,minWidth:180,maxWidth:500,fontSize:10,padding:'6px 10px',background:`${ac}11`,border:`1px solid ${ac}33`,color:ac,fontWeight:600}}>
               {ASAMALAR.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
             <button style={{...S.btn,...S.btnP,fontSize:10,padding:'6px 12px'}} onClick={openEditModal}>

@@ -1,5 +1,5 @@
 const MR = window.MR || (window.MR = {});
-const {useState} = React;
+const {useState, useEffect, useRef} = React;
 
 MR.StatCard = ({icon, label, value, color = MR.C.accent}) => (
   <div style={{...MR.S.stat, display:'flex', alignItems:'center', gap:12, padding:'10px 16px'}}>
@@ -130,6 +130,128 @@ MR.LoginScreen = ({onLogin}) => {
         </form>
         <div style={{textAlign:'center',marginTop:24,fontSize:13,fontWeight:700,color:MR.C.accent,letterSpacing:4}}>HER ZAMAN FARK EDER</div>
       </div>
+    </div>
+  );
+};
+
+/* ═══ ARAÇ MARKA/MODEL SEÇİCİ ═══ */
+MR._aracCache = {markalar: null, modeller: {}};
+
+MR.AracMarkaSelect = ({value, onChange, style}) => {
+  const [markalar, setMarkalar] = useState(MR._aracCache.markalar || []);
+  const [ara, setAra] = useState('');
+  const [acik, setAcik] = useState(false);
+  const ref = useRef(null);
+  const S = MR.S, C = MR.C;
+
+  useEffect(() => {
+    if (MR._aracCache.markalar) { setMarkalar(MR._aracCache.markalar); return; }
+    (async () => {
+      const r = await MR.api.aracMarkaList();
+      if (r?.success && r.data?.markalar) {
+        MR._aracCache.markalar = r.data.markalar;
+        setMarkalar(r.data.markalar);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setAcik(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, []);
+
+  const filtered = ara ? markalar.filter(m => m.includes(ara.toUpperCase())) : markalar;
+
+  return (
+    <div ref={ref} style={{position:'relative',...(style||{})}}>
+      <input
+        value={acik ? ara : (value || '')}
+        onChange={e => { setAra(e.target.value); if (!acik) setAcik(true); }}
+        onFocus={() => { setAcik(true); setAra(''); }}
+        placeholder={value || 'MARKA YAZIN...'}
+        style={{...S.input, cursor:'pointer'}}
+      />
+      {acik && (
+        <div style={{position:'absolute',top:'100%',left:0,right:0,maxHeight:220,overflowY:'auto',
+          background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:6,zIndex:999,boxShadow:'0 4px 12px rgba(0,0,0,0.15)'}}>
+          {filtered.length === 0 ? <div style={{padding:8,fontSize:11,color:C.textMuted}}>SONUÇ YOK</div> :
+            filtered.slice(0, 50).map(m => (
+              <div key={m} onClick={() => { onChange(m); setAcik(false); setAra(''); }}
+                style={{padding:'6px 10px',fontSize:11,cursor:'pointer',
+                  background: m===value ? `${C.accent}22` : 'transparent',
+                  fontWeight: m===value ? 700 : 400,
+                  color:C.text,borderBottom:`1px solid ${C.border}22`}}
+                onMouseEnter={e=>e.target.style.background=`${C.accent}11`}
+                onMouseLeave={e=>e.target.style.background=m===value?`${C.accent}22`:'transparent'}>
+                {m}
+              </div>
+            ))}
+          {filtered.length > 50 && <div style={{padding:6,fontSize:10,color:C.textMuted,textAlign:'center'}}>{filtered.length-50} DAHA... (YAZMAYA DEVAM EDİN)</div>}
+        </div>
+      )}
+    </div>
+  );
+};
+
+MR.AracModelSelect = ({marka, value, onChange, style}) => {
+  const [modeller, setModeller] = useState([]);
+  const [ara, setAra] = useState('');
+  const [acik, setAcik] = useState(false);
+  const [yukleniyor, setYukleniyor] = useState(false);
+  const ref = useRef(null);
+  const S = MR.S, C = MR.C;
+
+  useEffect(() => {
+    if (!marka) { setModeller([]); return; }
+    if (MR._aracCache.modeller[marka]) { setModeller(MR._aracCache.modeller[marka]); return; }
+    setYukleniyor(true);
+    (async () => {
+      const r = await MR.api.aracModelList(marka);
+      if (r?.success && r.data?.modeller) {
+        MR._aracCache.modeller[marka] = r.data.modeller;
+        setModeller(r.data.modeller);
+      }
+      setYukleniyor(false);
+    })();
+  }, [marka]);
+
+  useEffect(() => {
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setAcik(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, []);
+
+  const filtered = ara ? modeller.filter(m => m.includes(ara.toUpperCase())) : modeller;
+
+  return (
+    <div ref={ref} style={{position:'relative',...(style||{})}}>
+      <input
+        value={acik ? ara : (value || '')}
+        onChange={e => { setAra(e.target.value); if (!acik) setAcik(true); }}
+        onFocus={() => { setAcik(true); setAra(''); }}
+        placeholder={yukleniyor ? 'YÜKLENİYOR...' : (value || 'MODEL YAZIN...')}
+        disabled={!marka || yukleniyor}
+        style={{...S.input, cursor: marka ? 'pointer' : 'not-allowed', opacity: marka ? 1 : 0.5}}
+      />
+      {acik && marka && !yukleniyor && (
+        <div style={{position:'absolute',top:'100%',left:0,right:0,maxHeight:250,overflowY:'auto',
+          background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:6,zIndex:999,boxShadow:'0 4px 12px rgba(0,0,0,0.15)'}}>
+          {filtered.length === 0 ? <div style={{padding:8,fontSize:11,color:C.textMuted}}>SONUÇ YOK</div> :
+            filtered.slice(0, 80).map(m => (
+              <div key={m} onClick={() => { onChange(m); setAcik(false); setAra(''); }}
+                style={{padding:'5px 10px',fontSize:10,cursor:'pointer',
+                  background: m===value ? `${C.accent}22` : 'transparent',
+                  fontWeight: m===value ? 700 : 400,
+                  color:C.text,borderBottom:`1px solid ${C.border}22`}}
+                onMouseEnter={e=>e.target.style.background=`${C.accent}11`}
+                onMouseLeave={e=>e.target.style.background=m===value?`${C.accent}22`:'transparent'}>
+                {m}
+              </div>
+            ))}
+          {filtered.length > 80 && <div style={{padding:6,fontSize:10,color:C.textMuted,textAlign:'center'}}>{filtered.length-80} DAHA... (YAZMAYA DEVAM EDİN)</div>}
+        </div>
+      )}
     </div>
   );
 };

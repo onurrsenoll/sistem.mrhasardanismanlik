@@ -2,7 +2,7 @@ const MR = window.MR || (window.MR = {});
 const {useState} = React;
 
 MR.DosyaYeniPage = ({setPage, user}) => {
-  const {C, S, LIcon, Badge, SectionTitle, FormGroup, api, ARAC_DB, SIGORTA, ILLER, formatPlaka} = MR;
+  const {C, S, LIcon, Badge, SectionTitle, FormGroup, api, SIGORTA, ILLER, formatPlaka, AracMarkaSelect, AracModelSelect} = MR;
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -108,14 +108,10 @@ MR.DosyaYeniPage = ({setPage, user}) => {
               <div style={{padding:16,display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
                 <FormGroup label="PLAKA *"><input style={S.input} value={form.ma_plaka} onChange={e=>u('ma_plaka',formatPlaka(e.target.value))} placeholder="55MR001"/></FormGroup>
                 <FormGroup label="MARKA">
-                  <select style={S.select} value={form.ma_marka} onChange={e=>{u('ma_marka',e.target.value);u('ma_model','');}}>
-                    <option value="">SEÇİNİZ</option>{Object.keys(ARAC_DB).sort().map(m=><option key={m} value={m}>{m}</option>)}
-                  </select>
+                  <AracMarkaSelect value={form.ma_marka} onChange={v=>{u('ma_marka',v);u('ma_model','');}}/>
                 </FormGroup>
-                <FormGroup label="MODEL">
-                  <select style={S.select} value={form.ma_model} onChange={e=>u('ma_model',e.target.value)}>
-                    <option value="">SEÇİNİZ</option>{(ARAC_DB[form.ma_marka]?.modeller||[]).map(m=><option key={m} value={m}>{m}</option>)}
-                  </select>
+                <FormGroup label="MODEL / PAKET">
+                  <AracModelSelect marka={form.ma_marka} value={form.ma_model} onChange={v=>u('ma_model',v)}/>
                 </FormGroup>
                 <FormGroup label="MODEL YILI">
                   <select style={S.select} value={form.ma_yil} onChange={e=>u('ma_yil',e.target.value)}>
@@ -136,9 +132,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
                   </select>
                 </FormGroup>
                 <FormGroup label="MARKA">
-                  <select style={S.select} value={form.ka_marka} onChange={e=>u('ka_marka',e.target.value)}>
-                    <option value="">SEÇİNİZ</option>{Object.keys(ARAC_DB).sort().map(m=><option key={m} value={m}>{m}</option>)}
-                  </select>
+                  <AracMarkaSelect value={form.ka_marka} onChange={v=>u('ka_marka',v)}/>
                 </FormGroup>
                 <FormGroup label="MODEL YILI">
                   <select style={S.select} value={form.ka_yil} onChange={e=>u('ka_yil',e.target.value)}>

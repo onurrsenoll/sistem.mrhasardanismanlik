@@ -112,7 +112,7 @@ MR.HesapADKPage = () => {
   /* PDF */
   const [pdfLoading, setPdfLoading] = useState(false);
 
-  const modeller = marka && MR.ARAC_DB?.[marka] ? MR.ARAC_DB[marka].modeller : [];
+  /* modeller artık AracModelSelect ile yükleniyor */
   const yillar = [];
   for (let y = new Date().getFullYear(); y >= 2005; y--) yillar.push(y);
 
@@ -246,22 +246,22 @@ MR.HesapADKPage = () => {
       + '<td style="width:50%;vertical-align:top;background:#f0f9ff;border:1px solid #bfdbfe;border-radius:5px;padding:6px 8px;">'
       + '<div style="font-size:7.5px;font-weight:800;color:#2563eb;margin-bottom:4px;padding-bottom:2px;border-bottom:1px solid #bfdbfe;">ARAC BILGILERI</div>'
       + '<table style="width:100%;font-size:7px;">'
-      + '<tr><td style="'+P2+'color:#64748b;">MARKA/MODEL:</td><td style="'+P2+'font-weight:700;">'+marka+' '+model+'</td></tr>'
-      + '<tr><td style="'+P2+'color:#64748b;">YILI / YASI:</td><td style="'+P2+'font-weight:600;">'+yil+' ('+aracYasi+' YAS)</td></tr>'
-      + '<tr><td style="'+P2+'color:#64748b;">KILOMETRE:</td><td style="'+P2+'font-weight:600;">'+MR.parseNum(km).toLocaleString('tr-TR')+' KM</td></tr>'
-      + '<tr><td style="'+P2+'color:#64748b;">PLAKA:</td><td style="'+P2+'font-weight:600;">'+(plaka||'-')+'</td></tr>'
-      + '<tr><td style="'+P2+'color:#64748b;">KAZA TARIHI:</td><td style="'+P2+'font-weight:600;">'+(kazaTarihi||'-')+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">MARKA/MODEL:</td><td style="padding:2px 4px;font-weight:700;">'+marka+' '+model+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">YILI / YASI:</td><td style="padding:2px 4px;font-weight:600;">'+yil+' ('+aracYasi+' YAS)</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">KILOMETRE:</td><td style="padding:2px 4px;font-weight:600;">'+MR.parseNum(km).toLocaleString('tr-TR')+' KM</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">PLAKA:</td><td style="padding:2px 4px;font-weight:600;">'+(plaka||'-')+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">KAZA TARIHI:</td><td style="padding:2px 4px;font-weight:600;">'+(kazaTarihi||'-')+'</td></tr>'
       + '</table></td>'
       // Sağ: Hasar
       + '<td style="width:50%;vertical-align:top;background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:6px 8px;">'
       + '<div style="font-size:7.5px;font-weight:800;color:#dc2626;margin-bottom:4px;padding-bottom:2px;border-bottom:1px solid #fecaca;">HASAR BILGILERI</div>'
       + '<table style="width:100%;font-size:7px;">'
-      + '<tr><td style="'+P2+'color:#64748b;">RAYIC DEGER:</td><td style="'+P2+'font-weight:700;color:#2563eb;">'+fmtM(r)+'</td></tr>'
-      + '<tr><td style="'+P2+'color:#64748b;">ONARIM BEDELI:</td><td style="'+P2+'font-weight:700;color:#dc2626;">'+fmtM(o)+'</td></tr>'
-      + '<tr><td style="'+P2+'color:#64748b;">HASAR ORANI:</td><td style="'+P2+'font-weight:600;">%'+hasarOrani+'</td></tr>'
-      + '<tr><td style="'+P2+'color:#64748b;">KUSUR ORANI:</td><td style="'+P2+'font-weight:600;">%'+kusur+(parseInt(kusur)===100?' (KUSURSUZ)':'')+'</td></tr>'
-      + '<tr><td style="'+P2+'color:#64748b;">ONCEKI HASAR:</td><td style="'+P2+'font-weight:600;">'+(parseInt(onceki)===0?'YOK':onceki+' ADET')+'</td></tr>'
-      + '<tr><td style="'+P2+'color:#64748b;">HASARLI BOLGE:</td><td style="'+P2+'font-weight:600;">'+({on:'ON KISIM',arka:'ARKA KISIM',yan:'YAN KISIM',tavan:'TAVAN'}[bolge]||bolge)+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">RAYIC DEGER:</td><td style="padding:2px 4px;font-weight:700;color:#2563eb;">'+fmtM(r)+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">ONARIM BEDELI:</td><td style="padding:2px 4px;font-weight:700;color:#dc2626;">'+fmtM(o)+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">HASAR ORANI:</td><td style="padding:2px 4px;font-weight:600;">%'+hasarOrani+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">KUSUR ORANI:</td><td style="padding:2px 4px;font-weight:600;">%'+kusur+(parseInt(kusur)===100?' (KUSURSUZ)':'')+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">ONCEKI HASAR:</td><td style="padding:2px 4px;font-weight:600;">'+(parseInt(onceki)===0?'YOK':onceki+' ADET')+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">HASARLI BOLGE:</td><td style="padding:2px 4px;font-weight:600;">'+({on:'ON KISIM',arka:'ARKA KISIM',yan:'YAN KISIM',tavan:'TAVAN'}[bolge]||bolge)+'</td></tr>'
       + '</table></td>'
       + '</tr></table>'
 
@@ -297,7 +297,7 @@ MR.HesapADKPage = () => {
       + (kararlar.length > 0 ? '<td style="vertical-align:top;width:'+(ilanlar.length>0?'42':'100')+'%;border:1px solid #fcd34d;border-radius:5px;overflow:hidden;">'
         + '<div style="background:#d97706;color:#fff;padding:3px 6px;font-size:7px;font-weight:700;">TAHKIM EMSAL ('+kararlar.length+' KARAR)</div>'
         + '<table style="width:100%;border-collapse:collapse;">'
-        + '<tr style="background:#fef3c7;"><th style="'+P2+'font-size:6px;text-align:left;">DOSYA</th><th style="'+P2+'font-size:6px;text-align:left;">ARAC</th><th style="'+P2+'font-size:6px;text-align:right;">RAYIC</th><th style="'+P2+'font-size:6px;text-align:right;">DK</th></tr>'
+        + '<tr style="background:#fef3c7;"><th style="padding:2px 4px;font-size:6px;text-align:left;">DOSYA</th><th style="padding:2px 4px;font-size:6px;text-align:left;">ARAC</th><th style="padding:2px 4px;font-size:6px;text-align:right;">RAYIC</th><th style="padding:2px 4px;font-size:6px;text-align:right;">DK</th></tr>'
         + emsalRows+'</table>'
         + '<div style="background:#fef3c7;padding:3px 6px;text-align:center;font-size:7px;font-weight:700;color:#b45309;">EMSAL ORT: '+fmtM(emsalData?.ortalama_dk||0)+'</div>'
         + '</td>' : '')
@@ -398,16 +398,10 @@ MR.HesapADKPage = () => {
             <div style={{...S.cardBody, paddingTop:12}}>
               <div style={gridS}>
                 <MR.FormGroup label="MARKA *">
-                  <select value={marka} onChange={e => {setMarka(e.target.value); setModel('');}} style={S.select}>
-                    <option value="">SEÇİNİZ</option>
-                    {Object.keys(MR.ARAC_DB||{}).sort().map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
+                  <MR.AracMarkaSelect value={marka} onChange={v => {setMarka(v); setModel('');}}/>
                 </MR.FormGroup>
-                <MR.FormGroup label="MODEL *">
-                  <select value={model} onChange={e => setModel(e.target.value)} style={S.select}>
-                    <option value="">{marka ? 'SEÇİNİZ' : 'ÖNCE MARKA'}</option>
-                    {modeller.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
+                <MR.FormGroup label="MODEL / PAKET *">
+                  <MR.AracModelSelect marka={marka} value={model} onChange={v => setModel(v)}/>
                 </MR.FormGroup>
                 <MR.FormGroup label="MODEL YILI *">
                   <select value={yil} onChange={e => setYil(e.target.value)} style={S.select}>

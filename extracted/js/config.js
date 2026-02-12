@@ -152,6 +152,9 @@ MR.api = {
       method: 'POST', headers: h, body: fd
     }).then(r => r.json()).catch(() => ({success: false, error: 'BAĞLANTI HATASI'}));
   },
+  // ARAÇ KATALOG
+  aracMarkaList() { return this.req('/tanim/arac-marka-list.php'); },
+  aracModelList(marka) { return this.req('/tanim/arac-model-list.php?marka=' + encodeURIComponent(marka)); },
 };
 
 // ═══ TEMA SİSTEMİ ═══
