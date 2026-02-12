@@ -681,7 +681,7 @@ MR._CRMYeniInner = ({setPage}) => {
               {error}
             </div>
           )}
-          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 700}}>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 700, margin: '0 auto'}}>
             <FormGroup label="AD SOYAD *">
               <input style={S.input} value={f.ad_soyad} onChange={e => up('ad_soyad', e.target.value)} placeholder="AD SOYAD"/>
             </FormGroup>
@@ -720,7 +720,7 @@ MR._CRMYeniInner = ({setPage}) => {
               <textarea style={{...S.input, minHeight: 80}} value={f.not_text} onChange={e => up('not_text', e.target.value)} placeholder="GÖRÜŞME NOTU..."/>
             </FormGroup>
           </div>
-          <div style={{marginTop: 24, display: 'flex', gap: 8}}>
+          <div style={{marginTop: 24, display: 'flex', gap: 8, maxWidth: 700, margin: '24px auto 0'}}>
             <button style={{...S.btn, ...S.btnS, fontSize: 12}} onClick={kaydet} disabled={loading}>
               <LIcon name="Save" size={14} color="#fff"/> {loading ? 'KAYDEDİLİYOR...' : 'KAYDET'}
             </button>

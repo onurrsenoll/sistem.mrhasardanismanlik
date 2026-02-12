@@ -2,12 +2,12 @@ const MR = window.MR || (window.MR = {});
 const {useState} = React;
 
 MR.StatCard = ({icon, label, value, color = MR.C.accent}) => (
-  <div style={MR.S.stat}>
-    <div style={{width:38,height:38,borderRadius:10,background:`${color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <MR.LIcon name={icon} size={18} color={color}/>
+  <div style={{...MR.S.stat, display:'flex', alignItems:'center', gap:12, padding:'10px 16px'}}>
+    <div style={{width:34,height:34,minWidth:34,borderRadius:8,background:`${color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <MR.LIcon name={icon} size={16} color={color}/>
     </div>
-    <div style={{marginTop:12,fontSize:22,fontWeight:800}}>{value}</div>
-    <div style={{fontSize:11,color:MR.C.textMuted,marginTop:2}}>{label}</div>
+    <div style={{fontSize:20,fontWeight:800,lineHeight:1}}>{value}</div>
+    <div style={{fontSize:11,color:MR.C.textMuted,fontWeight:600}}>{label}</div>
   </div>
 );
 

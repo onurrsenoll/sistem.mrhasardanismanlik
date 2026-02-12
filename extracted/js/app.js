@@ -170,24 +170,24 @@ const TopNav = ({user, page, setPage, onLogout}) => {
   return (
     <div ref={navRef} style={{
       background: C.headerBg, borderBottom: `1px solid ${C.border}`,
-      display: 'flex', alignItems: 'center', padding: '0 12px', height: 54,
+      display: 'flex', alignItems: 'center', padding: '6px 12px', minHeight: 54,
       position: 'sticky', top: 0, zIndex: 1000, gap: 0
     }}>
       {/* LOGO */}
       <div onClick={() => setPage('home')} style={{
         display: 'flex', alignItems: 'center', cursor: 'pointer',
-        height: 42, marginRight: 8, flexShrink: 0
+        height: 'auto', marginRight: 12, flexShrink: 0
       }}>
         {logoUrl ? (
           <img src={logoUrl} alt="LOGO" style={{
-            height: 38, width: 'auto', maxWidth: 140, objectFit: 'contain',
+            height: 114, width: 'auto', maxWidth: 420, objectFit: 'contain',
             filter: MR.tema === 'koyu' ? 'brightness(0) invert(1)' : 'none'
           }}/>
         ) : (
           <div style={{
-            width: 34, height: 34, minWidth: 34, borderRadius: 8,
+            width: 102, height: 102, minWidth: 102, borderRadius: 16,
             background: `${C.accent}22`, display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontSize: 13, fontWeight: 900, color: C.accent
+            justifyContent: 'center', fontSize: 36, fontWeight: 900, color: C.accent
           }}>MR</div>
         )}
       </div>
