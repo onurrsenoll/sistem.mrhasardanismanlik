@@ -111,7 +111,12 @@ if ($httpCode !== 200 || !$response) {
 }
 
 $data = json_decode($response, true);
-$text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+// Gemini 2.5 Flash thinking model - son metin parçasını al (ilk parça düşünme olabilir)
+$text = '';
+$allParts = $data['candidates'][0]['content']['parts'] ?? [];
+foreach ($allParts as $part) {
+    if (isset($part['text']) && empty($part['thought'])) $text = $part['text'];
+}
 $webSources = [];
 
 // JSON parse
@@ -123,6 +128,13 @@ $text = preg_replace('/^[^{]*/', '', $text);
 $text = preg_replace('/[^}]*$/', '', $text);
 
 $result = json_decode($text, true);
+// Key'leri lowercase'e çevir (Gemini bazen BÜYÜK HARF key döner)
+if ($result) {
+    $result = array_change_key_case($result, CASE_LOWER);
+    if (isset($result['ilanlar']) && is_array($result['ilanlar'])) {
+        $result['ilanlar'] = array_map(function($il) { return array_change_key_case($il, CASE_LOWER); }, $result['ilanlar']);
+    }
+}
 
 if (!$result || !isset($result['ilanlar'])) {
     echo json_encode([

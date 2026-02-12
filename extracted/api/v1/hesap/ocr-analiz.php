@@ -183,7 +183,12 @@ if ($httpCode !== 200 || !$response) {
 }
 
 $data = json_decode($response, true);
-$text = isset($data['candidates'][0]['content']['parts'][0]['text']) ? $data['candidates'][0]['content']['parts'][0]['text'] : '';
+// Gemini 2.5 Flash thinking model - son metin parçasını al
+$text = '';
+$allParts = isset($data['candidates'][0]['content']['parts']) ? $data['candidates'][0]['content']['parts'] : [];
+foreach ($allParts as $part) {
+    if (isset($part['text']) && empty($part['thought'])) $text = $part['text'];
+}
 
 if (empty($text)) {
     echo json_encode(['success' => false, 'error' => 'GEMİNİ YANIT ALINAMADI']);
@@ -206,6 +211,8 @@ if (!$parsed) {
 }
 
 if ($parsed) {
+    // Key'leri lowercase'e çevir
+    $parsed = array_change_key_case($parsed, CASE_LOWER);
     echo json_encode(['success' => true, 'data' => $parsed]);
 } else {
     echo json_encode(['success' => false, 'error' => 'EVRAK ANALİZ EDİLEMEDİ. LÜTFEN DAHA NET BİR GÖRÜNTÜ YÜKLEYİN.', 'raw' => $text]);

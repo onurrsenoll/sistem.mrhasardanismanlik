@@ -96,7 +96,13 @@ function callGeminiBH($apiKey, $systemPrompt, $userPrompt) {
 
     if ($httpCode === 200 && $response) {
         $data = json_decode($response, true);
-        return $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
+        // Gemini 2.5 Flash thinking model - son metin parçasını al
+        $text = '';
+        $allParts = $data['candidates'][0]['content']['parts'] ?? [];
+        foreach ($allParts as $part) {
+            if (isset($part['text']) && empty($part['thought'])) $text = $part['text'];
+        }
+        return !empty($text) ? $text : null;
     }
     return null;
 }
