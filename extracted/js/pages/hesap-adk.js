@@ -216,18 +216,17 @@ MR.HesapADKPage = () => {
     // ═══ İLAN SATIRLARI ═══
     let ilanRows = '';
     ilanlar.forEach((il, i) => {
-      ilanRows += '<tr style="background:'+(i%2===0?'#f8fafc':'#fff')+';"><td style="P2;font-size:6.5px;color:#94a3b8;">'+(i+1)+'</td><td style="P2;font-size:6.5px;">'+((il.kaynak||'').replace('.com','').replace('sahibinden','sahib.').replace('araban','araban'))+'</td><td style="P2;font-size:6.5px;max-width:120px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">'+((il.baslik||'').substring(0,40))+'</td><td style="P2;font-size:6.5px;font-weight:700;color:#059669;text-align:right;">'+fmtM(il.fiyat)+'</td><td style="P2;font-size:6.5px;text-align:right;color:#64748b;">'+((il.km||0)/1000).toFixed(0)+'K</td><td style="P2;font-size:6.5px;color:#64748b;">'+((il.sehir||'').substring(0,8))+'</td></tr>';
+      ilanRows += '<tr style="background:'+(i%2===0?'#f8fafc':'#fff')+';"><td style="padding:2px 4px;font-size:6.5px;color:#94a3b8;">'+(i+1)+'</td><td style="padding:2px 4px;font-size:6.5px;">'+((il.kaynak||'').replace('.com','').replace('sahibinden','sahib.').replace('araban','araban'))+'</td><td style="padding:2px 4px;font-size:6.5px;max-width:120px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">'+((il.baslik||'').substring(0,40))+'</td><td style="padding:2px 4px;font-size:6.5px;font-weight:700;color:#059669;text-align:right;">'+fmtM(il.fiyat)+'</td><td style="padding:2px 4px;font-size:6.5px;text-align:right;color:#64748b;">'+((il.km||0)/1000).toFixed(0)+'K</td><td style="padding:2px 4px;font-size:6.5px;color:#64748b;">'+((il.sehir||'').substring(0,8))+'</td></tr>';
     });
 
     // ═══ EMSAL SATIRLARI ═══
     let emsalRows = '';
     kararlar.forEach((k, i) => {
-      emsalRows += '<tr style="background:'+(i%2===0?'#fffbeb':'#fff')+';"><td style="P2;font-size:6.5px;font-weight:600;color:#b45309;">'+(k.dosya_no||'-')+'</td><td style="P2;font-size:6.5px;">'+((k.marka||'')+' '+(k.model||'')+' ('+(k.yil||'')+')').substring(0,25)+'</td><td style="P2;font-size:6.5px;text-align:right;">'+fmtM(k.rayic)+'</td><td style="P2;font-size:6.5px;font-weight:700;color:#059669;text-align:right;">'+fmtM(k.deger_kaybi)+'</td></tr>';
+      emsalRows += '<tr style="background:'+(i%2===0?'#fffbeb':'#fff')+';"><td style="padding:2px 4px;font-size:6.5px;font-weight:600;color:#b45309;">'+(k.dosya_no||'-')+'</td><td style="padding:2px 4px;font-size:6.5px;">'+((k.marka||'')+' '+(k.model||'')+' ('+(k.yil||'')+')').substring(0,25)+'</td><td style="padding:2px 4px;font-size:6.5px;text-align:right;">'+fmtM(k.rayic)+'</td><td style="padding:2px 4px;font-size:6.5px;font-weight:700;color:#059669;text-align:right;">'+fmtM(k.deger_kaybi)+'</td></tr>';
     });
 
     // html2pdf flex desteklemez, TABLE kullan
-    const P2 = 'padding:2px 4px;';
-    const html = ('<div style="font-family:Arial,Helvetica,sans-serif;padding:10px 14px;color:#1e293b;line-height:1.3;">'
+    const html = '<div style="font-family:Arial,Helvetica,sans-serif;padding:10px 14px;color:#1e293b;line-height:1.3;">'
 
       // ═══ HEADER ═══
       + '<table style="width:100%;margin-bottom:6px;"><tr>'
@@ -316,20 +315,18 @@ MR.HesapADKPage = () => {
       + '<td style="padding-top:4px;font-size:6.5px;font-weight:700;color:#2563eb;text-align:right;white-space:nowrap;">MR HASAR DANISMANLIK</td>'
       + '</tr></table>'
 
-      + '</div>').replace(/P2;/g, P2);
+      + '</div>';
 
     const el = document.createElement('div');
     el.innerHTML = html;
-    el.style.position = 'fixed';
-    el.style.left = '-9999px';
-    el.style.top = '0';
     el.style.width = '780px';
+    el.style.background = '#fff';
     document.body.appendChild(el);
     html2pdf().set({
       margin: [4, 4, 4, 4],
       filename: 'MR_ADK_Rapor_' + raporNo + '.pdf',
       image: {type:'jpeg', quality:0.95},
-      html2canvas: {scale:2, useCORS:true, width:780},
+      html2canvas: {scale:2, useCORS:true},
       jsPDF: {unit:'mm', format:'a4', orientation:'portrait'},
       pagebreak: {mode:['avoid-all']}
     }).from(el).save().then(() => { document.body.removeChild(el); setPdfLoading(false); }).catch(() => { document.body.removeChild(el); setPdfLoading(false); });
