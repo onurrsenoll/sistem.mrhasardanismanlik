@@ -321,15 +321,21 @@ MR.HesapADKPage = () => {
     el.innerHTML = html;
     el.style.width = '780px';
     el.style.background = '#fff';
+    el.style.position = 'absolute';
+    el.style.left = '0';
+    el.style.top = '0';
+    el.style.zIndex = '-1';
     document.body.appendChild(el);
-    html2pdf().set({
-      margin: [4, 4, 4, 4],
-      filename: 'MR_ADK_Rapor_' + raporNo + '.pdf',
-      image: {type:'jpeg', quality:0.95},
-      html2canvas: {scale:2, useCORS:true},
-      jsPDF: {unit:'mm', format:'a4', orientation:'portrait'},
-      pagebreak: {mode:['avoid-all']}
-    }).from(el).save().then(() => { document.body.removeChild(el); setPdfLoading(false); }).catch(() => { document.body.removeChild(el); setPdfLoading(false); });
+    setTimeout(() => {
+      html2pdf().set({
+        margin: [4, 4, 4, 4],
+        filename: 'MR_ADK_Rapor_' + raporNo + '.pdf',
+        image: {type:'jpeg', quality:0.95},
+        html2canvas: {scale:2, useCORS:true, scrollY: 0, scrollX: 0, windowWidth: 800},
+        jsPDF: {unit:'mm', format:'a4', orientation:'portrait'},
+        pagebreak: {mode:['avoid-all']}
+      }).from(el).save().then(() => { document.body.removeChild(el); setPdfLoading(false); }).catch(() => { document.body.removeChild(el); setPdfLoading(false); });
+    }, 200);
   };
 
   /* ═══════════════ RENDER ═══════════════ */
