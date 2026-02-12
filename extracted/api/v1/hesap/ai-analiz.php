@@ -74,15 +74,13 @@ if ($result !== null) {
 function callGemini($apiKey, $systemPrompt, $userPrompt) {
     $url = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=' . urlencode($apiKey);
 
+    $fullPrompt = $systemPrompt . "\n\n" . $userPrompt;
     $payload = [
         'contents' => [
             [
                 'role' => 'user',
-                'parts' => [['text' => $userPrompt]]
+                'parts' => [['text' => $fullPrompt]]
             ]
-        ],
-        'systemInstruction' => [
-            'parts' => [['text' => $systemPrompt]]
         ],
         'generationConfig' => [
             'temperature' => 0.3,

@@ -73,12 +73,10 @@ $systemPrompt = "Sen bir araç değer kaybı uzmanısın. Görevin sahibinden.co
 // Gemini API - ai-analiz.php ile aynı çalışan yapı
 $url = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=' . urlencode($apiKey);
 
+$fullPrompt = $systemPrompt . "\n\nÖNEMLİ: Türkiye araç piyasası hakkındaki bilgini kullanarak {$marka} {$model} {$yil} model aracın gerçekçi piyasa fiyatlarını belirle. sahibinden.com ve araban.com üzerindeki güncel piyasa bilgin ile en gerçekçi ilan verilerini oluştur.\n\n" . $prompt;
 $payload = [
     'contents' => [
-        ['role' => 'user', 'parts' => [['text' => $prompt]]]
-    ],
-    'systemInstruction' => [
-        'parts' => [['text' => $systemPrompt . "\n\nÖNEMLİ: Türkiye araç piyasası hakkındaki bilgini kullanarak {$marka} {$model} {$yil} model aracın gerçekçi piyasa fiyatlarını belirle. sahibinden.com ve araban.com üzerindeki güncel piyasa bilgin ile en gerçekçi ilan verilerini oluştur."]]
+        ['role' => 'user', 'parts' => [['text' => $fullPrompt]]]
     ],
     'generationConfig' => [
         'temperature' => 0.2,

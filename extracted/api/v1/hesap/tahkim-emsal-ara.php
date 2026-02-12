@@ -67,12 +67,10 @@ $systemPrompt = "Sen bir Türk sigorta hukuku uzmanısın. Görevin Sigorta Tahk
 // Gemini API - ai-analiz.php ile aynı çalışan yapı
 $url = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=' . urlencode($apiKey);
 
+$fullPrompt = $systemPrompt . "\n\nÖNEMLİ: Sigorta Tahkim Komisyonu kararları hakkındaki bilgi birikimin ile {$marka} {$model} {$yil} model araç için gerçekçi emsal kararlar oluştur. Türkiye'deki güncel tahkim kararlarına ve rayiç değerlere uygun, tutarlı ve gerçekçi veriler sun.\n\n" . $prompt;
 $payload = [
     'contents' => [
-        ['role' => 'user', 'parts' => [['text' => $prompt]]]
-    ],
-    'systemInstruction' => [
-        'parts' => [['text' => $systemPrompt . "\n\nÖNEMLİ: Sigorta Tahkim Komisyonu kararları hakkındaki bilgi birikimin ile {$marka} {$model} {$yil} model araç için gerçekçi emsal kararlar oluştur. Türkiye'deki güncel tahkim kararlarına ve rayiç değerlere uygun, tutarlı ve gerçekçi veriler sun."]]
+        ['role' => 'user', 'parts' => [['text' => $fullPrompt]]]
     ],
     'generationConfig' => [
         'temperature' => 0.2,
