@@ -27,7 +27,7 @@ const asamaRenk = (a) => {
 };
 
 MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
-  const {C, S, LIcon, Badge, SectionTitle, EmptyState, Loading, Modal, FormGroup, Confirm, api, fmt, MASRAF_K, EVRAK_T, ILLER, SIGORTA, today} = MR;
+  const {C, S, LIcon, Badge, SectionTitle, EmptyState, Loading, Modal, FormGroup, Confirm, api, fmt, MASRAF_K, EVRAK_T, ILLER, ILCELER, SIGORTA, today} = MR;
   const [dosya, setDosya] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('bilgi');
@@ -730,13 +730,16 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             <input value={editForm.magdur_telefon2||''} onChange={e => u('magdur_telefon2',e.target.value)} placeholder="TELEFON 2" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="İL">
-            <select value={editForm.magdur_il} onChange={e => u('magdur_il',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+            <select value={editForm.magdur_il} onChange={e => {u('magdur_il',e.target.value);u('magdur_ilce','');}} style={{...S.select,padding:'8px 10px',fontSize:11}}>
               <option value="">SEÇİNİZ</option>
               {(ILLER || []).map(il => <option key={il} value={il}>{il}</option>)}
             </select>
           </FormGroup>
           <FormGroup label="İLÇE">
-            <input value={editForm.magdur_ilce||''} onChange={e => u('magdur_ilce',e.target.value)} placeholder="İLÇE" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            <select value={editForm.magdur_ilce||''} onChange={e => u('magdur_ilce',e.target.value)} disabled={!editForm.magdur_il} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+              <option value="">SEÇİNİZ</option>
+              {((ILCELER||{})[editForm.magdur_il]||[]).map(i => <option key={i} value={i}>{i}</option>)}
+            </select>
           </FormGroup>
           <FormGroup label="DOĞUM TARİHİ">
             <input type="date" value={editForm.magdur_dogum_tarihi||''} onChange={e => u('magdur_dogum_tarihi',e.target.value)} style={{...S.input,padding:'8px 10px',fontSize:11}}/>

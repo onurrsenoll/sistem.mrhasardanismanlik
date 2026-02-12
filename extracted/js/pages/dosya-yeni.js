@@ -2,7 +2,7 @@ const MR = window.MR || (window.MR = {});
 const {useState} = React;
 
 MR.DosyaYeniPage = ({setPage, user}) => {
-  const {C, S, LIcon, Badge, SectionTitle, FormGroup, api, SIGORTA, ILLER, formatPlaka, AracMarkaSelect, AracModelSelect} = MR;
+  const {C, S, LIcon, Badge, SectionTitle, FormGroup, api, SIGORTA, ILLER, ILCELER, formatPlaka, AracMarkaSelect, AracModelSelect} = MR;
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -56,8 +56,8 @@ MR.DosyaYeniPage = ({setPage, user}) => {
           <FormGroup label="TELEFON"><input style={S.input} value={form.telefon} onChange={e=>u('telefon',e.target.value)} placeholder="05XX XXX XXXX"/></FormGroup>
           <FormGroup label="IBAN"><input style={S.input} value={form.iban} onChange={e=>u('iban',e.target.value)} placeholder="TR00 0000 ..."/></FormGroup>
           <FormGroup label="ADRES" full><input style={S.input} value={form.adres} onChange={e=>u('adres',e.target.value)} placeholder="AÇIK ADRES"/></FormGroup>
-          <FormGroup label="İL"><select style={S.select} value={form.il} onChange={e=>u('il',e.target.value)}><option value="">SEÇİNİZ</option>{ILLER.map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
-          <FormGroup label="İLÇE"><input style={S.input} value={form.ilce} onChange={e=>u('ilce',e.target.value)} placeholder="İLÇE"/></FormGroup>
+          <FormGroup label="İL"><select style={S.select} value={form.il} onChange={e=>{u('il',e.target.value);u('ilce','');}}><option value="">SEÇİNİZ</option>{ILLER.map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
+          <FormGroup label="İLÇE"><select style={S.select} value={form.ilce} onChange={e=>u('ilce',e.target.value)} disabled={!form.il}><option value="">SEÇİNİZ</option>{(ILCELER[form.il]||[]).map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
         </div>
       );
       case 1: return (
