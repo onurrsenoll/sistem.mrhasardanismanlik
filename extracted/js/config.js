@@ -9,12 +9,12 @@ const API_BASE = '/api/v1';
 MR.api = {
   token: localStorage.getItem('mr_token'),
   setToken(t) { this.token = t; if (t) localStorage.setItem('mr_token', t); else localStorage.removeItem('mr_token'); },
-  async req(ep, o = {}) {
+  async req(ep, o = {}, timeout = 30000) {
     try {
       const h = { 'Content-Type': 'application/json' };
       if (this.token) h['Authorization'] = 'Bearer ' + this.token;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
       const r = await fetch(API_BASE + ep, { ...o, headers: { ...h, ...o.headers }, signal: controller.signal });
       clearTimeout(timeoutId);
       if (r.status === 401) { this.setToken(null); location.reload(); return null; }
@@ -131,6 +131,8 @@ MR.api = {
   // HESAP (AI)
   adkAiAnaliz(d) { return this.req('/hesap/ai-analiz.php', { method: 'POST', body: JSON.stringify(d) }); },
   bhAiAnaliz(d) { return this.req('/hesap/bh-ai-analiz.php', { method: 'POST', body: JSON.stringify(d) }); },
+  rayicArastir(d) { return this.req('/hesap/rayic-arastirma.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
+  tahkimEmsalAra(d) { return this.req('/hesap/tahkim-emsal-ara.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
   // ŞABLON
   sablonList(p = {}) { return this.req('/sablon/list.php?' + new URLSearchParams(p)); },
   sablonGet(id) { return this.req('/sablon/get.php?id=' + id); },
