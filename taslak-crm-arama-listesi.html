@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TASLAK - CRM ARAMA LİSTESİ MODÜLÜ</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; text-transform: uppercase; }
+  body { background: #0B1120; color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; }
+
+  :root {
+    --bg: #0B1120; --bgCard: #111827; --bgHover: #1F2937; --bgInput: #1a2332;
+    --border: #1F2937; --borderLight: #374151;
+    --accent: #2563eb; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+    --purple: #8b5cf6; --cyan: #06b6d4; --pink: #ec4899;
+    --text: #f1f5f9; --textSec: #94a3b8; --textMuted: #64748b;
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px 80px; }
+  .card { background: var(--bgCard); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+  .card-head { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: rgba(37,99,235,0.05); font-weight: 700; font-size: 12px; }
+  .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all .2s; }
+  .btn-p { background: var(--accent); color: #fff; }
+  .btn-s { background: var(--success); color: #fff; }
+  .btn-w { background: var(--warning); color: #000; }
+  .btn-d { background: var(--danger); color: #fff; }
+  .btn-g { background: var(--borderLight); color: var(--textSec); }
+  .input, .select { width: 100%; padding: 10px 14px; background: var(--bgInput); border: 1px solid var(--borderLight); border-radius: 8px; color: var(--text); font-size: 13px; outline: none; }
+  .label { font-size: 11px; font-weight: 600; color: var(--textSec); margin-bottom: 6px; display: block; letter-spacing: 0.5px; }
+  .badge { padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; display: inline-block; }
+
+  /* STAT CARDS */
+  .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: var(--bgCard); border-radius: 12px; padding: 18px 20px; border: 1px solid var(--border); }
+  .stat-card .value { font-size: 28px; font-weight: 800; }
+  .stat-card .label { font-size: 10px; color: var(--textMuted); margin-top: 4px; }
+
+  /* FİLTRE TABS */
+  .filter-tab {
+    padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: transparent;
+    color: var(--textSec); transition: all .2s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .filter-tab.active { background: rgba(37,99,235,0.15); color: var(--accent); border-color: rgba(37,99,235,0.4); font-weight: 700; }
+  .filter-tab:hover:not(.active) { background: rgba(37,99,235,0.08); }
+  .filter-tab .count { background: rgba(255,255,255,0.12); padding: 1px 6px; border-radius: 10px; font-size: 9px; }
+
+  /* TABLO */
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th { padding: 10px 8px; text-align: left; color: var(--textMuted); font-weight: 600; font-size: 9px; border-bottom: 1px solid var(--border); background: var(--bgHover); }
+  td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: var(--bgHover); }
+
+  /* UPLOAD AREA */
+  .upload-area {
+    border: 2px dashed var(--borderLight); border-radius: 12px; padding: 30px;
+    text-align: center; cursor: pointer; transition: all .3s;
+    background: rgba(37,99,235,0.03);
+  }
+  .upload-area:hover { border-color: var(--accent); background: rgba(37,99,235,0.08); }
+
+  /* NOT MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 1000; align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--bgCard); border: 1px solid var(--border); border-radius: 14px;
+    width: 560px; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  .modal-head {
+    padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex;
+    align-items: center; justify-content: space-between; font-weight: 700; font-size: 13px;
+  }
+  .modal-body { padding: 20px; }
+
+  /* SAYFALAMA */
+  .pagination { display: flex; align-items: center; gap: 4px; }
+  .page-btn {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--borderLight);
+    background: transparent; color: var(--textSec); cursor: pointer; display: flex;
+    align-items: center; justify-content: center; font-size: 12px; font-weight: 600;
+    transition: all .2s;
+  }
+  .page-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .page-btn:hover:not(.active) { background: rgba(37,99,235,0.12); }
+
+  /* İKON BUTONLAR */
+  .icon-btn {
+    width: 28px; height: 28px; border-radius: 6px; border: none; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; transition: all .2s;
+  }
+
+  /* ARAMA DURUMU CHIP */
+  .durum-chip {
+    padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ÜST BAR -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <button class="btn btn-g" style="font-size:11px;">&#8592; CRM LİSTESİNE DÖN</button>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="font-size:14px; font-weight:700;">&#128222; CRM ARAMA LİSTESİ</span>
+    </div>
+    <div style="font-size:11px; color:var(--textMuted);">13.02.2026 | 10:35</div>
+  </div>
+
+  <!-- ═══ İSTATİSTİK KARTLARI ═══ -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="value" style="color:var(--accent);">156</div>
+      <div class="label">TOPLAM YÖNLENDİRME</div>
+    </div>
+    <div class="stat-card">
+      <div class="value" style="color:var(--warning);">43</div>
+      <div class="label">BELİRSİZ</div>
+    </div>
+    <div class="stat-card">
+      <div class="value" style="color:var(--success);">87</div>
+      <div class="label">ALINDI</div>
+    </div>
+    <div class="stat-card">
+      <div class="value" style="color:var(--danger);">26</div>
+      <div class="label">OLUMSUZ</div>
+    </div>
+    <div class="stat-card">
+      <div class="value" style="color:var(--cyan);">12</div>
+      <div class="label">BUGÜN ARANACAK</div>
+    </div>
+  </div>
+
+  <!-- ═══ EXCEL YÜKLEME & FİLTRE BÖLÜMÜ ═══ -->
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+
+    <!-- EXCEL YÜKLEME -->
+    <div class="card">
+      <div class="card-head">
+        <span>&#128196;</span> DATA YÜKLEME (EXCEL)
+      </div>
+      <div style="padding:16px;">
+        <div class="upload-area" onclick="document.getElementById('excelInput').click()">
+          <div style="font-size:32px; margin-bottom:8px; opacity:0.5;">&#128194;</div>
+          <div style="font-size:12px; font-weight:700; color:var(--textSec); margin-bottom:4px;">
+            EXCEL DOSYASI SÜRÜKLE VEYA TIKLA
+          </div>
+          <div style="font-size:10px; color:var(--textMuted);">
+            ŞABLON FORMATINDA .XLSX / .XLS DOSYASI SEÇİN
+          </div>
+          <input type="file" id="excelInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileUpload(this)">
+        </div>
+        <div style="margin-top:12px; display:flex; gap:8px; align-items:center; justify-content:space-between;">
+          <button class="btn btn-p" style="font-size:11px; padding:8px 16px;" onclick="downloadSablon()">
+            &#11015; ŞABLON İNDİR
+          </button>
+          <button class="btn btn-s" style="font-size:11px; padding:8px 16px;" id="uploadBtn" disabled>
+            &#11014; YÜKLE
+          </button>
+          <span id="fileInfo" style="font-size:10px; color:var(--textMuted);">DOSYA SEÇİLMEDİ</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GÜNLÜK ARAMA ÖZETİ -->
+    <div class="card">
+      <div class="card-head">
+        <span>&#128200;</span> GÜNLÜK ARAMA ÖZETİ
+      </div>
+      <div style="padding:16px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div style="background:rgba(37,99,235,0.08); border:1px solid rgba(37,99,235,0.2); border-radius:10px; padding:14px; text-align:center;">
+            <div style="font-size:24px; font-weight:800; color:var(--accent);">12</div>
+            <div style="font-size:10px; color:var(--textMuted); margin-top:4px;">BUGÜN ARANAN</div>
+          </div>
+          <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:10px; padding:14px; text-align:center;">
+            <div style="font-size:24px; font-weight:800; color:var(--success);">5</div>
+            <div style="font-size:10px; color:var(--textMuted); margin-top:4px;">OLUMLU SONUÇ</div>
+          </div>
+          <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); border-radius:10px; padding:14px; text-align:center;">
+            <div style="font-size:24px; font-weight:800; color:var(--warning);">3</div>
+            <div style="font-size:10px; color:var(--textMuted); margin-top:4px;">TAKİP GEREKLİ</div>
+          </div>
+          <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:10px; padding:14px; text-align:center;">
+            <div style="font-size:24px; font-weight:800; color:var(--danger);">4</div>
+            <div style="font-size:10px; color:var(--textMuted); margin-top:4px;">ULAŞILAMADI</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ANA LİSTE KARTI ═══ -->
+  <div class="card">
+    <!-- BAŞLIK -->
+    <div class="card-head" style="justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span>&#128203;</span>
+        <span style="font-size:14px; font-weight:700;">YÖNLENDİRME / ARAMA LİSTESİ</span>
+        <span class="badge" style="background:rgba(37,99,235,0.15); color:var(--accent); border:1px solid rgba(37,99,235,0.3);">156 KAYIT</span>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input class="input" placeholder="AD, TELEFON, TC ARA..." style="width:220px; font-size:11px; padding:8px 12px;">
+        <select class="select" style="width:160px; font-size:11px; padding:8px 12px;">
+          <option>ATANAN: TÜMÜ</option>
+          <option>PERSONEL 1</option>
+          <option>PERSONEL 2</option>
+        </select>
+        <button class="btn btn-p" style="font-size:11px; padding:8px 16px;">&#128269; ARA</button>
+      </div>
+    </div>
+
+    <!-- FİLTRE TABS -->
+    <div style="padding:12px 20px; border-bottom:1px solid var(--border); display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <span style="font-size:10px; font-weight:700; color:var(--textMuted); margin-right:8px;">YÖNLENDİRME DURUMU:</span>
+
+      <button class="filter-tab active" onclick="filterTab(this)">
+        HEPSİ <span class="count">156</span>
+      </button>
+      <button class="filter-tab" onclick="filterTab(this)" style="color:var(--warning);">
+        BELİRSİZ <span class="count" style="background:rgba(245,158,11,0.2);">43</span>
+      </button>
+      <button class="filter-tab" onclick="filterTab(this)" style="color:var(--success);">
+        ALINDI <span class="count" style="background:rgba(16,185,129,0.2);">87</span>
+      </button>
+      <button class="filter-tab" onclick="filterTab(this)" style="color:var(--danger);">
+        OLUMSUZ <span class="count" style="background:rgba(239,68,68,0.2);">26</span>
+      </button>
+
+      <div style="margin-left:auto; display:flex; gap:6px; align-items:center;">
+        <span style="font-size:10px; color:var(--textMuted);">TARİH:</span>
+        <input type="date" class="input" style="width:140px; font-size:10px; padding:6px 10px;">
+        <span style="font-size:10px; color:var(--textMuted);">-</span>
+        <input type="date" class="input" style="width:140px; font-size:10px; padding:6px 10px;">
+      </div>
+    </div>
+
+    <!-- TABLO -->
+    <div style="overflow-x:auto;">
+      <table style="min-width:1200px;">
+        <thead>
+          <tr>
+            <th style="width:30px;"><input type="checkbox"></th>
+            <th>NO</th>
+            <th>YÖNLENDİREN</th>
+            <th>YÖNLENDİRME TARİHİ</th>
+            <th>KAZA TÜRÜ</th>
+            <th>MAĞDUR AD SOYAD</th>
+            <th>MAĞDUR TELEFON</th>
+            <th>MAĞDUR İL</th>
+            <th>MAĞDUR İLÇE</th>
+            <th>GÖRÜŞME TARİHİ</th>
+            <th>DURUM</th>
+            <th>ALINMAMA NEDENİ</th>
+            <th>SON DURUM</th>
+            <th>MAĞDUR TC</th>
+            <th>İŞLEMLER</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- ÖRNEK VERİ 1 -->
+          <tr>
+            <td><input type="checkbox"></td>
+            <td style="font-weight:700; color:var(--accent);">1001</td>
+            <td>AHMET YILMAZ</td>
+            <td style="color:var(--textMuted);">12.02.2026</td>
+            <td><span class="badge" style="background:rgba(37,99,235,0.15);color:var(--accent);">ÇİFT TARAFLI</span></td>
+            <td style="font-weight:600;">MEHMET DEMİR</td>
+            <td>0532 XXX XX XX</td>
+            <td>İSTANBUL</td>
+            <td>KADIKÖY</td>
+            <td style="color:var(--textMuted);">12.02.2026 14:30</td>
+            <td><span class="durum-chip" style="background:rgba(16,185,129,0.15);color:var(--success);">&#10004; ALINDI</span></td>
+            <td>-</td>
+            <td><span class="durum-chip" style="background:rgba(37,99,235,0.15);color:var(--accent);">DOSYA AÇILDI</span></td>
+            <td style="color:var(--textMuted);">12345XXXXXX</td>
+            <td>
+              <div style="display:flex; gap:4px;">
+                <button class="icon-btn" style="background:rgba(6,182,212,0.15);" title="NOT EKLE / GÖRÜNTÜLE" onclick="openNotModal()">&#128221;</button>
+                <button class="icon-btn" style="background:rgba(37,99,235,0.15);" title="DETAY">&#128065;</button>
+                <button class="icon-btn" style="background:rgba(16,185,129,0.15);" title="ARA" onclick="aramaYap(this)">&#128222;</button>
+                <button class="icon-btn" style="background:rgba(245,158,11,0.15);" title="CRM'E AKTAR">&#128194;</button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- ÖRNEK VERİ 2 -->
+          <tr>
+            <td><input type="checkbox"></td>
+            <td style="font-weight:700; color:var(--accent);">1002</td>
+            <td>AYŞE KAYA</td>
+            <td style="color:var(--textMuted);">12.02.2026</td>
+            <td><span class="badge" style="background:rgba(139,92,246,0.15);color:var(--purple);">TEK TARAFLI</span></td>
+            <td style="font-weight:600;">ALİ ÖZTÜRK</td>
+            <td>0533 XXX XX XX</td>
+            <td>ANKARA</td>
+            <td>ÇANKAYA</td>
+            <td style="color:var(--textMuted);">-</td>
+            <td><span class="durum-chip" style="background:rgba(245,158,11,0.15);color:var(--warning);">&#9679; BELİRSİZ</span></td>
+            <td>-</td>
+            <td><span class="durum-chip" style="background:rgba(245,158,11,0.15);color:var(--warning);">ARANICAK</span></td>
+            <td style="color:var(--textMuted);">98765XXXXXX</td>
+            <td>
+              <div style="display:flex; gap:4px;">
+                <button class="icon-btn" style="background:rgba(6,182,212,0.15);" title="NOT EKLE">&#128221;</button>
+                <button class="icon-btn" style="background:rgba(37,99,235,0.15);" title="DETAY">&#128065;</button>
+                <button class="icon-btn" style="background:rgba(16,185,129,0.15);" title="ARA" onclick="aramaYap(this)">&#128222;</button>
+                <button class="icon-btn" style="background:rgba(245,158,11,0.15);" title="CRM'E AKTAR">&#128194;</button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- ÖRNEK VERİ 3 -->
+          <tr>
+            <td><input type="checkbox"></td>
+            <td style="font-weight:700; color:var(--accent);">1003</td>
+            <td>MEHMET CAN</td>
+            <td style="color:var(--textMuted);">11.02.2026</td>
+            <td><span class="badge" style="background:rgba(37,99,235,0.15);color:var(--accent);">ÇİFT TARAFLI</span></td>
+            <td style="font-weight:600;">FATİH ŞAHIN</td>
+            <td>0544 XXX XX XX</td>
+            <td>İZMİR</td>
+            <td>KONAK</td>
+            <td style="color:var(--textMuted);">11.02.2026 16:45</td>
+            <td><span class="durum-chip" style="background:rgba(239,68,68,0.15);color:var(--danger);">&#10006; OLUMSUZ</span></td>
+            <td style="color:var(--danger);font-size:10px;">BAŞKA FİRMA İLE ANLAŞTI</td>
+            <td><span class="durum-chip" style="background:rgba(239,68,68,0.15);color:var(--danger);">KAPANDI</span></td>
+            <td style="color:var(--textMuted);">45678XXXXXX</td>
+            <td>
+              <div style="display:flex; gap:4px;">
+                <button class="icon-btn" style="background:rgba(6,182,212,0.15);" title="NOT EKLE">&#128221;</button>
+                <button class="icon-btn" style="background:rgba(37,99,235,0.15);" title="DETAY">&#128065;</button>
+                <button class="icon-btn" style="background:rgba(16,185,129,0.15);" title="ARA" onclick="aramaYap(this)">&#128222;</button>
+                <button class="icon-btn" style="background:rgba(245,158,11,0.15);" title="CRM'E AKTAR">&#128194;</button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- ÖRNEK VERİ 4 -->
+          <tr>
+            <td><input type="checkbox"></td>
+            <td style="font-weight:700; color:var(--accent);">1004</td>
+            <td>ZEYNEP ARSLAN</td>
+            <td style="color:var(--textMuted);">11.02.2026</td>
+            <td><span class="badge" style="background:rgba(37,99,235,0.15);color:var(--accent);">ÇİFT TARAFLI</span></td>
+            <td style="font-weight:600;">HASAN YILDIZ</td>
+            <td>0555 XXX XX XX</td>
+            <td>BURSA</td>
+            <td>NİLÜFER</td>
+            <td style="color:var(--textMuted);">12.02.2026 09:15</td>
+            <td><span class="durum-chip" style="background:rgba(16,185,129,0.15);color:var(--success);">&#10004; ALINDI</span></td>
+            <td>-</td>
+            <td><span class="durum-chip" style="background:rgba(16,185,129,0.15);color:var(--success);">SÖZLEŞME GÖNDERİLDİ</span></td>
+            <td style="color:var(--textMuted);">78901XXXXXX</td>
+            <td>
+              <div style="display:flex; gap:4px;">
+                <button class="icon-btn" style="background:rgba(6,182,212,0.15);" title="NOT EKLE">&#128221;</button>
+                <button class="icon-btn" style="background:rgba(37,99,235,0.15);" title="DETAY">&#128065;</button>
+                <button class="icon-btn" style="background:rgba(16,185,129,0.15);" title="ARA" onclick="aramaYap(this)">&#128222;</button>
+                <button class="icon-btn" style="background:rgba(245,158,11,0.15);" title="CRM'E AKTAR">&#128194;</button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- ÖRNEK VERİ 5 -->
+          <tr>
+            <td><input type="checkbox"></td>
+            <td style="font-weight:700; color:var(--accent);">1005</td>
+            <td>MUSTAFA ACAR</td>
+            <td style="color:var(--textMuted);">10.02.2026</td>
+            <td><span class="badge" style="background:rgba(139,92,246,0.15);color:var(--purple);">TEK TARAFLI</span></td>
+            <td style="font-weight:600;">EMİNE KORKMAZ</td>
+            <td>0546 XXX XX XX</td>
+            <td>ANTALYA</td>
+            <td>MURATPAŞA</td>
+            <td style="color:var(--textMuted);">-</td>
+            <td><span class="durum-chip" style="background:rgba(245,158,11,0.15);color:var(--warning);">&#9679; BELİRSİZ</span></td>
+            <td>-</td>
+            <td><span class="durum-chip" style="background:rgba(245,158,11,0.15);color:var(--warning);">ARANICAK</span></td>
+            <td style="color:var(--textMuted);">34567XXXXXX</td>
+            <td>
+              <div style="display:flex; gap:4px;">
+                <button class="icon-btn" style="background:rgba(6,182,212,0.15);" title="NOT EKLE">&#128221;</button>
+                <button class="icon-btn" style="background:rgba(37,99,235,0.15);" title="DETAY">&#128065;</button>
+                <button class="icon-btn" style="background:rgba(16,185,129,0.15);" title="ARA" onclick="aramaYap(this)">&#128222;</button>
+                <button class="icon-btn" style="background:rgba(245,158,11,0.15);" title="CRM'E AKTAR">&#128194;</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ALT BAR: SAYFALAMA & TOPLU İŞLEM -->
+    <div style="padding:14px 20px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+      <!-- TOPLU İŞLEM -->
+      <div style="display:flex; gap:8px; align-items:center;">
+        <select class="select" style="width:180px; font-size:11px; padding:8px 12px;">
+          <option>TOPLU İŞLEM SEÇİNİZ</option>
+          <option>SEÇİLENLERİ ALINDI YAP</option>
+          <option>SEÇİLENLERİ OLUMSUZ YAP</option>
+          <option>SEÇİLENLERİ CRM'E AKTAR</option>
+          <option>SEÇİLENLERİ SİL</option>
+        </select>
+        <button class="btn btn-p" style="font-size:11px; padding:8px 16px;">UYGULA</button>
+      </div>
+
+      <!-- SAYFALAMA -->
+      <div class="pagination">
+        <button class="page-btn">&#171;</button>
+        <button class="page-btn">&#8249;</button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn">...</button>
+        <button class="page-btn">16</button>
+        <button class="page-btn">&#8250;</button>
+        <button class="page-btn">&#187;</button>
+        <span style="font-size:10px; color:var(--textMuted); margin-left:8px;">SAYFA 1 / 16 (156 KAYIT)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ NOT MODAL ═══ -->
+<div class="modal-overlay" id="notModal">
+  <div class="modal">
+    <div class="modal-head">
+      <span>&#128221; GÖRÜŞME NOTLARI - MEHMET DEMİR</span>
+      <button style="background:none;border:none;color:var(--textSec);cursor:pointer;font-size:18px;" onclick="closeNotModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <!-- MEVCUT NOTLAR -->
+      <div style="margin-bottom:16px;">
+        <div style="font-size:10px; font-weight:700; color:var(--accent); letter-spacing:1px; margin-bottom:10px;">
+          &#128196; MEVCUT NOTLAR
+        </div>
+
+        <div style="background:rgba(37,99,235,0.06);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px;">
+          <div style="font-size:12px;line-height:1.6;margin-bottom:8px;">
+            MÜŞTERİ İLE GÖRÜŞÜLDÜ. DEĞER KAYBI DAVASI HAKKINDA BİLGİ VERİLDİ. SÖZLEŞME GÖNDERİLECEK.
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--textMuted);">
+            <span>AHMET YILMAZ</span>
+            <span>12.02.2026 14:30</span>
+          </div>
+        </div>
+
+        <div style="background:rgba(37,99,235,0.06);border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <div style="font-size:12px;line-height:1.6;margin-bottom:8px;">
+            İLK ARAMA YAPILDI. SÜRÜCÜ POZİSYONUNDA. ÇİFT TARAFLI KAZA. HASAR ORTA SEVİYEDE.
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--textMuted);">
+            <span>AHMET YILMAZ</span>
+            <span>12.02.2026 14:00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- YENİ NOT -->
+      <div>
+        <div style="font-size:10px; font-weight:700; color:var(--success); letter-spacing:1px; margin-bottom:10px;">
+          &#128394; YENİ NOT EKLE
+        </div>
+        <div style="margin-bottom:12px;">
+          <label class="label">GÖRÜŞME DURUMU</label>
+          <div style="display:flex; gap:8px;">
+            <button class="btn" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:var(--success);font-size:11px;padding:8px 14px;" onclick="this.style.background='var(--success)';this.style.color='#fff';">
+              &#10004; OLUMLU
+            </button>
+            <button class="btn" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:var(--warning);font-size:11px;padding:8px 14px;">
+              &#9679; TAKİPTE
+            </button>
+            <button class="btn" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:var(--danger);font-size:11px;padding:8px 14px;">
+              &#10006; OLUMSUZ
+            </button>
+            <button class="btn" style="background:rgba(148,163,184,0.12);border:1px solid rgba(148,163,184,0.3);color:var(--textSec);font-size:11px;padding:8px 14px;">
+              &#128222; ULAŞILAMADI
+            </button>
+          </div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label class="label">ALINMAMA NEDENİ (OLUMSUZ İSE)</label>
+          <select class="select" style="font-size:11px;">
+            <option value="">SEÇİNİZ (İSTEĞE BAĞLI)</option>
+            <option>BAŞKA FİRMA İLE ANLAŞTI</option>
+            <option>İLGİLENMİYOR</option>
+            <option>TELEFON KAPALI / ULAŞILAMADI</option>
+            <option>MADDİ HASAR DÜŞÜK</option>
+            <option>ZAMAN AŞIMI</option>
+            <option>DİĞER</option>
+          </select>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label class="label">GÖRÜŞME NOTU *</label>
+          <textarea class="input" style="min-height:80px;" placeholder="GÖRÜŞME DETAYLARINI YAZINIZ..."></textarea>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label class="label">SONRAKİ ARAMA TARİHİ (OPSİYONEL)</label>
+          <input type="datetime-local" class="input" style="font-size:11px;">
+        </div>
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+          <button class="btn btn-g" onclick="closeNotModal()">İPTAL</button>
+          <button class="btn btn-s">&#128190; NOTU KAYDET</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ AÇIKLAMA NOTU ═══ -->
+<div style="position:fixed;bottom:0;left:0;right:0;background:#1e293b;padding:10px 20px;border-top:2px solid var(--cyan);z-index:100;">
+  <div style="max-width:1400px;margin:0 auto;">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:4px;">
+      <span style="font-size:11px;font-weight:700;color:var(--cyan);white-space:nowrap;">&#9432; TASLAK AÇIKLAMASI - CRM ARAMA LİSTESİ:</span>
+    </div>
+    <div style="font-size:10px;color:var(--textSec);line-height:1.6;">
+      <span style="color:var(--accent);font-weight:700;">&#9654; EXCEL YÜKLEME:</span> ŞABLON FORMATINDA GÜNLÜK DATA YÜKLEME &nbsp;|&nbsp;
+      <span style="color:var(--success);font-weight:700;">&#9654; ARAMA TAKİP:</span> HER SATIR İÇİN NOT EKLEME, DURUM GÜNCELLEMESİ &nbsp;|&nbsp;
+      <span style="color:var(--warning);font-weight:700;">&#9654; FİLTRELEME:</span> YÖNLENDİRME DURUMU + TARİH + ATANAN FİLTRESİ &nbsp;|&nbsp;
+      <span style="color:var(--purple);font-weight:700;">&#9654; TOPLU İŞLEM:</span> SEÇİLİ KAYITLARDA TOPLU DURUM DEĞİŞİKLİĞİ
+    </div>
+  </div>
+</div>
+
+<script>
+  // FİLTRE TAB
+  function filterTab(btn) {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  // NOT MODAL AÇ/KAPAT
+  function openNotModal() {
+    document.getElementById('notModal').classList.add('show');
+  }
+  function closeNotModal() {
+    document.getElementById('notModal').classList.remove('show');
+  }
+
+  // DOSYA YÜKLEME
+  function handleFileUpload(input) {
+    if (input.files.length > 0) {
+      const file = input.files[0];
+      document.getElementById('fileInfo').textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+      document.getElementById('fileInfo').style.color = '#10b981';
+      document.getElementById('uploadBtn').disabled = false;
+    }
+  }
+
+  // ŞABLON İNDİR
+  function downloadSablon() {
+    alert('EXCEL ŞABLON DOSYASI İNDİRİLECEK.\n\nŞABLON KOLONLARI:\n- YÖNLENDİREN\n- YÖNLENDİRME TARİHİ\n- KAZA TÜRÜ\n- MAĞDUR AD SOYAD\n- MAĞDUR TELEFON\n- MAĞDUR İL\n- MAĞDUR İLÇE\n- MAĞDUR TC');
+  }
+
+  // ARAMA YAP
+  function aramaYap(btn) {
+    const row = btn.closest('tr');
+    const telefon = row.querySelector('td:nth-child(7)').textContent;
+    alert('ARANACAK NUMARA: ' + telefon);
+  }
+</script>
+
+</body>
+</html>
