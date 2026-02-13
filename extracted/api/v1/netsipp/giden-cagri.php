@@ -47,32 +47,42 @@ if (empty($arayan) && empty($aranan)) {
     json_error('Arayan veya aranan numarası gerekli', 422);
 }
 
-// ARAMA LOGU KAYDET
-$stmt = $db->prepare('INSERT INTO arama_loglari (arayan, arayan_adi, aranan, arama_tarihi, netsipp_arama_id, senaryo, yon, durum) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-$stmt->execute([
-    $arayan,
-    $arayanAdi,
-    $aranan,
-    $aramaTarihi,
-    $aramaId,
-    $senaryo,
-    'giden',
-    'calıyor'
-]);
-
-$logId = (int)$db->lastInsertId();
+// ARAMA LOGU KAYDET (tablo yoksa hata vermesin)
+$logId = 0;
+try {
+    $stmt = $db->prepare('INSERT INTO arama_loglari (arayan, arayan_adi, aranan, arama_tarihi, netsipp_arama_id, senaryo, yon, durum) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt->execute([
+        $arayan,
+        $arayanAdi,
+        $aranan,
+        $aramaTarihi,
+        $aramaId,
+        $senaryo,
+        'giden',
+        'calıyor'
+    ]);
+    $logId = (int)$db->lastInsertId();
+} catch (Exception $e) {
+    // Tablo yoksa sessizce devam et
+}
 
 // CRM'DE ARANAN NUMARAYI ARA
+$crmKayit = null;
+$yonlendirmeKayit = null;
 $searchNum = $aranan ?: $arayan;
-$stmt = $db->prepare('SELECT id, ad_soyad, telefon, il, dosya_turu, durum FROM crm WHERE telefon LIKE ? OR telefon2 LIKE ? LIMIT 1');
-$cleanNum = '%' . preg_replace('/[^0-9]/', '', $searchNum) . '%';
-$stmt->execute([$cleanNum, $cleanNum]);
-$crmKayit = $stmt->fetch();
+try {
+    $stmt = $db->prepare('SELECT id, ad_soyad, telefon, il, dosya_turu, durum FROM crm WHERE telefon LIKE ? OR telefon2 LIKE ? LIMIT 1');
+    $cleanNum = '%' . preg_replace('/[^0-9]/', '', $searchNum) . '%';
+    $stmt->execute([$cleanNum, $cleanNum]);
+    $crmKayit = $stmt->fetch();
+} catch (Exception $e) {}
 
 // YÖNLENDİRME TABLOSUNDA DA ARA
-$stmt = $db->prepare('SELECT id, magdur_ad_soyad, magdur_telefon, magdur_il FROM yonlendirme WHERE magdur_telefon LIKE ? LIMIT 1');
-$stmt->execute([$cleanNum]);
-$yonlendirmeKayit = $stmt->fetch();
+try {
+    $stmt = $db->prepare('SELECT id, magdur_ad_soyad, magdur_telefon, magdur_il FROM yonlendirme WHERE magdur_telefon LIKE ? LIMIT 1');
+    $stmt->execute([$cleanNum]);
+    $yonlendirmeKayit = $stmt->fetch();
+} catch (Exception $e) {}
 
 json_success([
     'log_id' => $logId,

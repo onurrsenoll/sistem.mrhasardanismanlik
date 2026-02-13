@@ -55,6 +55,7 @@ const MENU = [
     {id:'sistem-kullanici', label:'KULLANICI YÖNETİMİ', icon:'UserCog'},
     {id:'sistem-yetki', label:'YETKİ YÖNETİMİ', icon:'KeyRound'},
     {id:'sistem-ayarlar', label:'FİRMA AYARLARI', icon:'Settings'},
+    {id:'sistem-netsantral', label:'NETSANTRAL', icon:'Phone'},
     {id:'sistem-log', label:'LOG KAYITLARI', icon:'FileText'}
   ]}
 ];
@@ -508,6 +509,386 @@ const PageRouter = ({page, setPage, user}) => {
   return <MR.HomePage setPage={setPage} user={user}/>;
 };
 
+/* ═══ NETSANTRAL FLOATING KONTROL PANELİ ═══ */
+const NetsantralPanel = () => {
+  const {C, LIcon, api} = MR;
+  const [minimized, setMinimized] = useState(true);
+  const [dialpadOpen, setDialpadOpen] = useState(false);
+  const [number, setNumber] = useState('');
+  const [activeCall, setActiveCall] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [callTimer, setCallTimer] = useState(0);
+  const [status, setStatus] = useState('hazir'); // hazir, araniyor, gorusmede, mola
+  const [statusMsg, setStatusMsg] = useState('');
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [transferNum, setTransferNum] = useState('');
+  const [queueInfo, setQueueInfo] = useState(null);
+
+  const timerRef = useRef(null);
+  const callStartRef = useRef(null);
+
+  // ARAMA SÜRE SAYACI
+  useEffect(() => {
+    if (activeCall) {
+      callStartRef.current = Date.now();
+      timerRef.current = setInterval(() => {
+        setCallTimer(Math.floor((Date.now() - callStartRef.current) / 1000));
+      }, 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setCallTimer(0);
+      callStartRef.current = null;
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [activeCall]);
+
+  // GELEN ÇAĞRI DİNLE (global event)
+  useEffect(() => {
+    const handler = (e) => {
+      const data = e.detail || {};
+      if (data.arayan) {
+        setNumber(data.arayan);
+        setActiveCall(true);
+        setStatus('gorusmede');
+        setMinimized(false);
+      }
+    };
+    window.addEventListener('mr-netsantral-gelen', handler);
+    return () => window.removeEventListener('mr-netsantral-gelen', handler);
+  }, []);
+
+  const fmtTime = (s) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  // NUMARA TUŞU
+  const dialKey = (key) => {
+    setNumber(prev => prev + key);
+  };
+
+  // ÇAĞRI BAŞLAT
+  const aramaBaslat = async () => {
+    if (!number) return;
+    setStatusMsg('ARANIYOR...');
+    setStatus('araniyor');
+    setMinimized(false);
+
+    // SIP PROTOKOLÜ İLE ARA (NetSIPP üzerinden)
+    const cleanNum = number.replace(/[\s\-\(\)]/g, '').replace(/^0/, '90');
+    try { window.open('sip:' + cleanNum, '_self'); } catch(e) { try { window.open('tel:' + cleanNum, '_self'); } catch(e2) {} }
+
+    // NETSANTRAL API İLE DE ARA
+    const r = await api.netsantralOriginate(cleanNum);
+    if (r?.success && r.data?.success_api) {
+      setActiveCall(true);
+      setStatus('gorusmede');
+      setStatusMsg('GÖRÜŞME BAŞLADI');
+    } else {
+      // SIP ile açıldıysa zaten arama başladı, sadece timer'ı aç
+      setActiveCall(true);
+      setStatus('gorusmede');
+      setStatusMsg(r?.data?.response?.raw_response || 'SIP İLE ARAMA BAŞLATILDI');
+    }
+
+    // GİDEN ARAMA LOGU
+    api.req('/netsipp/giden-cagri.php', {
+      method: 'POST', body: JSON.stringify({ arayan: cleanNum, aranan_adi: '', yon: 'giden' })
+    }).catch(() => {});
+
+    setTimeout(() => setStatusMsg(''), 3000);
+  };
+
+  // ÇAĞRI BİTİR
+  const aramaKapat = async () => {
+    setStatusMsg('ÇAĞRI SONLANDIRILIYOR...');
+    const r = await api.netsantralHangup();
+    setActiveCall(false);
+    setMuted(false);
+    setStatus('hazir');
+    setStatusMsg('ÇAĞRI SONLANDIRILDI');
+    setTransferOpen(false);
+    setTimeout(() => setStatusMsg(''), 2000);
+  };
+
+  // SESİ KAPAT/AÇ
+  const toggleMute = async () => {
+    const newState = muted ? 'off' : 'on';
+    const r = await api.netsantralMute(newState);
+    setMuted(!muted);
+    setStatusMsg(muted ? 'MİKROFON AÇILDI' : 'MİKROFON KAPATILDI');
+    setTimeout(() => setStatusMsg(''), 2000);
+  };
+
+  // TRANSFER
+  const transferYap = async () => {
+    if (!transferNum) return;
+    setStatusMsg('TRANSFER EDİLİYOR...');
+    const r = await api.netsantralTransfer(transferNum);
+    setStatusMsg('TRANSFER YAPILDI');
+    setTransferOpen(false);
+    setTransferNum('');
+    setActiveCall(false);
+    setStatus('hazir');
+    setTimeout(() => setStatusMsg(''), 2000);
+  };
+
+  // DURUM RENKLERİ
+  const statusColors = {
+    hazir: C.success,
+    araniyor: C.warning,
+    gorusmede: C.accent,
+    mola: C.purple
+  };
+  const statusLabels = {
+    hazir: 'HAZIR',
+    araniyor: 'ARANIYOR',
+    gorusmede: 'GÖRÜŞMEDE',
+    mola: 'MOLADA'
+  };
+
+  const statusColor = statusColors[status] || C.success;
+
+  // DIALPAD TUŞLARI
+  const keys = [
+    ['1', '2', '3'],
+    ['4', '5', '6'],
+    ['7', '8', '9'],
+    ['*', '0', '#']
+  ];
+
+  // MİNİMİZE GÖRÜNÜM
+  if (minimized) {
+    return (
+      <div onClick={() => setMinimized(false)} style={{
+        position: 'fixed', bottom: 60, right: 24, zIndex: 9998,
+        width: 52, height: 52, borderRadius: '50%',
+        background: activeCall ? C.accent : `${C.success}22`,
+        border: `2px solid ${activeCall ? C.accent : C.success}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,0,0,.4)',
+        transition: 'all .3s',
+        animation: activeCall ? 'pulse 1.5s infinite' : 'none'
+      }} title="NETSANTRAL KONTROL PANELİ">
+        <LIcon name="Phone" size={22} color={activeCall ? '#fff' : C.success}/>
+        {activeCall && (
+          <div style={{
+            position: 'absolute', top: -4, right: -4,
+            width: 18, height: 18, borderRadius: '50%',
+            background: C.danger, color: '#fff',
+            fontSize: 8, fontWeight: 800,
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>{fmtTime(callTimer)}</div>
+        )}
+        {/* DURUM NOKTASI */}
+        <div style={{
+          position: 'absolute', bottom: -2, right: -2,
+          width: 14, height: 14, borderRadius: '50%',
+          background: statusColor, border: '2px solid #0B1120'
+        }}/>
+      </div>
+    );
+  }
+
+  // AÇIK GÖRÜNÜM
+  return (
+    <div style={{
+      position: 'fixed', bottom: 60, right: 24, zIndex: 9998,
+      width: 320, background: C.bgCard,
+      border: `1px solid ${C.border}`, borderRadius: 16,
+      boxShadow: '0 10px 50px rgba(0,0,0,.5)',
+      overflow: 'hidden', animation: 'slideUp .2s ease-out'
+    }}>
+      {/* BAŞLIK */}
+      <div style={{
+        padding: '10px 14px', background: `${statusColor}15`,
+        borderBottom: `1px solid ${C.border}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+      }}>
+        <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
+          <div style={{
+            width: 10, height: 10, borderRadius: '50%',
+            background: statusColor, boxShadow: `0 0 8px ${statusColor}`
+          }}/>
+          <span style={{fontSize: 11, fontWeight: 700, color: statusColor}}>
+            {statusLabels[status]}
+          </span>
+          {activeCall && (
+            <span style={{fontSize: 11, fontWeight: 800, color: C.text, fontFamily: 'monospace'}}>
+              {fmtTime(callTimer)}
+            </span>
+          )}
+        </div>
+        <div style={{display: 'flex', gap: 4}}>
+          <div onClick={() => setMinimized(true)} style={{
+            cursor: 'pointer', padding: 4, borderRadius: 6
+          }} title="KÜÇÜLT">
+            <LIcon name="Minus" size={14} color={C.textMuted}/>
+          </div>
+        </div>
+      </div>
+
+      {/* DURUM MESAJI */}
+      {statusMsg && (
+        <div style={{
+          padding: '6px 14px', background: `${C.warning}15`,
+          fontSize: 10, fontWeight: 600, color: C.warning, textAlign: 'center'
+        }}>{statusMsg}</div>
+      )}
+
+      {/* NUMARA GİRİŞİ */}
+      <div style={{padding: '12px 14px'}}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: C.bgInput, border: `1px solid ${C.borderLight}`,
+          borderRadius: 10, padding: '8px 12px'
+        }}>
+          <LIcon name="Phone" size={16} color={C.textMuted}/>
+          <input
+            value={number}
+            onChange={e => setNumber(e.target.value)}
+            placeholder="NUMARA GİRİN..."
+            style={{
+              flex: 1, background: 'transparent', border: 'none',
+              color: C.text, fontSize: 16, fontWeight: 700,
+              letterSpacing: 1, outline: 'none', fontFamily: 'monospace'
+            }}
+            onKeyDown={e => { if (e.key === 'Enter' && !activeCall) aramaBaslat(); }}
+          />
+          {number && (
+            <div onClick={() => setNumber('')} style={{cursor: 'pointer', padding: 2}}>
+              <LIcon name="X" size={14} color={C.textMuted}/>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* KONTROL BUTONLARI */}
+      <div style={{padding: '0 14px 12px', display: 'flex', gap: 8}}>
+        {!activeCall ? (
+          <button onClick={aramaBaslat} disabled={!number} style={{
+            flex: 1, padding: '10px', borderRadius: 10, border: 'none',
+            background: number ? C.success : `${C.success}33`,
+            color: '#fff', fontSize: 12, fontWeight: 700,
+            cursor: number ? 'pointer' : 'default',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            opacity: number ? 1 : 0.5
+          }}>
+            <LIcon name="PhoneCall" size={16} color="#fff"/> ARA
+          </button>
+        ) : (
+          <>
+            <button onClick={aramaKapat} style={{
+              flex: 1, padding: '10px', borderRadius: 10, border: 'none',
+              background: C.danger, color: '#fff', fontSize: 12, fontWeight: 700,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+            }}>
+              <LIcon name="PhoneOff" size={16} color="#fff"/> KAPAT
+            </button>
+            <button onClick={toggleMute} style={{
+              padding: '10px 14px', borderRadius: 10, border: 'none',
+              background: muted ? `${C.warning}33` : `${C.textMuted}22`,
+              color: muted ? C.warning : C.textSec,
+              fontSize: 11, fontWeight: 700, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 4
+            }}>
+              <LIcon name={muted ? 'MicOff' : 'Mic'} size={14} color={muted ? C.warning : C.textSec}/>
+            </button>
+            <button onClick={() => setTransferOpen(!transferOpen)} style={{
+              padding: '10px 14px', borderRadius: 10, border: 'none',
+              background: transferOpen ? `${C.purple}33` : `${C.textMuted}22`,
+              color: transferOpen ? C.purple : C.textSec,
+              fontSize: 11, fontWeight: 700, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 4
+            }}>
+              <LIcon name="ArrowRightLeft" size={14} color={transferOpen ? C.purple : C.textSec}/>
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* TRANSFER PANELİ */}
+      {transferOpen && activeCall && (
+        <div style={{padding: '0 14px 12px'}}>
+          <div style={{
+            padding: 10, background: `${C.purple}11`, borderRadius: 10,
+            border: `1px solid ${C.purple}22`
+          }}>
+            <div style={{fontSize: 10, fontWeight: 700, color: C.purple, marginBottom: 8}}>
+              <LIcon name="ArrowRightLeft" size={12} color={C.purple}/> TRANSFER
+            </div>
+            <div style={{display: 'flex', gap: 6}}>
+              <input
+                value={transferNum}
+                onChange={e => setTransferNum(e.target.value)}
+                placeholder="HEDEF NUMARA..."
+                style={{
+                  flex: 1, padding: '8px 10px', background: C.bgInput,
+                  border: `1px solid ${C.borderLight}`, borderRadius: 8,
+                  color: C.text, fontSize: 12, outline: 'none'
+                }}
+              />
+              <button onClick={transferYap} style={{
+                padding: '8px 14px', borderRadius: 8, border: 'none',
+                background: C.purple, color: '#fff', fontSize: 11,
+                fontWeight: 700, cursor: 'pointer'
+              }}>TRANSFER</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DIALPAD TOGGLE */}
+      <div style={{
+        padding: '0 14px 12px', display: 'flex', justifyContent: 'center'
+      }}>
+        <div onClick={() => setDialpadOpen(!dialpadOpen)} style={{
+          cursor: 'pointer', fontSize: 10, fontWeight: 600,
+          color: C.textMuted, display: 'flex', alignItems: 'center', gap: 4
+        }}>
+          <LIcon name={dialpadOpen ? 'ChevronDown' : 'ChevronUp'} size={12} color={C.textMuted}/>
+          {dialpadOpen ? 'TUŞLARI GİZLE' : 'TUŞLARI GÖSTER'}
+        </div>
+      </div>
+
+      {/* DIALPAD */}
+      {dialpadOpen && (
+        <div style={{padding: '0 14px 14px'}}>
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6
+          }}>
+            {keys.flat().map(k => (
+              <button key={k} onClick={() => dialKey(k)} style={{
+                padding: '12px 0', borderRadius: 10, border: `1px solid ${C.border}`,
+                background: C.bgHover, color: C.text,
+                fontSize: 18, fontWeight: 700, cursor: 'pointer',
+                transition: 'all .15s', fontFamily: 'monospace'
+              }}
+                onMouseEnter={e => e.currentTarget.style.background = `${C.accent}22`}
+                onMouseLeave={e => e.currentTarget.style.background = C.bgHover}
+              >{k}</button>
+            ))}
+          </div>
+          {/* SİL BUTONU */}
+          <div style={{marginTop: 6, display: 'flex', justifyContent: 'center'}}>
+            <div onClick={() => setNumber(prev => prev.slice(0, -1))} style={{
+              cursor: 'pointer', padding: '6px 20px', borderRadius: 8,
+              background: `${C.warning}22`, color: C.warning,
+              fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4
+            }}>
+              <LIcon name="Delete" size={14} color={C.warning}/> SİL
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ANİMASYON */}
+      <style>{`@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
+    </div>
+  );
+};
+
 /* ═══ GELEN ÇAĞRI POPUP ═══ */
 const GelenCagriPopup = ({call, onKapat, onCrmGit, setPage}) => {
   const {C, LIcon} = MR;
@@ -749,13 +1130,15 @@ const App = () => {
         call={gelenCagri}
         onKapat={() => setGelenCagri(null)}
         onCrmGit={(call) => {
-          // CRM yeni kayıt sayfasına yönlendir, telefon numarasını doldur
           MR._gelenCagriTelefon = call.arayan;
           MR._gelenCagriAdi = call.arayanAdi || '';
           setPage('crm-yeni');
         }}
         setPage={setPage}
       />
+
+      {/* NETSANTRAL FLOATING KONTROL PANELİ */}
+      <NetsantralPanel/>
 
       {/* ANİMASYON CSS */}
       <style>{`

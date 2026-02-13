@@ -747,6 +747,87 @@ LEFT JOIN users av ON av.id = d.avukat_id
 LEFT JOIN users s ON s.id = d.sorumlu_id;
 
 -- ═══════════════════════════════════════════
+-- 23. ARAMA LOGLARI (NetSIPP/Netsantral)
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS arama_loglari (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    arayan VARCHAR(30) DEFAULT NULL,
+    arayan_adi VARCHAR(100) DEFAULT NULL,
+    aranan VARCHAR(30) DEFAULT NULL,
+    arama_tarihi DATETIME DEFAULT CURRENT_TIMESTAMP,
+    netsipp_arama_id VARCHAR(50) DEFAULT NULL,
+    senaryo VARCHAR(100) DEFAULT NULL,
+    yon ENUM('gelen','giden') NOT NULL DEFAULT 'gelen',
+    durum VARCHAR(30) DEFAULT 'calıyor',
+    sure INT DEFAULT 0 COMMENT 'Arama süresi (saniye)',
+    crm_id INT DEFAULT NULL,
+    kullanici_id INT DEFAULT NULL,
+    notlar TEXT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_arayan (arayan),
+    INDEX idx_aranan (aranan),
+    INDEX idx_yon (yon),
+    INDEX idx_durum (durum),
+    INDEX idx_tarih (arama_tarihi),
+    INDEX idx_crm (crm_id),
+    FOREIGN KEY (crm_id) REFERENCES crm(id) ON DELETE SET NULL,
+    FOREIGN KEY (kullanici_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 24. YÖNLENDİRME (MAĞDUR YÖNLENDİRME TAKİBİ)
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS yonlendirme (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    magdur_ad_soyad VARCHAR(100) NOT NULL,
+    magdur_tc VARCHAR(20) DEFAULT NULL,
+    magdur_telefon VARCHAR(20) DEFAULT NULL,
+    magdur_telefon2 VARCHAR(20) DEFAULT NULL,
+    magdur_il VARCHAR(50) DEFAULT NULL,
+    magdur_ilce VARCHAR(50) DEFAULT NULL,
+    plaka VARCHAR(20) DEFAULT NULL,
+    kaza_tarihi DATE DEFAULT NULL,
+    kaza_ili VARCHAR(50) DEFAULT NULL,
+    dosya_turu VARCHAR(30) DEFAULT NULL,
+    kaynak VARCHAR(100) DEFAULT NULL,
+    kaynak_kisi VARCHAR(100) DEFAULT NULL,
+    kaynak_telefon VARCHAR(20) DEFAULT NULL,
+    durum ENUM('beklemede','arandı','olumlu','olumsuz','dosya_acildi') NOT NULL DEFAULT 'beklemede',
+    oncelik VARCHAR(20) DEFAULT 'NORMAL',
+    notlar TEXT DEFAULT NULL,
+    atanan_id INT DEFAULT NULL,
+    donusen_crm_id INT DEFAULT NULL,
+    donusen_dosya_id INT DEFAULT NULL,
+    created_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_magdur_ad (magdur_ad_soyad),
+    INDEX idx_magdur_tel (magdur_telefon),
+    INDEX idx_plaka (plaka),
+    INDEX idx_durum (durum),
+    INDEX idx_kaynak (kaynak),
+    INDEX idx_atanan (atanan_id),
+    FOREIGN KEY (atanan_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (donusen_crm_id) REFERENCES crm(id) ON DELETE SET NULL,
+    FOREIGN KEY (donusen_dosya_id) REFERENCES dosyalar(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 25. YÖNLENDİRME NOTLARI
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS yonlendirme_notlari (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    yonlendirme_id INT NOT NULL,
+    not_text TEXT NOT NULL,
+    kullanici_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_yonlendirme (yonlendirme_id),
+    FOREIGN KEY (yonlendirme_id) REFERENCES yonlendirme(id) ON DELETE CASCADE,
+    FOREIGN KEY (kullanici_id) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
 -- TAMAMLANDI
 -- ═══════════════════════════════════════════
 -- Kurulum sonrası kontrol:

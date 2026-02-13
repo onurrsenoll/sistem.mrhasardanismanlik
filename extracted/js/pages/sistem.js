@@ -1293,6 +1293,314 @@ const LogTab = () => {
 };
 
 /* ════════════════════════════════════════════════════════════════
+   TAB 5 - NETSANTRAL AYARLARI
+   ════════════════════════════════════════════════════════════════ */
+const NetsantralTab = () => {
+  const {C, S, LIcon, Badge, Loading, StatCard, api} = MR;
+  const [ayarlar, setAyarlar] = useState({
+    netsantral_santral_no: '',
+    netsantral_kullanici: '',
+    netsantral_sifre: '',
+    netsantral_dahili: '',
+    netsantral_aktif: '0'
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [mesaj, setMesaj] = useState({type: '', text: ''});
+  const [testResult, setTestResult] = useState(null);
+  const [queueStats, setQueueStats] = useState(null);
+
+  /* AYARLAR YÜKLE */
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const r = await api.ayarlarList();
+      if (r?.success) {
+        const data = r.data || {};
+        setAyarlar(prev => ({
+          ...prev,
+          netsantral_santral_no: data.netsantral_santral_no || '',
+          netsantral_kullanici: data.netsantral_kullanici || '',
+          netsantral_sifre: data.netsantral_sifre || '',
+          netsantral_dahili: data.netsantral_dahili || '',
+          netsantral_aktif: data.netsantral_aktif || '0'
+        }));
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  const up = (k, v) => setAyarlar(p => ({...p, [k]: v}));
+
+  /* AYARLARI KAYDET */
+  const kaydet = async () => {
+    setSaving(true);
+    setMesaj({type: '', text: ''});
+    const r = await api.ayarlarGuncelle(ayarlar);
+    if (r?.success) {
+      setMesaj({type: 'success', text: 'NETSANTRAL AYARLARI BAŞARIYLA KAYDEDİLDİ'});
+    } else {
+      setMesaj({type: 'error', text: r?.error || 'AYARLAR KAYDEDİLİRKEN HATA OLUŞTU'});
+    }
+    setSaving(false);
+    setTimeout(() => setMesaj({type: '', text: ''}), 4000);
+  };
+
+  /* BAĞLANTI TESTİ */
+  const testBaglanti = async () => {
+    setTesting(true);
+    setTestResult(null);
+    setMesaj({type: '', text: ''});
+
+    // Önce ayarları kaydet
+    await api.ayarlarGuncelle(ayarlar);
+
+    // Sonra test et
+    const r = await api.netsantralTest();
+    if (r?.success && r.data?.success_api) {
+      setTestResult({success: true, data: r.data?.response});
+      setMesaj({type: 'success', text: 'NETSANTRAL BAĞLANTISI BAŞARILI!'});
+
+      // Kuyruk bilgisini kaydet
+      if (r.data?.response) {
+        setQueueStats(r.data.response);
+      }
+    } else {
+      const errMsg = r?.data?.response?.raw_response || r?.error || 'BAĞLANTI HATASI';
+      setTestResult({success: false, error: errMsg});
+      setMesaj({type: 'error', text: 'BAĞLANTI HATASI: ' + errMsg});
+    }
+    setTesting(false);
+    setTimeout(() => setMesaj({type: '', text: ''}), 6000);
+  };
+
+  if (loading) return <Loading/>;
+
+  return (
+    <div>
+      {/* MESAJ */}
+      {mesaj.text && (
+        <div style={{
+          padding: '12px 16px', borderRadius: 8, marginBottom: 16, fontSize: 12, fontWeight: 600,
+          background: mesaj.type === 'success' ? `${C.success}22` : `${C.danger}22`,
+          border: `1px solid ${mesaj.type === 'success' ? C.success + '44' : C.danger + '44'}`,
+          color: mesaj.type === 'success' ? C.success : C.danger,
+          display: 'flex', alignItems: 'center', gap: 8
+        }}>
+          <LIcon name={mesaj.type === 'success' ? 'CheckCircle' : 'AlertCircle'} size={16}
+            color={mesaj.type === 'success' ? C.success : C.danger}/>
+          {mesaj.text}
+        </div>
+      )}
+
+      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16}}>
+        {/* BAĞLANTI AYARLARI */}
+        <div style={S.card}>
+          <div style={{...S.cardHead, padding: '12px 16px'}}>
+            <LIcon name="Phone" size={14} color={C.accent}/>
+            <span style={{fontSize: 12, fontWeight: 700}}>NETSANTRAL BAĞLANTI AYARLARI</span>
+          </div>
+          <div style={{padding: 16}}>
+            <div style={{display: 'grid', gap: 16}}>
+              {/* AKTİF/PASİF */}
+              <div style={{
+                padding: '12px 16px', borderRadius: 10,
+                background: ayarlar.netsantral_aktif === '1' ? `${C.success}15` : `${C.textMuted}10`,
+                border: `1px solid ${ayarlar.netsantral_aktif === '1' ? C.success + '33' : C.border}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+              }}>
+                <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+                  <div style={{
+                    width: 12, height: 12, borderRadius: '50%',
+                    background: ayarlar.netsantral_aktif === '1' ? C.success : C.textMuted,
+                    boxShadow: ayarlar.netsantral_aktif === '1' ? `0 0 8px ${C.success}` : 'none'
+                  }}/>
+                  <span style={{fontSize: 12, fontWeight: 700,
+                    color: ayarlar.netsantral_aktif === '1' ? C.success : C.textMuted
+                  }}>
+                    NETSANTRAL {ayarlar.netsantral_aktif === '1' ? 'AKTİF' : 'PASİF'}
+                  </span>
+                </div>
+                <div onClick={() => up('netsantral_aktif', ayarlar.netsantral_aktif === '1' ? '0' : '1')} style={{
+                  width: 44, height: 24, borderRadius: 12, cursor: 'pointer',
+                  background: ayarlar.netsantral_aktif === '1' ? C.success : C.borderLight,
+                  position: 'relative', transition: 'all .3s'
+                }}>
+                  <div style={{
+                    width: 20, height: 20, borderRadius: '50%',
+                    background: '#fff', position: 'absolute', top: 2,
+                    left: ayarlar.netsantral_aktif === '1' ? 22 : 2,
+                    transition: 'all .3s', boxShadow: '0 1px 4px rgba(0,0,0,.3)'
+                  }}/>
+                </div>
+              </div>
+
+              {/* SANTRAL NO */}
+              <div>
+                <label style={S.label}>SANTRAL NUMARASI *</label>
+                <input style={S.input} value={ayarlar.netsantral_santral_no}
+                  onChange={e => up('netsantral_santral_no', e.target.value)}
+                  placeholder="08503XXXXXXX"/>
+                <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
+                  NETGSM'DEN ALINAN SANTRAL NUMARANIZ (BAŞINDA 0 İLE)
+                </div>
+              </div>
+
+              {/* KULLANICI ADI */}
+              <div>
+                <label style={S.label}>KULLANICI ADI *</label>
+                <input style={S.input} value={ayarlar.netsantral_kullanici}
+                  onChange={e => up('netsantral_kullanici', e.target.value)}
+                  placeholder="8503XXXXXXX"/>
+                <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
+                  SANTRAL NUMARASI (BAŞINDAKI 0 OLMADAN)
+                </div>
+              </div>
+
+              {/* ŞİFRE */}
+              <div>
+                <label style={S.label}>ŞİFRE *</label>
+                <input style={S.input} type="password" value={ayarlar.netsantral_sifre}
+                  onChange={e => up('netsantral_sifre', e.target.value)}
+                  placeholder="ALT KULLANICI ŞİFRENİZ"/>
+                <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
+                  NETGSM ALT KULLANICI ŞİFRESİ
+                </div>
+              </div>
+
+              {/* DAHİLİ */}
+              <div>
+                <label style={S.label}>VARSAYILAN DAHİLİ</label>
+                <input style={S.input} value={ayarlar.netsantral_dahili}
+                  onChange={e => up('netsantral_dahili', e.target.value)}
+                  placeholder="100"/>
+                <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
+                  VARSAYILAN DAHİLİ NUMARANIZ (ÖRN: 100, 101, 102...)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* DURUM VE TEST */}
+        <div style={{display: 'grid', gap: 16, alignContent: 'start'}}>
+          {/* BAĞLANTI TESTİ */}
+          <div style={S.card}>
+            <div style={{...S.cardHead, padding: '12px 16px'}}>
+              <LIcon name="Activity" size={14} color={C.accent}/>
+              <span style={{fontSize: 12, fontWeight: 700}}>BAĞLANTI DURUMU</span>
+            </div>
+            <div style={{padding: 16}}>
+              <button onClick={testBaglanti} disabled={testing} style={{
+                ...S.btn, width: '100%', justifyContent: 'center',
+                background: testing ? `${C.accent}55` : C.accent,
+                color: '#fff', fontSize: 13, fontWeight: 700, padding: '12px 20px'
+              }}>
+                {testing ? (
+                  <>
+                    <div style={{width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)',
+                      borderTop: '2px solid #fff', borderRadius: '50%', animation: 'spin 1s linear infinite'}}/>
+                    TEST EDİLİYOR...
+                  </>
+                ) : (
+                  <>
+                    <LIcon name="Wifi" size={16} color="#fff"/> BAĞLANTIYI TEST ET
+                  </>
+                )}
+              </button>
+
+              {testResult && (
+                <div style={{
+                  marginTop: 12, padding: 12, borderRadius: 8,
+                  background: testResult.success ? `${C.success}15` : `${C.danger}15`,
+                  border: `1px solid ${testResult.success ? C.success + '33' : C.danger + '33'}`
+                }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6
+                  }}>
+                    <LIcon name={testResult.success ? 'CheckCircle' : 'XCircle'} size={16}
+                      color={testResult.success ? C.success : C.danger}/>
+                    <span style={{
+                      fontSize: 12, fontWeight: 700,
+                      color: testResult.success ? C.success : C.danger
+                    }}>
+                      {testResult.success ? 'BAĞLANTI BAŞARILI' : 'BAĞLANTI HATASI'}
+                    </span>
+                  </div>
+                  {testResult.error && (
+                    <div style={{fontSize: 10, color: C.danger, wordBreak: 'break-all'}}>
+                      {testResult.error}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* BİLGİ KARTI */}
+          <div style={S.card}>
+            <div style={{...S.cardHead, padding: '12px 16px'}}>
+              <LIcon name="Info" size={14} color={C.accent}/>
+              <span style={{fontSize: 12, fontWeight: 700}}>NETGSM NETSANTRAL BİLGİ</span>
+            </div>
+            <div style={{padding: 16}}>
+              <div style={{fontSize: 11, color: C.textSec, lineHeight: 1.8}}>
+                <div style={{display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8}}>
+                  <LIcon name="CheckCircle" size={12} color={C.success}/>
+                  <span>ÇAĞRI BAŞLATMA / SONLANDIRMA</span>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8}}>
+                  <LIcon name="CheckCircle" size={12} color={C.success}/>
+                  <span>SESİ KAPATMA / AÇMA</span>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8}}>
+                  <LIcon name="CheckCircle" size={12} color={C.success}/>
+                  <span>ÇAĞRI TRANSFER</span>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8}}>
+                  <LIcon name="CheckCircle" size={12} color={C.success}/>
+                  <span>KUYRUK YÖNETİMİ</span>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8}}>
+                  <LIcon name="CheckCircle" size={12} color={C.success}/>
+                  <span>ARAMA GEÇMİŞİ VE RAPORLAR</span>
+                </div>
+              </div>
+              <div style={{
+                marginTop: 12, padding: '10px 14px', borderRadius: 8,
+                background: `${C.warning}11`, border: `1px solid ${C.warning}22`,
+                fontSize: 10, color: C.warning
+              }}>
+                <LIcon name="AlertTriangle" size={12} color={C.warning}/>{' '}
+                AYARLARI KAYDETTİKTEN SONRA BAĞLANTI TESTİ YAPINIZ
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* KAYDET BUTONU */}
+      <div style={{
+        ...S.card, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+      }}>
+        <div style={{fontSize: 12, color: C.textMuted}}>
+          <LIcon name="Info" size={14} color={C.textMuted} style={{verticalAlign: 'middle'}}/>{' '}
+          NETSANTRAL AYARLARINI KAYDETTİKTEN SONRA TEK EKRANDAN ARAMA YAPABİLİRSİNİZ
+        </div>
+        <button style={{
+          ...S.btn, ...S.btnP, fontSize: 13, padding: '12px 32px', fontWeight: 700,
+          opacity: saving ? 0.7 : 1
+        }} onClick={kaydet} disabled={saving}>
+          <LIcon name="Save" size={16} color="#fff"/>
+          {saving ? 'KAYDEDİLİYOR...' : 'AYARLARI KAYDET'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════════════════════════
    ANA SAYFA BİLEŞENİ - MR.SistemPage
    ════════════════════════════════════════════════════════════════ */
 MR.SistemPage = ({setPage, user, subPage}) => {
@@ -1303,6 +1611,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
     {key: 'kullanici', label: 'KULLANICI YÖNETİMİ', icon: 'Users',     desc: 'KULLANICI OLUŞTUR, DÜZENLE, YÖNETİMİ'},
     {key: 'yetki',     label: 'YETKİ YÖNETİMİ',     icon: 'KeyRound',  desc: 'MODÜL BAZLI İZİN YÖNETİMİ'},
     {key: 'ayarlar',   label: 'FİRMA AYARLARI',      icon: 'Settings',  desc: 'LOGO, ÜNVAN, SLOGAN, BİLGİLER'},
+    {key: 'netsantral',label: 'NETSANTRAL',           icon: 'Phone',     desc: 'NETSANTRAL ENTEGRASYON AYARLARI'},
     {key: 'log',       label: 'LOG KAYITLARI',        icon: 'Activity',  desc: 'SİSTEM OLAY GEÇMİŞİ'}
   ];
 
@@ -1377,6 +1686,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
         {aktifTab === 'kullanici' && isAdmin && <KullaniciTab/>}
         {aktifTab === 'yetki' && isAdmin && <YetkiTab/>}
         {aktifTab === 'ayarlar' && isAdmin && <AyarlarTab/>}
+        {aktifTab === 'netsantral' && isAdmin && <NetsantralTab/>}
         {aktifTab === 'log' && <LogTab/>}
       </div>
     </div>
