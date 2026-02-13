@@ -769,8 +769,8 @@ MR._CRMYeniInner = ({setPage}) => {
     il: '', ilce: '',
     plaka: '', marka: '', model_adi: '', arac_yili: '', arac_km: '',
     olay_aciklama: '',
-    dosya_turu: 'ADK', kaynak: 'TELEFON', durum: 'Yeni', oncelik: 'NORMAL',
-    not_text: '', taslak: 0
+    dosya_turu: 'ADK', kaynak: 'TELEFON', kaza_turu: 'TEK_TARAFLI', pozisyon: 'SURUCU',
+    durum: 'Yeni', not_text: '', taslak: 0
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -778,6 +778,66 @@ MR._CRMYeniInner = ({setPage}) => {
   const [savedId, setSavedId] = useState(null);
   const [donusturConfirm, setDonusturConfirm] = useState(false);
   const up = (k, v) => { sF(p => ({...p, [k]: v})); setError(''); setSuccess(''); };
+
+  /* ── DOSYA / SES / FOTOĞRAF STATE ── */
+  const [ekler, setEkler] = useState([]); // {type:'dosya'|'ses'|'foto', file:File, preview:string|null, name:string}
+  const [recording, setRecording] = useState(false);
+  const mediaRecRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const dosyaInputRef = useRef(null);
+  const fotoInputRef = useRef(null);
+
+  const dosyaEkle = (files, type = 'dosya') => {
+    const newFiles = Array.from(files).map(file => {
+      const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
+      return {type, file, preview, name: file.name, size: file.size};
+    });
+    setEkler(prev => [...prev, ...newFiles]);
+  };
+
+  const dosyaSil = (idx) => {
+    setEkler(prev => {
+      const item = prev[idx];
+      if (item?.preview) URL.revokeObjectURL(item.preview);
+      return prev.filter((_, i) => i !== idx);
+    });
+  };
+
+  const sesKaydiBaslat = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+      const mediaRec = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      mediaRec.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mediaRec.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, {type: 'audio/webm'});
+        const file = new File([blob], `ses_kaydi_${Date.now()}.webm`, {type: 'audio/webm'});
+        setEkler(prev => [...prev, {type: 'ses', file, preview: null, name: file.name, size: file.size}]);
+        stream.getTracks().forEach(t => t.stop());
+      };
+      mediaRecRef.current = mediaRec;
+      mediaRec.start();
+      setRecording(true);
+    } catch (e) {
+      setError('MİKROFON ERİŞİMİ REDDEDILDI VEYA DESTEKLENMIYOR');
+    }
+  };
+
+  const sesKaydiDurdur = () => {
+    if (mediaRecRef.current && recording) {
+      mediaRecRef.current.stop();
+      setRecording(false);
+    }
+  };
+
+  /* ── GELEN ÇAĞRI'DAN OTOMATİK DOLDURMA ── */
+  useEffect(() => {
+    if (MR._gelenCagriTelefon) {
+      sF(p => ({...p, telefon: MR._gelenCagriTelefon, ad_soyad: MR._gelenCagriAdi || ''}));
+      MR._gelenCagriTelefon = null;
+      MR._gelenCagriAdi = null;
+    }
+  }, []);
 
   /* ── ÇAĞRI ZAMANLAYICI ── */
   const [callActive, setCallActive] = useState(false);
@@ -810,13 +870,15 @@ MR._CRMYeniInner = ({setPage}) => {
     if (f.telefon.length >= 10) r.push({t: 'ÇAĞRI KAYDI OLUŞTURULDU.', c: C.success});
     if (f.dosya_turu === 'ADK') r.push({t: 'DEĞER KAYBI POTANSİYELİ YÜKSEK.', c: C.success});
     if (f.dosya_turu === 'BH') r.push({t: 'BEDENİ HASAR HESAPLAMASI GEREKLİ.', c: C.purple});
+    if (f.kaza_turu === 'CIFT_TARAFLI') r.push({t: 'ÇİFT TARAFLI KAZA - KUSUR TESPİTİ GEREKLİ.', c: C.warning});
+    if (f.pozisyon === 'YAYA') r.push({t: 'YAYA KAZASI - BEDENİ HASAR ÖNCELİKLİ.', c: C.danger});
+    if (f.pozisyon === 'YOLCU') r.push({t: 'YOLCU POZİSYONU - TAZMİNAT HAKKI YÜKSEK.', c: C.success});
     if (f.arac_yili && parseInt(f.arac_yili) >= new Date().getFullYear() - 5) r.push({t: 'EKSPER RAPORU GEREKLİ.', c: C.success});
     if (f.plaka) r.push({t: 'ARAÇ BİLGİSİ TESPİT EDİLDİ.', c: C.success});
     if (f.olay_aciklama && f.olay_aciklama.length > 30) r.push({t: 'TAHKİM UYGUN OLABİLİR.', c: C.success});
-    if (f.oncelik === 'ACİL') r.push({t: 'ACİL DOSYA - ÖNCELİKLİ İŞLEM.', c: C.danger});
-    if (f.oncelik === 'YÜKSEK') r.push({t: 'YÜKSEK ÖNCELİKLİ KAYIT.', c: C.warning});
+    if (ekler.length > 0) r.push({t: `${ekler.length} DOSYA/EK EKLENDİ.`, c: C.cyan});
     return r;
-  }, [f.telefon, f.dosya_turu, f.arac_yili, f.plaka, f.olay_aciklama, f.oncelik]);
+  }, [f.telefon, f.dosya_turu, f.kaza_turu, f.pozisyon, f.arac_yili, f.plaka, f.olay_aciklama, ekler.length]);
 
   /* ── KAYDET ── */
   const kaydet = async (taslak = false) => {
@@ -830,10 +892,16 @@ MR._CRMYeniInner = ({setPage}) => {
     setLoading(true); setError(''); setSuccess('');
     const data = {...f, taslak: taslak ? 1 : 0};
     const r = await api.crmCreate(data);
-    setLoading(false);
     if (r?.success) {
       const newId = r.data?.id;
       setSavedId(newId);
+      // EKLERİ YÜKLE
+      if (ekler.length > 0 && newId) {
+        for (const ek of ekler) {
+          try { await api.crmDosyaYukle(newId, ek.type, ek.file); } catch(e) {}
+        }
+      }
+      setLoading(false);
       if (taslak) {
         setSuccess('TASLAK BAŞARIYLA KAYDEDİLDİ');
         return newId;
@@ -842,6 +910,7 @@ MR._CRMYeniInner = ({setPage}) => {
         return newId;
       }
     } else {
+      setLoading(false);
       setError(r?.error || 'KAYIT OLUŞTURULURKEN HATA OLUŞTU');
       return null;
     }
@@ -869,9 +938,11 @@ MR._CRMYeniInner = ({setPage}) => {
   const [clearConfirm, setClearConfirm] = useState(false);
   const resetForm = () => {
     setClearConfirm(false);
-    sF({ad_soyad:'',tc_vergi_no:'',telefon:'',telefon2:'',email:'',il:'',ilce:'',plaka:'',marka:'',model_adi:'',arac_yili:'',arac_km:'',olay_aciklama:'',dosya_turu:'ADK',kaynak:'TELEFON',durum:'Yeni',oncelik:'NORMAL',not_text:'',taslak:0});
+    sF({ad_soyad:'',tc_vergi_no:'',telefon:'',telefon2:'',email:'',il:'',ilce:'',plaka:'',marka:'',model_adi:'',arac_yili:'',arac_km:'',olay_aciklama:'',dosya_turu:'ADK',kaynak:'TELEFON',kaza_turu:'TEK_TARAFLI',pozisyon:'SURUCU',durum:'Yeni',not_text:'',taslak:0});
     setError(''); setSuccess(''); setSavedId(null);
     setCallActive(false); setCallSeconds(0);
+    ekler.forEach(e => { if (e.preview) URL.revokeObjectURL(e.preview); });
+    setEkler([]); setRecording(false);
   };
 
   /* ── FIELDSET BİLEŞENİ ── */
@@ -977,7 +1048,14 @@ MR._CRMYeniInner = ({setPage}) => {
               </div>
 
               {/* ÇAĞRI KONTROL */}
-              <button onClick={toggleCall} style={{
+              <button onClick={() => {
+                toggleCall();
+                if (!callActive && f.telefon.length >= 10) {
+                  // NetSIPP Click-to-Call: SIP protokolü ile arama başlat
+                  const cleanNum = f.telefon.replace(/\s/g,'').replace(/^0/, '90');
+                  try { window.open('sip:' + cleanNum, '_self'); } catch(e) {}
+                }
+              }} style={{
                 ...S.btn, width:'100%', justifyContent:'center',
                 background: callActive ? C.danger : C.success,
                 color:'#fff', padding:'12px', fontSize:13, borderRadius:10,
@@ -986,6 +1064,11 @@ MR._CRMYeniInner = ({setPage}) => {
                 <LIcon name={callActive ? 'PhoneOff' : 'PhoneCall'} size={16} color="#fff"/>
                 {callActive ? 'ÇAĞRIYI SONLANDIR' : 'ÇAĞRI BAŞLAT'}
               </button>
+              {/* NetSIPP DURUM */}
+              <div style={{marginTop:8, display:'flex', alignItems:'center', gap:6, fontSize:10, color:C.textMuted}}>
+                <span style={{width:6, height:6, borderRadius:'50%', background:C.success, display:'inline-block'}}/>
+                NETSIPP BAĞLI
+              </div>
             </div>
           </div>
 
@@ -1093,7 +1176,7 @@ MR._CRMYeniInner = ({setPage}) => {
 
           {/* ── OLAY BİLGİLERİ ── */}
           <Fieldset title="OLAY BİLGİLERİ" icon="FileText">
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:14, marginBottom:14}}>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:14}}>
               <FormGroup label="DOSYA TÜRÜ">
                 <select style={S.select} value={f.dosya_turu} onChange={e => up('dosya_turu', e.target.value)}>
                   <option value="ADK">ADK</option>
@@ -1105,24 +1188,118 @@ MR._CRMYeniInner = ({setPage}) => {
                   {kaynaklar.map(k => <option key={k} value={k}>{k}</option>)}
                 </select>
               </FormGroup>
-              <FormGroup label="DURUM">
-                <select style={S.select} value={f.durum} onChange={e => up('durum', e.target.value)}>
-                  {['Yeni','Takipte','Olumlu','Olumsuz'].map(d => <option key={d} value={d}>{d.toUpperCase()}</option>)}
-                </select>
-              </FormGroup>
-              <FormGroup label="ÖNCELİK">
-                <select style={{
-                  ...S.select,
-                  borderColor: f.oncelik === 'ACİL' ? C.danger : f.oncelik === 'YÜKSEK' ? C.warning : undefined,
-                  color: f.oncelik === 'ACİL' ? C.danger : f.oncelik === 'YÜKSEK' ? C.warning : undefined
-                }} value={f.oncelik} onChange={e => up('oncelik', e.target.value)}>
-                  {['DÜŞÜK','NORMAL','YÜKSEK','ACİL'].map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </FormGroup>
             </div>
+
+            {/* ── KAZA TÜRÜ TOGGLE ── */}
+            <FormGroup label="KAZA TÜRÜ">
+              <div style={{display:'flex', gap:6}}>
+                {[{v:'TEK_TARAFLI', l:'TEK TARAFLI', icon:'ArrowRight'}, {v:'CIFT_TARAFLI', l:'ÇİFT TARAFLI', icon:'ArrowLeftRight'}].map(opt => (
+                  <button key={opt.v} type="button" onClick={() => up('kaza_turu', opt.v)}
+                    style={{
+                      flex:1, padding:'12px 10px', borderRadius:10,
+                      border: `2px solid ${f.kaza_turu === opt.v ? C.accent : C.borderLight}`,
+                      background: f.kaza_turu === opt.v ? `${C.accent}20` : C.bgInput,
+                      color: f.kaza_turu === opt.v ? C.accent : C.textSec,
+                      fontWeight: f.kaza_turu === opt.v ? 800 : 500,
+                      fontSize:13, cursor:'pointer', transition:'all .2s',
+                      display:'flex', alignItems:'center', justifyContent:'center', gap:8
+                    }}>
+                    <LIcon name={opt.icon} size={16} color={f.kaza_turu === opt.v ? C.accent : C.textMuted}/>
+                    {opt.l}
+                  </button>
+                ))}
+              </div>
+            </FormGroup>
+
+            {/* ── POZİSYON TOGGLE ── */}
+            <FormGroup label="POZİSYON">
+              <div style={{display:'flex', gap:6, marginBottom:14}}>
+                {[{v:'SURUCU', l:'SÜRÜCÜ', icon:'Steering'}, {v:'YOLCU', l:'YOLCU', icon:'Users'}, {v:'YAYA', l:'YAYA', icon:'PersonStanding'}].map(opt => (
+                  <button key={opt.v} type="button" onClick={() => up('pozisyon', opt.v)}
+                    style={{
+                      flex:1, padding:'12px 10px', borderRadius:10,
+                      border: `2px solid ${f.pozisyon === opt.v ? C.purple : C.borderLight}`,
+                      background: f.pozisyon === opt.v ? `${C.purple}20` : C.bgInput,
+                      color: f.pozisyon === opt.v ? C.purple : C.textSec,
+                      fontWeight: f.pozisyon === opt.v ? 800 : 500,
+                      fontSize:13, cursor:'pointer', transition:'all .2s',
+                      display:'flex', alignItems:'center', justifyContent:'center', gap:8
+                    }}>
+                    <LIcon name={opt.v === 'SURUCU' ? 'CircleUser' : opt.v === 'YOLCU' ? 'Users' : 'Footprints'} size={16} color={f.pozisyon === opt.v ? C.purple : C.textMuted}/>
+                    {opt.l}
+                  </button>
+                ))}
+              </div>
+            </FormGroup>
+
             <FormGroup label="OLAY AÇIKLAMASI / GÖRÜŞME NOTU">
               <textarea style={{...S.input, minHeight:120}} value={f.olay_aciklama} onChange={e => up('olay_aciklama', e.target.value)} placeholder="MÜŞTERİ SAĞ ÖN ÇAMURLUK HASARLI, SİGORTA EKSPER BEKLİYOR, DEĞER KAYBI TALEP EDECEK..."/>
             </FormGroup>
+          </Fieldset>
+
+          {/* ── EKLER / MEDYA ── */}
+          <Fieldset title="EKLER" icon="Paperclip">
+            <div style={{display:'flex', gap:8, marginBottom:14, flexWrap:'wrap'}}>
+              {/* SES KAYDI */}
+              <button type="button" onClick={recording ? sesKaydiDurdur : sesKaydiBaslat}
+                style={{
+                  ...S.btn, flex:'1 1 auto', justifyContent:'center',
+                  background: recording ? `${C.danger}20` : `${C.accent}12`,
+                  border: `1px solid ${recording ? C.danger : C.accent}40`,
+                  color: recording ? C.danger : C.accent, fontSize:12, padding:'11px 14px', borderRadius:10,
+                  animation: recording ? 'pulse 1.5s infinite' : 'none'
+                }}>
+                <LIcon name={recording ? 'MicOff' : 'Mic'} size={16} color={recording ? C.danger : C.accent}/>
+                {recording ? 'KAYDI DURDUR' : 'SES KAYDI'}
+              </button>
+              {/* DOSYA EKLE */}
+              <button type="button" onClick={() => dosyaInputRef.current?.click()}
+                style={{
+                  ...S.btn, flex:'1 1 auto', justifyContent:'center',
+                  background: `${C.success}12`, border: `1px solid ${C.success}40`,
+                  color: C.success, fontSize:12, padding:'11px 14px', borderRadius:10
+                }}>
+                <LIcon name="FilePlus" size={16} color={C.success}/> DOSYA EKLE
+              </button>
+              {/* FOTOĞRAF YÜKLE */}
+              <button type="button" onClick={() => fotoInputRef.current?.click()}
+                style={{
+                  ...S.btn, flex:'1 1 auto', justifyContent:'center',
+                  background: `${C.purple}12`, border: `1px solid ${C.purple}40`,
+                  color: C.purple, fontSize:12, padding:'11px 14px', borderRadius:10
+                }}>
+                <LIcon name="Camera" size={16} color={C.purple}/> FOTOĞRAF YÜKLE
+              </button>
+            </div>
+            {/* GİZLİ FILE INPUT'LAR */}
+            <input ref={dosyaInputRef} type="file" multiple style={{display:'none'}}
+              onChange={e => { dosyaEkle(e.target.files, 'dosya'); e.target.value = ''; }}/>
+            <input ref={fotoInputRef} type="file" accept="image/*" multiple capture="environment" style={{display:'none'}}
+              onChange={e => { dosyaEkle(e.target.files, 'foto'); e.target.value = ''; }}/>
+
+            {/* EK LİSTESİ */}
+            {ekler.length > 0 && (
+              <div style={{display:'flex', flexDirection:'column', gap:6}}>
+                {ekler.map((ek, i) => (
+                  <div key={i} style={{
+                    display:'flex', alignItems:'center', gap:10, padding:'8px 12px',
+                    background: `${ek.type === 'ses' ? C.accent : ek.type === 'foto' ? C.purple : C.success}08`,
+                    borderRadius:8, border:`1px solid ${C.border}`
+                  }}>
+                    <LIcon name={ek.type === 'ses' ? 'Mic' : ek.type === 'foto' ? 'Image' : 'File'} size={14}
+                      color={ek.type === 'ses' ? C.accent : ek.type === 'foto' ? C.purple : C.success}/>
+                    {ek.preview && <img src={ek.preview} style={{width:32, height:32, borderRadius:4, objectFit:'cover'}}/>}
+                    <span style={{flex:1, fontSize:11, fontWeight:500}}>{ek.name}</span>
+                    <span style={{fontSize:10, color:C.textMuted}}>{(ek.size/1024).toFixed(0)} KB</span>
+                    <button type="button" onClick={() => dosyaSil(i)} style={{
+                      background:'none', border:'none', cursor:'pointer', padding:2
+                    }}>
+                      <LIcon name="X" size={14} color={C.danger}/>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </Fieldset>
 
         </div>

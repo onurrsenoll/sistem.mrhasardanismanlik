@@ -55,6 +55,13 @@ MR.api = {
   crmDelete(id) { return this.req('/crm/delete.php?id=' + id, { method: 'DELETE' }); },
   crmNotEkle(d) { return this.req('/crm/not-ekle.php', { method: 'POST', body: JSON.stringify(d) }); },
   crmDonustur(d) { return this.req('/crm/donustur.php', { method: 'POST', body: JSON.stringify(d) }); },
+  async crmDosyaYukle(crmId, tur, file) {
+    const fd = new FormData(); fd.append('crm_id', crmId); fd.append('tur', tur); fd.append('file', file);
+    const h = {}; if (this.token) h['Authorization'] = 'Bearer ' + this.token;
+    return (await fetch(API_BASE + '/crm/dosya-yukle.php', { method: 'POST', headers: h, body: fd })).json();
+  },
+  // NETSIPP
+  netsippBekleyenCagri() { return this.req('/netsipp/bekleyen-cagri.php'); },
   // MUHASEBE
   kasaList() { return this.req('/muhasebe/kasa-list.php'); },
   kasaCreate(d) { return this.req('/muhasebe/kasa-create.php', { method: 'POST', body: JSON.stringify(d) }); },

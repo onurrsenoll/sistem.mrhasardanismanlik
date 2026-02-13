@@ -508,6 +508,65 @@ const PageRouter = ({page, setPage, user}) => {
   return <MR.HomePage setPage={setPage} user={user}/>;
 };
 
+/* ═══ GELEN ÇAĞRI POPUP ═══ */
+const GelenCagriPopup = ({call, onKapat, onCrmGit, setPage}) => {
+  const {C, LIcon} = MR;
+  if (!call) return null;
+  return (
+    <div style={{
+      position:'fixed', top:60, right:24, zIndex:9999, width:360,
+      background:C.bgCard, border:`2px solid ${C.success}`, borderRadius:16,
+      boxShadow:'0 20px 60px rgba(0,0,0,.5)', overflow:'hidden',
+      animation:'slideInRight .3s ease-out'
+    }}>
+      <div style={{
+        padding:'14px 16px', background:`${C.success}15`,
+        display:'flex', alignItems:'center', gap:10, borderBottom:`1px solid ${C.success}30`
+      }}>
+        <div style={{
+          width:36, height:36, borderRadius:'50%', background:`${C.success}25`,
+          display:'flex', alignItems:'center', justifyContent:'center',
+          animation:'pulse 1.5s infinite'
+        }}>
+          <LIcon name="PhoneIncoming" size={18} color={C.success}/>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:13, fontWeight:800, color:C.success}}>GELEN ÇAĞRI</div>
+          <div style={{fontSize:10, color:C.textMuted}}>{call.aramaTarihi || new Date().toLocaleTimeString('tr-TR')}</div>
+        </div>
+        <button onClick={onKapat} style={{background:'none', border:'none', cursor:'pointer', padding:4}}>
+          <LIcon name="X" size={16} color={C.textMuted}/>
+        </button>
+      </div>
+      <div style={{padding:16}}>
+        <div style={{fontSize:22, fontWeight:800, letterSpacing:1.5, marginBottom:6, color:C.text}}>
+          {call.arayan || 'BİLİNMEYEN'}
+        </div>
+        {call.arayanAdi && <div style={{fontSize:13, color:C.textSec, marginBottom:12}}>{call.arayanAdi}</div>}
+        {call.crm_kayit && (
+          <div style={{padding:'8px 12px', background:`${C.accent}12`, borderRadius:8, marginBottom:12, fontSize:11, display:'flex', alignItems:'center', gap:6}}>
+            <LIcon name="User" size={14} color={C.accent}/>
+            <span style={{fontWeight:600}}>CRM KAYITLI: {call.crm_kayit.ad_soyad}</span>
+          </div>
+        )}
+        <div style={{display:'flex', gap:8}}>
+          <button onClick={() => { onCrmGit(call); onKapat(); }} style={{
+            flex:1, padding:'10px', borderRadius:8, border:'none', cursor:'pointer',
+            background:C.accent, color:'#fff', fontSize:12, fontWeight:700,
+            display:'flex', alignItems:'center', justifyContent:'center', gap:6
+          }}>
+            <LIcon name="UserPlus" size={14} color="#fff"/> CRM KAYIT OLUŞTUR
+          </button>
+          <button onClick={onKapat} style={{
+            padding:'10px 16px', borderRadius:8, border:`1px solid ${C.border}`, cursor:'pointer',
+            background:'transparent', color:C.textSec, fontSize:12, fontWeight:600
+          }}>KAPAT</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* ═══ ANA UYGULAMA ═══ */
 const App = () => {
   const {C, api, LoginScreen} = MR;
@@ -516,6 +575,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [, forceUpdate] = useState(0);
   const [bgLogoUrl, setBgLogoUrl] = useState(MR.logoUrl || '');
+  const [gelenCagri, setGelenCagri] = useState(null);
 
   /* URL HASH ROUTING - SAYFA DEĞİŞİNCE URL GÜNCELLENİR */
   const setPage = useCallback((p) => {
@@ -552,6 +612,40 @@ const App = () => {
     window.addEventListener('mr-tema-degisti', handler);
     return () => window.removeEventListener('mr-tema-degisti', handler);
   }, []);
+
+  /* NETSIPP GELEN ÇAĞRI DİNLEYİCİ (localStorage) */
+  useEffect(() => {
+    if (!user) return;
+    const handler = (e) => {
+      if (e.key === 'mr_netsipp_gelen') {
+        try {
+          const data = JSON.parse(e.newValue);
+          if (data && data.timestamp && (Date.now() - data.timestamp < 30000)) {
+            setGelenCagri(data);
+            // 15 saniye sonra otomatik kapat
+            setTimeout(() => setGelenCagri(prev => prev?.timestamp === data.timestamp ? null : prev), 15000);
+          }
+        } catch(err) {}
+      }
+    };
+    window.addEventListener('storage', handler);
+    // Sayfa açıkken de kontrol et (aynı sekmede)
+    const checkLocal = () => {
+      try {
+        const raw = localStorage.getItem('mr_netsipp_gelen');
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data && data.timestamp && (Date.now() - data.timestamp < 5000)) {
+            setGelenCagri(data);
+            localStorage.removeItem('mr_netsipp_gelen');
+            setTimeout(() => setGelenCagri(prev => prev?.timestamp === data.timestamp ? null : prev), 15000);
+          }
+        }
+      } catch(err) {}
+    };
+    const iv = setInterval(checkLocal, 3000);
+    return () => { window.removeEventListener('storage', handler); clearInterval(iv); };
+  }, [user]);
 
   /* ARKA PLAN LOGO URL - SADECE GİRİŞ YAPILDIKTAN SONRA */
   useEffect(() => {
@@ -633,6 +727,25 @@ const App = () => {
       }}>
         HER ZAMAN FARK EDER
       </div>
+
+      {/* GELEN ÇAĞRI POPUP */}
+      <GelenCagriPopup
+        call={gelenCagri}
+        onKapat={() => setGelenCagri(null)}
+        onCrmGit={(call) => {
+          // CRM yeni kayıt sayfasına yönlendir, telefon numarasını doldur
+          MR._gelenCagriTelefon = call.arayan;
+          MR._gelenCagriAdi = call.arayanAdi || '';
+          setPage('crm-yeni');
+        }}
+        setPage={setPage}
+      />
+
+      {/* ANİMASYON CSS */}
+      <style>{`
+        @keyframes slideInRight{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+      `}</style>
     </div>
   );
 };

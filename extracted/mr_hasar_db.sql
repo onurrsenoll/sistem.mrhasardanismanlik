@@ -231,6 +231,8 @@ CREATE TABLE IF NOT EXISTS crm (
     olay_aciklama TEXT DEFAULT NULL,
     kaynak VARCHAR(50) DEFAULT NULL,
     dosya_turu VARCHAR(20) DEFAULT NULL,
+    kaza_turu VARCHAR(30) DEFAULT NULL,
+    pozisyon VARCHAR(20) DEFAULT NULL,
     durum ENUM('Yeni','Takipte','Olumlu','Olumsuz') NOT NULL DEFAULT 'Yeni',
     oncelik VARCHAR(20) DEFAULT 'NORMAL',
     taslak TINYINT DEFAULT 0,
@@ -264,6 +266,8 @@ CREATE TABLE IF NOT EXISTS crm (
 -- ALTER TABLE crm ADD COLUMN olay_aciklama TEXT DEFAULT NULL AFTER arac_km;
 -- ALTER TABLE crm ADD COLUMN oncelik VARCHAR(20) DEFAULT 'NORMAL' AFTER durum;
 -- ALTER TABLE crm ADD COLUMN taslak TINYINT DEFAULT 0 AFTER oncelik;
+-- ALTER TABLE crm ADD COLUMN kaza_turu VARCHAR(30) DEFAULT NULL AFTER dosya_turu;
+-- ALTER TABLE crm ADD COLUMN pozisyon VARCHAR(20) DEFAULT NULL AFTER kaza_turu;
 -- ALTER TABLE crm ADD INDEX idx_plaka (plaka);
 -- ALTER TABLE crm ADD INDEX idx_tc (tc_vergi_no);
 -- ALTER TABLE crm ADD INDEX idx_taslak (taslak);
