@@ -9,7 +9,13 @@ MR._NetsippDurum = () => {
   const [durum, setDurum] = useState('kontrol'); // kontrol, bagli, hata
   const [mesaj, setMesaj] = useState('KONTROL EDİLİYOR...');
 
+  /* YETKİ KONTROLÜ: ADMIN VEYA netsipp_goruntule İZNİ GEREKLİ */
+  const user = MR._currentUser;
+  const isAdmin = user?.rol === 'admin';
+  const netsippIzin = isAdmin || user?.yetkiler?.netsipp_goruntule === 1;
+
   useEffect(() => {
+    if (!netsippIzin) return;
     let mounted = true;
     const kontrol = async () => {
       try {
@@ -31,7 +37,10 @@ MR._NetsippDurum = () => {
     };
     kontrol();
     return () => { mounted = false; };
-  }, []);
+  }, [netsippIzin]);
+
+  /* YETKİ YOKSA HİÇ RENDER ETME */
+  if (!netsippIzin) return null;
 
   const renk = durum === 'bagli' ? C.success : durum === 'hata' ? C.danger : C.warning;
 
@@ -1117,8 +1126,8 @@ MR._CRMYeniInner = ({setPage}) => {
         {/* ═══ SOL PANEL - ANLIK ÇAĞRI & ANALİZ ═══ */}
         <div style={{width:310, minWidth:310, flexShrink:0}}>
 
-          {/* ÇAĞRI PANELİ */}
-          <div style={{...S.card, marginBottom:16}}>
+          {/* ÇAĞRI PANELİ - YETKİ KONTROLLÜ */}
+          {(MR._currentUser?.rol === 'admin' || MR._currentUser?.yetkiler?.netsipp_goruntule === 1) && <div style={{...S.card, marginBottom:16}}>
             <div style={{...S.cardHead, padding:'12px 16px'}}>
               <LIcon name="Headphones" size={16} color={C.accent}/>
               <span style={{fontSize:12, fontWeight:700}}>ANLIK ÇAĞRI & ANALİZ</span>
@@ -1190,7 +1199,7 @@ MR._CRMYeniInner = ({setPage}) => {
                 </div>
               )}
             </div>
-          </div>
+          </div>}
 
           {/* AI ANALİZ PANELİ */}
           <div style={{...S.card}}>

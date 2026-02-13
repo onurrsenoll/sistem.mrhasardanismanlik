@@ -92,6 +92,17 @@ const MODUL_YETKILERI = [
     {key: 'gonder', label: 'GÖNDER'},
     {key: 'sil', label: 'SİL'}
   ]},
+  {modul: 'netsantral', label: 'NETSANTRAL', icon: 'Phone', islemler: [
+    {key: 'goruntule', label: 'GÖRÜNTÜLE / KULLAN'},
+    {key: 'arama_yap', label: 'ARAMA YAP'},
+    {key: 'transfer', label: 'TRANSFER'},
+    {key: 'ayarlar', label: 'AYARLARI DÜZENLE'}
+  ]},
+  {modul: 'netsipp', label: 'NETSİPP', icon: 'PhoneCall', islemler: [
+    {key: 'goruntule', label: 'GÖRÜNTÜLE / KULLAN'},
+    {key: 'gelen_cagri', label: 'GELEN ÇAĞRI'},
+    {key: 'giden_cagri', label: 'GİDEN ÇAĞRI'}
+  ]},
   {modul: 'sistem', label: 'SİSTEM', icon: 'Shield', islemler: [
     {key: 'kullanici_yonet', label: 'KULLANICI YÖNETİMİ'},
     {key: 'yetki_yonet', label: 'YETKİ YÖNETİMİ'},

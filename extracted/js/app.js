@@ -510,8 +510,14 @@ const PageRouter = ({page, setPage, user}) => {
 };
 
 /* ═══ NETSANTRAL FLOATING KONTROL PANELİ ═══ */
-const NetsantralPanel = () => {
+const NetsantralPanel = ({user}) => {
   const {C, LIcon, api} = MR;
+
+  /* YETKİ KONTROLÜ: ADMIN HER ZAMAN GÖREBİLİR, DİĞERLERİ İZİN GEREKTİRİR */
+  const yetkiler = user?.yetkiler || {};
+  const isAdmin = user?.rol === 'admin';
+  const netsantralIzin = isAdmin || yetkiler['netsantral_goruntule'] === 1;
+  if (!netsantralIzin) return null;
   const [minimized, setMinimized] = useState(true);
   const [dialpadOpen, setDialpadOpen] = useState(false);
   const [number, setNumber] = useState('');
@@ -1013,6 +1019,9 @@ const App = () => {
   }, []);
 
   /* NETSIPP GELEN ÇAĞRI DİNLEYİCİ (localStorage) - OTOMATİK CRM KAYIT EKRANI AÇ */
+  /* YETKİ KONTROLÜ: ADMIN VEYA netsipp_goruntule / netsipp_gelen_cagri İZNİ GEREKLİ */
+  const netsippIzinVar = user?.rol === 'admin' || user?.yetkiler?.netsipp_goruntule === 1 || user?.yetkiler?.netsipp_gelen_cagri === 1;
+
   const gelenCagriIsle = useCallback((data) => {
     if (!data || !data.timestamp || (Date.now() - data.timestamp > 30000)) return;
     /* POPUP GÖSTER (KISA SÜRELİ) */
@@ -1025,7 +1034,7 @@ const App = () => {
   }, [setPage]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !netsippIzinVar) return;
     const handler = (e) => {
       if (e.key === 'mr_netsipp_gelen') {
         try {
@@ -1050,17 +1059,17 @@ const App = () => {
     };
     const iv = setInterval(checkLocal, 3000);
     return () => { window.removeEventListener('storage', handler); clearInterval(iv); };
-  }, [user, gelenCagriIsle]);
+  }, [user, netsippIzinVar, gelenCagriIsle]);
 
-  /* GİDEN ARAMA'DAN OTOMATİK CRM EKRANI AÇ */
+  /* GİDEN ARAMA'DAN OTOMATİK CRM EKRANI AÇ - YETKİ KONTROLLÜ */
   useEffect(() => {
-    if (!user) return;
+    if (!user || !netsippIzinVar) return;
     const handler = () => {
       setPage('crm-yeni');
     };
     window.addEventListener('mr-arama-crm-ac', handler);
     return () => window.removeEventListener('mr-arama-crm-ac', handler);
-  }, [user, setPage]);
+  }, [user, netsippIzinVar, setPage]);
 
   /* ARKA PLAN LOGO URL - SADECE GİRİŞ YAPILDIKTAN SONRA */
   useEffect(() => {
@@ -1075,6 +1084,11 @@ const App = () => {
         }
       } catch(e) {}
     })();
+  }, [user]);
+
+  /* KULLANICI DEĞİŞTİĞİNDE GLOBAL REFERANSI GÜNCELLE (YETKİ KONTROLÜ İÇİN) */
+  useEffect(() => {
+    MR._currentUser = user;
   }, [user]);
 
   /* LOGIN SONRASI ME.PHP'DEN YETKİLERİ ÇEK */
@@ -1143,8 +1157,8 @@ const App = () => {
         HER ZAMAN FARK EDER
       </div>
 
-      {/* GELEN ÇAĞRI POPUP */}
-      <GelenCagriPopup
+      {/* GELEN ÇAĞRI POPUP - YETKİ KONTROLLÜ */}
+      {netsippIzinVar && <GelenCagriPopup
         call={gelenCagri}
         onKapat={() => setGelenCagri(null)}
         onCrmGit={(call) => {
@@ -1153,10 +1167,10 @@ const App = () => {
           setPage('crm-yeni');
         }}
         setPage={setPage}
-      />
+      />}
 
-      {/* NETSANTRAL FLOATING KONTROL PANELİ */}
-      <NetsantralPanel/>
+      {/* NETSANTRAL FLOATING KONTROL PANELİ - YETKİ KONTROLLÜ */}
+      <NetsantralPanel user={user}/>
 
       {/* ANİMASYON CSS */}
       <style>{`
