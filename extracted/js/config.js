@@ -152,6 +152,15 @@ MR.api = {
       method: 'POST', headers: h, body: fd
     }).then(r => r.json()).catch(() => ({success: false, error: 'BAĞLANTI HATASI'}));
   },
+  // YÖNLENDİRME / ARAMA LİSTESİ
+  yonlendirmeList(p = {}) { return this.req('/yonlendirme/list.php?' + new URLSearchParams(p)); },
+  yonlendirmeGet(id) { return this.req('/yonlendirme/get.php?id=' + id); },
+  yonlendirmeCreate(d) { return this.req('/yonlendirme/create.php', { method: 'POST', body: JSON.stringify(d) }); },
+  yonlendirmeUpdate(d) { return this.req('/yonlendirme/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  yonlendirmeDelete(id) { return this.req('/yonlendirme/delete.php?id=' + id, { method: 'DELETE' }); },
+  yonlendirmeImport(d) { return this.req('/yonlendirme/import.php', { method: 'POST', body: JSON.stringify(d) }); },
+  yonlendirmeNotEkle(d) { return this.req('/yonlendirme/not-ekle.php', { method: 'POST', body: JSON.stringify(d) }); },
+  yonlendirmeTopluIslem(d) { return this.req('/yonlendirme/toplu-islem.php', { method: 'POST', body: JSON.stringify(d) }); },
   // ARAÇ KATALOG
   aracMarkaList() { return this.req('/tanim/arac-marka-list.php'); },
   aracModelList(marka) { return this.req('/tanim/arac-model-list.php?marka=' + encodeURIComponent(marka)); },

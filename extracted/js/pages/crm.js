@@ -1120,38 +1120,11 @@ MR._CRMYeniInner = ({setPage}) => {
                 </select>
               </FormGroup>
             </div>
-            <FormGroup label="OLAY AÇIKLAMASI">
-              <textarea style={{...S.input, minHeight:90}} value={f.olay_aciklama} onChange={e => up('olay_aciklama', e.target.value)} placeholder="MÜŞTERİ SAĞ ÖN ÇAMURLUK HASARLI, SİGORTA EKSPER BEKLİYOR, DEĞER KAYBI TALEP EDECEK..."/>
+            <FormGroup label="OLAY AÇIKLAMASI / GÖRÜŞME NOTU">
+              <textarea style={{...S.input, minHeight:120}} value={f.olay_aciklama} onChange={e => up('olay_aciklama', e.target.value)} placeholder="MÜŞTERİ SAĞ ÖN ÇAMURLUK HASARLI, SİGORTA EKSPER BEKLİYOR, DEĞER KAYBI TALEP EDECEK..."/>
             </FormGroup>
-            {/* EK DOSYA BUTONLARI */}
-            <div style={{marginTop:12, display:'flex', gap:8, flexWrap:'wrap'}}>
-              <button style={{
-                ...S.btn, background:`${C.textSec}10`, border:`1px solid ${C.border}`,
-                color:C.textSec, fontSize:11, padding:'8px 14px', borderRadius:8
-              }}>
-                <LIcon name="Mic" size={14} color={C.textSec}/> SES KAYDI EKLE
-              </button>
-              <button style={{
-                ...S.btn, background:`${C.textSec}10`, border:`1px solid ${C.border}`,
-                color:C.textSec, fontSize:11, padding:'8px 14px', borderRadius:8
-              }}>
-                <LIcon name="Paperclip" size={14} color={C.textSec}/> DOSYA EKLE
-              </button>
-              <button style={{
-                ...S.btn, background:`${C.textSec}10`, border:`1px solid ${C.border}`,
-                color:C.textSec, fontSize:11, padding:'8px 14px', borderRadius:8
-              }}>
-                <LIcon name="Camera" size={14} color={C.textSec}/> FOTOĞRAF YÜKLE
-              </button>
-            </div>
           </Fieldset>
 
-          {/* DAHİLİ NOT */}
-          <div style={{marginBottom:8}}>
-            <FormGroup label="DAHİLİ NOT">
-              <textarea style={{...S.input, minHeight:60}} value={f.not_text} onChange={e => up('not_text', e.target.value)} placeholder="DAHİLİ GÖRÜŞME NOTU..."/>
-            </FormGroup>
-          </div>
         </div>
       </div>
 

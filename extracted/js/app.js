@@ -13,7 +13,8 @@ const MENU = [
   ]},
   {id:'crm', label:'CRM', icon:'Users', sub:[
     {id:'crm-liste', label:'CRM LİSTESİ', icon:'List'},
-    {id:'crm-yeni', label:'YENİ KAYIT', icon:'UserPlus'}
+    {id:'crm-yeni', label:'YENİ KAYIT', icon:'UserPlus'},
+    {id:'crm-arama', label:'ARAMA LİSTESİ', icon:'PhoneCall'}
   ]},
   {id:'hesap', label:'HESAPLAMALAR', icon:'Calculator', sub:[
     {id:'hesap-adk', label:'ARAÇ DEĞER KAYBI', icon:'Car'},
@@ -320,6 +321,13 @@ const Breadcrumb = ({page, setPage}) => {
         break;
       }
     }
+    if (page === 'crm-arama') {
+      if (m.id === 'crm') {
+        parts.push({label: 'CRM', id: 'crm-liste'});
+        parts.push({label: 'ARAMA LİSTESİ', id: page});
+        break;
+      }
+    }
     if (page.startsWith('crm-detay-')) {
       if (m.id === 'crm') {
         parts.push({label: 'CRM', id: 'crm-liste'});
@@ -449,6 +457,7 @@ const PageRouter = ({page, setPage, user}) => {
   /* CRM */
   if (page === 'crm-liste') return <MR.CrmPage setPage={setPage} user={user} view="liste"/>;
   if (page === 'crm-yeni') return <MR.CrmPage setPage={setPage} user={user} view="yeni"/>;
+  if (page === 'crm-arama') return <MR.CrmAramaPage setPage={setPage} user={user}/>;
   if (crmIdMatch) return <MR.CrmPage setPage={setPage} user={user} view="detay" crmId={parseInt(crmIdMatch[1])}/>;
 
   /* HESAPLAMALAR */
