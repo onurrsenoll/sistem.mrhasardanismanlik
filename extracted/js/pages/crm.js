@@ -930,8 +930,8 @@ MR._CRMYeniInner = ({setPage}) => {
   /* ── GÖRÜŞME SONLANDIĞINDA OTOMATİK KAYDET ── */
   useEffect(() => {
     if (prevCallActiveRef.current && !callActive) {
-      /* ÇAĞRI SONA ERDİ - OTOMATİK KAYDET */
-      if (f.ad_soyad.trim() || f.telefon.trim()) {
+      /* ÇAĞRI SONA ERDİ - AD SOYAD VE TELEFON DOLUYSA OTOMATİK KAYDET */
+      if (f.ad_soyad.trim() && f.telefon.trim()) {
         otomatikKaydet();
       }
     }
@@ -940,6 +940,8 @@ MR._CRMYeniInner = ({setPage}) => {
 
   const otomatikKaydet = async () => {
     if (loading || savedId) return;
+    if (!f.ad_soyad.trim()) { setError('OTOMATİK KAYIT İÇİN AD SOYAD GİRİLMELİDİR'); return; }
+    if (!f.telefon.trim()) { setError('OTOMATİK KAYIT İÇİN TELEFON GİRİLMELİDİR'); return; }
     setLoading(true); setError(''); setSuccess('');
     const data = {...f, taslak: 0, kaynak: 'TELEFON'};
     const r = await api.crmCreate(data);
