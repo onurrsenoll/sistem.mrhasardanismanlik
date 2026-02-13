@@ -194,7 +194,15 @@ MR._CRMListesiInner = ({setPage, user}) => {
                     onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <td style={{...cellSt, fontWeight: 600}}>{c.ad_soyad}</td>
-                    <td style={{...cellSt, color: C.textSec}}>{c.telefon || '-'}</td>
+                    <td style={{...cellSt, color: C.textSec, display:'flex', alignItems:'center', gap:6}}>
+                      {c.telefon || '-'}
+                      {c.telefon && (
+                        <button style={{...iconBtn(C.success), width:24, height:24}} title="ARA"
+                          onClick={(e) => { e.stopPropagation(); MR.aramaBaslat(c.telefon, c.ad_soyad); }}>
+                          <LIcon name="Phone" size={12} color={C.success}/>
+                        </button>
+                      )}
+                    </td>
                     <td style={cellSt}>{c.il || '-'}</td>
                     <td style={cellSt}><Badge text={c.dosya_turu || 'ADK'} color={c.dosya_turu === 'BH' ? C.purple : C.accent}/></td>
                     <td style={{...cellSt, color: C.textMuted}}>{c.kaynak || '-'}</td>
@@ -535,6 +543,15 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
               </div>
               <div style={{fontSize: 12, color: C.textSec, marginTop: 4, display: 'flex', gap: 10, alignItems: 'center'}}>
                 <span>{crm.telefon || '-'}</span>
+                {crm.telefon && (
+                  <button onClick={() => MR.aramaBaslat(crm.telefon, crm.ad_soyad)} style={{
+                    padding:'4px 10px', borderRadius:6, border:'none', cursor:'pointer',
+                    background:`${C.success}22`, color:C.success, fontSize:11, fontWeight:700,
+                    display:'inline-flex', alignItems:'center', gap:4, transition:'all .2s'
+                  }}>
+                    <LIcon name="Phone" size={13} color={C.success}/> ARA
+                  </button>
+                )}
                 <span style={{color: C.textMuted}}>|</span>
                 <Badge text={crm.kaynak || 'TELEFON'} color={C.textSec}/>
                 <Badge text={crm.dosya_turu || 'ADK'} color={crm.dosya_turu === 'BH' ? C.purple : C.accent}/>
@@ -569,7 +586,18 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
           <div style={{padding: 20}}>
             {infoRow('AD SOYAD', crm.ad_soyad)}
             {infoRow('TC / VERGİ NO', crm.tc_vergi_no)}
-            {infoRow('TELEFON', crm.telefon)}
+            {infoRow('TELEFON', crm.telefon ? (
+              <div style={{display:'flex', alignItems:'center', gap:8}}>
+                <span>{crm.telefon}</span>
+                <button onClick={() => MR.aramaBaslat(crm.telefon, crm.ad_soyad)} style={{
+                  padding:'3px 8px', borderRadius:5, border:'none', cursor:'pointer',
+                  background:`${C.success}22`, color:C.success, fontSize:10, fontWeight:700,
+                  display:'inline-flex', alignItems:'center', gap:3
+                }}>
+                  <LIcon name="Phone" size={11} color={C.success}/> ARA
+                </button>
+              </div>
+            ) : '-')}
             {infoRow('E-POSTA', crm.email)}
             {infoRow('İL / İLÇE', [crm.il, crm.ilce].filter(Boolean).join(' / ') || '-')}
             {crm.plaka && <div style={{padding:'6px 0', borderBottom:`1px solid ${C.border}`, marginTop:6}}>
@@ -1051,9 +1079,7 @@ MR._CRMYeniInner = ({setPage}) => {
               <button onClick={() => {
                 toggleCall();
                 if (!callActive && f.telefon.length >= 10) {
-                  // NetSIPP Click-to-Call: SIP protokolü ile arama başlat
-                  const cleanNum = f.telefon.replace(/\s/g,'').replace(/^0/, '90');
-                  try { window.open('sip:' + cleanNum, '_self'); } catch(e) {}
+                  MR.aramaBaslat(f.telefon, f.ad_soyad);
                 }
               }} style={{
                 ...S.btn, width:'100%', justifyContent:'center',

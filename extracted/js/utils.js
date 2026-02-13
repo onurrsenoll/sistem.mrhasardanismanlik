@@ -5,6 +5,31 @@
 
 const MR = window.MR || (window.MR = {});
 
+/* ---------- NETSIPP ARAMA BAŞLAT ---------- */
+
+/**
+ * NETSIPP ÜZERİNDEN GİDEN ARAMA BAŞLAT
+ * SIP PROTOKOLÜ İLE SOFTPHONE'U TETİKLER
+ * @param {string} telefon - ARANACAK TELEFON NUMARASI
+ * @param {string} ad - ARANAN KİŞİNİN ADI (OPSİYONEL)
+ */
+MR.aramaBaslat = function(telefon, ad) {
+  if (!telefon) return;
+  const cleanNum = telefon.replace(/[\s\-\(\)]/g, '').replace(/^0/, '90');
+  // SIP PROTOKOLÜ İLE ARAMA BAŞLAT
+  try {
+    window.open('sip:' + cleanNum, '_self');
+  } catch(e) {
+    // FALLBACK: TEL PROTOKOLÜ
+    window.open('tel:' + cleanNum, '_self');
+  }
+  // ARAMA LOGUNU API'YE KAYDET
+  MR.api.req('/netsipp/giden-cagri.php', {
+    method: 'POST',
+    body: JSON.stringify({ arayan: cleanNum, aranan_adi: ad || '', yon: 'giden' })
+  }).catch(() => {});
+};
+
 /* ---------- PARA BİÇİMLENDİRME ---------- */
 
 /**
