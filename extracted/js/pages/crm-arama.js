@@ -222,25 +222,43 @@ MR.CrmAramaPage = ({setPage, user}) => {
 
   /* ── CRM'E AKTAR ── */
   const [aktarimLoading, setAktarimLoading] = useState(null);
+  const [aktarimMsg, setAktarimMsg] = useState({type:'', text:''});
   const crmAktar = async (item) => {
     if (item.donusen_crm_id) return;
+    if (!item.magdur_ad_soyad || !item.magdur_ad_soyad.trim()) {
+      setAktarimMsg({type:'error', text:'CRM AKTARIMI İÇİN MAĞDUR AD SOYAD GEREKLİ'});
+      setTimeout(() => setAktarimMsg({type:'', text:''}), 4000);
+      return;
+    }
     setAktarimLoading(item.id);
+    setAktarimMsg({type:'', text:''});
     try {
       const d = {
         ad_soyad: item.magdur_ad_soyad,
-        telefon: item.magdur_telefon,
-        il: item.magdur_il,
-        ilce: item.magdur_ilce,
-        tc_vergi_no: item.magdur_tc,
+        telefon: item.magdur_telefon || '',
+        il: item.magdur_il || '',
+        ilce: item.magdur_ilce || '',
+        tc_vergi_no: item.magdur_tc || '',
         kaynak: 'YÖNLENDİRME',
-        durum: 'Yeni'
+        durum: 'Yeni',
+        dosya_turu: 'ADK'
       };
       const r = await api.crmCreate(d);
       if (r?.success) {
-        await api.yonlendirmeUpdate({id: item.id, donusen_crm_id: r.data?.id, son_durum: 'CRM\'E AKTARILDI'});
+        try {
+          await api.yonlendirmeUpdate({id: item.id, donusen_crm_id: r.data?.id, son_durum: "CRM'E AKTARILDI"});
+        } catch(e2) {}
+        setAktarimMsg({type:'success', text: (item.magdur_ad_soyad || '') + ' CRM\'E BAŞARIYLA AKTARILDI'});
+        setTimeout(() => setAktarimMsg({type:'', text:''}), 3000);
         load();
+      } else {
+        setAktarimMsg({type:'error', text:'CRM AKTARIMI HATASI: ' + (r?.error || 'BİLİNMEYEN HATA')});
+        setTimeout(() => setAktarimMsg({type:'', text:''}), 5000);
       }
-    } catch(e) {}
+    } catch(e) {
+      setAktarimMsg({type:'error', text:'CRM AKTARIMI SIRASINDA HATA: ' + (e?.message || 'BAĞLANTI HATASI')});
+      setTimeout(() => setAktarimMsg({type:'', text:''}), 5000);
+    }
     setAktarimLoading(null);
   };
 
@@ -385,6 +403,13 @@ MR.CrmAramaPage = ({setPage, user}) => {
               style={{...S.input, width:130, fontSize:10, padding:'5px 8px'}}/>
           </div>
         </div>
+
+        {/* AKTARIM MESAJI */}
+        {aktarimMsg.text && (
+          <div style={{padding:'10px 16px', background: aktarimMsg.type === 'success' ? `${C.success}15` : `${C.danger}15`, borderBottom:`1px solid ${aktarimMsg.type === 'success' ? C.success : C.danger}33`, fontSize:12, fontWeight:600, color: aktarimMsg.type === 'success' ? C.success : C.danger, display:'flex', alignItems:'center', gap:8}}>
+            <LIcon name={aktarimMsg.type === 'success' ? 'CheckCircle' : 'AlertCircle'} size={16} color={aktarimMsg.type === 'success' ? C.success : C.danger}/> {aktarimMsg.text}
+          </div>
+        )}
 
         {/* TABLO */}
         {loading ? <Loading/> : data.length === 0 ? (

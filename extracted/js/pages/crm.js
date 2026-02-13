@@ -832,25 +832,33 @@ MR._CRMYeniInner = ({setPage}) => {
       sF(p => ({...p, telefon: MR._gelenCagriTelefon, ad_soyad: MR._gelenCagriAdi || ''}));
       /* GELEN ÇAĞRI İSE OTOMATİK ÇAĞRIYI AKTİF YAP */
       setCallActive(true);
-      setCallSeconds(0);
+      callSecondsRef.current = 0;
       MR._gelenCagriTelefon = null;
       MR._gelenCagriAdi = null;
     }
   }, []);
 
-  /* ── ÇAĞRI ZAMANLAYICI ── */
+  /* ── ÇAĞRI ZAMANLAYICI (REF BAZLI - RE-RENDER ENGELLER) ── */
   const [callActive, setCallActive] = useState(false);
-  const [callSeconds, setCallSeconds] = useState(0);
+  const callSecondsRef = useRef(0);
   const timerRef = useRef(null);
+  const timerDisplayRef = useRef(null);
   const prevCallActiveRef = useRef(false);
 
   useEffect(() => {
     if (callActive) {
-      timerRef.current = setInterval(() => setCallSeconds(s => s + 1), 1000);
+      callSecondsRef.current = 0;
+      if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
+      timerRef.current = setInterval(() => {
+        callSecondsRef.current += 1;
+        if (timerDisplayRef.current) {
+          timerDisplayRef.current.textContent = fmtTime(callSecondsRef.current);
+        }
+      }, 1000);
     } else {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     }
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    return () => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } };
   }, [callActive]);
 
   /* ── GÖRÜŞME SONLANDIĞINDA OTOMATİK KAYDET ── */
@@ -879,9 +887,9 @@ MR._CRMYeniInner = ({setPage}) => {
         }
       }
       /* NOT OLARAK GÖRÜŞME SÜRESİ EKLE */
-      if (newId && callSeconds > 0) {
-        const m = Math.floor(callSeconds / 60);
-        const s = callSeconds % 60;
+      if (newId && callSecondsRef.current > 0) {
+        const m = Math.floor(callSecondsRef.current / 60);
+        const s = callSecondsRef.current % 60;
         const sure = `${m} DK ${s} SN`;
         await api.crmNotEkle({crm_id: newId, not_text: `TELEFON GÖRÜŞMESİ - SÜRE: ${sure}\n${f.olay_aciklama || ''}`}).catch(() => {});
       }
@@ -895,8 +903,15 @@ MR._CRMYeniInner = ({setPage}) => {
   };
 
   const toggleCall = () => {
-    if (callActive) { setCallActive(false); }
-    else { setCallActive(true); setCallSeconds(0); }
+    if (callActive) {
+      /* ÇAĞRIYI SONLANDIR */
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      setCallActive(false);
+    } else {
+      callSecondsRef.current = 0;
+      if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
+      setCallActive(true);
+    }
   };
 
   const fmtTime = (s) => {
@@ -970,7 +985,10 @@ MR._CRMYeniInner = ({setPage}) => {
     setClearConfirm(false);
     sF({ad_soyad:'',tc_vergi_no:'',telefon:'',telefon2:'',il:'',ilce:'',adres:'',olay_aciklama:'',dosya_turu:'ADK',kaza_tarihi:'',kaza_turu:'TEK_TARAFLI',pozisyon:'SURUCU',durum:'Yeni',not_text:'',taslak:0});
     setError(''); setSuccess(''); setSavedId(null);
-    setCallActive(false); setCallSeconds(0);
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setCallActive(false);
+    callSecondsRef.current = 0;
+    if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
     ekler.forEach(e => { if (e.preview) URL.revokeObjectURL(e.preview); });
     setEkler([]);
   };
@@ -1068,27 +1086,32 @@ MR._CRMYeniInner = ({setPage}) => {
                 marginBottom:14, padding:'8px 0'
               }}>
                 <LIcon name="Clock" size={16} color={callActive ? C.success : C.textMuted}/>
-                <span style={{
+                <span ref={timerDisplayRef} style={{
                   fontSize:28, fontWeight:800, fontFamily:'monospace', letterSpacing:2,
                   color: callActive ? C.text : C.textMuted
                 }}>
-                  {fmtTime(callSeconds)}
+                  {fmtTime(0)}
                 </span>
                 {callActive && <Badge text="AKTIF" color={C.success}/>}
               </div>
 
               {/* ÇAĞRI KONTROL */}
-              <button onClick={() => {
-                if (!callActive && f.telefon.length >= 10) {
-                  MR.aramaBaslat(f.telefon, f.ad_soyad, false);
-                }
-                toggleCall();
-              }} style={{
-                ...S.btn, width:'100%', justifyContent:'center',
-                background: callActive ? C.danger : C.success,
-                color:'#fff', padding:'12px', fontSize:13, borderRadius:10,
-                transition:'all .2s'
-              }}>
+              <button
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!callActive && f.telefon.length >= 10) {
+                    MR.aramaBaslat(f.telefon, f.ad_soyad, false);
+                  }
+                  toggleCall();
+                }}
+                style={{
+                  ...S.btn, width:'100%', justifyContent:'center',
+                  background: callActive ? C.danger : C.success,
+                  color:'#fff', padding:'12px', fontSize:13, borderRadius:10,
+                  transition:'all .2s', userSelect:'none', WebkitUserSelect:'none',
+                  position:'relative', zIndex:10
+                }}>
                 <LIcon name={callActive ? 'PhoneOff' : 'PhoneCall'} size={16} color="#fff"/>
                 {callActive ? 'ÇAĞRIYI SONLANDIR' : 'ÇAĞRI BAŞLAT'}
               </button>

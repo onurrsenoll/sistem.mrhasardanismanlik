@@ -74,7 +74,9 @@
   const endpoint = isGiden ? '/api/v1/netsipp/giden-cagri.php' : '/api/v1/netsipp/gelen-cagri.php';
   const apiParams = new URLSearchParams({arayan, arayanadi: arayanAdi, aramatarihi: aramaTarihi, aramaid: aramaId, senaryo, aranan});
 
-  fetch(endpoint + '?' + apiParams.toString())
+  fetch(endpoint + '?' + apiParams.toString(), {
+    headers: {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json'}
+  })
     .then(r => r.json())
     .then(data => {
       if (data?.data?.crm_kayit) {
@@ -83,6 +85,21 @@
       }
     })
     .catch(() => {});
+
+  // PENCEREYI OTOMATİK KAPAT (3 SANİYE SONRA)
+  setTimeout(function() {
+    try { window.close(); } catch(e) {}
+    // window.close() çalışmazsa bilgi göster
+    setTimeout(function() {
+      var body = document.querySelector('.card');
+      if (body) {
+        var msg = document.createElement('div');
+        msg.style.cssText = 'margin-top:16px;font-size:11px;color:#f59e0b;animation:blink 1s infinite';
+        msg.textContent = 'BU SEKMEYİ KAPATABİLİRSİNİZ';
+        body.appendChild(msg);
+      }
+    }, 500);
+  }, 3000);
 </script>
 </body>
 </html>
