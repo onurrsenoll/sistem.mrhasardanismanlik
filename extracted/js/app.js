@@ -517,7 +517,7 @@ const NetsantralPanel = ({user}) => {
   const yetkiler = user?.yetkiler || {};
   const isAdmin = user?.rol === 'admin';
   const netsantralIzin = isAdmin || yetkiler['netsantral_goruntule'] === 1;
-  if (!netsantralIzin) return null;
+
   const [minimized, setMinimized] = useState(true);
   const [dialpadOpen, setDialpadOpen] = useState(false);
   const [number, setNumber] = useState('');
@@ -578,6 +578,9 @@ const NetsantralPanel = ({user}) => {
     window.addEventListener('mr-arama-sonlandi', handler);
     return () => window.removeEventListener('mr-arama-sonlandi', handler);
   }, [activeCall]);
+
+  /* YETKİ YOKSA RENDER ETME (HOOK'LARDAN SONRA) */
+  if (!netsantralIzin) return null;
 
   const fmtTime = (s) => {
     const m = Math.floor(s / 60);

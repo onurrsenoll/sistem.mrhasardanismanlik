@@ -9,6 +9,7 @@
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
+require_once __DIR__ . '/../../config/database.php';
 
 // CORS headers
 header('Access-Control-Allow-Origin: *');
@@ -22,6 +23,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $db = getDB();
+
+// TABLO YOKSA OLUŞTUR
+try {
+    $db->exec("CREATE TABLE IF NOT EXISTS arama_loglari (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        arayan VARCHAR(30) DEFAULT NULL,
+        arayan_adi VARCHAR(100) DEFAULT NULL,
+        aranan VARCHAR(30) DEFAULT NULL,
+        arama_tarihi DATETIME DEFAULT CURRENT_TIMESTAMP,
+        netsipp_arama_id VARCHAR(50) DEFAULT NULL,
+        senaryo VARCHAR(100) DEFAULT NULL,
+        yon ENUM('gelen','giden') NOT NULL DEFAULT 'gelen',
+        durum VARCHAR(30) DEFAULT 'calıyor',
+        sure INT DEFAULT 0,
+        crm_id INT DEFAULT NULL,
+        kullanici_id INT DEFAULT NULL,
+        notlar TEXT DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_arayan (arayan),
+        INDEX idx_aranan (aranan),
+        INDEX idx_yon (yon)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
+} catch (Exception $e) {}
 
 // GET VEYA POST'TAN VERİLERİ AL
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
