@@ -533,6 +533,18 @@ const NetsantralPanel = ({user}) => {
   const timerRef = useRef(null);
   const callStartRef = useRef(null);
 
+  // SİSTEM AYARLARINDAN DAHİLİ NUMARASINI ÇEK VE GLOBAL KAYDET
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await api.ayarlarList();
+        if (r?.success && r.data) {
+          MR._netsantralDahili = r.data.netsantral_dahili || '';
+        }
+      } catch(e) {}
+    })();
+  }, []);
+
   // ARAMA SÜRE SAYACI
   useEffect(() => {
     if (activeCall) {
@@ -604,17 +616,30 @@ const NetsantralPanel = ({user}) => {
     const cleanNum = number.replace(/[\s\-\(\)]/g, '').replace(/^0/, '90');
     try { window.open('sip:' + cleanNum, '_self'); } catch(e) { try { window.open('tel:' + cleanNum, '_self'); } catch(e2) {} }
 
-    // NETSANTRAL API İLE DE ARA
-    const r = await api.netsantralOriginate(cleanNum);
-    if (r?.success && r.data?.success_api) {
+    // NETSANTRAL API İLE DE ARA (PBX ÜZERİNDEN)
+    try {
+      const r = await api.netsantralOriginate(cleanNum, MR._netsantralDahili || undefined);
+      if (r?.success && r.data?.success_api) {
+        setActiveCall(true);
+        setStatus('gorusmede');
+        setStatusMsg('GÖRÜŞME BAŞLADI');
+      } else if (r?.success && !r.data?.success_api) {
+        /* PBX HATASI - AMA SIP İLE ZATEN AÇILMIŞ OLABİLİR */
+        setActiveCall(true);
+        setStatus('gorusmede');
+        const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || '';
+        setStatusMsg(hataMesaj || 'SIP İLE ARAMA BAŞLATILDI');
+      } else {
+        /* PROXY HATASI (DAHİLİ EKSİK VS.) - AMA SIP İLE AÇILMIŞ OLABİLİR */
+        setActiveCall(true);
+        setStatus('gorusmede');
+        setStatusMsg(r?.error || 'SIP İLE ARAMA BAŞLATILDI');
+      }
+    } catch(e) {
+      /* BAĞLANTI HATASI - AMA SIP İLE AÇILMIŞ OLABİLİR */
       setActiveCall(true);
       setStatus('gorusmede');
-      setStatusMsg('GÖRÜŞME BAŞLADI');
-    } else {
-      // SIP ile açıldıysa zaten arama başladı, sadece timer'ı aç
-      setActiveCall(true);
-      setStatus('gorusmede');
-      setStatusMsg(r?.data?.response?.raw_response || 'SIP İLE ARAMA BAŞLATILDI');
+      setStatusMsg('SIP İLE ARAMA BAŞLATILDI');
     }
 
     // GİDEN ARAMA LOGU
@@ -622,27 +647,42 @@ const NetsantralPanel = ({user}) => {
       method: 'POST', body: JSON.stringify({ arayan: cleanNum, aranan_adi: '', yon: 'giden' })
     }).catch(() => {});
 
-    setTimeout(() => setStatusMsg(''), 3000);
+    setTimeout(() => setStatusMsg(''), 4000);
   };
 
   // ÇAĞRI BİTİR
   const aramaKapat = async () => {
     setStatusMsg('ÇAĞRI SONLANDIRILIYOR...');
-    const r = await api.netsantralHangup();
+    let hangupOk = false;
+    try {
+      const r = await api.netsantralHangup(MR._netsantralDahili || undefined);
+      if (r?.success && r.data?.success_api) {
+        hangupOk = true;
+        setStatusMsg('ÇAĞRI SONLANDIRILDI');
+      } else if (r?.success && !r.data?.success_api) {
+        /* API ULAŞTI AMA NETSANTRAL HATA DÖNDÜ */
+        const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || 'NETSANTRAL YANIT HATASI';
+        setStatusMsg(hataMesaj);
+      } else {
+        /* PROXY HATASI */
+        setStatusMsg(r?.error || 'ÇAĞRI SONLANDIRMA HATASI');
+      }
+    } catch(e) {
+      setStatusMsg('BAĞLANTI HATASI - ÇAĞRI SONLANDIRILAMADI');
+    }
     setActiveCall(false);
     setMuted(false);
     setStatus('hazir');
-    setStatusMsg('ÇAĞRI SONLANDIRILDI');
     setTransferOpen(false);
     /* CRM EKRANINA BİLDİR - ÇAĞRI SONLANDI */
     window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
-    setTimeout(() => setStatusMsg(''), 2000);
+    setTimeout(() => setStatusMsg(''), hangupOk ? 2000 : 6000);
   };
 
   // SESİ KAPAT/AÇ
   const toggleMute = async () => {
     const newState = muted ? 'off' : 'on';
-    const r = await api.netsantralMute(newState);
+    const r = await api.netsantralMute(newState, MR._netsantralDahili || undefined);
     setMuted(!muted);
     setStatusMsg(muted ? 'MİKROFON AÇILDI' : 'MİKROFON KAPATILDI');
     setTimeout(() => setStatusMsg(''), 2000);
@@ -652,7 +692,7 @@ const NetsantralPanel = ({user}) => {
   const transferYap = async () => {
     if (!transferNum) return;
     setStatusMsg('TRANSFER EDİLİYOR...');
-    const r = await api.netsantralTransfer(transferNum);
+    const r = await api.netsantralTransfer(transferNum, MR._netsantralDahili || undefined);
     setStatusMsg('TRANSFER YAPILDI');
     setTransferOpen(false);
     setTransferNum('');

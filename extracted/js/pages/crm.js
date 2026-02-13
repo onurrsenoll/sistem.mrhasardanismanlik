@@ -975,8 +975,18 @@ MR._CRMYeniInner = ({setPage}) => {
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
       try {
         /* NETSANTRAL API İLE ÇAĞRIYI SONLANDIR */
-        await api.netsantralHangup();
-      } catch(e) { /* HATA OLSA BİLE UI'I KAPAT */ }
+        const r = await api.netsantralHangup(MR._netsantralDahili || undefined);
+        if (r?.success && r.data?.success_api) {
+          /* BAŞARILI - ÇAĞRI SONLANDIRILDI */
+        } else if (r?.success && !r.data?.success_api) {
+          const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || 'NETSANTRAL YANIT HATASI';
+          setError(hataMesaj);
+        } else {
+          setError(r?.error || 'ÇAĞRI SONLANDIRMA HATASI - NETSANTRAL AYARLARINI KONTROL EDİN');
+        }
+      } catch(e) {
+        setError('BAĞLANTI HATASI - ÇAĞRI SONLANDIRILAMADI');
+      }
       setHangupLoading(false);
       setCallActive(false);
       /* NETSANTRAL PANELİNE BİLDİR - ÇAĞRI SONLANDI */

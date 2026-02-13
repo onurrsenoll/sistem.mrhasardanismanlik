@@ -62,6 +62,9 @@ switch ($action) {
         $apiUrl = "{$baseUrl}/originate";
         $queryParams['dahili'] = $params['dahili'] ?? $dahili;
         $queryParams['hedef'] = $params['hedef'] ?? '';
+        if (empty($queryParams['dahili'])) {
+            json_error('DAHİLİ NUMARASI TANIMLANMAMIŞ. SİSTEM > NETSANTRAL AYARLARI BÖLÜMÜNDEN DAHİLİ NUMARASINI GİRİN.', 422);
+        }
         if (empty($queryParams['hedef'])) {
             json_error('Hedef numara gerekli', 422);
         }
@@ -71,6 +74,9 @@ switch ($action) {
         // ÇAĞRI SONLANDIR
         $apiUrl = "{$baseUrl}/hangup";
         $queryParams['dahili'] = $params['dahili'] ?? $dahili;
+        if (empty($queryParams['dahili'])) {
+            json_error('DAHİLİ NUMARASI TANIMLANMAMIŞ. SİSTEM > NETSANTRAL AYARLARI BÖLÜMÜNDEN DAHİLİ NUMARASINI GİRİN.', 422);
+        }
         break;
 
     case 'muteaudio':
@@ -180,7 +186,12 @@ if ($curlError) {
 
 // LOGLAMA
 try {
-    log_action($user['id'], 'netsantral_' . $action, "Netsantral API: {$action}", 'netsantral');
+    $logDetay = "Netsantral API: {$action}";
+    if ($action === 'hangup') {
+        $logDetay .= " | dahili=" . ($queryParams['dahili'] ?? 'BOŞ') . " | http={$httpCode}";
+        if ($response) $logDetay .= " | yanit=" . substr($response, 0, 200);
+    }
+    log_action($user['id'], 'netsantral_' . $action, $logDetay, 'netsantral');
 } catch (Exception $e) {}
 
 // NETSANTRAL YANITINI PARSE ET
