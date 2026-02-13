@@ -22,7 +22,7 @@ $stmt->execute([$id]);
 $crm = $stmt->fetch();
 if (!$crm) json_error('CRM kaydı bulunamadı', 404);
 
-$fields = ['ad_soyad', 'tc_vergi_no', 'telefon', 'telefon2', 'email', 'il', 'ilce',
+$fields = ['ad_soyad', 'tc_vergi_no', 'telefon', 'telefon2', 'email', 'il', 'ilce', 'adres',
     'plaka', 'marka', 'model_adi', 'arac_yili', 'arac_km', 'olay_aciklama',
     'kaynak', 'dosya_turu', 'durum', 'oncelik', 'taslak', 'not_text',
     'atanan_id', 'son_iletisim', 'donusen_dosya_id'];

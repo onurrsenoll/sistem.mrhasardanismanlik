@@ -16,7 +16,7 @@ require_fields($body, ['ad_soyad']);
 
 $db = getDB();
 
-$stmt = $db->prepare('INSERT INTO crm (ad_soyad, tc_vergi_no, telefon, telefon2, email, il, ilce, plaka, marka, model_adi, arac_yili, arac_km, olay_aciklama, kaynak, dosya_turu, durum, oncelik, taslak, not_text, atanan_id, son_iletisim, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+$stmt = $db->prepare('INSERT INTO crm (ad_soyad, tc_vergi_no, telefon, telefon2, email, il, ilce, adres, plaka, marka, model_adi, arac_yili, arac_km, olay_aciklama, kaynak, dosya_turu, durum, oncelik, taslak, not_text, atanan_id, son_iletisim, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 $stmt->execute([
     clean($body['ad_soyad']),
     clean($body['tc_vergi_no'] ?? ''),
@@ -25,6 +25,7 @@ $stmt->execute([
     clean($body['email'] ?? ''),
     clean($body['il'] ?? ''),
     clean($body['ilce'] ?? ''),
+    clean($body['adres'] ?? ''),
     clean($body['plaka'] ?? ''),
     clean($body['marka'] ?? ''),
     clean($body['model_adi'] ?? ''),
