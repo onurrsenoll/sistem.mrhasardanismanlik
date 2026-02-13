@@ -232,6 +232,7 @@ CREATE TABLE IF NOT EXISTS crm (
     kaynak VARCHAR(50) DEFAULT NULL,
     dosya_turu VARCHAR(20) DEFAULT NULL,
     kaza_turu VARCHAR(30) DEFAULT NULL,
+    kaza_tarihi DATE DEFAULT NULL,
     pozisyon VARCHAR(20) DEFAULT NULL,
     durum ENUM('Yeni','Takipte','Olumlu','Olumsuz') NOT NULL DEFAULT 'Yeni',
     oncelik VARCHAR(20) DEFAULT 'NORMAL',

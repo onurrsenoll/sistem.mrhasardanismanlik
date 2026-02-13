@@ -613,39 +613,55 @@ const App = () => {
     return () => window.removeEventListener('mr-tema-degisti', handler);
   }, []);
 
-  /* NETSIPP GELEN ÇAĞRI DİNLEYİCİ (localStorage) */
+  /* NETSIPP GELEN ÇAĞRI DİNLEYİCİ (localStorage) - OTOMATİK CRM KAYIT EKRANI AÇ */
+  const gelenCagriIsle = useCallback((data) => {
+    if (!data || !data.timestamp || (Date.now() - data.timestamp > 30000)) return;
+    /* POPUP GÖSTER (KISA SÜRELİ) */
+    setGelenCagri(data);
+    setTimeout(() => setGelenCagri(prev => prev?.timestamp === data.timestamp ? null : prev), 5000);
+    /* OTOMATİK CRM YENİ KAYIT EKRANINA YÖNLENDİR */
+    MR._gelenCagriTelefon = data.arayan;
+    MR._gelenCagriAdi = data.arayanAdi || '';
+    setPage('crm-yeni');
+  }, [setPage]);
+
   useEffect(() => {
     if (!user) return;
     const handler = (e) => {
       if (e.key === 'mr_netsipp_gelen') {
         try {
           const data = JSON.parse(e.newValue);
-          if (data && data.timestamp && (Date.now() - data.timestamp < 30000)) {
-            setGelenCagri(data);
-            // 15 saniye sonra otomatik kapat
-            setTimeout(() => setGelenCagri(prev => prev?.timestamp === data.timestamp ? null : prev), 15000);
-          }
+          gelenCagriIsle(data);
         } catch(err) {}
       }
     };
     window.addEventListener('storage', handler);
-    // Sayfa açıkken de kontrol et (aynı sekmede)
+    /* SAYFA AÇIKKEN DE KONTROL ET (AYNI SEKMEDE) */
     const checkLocal = () => {
       try {
         const raw = localStorage.getItem('mr_netsipp_gelen');
         if (raw) {
           const data = JSON.parse(raw);
           if (data && data.timestamp && (Date.now() - data.timestamp < 5000)) {
-            setGelenCagri(data);
             localStorage.removeItem('mr_netsipp_gelen');
-            setTimeout(() => setGelenCagri(prev => prev?.timestamp === data.timestamp ? null : prev), 15000);
+            gelenCagriIsle(data);
           }
         }
       } catch(err) {}
     };
     const iv = setInterval(checkLocal, 3000);
     return () => { window.removeEventListener('storage', handler); clearInterval(iv); };
-  }, [user]);
+  }, [user, gelenCagriIsle]);
+
+  /* GİDEN ARAMA'DAN OTOMATİK CRM EKRANI AÇ */
+  useEffect(() => {
+    if (!user) return;
+    const handler = () => {
+      setPage('crm-yeni');
+    };
+    window.addEventListener('mr-arama-crm-ac', handler);
+    return () => window.removeEventListener('mr-arama-crm-ac', handler);
+  }, [user, setPage]);
 
   /* ARKA PLAN LOGO URL - SADECE GİRİŞ YAPILDIKTAN SONRA */
   useEffect(() => {

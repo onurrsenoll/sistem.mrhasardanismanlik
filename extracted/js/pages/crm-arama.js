@@ -221,21 +221,27 @@ MR.CrmAramaPage = ({setPage, user}) => {
   };
 
   /* ── CRM'E AKTAR ── */
+  const [aktarimLoading, setAktarimLoading] = useState(null);
   const crmAktar = async (item) => {
-    const d = {
-      ad_soyad: item.magdur_ad_soyad,
-      telefon: item.magdur_telefon,
-      il: item.magdur_il,
-      ilce: item.magdur_ilce,
-      tc_vergi_no: item.magdur_tc,
-      kaynak: 'YÖNLENDİRME',
-      durum: 'Yeni'
-    };
-    const r = await api.crmCreate(d);
-    if (r?.success) {
-      await api.yonlendirmeUpdate({id: item.id, donusen_crm_id: r.data?.id, son_durum: 'CRM\'E AKTARILDI'});
-      load();
-    }
+    if (item.donusen_crm_id) return;
+    setAktarimLoading(item.id);
+    try {
+      const d = {
+        ad_soyad: item.magdur_ad_soyad,
+        telefon: item.magdur_telefon,
+        il: item.magdur_il,
+        ilce: item.magdur_ilce,
+        tc_vergi_no: item.magdur_tc,
+        kaynak: 'YÖNLENDİRME',
+        durum: 'Yeni'
+      };
+      const r = await api.crmCreate(d);
+      if (r?.success) {
+        await api.yonlendirmeUpdate({id: item.id, donusen_crm_id: r.data?.id, son_durum: 'CRM\'E AKTARILDI'});
+        load();
+      }
+    } catch(e) {}
+    setAktarimLoading(null);
   };
 
   /* ── STİLLER ── */
@@ -453,8 +459,8 @@ MR.CrmAramaPage = ({setPage, user}) => {
                         <button style={iconBtn(C.success)} title="ARA" onClick={() => {if(item.magdur_telefon) MR.aramaBaslat(item.magdur_telefon, item.magdur_ad_soyad);}}>
                           <LIcon name="Phone" size={12} color={C.success}/>
                         </button>
-                        <button style={iconBtn(C.warning)} title="CRM'E AKTAR" onClick={() => crmAktar(item)}>
-                          <LIcon name="UserPlus" size={12} color={C.warning}/>
+                        <button style={{...iconBtn(item.donusen_crm_id ? C.success : C.warning), opacity: aktarimLoading === item.id ? 0.5 : 1}} title={item.donusen_crm_id ? 'CRM\'E AKTARILDI' : 'CRM\'E AKTAR'} onClick={() => crmAktar(item)} disabled={!!item.donusen_crm_id || aktarimLoading === item.id}>
+                          <LIcon name={item.donusen_crm_id ? 'CheckCircle' : 'UserPlus'} size={12} color={item.donusen_crm_id ? C.success : C.warning}/>
                         </button>
                       </div>
                     </td>

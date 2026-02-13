@@ -13,7 +13,7 @@ const MR = window.MR || (window.MR = {});
  * @param {string} telefon - ARANACAK TELEFON NUMARASI
  * @param {string} ad - ARANAN KİŞİNİN ADI (OPSİYONEL)
  */
-MR.aramaBaslat = function(telefon, ad) {
+MR.aramaBaslat = function(telefon, ad, otomatikCrmAc) {
   if (!telefon) return;
   const cleanNum = telefon.replace(/[\s\-\(\)]/g, '').replace(/^0/, '90');
   // SIP PROTOKOLÜ İLE ARAMA BAŞLAT
@@ -28,6 +28,12 @@ MR.aramaBaslat = function(telefon, ad) {
     method: 'POST',
     body: JSON.stringify({ arayan: cleanNum, aranan_adi: ad || '', yon: 'giden' })
   }).catch(() => {});
+  // OTOMATİK CRM KAYIT EKRANI AÇ (LİSTEDEN ARANDIĞINDA)
+  if (otomatikCrmAc !== false) {
+    MR._gelenCagriTelefon = telefon;
+    MR._gelenCagriAdi = ad || '';
+    window.dispatchEvent(new CustomEvent('mr-arama-crm-ac'));
+  }
 };
 
 /* ---------- PARA BİÇİMLENDİRME ---------- */
