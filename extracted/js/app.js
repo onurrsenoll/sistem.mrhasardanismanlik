@@ -557,6 +557,22 @@ const NetsantralPanel = () => {
     return () => window.removeEventListener('mr-netsantral-gelen', handler);
   }, []);
 
+  // CRM EKRANINDAN ÇAĞRI SONLANDIRILINCA DİNLE
+  useEffect(() => {
+    const handler = () => {
+      if (activeCall) {
+        setActiveCall(false);
+        setMuted(false);
+        setStatus('hazir');
+        setStatusMsg('ÇAĞRI SONLANDIRILDI');
+        setTransferOpen(false);
+        setTimeout(() => setStatusMsg(''), 2000);
+      }
+    };
+    window.addEventListener('mr-arama-sonlandi', handler);
+    return () => window.removeEventListener('mr-arama-sonlandi', handler);
+  }, [activeCall]);
+
   const fmtTime = (s) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
@@ -609,6 +625,8 @@ const NetsantralPanel = () => {
     setStatus('hazir');
     setStatusMsg('ÇAĞRI SONLANDIRILDI');
     setTransferOpen(false);
+    /* CRM EKRANINA BİLDİR - ÇAĞRI SONLANDI */
+    window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
     setTimeout(() => setStatusMsg(''), 2000);
   };
 

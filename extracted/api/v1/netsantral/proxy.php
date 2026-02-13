@@ -185,13 +185,45 @@ try {
 
 // NETSANTRAL YANITINI PARSE ET
 $parsed = null;
+$apiBasarili = ($httpCode >= 200 && $httpCode < 300);
+
 if ($response) {
     // Önce JSON dene
     $parsed = json_decode($response, true);
     if ($parsed === null) {
         // JSON değilse düz metin olarak döndür
-        $parsed = ['raw_response' => trim($response)];
+        $rawTrimmed = trim($response);
+        $parsed = ['raw_response' => $rawTrimmed];
+
+        // NETGSM HATA KODLARI KONTROLÜ
+        // Netgsm API hata durumunda sadece sayısal kod döndürür
+        $netgsmHataKodlari = [
+            '30' => 'GEÇERSİZ KULLANICI ADI VEYA ŞİFRE',
+            '40' => 'YETERSİZ BAKİYE',
+            '50' => 'SUNUCU HATASI',
+            '60' => 'GEÇERSİZ SANTRAL NUMARASI',
+            '70' => 'GEÇERSİZ PARAMETRE',
+            '80' => 'TANIMSIZ HATA',
+            '100' => 'SİSTEM HATASI'
+        ];
+
+        if (isset($netgsmHataKodlari[$rawTrimmed])) {
+            $apiBasarili = false;
+            $parsed['hata_kodu'] = $rawTrimmed;
+            $parsed['hata_mesaj'] = $netgsmHataKodlari[$rawTrimmed];
+        } elseif (is_numeric($rawTrimmed) && strlen($rawTrimmed) <= 3 && intval($rawTrimmed) >= 20) {
+            // Bilinmeyen ama sayısal hata kodu
+            $apiBasarili = false;
+            $parsed['hata_kodu'] = $rawTrimmed;
+            $parsed['hata_mesaj'] = 'NETGSM HATA KODU: ' . $rawTrimmed;
+        }
     }
+}
+
+// HTTP 200 bile olsa boş yanıt = hata
+if ($apiBasarili && empty($response)) {
+    $apiBasarili = false;
+    $parsed = ['raw_response' => '', 'hata_mesaj' => 'SUNUCUDAN BOŞ YANIT GELDİ'];
 }
 
 // BAŞARILI YANIT
@@ -199,5 +231,5 @@ json_success([
     'action' => $action,
     'http_code' => $httpCode,
     'response' => $parsed,
-    'success_api' => ($httpCode >= 200 && $httpCode < 300)
+    'success_api' => $apiBasarili
 ]);

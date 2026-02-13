@@ -1367,9 +1367,13 @@ const NetsantralTab = () => {
         setQueueStats(r.data.response);
       }
     } else {
-      const errMsg = r?.data?.response?.raw_response || r?.error || 'BAĞLANTI HATASI';
-      setTestResult({success: false, error: errMsg});
-      setMesaj({type: 'error', text: 'BAĞLANTI HATASI: ' + errMsg});
+      // NETGSM HATA KODU KONTROLÜ
+      const resp = r?.data?.response || {};
+      const hataMesaj = resp.hata_mesaj || resp.raw_response || r?.error || 'BAĞLANTI HATASI';
+      const hataKodu = resp.hata_kodu || '';
+      const errText = hataKodu ? `HATA KODU: ${hataKodu} - ${hataMesaj}` : hataMesaj;
+      setTestResult({success: false, error: errText});
+      setMesaj({type: 'error', text: 'BAĞLANTI HATASI: ' + errText});
     }
     setTesting(false);
     setTimeout(() => setMesaj({type: '', text: ''}), 6000);

@@ -2,6 +2,50 @@ const MR = window.MR || (window.MR = {});
 const {useState, useEffect, useCallback, useMemo, useRef} = React;
 
 /* ═══════════════════════════════════════════
+   NETSIPP DURUM GÖSTERGESİ (DİNAMİK)
+   ═══════════════════════════════════════════ */
+MR._NetsippDurum = () => {
+  const {C, LIcon, api} = MR;
+  const [durum, setDurum] = useState('kontrol'); // kontrol, bagli, hata
+  const [mesaj, setMesaj] = useState('KONTROL EDİLİYOR...');
+
+  useEffect(() => {
+    let mounted = true;
+    const kontrol = async () => {
+      try {
+        const r = await api.netsantralTest();
+        if (!mounted) return;
+        if (r?.success && r.data?.success_api) {
+          setDurum('bagli');
+          setMesaj('NETSANTRAL BAĞLI');
+        } else {
+          setDurum('hata');
+          const resp = r?.data?.response || {};
+          setMesaj(resp.hata_mesaj || 'BAĞLANTI HATASI');
+        }
+      } catch(e) {
+        if (!mounted) return;
+        setDurum('hata');
+        setMesaj('BAĞLANTI HATASI');
+      }
+    };
+    kontrol();
+    return () => { mounted = false; };
+  }, []);
+
+  const renk = durum === 'bagli' ? C.success : durum === 'hata' ? C.danger : C.warning;
+
+  return (
+    <div style={{marginTop:8, display:'flex', alignItems:'center', gap:6, fontSize:10, color: renk}}>
+      <span style={{width:6, height:6, borderRadius:'50%', background: renk, display:'inline-block',
+        animation: durum === 'kontrol' ? 'pulse 1s infinite' : 'none'
+      }}/>
+      {mesaj}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════
    CRM SAYFA YÖNLENDİRİCİ
    ═══════════════════════════════════════════ */
 MR.CrmPage = ({setPage, user, view, crmId}) => {
@@ -799,6 +843,7 @@ MR._CRMYeniInner = ({setPage}) => {
     durum: 'Yeni', not_text: '', taslak: 0
   });
   const [loading, setLoading] = useState(false);
+  const [hangupLoading, setHangupLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [savedId, setSavedId] = useState(null);
@@ -837,6 +882,18 @@ MR._CRMYeniInner = ({setPage}) => {
       MR._gelenCagriAdi = null;
     }
   }, []);
+
+  /* ── NETSANTRAL PANELİNDEN ÇAĞRI SONLANDIRILINCA DİNLE ── */
+  useEffect(() => {
+    const handler = () => {
+      if (callActive) {
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+        setCallActive(false);
+      }
+    };
+    window.addEventListener('mr-arama-sonlandi', handler);
+    return () => window.removeEventListener('mr-arama-sonlandi', handler);
+  }, [callActive]);
 
   /* ── ÇAĞRI ZAMANLAYICI (REF BAZLI - RE-RENDER ENGELLER) ── */
   const [callActive, setCallActive] = useState(false);
@@ -902,11 +959,19 @@ MR._CRMYeniInner = ({setPage}) => {
     }
   };
 
-  const toggleCall = () => {
+  const toggleCall = async () => {
     if (callActive) {
-      /* ÇAĞRIYI SONLANDIR */
+      /* ÇAĞRIYI SONLANDIR - GERÇEK SIP HANGUP */
+      setHangupLoading(true);
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      try {
+        /* NETSANTRAL API İLE ÇAĞRIYI SONLANDIR */
+        await api.netsantralHangup();
+      } catch(e) { /* HATA OLSA BİLE UI'I KAPAT */ }
+      setHangupLoading(false);
       setCallActive(false);
+      /* NETSANTRAL PANELİNE BİLDİR - ÇAĞRI SONLANDI */
+      window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
     } else {
       callSecondsRef.current = 0;
       if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
@@ -1097,29 +1162,28 @@ MR._CRMYeniInner = ({setPage}) => {
 
               {/* ÇAĞRI KONTROL */}
               <button
-                onMouseDown={(e) => {
+                onClick={async (e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   if (!callActive && f.telefon.length >= 10) {
                     MR.aramaBaslat(f.telefon, f.ad_soyad, false);
                   }
-                  toggleCall();
+                  await toggleCall();
                 }}
+                disabled={hangupLoading}
                 style={{
                   ...S.btn, width:'100%', justifyContent:'center',
                   background: callActive ? C.danger : C.success,
                   color:'#fff', padding:'12px', fontSize:13, borderRadius:10,
                   transition:'all .2s', userSelect:'none', WebkitUserSelect:'none',
-                  position:'relative', zIndex:10
+                  position:'relative', zIndex:10,
+                  opacity: hangupLoading ? 0.7 : 1
                 }}>
                 <LIcon name={callActive ? 'PhoneOff' : 'PhoneCall'} size={16} color="#fff"/>
-                {callActive ? 'ÇAĞRIYI SONLANDIR' : 'ÇAĞRI BAŞLAT'}
+                {hangupLoading ? 'SONLANDIRILIYOR...' : (callActive ? 'ÇAĞRIYI SONLANDIR' : 'ÇAĞRI BAŞLAT')}
               </button>
-              {/* NetSIPP DURUM */}
-              <div style={{marginTop:8, display:'flex', alignItems:'center', gap:6, fontSize:10, color:C.textMuted}}>
-                <span style={{width:6, height:6, borderRadius:'50%', background:C.success, display:'inline-block'}}/>
-                NETSIPP BAĞLI
-              </div>
+              {/* NetSIPP DURUM - DİNAMİK */}
+              <MR._NetsippDurum/>
               {callActive && (
                 <div style={{marginTop:10, padding:'8px 12px', background:`${C.warning}12`, borderRadius:8, fontSize:10, color:C.warning, border:`1px solid ${C.warning}30`}}>
                   <LIcon name="Info" size={12} color={C.warning}/> GÖRÜŞME SONUNDA OTOMATİK KAYDEDİLECEK
