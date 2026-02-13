@@ -450,7 +450,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
                         <button style={iconBtn(C.cyan)} title="NOT EKLE / GÖRÜNTÜLE" onClick={() => openNot(item)}>
                           <LIcon name="MessageSquare" size={12} color={C.cyan}/>
                         </button>
-                        <button style={iconBtn(C.success)} title="ARA" onClick={() => {if(item.magdur_telefon) window.open('tel:'+item.magdur_telefon);}}>
+                        <button style={iconBtn(C.success)} title="ARA" onClick={() => {if(item.magdur_telefon) MR.aramaBaslat(item.magdur_telefon, item.magdur_ad_soyad);}}>
                           <LIcon name="Phone" size={12} color={C.success}/>
                         </button>
                         <button style={iconBtn(C.warning)} title="CRM'E AKTAR" onClick={() => crmAktar(item)}>
