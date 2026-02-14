@@ -1015,15 +1015,14 @@ MR._CRMYeniInner = ({setPage}) => {
 
       setHangupLoading(false);
 
-      if (hangupOk) {
-        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-        setCallActive(false);
-        pbxOriginatedRef.current = false;
-        setError('');
-        window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
-      } else {
-        setError('ÇAĞRI SONLANDIRILAMADI - TEKRAR DENEYİN VEYA ZORLA SONLANDIRIN');
-      }
+      /* HANGUP BAŞARILI VEYA BAŞARISIZ - HER DURUMDA UI'I KAPAT
+         PBX TARAFINDA ÇAĞRI ZATEN DÜŞMÜŞ OLABİLİR, UI TAKILMASIN */
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      setCallActive(false);
+      pbxOriginatedRef.current = false;
+      if (!hangupOk) setError('ÇAĞRI SONLANDIRILDI (PBX YANIT VEREMEDİ)');
+      else setError('');
+      window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
     } else {
       /* ÇAĞRI BAŞLAT - PBX ORIGINATE API İLE */
       if (!f.telefon || f.telefon.length < 10) {

@@ -598,13 +598,14 @@ const NetsantralPanel = ({user}) => {
   useEffect(() => {
     if (minimized) return;
     const handleClickOutside = (e) => {
+      if (activeCall) return; // AKTİF ÇAĞRI VARKEN MİNİMİZE ETME
       if (panelRef.current && !panelRef.current.contains(e.target)) {
         setMinimized(true);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [minimized]);
+  }, [minimized, activeCall]);
 
   /* YETKİ YOKSA RENDER ETME (HOOK'LARDAN SONRA) */
   if (!netsantralIzin) return null;
@@ -701,19 +702,16 @@ const NetsantralPanel = ({user}) => {
 
     setHangupLoading(false);
 
-    if (hangupOk) {
-      setActiveCall(false);
-      setMuted(false);
-      setStatus('hazir');
-      setTransferOpen(false);
-      pbxOriginatedRef.current = false;
-      setStatusMsg('ÇAĞRI SONLANDIRILDI');
-      window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
-      setTimeout(() => setStatusMsg(''), 2000);
-    } else {
-      /* HANGUP BAŞARISIZ - KULLANICIYA BİLDİR AMA ZORUNLU KAPAMA SEÇENEĞİ SUN */
-      setStatusMsg('ÇAĞRI SONLANDIRILAMADI - TEKRAR DENEYİN VEYA ZORLA KAPATIN');
-    }
+    /* HANGUP BAŞARILI VEYA BAŞARISIZ - HER DURUMDA UI'I KAPAT
+       PBX TARAFINDA ÇAĞRI ZATEN DÜŞMÜŞ OLABİLİR, UI TAKILMASIN */
+    setActiveCall(false);
+    setMuted(false);
+    setStatus('hazir');
+    setTransferOpen(false);
+    pbxOriginatedRef.current = false;
+    setStatusMsg(hangupOk ? 'ÇAĞRI SONLANDIRILDI' : 'ÇAĞRI SONLANDIRILDI (PBX YANIT VEREMEDİ)');
+    window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
+    setTimeout(() => setStatusMsg(''), 3000);
   };
 
   // ZORLA ÇAĞRI SONLANDIR (NETSANTRAL'DAN YANIT ALINAMADIĞINDA)
