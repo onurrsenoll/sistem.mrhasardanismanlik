@@ -92,16 +92,16 @@ const MODUL_YETKILERI = [
     {key: 'gonder', label: 'GÖNDER'},
     {key: 'sil', label: 'SİL'}
   ]},
-  {modul: 'netsantral', label: 'NETSANTRAL', icon: 'Phone', islemler: [
-    {key: 'goruntule', label: 'GÖRÜNTÜLE / KULLAN'},
-    {key: 'arama_yap', label: 'ARAMA YAP'},
-    {key: 'transfer', label: 'TRANSFER'},
+  {modul: 'netsantral', label: 'NETSANTRAL (GİDEN ARAMA)', icon: 'Phone', islemler: [
+    {key: 'goruntule', label: 'ARAMA PANELİ GÖRÜNTÜLE'},
+    {key: 'arama_yap', label: 'GİDEN ARAMA YAP'},
+    {key: 'transfer', label: 'ÇAĞRI TRANSFER'},
     {key: 'ayarlar', label: 'AYARLARI DÜZENLE'}
   ]},
-  {modul: 'netsipp', label: 'NETSİPP', icon: 'PhoneCall', islemler: [
-    {key: 'goruntule', label: 'GÖRÜNTÜLE / KULLAN'},
-    {key: 'gelen_cagri', label: 'GELEN ÇAĞRI'},
-    {key: 'giden_cagri', label: 'GİDEN ÇAĞRI'}
+  {modul: 'netsipp', label: 'ÇAĞRI BİLDİRİM', icon: 'PhoneCall', islemler: [
+    {key: 'goruntule', label: 'ÇAĞRI PANELİ GÖRÜNTÜLE'},
+    {key: 'gelen_cagri', label: 'GELEN ÇAĞRI BİLDİRİMİ'},
+    {key: 'giden_cagri', label: 'GİDEN ÇAĞRI LOGU'}
   ]},
   {modul: 'sistem', label: 'SİSTEM', icon: 'Shield', islemler: [
     {key: 'kullanici_yonet', label: 'KULLANICI YÖNETİMİ'},
