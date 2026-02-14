@@ -534,6 +534,7 @@ const NetsantralPanel = ({user}) => {
   const timerRef = useRef(null);
   const callStartRef = useRef(null);
   const panelRef = useRef(null);
+  const pbxOriginatedRef = useRef(false);
 
   // SİSTEM AYARLARINDAN DAHİLİ NUMARASINI ÇEK VE GLOBAL KAYDET
   useEffect(() => {
@@ -625,6 +626,7 @@ const NetsantralPanel = ({user}) => {
     setStatusMsg('ARANIYOR...');
     setStatus('araniyor');
     setMinimized(false);
+    pbxOriginatedRef.current = false;
 
     const cleanNum = number.replace(/[\s\-\(\)]/g, '').replace(/^0/, '90');
 
@@ -632,6 +634,7 @@ const NetsantralPanel = ({user}) => {
     try {
       const r = await api.netsantralOriginate(cleanNum, MR._netsantralDahili || undefined);
       if (r?.success && r.data?.success_api) {
+        pbxOriginatedRef.current = true;
         setActiveCall(true);
         setStatus('gorusmede');
         setStatusMsg('GÖRÜŞME BAŞLADI');
@@ -639,11 +642,11 @@ const NetsantralPanel = ({user}) => {
         const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || '';
         setActiveCall(true);
         setStatus('gorusmede');
-        setStatusMsg(hataMesaj || 'PBX ÇAĞRI BAŞLATMA HATASI');
+        setStatusMsg(hataMesaj || 'PBX BAŞARISIZ - SIP İLE DEVAM EDİLİYOR');
       } else {
         setActiveCall(true);
         setStatus('gorusmede');
-        setStatusMsg(r?.error || 'ÇAĞRI BAŞLATMA HATASI');
+        setStatusMsg(r?.error || 'ÇAĞRI BAŞLATMA HATASI - SIP İLE DEVAM EDİLİYOR');
       }
     } catch(e) {
       setStatusMsg('NETSANTRAL BAĞLANTI HATASI');
@@ -658,37 +661,42 @@ const NetsantralPanel = ({user}) => {
     setTimeout(() => setStatusMsg(''), 4000);
   };
 
-  // ÇAĞRI BİTİR - HANGUP BAŞARILI OLANA KADAR TEKRAR DENE
+  // ÇAĞRI BİTİR - PBX İLE BAŞLADIYSA HANGUP API, DEĞİLSE DİREKT KAPAT
   const aramaKapat = async () => {
     setHangupLoading(true);
     setStatusMsg('ÇAĞRI SONLANDIRILIYOR...');
 
     let hangupOk = false;
-    const maxRetry = 3;
 
-    for (let attempt = 1; attempt <= maxRetry; attempt++) {
-      try {
-        const r = await api.netsantralHangup(MR._netsantralDahili || undefined);
-        if (r?.success && r.data?.success_api) {
-          hangupOk = true;
-          break;
-        } else if (r?.success && !r.data?.success_api) {
-          const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || '';
-          const hataKodu = r.data?.response?.hata_kodu || '';
-          /* BAZI HATA KODLARI ÇAĞRININ ZATEN BİTTİĞİ ANLAMINA GELİR */
-          /* 70 = Geçersiz Parametre (çağrı aktif değil) */
-          if (hataKodu === '70' || (hataMesaj && (hataMesaj.includes('70') || hataMesaj.includes('GEÇERSİZ') || hataMesaj.includes('PARAMETRE') || hataMesaj.includes('AKTİF DEĞİL')))) {
+    if (pbxOriginatedRef.current) {
+      /* PBX ÇAĞRISI - HANGUP API İLE SONLANDIR */
+      const maxRetry = 3;
+      for (let attempt = 1; attempt <= maxRetry; attempt++) {
+        try {
+          const r = await api.netsantralHangup(MR._netsantralDahili || undefined);
+          if (r?.success && r.data?.success_api) {
             hangupOk = true;
             break;
+          } else if (r?.success && !r.data?.success_api) {
+            const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || '';
+            const hataKodu = r.data?.response?.hata_kodu || '';
+            /* 70 = Geçersiz Parametre (çağrı aktif değil = zaten bitmiş) */
+            if (hataKodu === '70' || (hataMesaj && (hataMesaj.includes('70') || hataMesaj.includes('GEÇERSİZ') || hataMesaj.includes('PARAMETRE') || hataMesaj.includes('AKTİF DEĞİL')))) {
+              hangupOk = true;
+              break;
+            }
+            if (hataMesaj) setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${hataMesaj}`);
+          } else {
+            setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${r?.error || 'ÇAĞRI SONLANDIRMA HATASI'}`);
           }
-          if (hataMesaj) setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${hataMesaj}`);
-        } else {
-          setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${r?.error || 'ÇAĞRI SONLANDIRMA HATASI'}`);
+        } catch(e) {
+          setStatusMsg(`DENEME ${attempt}/${maxRetry}: BAĞLANTI HATASI`);
         }
-      } catch(e) {
-        setStatusMsg(`DENEME ${attempt}/${maxRetry}: BAĞLANTI HATASI`);
+        if (attempt < maxRetry) await new Promise(ok => setTimeout(ok, 1500));
       }
-      if (attempt < maxRetry) await new Promise(ok => setTimeout(ok, 1500));
+    } else {
+      /* SIP FALLBACK ÇAĞRISI - PBX KONTROLÜNDE DEĞİL, DİREKT KAPAT */
+      hangupOk = true;
     }
 
     setHangupLoading(false);
@@ -698,6 +706,7 @@ const NetsantralPanel = ({user}) => {
       setMuted(false);
       setStatus('hazir');
       setTransferOpen(false);
+      pbxOriginatedRef.current = false;
       setStatusMsg('ÇAĞRI SONLANDIRILDI');
       window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
       setTimeout(() => setStatusMsg(''), 2000);
@@ -713,6 +722,7 @@ const NetsantralPanel = ({user}) => {
     setMuted(false);
     setStatus('hazir');
     setTransferOpen(false);
+    pbxOriginatedRef.current = false;
     setStatusMsg('ÇAĞRI ZORLA SONLANDIRILDI');
     setHangupLoading(false);
     window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
