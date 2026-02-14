@@ -1023,12 +1023,12 @@ INSERT IGNORE INTO ayarlar (anahtar, deger, tip) VALUES
 ('baslik_renk', '#2563eb', 'color'),
 ('slogan_renk', '#94a3b8', 'color'),
 ('slogan_font_boyut', '10', 'number'),
-('netsantral_santral_no', '', 'text'),
+('netsantral_santral_no', '3625026502', 'text'),
 ('netsantral_kullanici', '', 'text'),
-('netsantral_dahili', '', 'text'),
+('netsantral_dahili', '102', 'text'),
 ('netsantral_sifre', '', 'text'),
 ('netsantral_domain', 'sip6.netsantral.com', 'text'),
-('netsantral_aktif', '0', 'text'),
+('netsantral_aktif', '1', 'text'),
 ('openai_api_key', '', 'text'),
 ('ai_api_key', '', 'text');
 
