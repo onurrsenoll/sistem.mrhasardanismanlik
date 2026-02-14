@@ -536,17 +536,7 @@ const NetsantralPanel = ({user}) => {
   const panelRef = useRef(null);
   const pbxOriginatedRef = useRef(false);
 
-  // SİSTEM AYARLARINDAN DAHİLİ NUMARASINI ÇEK VE GLOBAL KAYDET
-  useEffect(() => {
-    (async () => {
-      try {
-        const r = await api.ayarlarList();
-        if (r?.success && r.data) {
-          MR._netsantralDahili = r.data.netsantral_dahili || '';
-        }
-      } catch(e) {}
-    })();
-  }, []);
+  // DAHİLİ NUMARASI APP BİLEŞENİNDE YÜKLENİYOR (MR._netsantralDahili)
 
   // ARAMA SÜRE SAYACI
   useEffect(() => {
@@ -563,7 +553,7 @@ const NetsantralPanel = ({user}) => {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [activeCall]);
 
-  // GELEN ÇAĞRI DİNLE (global event)
+  // GELEN ÇAĞRI BİLDİRİMİ (OPSİYONEL - WEBHOOK AKTİFSE)
   useEffect(() => {
     const handler = (e) => {
       const data = e.detail || {};
@@ -572,6 +562,8 @@ const NetsantralPanel = ({user}) => {
         setActiveCall(true);
         setStatus('gorusmede');
         setMinimized(false);
+        setStatusMsg('GELEN ÇAĞRI: ' + (data.arayanAdi || data.arayan));
+        setTimeout(() => setStatusMsg(''), 4000);
       }
     };
     window.addEventListener('mr-netsantral-gelen', handler);
@@ -594,32 +586,31 @@ const NetsantralPanel = ({user}) => {
     return () => window.removeEventListener('mr-arama-sonlandi', handler);
   }, [activeCall]);
 
-  // DIŞARIDAN BAŞLATILAN ÇAĞRILARI DİNLE (CRM-ARAMA, DOSYA DETAY vs.)
+  // DIŞARIDAN BAŞLATILAN GİDEN ÇAĞRILARI DİNLE (CRM-ARAMA, DOSYA DETAY vs.)
   useEffect(() => {
     const handleAramaBaslat = (e) => {
       const data = e.detail || {};
       if (data.telefon) {
         setNumber(data.telefon);
-        setStatusMsg('ARANIYOR...');
+        setStatusMsg('GİDEN ARAMA BAŞLATILIYOR: ' + (data.ad || data.telefon));
         setStatus('araniyor');
         setMinimized(false);
-        pbxOriginatedRef.current = true; // PBX ÜZERİNDEN GİDECEK
       }
     };
     const handlePbxSonuc = (e) => {
       const data = e.detail || {};
       if (data.basarili) {
+        pbxOriginatedRef.current = true;
         setActiveCall(true);
         setStatus('gorusmede');
-        setStatusMsg('GÖRÜŞME BAŞLADI');
+        setStatusMsg('ÇAĞRI BAĞLANDI - ' + (data.ad || data.telefon));
       } else {
-        // PBX BAŞARISIZ - YİNE DE ÇAĞRIYI AKTİF GÖSTER (KULLANICI KAPAT BUTONUYLA KAPATABİLSİN)
-        setActiveCall(true);
-        setStatus('gorusmede');
-        setStatusMsg(data.hata || 'PBX HATASI - ÇAĞRI KONTROL EDİLEMEYEBİLİR');
-        pbxOriginatedRef.current = false; // PBX KONTROLÜNDE DEĞİL
+        /* PBX BAŞARISIZ - HATA GÖSTER VE TEMİZLE */
+        setStatus('hazir');
+        setStatusMsg(data.hata || 'GİDEN ARAMA BAŞLATILAMADI');
+        pbxOriginatedRef.current = false;
       }
-      setTimeout(() => setStatusMsg(''), 4000);
+      setTimeout(() => setStatusMsg(''), 5000);
     };
     window.addEventListener('mr-arama-baslat', handleAramaBaslat);
     window.addEventListener('mr-arama-pbx-sonuc', handlePbxSonuc);
@@ -656,95 +647,92 @@ const NetsantralPanel = ({user}) => {
     setNumber(prev => prev + key);
   };
 
-  // ÇAĞRI BAŞLAT - SADECE PBX ORIGINATE API İLE
+  // GİDEN ARAMA BAŞLAT - NETSANTRAL PBX ORIGINATE API İLE
   const aramaBaslat = async () => {
     if (!number) return;
-    setStatusMsg('ARANIYOR...');
+
+    /* DAHİLİ KONTROLÜ */
+    if (!MR._netsantralDahili) {
+      setStatusMsg('DAHİLİ NUMARASI TANIMLI DEĞİL! SİSTEM > AYARLAR > NETSANTRAL BÖLÜMÜNDEN DAHİLİ GİRİN.');
+      setTimeout(() => setStatusMsg(''), 6000);
+      return;
+    }
+
+    setStatusMsg('GİDEN ARAMA BAŞLATILIYOR...');
     setStatus('araniyor');
     setMinimized(false);
     pbxOriginatedRef.current = false;
 
     const cleanNum = number.replace(/[\s\-\(\)]/g, '').replace(/^0/, '90');
 
-    // PBX ÜZERİNDEN ÇAĞRI BAŞLAT (ORIGINATE)
+    /* PBX ORIGINATE: ÖNCEKİ DAHİLİNİZİ ÇALDIRIR, AÇTIĞINIZDA HEDEF NUMARAYI BAĞLAR */
     try {
-      const r = await api.netsantralOriginate(cleanNum, MR._netsantralDahili || undefined);
+      const r = await api.netsantralOriginate(cleanNum, MR._netsantralDahili);
       if (r?.success && r.data?.success_api) {
         pbxOriginatedRef.current = true;
         setActiveCall(true);
         setStatus('gorusmede');
-        setStatusMsg('GÖRÜŞME BAŞLADI');
-      } else if (r?.success && !r.data?.success_api) {
-        const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || '';
-        setActiveCall(true);
-        setStatus('gorusmede');
-        setStatusMsg(hataMesaj || 'PBX BAŞARISIZ - SIP İLE DEVAM EDİLİYOR');
+        setStatusMsg('ÇAĞRI BAĞLANDI - ' + cleanNum);
       } else {
-        setActiveCall(true);
-        setStatus('gorusmede');
-        setStatusMsg(r?.error || 'ÇAĞRI BAŞLATMA HATASI - SIP İLE DEVAM EDİLİYOR');
+        const hataMesaj = r?.data?.response?.hata_mesaj || r?.error || 'PBX ÇAĞRI BAŞLATILAMADI';
+        setStatusMsg('HATA: ' + hataMesaj);
+        setStatus('hazir');
       }
     } catch(e) {
-      setStatusMsg('NETSANTRAL BAĞLANTI HATASI');
+      setStatusMsg('NETSANTRAL BAĞLANTI HATASI - İNTERNET BAĞLANTINIZI KONTROL EDİN');
       setStatus('hazir');
     }
 
-    // GİDEN ARAMA LOGU
+    /* GİDEN ARAMA LOGU KAYDET */
     api.req('/netsipp/giden-cagri.php', {
       method: 'POST', body: JSON.stringify({ arayan: cleanNum, aranan_adi: '', yon: 'giden' })
     }).catch(() => {});
 
-    setTimeout(() => setStatusMsg(''), 4000);
+    setTimeout(() => setStatusMsg(''), 5000);
   };
 
-  // ÇAĞRI BİTİR - PBX İLE BAŞLADIYSA HANGUP API, DEĞİLSE DİREKT KAPAT
+  // GİDEN ARAMAYI SONLANDIR - PBX HANGUP API İLE
   const aramaKapat = async () => {
     setHangupLoading(true);
     setStatusMsg('ÇAĞRI SONLANDIRILIYOR...');
 
     let hangupOk = false;
 
-    if (pbxOriginatedRef.current) {
-      /* PBX ÇAĞRISI - HANGUP API İLE SONLANDIR */
-      const maxRetry = 3;
-      for (let attempt = 1; attempt <= maxRetry; attempt++) {
-        try {
-          const r = await api.netsantralHangup(MR._netsantralDahili || undefined);
-          if (r?.success && r.data?.success_api) {
+    /* PBX HANGUP API İLE ÇAĞRIYI SONLANDIR */
+    const maxRetry = 3;
+    for (let attempt = 1; attempt <= maxRetry; attempt++) {
+      try {
+        const r = await api.netsantralHangup(MR._netsantralDahili || undefined);
+        if (r?.success && r.data?.success_api) {
+          hangupOk = true;
+          break;
+        } else if (r?.success && !r.data?.success_api) {
+          const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || '';
+          const hataKodu = r.data?.response?.hata_kodu || '';
+          /* 70 = GEÇERSİZ PARAMETRE = ÇAĞRI ZATEN BİTMİŞ */
+          if (hataKodu === '70' || (hataMesaj && (hataMesaj.includes('70') || hataMesaj.includes('GEÇERSİZ') || hataMesaj.includes('PARAMETRE') || hataMesaj.includes('AKTİF DEĞİL')))) {
             hangupOk = true;
             break;
-          } else if (r?.success && !r.data?.success_api) {
-            const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || '';
-            const hataKodu = r.data?.response?.hata_kodu || '';
-            /* 70 = Geçersiz Parametre (çağrı aktif değil = zaten bitmiş) */
-            if (hataKodu === '70' || (hataMesaj && (hataMesaj.includes('70') || hataMesaj.includes('GEÇERSİZ') || hataMesaj.includes('PARAMETRE') || hataMesaj.includes('AKTİF DEĞİL')))) {
-              hangupOk = true;
-              break;
-            }
-            if (hataMesaj) setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${hataMesaj}`);
-          } else {
-            setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${r?.error || 'ÇAĞRI SONLANDIRMA HATASI'}`);
           }
-        } catch(e) {
-          setStatusMsg(`DENEME ${attempt}/${maxRetry}: BAĞLANTI HATASI`);
+          if (hataMesaj) setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${hataMesaj}`);
+        } else {
+          setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${r?.error || 'ÇAĞRI SONLANDIRMA HATASI'}`);
         }
-        if (attempt < maxRetry) await new Promise(ok => setTimeout(ok, 1500));
+      } catch(e) {
+        setStatusMsg(`DENEME ${attempt}/${maxRetry}: BAĞLANTI HATASI`);
       }
-    } else {
-      /* SIP FALLBACK ÇAĞRISI - PBX KONTROLÜNDE DEĞİL, DİREKT KAPAT */
-      hangupOk = true;
+      if (attempt < maxRetry) await new Promise(ok => setTimeout(ok, 1500));
     }
 
     setHangupLoading(false);
 
-    /* HANGUP BAŞARILI VEYA BAŞARISIZ - HER DURUMDA UI'I KAPAT
-       PBX TARAFINDA ÇAĞRI ZATEN DÜŞMÜŞ OLABİLİR, UI TAKILMASIN */
+    /* UI'I TEMİZLE - PBX YANIT VERMEMİŞ OLSA BİLE ÇAĞRI BİTMİŞ SAYILIR */
     setActiveCall(false);
     setMuted(false);
     setStatus('hazir');
     setTransferOpen(false);
     pbxOriginatedRef.current = false;
-    setStatusMsg(hangupOk ? 'ÇAĞRI SONLANDIRILDI' : 'ÇAĞRI SONLANDIRILDI (PBX YANIT VEREMEDİ)');
+    setStatusMsg(hangupOk ? 'ÇAĞRI SONLANDIRILDI' : 'ÇAĞRI SONLANDIRILDI (PBX ZATEN KAPANMIŞ OLABİLİR)');
     window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
     setTimeout(() => setStatusMsg(''), 3000);
   };
@@ -820,7 +808,7 @@ const NetsantralPanel = ({user}) => {
         cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,0,0,.4)',
         transition: 'all .3s',
         animation: activeCall ? 'pulse 1.5s infinite' : 'none'
-      }} title="NETSANTRAL KONTROL PANELİ">
+      }} title="GİDEN ARAMA PANELİ">
         <LIcon name="Phone" size={22} color={activeCall ? '#fff' : C.success}/>
         {activeCall && (
           <div style={{
@@ -909,7 +897,7 @@ const NetsantralPanel = ({user}) => {
           <input
             value={number}
             onChange={e => setNumber(e.target.value)}
-            placeholder="NUMARA GİRİN..."
+            placeholder="GİDEN ARAMA İÇİN NUMARA GİRİN..."
             style={{
               flex: 1, background: 'transparent', border: 'none',
               color: C.text, fontSize: 16, fontWeight: 700,
@@ -936,7 +924,7 @@ const NetsantralPanel = ({user}) => {
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             opacity: number ? 1 : 0.5
           }}>
-            <LIcon name="PhoneCall" size={16} color="#fff"/> ARA
+            <LIcon name="PhoneCall" size={16} color="#fff"/> GİDEN ARAMA YAP
           </button>
         ) : (
           <>
@@ -948,7 +936,7 @@ const NetsantralPanel = ({user}) => {
               opacity: hangupLoading ? 0.7 : 1
             }}>
               <LIcon name="PhoneOff" size={16} color="#fff"/>
-              {hangupLoading ? 'SONLANDIRILIYOR...' : 'KAPAT'}
+              {hangupLoading ? 'SONLANDIRILIYOR...' : 'GÖRÜŞME KAPAT'}
             </button>
             <button onClick={toggleMute} style={{
               padding: '10px 14px', borderRadius: 10, border: 'none',
@@ -1163,6 +1151,21 @@ const App = () => {
       setLoading(false);
     })();
   }, []);
+
+  /* NETSANTRAL DAHİLİ NUMARASINI YÜKLE (GİDEN ARAMA İÇİN KRİTİK) */
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const r = await api.ayarlarList();
+        if (r?.success && r.data) {
+          MR._netsantralDahili = r.data.netsantral_dahili || '';
+          MR._netsantralAktif = r.data.netsantral_aktif === '1' || r.data.netsantral_aktif === 1;
+          MR._netsantralSantralNo = r.data.netsantral_santral_no || '';
+        }
+      } catch(e) {}
+    })();
+  }, [user]);
 
   /* TEMA DEĞİŞİMİ DİNLEYİCİ */
   useEffect(() => {

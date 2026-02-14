@@ -262,6 +262,32 @@ MR.CrmAramaPage = ({setPage, user}) => {
     setAktarimLoading(null);
   };
 
+  /* ── GİDEN ARAMA DURUMU ── */
+  const [aramaAktif, setAramaAktif] = useState(null); // ARANMAKTA OLAN KAYIT ID'Sİ
+  const [aramaMsg, setAramaMsg] = useState('');
+
+  useEffect(() => {
+    const handler = (e) => {
+      const data = e.detail || {};
+      if (data.basarili) {
+        setAramaMsg('ÇAĞRI BAĞLANDI');
+        setTimeout(() => { setAramaMsg(''); setAramaAktif(null); }, 4000);
+      } else {
+        setAramaMsg(data.hata || 'ARAMA BAŞLATILAMADI');
+        setTimeout(() => { setAramaMsg(''); setAramaAktif(null); }, 5000);
+      }
+    };
+    window.addEventListener('mr-arama-pbx-sonuc', handler);
+    return () => window.removeEventListener('mr-arama-pbx-sonuc', handler);
+  }, []);
+
+  const aramaYap = (item) => {
+    if (!item.magdur_telefon) return;
+    setAramaAktif(item.id);
+    setAramaMsg('ARANIYOR...');
+    MR.aramaBaslat(item.magdur_telefon, item.magdur_ad_soyad);
+  };
+
   /* ── STİLLER ── */
   const thSt = {padding:'8px 6px', textAlign:'left', color:C.textMuted, fontWeight:600, fontSize:9, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:C.bgCard, zIndex:1};
   const tdSt = {padding:'7px 6px', fontSize:10, borderBottom:`1px solid ${C.border}22`, whiteSpace:'nowrap'};
@@ -404,6 +430,13 @@ MR.CrmAramaPage = ({setPage, user}) => {
           </div>
         </div>
 
+        {/* GİDEN ARAMA DURUM MESAJI */}
+        {aramaMsg && (
+          <div style={{padding:'10px 16px', background: aramaMsg.includes('BAĞLANDI') ? `${C.success}15` : aramaMsg.includes('ARANIYOR') ? `${C.accent}15` : `${C.danger}15`, borderBottom:`1px solid ${aramaMsg.includes('BAĞLANDI') ? C.success : aramaMsg.includes('ARANIYOR') ? C.accent : C.danger}33`, fontSize:12, fontWeight:600, color: aramaMsg.includes('BAĞLANDI') ? C.success : aramaMsg.includes('ARANIYOR') ? C.accent : C.danger, display:'flex', alignItems:'center', gap:8}}>
+            <LIcon name={aramaMsg.includes('BAĞLANDI') ? 'PhoneCall' : aramaMsg.includes('ARANIYOR') ? 'Phone' : 'PhoneOff'} size={16} color={aramaMsg.includes('BAĞLANDI') ? C.success : aramaMsg.includes('ARANIYOR') ? C.accent : C.danger}/> {aramaMsg}
+          </div>
+        )}
+
         {/* AKTARIM MESAJI */}
         {aktarimMsg.text && (
           <div style={{padding:'10px 16px', background: aktarimMsg.type === 'success' ? `${C.success}15` : `${C.danger}15`, borderBottom:`1px solid ${aktarimMsg.type === 'success' ? C.success : C.danger}33`, fontSize:12, fontWeight:600, color: aktarimMsg.type === 'success' ? C.success : C.danger, display:'flex', alignItems:'center', gap:8}}>
@@ -481,8 +514,15 @@ MR.CrmAramaPage = ({setPage, user}) => {
                         <button style={iconBtn(C.cyan)} title="NOT EKLE / GÖRÜNTÜLE" onClick={() => openNot(item)}>
                           <LIcon name="MessageSquare" size={12} color={C.cyan}/>
                         </button>
-                        <button style={iconBtn(C.success)} title="ARA" onClick={() => {if(item.magdur_telefon) MR.aramaBaslat(item.magdur_telefon, item.magdur_ad_soyad);}}>
-                          <LIcon name="Phone" size={12} color={C.success}/>
+                        <button style={{
+                          ...iconBtn(aramaAktif === item.id ? C.accent : C.success),
+                          background: aramaAktif === item.id ? `${C.accent}33` : `${C.success}18`,
+                          minWidth: aramaAktif === item.id ? 60 : 26
+                        }} title="GİDEN ARAMA YAP" onClick={() => aramaYap(item)}
+                          disabled={aramaAktif === item.id}>
+                          <LIcon name={aramaAktif === item.id ? 'PhoneCall' : 'Phone'} size={12}
+                            color={aramaAktif === item.id ? C.accent : C.success}/>
+                          {aramaAktif === item.id && <span style={{fontSize:8, color:C.accent, fontWeight:700}}>ARANIYOR</span>}
                         </button>
                         <button style={{...iconBtn(item.donusen_crm_id ? C.success : C.warning), opacity: aktarimLoading === item.id ? 0.5 : 1}} title={item.donusen_crm_id ? 'CRM\'E AKTARILDI' : 'CRM\'E AKTAR'} onClick={() => crmAktar(item)} disabled={!!item.donusen_crm_id || aktarimLoading === item.id}>
                           <LIcon name={item.donusen_crm_id ? 'CheckCircle' : 'UserPlus'} size={12} color={item.donusen_crm_id ? C.success : C.warning}/>
