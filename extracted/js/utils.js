@@ -17,13 +17,47 @@ const MR = window.MR || (window.MR = {});
  * @param {boolean} otomatikCrmAc - CRM EKRANI AÇILSIN MI (VARSAYILAN: TRUE)
  */
 MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
-  if (!telefon) return;
-  const cleanNum = telefon.replace(/[\s\-\(\)]/g, '').replace(/^0/, '90');
+  if (!telefon) {
+    alert('TELEFON NUMARASI BOŞ! LÜTFEN GEÇERLİ BİR NUMARA GİRİN.');
+    return;
+  }
+
+  /* NUMARA TEMİZLEME VE NORMALİZASYON
+     TÜM FORMATLAR DESTEKLER:
+     "05551234567"   → "905551234567"
+     "5551234567"    → "905551234567"
+     "+905551234567" → "905551234567"
+     "905551234567"  → "905551234567"
+  */
+  let cleanNum = telefon.replace(/[\s\-\(\)\+]/g, '');
+  if (cleanNum.startsWith('90') && cleanNum.length >= 12) {
+    /* ZATEN 90 İLE BAŞLIYOR - OLDUĞU GİBİ BIRAK */
+  } else if (cleanNum.startsWith('0') && cleanNum.length >= 11) {
+    cleanNum = '90' + cleanNum.substring(1);
+  } else if (cleanNum.length === 10 && /^[5]\d{9}$/.test(cleanNum)) {
+    cleanNum = '90' + cleanNum;
+  } else if (cleanNum.length === 10 && /^\d{10}$/.test(cleanNum)) {
+    cleanNum = '90' + cleanNum;
+  }
+
+  console.log('[NETSANTRAL] ARAMA BAŞLATILIYOR:', cleanNum, '| AD:', ad || '-', '| DAHİLİ:', MR._netsantralDahili || 'YOK', '| AKTİF:', MR._netsantralAktif);
+
+  /* NETSANTRAL AKTİF KONTROLÜ */
+  if (MR._netsantralAktif === false) {
+    const hata = 'NETSANTRAL PASİF DURUMDA! SİSTEM > AYARLAR > NETSANTRAL BÖLÜMÜNDEN AKTİF EDİN.';
+    alert(hata);
+    window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
+      detail: { basarili: false, hata: hata, telefon: cleanNum, ad: ad || '' }
+    }));
+    return;
+  }
 
   /* DAHİLİ KONTROLÜ - DAHİLİ YOKSA ARAMA YAPILAMAZ */
   if (!MR._netsantralDahili) {
+    const hata = 'DAHİLİ NUMARASI TANIMLI DEĞİL! SİSTEM > AYARLAR > NETSANTRAL BÖLÜMÜNDEN DAHİLİ NUMARASINI GİRİN.';
+    alert(hata);
     window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
-      detail: { basarili: false, hata: 'DAHİLİ NUMARASI TANIMLI DEĞİL! SİSTEM AYARLARINDAN NETSANTRAL DAHİLİ GİRİN.', telefon: cleanNum, ad: ad || '' }
+      detail: { basarili: false, hata: hata, telefon: cleanNum, ad: ad || '' }
     }));
     return;
   }
@@ -36,6 +70,7 @@ MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
   /* NETSANTRAL PBX ORIGINATE API İLE GİDEN ÇAĞRI BAŞLAT */
   try {
     const r = await MR.api.netsantralOriginate(cleanNum, MR._netsantralDahili);
+    console.log('[NETSANTRAL] ORIGINATE YANIT:', JSON.stringify(r));
     if (r?.success && r.data?.success_api) {
       /* PBX BAŞARIYLA GİDEN ÇAĞRI BAŞLATTI */
       window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
@@ -44,13 +79,17 @@ MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
     } else {
       /* PBX HATASI */
       const hataMesaj = r?.data?.response?.hata_mesaj || r?.error || 'PBX ÇAĞRI BAŞLATILAMADI';
+      console.error('[NETSANTRAL] ORIGINATE HATA:', hataMesaj, r);
+      alert('ARAMA HATASI: ' + hataMesaj);
       window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
         detail: { basarili: false, hata: hataMesaj, telefon: cleanNum, ad: ad || '' }
       }));
     }
   } catch(e) {
+    console.error('[NETSANTRAL] BAĞLANTI HATASI:', e);
+    alert('NETSANTRAL BAĞLANTI HATASI! İNTERNET BAĞLANTINIZI KONTROL EDİN.');
     window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
-      detail: { basarili: false, hata: 'NETSANTRAL BAĞLANTI HATASI', telefon: cleanNum, ad: ad || '' }
+      detail: { basarili: false, hata: 'NETSANTRAL BAĞLANTI HATASI: ' + (e?.message || ''), telefon: cleanNum, ad: ad || '' }
     }));
   }
 

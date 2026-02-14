@@ -663,11 +663,22 @@ const NetsantralPanel = ({user}) => {
     setMinimized(false);
     pbxOriginatedRef.current = false;
 
-    const cleanNum = number.replace(/[\s\-\(\)]/g, '').replace(/^0/, '90');
+    /* NUMARA TEMİZLEME VE NORMALİZASYON */
+    let cleanNum = number.replace(/[\s\-\(\)\+]/g, '');
+    if (cleanNum.startsWith('90') && cleanNum.length >= 12) {
+      /* ZATEN 90 İLE BAŞLIYOR */
+    } else if (cleanNum.startsWith('0') && cleanNum.length >= 11) {
+      cleanNum = '90' + cleanNum.substring(1);
+    } else if (cleanNum.length === 10 && /^\d{10}$/.test(cleanNum)) {
+      cleanNum = '90' + cleanNum;
+    }
+
+    console.log('[NETSANTRAL PANEL] ARAMA:', cleanNum, '| DAHİLİ:', MR._netsantralDahili);
 
     /* PBX ORIGINATE: ÖNCEKİ DAHİLİNİZİ ÇALDIRIR, AÇTIĞINIZDA HEDEF NUMARAYI BAĞLAR */
     try {
       const r = await api.netsantralOriginate(cleanNum, MR._netsantralDahili);
+      console.log('[NETSANTRAL PANEL] ORIGINATE YANIT:', JSON.stringify(r));
       if (r?.success && r.data?.success_api) {
         pbxOriginatedRef.current = true;
         setActiveCall(true);
@@ -677,10 +688,13 @@ const NetsantralPanel = ({user}) => {
         const hataMesaj = r?.data?.response?.hata_mesaj || r?.error || 'PBX ÇAĞRI BAŞLATILAMADI';
         setStatusMsg('HATA: ' + hataMesaj);
         setStatus('hazir');
+        alert('ARAMA HATASI: ' + hataMesaj);
       }
     } catch(e) {
+      console.error('[NETSANTRAL PANEL] BAĞLANTI HATASI:', e);
       setStatusMsg('NETSANTRAL BAĞLANTI HATASI - İNTERNET BAĞLANTINIZI KONTROL EDİN');
       setStatus('hazir');
+      alert('NETSANTRAL BAĞLANTI HATASI! İNTERNET BAĞLANTINIZI KONTROL EDİN.');
     }
 
     /* GİDEN ARAMA LOGU KAYDET */
@@ -1162,8 +1176,16 @@ const App = () => {
           MR._netsantralDahili = r.data.netsantral_dahili || '';
           MR._netsantralAktif = r.data.netsantral_aktif === '1' || r.data.netsantral_aktif === 1;
           MR._netsantralSantralNo = r.data.netsantral_santral_no || '';
+          console.log('[NETSANTRAL] AYARLAR YÜKLENDİ - DAHİLİ:', MR._netsantralDahili || 'BOŞ!', '| AKTİF:', MR._netsantralAktif, '| SANTRAL:', MR._netsantralSantralNo || 'BOŞ!');
+          if (!MR._netsantralDahili) {
+            console.warn('[NETSANTRAL] UYARI: DAHİLİ NUMARASI TANIMLANMAMIŞ! SİSTEM > AYARLAR > NETSANTRAL BÖLÜMÜNDEN TANIMLAYIN.');
+          }
+        } else {
+          console.warn('[NETSANTRAL] AYARLAR YÜKLENEMEDI:', r);
         }
-      } catch(e) {}
+      } catch(e) {
+        console.error('[NETSANTRAL] AYARLAR YÜKLENME HATASI:', e);
+      }
     })();
   }, [user]);
 
