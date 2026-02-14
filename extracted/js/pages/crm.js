@@ -974,30 +974,53 @@ MR._CRMYeniInner = ({setPage}) => {
     if (callActive) {
       /* ÇAĞRIYI SONLANDIR - GERÇEK SIP HANGUP */
       setHangupLoading(true);
-      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-      try {
-        /* NETSANTRAL API İLE ÇAĞRIYI SONLANDIR */
-        const r = await api.netsantralHangup(MR._netsantralDahili || undefined);
-        if (r?.success && r.data?.success_api) {
-          /* BAŞARILI - ÇAĞRI SONLANDIRILDI */
-        } else if (r?.success && !r.data?.success_api) {
-          const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || 'NETSANTRAL YANIT HATASI';
-          setError(hataMesaj);
-        } else {
-          setError(r?.error || 'ÇAĞRI SONLANDIRMA HATASI - NETSANTRAL AYARLARINI KONTROL EDİN');
+      setError('');
+
+      let hangupOk = false;
+      const maxRetry = 3;
+
+      for (let attempt = 1; attempt <= maxRetry; attempt++) {
+        try {
+          const r = await api.netsantralHangup(MR._netsantralDahili || undefined);
+          if (r?.success && r.data?.success_api) {
+            hangupOk = true;
+            break;
+          } else if (r?.success && !r.data?.success_api) {
+            const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || 'NETSANTRAL YANIT HATASI';
+            setError(`DENEME ${attempt}/${maxRetry}: ${hataMesaj}`);
+          } else {
+            setError(`DENEME ${attempt}/${maxRetry}: ${r?.error || 'ÇAĞRI SONLANDIRMA HATASI'}`);
+          }
+        } catch(e) {
+          setError(`DENEME ${attempt}/${maxRetry}: BAĞLANTI HATASI`);
         }
-      } catch(e) {
-        setError('BAĞLANTI HATASI - ÇAĞRI SONLANDIRILAMADI');
+        if (attempt < maxRetry) await new Promise(ok => setTimeout(ok, 1500));
       }
+
       setHangupLoading(false);
-      setCallActive(false);
-      /* NETSANTRAL PANELİNE BİLDİR - ÇAĞRI SONLANDI */
-      window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
+
+      if (hangupOk) {
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+        setCallActive(false);
+        setError('');
+        window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
+      } else {
+        setError('ÇAĞRI SONLANDIRILAMADI - TEKRAR DENEYİN VEYA ZORLA SONLANDIRIN');
+      }
     } else {
       callSecondsRef.current = 0;
       if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
       setCallActive(true);
     }
+  };
+
+  /* ZORLA ÇAĞRI SONLANDIR */
+  const zorlaKapat = () => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setCallActive(false);
+    setHangupLoading(false);
+    setError('');
+    window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
   };
 
   const fmtTime = (s) => {
@@ -1203,6 +1226,17 @@ MR._CRMYeniInner = ({setPage}) => {
                 <LIcon name={callActive ? 'PhoneOff' : 'PhoneCall'} size={16} color="#fff"/>
                 {hangupLoading ? 'SONLANDIRILIYOR...' : (callActive ? 'ÇAĞRIYI SONLANDIR' : 'ÇAĞRI BAŞLAT')}
               </button>
+              {/* ZORLA SONLANDIR - HANGUP BAŞARISIZ OLDUĞUNDA */}
+              {callActive && !hangupLoading && error && error.includes('SONLANDIRILAMADI') && (
+                <button onClick={zorlaKapat} style={{
+                  ...S.btn, width:'100%', justifyContent:'center', marginTop:8,
+                  background:`${C.warning}22`, color:C.warning, padding:'10px',
+                  fontSize:12, borderRadius:8, border:`1px solid ${C.warning}`,
+                  cursor:'pointer'
+                }}>
+                  <LIcon name="XCircle" size={14} color={C.warning}/> ZORLA SONLANDIR
+                </button>
+              )}
               {/* NetSIPP DURUM - DİNAMİK */}
               <MR._NetsippDurum/>
               {callActive && (

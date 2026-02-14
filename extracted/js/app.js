@@ -529,9 +529,11 @@ const NetsantralPanel = ({user}) => {
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferNum, setTransferNum] = useState('');
   const [queueInfo, setQueueInfo] = useState(null);
+  const [hangupLoading, setHangupLoading] = useState(false);
 
   const timerRef = useRef(null);
   const callStartRef = useRef(null);
+  const panelRef = useRef(null);
 
   // SİSTEM AYARLARINDAN DAHİLİ NUMARASINI ÇEK VE GLOBAL KAYDET
   useEffect(() => {
@@ -590,6 +592,18 @@ const NetsantralPanel = ({user}) => {
     window.addEventListener('mr-arama-sonlandi', handler);
     return () => window.removeEventListener('mr-arama-sonlandi', handler);
   }, [activeCall]);
+
+  // DIŞARI TIKLANINCA MİNİMİZE ET (AKTİF ÇAĞRI YOKSA)
+  useEffect(() => {
+    if (minimized) return;
+    const handleClickOutside = (e) => {
+      if (panelRef.current && !panelRef.current.contains(e.target)) {
+        setMinimized(true);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [minimized]);
 
   /* YETKİ YOKSA RENDER ETME (HOOK'LARDAN SONRA) */
   if (!netsantralIzin) return null;
@@ -650,33 +664,59 @@ const NetsantralPanel = ({user}) => {
     setTimeout(() => setStatusMsg(''), 4000);
   };
 
-  // ÇAĞRI BİTİR
+  // ÇAĞRI BİTİR - HANGUP BAŞARILI OLANA KADAR TEKRAR DENE
   const aramaKapat = async () => {
+    setHangupLoading(true);
     setStatusMsg('ÇAĞRI SONLANDIRILIYOR...');
+
     let hangupOk = false;
-    try {
-      const r = await api.netsantralHangup(MR._netsantralDahili || undefined);
-      if (r?.success && r.data?.success_api) {
-        hangupOk = true;
-        setStatusMsg('ÇAĞRI SONLANDIRILDI');
-      } else if (r?.success && !r.data?.success_api) {
-        /* API ULAŞTI AMA NETSANTRAL HATA DÖNDÜ */
-        const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || 'NETSANTRAL YANIT HATASI';
-        setStatusMsg(hataMesaj);
-      } else {
-        /* PROXY HATASI */
-        setStatusMsg(r?.error || 'ÇAĞRI SONLANDIRMA HATASI');
+    const maxRetry = 3;
+
+    for (let attempt = 1; attempt <= maxRetry; attempt++) {
+      try {
+        const r = await api.netsantralHangup(MR._netsantralDahili || undefined);
+        if (r?.success && r.data?.success_api) {
+          hangupOk = true;
+          break;
+        } else if (r?.success && !r.data?.success_api) {
+          const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || '';
+          /* BAZI HATA KODLARI ZATEN ÇAĞRI BİTTİĞİ ANLAMINA GELEBİLİR */
+          if (hataMesaj) setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${hataMesaj}`);
+        } else {
+          setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${r?.error || 'ÇAĞRI SONLANDIRMA HATASI'}`);
+        }
+      } catch(e) {
+        setStatusMsg(`DENEME ${attempt}/${maxRetry}: BAĞLANTI HATASI`);
       }
-    } catch(e) {
-      setStatusMsg('BAĞLANTI HATASI - ÇAĞRI SONLANDIRILAMADI');
+      if (attempt < maxRetry) await new Promise(ok => setTimeout(ok, 1500));
     }
+
+    setHangupLoading(false);
+
+    if (hangupOk) {
+      setActiveCall(false);
+      setMuted(false);
+      setStatus('hazir');
+      setTransferOpen(false);
+      setStatusMsg('ÇAĞRI SONLANDIRILDI');
+      window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
+      setTimeout(() => setStatusMsg(''), 2000);
+    } else {
+      /* HANGUP BAŞARISIZ - KULLANICIYA BİLDİR AMA ZORUNLU KAPAMA SEÇENEĞİ SUN */
+      setStatusMsg('ÇAĞRI SONLANDIRILAMADI - TEKRAR DENEYİN VEYA ZORLA KAPATIN');
+    }
+  };
+
+  // ZORLA ÇAĞRI SONLANDIR (NETSANTRAL'DAN YANIT ALINAMADIĞINDA)
+  const zorlaKapat = () => {
     setActiveCall(false);
     setMuted(false);
     setStatus('hazir');
     setTransferOpen(false);
-    /* CRM EKRANINA BİLDİR - ÇAĞRI SONLANDI */
+    setStatusMsg('ÇAĞRI ZORLA SONLANDIRILDI');
+    setHangupLoading(false);
     window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
-    setTimeout(() => setStatusMsg(''), hangupOk ? 2000 : 6000);
+    setTimeout(() => setStatusMsg(''), 3000);
   };
 
   // SESİ KAPAT/AÇ
@@ -760,7 +800,7 @@ const NetsantralPanel = ({user}) => {
 
   // AÇIK GÖRÜNÜM
   return (
-    <div style={{
+    <div ref={panelRef} style={{
       position: 'fixed', bottom: 60, right: 24, zIndex: 9998,
       width: 320, background: C.bgCard,
       border: `1px solid ${C.border}`, borderRadius: 16,
@@ -787,11 +827,22 @@ const NetsantralPanel = ({user}) => {
             </span>
           )}
         </div>
-        <div style={{display: 'flex', gap: 4}}>
+        <div style={{display: 'flex', gap: 2}}>
           <div onClick={() => setMinimized(true)} style={{
-            cursor: 'pointer', padding: 4, borderRadius: 6
-          }} title="KÜÇÜLT">
+            cursor: 'pointer', padding: 4, borderRadius: 6,
+            transition: 'background .15s'
+          }} title="KÜÇÜLT"
+            onMouseEnter={e => e.currentTarget.style.background = `${C.textMuted}22`}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             <LIcon name="Minus" size={14} color={C.textMuted}/>
+          </div>
+          <div onClick={() => setMinimized(true)} style={{
+            cursor: 'pointer', padding: 4, borderRadius: 6,
+            transition: 'background .15s'
+          }} title="KAPAT"
+            onMouseEnter={e => e.currentTarget.style.background = `${C.danger}22`}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+            <LIcon name="X" size={14} color={C.textMuted}/>
           </div>
         </div>
       </div>
@@ -846,12 +897,15 @@ const NetsantralPanel = ({user}) => {
           </button>
         ) : (
           <>
-            <button onClick={aramaKapat} style={{
+            <button onClick={aramaKapat} disabled={hangupLoading} style={{
               flex: 1, padding: '10px', borderRadius: 10, border: 'none',
               background: C.danger, color: '#fff', fontSize: 12, fontWeight: 700,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+              cursor: hangupLoading ? 'wait' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              opacity: hangupLoading ? 0.7 : 1
             }}>
-              <LIcon name="PhoneOff" size={16} color="#fff"/> KAPAT
+              <LIcon name="PhoneOff" size={16} color="#fff"/>
+              {hangupLoading ? 'SONLANDIRILIYOR...' : 'KAPAT'}
             </button>
             <button onClick={toggleMute} style={{
               padding: '10px 14px', borderRadius: 10, border: 'none',
@@ -874,6 +928,19 @@ const NetsantralPanel = ({user}) => {
           </>
         )}
       </div>
+
+      {/* ZORLA KAPAT BUTONU - HANGUP BAŞARISIZ OLDUĞUNDA */}
+      {activeCall && !hangupLoading && statusMsg && statusMsg.includes('SONLANDIRILAMADI') && (
+        <div style={{padding: '0 14px 12px'}}>
+          <button onClick={zorlaKapat} style={{
+            width: '100%', padding: '8px', borderRadius: 8, border: `1px solid ${C.warning}`,
+            background: `${C.warning}22`, color: C.warning, fontSize: 11, fontWeight: 700,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+          }}>
+            <LIcon name="XCircle" size={14} color={C.warning}/> ZORLA SONLANDIR
+          </button>
+        </div>
+      )}
 
       {/* TRANSFER PANELİ */}
       {transferOpen && activeCall && (
