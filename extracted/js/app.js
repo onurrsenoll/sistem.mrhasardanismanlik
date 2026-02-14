@@ -619,18 +619,16 @@ const NetsantralPanel = ({user}) => {
     setNumber(prev => prev + key);
   };
 
-  // ÇAĞRI BAŞLAT
+  // ÇAĞRI BAŞLAT - SADECE PBX ORIGINATE API İLE
   const aramaBaslat = async () => {
     if (!number) return;
     setStatusMsg('ARANIYOR...');
     setStatus('araniyor');
     setMinimized(false);
 
-    // SIP PROTOKOLÜ İLE ARA (NetSIPP üzerinden)
     const cleanNum = number.replace(/[\s\-\(\)]/g, '').replace(/^0/, '90');
-    try { window.open('sip:' + cleanNum, '_self'); } catch(e) { try { window.open('tel:' + cleanNum, '_self'); } catch(e2) {} }
 
-    // NETSANTRAL API İLE DE ARA (PBX ÜZERİNDEN)
+    // PBX ÜZERİNDEN ÇAĞRI BAŞLAT (ORIGINATE)
     try {
       const r = await api.netsantralOriginate(cleanNum, MR._netsantralDahili || undefined);
       if (r?.success && r.data?.success_api) {
@@ -638,22 +636,18 @@ const NetsantralPanel = ({user}) => {
         setStatus('gorusmede');
         setStatusMsg('GÖRÜŞME BAŞLADI');
       } else if (r?.success && !r.data?.success_api) {
-        /* PBX HATASI - AMA SIP İLE ZATEN AÇILMIŞ OLABİLİR */
-        setActiveCall(true);
-        setStatus('gorusmede');
         const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || '';
-        setStatusMsg(hataMesaj || 'SIP İLE ARAMA BAŞLATILDI');
-      } else {
-        /* PROXY HATASI (DAHİLİ EKSİK VS.) - AMA SIP İLE AÇILMIŞ OLABİLİR */
         setActiveCall(true);
         setStatus('gorusmede');
-        setStatusMsg(r?.error || 'SIP İLE ARAMA BAŞLATILDI');
+        setStatusMsg(hataMesaj || 'PBX ÇAĞRI BAŞLATMA HATASI');
+      } else {
+        setActiveCall(true);
+        setStatus('gorusmede');
+        setStatusMsg(r?.error || 'ÇAĞRI BAŞLATMA HATASI');
       }
     } catch(e) {
-      /* BAĞLANTI HATASI - AMA SIP İLE AÇILMIŞ OLABİLİR */
-      setActiveCall(true);
-      setStatus('gorusmede');
-      setStatusMsg('SIP İLE ARAMA BAŞLATILDI');
+      setStatusMsg('NETSANTRAL BAĞLANTI HATASI');
+      setStatus('hazir');
     }
 
     // GİDEN ARAMA LOGU
@@ -680,7 +674,11 @@ const NetsantralPanel = ({user}) => {
           break;
         } else if (r?.success && !r.data?.success_api) {
           const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || '';
-          /* BAZI HATA KODLARI ZATEN ÇAĞRI BİTTİĞİ ANLAMINA GELEBİLİR */
+          /* BAZI HATA KODLARI ÇAĞRININ ZATEN BİTTİĞİ ANLAMINA GELİR */
+          if (hataMesaj && (hataMesaj.includes('70') || hataMesaj.includes('GEÇERSİZ') || hataMesaj.includes('PARAMETRE'))) {
+            hangupOk = true;
+            break;
+          }
           if (hataMesaj) setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${hataMesaj}`);
         } else {
           setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${r?.error || 'ÇAĞRI SONLANDIRMA HATASI'}`);

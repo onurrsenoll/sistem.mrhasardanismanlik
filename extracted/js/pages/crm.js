@@ -972,7 +972,7 @@ MR._CRMYeniInner = ({setPage}) => {
 
   const toggleCall = async () => {
     if (callActive) {
-      /* ÇAĞRIYI SONLANDIR - GERÇEK SIP HANGUP */
+      /* ÇAĞRIYI SONLANDIR - PBX HANGUP API */
       setHangupLoading(true);
       setError('');
 
@@ -987,6 +987,11 @@ MR._CRMYeniInner = ({setPage}) => {
             break;
           } else if (r?.success && !r.data?.success_api) {
             const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || 'NETSANTRAL YANIT HATASI';
+            /* BAZI HATALAR ÇAĞRININ ZATEN BİTTİĞİ ANLAMINA GELİR */
+            if (hataMesaj && (hataMesaj.includes('70') || hataMesaj.includes('GEÇERSİZ') || hataMesaj.includes('PARAMETRE'))) {
+              hangupOk = true;
+              break;
+            }
             setError(`DENEME ${attempt}/${maxRetry}: ${hataMesaj}`);
           } else {
             setError(`DENEME ${attempt}/${maxRetry}: ${r?.error || 'ÇAĞRI SONLANDIRMA HATASI'}`);
@@ -1008,9 +1013,48 @@ MR._CRMYeniInner = ({setPage}) => {
         setError('ÇAĞRI SONLANDIRILAMADI - TEKRAR DENEYİN VEYA ZORLA SONLANDIRIN');
       }
     } else {
-      callSecondsRef.current = 0;
-      if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
-      setCallActive(true);
+      /* ÇAĞRI BAŞLAT - PBX ORIGINATE API İLE */
+      if (!f.telefon || f.telefon.length < 10) {
+        setError('GEÇERLİ BİR TELEFON NUMARASI GİRİN');
+        return;
+      }
+      setError('');
+      const cleanNum = f.telefon.replace(/[\s\-\(\)]/g, '').replace(/^0/, '90');
+
+      /* PBX ÜZERİNDEN ÇAĞRI BAŞLAT (ORIGINATE) */
+      try {
+        const r = await api.netsantralOriginate(cleanNum, MR._netsantralDahili || undefined);
+        if (r?.success && r.data?.success_api) {
+          /* PBX BAŞARIYLA ÇAĞRIYI BAŞLATTI */
+          callSecondsRef.current = 0;
+          if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
+          setCallActive(true);
+        } else if (r?.success && !r.data?.success_api) {
+          /* PBX HATASI - KULLANICIYA BİLDİR */
+          const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || '';
+          setError(hataMesaj || 'PBX ÇAĞRI BAŞLATMA HATASI - DAHİLİ AYARLARINI KONTROL EDİN');
+          /* YİNE DE ÇAĞRIYI AKTİF YAP (SIP FALLBACK OLABİLİR) */
+          callSecondsRef.current = 0;
+          if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
+          setCallActive(true);
+        } else {
+          setError(r?.error || 'ÇAĞRI BAŞLATILAMADI - NETSANTRAL AYARLARINI KONTROL EDİN');
+          /* HATA OLSA BİLE ÇAĞRIYI AKTİF YAP */
+          callSecondsRef.current = 0;
+          if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
+          setCallActive(true);
+        }
+      } catch(e) {
+        setError('NETSANTRAL BAĞLANTI HATASI');
+        callSecondsRef.current = 0;
+        if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
+        setCallActive(true);
+      }
+
+      /* GİDEN ARAMA LOGU */
+      api.req('/netsipp/giden-cagri.php', {
+        method: 'POST', body: JSON.stringify({ arayan: cleanNum, aranan_adi: f.ad_soyad || '', yon: 'giden' })
+      }).catch(() => {});
     }
   };
 
@@ -1209,9 +1253,6 @@ MR._CRMYeniInner = ({setPage}) => {
                 onClick={async (e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  if (!callActive && f.telefon.length >= 10) {
-                    MR.aramaBaslat(f.telefon, f.ad_soyad, false);
-                  }
                   await toggleCall();
                 }}
                 disabled={hangupLoading}
