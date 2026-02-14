@@ -5,30 +5,52 @@
 
 const MR = window.MR || (window.MR = {});
 
-/* ---------- NETSIPP ARAMA BAŞLAT ---------- */
+/* ---------- ARAMA BAŞLAT (NETSANTRAL PBX) ---------- */
 
 /**
- * NETSIPP ÜZERİNDEN GİDEN ARAMA BAŞLAT
- * SIP PROTOKOLÜ İLE SOFTPHONE'U TETİKLER
+ * NETSANTRAL PBX ÜZERİNDEN GİDEN ARAMA BAŞLAT
+ * ÇAĞRI KONTROLÜ (KAPAT, SESİ KAPAT, TRANSFER) SİSTEM ÜZERİNDEN YAPILIR
  * @param {string} telefon - ARANACAK TELEFON NUMARASI
  * @param {string} ad - ARANAN KİŞİNİN ADI (OPSİYONEL)
+ * @param {boolean} otomatikCrmAc - CRM EKRANI AÇILSIN MI (VARSAYILAN: TRUE)
  */
-MR.aramaBaslat = function(telefon, ad, otomatikCrmAc) {
+MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
   if (!telefon) return;
   const cleanNum = telefon.replace(/[\s\-\(\)]/g, '').replace(/^0/, '90');
-  // SIP PROTOKOLÜ İLE ARAMA BAŞLAT
+
+  /* NETSANTRAL PANELİNE ÇAĞRI BAŞLATILDIĞINI BİLDİR */
+  window.dispatchEvent(new CustomEvent('mr-arama-baslat', {
+    detail: { telefon: cleanNum, ad: ad || '', timestamp: Date.now() }
+  }));
+
+  /* NETSANTRAL PBX ORIGINATE API İLE ÇAĞRI BAŞLAT */
   try {
-    window.open('sip:' + cleanNum, '_self');
+    const r = await MR.api.netsantralOriginate(cleanNum, MR._netsantralDahili || undefined);
+    if (r?.success && r.data?.success_api) {
+      /* PBX BAŞARIYLA ÇAĞRI BAŞLATTI */
+      window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
+        detail: { basarili: true, telefon: cleanNum, ad: ad || '' }
+      }));
+    } else {
+      /* PBX BAŞARISIZ - KULLANICIYA BİLDİR AMA ÇAĞRI UI'DA AKTİF KALSIN */
+      const hataMesaj = r?.data?.response?.hata_mesaj || r?.error || 'PBX ÇAĞRI BAŞLATMA HATASI';
+      window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
+        detail: { basarili: false, hata: hataMesaj, telefon: cleanNum, ad: ad || '' }
+      }));
+    }
   } catch(e) {
-    // FALLBACK: TEL PROTOKOLÜ
-    window.open('tel:' + cleanNum, '_self');
+    window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
+      detail: { basarili: false, hata: 'NETSANTRAL BAĞLANTI HATASI', telefon: cleanNum, ad: ad || '' }
+    }));
   }
-  // ARAMA LOGUNU API'YE KAYDET
+
+  /* ARAMA LOGUNU API'YE KAYDET */
   MR.api.req('/netsipp/giden-cagri.php', {
     method: 'POST',
     body: JSON.stringify({ arayan: cleanNum, aranan_adi: ad || '', yon: 'giden' })
   }).catch(() => {});
-  // OTOMATİK CRM KAYIT EKRANI AÇ (LİSTEDEN ARANDIĞINDA)
+
+  /* OTOMATİK CRM KAYIT EKRANI AÇ (LİSTEDEN ARANDIĞINDA) */
   if (otomatikCrmAc !== false) {
     MR._gelenCagriTelefon = telefon;
     MR._gelenCagriAdi = ad || '';

@@ -594,6 +594,41 @@ const NetsantralPanel = ({user}) => {
     return () => window.removeEventListener('mr-arama-sonlandi', handler);
   }, [activeCall]);
 
+  // DIŞARIDAN BAŞLATILAN ÇAĞRILARI DİNLE (CRM-ARAMA, DOSYA DETAY vs.)
+  useEffect(() => {
+    const handleAramaBaslat = (e) => {
+      const data = e.detail || {};
+      if (data.telefon) {
+        setNumber(data.telefon);
+        setStatusMsg('ARANIYOR...');
+        setStatus('araniyor');
+        setMinimized(false);
+        pbxOriginatedRef.current = true; // PBX ÜZERİNDEN GİDECEK
+      }
+    };
+    const handlePbxSonuc = (e) => {
+      const data = e.detail || {};
+      if (data.basarili) {
+        setActiveCall(true);
+        setStatus('gorusmede');
+        setStatusMsg('GÖRÜŞME BAŞLADI');
+      } else {
+        // PBX BAŞARISIZ - YİNE DE ÇAĞRIYI AKTİF GÖSTER (KULLANICI KAPAT BUTONUYLA KAPATABİLSİN)
+        setActiveCall(true);
+        setStatus('gorusmede');
+        setStatusMsg(data.hata || 'PBX HATASI - ÇAĞRI KONTROL EDİLEMEYEBİLİR');
+        pbxOriginatedRef.current = false; // PBX KONTROLÜNDE DEĞİL
+      }
+      setTimeout(() => setStatusMsg(''), 4000);
+    };
+    window.addEventListener('mr-arama-baslat', handleAramaBaslat);
+    window.addEventListener('mr-arama-pbx-sonuc', handlePbxSonuc);
+    return () => {
+      window.removeEventListener('mr-arama-baslat', handleAramaBaslat);
+      window.removeEventListener('mr-arama-pbx-sonuc', handlePbxSonuc);
+    };
+  }, []);
+
   // DIŞARI TIKLANINCA MİNİMİZE ET (AKTİF ÇAĞRI YOKSA)
   useEffect(() => {
     if (minimized) return;
