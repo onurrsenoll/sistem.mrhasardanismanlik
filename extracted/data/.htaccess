@@ -1,0 +1,9 @@
+# Log dosyalarına web erişimini engelle
+<FilesMatch "\.(log|txt)$">
+    Deny from all
+</FilesMatch>
+
+# PHP çalıştırmayı engelle
+<FilesMatch "\.php$">
+    Deny from all
+</FilesMatch>

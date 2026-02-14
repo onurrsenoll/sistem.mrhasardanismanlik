@@ -4,23 +4,30 @@
  * NetSantral Özel API Webhook Endpoint
  *
  * NetSantral gelen çağrılarda bu URL'yi çağırır.
- * AUTH GEREKMEZÇünkü NetSantral sunucusu çağırır, JWT token göndermez.
+ * AUTH GEREKMEZ - NetSantral sunucusu çağırır, JWT token göndermez.
  *
- * POST Body (JSON):
+ * POST Body (JSON veya form-encoded):
  * {
  *   "arayan_no": "905551234567",
  *   "aranan_no": "908503625026502",
  *   "santral_no": "08503625026502",
  *   "arama_id": "1134567_1234",
- *   "tus_bilgisi": "1"
+ *   "tus_bilgisi": "1",
+ *   "api_key": "mr_hasar_2026"  (sabit değişken)
  * }
  *
- * Beklenen Yanıt:
+ * Beklenen Yanıt (TÜM ALANLAR STRING OLMALI):
  * {
  *   "status": "success",
- *   "result": "1",
- *   "data": "okunacak metin"
+ *   "result": "extensions",
+ *   "data": "102"
  * }
+ *
+ * Sonuç Durumları:
+ * - "1"          = TTS ile data okunur
+ * - "extensions" = Dahili numarasına yönlendir
+ * - "e"          = Hata
+ * - "t"          = Zaman aşımı
  */
 
 error_reporting(E_ALL);
@@ -41,7 +48,7 @@ require_once __DIR__ . '/../../config/helpers.php';
 
 $db = getDB();
 
-// TABLO YOKSA OLUŞTUR
+// ══════════ TABLOLAR ══════════
 try {
     $db->exec("CREATE TABLE IF NOT EXISTS arama_loglari (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -60,11 +67,11 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_arayan (arayan),
         INDEX idx_aranan (aranan),
-        INDEX idx_yon (yon)
+        INDEX idx_yon (yon),
+        INDEX idx_created (created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
 } catch (Exception $e) {}
 
-// NETSANTRAL BEKLEYEN ÇAĞRI TABLOSU (frontend polling için)
 try {
     $db->exec("CREATE TABLE IF NOT EXISTS netsantral_bekleyen (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -84,15 +91,23 @@ try {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
 } catch (Exception $e) {}
 
-// POST VERİLERİNİ OKU
-$body = get_json_body();
+// ══════════ POST VERİLERİNİ OKU ══════════
+// Netsantral hem JSON hem form-encoded gönderebilir
+$rawInput = file_get_contents('php://input');
+$body = json_decode($rawInput, true);
 
-// GET parametreleri de destekle (NetSantral bazı durumlarda GET gönderebilir)
-$arayan_no  = $body['arayan_no']  ?? ($_GET['arayan_no']  ?? '');
-$aranan_no  = $body['aranan_no']  ?? ($_GET['aranan_no']  ?? '');
-$santral_no = $body['santral_no'] ?? ($_GET['santral_no'] ?? '');
-$arama_id   = $body['arama_id']  ?? ($_GET['arama_id']   ?? '');
-$tus_bilgisi = $body['tus_bilgisi'] ?? ($_GET['tus_bilgisi'] ?? '');
+// JSON parse edilemezse form-encoded veya $_POST dene
+if (!is_array($body) || empty($body)) {
+    $body = $_POST;
+}
+
+// GET parametreleri de destekle (yedek)
+$arayan_no   = trim($body['arayan_no']  ?? ($_GET['arayan_no']  ?? ''));
+$aranan_no   = trim($body['aranan_no']  ?? ($_GET['aranan_no']  ?? ''));
+$santral_no  = trim($body['santral_no'] ?? ($_GET['santral_no'] ?? ''));
+$arama_id    = trim($body['arama_id']   ?? ($_GET['arama_id']   ?? ''));
+$tus_bilgisi = trim($body['tus_bilgisi'] ?? ($_GET['tus_bilgisi'] ?? ''));
+$api_key     = trim($body['api_key']    ?? ($_GET['api_key']    ?? ''));
 
 // TEMİZLE
 $arayan_no  = preg_replace('/[^0-9+]/', '', $arayan_no);
@@ -101,14 +116,35 @@ $santral_no = preg_replace('/[^0-9+]/', '', $santral_no);
 $arama_id   = clean($arama_id);
 $tus_bilgisi = clean($tus_bilgisi);
 
-// LOG
+// ══════════ LOGLAMA ══════════
+$logData = [
+    'zaman'    => date('Y-m-d H:i:s'),
+    'arayan'   => $arayan_no,
+    'aranan'   => $aranan_no,
+    'santral'  => $santral_no,
+    'arama_id' => $arama_id,
+    'tus'      => $tus_bilgisi,
+    'ip'       => $_SERVER['REMOTE_ADDR'] ?? '',
+    'method'   => $_SERVER['REQUEST_METHOD'] ?? '',
+    'raw_body' => substr($rawInput, 0, 500)
+];
+
+// Dosyaya log yaz (hata ayıklama için)
+$logDir = __DIR__ . '/../../../data';
+if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
+@file_put_contents($logDir . '/netsantral_webhook.log',
+    json_encode($logData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n---\n",
+    FILE_APPEND | LOCK_EX
+);
+
+// DB log
 try {
-    $logMsg = "NetSantral Webhook: arayan={$arayan_no}, aranan={$aranan_no}, santral={$santral_no}, arama_id={$arama_id}, tus={$tus_bilgisi}";
+    $logMsg = "Webhook: arayan={$arayan_no}, aranan={$aranan_no}, santral={$santral_no}, id={$arama_id}, tus={$tus_bilgisi}";
     $db->prepare("INSERT INTO log_kayitlari (kullanici_id, islem, detay, tablo_adi, ip_adresi, user_agent) VALUES (NULL, ?, ?, ?, ?, ?)")
        ->execute(['netsantral_webhook', $logMsg, 'netsantral_bekleyen', $_SERVER['REMOTE_ADDR'] ?? '', substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255)]);
 } catch (Exception $e) {}
 
-// ARAYAN NUMARASI YOKSA HATA
+// ══════════ ARAYAN NUMARASI YOKSA HATA ══════════
 if (empty($arayan_no)) {
     echo json_encode([
         'status' => 'error',
@@ -118,13 +154,18 @@ if (empty($arayan_no)) {
     exit;
 }
 
-// CRM VERİTABANINDA NUMARA ARA
+// ══════════ CRM VERİTABANINDA NUMARA ARA ══════════
 $crmKayit = null;
 $arayanAdi = '';
+$cleanNum = preg_replace('/[^0-9]/', '', $arayan_no);
+
+// Numara arama: son 10 haneyi al (alan kodu olmadan)
+$searchNum = strlen($cleanNum) > 10 ? substr($cleanNum, -10) : $cleanNum;
+$searchPattern = '%' . $searchNum . '%';
+
 try {
-    $cleanNum = '%' . preg_replace('/[^0-9]/', '', $arayan_no) . '%';
     $stmt = $db->prepare('SELECT id, ad_soyad, telefon, il, dosya_turu, durum FROM crm WHERE telefon LIKE ? OR telefon2 LIKE ? ORDER BY id DESC LIMIT 1');
-    $stmt->execute([$cleanNum, $cleanNum]);
+    $stmt->execute([$searchPattern, $searchPattern]);
     $crmKayit = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($crmKayit) {
         $arayanAdi = $crmKayit['ad_soyad'] ?? '';
@@ -135,7 +176,7 @@ try {
 if (empty($arayanAdi)) {
     try {
         $stmt = $db->prepare('SELECT id, magdur_ad_soyad, magdur_telefon FROM yonlendirme WHERE magdur_telefon LIKE ? LIMIT 1');
-        $stmt->execute([$cleanNum]);
+        $stmt->execute([$searchPattern]);
         $yonKayit = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($yonKayit) {
             $arayanAdi = $yonKayit['magdur_ad_soyad'] ?? '';
@@ -143,23 +184,36 @@ if (empty($arayanAdi)) {
     } catch (Exception $e) {}
 }
 
-// ARAMA LOGUNA KAYDET
+// DOSYALAR TABLOSUNDA DA ARA (magdur_telefon)
+if (empty($arayanAdi)) {
+    try {
+        $stmt = $db->prepare('SELECT id, magdur_ad, magdur_telefon FROM dosyalar WHERE magdur_telefon LIKE ? LIMIT 1');
+        $stmt->execute([$searchPattern]);
+        $dosyaKayit = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($dosyaKayit) {
+            $arayanAdi = $dosyaKayit['magdur_ad'] ?? '';
+        }
+    } catch (Exception $e) {}
+}
+
+// ══════════ ARAMA LOGUNA KAYDET ══════════
 $logId = 0;
 try {
-    $stmt = $db->prepare('INSERT INTO arama_loglari (arayan, arayan_adi, aranan, arama_tarihi, netsipp_arama_id, senaryo, yon, durum) VALUES (?, ?, ?, NOW(), ?, ?, ?, ?)');
+    $stmt = $db->prepare('INSERT INTO arama_loglari (arayan, arayan_adi, aranan, arama_tarihi, netsipp_arama_id, senaryo, yon, durum, crm_id) VALUES (?, ?, ?, NOW(), ?, ?, ?, ?, ?)');
     $stmt->execute([
         $arayan_no,
         $arayanAdi,
         $aranan_no,
         $arama_id,
-        'netsantral_webhook',
+        'netsantral_ozel_api',
         'gelen',
-        'calıyor'
+        'calıyor',
+        $crmKayit ? $crmKayit['id'] : null
     ]);
     $logId = (int)$db->lastInsertId();
 } catch (Exception $e) {}
 
-// BEKLEYEN ÇAĞRI TABLOSUNA EKLE (frontend polling ile alacak)
+// ══════════ BEKLEYEN ÇAĞRI TABLOSUNA EKLE ══════════
 try {
     $stmt = $db->prepare('INSERT INTO netsantral_bekleyen (arayan_no, aranan_no, santral_no, arama_id, tus_bilgisi, durum, arayan_adi, crm_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
     $stmt->execute([
@@ -174,34 +228,60 @@ try {
     ]);
 } catch (Exception $e) {}
 
-// NETSANTRAL'IN BEKLEDİĞİ FORMATTA YANIT DÖN
-// result: Sonuç Durumları'ndaki durum kodlarından biri
-// data: TTS ile okunacak metin (max 750 karakter)
-$anons = 'Hosgeldiniz, cagrınız yonlendiriliyor.';
-if ($arayanAdi) {
-    $anons = 'Hosgeldiniz ' . $arayanAdi . ', cagrınız yonlendiriliyor.';
-}
-
-// DAHİLİ NUMARASINI ÇEK (çağrıyı yönlendir)
+// ══════════ DAHİLİ NUMARASINI ÇEK ══════════
 $dahili = '';
 try {
     $stmt = $db->query("SELECT deger FROM ayarlar WHERE anahtar = 'netsantral_dahili' LIMIT 1");
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($row) $dahili = $row['deger'];
+    if ($row) $dahili = trim($row['deger']);
 } catch (Exception $e) {}
 
-// YANIT: Başarılı + Dahiliye yönlendir
-$response = [
-    'status' => 'success',
-    'result' => '1',
-    'data'   => $anons
-];
+// ══════════ YANIT OLUŞTUR ══════════
+// NOT: Netsantral Özel API tüm alanların STRING olmasını bekler
+// NOT2: result alanı Sonuç Durumları'nda tanımlı olmalı
 
-// Dinamik yönlendirme varsa dahiliye yönlendir
 if (!empty($dahili)) {
-    $response['result'] = 'extensions';
-    $response['data']   = $dahili;
+    // DAHİLİYE YÖNLENDİR
+    // TTS anons metni oluştur
+    $anons = 'Hosgeldiniz, cagrınız yonlendiriliyor.';
+    if ($arayanAdi) {
+        // Türkçe karakterleri TTS uyumlu hale getir
+        $ttsAd = str_replace(['ı', 'İ', 'ö', 'Ö', 'ü', 'Ü', 'ş', 'Ş', 'ç', 'Ç', 'ğ', 'Ğ'],
+                             ['i', 'I', 'o', 'O', 'u', 'U', 's', 'S', 'c', 'C', 'g', 'G'], $arayanAdi);
+        $anons = 'Hosgeldiniz ' . $ttsAd . ', cagrınız yonlendiriliyor.';
+    }
+
+    // Dinamik yönlendirme: extensions = Dahili
+    $response = [
+        'status' => 'success',
+        'result' => 'extensions',
+        'data'   => strval($dahili)
+    ];
+} else {
+    // DAHİLİ TANIMLI DEĞİLSE TTS İLE BİLDİR
+    $anons = 'Hosgeldiniz';
+    if ($arayanAdi) {
+        $anons .= ' ' . $arayanAdi;
+    }
+    $anons .= ', cagrınız yonlendiriliyor.';
+
+    // Anons max 750 karakter
+    if (mb_strlen($anons) > 750) {
+        $anons = mb_substr($anons, 0, 750);
+    }
+
+    $response = [
+        'status' => 'success',
+        'result' => '1',
+        'data'   => strval($anons)
+    ];
 }
+
+// Log: Webhook yanıtı
+@file_put_contents($logDir . '/netsantral_webhook.log',
+    "[YANIT] " . json_encode($response, JSON_UNESCAPED_UNICODE) . "\n===\n",
+    FILE_APPEND | LOCK_EX
+);
 
 echo json_encode($response, JSON_UNESCAPED_UNICODE);
 exit;

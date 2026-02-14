@@ -987,8 +987,10 @@ MR._CRMYeniInner = ({setPage}) => {
             break;
           } else if (r?.success && !r.data?.success_api) {
             const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || 'NETSANTRAL YANIT HATASI';
+            const hataKodu = r.data?.response?.hata_kodu || '';
             /* BAZI HATALAR ÇAĞRININ ZATEN BİTTİĞİ ANLAMINA GELİR */
-            if (hataMesaj && (hataMesaj.includes('70') || hataMesaj.includes('GEÇERSİZ') || hataMesaj.includes('PARAMETRE'))) {
+            /* 70 = Geçersiz Parametre (çağrı aktif değil) */
+            if (hataKodu === '70' || (hataMesaj && (hataMesaj.includes('70') || hataMesaj.includes('GEÇERSİZ') || hataMesaj.includes('PARAMETRE') || hataMesaj.includes('AKTİF DEĞİL')))) {
               hangupOk = true;
               break;
             }

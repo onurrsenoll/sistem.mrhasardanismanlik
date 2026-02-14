@@ -4,7 +4,9 @@
  * Netsantral API Proxy
  * Frontend'den gelen istekleri Netsantral API'ye iletir (CORS bypass)
  *
- * Body: { action: "originate|hangup|muteaudio|xfer|atxfer|queuestats|agentlogin|agentlogoff|agentpause|linkup", params: {...} }
+ * Body: { action: "originate|hangup|muteaudio|xfer|atxfer|queuestats|agentlogin|agentlogoff|agentpause|linkup|test", params: {...} }
+ *
+ * ÖZEL API AKTİF - originate, hangup ve diğer çağrı kontrol komutları çalışır
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -34,9 +36,7 @@ try {
     while ($row = $stmt->fetch()) {
         $netsantralAyar[$row['anahtar']] = $row['deger'];
     }
-} catch (Exception $e) {
-    // ayarlar tablosu yoksa veya netsantral ayarları tanımlanmamışsa
-}
+} catch (Exception $e) {}
 
 $santralNo = $netsantralAyar['netsantral_santral_no'] ?? '';
 $username = $netsantralAyar['netsantral_kullanici'] ?? '';
@@ -44,7 +44,7 @@ $password = $netsantralAyar['netsantral_sifre'] ?? '';
 $dahili = $netsantralAyar['netsantral_dahili'] ?? '';
 
 if (empty($santralNo) || empty($username) || empty($password)) {
-    json_error('Netsantral ayarları yapılandırılmamış. Sistem > Netsantral Ayarları bölümünden ayarları girin.', 400);
+    json_error('NETSANTRAL AYARLARI YAPILANDIRILMAMIŞ. SİSTEM > NETSANTRAL AYARLARI BÖLÜMÜNDEN AYARLARI GİRİN.', 400);
 }
 
 // API URL OLUŞTUR
@@ -66,7 +66,7 @@ switch ($action) {
             json_error('DAHİLİ NUMARASI TANIMLANMAMIŞ. SİSTEM > NETSANTRAL AYARLARI BÖLÜMÜNDEN DAHİLİ NUMARASINI GİRİN.', 422);
         }
         if (empty($queryParams['hedef'])) {
-            json_error('Hedef numara gerekli', 422);
+            json_error('HEDEF NUMARA GEREKLİ', 422);
         }
         break;
 
@@ -93,7 +93,7 @@ switch ($action) {
         $queryParams['dahili'] = $params['dahili'] ?? $dahili;
         $queryParams['hedef'] = $params['hedef'] ?? '';
         if (empty($queryParams['hedef'])) {
-            json_error('Transfer hedefi gerekli', 422);
+            json_error('TRANSFER HEDEFİ GEREKLİ', 422);
         }
         break;
 
@@ -103,7 +103,7 @@ switch ($action) {
         $queryParams['dahili'] = $params['dahili'] ?? $dahili;
         $queryParams['hedef'] = $params['hedef'] ?? '';
         if (empty($queryParams['hedef'])) {
-            json_error('Transfer hedefi gerekli', 422);
+            json_error('TRANSFER HEDEFİ GEREKLİ', 422);
         }
         break;
 
@@ -113,7 +113,7 @@ switch ($action) {
         $queryParams['numara1'] = $params['numara1'] ?? '';
         $queryParams['numara2'] = $params['numara2'] ?? '';
         if (empty($queryParams['numara1']) || empty($queryParams['numara2'])) {
-            json_error('Her iki numara da gerekli', 422);
+            json_error('HER İKİ NUMARA DA GEREKLİ', 422);
         }
         break;
 
@@ -140,7 +140,7 @@ switch ($action) {
         break;
 
     case 'agentpause':
-        // MOLA ALIN / MOLA BİTİRİN
+        // MOLA AL / MOLA BİTİR
         $apiUrl = "{$baseUrl}/agentpause";
         $queryParams['dahili'] = $params['dahili'] ?? $dahili;
         $queryParams['pause'] = $params['pause'] ?? '1';
@@ -155,7 +155,7 @@ switch ($action) {
         break;
 
     default:
-        json_error('Geçersiz aksiyon: ' . $action, 422);
+        json_error('GEÇERSİZ AKSİYON: ' . $action, 422);
 }
 
 // HTTP İSTEĞİ GÖNDER
@@ -178,21 +178,34 @@ curl_setopt_array($ch, [
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError = curl_error($ch);
+$curlErrno = curl_errno($ch);
 curl_close($ch);
 
 if ($curlError) {
-    json_error('Netsantral bağlantı hatası: ' . $curlError, 502);
+    // LOGLAMA
+    try {
+        log_action($user['id'], 'netsantral_' . $action . '_hata', "CURL HATA: {$curlError} (errno: {$curlErrno})", 'netsantral');
+    } catch (Exception $e) {}
+    json_error('NETSANTRAL BAĞLANTI HATASI: ' . $curlError, 502);
 }
 
-// LOGLAMA
+// LOGLAMA - TÜM AKSİYONLAR İÇİN
 try {
     $logDetay = "Netsantral API: {$action}";
-    if ($action === 'hangup') {
-        $logDetay .= " | dahili=" . ($queryParams['dahili'] ?? 'BOŞ') . " | http={$httpCode}";
-        if ($response) $logDetay .= " | yanit=" . substr($response, 0, 200);
-    }
+    $logDetay .= " | dahili=" . ($queryParams['dahili'] ?? 'YOK');
+    if (isset($queryParams['hedef'])) $logDetay .= " | hedef=" . $queryParams['hedef'];
+    $logDetay .= " | http={$httpCode}";
+    if ($response) $logDetay .= " | yanit=" . substr($response, 0, 300);
     log_action($user['id'], 'netsantral_' . $action, $logDetay, 'netsantral');
 } catch (Exception $e) {}
+
+// DOSYA LOG (hata ayıklama için)
+$logDir = __DIR__ . '/../../../data';
+if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
+@file_put_contents($logDir . '/netsantral_proxy.log',
+    date('Y-m-d H:i:s') . " | {$action} | http={$httpCode} | yanit=" . substr($response ?? '', 0, 200) . "\n",
+    FILE_APPEND | LOCK_EX
+);
 
 // NETSANTRAL YANITINI PARSE ET
 $parsed = null;
@@ -207,13 +220,12 @@ if ($response) {
         $parsed = ['raw_response' => $rawTrimmed];
 
         // NETGSM HATA KODLARI KONTROLÜ
-        // Netgsm API hata durumunda sadece sayısal kod döndürür
         $netgsmHataKodlari = [
             '30' => 'GEÇERSİZ KULLANICI ADI VEYA ŞİFRE',
             '40' => 'YETERSİZ BAKİYE',
             '50' => 'SUNUCU HATASI',
             '60' => 'GEÇERSİZ SANTRAL NUMARASI',
-            '70' => 'GEÇERSİZ PARAMETRE',
+            '70' => 'GEÇERSİZ PARAMETRE - ÇAĞRI AKTİF DEĞİL OLABİLİR',
             '80' => 'TANIMSIZ HATA',
             '100' => 'SİSTEM HATASI'
         ];
@@ -223,18 +235,26 @@ if ($response) {
             $parsed['hata_kodu'] = $rawTrimmed;
             $parsed['hata_mesaj'] = $netgsmHataKodlari[$rawTrimmed];
         } elseif (is_numeric($rawTrimmed) && strlen($rawTrimmed) <= 3 && intval($rawTrimmed) >= 20) {
-            // Bilinmeyen ama sayısal hata kodu
             $apiBasarili = false;
             $parsed['hata_kodu'] = $rawTrimmed;
             $parsed['hata_mesaj'] = 'NETGSM HATA KODU: ' . $rawTrimmed;
+        } else {
+            // DÜMDÜZ BAŞARILI YANIT (originate başarılı olduğunda bazen düz metin döner)
+            $apiBasarili = true;
         }
     }
 }
 
-// HTTP 200 bile olsa boş yanıt = hata
+// HTTP 200 bile olsa boş yanıt - bazı komutlar için bu normaldir
 if ($apiBasarili && empty($response)) {
-    $apiBasarili = false;
-    $parsed = ['raw_response' => '', 'hata_mesaj' => 'SUNUCUDAN BOŞ YANIT GELDİ'];
+    // originate ve hangup boş yanıt dönebilir ama bu başarı demek olabilir
+    if (in_array($action, ['originate', 'hangup', 'muteaudio', 'xfer', 'atxfer'])) {
+        $parsed = ['raw_response' => 'OK', 'hata_mesaj' => ''];
+        $apiBasarili = true;
+    } else {
+        $apiBasarili = false;
+        $parsed = ['raw_response' => '', 'hata_mesaj' => 'SUNUCUDAN BOŞ YANIT GELDİ'];
+    }
 }
 
 // BAŞARILI YANIT
