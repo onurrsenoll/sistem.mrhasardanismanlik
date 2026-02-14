@@ -775,6 +775,26 @@ CREATE TABLE IF NOT EXISTS arama_loglari (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
 -- ═══════════════════════════════════════════
+-- 23b. NETSANTRAL BEKLEYEN ÇAĞRILAR
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS netsantral_bekleyen (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    arayan_no VARCHAR(30) NOT NULL,
+    aranan_no VARCHAR(30) DEFAULT NULL,
+    santral_no VARCHAR(30) DEFAULT NULL,
+    arama_id VARCHAR(50) DEFAULT NULL,
+    tus_bilgisi VARCHAR(10) DEFAULT NULL,
+    durum VARCHAR(20) DEFAULT 'bekliyor',
+    arayan_adi VARCHAR(100) DEFAULT NULL,
+    crm_id INT DEFAULT NULL,
+    islendi TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_durum (durum),
+    INDEX idx_islendi (islendi),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
 -- 24. YÖNLENDİRME (MAĞDUR YÖNLENDİRME TAKİBİ)
 -- ═══════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS yonlendirme (
@@ -1029,7 +1049,8 @@ INSERT IGNORE INTO yetkiler (kullanici_id, modul, islem, izin) VALUES
 (1, 'ortaklar', 'goruntule', 1), (1, 'ortaklar', 'ekle', 1), (1, 'ortaklar', 'duzenle', 1), (1, 'ortaklar', 'sil', 1),
 (1, 'servis', 'goruntule', 1), (1, 'servis', 'ekle', 1), (1, 'servis', 'duzenle', 1), (1, 'servis', 'sil', 1),
 (1, 'mesajlar', 'goruntule', 1), (1, 'mesajlar', 'ekle', 1), (1, 'mesajlar', 'duzenle', 1), (1, 'mesajlar', 'sil', 1),
-(1, 'netsantral', 'goruntule', 1), (1, 'netsantral', 'ekle', 1), (1, 'netsantral', 'duzenle', 1);
+(1, 'netsantral', 'goruntule', 1), (1, 'netsantral', 'arama_yap', 1), (1, 'netsantral', 'transfer', 1), (1, 'netsantral', 'ayarlar', 1),
+(1, 'netsipp', 'goruntule', 1), (1, 'netsipp', 'gelen_cagri', 1), (1, 'netsipp', 'giden_cagri', 1);
 
 -- ═══════════════════════════════════════════
 -- EK TANIMLAMALAR
@@ -1072,4 +1093,4 @@ INSERT IGNORE INTO tanimlamalar (kategori, deger, sira) VALUES
 -- SELECT COUNT(*) FROM kasalar;         → 4 kayıt olmalı
 -- SELECT COUNT(*) FROM tanimlamalar;    → ~100 kayıt olmalı
 -- SHOW TRIGGERS;                        → 2 trigger olmalı
--- SHOW TABLES;                          → 33 tablo olmalı
+-- SHOW TABLES;                          → 34 tablo olmalı
