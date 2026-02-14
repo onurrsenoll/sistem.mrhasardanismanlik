@@ -1171,6 +1171,32 @@ const App = () => {
     return () => { window.removeEventListener('storage', handler); clearInterval(iv); };
   }, [user, netsippIzinVar, gelenCagriIsle]);
 
+  /* NETSANTRAL WEBHOOK POLLING - GELEN ÇAĞRI KONTROLÜ */
+  useEffect(() => {
+    if (!user || !netsippIzinVar) return;
+    const pollNetsantral = async () => {
+      try {
+        const r = await api.netsantralBekleyen();
+        if (r?.success && r.data && r.data.length > 0) {
+          const cagri = r.data[0]; // EN SON GELEN ÇAĞRI
+          const data = {
+            arayan: cagri.arayan_no,
+            arayanAdi: cagri.arayan_adi || '',
+            aranan: cagri.aranan_no || '',
+            aramaId: cagri.arama_id || '',
+            yon: 'gelen',
+            timestamp: Date.now()
+          };
+          gelenCagriIsle(data);
+          /* NETSANTRAL PANELİNE DE BİLDİR */
+          window.dispatchEvent(new CustomEvent('mr-netsantral-gelen', {detail: data}));
+        }
+      } catch(e) {}
+    };
+    const iv = setInterval(pollNetsantral, 5000);
+    return () => clearInterval(iv);
+  }, [user, netsippIzinVar, gelenCagriIsle]);
+
   /* GİDEN ARAMA'DAN OTOMATİK CRM EKRANI AÇ - YETKİ KONTROLLÜ */
   useEffect(() => {
     if (!user || !netsippIzinVar) return;

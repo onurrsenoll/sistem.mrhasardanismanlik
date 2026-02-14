@@ -63,6 +63,7 @@ MR.api = {
   // NETSIPP
   netsippBekleyenCagri() { return this.req('/netsipp/bekleyen-cagri.php'); },
   // NETSANTRAL
+  netsantralBekleyen() { return this.req('/netsantral/bekleyen.php'); },
   netsantralProxy(d) { return this.req('/netsantral/proxy.php', { method: 'POST', body: JSON.stringify(d) }); },
   netsantralOriginate(hedef, dahili) { return this.netsantralProxy({ action: 'originate', params: { hedef, dahili } }); },
   netsantralHangup(dahili) { return this.netsantralProxy({ action: 'hangup', params: { dahili } }); },
