@@ -238,44 +238,32 @@ try {
 
 // ══════════ YANIT OLUŞTUR ══════════
 // NOT: Netsantral Özel API tüm alanların STRING olmasını bekler
-// NOT2: result alanı Sonuç Durumları'nda tanımlı olmalı
+// NOT2: result alanı Sonuç Durumları'nda tanımlı olmalı (1=Başarılı, e=Hata, t=Zaman aşımı)
+// Çağrı yönlendirme Netsantral PBX ayarlarından yapılır (dahili/kuyruk)
 
-if (!empty($dahili)) {
-    // DAHİLİYE YÖNLENDİR
-    // TTS anons metni oluştur
-    $anons = 'Hosgeldiniz, cagrınız yonlendiriliyor.';
-    if ($arayanAdi) {
-        // Türkçe karakterleri TTS uyumlu hale getir
-        $ttsAd = str_replace(['ı', 'İ', 'ö', 'Ö', 'ü', 'Ü', 'ş', 'Ş', 'ç', 'Ç', 'ğ', 'Ğ'],
-                             ['i', 'I', 'o', 'O', 'u', 'U', 's', 'S', 'c', 'C', 'g', 'G'], $arayanAdi);
-        $anons = 'Hosgeldiniz ' . $ttsAd . ', cagrınız yonlendiriliyor.';
-    }
-
-    // Dinamik yönlendirme: extensions = Dahili
-    $response = [
-        'status' => 'success',
-        'result' => 'extensions',
-        'data'   => strval($dahili)
-    ];
-} else {
-    // DAHİLİ TANIMLI DEĞİLSE TTS İLE BİLDİR
-    $anons = 'Hosgeldiniz';
-    if ($arayanAdi) {
-        $anons .= ' ' . $arayanAdi;
-    }
-    $anons .= ', cagrınız yonlendiriliyor.';
-
-    // Anons max 750 karakter
-    if (mb_strlen($anons) > 750) {
-        $anons = mb_substr($anons, 0, 750);
-    }
-
-    $response = [
-        'status' => 'success',
-        'result' => '1',
-        'data'   => strval($anons)
-    ];
+// TTS ANONS METNİ OLUŞTUR
+$anons = 'Hosgeldiniz, cagrınız yonlendiriliyor.';
+if ($arayanAdi) {
+    // Türkçe karakterleri TTS uyumlu hale getir
+    $ttsAd = str_replace(
+        ['ı', 'İ', 'ö', 'Ö', 'ü', 'Ü', 'ş', 'Ş', 'ç', 'Ç', 'ğ', 'Ğ'],
+        ['i', 'I', 'o', 'O', 'u', 'U', 's', 'S', 'c', 'C', 'g', 'G'],
+        $arayanAdi
+    );
+    $anons = 'Hosgeldiniz ' . $ttsAd . ', cagrınız yonlendiriliyor.';
 }
+
+// Max 750 karakter (Netsantral limiti)
+if (mb_strlen($anons) > 750) {
+    $anons = mb_substr($anons, 0, 750);
+}
+
+// BAŞARILI YANIT: result="1" → TTS ile anons okunur, sonra PBX yönlendirir
+$response = [
+    'status' => 'success',
+    'result' => '1',
+    'data'   => strval($anons)
+];
 
 // Log: Webhook yanıtı
 @file_put_contents($logDir . '/netsantral_webhook.log',
