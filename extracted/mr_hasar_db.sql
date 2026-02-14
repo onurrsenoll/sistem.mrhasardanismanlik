@@ -828,10 +828,246 @@ CREATE TABLE IF NOT EXISTS yonlendirme_notlari (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
 -- ═══════════════════════════════════════════
+-- 26. KOMİSYONLAR
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS komisyonlar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    dosya_id INT DEFAULT NULL,
+    ortak_id INT DEFAULT NULL,
+    paydas_id INT DEFAULT NULL,
+    personel_id INT DEFAULT NULL,
+    komisyon_turu VARCHAR(50) NOT NULL,
+    tutar DECIMAL(12,2) NOT NULL,
+    oran DECIMAL(5,2) DEFAULT NULL,
+    odendi TINYINT(1) NOT NULL DEFAULT 0,
+    odeme_tarihi DATE DEFAULT NULL,
+    kasa_id INT DEFAULT NULL,
+    aciklama VARCHAR(255) DEFAULT NULL,
+    kullanici_id INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_dosya (dosya_id),
+    INDEX idx_ortak (ortak_id),
+    INDEX idx_paydas (paydas_id),
+    INDEX idx_turu (komisyon_turu),
+    INDEX idx_odendi (odendi),
+    FOREIGN KEY (dosya_id) REFERENCES dosyalar(id) ON DELETE SET NULL,
+    FOREIGN KEY (ortak_id) REFERENCES ortaklar(id) ON DELETE SET NULL,
+    FOREIGN KEY (paydas_id) REFERENCES paydaslar(id) ON DELETE SET NULL,
+    FOREIGN KEY (personel_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (kasa_id) REFERENCES kasalar(id) ON DELETE SET NULL,
+    FOREIGN KEY (kullanici_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 27. GELİRLER
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS gelirler (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    dosya_id INT DEFAULT NULL,
+    gelir_turu VARCHAR(50) NOT NULL,
+    tutar DECIMAL(12,2) NOT NULL,
+    kasa_id INT NOT NULL,
+    aciklama TEXT DEFAULT NULL,
+    fatura_no VARCHAR(50) DEFAULT NULL,
+    fatura_tarihi DATE DEFAULT NULL,
+    tahsilat_durumu ENUM('beklemede','tahsil_edildi','iptal') NOT NULL DEFAULT 'beklemede',
+    tahsilat_tarihi DATE DEFAULT NULL,
+    kullanici_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_dosya (dosya_id),
+    INDEX idx_turu (gelir_turu),
+    INDEX idx_tahsilat (tahsilat_durumu),
+    FOREIGN KEY (dosya_id) REFERENCES dosyalar(id) ON DELETE SET NULL,
+    FOREIGN KEY (kasa_id) REFERENCES kasalar(id) ON DELETE RESTRICT,
+    FOREIGN KEY (kullanici_id) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 28. GİDERLER
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS giderler (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    dosya_id INT DEFAULT NULL,
+    gider_turu VARCHAR(50) NOT NULL,
+    tutar DECIMAL(12,2) NOT NULL,
+    kasa_id INT NOT NULL,
+    aciklama TEXT DEFAULT NULL,
+    belge_no VARCHAR(50) DEFAULT NULL,
+    islem_tarihi DATE NOT NULL,
+    kullanici_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_dosya (dosya_id),
+    INDEX idx_turu (gider_turu),
+    INDEX idx_tarih (islem_tarihi),
+    FOREIGN KEY (dosya_id) REFERENCES dosyalar(id) ON DELETE SET NULL,
+    FOREIGN KEY (kasa_id) REFERENCES kasalar(id) ON DELETE RESTRICT,
+    FOREIGN KEY (kullanici_id) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 29. MESAJLAR
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS mesajlar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    gonderen_id INT NOT NULL,
+    alici_id INT NOT NULL,
+    konu VARCHAR(200) NOT NULL,
+    icerik TEXT NOT NULL,
+    okundu TINYINT(1) NOT NULL DEFAULT 0,
+    okunma_tarihi DATETIME DEFAULT NULL,
+    dosya_id INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_gonderen (gonderen_id),
+    INDEX idx_alici (alici_id),
+    INDEX idx_okundu (okundu),
+    FOREIGN KEY (gonderen_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (alici_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (dosya_id) REFERENCES dosyalar(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 30. ŞABLONLAR
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS sablonlar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad VARCHAR(200) NOT NULL,
+    kategori VARCHAR(50) DEFAULT NULL,
+    icerik LONGTEXT NOT NULL,
+    degiskenler JSON DEFAULT NULL,
+    aktif TINYINT(1) NOT NULL DEFAULT 1,
+    kullanici_id INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_kategori (kategori),
+    FOREIGN KEY (kullanici_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 31. YETKİLER
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS yetkiler (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    kullanici_id INT NOT NULL,
+    modul VARCHAR(50) NOT NULL,
+    islem VARCHAR(50) NOT NULL,
+    izin TINYINT(1) NOT NULL DEFAULT 0,
+    UNIQUE KEY uq_yetki (kullanici_id, modul, islem),
+    FOREIGN KEY (kullanici_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 32. AYARLAR
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS ayarlar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    anahtar VARCHAR(100) NOT NULL UNIQUE,
+    deger TEXT,
+    tip ENUM('text','number','color','image','json') DEFAULT 'text',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 33. CRM EKLERİ
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS crm_ekler (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    crm_id INT NOT NULL,
+    tur VARCHAR(20) NOT NULL DEFAULT 'dosya' COMMENT 'dosya, ses, foto',
+    dosya_adi VARCHAR(255) NOT NULL COMMENT 'Orijinal dosya adı',
+    sunucu_adi VARCHAR(255) NOT NULL COMMENT 'UUID ile kaydedilen ad',
+    dosya_yolu VARCHAR(500) NOT NULL COMMENT 'Sunucudaki tam yol',
+    dosya_boyutu INT DEFAULT 0 COMMENT 'Byte cinsinden',
+    mime_type VARCHAR(100) DEFAULT 'application/octet-stream',
+    kullanici_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_crm (crm_id),
+    INDEX idx_tur (tur),
+    FOREIGN KEY (crm_id) REFERENCES crm(id) ON DELETE CASCADE,
+    FOREIGN KEY (kullanici_id) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- VARSAYILAN AYARLAR
+-- ═══════════════════════════════════════════
+INSERT IGNORE INTO ayarlar (anahtar, deger, tip) VALUES
+('firma_adi', 'MR HASAR DANIŞMANLIK', 'text'),
+('slogan', 'HER ZAMAN FARK EDER', 'text'),
+('logo_url', '', 'image'),
+('firma_telefon', '', 'text'),
+('firma_email', '', 'text'),
+('firma_adres', '', 'text'),
+('firma_il', '', 'text'),
+('vergi_no', '', 'text'),
+('vergi_dairesi', '', 'text'),
+('baslik_font_boyut', '20', 'number'),
+('baslik_renk', '#2563eb', 'color'),
+('slogan_renk', '#94a3b8', 'color'),
+('slogan_font_boyut', '10', 'number'),
+('netsantral_santral_no', '', 'text'),
+('netsantral_dahili', '', 'text'),
+('netsantral_sifre', '', 'text'),
+('netsantral_domain', 'sip6.netsantral.com', 'text'),
+('openai_api_key', '', 'text'),
+('ai_api_key', '', 'text');
+
+-- ═══════════════════════════════════════════
+-- ADMIN YETKİLERİ (kullanici_id = 1)
+-- ═══════════════════════════════════════════
+INSERT IGNORE INTO yetkiler (kullanici_id, modul, islem, izin) VALUES
+(1, 'dosya', 'goruntule', 1), (1, 'dosya', 'ekle', 1), (1, 'dosya', 'duzenle', 1), (1, 'dosya', 'sil', 1),
+(1, 'masraf', 'goruntule', 1), (1, 'masraf', 'ekle', 1), (1, 'masraf', 'duzenle', 1), (1, 'masraf', 'sil', 1),
+(1, 'evrak', 'goruntule', 1), (1, 'evrak', 'ekle', 1), (1, 'evrak', 'duzenle', 1), (1, 'evrak', 'sil', 1),
+(1, 'crm', 'goruntule', 1), (1, 'crm', 'ekle', 1), (1, 'crm', 'duzenle', 1), (1, 'crm', 'sil', 1),
+(1, 'muhasebe', 'goruntule', 1), (1, 'muhasebe', 'ekle', 1), (1, 'muhasebe', 'duzenle', 1), (1, 'muhasebe', 'sil', 1),
+(1, 'ajanda', 'goruntule', 1), (1, 'ajanda', 'ekle', 1), (1, 'ajanda', 'duzenle', 1), (1, 'ajanda', 'sil', 1),
+(1, 'bildirim', 'goruntule', 1), (1, 'bildirim', 'ekle', 1), (1, 'bildirim', 'duzenle', 1), (1, 'bildirim', 'sil', 1),
+(1, 'sistem', 'goruntule', 1), (1, 'sistem', 'ekle', 1), (1, 'sistem', 'duzenle', 1), (1, 'sistem', 'sil', 1),
+(1, 'hesaplamalar', 'goruntule', 1), (1, 'hesaplamalar', 'ekle', 1), (1, 'hesaplamalar', 'duzenle', 1), (1, 'hesaplamalar', 'sil', 1),
+(1, 'tanimlamalar', 'goruntule', 1), (1, 'tanimlamalar', 'ekle', 1), (1, 'tanimlamalar', 'duzenle', 1), (1, 'tanimlamalar', 'sil', 1),
+(1, 'ortaklar', 'goruntule', 1), (1, 'ortaklar', 'ekle', 1), (1, 'ortaklar', 'duzenle', 1), (1, 'ortaklar', 'sil', 1),
+(1, 'servis', 'goruntule', 1), (1, 'servis', 'ekle', 1), (1, 'servis', 'duzenle', 1), (1, 'servis', 'sil', 1),
+(1, 'mesajlar', 'goruntule', 1), (1, 'mesajlar', 'ekle', 1), (1, 'mesajlar', 'duzenle', 1), (1, 'mesajlar', 'sil', 1),
+(1, 'netsantral', 'goruntule', 1), (1, 'netsantral', 'ekle', 1), (1, 'netsantral', 'duzenle', 1);
+
+-- ═══════════════════════════════════════════
+-- EK TANIMLAMALAR
+-- ═══════════════════════════════════════════
+INSERT IGNORE INTO tanimlamalar (kategori, deger, sira) VALUES
+('gelir_turu', 'TAHKİM TAZMİNATI', 1),
+('gelir_turu', 'MAHKEME TAZMİNATI', 2),
+('gelir_turu', 'SİGORTA ÖDEMESİ', 3),
+('gelir_turu', 'ANLAŞMA BEDELİ', 4),
+('gelir_turu', 'DANIŞMANLIK ÜCRETİ', 5),
+('gelir_turu', 'DİĞER GELİR', 6),
+('gider_turu', 'OFİS KİRASI', 1),
+('gider_turu', 'PERSONEL MAAŞI', 2),
+('gider_turu', 'ARAÇ GİDERİ', 3),
+('gider_turu', 'İLETİŞİM GİDERİ', 4),
+('gider_turu', 'VERGİ / SGK', 5),
+('gider_turu', 'DİĞER GİDER', 6),
+('komisyon_turu', 'ORTAK PAY', 1),
+('komisyon_turu', 'PAYDAŞ KOMİSYON', 2),
+('komisyon_turu', 'PERSONEL PRİM', 3),
+('hizmet_turu', 'KAPORTACI', 1),
+('hizmet_turu', 'OTO BOYA', 2),
+('hizmet_turu', 'OTO CAM', 3),
+('hizmet_turu', 'OTO ELEKTRİK', 4),
+('hizmet_turu', 'ÇEKİCİ', 5),
+('hizmet_turu', 'EKSPERTİZ', 6),
+('hizmet_turu', 'DİĞER', 7),
+('sablon_kategori', 'SÖZLEŞME', 1),
+('sablon_kategori', 'DİLEKÇE', 2),
+('sablon_kategori', 'VEKALETNAME', 3),
+('sablon_kategori', 'İHTARNAME', 4),
+('sablon_kategori', 'TUTANAK', 5),
+('sablon_kategori', 'DİĞER', 6);
+
+-- ═══════════════════════════════════════════
 -- TAMAMLANDI
 -- ═══════════════════════════════════════════
 -- Kurulum sonrası kontrol:
 -- SELECT COUNT(*) FROM users;           → 5 kayıt olmalı
 -- SELECT COUNT(*) FROM kasalar;         → 4 kayıt olmalı
--- SELECT COUNT(*) FROM tanimlamalar;    → ~70 kayıt olmalı
+-- SELECT COUNT(*) FROM tanimlamalar;    → ~100 kayıt olmalı
 -- SHOW TRIGGERS;                        → 2 trigger olmalı
+-- SHOW TABLES;                          → 33 tablo olmalı
