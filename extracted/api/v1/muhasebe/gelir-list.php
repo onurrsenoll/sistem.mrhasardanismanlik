@@ -73,7 +73,9 @@ $stmt = $db->prepare("SELECT g.*, d.dosya_no, k.ad as kasa_adi, u.ad_soyad as ku
     LEFT JOIN users u ON u.id = g.kullanici_id
     $whereSQL
     ORDER BY g.id DESC
-    LIMIT {$pag['limit']} OFFSET {$pag['offset']}");
+    LIMIT ? OFFSET ?");
+$params[] = (int)$pag['limit'];
+$params[] = (int)$pag['offset'];
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 

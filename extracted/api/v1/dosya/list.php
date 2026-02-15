@@ -68,7 +68,9 @@ $stmt->execute($params);
 $total = (int)$stmt->fetch()['total'];
 
 // Veri çek
-$dataSQL = "SELECT v.* FROM v_dosya_ozet v LEFT JOIN dosyalar d ON d.dosya_no = v.dosya_no $whereSQL ORDER BY v.created_at DESC LIMIT {$pag['limit']} OFFSET {$pag['offset']}";
+$dataSQL = "SELECT v.* FROM v_dosya_ozet v LEFT JOIN dosyalar d ON d.dosya_no = v.dosya_no $whereSQL ORDER BY v.created_at DESC LIMIT ? OFFSET ?";
+$params[] = (int)$pag['limit'];
+$params[] = (int)$pag['offset'];
 $stmt = $db->prepare($dataSQL);
 $stmt->execute($params);
 $items = $stmt->fetchAll();

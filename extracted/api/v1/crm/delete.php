@@ -22,12 +22,19 @@ $crm = $stmt->fetch();
 if (!$crm) json_error('CRM kaydı bulunamadı', 404);
 
 try {
-    $db->exec("SET FOREIGN_KEY_CHECKS = 0");
+    $db->beginTransaction();
+    // İlişkili kayıtları önce sil
+    $stmt = $db->prepare('DELETE FROM crm_notlari WHERE crm_id = ?');
+    $stmt->execute([$id]);
+    try {
+        $stmt = $db->prepare('DELETE FROM crm_ekler WHERE crm_id = ?');
+        $stmt->execute([$id]);
+    } catch (Exception $e2) { /* crm_ekler tablosu yoksa devam et */ }
     $stmt = $db->prepare('DELETE FROM crm WHERE id = ?');
     $stmt->execute([$id]);
-    $db->exec("SET FOREIGN_KEY_CHECKS = 1");
+    $db->commit();
 } catch (Exception $e) {
-    $db->exec("SET FOREIGN_KEY_CHECKS = 1");
+    $db->rollBack();
     json_error('Silme hatası: ' . $e->getMessage(), 500);
 }
 

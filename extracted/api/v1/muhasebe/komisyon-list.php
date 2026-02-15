@@ -90,7 +90,9 @@ $stmt = $db->prepare("SELECT k.*,
     LEFT JOIN kasalar kas ON kas.id = k.kasa_id
     $whereSQL
     ORDER BY k.id DESC
-    LIMIT {$pag['limit']} OFFSET {$pag['offset']}");
+    LIMIT ? OFFSET ?");
+$params[] = (int)$pag['limit'];
+$params[] = (int)$pag['offset'];
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 

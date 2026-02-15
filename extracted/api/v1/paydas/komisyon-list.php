@@ -53,7 +53,9 @@ $stmt = $db->prepare("SELECT pk.*, p.ad as paydas_adi, d.dosya_no
     LEFT JOIN dosyalar d ON d.id = pk.dosya_id
     $whereSQL
     ORDER BY pk.created_at DESC
-    LIMIT {$pag['limit']} OFFSET {$pag['offset']}");
+    LIMIT ? OFFSET ?");
+$params[] = (int)$pag['limit'];
+$params[] = (int)$pag['offset'];
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 

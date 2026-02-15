@@ -48,12 +48,15 @@ $stmt->execute($params);
 $total = (int)$stmt->fetch()['total'];
 
 // Veri çek
-$stmt = $db->prepare("SELECT s.*,
+$dataSQL = "SELECT s.*,
     (SELECT COUNT(*) FROM servis_ihbarlari si WHERE si.servis_id = s.id) as ihbar_sayisi
     FROM servisler s
     $whereSQL
     ORDER BY s.created_at DESC
-    LIMIT {$pag['limit']} OFFSET {$pag['offset']}");
+    LIMIT ? OFFSET ?";
+$params[] = (int)$pag['limit'];
+$params[] = (int)$pag['offset'];
+$stmt = $db->prepare($dataSQL);
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 

@@ -26,8 +26,8 @@ $stmt = $db->prepare("SELECT m.*, a.ad_soyad as alici_adi
     LEFT JOIN users a ON a.id = m.alici_id
     WHERE m.gonderen_id = ?
     ORDER BY m.id DESC
-    LIMIT {$pag['limit']} OFFSET {$pag['offset']}");
-$stmt->execute([$user['id']]);
+    LIMIT ? OFFSET ?");
+$stmt->execute([$user['id'], (int)$pag['limit'], (int)$pag['offset']]);
 $items = $stmt->fetchAll();
 
 paginated_response($items, $total, $pag);

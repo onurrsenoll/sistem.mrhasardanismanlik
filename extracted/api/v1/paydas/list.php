@@ -56,7 +56,9 @@ $stmt = $db->prepare("SELECT p.*,
     FROM paydaslar p
     $whereSQL
     ORDER BY p.created_at DESC
-    LIMIT {$pag['limit']} OFFSET {$pag['offset']}");
+    LIMIT ? OFFSET ?");
+$params[] = (int)$pag['limit'];
+$params[] = (int)$pag['offset'];
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 

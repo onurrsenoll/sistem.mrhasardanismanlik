@@ -36,13 +36,16 @@ $stmt = $db->prepare("SELECT COUNT(*) as total FROM evraklar e $whereSQL");
 $stmt->execute($params);
 $total = (int)$stmt->fetch()['total'];
 
-$stmt = $db->prepare("SELECT e.id, e.dosya_id, e.evrak_turu, e.dosya_adi, e.dosya_boyutu, e.mime_type, e.created_at, u.ad_soyad as kullanici_adi, d.dosya_no
+$dataSQL = "SELECT e.id, e.dosya_id, e.evrak_turu, e.dosya_adi, e.dosya_boyutu, e.mime_type, e.created_at, u.ad_soyad as kullanici_adi, d.dosya_no
     FROM evraklar e
     LEFT JOIN users u ON u.id = e.kullanici_id
     LEFT JOIN dosyalar d ON d.id = e.dosya_id
     $whereSQL
     ORDER BY e.created_at DESC
-    LIMIT {$pag['limit']} OFFSET {$pag['offset']}");
+    LIMIT ? OFFSET ?";
+$params[] = (int)$pag['limit'];
+$params[] = (int)$pag['offset'];
+$stmt = $db->prepare($dataSQL);
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 
