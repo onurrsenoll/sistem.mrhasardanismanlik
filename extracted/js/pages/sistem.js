@@ -1313,7 +1313,8 @@ const NetsantralTab = () => {
     netsantral_kullanici: '',
     netsantral_sifre: '',
     netsantral_dahili: '',
-    netsantral_aktif: '0'
+    netsantral_aktif: '0',
+    netsantral_yonlendirme_modu: 'dynamic'
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1321,6 +1322,9 @@ const NetsantralTab = () => {
   const [mesaj, setMesaj] = useState({type: '', text: ''});
   const [testResult, setTestResult] = useState(null);
   const [queueStats, setQueueStats] = useState(null);
+  const [webhookTest, setWebhookTest] = useState(null);
+  const [webhookTesting, setWebhookTesting] = useState(false);
+  const [webhookLog, setWebhookLog] = useState(null);
 
   /* AYARLAR YÜKLE */
   useEffect(() => {
@@ -1335,7 +1339,8 @@ const NetsantralTab = () => {
           netsantral_kullanici: data.netsantral_kullanici || '',
           netsantral_sifre: data.netsantral_sifre || '',
           netsantral_dahili: data.netsantral_dahili || '',
-          netsantral_aktif: data.netsantral_aktif || '0'
+          netsantral_aktif: data.netsantral_aktif || '0',
+          netsantral_yonlendirme_modu: data.netsantral_yonlendirme_modu || 'dynamic'
         }));
       }
       setLoading(false);
@@ -1390,7 +1395,32 @@ const NetsantralTab = () => {
     setTimeout(() => setMesaj({type: '', text: ''}), 6000);
   };
 
+  /* WEBHOOK DURUM TESTİ */
+  const testWebhook = async (mode) => {
+    setWebhookTesting(true);
+    setWebhookTest(null);
+    try {
+      const r = await api.req('/netsantral/test-webhook.php?mode=' + (mode || 'status'));
+      setWebhookTest(r?.data || r);
+    } catch(e) {
+      setWebhookTest({hata: 'BAĞLANTI HATASI'});
+    }
+    setWebhookTesting(false);
+  };
+
+  /* WEBHOOK LOG GÖSTERİM */
+  const logGoster = async () => {
+    try {
+      const r = await api.req('/netsantral/test-webhook.php?mode=log');
+      setWebhookLog(r?.data || null);
+    } catch(e) {
+      setWebhookLog({hata: 'LOG OKUNAMIYOR'});
+    }
+  };
+
   if (loading) return <Loading/>;
+
+  const webhookUrl = window.location.origin + '/api/v1/netsantral/webhook.php';
 
   return (
     <div>
@@ -1494,6 +1524,24 @@ const NetsantralTab = () => {
                   VARSAYILAN DAHİLİ NUMARANIZ (ÖRN: 100, 101, 102...)
                 </div>
               </div>
+
+              {/* YÖNLENDİRME MODU */}
+              <div>
+                <label style={S.label}>GELEN ÇAĞRI YÖNLENDİRME MODU</label>
+                <select style={S.select} value={ayarlar.netsantral_yonlendirme_modu}
+                  onChange={e => up('netsantral_yonlendirme_modu', e.target.value)}>
+                  <option value="dynamic">DİNAMİK - TTS + DAHİLİYE YÖNLENDIR (ÖNERİLEN)</option>
+                  <option value="extensions">DİREKT - TTS'SİZ DAHİLİYE YÖNLENDIR</option>
+                  <option value="tts">SADECE TTS - YÖNLENDİRME YOK</option>
+                </select>
+                <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
+                  {ayarlar.netsantral_yonlendirme_modu === 'dynamic'
+                    ? 'ARAYAN TANINIR → TTS İLE KARŞILANIR → DAHİLİYE AKTARILIR'
+                    : ayarlar.netsantral_yonlendirme_modu === 'extensions'
+                    ? 'DİREKT DAHİLİ NUMARASINA YÖNLENDİRİLİR (TTS OKUNMAZ)'
+                    : 'SADECE HOŞGELDİNİZ MESAJI OKUNUR, IVR AKIŞI DEVAM EDER'}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1553,43 +1601,163 @@ const NetsantralTab = () => {
             </div>
           </div>
 
-          {/* BİLGİ KARTI */}
+          {/* WEBHOOK AYARLARI VE KURULUM REHBERİ */}
           <div style={S.card}>
             <div style={{...S.cardHead, padding: '12px 16px'}}>
-              <LIcon name="Info" size={14} color={C.accent}/>
-              <span style={{fontSize: 12, fontWeight: 700}}>NETGSM NETSANTRAL BİLGİ</span>
+              <LIcon name="Globe" size={14} color={C.purple}/>
+              <span style={{fontSize: 12, fontWeight: 700}}>WEBHOOK & GELEN ÇAĞRI KURULUMU</span>
             </div>
             <div style={{padding: 16}}>
-              <div style={{fontSize: 11, color: C.textSec, lineHeight: 1.8}}>
-                <div style={{display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8}}>
-                  <LIcon name="CheckCircle" size={12} color={C.success}/>
-                  <span>ÇAĞRI BAŞLATMA / SONLANDIRMA</span>
-                </div>
-                <div style={{display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8}}>
-                  <LIcon name="CheckCircle" size={12} color={C.success}/>
-                  <span>SESİ KAPATMA / AÇMA</span>
-                </div>
-                <div style={{display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8}}>
-                  <LIcon name="CheckCircle" size={12} color={C.success}/>
-                  <span>ÇAĞRI TRANSFER</span>
-                </div>
-                <div style={{display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8}}>
-                  <LIcon name="CheckCircle" size={12} color={C.success}/>
-                  <span>KUYRUK YÖNETİMİ</span>
-                </div>
-                <div style={{display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8}}>
-                  <LIcon name="CheckCircle" size={12} color={C.success}/>
-                  <span>ARAMA GEÇMİŞİ VE RAPORLAR</span>
+              {/* WEBHOOK URL */}
+              <div style={{marginBottom: 12}}>
+                <label style={S.label}>WEBHOOK URL (BU ADRESİ NETGSM'E GİRİN)</label>
+                <div style={{
+                  padding: '10px 14px', borderRadius: 8,
+                  background: `${C.accent}11`, border: `1px solid ${C.accent}33`,
+                  fontSize: 11, color: C.accent, fontFamily: 'monospace', wordBreak: 'break-all',
+                  cursor: 'pointer', userSelect: 'all'
+                }} onClick={() => {
+                  navigator.clipboard?.writeText(webhookUrl);
+                  setMesaj({type: 'success', text: 'WEBHOOK URL KOPYALANDI!'});
+                  setTimeout(() => setMesaj({type: '', text: ''}), 2000);
+                }}>
+                  {webhookUrl}
+                  <span style={{fontSize: 9, color: C.textMuted, display: 'block', marginTop: 4}}>
+                    KOPYALAMAK İÇİN TIKLAYIN
+                  </span>
                 </div>
               </div>
+
+              {/* KURULUM ADIMLARI */}
               <div style={{
-                marginTop: 12, padding: '10px 14px', borderRadius: 8,
-                background: `${C.warning}11`, border: `1px solid ${C.warning}22`,
-                fontSize: 10, color: C.warning
+                padding: '12px 14px', borderRadius: 8,
+                background: `${C.warning}08`, border: `1px solid ${C.warning}22`,
+                fontSize: 10, lineHeight: 2, color: C.textSec
               }}>
-                <LIcon name="AlertTriangle" size={12} color={C.warning}/>{' '}
-                AYARLARI KAYDETTİKTEN SONRA BAĞLANTI TESTİ YAPINIZ
+                <div style={{fontSize: 11, fontWeight: 700, color: C.warning, marginBottom: 6}}>
+                  <LIcon name="BookOpen" size={12} color={C.warning}/> NETGSM PANEL KURULUM ADIMLARI
+                </div>
+                <div><strong style={{color: C.accent}}>1.</strong> NETGSM WEBPORTAL {'>'} NETSANTRAL {'>'} ENTEGRASYONLAR</div>
+                <div><strong style={{color: C.accent}}>2.</strong> PASİF ENTEGRASYONLARDAN "CUSTOM (ÖZEL API)" AKTİF EDİN</div>
+                <div><strong style={{color: C.accent}}>3.</strong> ÖZEL API OLUŞTUR {'>'} FONKSİYON URL: <strong style={{color: C.accent}}>YUKARIDAKİ URL</strong></div>
+                <div><strong style={{color: C.accent}}>4.</strong> FONKSİYON METOD: <strong style={{color: C.success}}>JSON POST</strong> SEÇİN</div>
+                <div><strong style={{color: C.accent}}>5.</strong> STATİK DEĞİŞKEN EKLE: <strong>api_key = mr_hasar_2026</strong></div>
+                <div><strong style={{color: C.accent}}>6.</strong> SONUÇ DURUMLARI {'>'} "dynamic" KODU EKLEYİN</div>
+                <div><strong style={{color: C.accent}}>7.</strong> FONKSİYONDAN MODÜL OLUŞTURUN VE IVR AKIŞINA EKLEYİN</div>
               </div>
+
+              {/* WEBHOOK TEST BUTONLARI */}
+              <div style={{display: 'flex', gap: 8, marginTop: 12}}>
+                <button onClick={() => testWebhook('status')} disabled={webhookTesting} style={{
+                  ...S.btn, flex: 1, justifyContent: 'center',
+                  background: C.purple, color: '#fff', fontSize: 11, padding: '10px 12px'
+                }}>
+                  <LIcon name="Activity" size={14} color="#fff"/>
+                  {webhookTesting ? 'KONTROL...' : 'WEBHOOK DURUMU'}
+                </button>
+                <button onClick={() => testWebhook('simulate')} disabled={webhookTesting} style={{
+                  ...S.btn, flex: 1, justifyContent: 'center',
+                  background: C.success, color: '#fff', fontSize: 11, padding: '10px 12px'
+                }}>
+                  <LIcon name="PhoneIncoming" size={14} color="#fff"/>
+                  SİMÜLE ET
+                </button>
+                <button onClick={logGoster} style={{
+                  ...S.btn, flex: 1, justifyContent: 'center',
+                  background: C.borderLight, color: C.textSec, fontSize: 11, padding: '10px 12px'
+                }}>
+                  <LIcon name="FileText" size={14} color={C.textSec}/>
+                  LOGLAR
+                </button>
+              </div>
+
+              {/* WEBHOOK TEST SONUÇLARI */}
+              {webhookTest && (
+                <div style={{
+                  marginTop: 12, padding: 12, borderRadius: 8,
+                  background: `${C.bgHover}`, border: `1px solid ${C.border}`,
+                  fontSize: 10, maxHeight: 300, overflowY: 'auto'
+                }}>
+                  {/* WEBHOOK DURUMU */}
+                  {webhookTest.webhook_url && (
+                    <div style={{marginBottom: 8}}>
+                      <div style={{fontWeight: 700, color: C.accent, marginBottom: 4}}>WEBHOOK URL</div>
+                      <div style={{color: C.text, fontFamily: 'monospace', wordBreak: 'break-all'}}>{webhookTest.webhook_url}</div>
+                    </div>
+                  )}
+                  {/* API TEST DURUMU */}
+                  {webhookTest.api_testi && (
+                    <div style={{marginBottom: 8}}>
+                      <div style={{fontWeight: 700, color: C.accent, marginBottom: 4}}>API BAĞLANTI</div>
+                      <span style={{
+                        ...MR.S.badge(webhookTest.api_testi.durum === 'BAĞLI' ? C.success : C.danger),
+                        fontSize: 10
+                      }}>
+                        {webhookTest.api_testi.durum}
+                      </span>
+                      {webhookTest.api_testi.hata && (
+                        <div style={{color: C.danger, marginTop: 4}}>{webhookTest.api_testi.hata}</div>
+                      )}
+                    </div>
+                  )}
+                  {/* YÖNLENDİRME BİLGİSİ */}
+                  {webhookTest.yonlendirme && (
+                    <div style={{marginBottom: 8}}>
+                      <div style={{fontWeight: 700, color: C.accent, marginBottom: 4}}>YÖNLENDİRME</div>
+                      <div style={{color: C.success}}>{webhookTest.yonlendirme.aciklama}</div>
+                    </div>
+                  )}
+                  {/* SİMÜLASYON SONUCU */}
+                  {webhookTest.dogrulama && (
+                    <div style={{marginBottom: 8}}>
+                      <div style={{fontWeight: 700, color: C.accent, marginBottom: 4}}>WEBHOOK YANIT DOĞRULAMA</div>
+                      {Object.entries(webhookTest.dogrulama).map(([k, v]) => (
+                        <div key={k} style={{display: 'flex', justifyContent: 'space-between', padding: '2px 0'}}>
+                          <span style={{color: C.textMuted}}>{k.replace(/_/g, ' ').toUpperCase()}</span>
+                          <span style={{color: String(v).includes('HAYIR') ? C.danger : C.success, fontWeight: 600}}>{v}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {/* KURULUM REHBERİ */}
+                  {webhookTest.kurulum_rehberi && (
+                    <div>
+                      <div style={{fontWeight: 700, color: C.warning, marginBottom: 4}}>KURULUM ADIMLARI</div>
+                      {Object.values(webhookTest.kurulum_rehberi).map((step, i) => (
+                        <div key={i} style={{color: C.textSec, padding: '1px 0'}}>{i + 1}. {step}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* WEBHOOK LOG */}
+              {webhookLog && (
+                <div style={{
+                  marginTop: 12, padding: 12, borderRadius: 8,
+                  background: '#0a0e1a', border: `1px solid ${C.border}`,
+                  maxHeight: 250, overflowY: 'auto'
+                }}>
+                  <div style={{fontWeight: 700, color: C.warning, marginBottom: 8, fontSize: 11}}>WEBHOOK LOG</div>
+                  <pre style={{
+                    fontSize: 9, color: C.success, fontFamily: 'monospace',
+                    whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0
+                  }}>
+                    {webhookLog.webhook_log || 'BOŞ'}
+                  </pre>
+                  {webhookLog.proxy_log && (
+                    <>
+                      <div style={{fontWeight: 700, color: C.warning, marginBottom: 8, marginTop: 12, fontSize: 11}}>PROXY LOG</div>
+                      <pre style={{
+                        fontSize: 9, color: C.cyan, fontFamily: 'monospace',
+                        whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0
+                      }}>
+                        {webhookLog.proxy_log}
+                      </pre>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

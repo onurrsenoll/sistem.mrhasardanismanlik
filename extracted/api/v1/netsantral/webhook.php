@@ -16,16 +16,29 @@
  *   "api_key": "mr_hasar_2026"  (sabit değişken)
  * }
  *
- * Beklenen Yanıt (TÜM ALANLAR STRING OLMALI):
+ * YANITLAR:
+ *
+ * 1) TTS + DİNAMİK YÖNLENDİRME (DAHİLİYE AKTAR):
  * {
  *   "status": "success",
- *   "result": "extensions",
- *   "data": "102"
+ *   "result": "dynamic",
+ *   "data": "Hosgeldiniz, cagrınız yonlendiriliyor.",
+ *   "redirect": "102"
  * }
  *
+ * 2) SADECE TTS (YÖNLENDİRME YOK):
+ * {
+ *   "status": "success",
+ *   "result": "1",
+ *   "data": "Hosgeldiniz, cagrınız yonlendiriliyor."
+ * }
+ *
+ * 3) HATA:
+ * { "status": "error", "result": "e", "data": "hata mesaji" }
+ *
  * Sonuç Durumları:
- * - "1"          = TTS ile data okunur
- * - "extensions" = Dahili numarasına yönlendir
+ * - "dynamic"    = TTS okunur + redirect numarasına yönlendirilir (ÖNERİLEN)
+ * - "1"          = TTS ile data okunur (Netsantral panelindeki IVR akışına devam eder)
  * - "e"          = Hata
  * - "t"          = Zaman aşımı
  */
@@ -228,20 +241,22 @@ try {
     ]);
 } catch (Exception $e) {}
 
-// ══════════ DAHİLİ NUMARASINI ÇEK ══════════
+// ══════════ AYARLARI OKU ══════════
 $dahili = '';
+$yonlendirmeModu = 'dynamic'; // dynamic, tts, extensions
 try {
-    $stmt = $db->query("SELECT deger FROM ayarlar WHERE anahtar = 'netsantral_dahili' LIMIT 1");
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($row) $dahili = trim($row['deger']);
+    $stmt = $db->query("SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('netsantral_dahili', 'netsantral_yonlendirme_modu', 'netsantral_yonlendirme_hedef', 'netsantral_tts_aktif')");
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        if ($row['anahtar'] === 'netsantral_dahili') $dahili = trim($row['deger']);
+        if ($row['anahtar'] === 'netsantral_yonlendirme_modu') $yonlendirmeModu = trim($row['deger']);
+    }
 } catch (Exception $e) {}
 
-// ══════════ YANIT OLUŞTUR ══════════
-// NOT: Netsantral Özel API tüm alanların STRING olmasını bekler
-// NOT2: result alanı Sonuç Durumları'nda tanımlı olmalı (1=Başarılı, e=Hata, t=Zaman aşımı)
-// Çağrı yönlendirme Netsantral PBX ayarlarından yapılır (dahili/kuyruk)
+// ══════════ YÖNLENDİRME HEDEFİNİ BELİRLE ══════════
+// Yönlendirme hedefi: dahili numarası veya dış numara olabilir
+$redirectHedef = $dahili; // Varsayılan: ayarlardaki dahili
 
-// TTS ANONS METNİ OLUŞTUR
+// ══════════ TTS ANONS METNİ OLUŞTUR ══════════
 $anons = 'Hosgeldiniz, cagrınız yonlendiriliyor.';
 if ($arayanAdi) {
     // Türkçe karakterleri TTS uyumlu hale getir
@@ -258,12 +273,38 @@ if (mb_strlen($anons) > 750) {
     $anons = mb_substr($anons, 0, 750);
 }
 
-// BAŞARILI YANIT: result="1" → TTS ile anons okunur, sonra PBX yönlendirir
-$response = [
-    'status' => 'success',
-    'result' => '1',
-    'data'   => strval($anons)
-];
+// ══════════ YANIT OLUŞTUR ══════════
+// NOT: Netsantral Özel API tüm alanların STRING olmasını bekler
+// NOT: result="dynamic" → TTS okunur + redirect numarasına yönlendirilir
+// NOT: result="1" → TTS okunur, Netsantral panelindeki IVR akışına devam eder
+
+if (!empty($redirectHedef) && $yonlendirmeModu === 'dynamic') {
+    // ═══ DİNAMİK YÖNLENDİRME ═══
+    // TTS metni okunduktan sonra redirect alanındaki numaraya yönlendirir
+    // redirect: dahili numarası (102) veya dış numara (05xxxxxxxxx) olabilir
+    $response = [
+        'status'   => 'success',
+        'result'   => 'dynamic',
+        'data'     => strval($anons),
+        'redirect' => strval($redirectHedef)
+    ];
+} elseif ($yonlendirmeModu === 'extensions' && !empty($dahili)) {
+    // ═══ DAHİLİ YÖNLENDİRME ═══
+    // Direkt dahili numarasına yönlendir (TTS yok)
+    $response = [
+        'status' => 'success',
+        'result' => 'extensions',
+        'data'   => strval($dahili)
+    ];
+} else {
+    // ═══ SADECE TTS (YÖNLENDİRME YOK) ═══
+    // TTS okunur, sonra Netsantral panelindeki IVR akışına devam eder
+    $response = [
+        'status' => 'success',
+        'result' => '1',
+        'data'   => strval($anons)
+    ];
+}
 
 // Log: Webhook yanıtı
 @file_put_contents($logDir . '/netsantral_webhook.log',

@@ -1029,6 +1029,7 @@ INSERT IGNORE INTO ayarlar (anahtar, deger, tip) VALUES
 ('netsantral_sifre', '', 'text'),
 ('netsantral_domain', 'sip6.netsantral.com', 'text'),
 ('netsantral_aktif', '1', 'text'),
+('netsantral_yonlendirme_modu', 'dynamic', 'text'),
 ('openai_api_key', '', 'text'),
 ('ai_api_key', '', 'text');
 

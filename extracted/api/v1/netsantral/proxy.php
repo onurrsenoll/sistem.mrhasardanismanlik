@@ -211,24 +211,43 @@ if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
 $parsed = null;
 $apiBasarili = ($httpCode >= 200 && $httpCode < 300);
 
+// NETGSM HATA KODLARI - TÜM BİLİNEN KODLAR
+$netgsmHataKodlari = [
+    '20' => 'MESAJ METNİ BULUNAMIYOR',
+    '30' => 'GEÇERSİZ KULLANICI ADI VEYA ŞİFRE - NETSANTRAL AYARLARINI KONTROL EDİN',
+    '40' => 'YETERSİZ BAKİYE - NETGSM BAKİYENİZİ KONTROL EDİN',
+    '50' => 'NETGSM SUNUCU HATASI - BİRAZ SONRA TEKNİK DENEYIN',
+    '51' => 'TEKRARLANAN İSTEK - AYNI İŞLEM KISA SÜRE ÖNCE YAPILDI',
+    '60' => 'GEÇERSİZ SANTRAL NUMARASI - SANTRAL NUMARASINI KONTROL EDİN',
+    '70' => 'GEÇERSİZ PARAMETRE VEYA AKTİF ÇAĞRI YOK',
+    '80' => 'TANIMSIZ HATA',
+    '85' => 'MÜKERRER GÖNDERİM',
+    '100' => 'SİSTEM HATASI - NETGSM TEKNİK DESTEK İLE İLETİŞİME GEÇİN',
+    '101' => 'SİSTEMDE KAYITLI DEĞİL'
+];
+
 if ($response) {
-    // Önce JSON dene
+    // Önce JSON dene - Netsantral originate başarılı yanıt:
+    // {"unique_id":"sip3-xxx","caller_num":"102","called_num":"553xxx","status":"Success","message":"Successfully"}
     $parsed = json_decode($response, true);
-    if ($parsed === null) {
+    if ($parsed !== null && is_array($parsed)) {
+        // JSON YANITLARI - status alanına göre değerlendir
+        if (isset($parsed['status'])) {
+            if (strtolower($parsed['status']) === 'success') {
+                $apiBasarili = true;
+                $parsed['hata_mesaj'] = '';
+            } elseif (strtolower($parsed['status']) === 'error') {
+                $apiBasarili = false;
+                $hataKodu = $parsed['code'] ?? '';
+                $parsed['hata_kodu'] = $hataKodu;
+                $parsed['hata_mesaj'] = $netgsmHataKodlari[$hataKodu]
+                    ?? ($parsed['message'] ?? 'API HATASI');
+            }
+        }
+    } else {
         // JSON değilse düz metin olarak döndür
         $rawTrimmed = trim($response);
         $parsed = ['raw_response' => $rawTrimmed];
-
-        // NETGSM HATA KODLARI KONTROLÜ
-        $netgsmHataKodlari = [
-            '30' => 'GEÇERSİZ KULLANICI ADI VEYA ŞİFRE',
-            '40' => 'YETERSİZ BAKİYE',
-            '50' => 'SUNUCU HATASI',
-            '60' => 'GEÇERSİZ SANTRAL NUMARASI',
-            '70' => 'GEÇERSİZ PARAMETRE - ÇAĞRI AKTİF DEĞİL OLABİLİR',
-            '80' => 'TANIMSIZ HATA',
-            '100' => 'SİSTEM HATASI'
-        ];
 
         if (isset($netgsmHataKodlari[$rawTrimmed])) {
             $apiBasarili = false;
@@ -239,7 +258,7 @@ if ($response) {
             $parsed['hata_kodu'] = $rawTrimmed;
             $parsed['hata_mesaj'] = 'NETGSM HATA KODU: ' . $rawTrimmed;
         } else {
-            // DÜMDÜZ BAŞARILI YANIT (originate başarılı olduğunda bazen düz metin döner)
+            // DÜMDÜZ BAŞARILI YANIT
             $apiBasarili = true;
         }
     }
@@ -247,7 +266,6 @@ if ($response) {
 
 // HTTP 200 bile olsa boş yanıt - bazı komutlar için bu normaldir
 if ($apiBasarili && empty($response)) {
-    // originate ve hangup boş yanıt dönebilir ama bu başarı demek olabilir
     if (in_array($action, ['originate', 'hangup', 'muteaudio', 'xfer', 'atxfer'])) {
         $parsed = ['raw_response' => 'OK', 'hata_mesaj' => ''];
         $apiBasarili = true;
@@ -257,10 +275,33 @@ if ($apiBasarili && empty($response)) {
     }
 }
 
+// HTTP DURUM KODU KONTROLÜ
+if ($httpCode === 0) {
+    $apiBasarili = false;
+    $parsed = $parsed ?? [];
+    $parsed['hata_mesaj'] = 'NETSANTRAL SUNUCUSUNA BAĞLANILAMADI - İNTERNET BAĞLANTISI VEYA DNS HATASI';
+} elseif ($httpCode === 401 || $httpCode === 403) {
+    $apiBasarili = false;
+    $parsed = $parsed ?? [];
+    $parsed['hata_mesaj'] = 'YETKİLENDİRME HATASI (HTTP ' . $httpCode . ') - KULLANICI ADI VE ŞİFREYİ KONTROL EDİN';
+} elseif ($httpCode === 404) {
+    $apiBasarili = false;
+    $parsed = $parsed ?? [];
+    $parsed['hata_mesaj'] = 'API ENDPOINT BULUNAMADI (HTTP 404) - SANTRAL NUMARASINI KONTROL EDİN';
+} elseif ($httpCode >= 500) {
+    $apiBasarili = false;
+    $parsed = $parsed ?? [];
+    $parsed['hata_mesaj'] = 'NETGSM SUNUCU HATASI (HTTP ' . $httpCode . ') - BİRAZ SONRA TEKRAR DENEYİN';
+}
+
 // BAŞARILI YANIT
 json_success([
     'action' => $action,
     'http_code' => $httpCode,
     'response' => $parsed,
-    'success_api' => $apiBasarili
+    'success_api' => $apiBasarili,
+    'debug' => [
+        'api_url' => preg_replace('/password=[^&]+/', 'password=***', $fullUrl),
+        'santral_no' => $santralNo
+    ]
 ]);
