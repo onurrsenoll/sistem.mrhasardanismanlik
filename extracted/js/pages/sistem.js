@@ -1653,10 +1653,15 @@ const NetsantralTab = () => {
     // Önce ayarları kaydet
     await api.ayarlarGuncelle(ayarlar);
 
+    // GLOBAL DEĞİŞKENLERİ GÜNCELLE (KAYIT SONRASI HEMEN AKTİF OLSUN)
+    MR._netsantralDahili = ayarlar.netsantral_dahili || '';
+    MR._netsantralAktif = ayarlar.netsantral_aktif === '1';
+    MR._netsantralSantralNo = ayarlar.netsantral_santral_no || '';
+
     // Sonra test et
     const r = await api.netsantralTest();
     if (r?.success && r.data?.success_api) {
-      setTestResult({success: true, data: r.data?.response});
+      setTestResult({success: true, data: r.data?.response, debug: r.data?.debug});
       setMesaj({type: 'success', text: 'NETSANTRAL BAĞLANTISI BAŞARILI!'});
 
       // Kuyruk bilgisini kaydet
@@ -1666,14 +1671,15 @@ const NetsantralTab = () => {
     } else {
       // NETGSM HATA KODU KONTROLÜ
       const resp = r?.data?.response || {};
+      const debug = r?.data?.debug || {};
       const hataMesaj = resp.hata_mesaj || resp.raw_response || r?.error || 'BAĞLANTI HATASI';
       const hataKodu = resp.hata_kodu || '';
       const errText = hataKodu ? `HATA KODU: ${hataKodu} - ${hataMesaj}` : hataMesaj;
-      setTestResult({success: false, error: errText});
+      setTestResult({success: false, error: errText, debug: debug, httpCode: r?.data?.http_code});
       setMesaj({type: 'error', text: 'BAĞLANTI HATASI: ' + errText});
     }
     setTesting(false);
-    setTimeout(() => setMesaj({type: '', text: ''}), 6000);
+    setTimeout(() => setMesaj({type: '', text: ''}), 8000);
   };
 
   /* WEBHOOK DURUM TESTİ */
@@ -1873,8 +1879,33 @@ const NetsantralTab = () => {
                     </span>
                   </div>
                   {testResult.error && (
-                    <div style={{fontSize: 10, color: C.danger, wordBreak: 'break-all'}}>
+                    <div style={{fontSize: 10, color: C.danger, wordBreak: 'break-all', marginBottom: 8}}>
                       {testResult.error}
+                    </div>
+                  )}
+                  {/* DEBUG BİLGİLERİ */}
+                  {testResult.debug && (
+                    <div style={{
+                      marginTop: 6, padding: '8px 10px', borderRadius: 6,
+                      background: `${C.bg}88`, fontSize: 9, fontFamily: 'monospace',
+                      color: C.textMuted, lineHeight: 1.8
+                    }}>
+                      <div style={{fontWeight: 700, color: C.textSec, marginBottom: 4, fontSize: 10}}>DETAY BİLGİ</div>
+                      {testResult.debug.api_url && <div>API URL: {testResult.debug.api_url}</div>}
+                      {testResult.debug.santral_no_api && <div>SANTRAL NO (API): {testResult.debug.santral_no_api}</div>}
+                      {testResult.debug.username_api && <div>KULLANICI (API): {testResult.debug.username_api}</div>}
+                      {testResult.httpCode !== undefined && <div>HTTP KOD: {testResult.httpCode}</div>}
+                      {testResult.debug.sure && <div>SÜRE: {testResult.debug.sure}</div>}
+                      {testResult.debug.curl_error && <div style={{color: C.danger}}>CURL: {testResult.debug.curl_error}</div>}
+                    </div>
+                  )}
+                  {/* BAŞARILI İSE KUYRUK BİLGİSİ */}
+                  {testResult.success && testResult.data && (
+                    <div style={{
+                      marginTop: 6, padding: '8px 10px', borderRadius: 6,
+                      background: `${C.success}10`, fontSize: 10, color: C.success
+                    }}>
+                      NETGSM BAĞLANTISI AKTİF - GELEN/GİDEN ARAMA HAZIR
                     </div>
                   )}
                 </div>

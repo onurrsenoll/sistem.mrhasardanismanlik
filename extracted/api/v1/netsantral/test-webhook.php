@@ -85,27 +85,51 @@ if ($mode === 'status') {
         curl_setopt_array($ch, [
             CURLOPT_URL => $testUrl,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 10,
-            CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_FOLLOWLOCATION => true
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_CONNECTTIMEOUT => 15,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS => 3,
+            CURLOPT_ENCODING => '',
+            CURLOPT_HTTPHEADER => [
+                'Accept: application/json, text/plain, */*',
+                'User-Agent: MR-Hasar-CRM/1.0'
+            ]
         ]);
         $testResp = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlErr = curl_error($ch);
+        $curlErrno = curl_errno($ch);
+        $totalTime = round(curl_getinfo($ch, CURLINFO_TOTAL_TIME), 2);
         curl_close($ch);
 
         if ($curlErr) {
-            $apiTest = ['durum' => 'BAĞLANTI_HATASI', 'hata' => $curlErr];
+            $turkceHata = $curlErr;
+            if (stripos($curlErr, 'SSL') !== false) $turkceHata = 'SSL SERTİFİKA HATASI';
+            elseif (stripos($curlErr, 'resolve') !== false) $turkceHata = 'DNS ÇÖZÜMLEME HATASI - NETGSM SUNUCUSU BULUNAMIYOR';
+            elseif (stripos($curlErr, 'timeout') !== false) $turkceHata = 'ZAMAN AŞIMI - NETGSM YANIT VERMİYOR';
+            elseif (stripos($curlErr, 'protocol') !== false) $turkceHata = 'HTTP PROTOKOL HATASI';
+            $apiTest = ['durum' => 'BAĞLANTI_HATASI', 'hata' => $turkceHata, 'curl_hata' => $curlErr, 'curl_errno' => $curlErrno, 'sure' => $totalTime . 's'];
         } elseif ($httpCode === 200) {
             $trimmed = trim($testResp);
-            $netgsmHatalar = ['30' => 'GEÇERSİZ KULLANICI/ŞİFRE', '60' => 'GEÇERSİZ SANTRAL NO', '100' => 'SİSTEM HATASI'];
+            $netgsmHatalar = [
+                '30' => 'GEÇERSİZ KULLANICI ADI VEYA ŞİFRE - NETSANTRAL AYARLARINI KONTROL EDİN',
+                '60' => 'GEÇERSİZ SANTRAL NUMARASI - SANTRAL NUMARASINI KONTROL EDİN',
+                '70' => 'GEÇERSİZ PARAMETRE',
+                '100' => 'NETGSM SİSTEM HATASI',
+                '101' => 'SİSTEMDE KAYITLI DEĞİL - SANTRAL NUMARASINI VE KULLANICI ADINI KONTROL EDİN'
+            ];
             if (isset($netgsmHatalar[$trimmed])) {
-                $apiTest = ['durum' => 'API_HATASI', 'hata_kodu' => $trimmed, 'hata' => $netgsmHatalar[$trimmed]];
+                $apiTest = ['durum' => 'API_HATASI', 'hata_kodu' => $trimmed, 'hata' => $netgsmHatalar[$trimmed], 'sure' => $totalTime . 's'];
             } else {
-                $apiTest = ['durum' => 'BAĞLI', 'http_kodu' => $httpCode, 'yanit' => substr($testResp, 0, 200)];
+                $apiTest = ['durum' => 'BAĞLI', 'http_kodu' => $httpCode, 'yanit' => substr($testResp, 0, 200), 'sure' => $totalTime . 's'];
             }
+        } elseif ($httpCode === 0) {
+            $apiTest = ['durum' => 'BAĞLANTI_HATASI', 'hata' => 'SUNUCUYA BAĞLANILAMADI', 'http_kodu' => 0, 'sure' => $totalTime . 's'];
         } else {
-            $apiTest = ['durum' => 'HTTP_HATASI', 'http_kodu' => $httpCode, 'yanit' => substr($testResp, 0, 200)];
+            $apiTest = ['durum' => 'HTTP_HATASI', 'http_kodu' => $httpCode, 'yanit' => substr($testResp, 0, 200), 'sure' => $totalTime . 's'];
         }
     } else {
         $apiTest = ['durum' => 'AYARLAR_EKSİK', 'mesaj' => 'Santral no, kullanıcı veya şifre boş'];
@@ -168,9 +192,12 @@ if ($mode === 'simulate') {
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => $postData,
-        CURLOPT_TIMEOUT => 10,
+        CURLOPT_TIMEOUT => 15,
+        CURLOPT_CONNECTTIMEOUT => 10,
         CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-        CURLOPT_SSL_VERIFYPEER => false
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1
     ]);
     $resp = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

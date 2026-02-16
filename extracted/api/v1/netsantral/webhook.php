@@ -107,7 +107,7 @@ try {
 } catch (Exception $e) {}
 
 // ══════════ POST VERİLERİNİ OKU ══════════
-// Netsantral hem JSON hem form-encoded gönderebilir
+// Netsantral hem JSON hem form-encoded hem de URL-encoded gönderebilir
 $rawInput = file_get_contents('php://input');
 $body = json_decode($rawInput, true);
 
@@ -116,13 +116,18 @@ if (!is_array($body) || empty($body)) {
     $body = $_POST;
 }
 
-// GET parametreleri de destekle (yedek)
-$arayan_no   = trim($body['arayan_no']  ?? ($_GET['arayan_no']  ?? ''));
-$aranan_no   = trim($body['aranan_no']  ?? ($_GET['aranan_no']  ?? ''));
-$santral_no  = trim($body['santral_no'] ?? ($_GET['santral_no'] ?? ''));
-$arama_id    = trim($body['arama_id']   ?? ($_GET['arama_id']   ?? ''));
-$tus_bilgisi = trim($body['tus_bilgisi'] ?? ($_GET['tus_bilgisi'] ?? ''));
-$api_key     = trim($body['api_key']    ?? ($_GET['api_key']    ?? ''));
+// Hala boşsa URL-encoded parse et
+if (empty($body) && !empty($rawInput)) {
+    parse_str($rawInput, $body);
+}
+
+// GET parametreleri de destekle (yedek - NetGSM bazen GET ile gönderir)
+$arayan_no   = trim($body['arayan_no']  ?? ($body['caller']    ?? ($_GET['arayan_no']  ?? ($_GET['caller']   ?? ''))));
+$aranan_no   = trim($body['aranan_no']  ?? ($body['called']    ?? ($_GET['aranan_no']  ?? ($_GET['called']   ?? ''))));
+$santral_no  = trim($body['santral_no'] ?? ($body['santral']   ?? ($_GET['santral_no'] ?? ($_GET['santral']  ?? ''))));
+$arama_id    = trim($body['arama_id']   ?? ($body['callid']    ?? ($_GET['arama_id']   ?? ($_GET['callid']   ?? ''))));
+$tus_bilgisi = trim($body['tus_bilgisi'] ?? ($body['dtmf']     ?? ($_GET['tus_bilgisi'] ?? ($_GET['dtmf']    ?? ''))));
+$api_key     = trim($body['api_key']    ?? ($body['apikey']    ?? ($_GET['api_key']    ?? ($_GET['apikey']   ?? ''))));
 
 // TEMİZLE
 $arayan_no  = preg_replace('/[^0-9+]/', '', $arayan_no);
@@ -160,8 +165,22 @@ try {
 } catch (Exception $e) {}
 
 // ══════════ API KEY DOĞRULAMA ══════════
+// API KEY: ayarlar tablosundan veya sabit değerden
 $VALID_API_KEY = 'mr_hasar_2026';
+try {
+    $stmt = $db->query("SELECT deger FROM ayarlar WHERE anahtar = 'netsantral_api_key' LIMIT 1");
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row && !empty($row['deger'])) {
+        $VALID_API_KEY = $row['deger'];
+    }
+} catch (Exception $e) {}
+
 if (empty($api_key) || $api_key !== $VALID_API_KEY) {
+    // LOG: Hatalı API key denemesi
+    @file_put_contents($logDir . '/netsantral_webhook.log',
+        "[HATA] API KEY GEÇERSİZ: gelen='{$api_key}' beklenen='{$VALID_API_KEY}' | IP=" . ($_SERVER['REMOTE_ADDR'] ?? '') . "\n---\n",
+        FILE_APPEND | LOCK_EX
+    );
     echo json_encode([
         'status' => 'error',
         'result' => 'e',
@@ -270,15 +289,22 @@ try {
 $redirectHedef = $dahili; // Varsayılan: ayarlardaki dahili
 
 // ══════════ TTS ANONS METNİ OLUŞTUR ══════════
+// NetGSM TTS motoru Türkçe karakterleri destekler ancak bazı karakterler sorun çıkarabilir
+// Güvenli karakter seti kullanılıyor
 $anons = 'Hosgeldiniz, cagrınız yonlendiriliyor.';
 if ($arayanAdi) {
-    // Türkçe karakterleri TTS uyumlu hale getir
+    // Türkçe karakterleri TTS uyumlu hale getir (NetGSM TTS ASCII bekleyebilir)
     $ttsAd = str_replace(
-        ['ı', 'İ', 'ö', 'Ö', 'ü', 'Ü', 'ş', 'Ş', 'ç', 'Ç', 'ğ', 'Ğ'],
-        ['i', 'I', 'o', 'O', 'u', 'U', 's', 'S', 'c', 'C', 'g', 'G'],
+        ['ı', 'İ', 'ö', 'Ö', 'ü', 'Ü', 'ş', 'Ş', 'ç', 'Ç', 'ğ', 'Ğ', 'â', 'Â', 'î', 'Î', 'û', 'Û'],
+        ['i', 'I', 'o', 'O', 'u', 'U', 's', 'S', 'c', 'C', 'g', 'G', 'a', 'A', 'i', 'I', 'u', 'U'],
         $arayanAdi
     );
-    $anons = 'Hosgeldiniz ' . $ttsAd . ', cagrınız yonlendiriliyor.';
+    // Özel karakterleri temizle (sadece harf, rakam ve boşluk)
+    $ttsAd = preg_replace('/[^a-zA-Z0-9\s]/', '', $ttsAd);
+    $ttsAd = trim(preg_replace('/\s+/', ' ', $ttsAd));
+    if (!empty($ttsAd)) {
+        $anons = 'Hosgeldiniz ' . $ttsAd . ', cagrınız yonlendiriliyor.';
+    }
 }
 
 // Max 750 karakter (Netsantral limiti)

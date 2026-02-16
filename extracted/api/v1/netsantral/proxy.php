@@ -168,17 +168,30 @@ switch ($action) {
 // HTTP İSTEĞİ GÖNDER
 $fullUrl = $apiUrl . '?' . http_build_query($queryParams);
 
+// ═══ cURL OPSİYONLARI ═══
+// NOT: cPanel/shared hosting ortamlarında SSL doğrulama ve HTTP/2 protokolü sorun çıkarabilir
+// Bu yüzden SSL doğrulama kapatılmış ve HTTP/1.1 zorlanmıştır
 $ch = curl_init();
 curl_setopt_array($ch, [
     CURLOPT_URL => $fullUrl,
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT => 15,
-    CURLOPT_CONNECTTIMEOUT => 10,
-    CURLOPT_SSL_VERIFYPEER => true,
+    CURLOPT_TIMEOUT => 20,
+    CURLOPT_CONNECTTIMEOUT => 15,
+    // SSL - cPanel uyumluluğu için doğrulama kapalı
+    CURLOPT_SSL_VERIFYPEER => false,
+    CURLOPT_SSL_VERIFYHOST => 0,
+    // HTTP/1.1 zorla - HTTP/2 protokol hataları önlenir
+    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
     CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_MAXREDIRS => 3,
+    // ENCODING - gzip/deflate desteği
+    CURLOPT_ENCODING => '',
+    // DNS CACHE - tekrarlı istekler hızlanır
+    CURLOPT_DNS_CACHE_TIMEOUT => 300,
     CURLOPT_HTTPHEADER => [
         'Accept: application/json, text/plain, */*',
-        'User-Agent: MR-Hasar-CRM/1.0'
+        'User-Agent: MR-Hasar-CRM/1.0',
+        'Cache-Control: no-cache'
     ]
 ]);
 
@@ -186,6 +199,8 @@ $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError = curl_error($ch);
 $curlErrno = curl_errno($ch);
+$effectiveUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+$totalTime = round(curl_getinfo($ch, CURLINFO_TOTAL_TIME), 2);
 curl_close($ch);
 
 if ($curlError) {
@@ -193,7 +208,48 @@ if ($curlError) {
     try {
         log_action($user['id'], 'netsantral_' . $action . '_hata', "CURL HATA: {$curlError} (errno: {$curlErrno})", 'netsantral');
     } catch (Exception $e) {}
-    json_error('NETSANTRAL BAĞLANTI HATASI: ' . $curlError, 502);
+
+    // DOSYA LOG
+    $logDir = __DIR__ . '/../../../data';
+    if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
+    @file_put_contents($logDir . '/netsantral_proxy.log',
+        date('Y-m-d H:i:s') . " | {$action} | CURL_HATA | errno={$curlErrno} | {$curlError}\n",
+        FILE_APPEND | LOCK_EX
+    );
+
+    // HATA MESAJLARINI TÜRKÇE'YE ÇEVİR
+    $turkceHata = $curlError;
+    if (stripos($curlError, 'SSL') !== false || stripos($curlError, 'certificate') !== false) {
+        $turkceHata = 'SSL SERTİFİKA HATASI - SUNUCU BAĞLANTISI GÜVENLİ KURULAMADI';
+    } elseif (stripos($curlError, 'resolve') !== false || stripos($curlError, 'DNS') !== false) {
+        $turkceHata = 'DNS ÇÖZÜMLEME HATASI - NETGSM SUNUCUSU BULUNAMIYOR';
+    } elseif (stripos($curlError, 'timeout') !== false || stripos($curlError, 'timed out') !== false) {
+        $turkceHata = 'ZAMAN AŞIMI - NETGSM SUNUCUSU YANITLAMIYOR';
+    } elseif (stripos($curlError, 'connection') !== false || stripos($curlError, 'connect') !== false) {
+        $turkceHata = 'BAĞLANTI HATASI - NETGSM SUNUCUSUNA ERİŞİLEMİYOR';
+    } elseif (stripos($curlError, 'protocol') !== false || stripos($curlError, 'HTTP') !== false) {
+        $turkceHata = 'PROTOKOL HATASI - HTTP İSTEK FORMATINDA SORUN VAR';
+    }
+
+    json_success([
+        'action' => $action,
+        'http_code' => 0,
+        'response' => [
+            'hata_mesaj' => $turkceHata,
+            'hata_kodu' => 'CURL_' . $curlErrno
+        ],
+        'success_api' => false,
+        'debug' => [
+            'api_url' => preg_replace('/password=[^&]+/', 'password=***', $fullUrl),
+            'santral_no' => $santralNo,
+            'santral_no_api' => $santralNoClean,
+            'username_api' => $usernameClean,
+            'curl_errno' => $curlErrno,
+            'curl_error' => $curlError,
+            'sure' => $totalTime . 's'
+        ]
+    ]);
+    exit;
 }
 
 // LOGLAMA - TÜM AKSİYONLAR İÇİN
@@ -311,6 +367,7 @@ json_success([
         'api_url' => preg_replace('/password=[^&]+/', 'password=***', $fullUrl),
         'santral_no' => $santralNo,
         'santral_no_api' => $santralNoClean,
-        'username_api' => $usernameClean
+        'username_api' => $usernameClean,
+        'sure' => $totalTime . 's'
     ]
 ]);
