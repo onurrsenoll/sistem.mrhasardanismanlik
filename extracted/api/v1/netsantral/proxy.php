@@ -168,67 +168,145 @@ switch ($action) {
 // HTTP İSTEĞİ GÖNDER
 $fullUrl = $apiUrl . '?' . http_build_query($queryParams);
 
-// ═══ cURL OPSİYONLARI ═══
-// NOT: cPanel/shared hosting ortamlarında SSL doğrulama ve HTTP/2 protokolü sorun çıkarabilir
-// Bu yüzden SSL doğrulama kapatılmış ve HTTP/1.1 zorlanmıştır
-$ch = curl_init();
-curl_setopt_array($ch, [
-    CURLOPT_URL => $fullUrl,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT => 20,
-    CURLOPT_CONNECTTIMEOUT => 15,
-    // SSL - cPanel uyumluluğu için doğrulama kapalı
-    CURLOPT_SSL_VERIFYPEER => false,
-    CURLOPT_SSL_VERIFYHOST => 0,
-    // HTTP/1.1 zorla - HTTP/2 protokol hataları önlenir
-    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_MAXREDIRS => 3,
-    // ENCODING - gzip/deflate desteği
-    CURLOPT_ENCODING => '',
-    // DNS CACHE - tekrarlı istekler hızlanır
-    CURLOPT_DNS_CACHE_TIMEOUT => 300,
-    CURLOPT_HTTPHEADER => [
-        'Accept: application/json, text/plain, */*',
-        'User-Agent: MR-Hasar-CRM/1.0',
-        'Cache-Control: no-cache'
-    ]
-]);
+// ═══ cURL BAĞLANTI FONKSİYONU (YENİDEN DENEME DESTEKLİ) ═══
+function netsantral_curl_exec($url, $attempt = 1) {
+    $ch = curl_init();
 
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlError = curl_error($ch);
-$curlErrno = curl_errno($ch);
-$effectiveUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
-$totalTime = round(curl_getinfo($ch, CURLINFO_TOTAL_TIME), 2);
-curl_close($ch);
+    // TEMEL CURL OPSİYONLARI
+    $opts = [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 25,
+        CURLOPT_CONNECTTIMEOUT => 15,
+        // SSL - cPanel uyumluluğu için doğrulama kapalı
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => 0,
+        // IPv4 ZORLA - cPanel/shared hosting ortamlarında IPv6 protokol hatası önlenir
+        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+        // HTTP/1.1 zorla - HTTP/2 protokol hataları önlenir
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_MAXREDIRS => 3,
+        // ENCODING - gzip/deflate desteği
+        CURLOPT_ENCODING => '',
+        // DNS CACHE - tekrarlı istekler hızlanır
+        CURLOPT_DNS_CACHE_TIMEOUT => 300,
+        CURLOPT_HTTPHEADER => [
+            'Accept: application/json, text/plain, */*',
+            'User-Agent: MR-Hasar-CRM/1.0 (PHP/' . PHP_VERSION . ')',
+            'Cache-Control: no-cache',
+            'Connection: close'
+        ],
+        // FRESH CONNECT - eski bağlantı sorunlarını önler
+        CURLOPT_FRESH_CONNECT => ($attempt > 1),
+        CURLOPT_FORBID_REUSE => ($attempt > 1),
+    ];
+
+    // 2. DENEME: HTTP versiyon kısıtlamasını kaldır
+    if ($attempt === 2) {
+        $opts[CURLOPT_HTTP_VERSION] = CURL_HTTP_VERSION_NONE;
+    }
+
+    // 3. DENEME: TLS ayarlarını gevşet
+    if ($attempt >= 3) {
+        $opts[CURLOPT_HTTP_VERSION] = CURL_HTTP_VERSION_NONE;
+        if (defined('CURLOPT_SSL_OPTIONS')) {
+            $opts[CURLOPT_SSL_OPTIONS] = CURLSSLOPT_ALLOW_BEAST | CURLSSLOPT_NO_REVOKE;
+        }
+        $opts[CURLOPT_SSLVERSION] = CURL_SSLVERSION_TLSv1;
+    }
+
+    curl_setopt_array($ch, $opts);
+
+    $response = curl_exec($ch);
+    $info = [
+        'http_code'     => curl_getinfo($ch, CURLINFO_HTTP_CODE),
+        'curl_error'    => curl_error($ch),
+        'curl_errno'    => curl_errno($ch),
+        'effective_url' => curl_getinfo($ch, CURLINFO_EFFECTIVE_URL),
+        'total_time'    => round(curl_getinfo($ch, CURLINFO_TOTAL_TIME), 2),
+        'primary_ip'    => curl_getinfo($ch, CURLINFO_PRIMARY_IP),
+        'ssl_verify'    => curl_getinfo($ch, CURLINFO_SSL_VERIFYRESULT),
+        'attempt'       => $attempt
+    ];
+    curl_close($ch);
+
+    return ['response' => $response, 'info' => $info];
+}
+
+// ═══ İSTEK GÖNDER (HATADA 3 DENEME) ═══
+$maxAttempts = 3;
+$result = null;
+$allAttempts = [];
+
+for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+    $result = netsantral_curl_exec($fullUrl, $attempt);
+    $allAttempts[] = [
+        'deneme' => $attempt,
+        'errno' => $result['info']['curl_errno'],
+        'error' => $result['info']['curl_error'],
+        'http_code' => $result['info']['http_code'],
+        'sure' => $result['info']['total_time'] . 's',
+        'ip' => $result['info']['primary_ip']
+    ];
+
+    // BAŞARILI VEYA API SEVİYESİNDE HATA (YENİDEN DENEMEYE GEREK YOK)
+    if (empty($result['info']['curl_error'])) {
+        break;
+    }
+
+    // SON DENEME DEĞİLSE KISA BEKLEYİP TEKRAR DENE
+    if ($attempt < $maxAttempts) {
+        usleep(500000); // 500ms
+    }
+}
+
+$response = $result['response'];
+$httpCode = $result['info']['http_code'];
+$curlError = $result['info']['curl_error'];
+$curlErrno = $result['info']['curl_errno'];
+$totalTime = $result['info']['total_time'];
+$primaryIp = $result['info']['primary_ip'];
+$totalAttempts = count($allAttempts);
+
+// LOG DOSYASI İÇİN DİZİN
+$logDir = __DIR__ . '/../../../data';
+if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
 
 if ($curlError) {
     // LOGLAMA
     try {
-        log_action($user['id'], 'netsantral_' . $action . '_hata', "CURL HATA: {$curlError} (errno: {$curlErrno})", 'netsantral');
+        log_action($user['id'], 'netsantral_' . $action . '_hata', "CURL HATA: {$curlError} (errno: {$curlErrno}, deneme: {$totalAttempts})", 'netsantral');
     } catch (Exception $e) {}
 
     // DOSYA LOG
-    $logDir = __DIR__ . '/../../../data';
-    if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
     @file_put_contents($logDir . '/netsantral_proxy.log',
-        date('Y-m-d H:i:s') . " | {$action} | CURL_HATA | errno={$curlErrno} | {$curlError}\n",
+        date('Y-m-d H:i:s') . " | {$action} | CURL_HATA | errno={$curlErrno} | deneme={$totalAttempts} | ip={$primaryIp} | {$curlError}\n",
         FILE_APPEND | LOCK_EX
     );
 
-    // HATA MESAJLARINI TÜRKÇE'YE ÇEVİR
+    // HATA MESAJLARINI TÜRKÇE'YE ÇEVİR VE DETAY EKLE
     $turkceHata = $curlError;
+    $cozumOnerisi = '';
+
     if (stripos($curlError, 'SSL') !== false || stripos($curlError, 'certificate') !== false) {
         $turkceHata = 'SSL SERTİFİKA HATASI - SUNUCU BAĞLANTISI GÜVENLİ KURULAMADI';
+        $cozumOnerisi = 'SUNUCUNUZUN SSL SERTİFİKASI VE PHP CURL MODÜLÜ KONTROL EDİLMELİ';
     } elseif (stripos($curlError, 'resolve') !== false || stripos($curlError, 'DNS') !== false) {
-        $turkceHata = 'DNS ÇÖZÜMLEME HATASI - NETGSM SUNUCUSU BULUNAMIYOR';
+        $turkceHata = 'DNS ÇÖZÜMLEME HATASI - NETGSM SUNUCUSU (crmsntrl.netgsm.com.tr) BULUNAMIYOR';
+        $cozumOnerisi = 'SUNUCUNUZUN DNS AYARLARINI KONTROL EDİN VEYA HOSTİNG FİRMANIZLA İLETİŞİME GEÇİN';
     } elseif (stripos($curlError, 'timeout') !== false || stripos($curlError, 'timed out') !== false) {
         $turkceHata = 'ZAMAN AŞIMI - NETGSM SUNUCUSU YANITLAMIYOR';
-    } elseif (stripos($curlError, 'connection') !== false || stripos($curlError, 'connect') !== false) {
+        $cozumOnerisi = 'SUNUCUNUZDAN DIS BAĞLANTI İZNİ OLDUĞUNU VE FIREWALL AYARLARINI KONTROL EDİN';
+    } elseif (stripos($curlError, 'connection') !== false || stripos($curlError, 'connect') !== false || stripos($curlError, 'refused') !== false) {
         $turkceHata = 'BAĞLANTI HATASI - NETGSM SUNUCUSUNA ERİŞİLEMİYOR';
-    } elseif (stripos($curlError, 'protocol') !== false || stripos($curlError, 'HTTP') !== false) {
-        $turkceHata = 'PROTOKOL HATASI - HTTP İSTEK FORMATINDA SORUN VAR';
+        $cozumOnerisi = 'SUNUCUNUZUN HTTPS (443) PORTU ÜZERİNDEN DIS BAĞLANTI YAPIP YAPAMADIĞINI KONTROL EDİN';
+    } elseif (stripos($curlError, 'protocol') !== false || stripos($curlError, 'HTTP') !== false || $curlErrno == 1 || $curlErrno == 16) {
+        $turkceHata = 'HTTP PROTOKOL HATASI - SUNUCUNUZUN CURL MODÜLÜ NETGSM İLE UYUMSUZ OLABİLİR';
+        $cozumOnerisi = 'cPanel PHP SÜRÜMÜNÜ 8.1+ YAPIN VE CURL MODÜLÜNÜ KONTROL EDİN. VEYA HOSTİNG FİRMANIZDAN 443 PORTUNA DIS BAGLANTI İZNİ İSTEYİN.';
+    } elseif ($curlErrno == 7) {
+        $turkceHata = 'BAĞLANTI REDDEDİLDİ - NETGSM SUNUCUSU ERİŞİLEMİYOR';
+        $cozumOnerisi = 'FIREWALL KURALLARINI VE SUNUCU DIS BAĞLANTI AYARLARINI KONTROL EDİN';
     }
 
     json_success([
@@ -236,7 +314,9 @@ if ($curlError) {
         'http_code' => 0,
         'response' => [
             'hata_mesaj' => $turkceHata,
-            'hata_kodu' => 'CURL_' . $curlErrno
+            'hata_kodu' => 'CURL_' . $curlErrno,
+            'cozum_onerisi' => $cozumOnerisi,
+            'deneme_sayisi' => $totalAttempts
         ],
         'success_api' => false,
         'debug' => [
@@ -246,7 +326,11 @@ if ($curlError) {
             'username_api' => $usernameClean,
             'curl_errno' => $curlErrno,
             'curl_error' => $curlError,
-            'sure' => $totalTime . 's'
+            'primary_ip' => $primaryIp,
+            'sure' => $totalTime . 's',
+            'denemeler' => $allAttempts,
+            'php_version' => PHP_VERSION,
+            'curl_version' => function_exists('curl_version') ? curl_version()['version'] : 'BİLİNMİYOR'
         ]
     ]);
     exit;
@@ -258,15 +342,15 @@ try {
     $logDetay .= " | dahili=" . ($queryParams['dahili'] ?? 'YOK');
     if (isset($queryParams['hedef'])) $logDetay .= " | hedef=" . $queryParams['hedef'];
     $logDetay .= " | http={$httpCode}";
+    $logDetay .= " | ip={$primaryIp}";
+    $logDetay .= " | deneme={$totalAttempts}";
     if ($response) $logDetay .= " | yanit=" . substr($response, 0, 300);
     log_action($user['id'], 'netsantral_' . $action, $logDetay, 'netsantral');
 } catch (Exception $e) {}
 
 // DOSYA LOG (hata ayıklama için)
-$logDir = __DIR__ . '/../../../data';
-if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
 @file_put_contents($logDir . '/netsantral_proxy.log',
-    date('Y-m-d H:i:s') . " | {$action} | http={$httpCode} | yanit=" . substr($response ?? '', 0, 200) . "\n",
+    date('Y-m-d H:i:s') . " | {$action} | http={$httpCode} | ip={$primaryIp} | deneme={$totalAttempts} | yanit=" . substr($response ?? '', 0, 200) . "\n",
     FILE_APPEND | LOCK_EX
 );
 
@@ -368,6 +452,8 @@ json_success([
         'santral_no' => $santralNo,
         'santral_no_api' => $santralNoClean,
         'username_api' => $usernameClean,
-        'sure' => $totalTime . 's'
+        'primary_ip' => $primaryIp,
+        'sure' => $totalTime . 's',
+        'deneme' => $totalAttempts
     ]
 ]);

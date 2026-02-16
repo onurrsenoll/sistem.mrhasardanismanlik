@@ -1593,6 +1593,8 @@ const NetsantralTab = () => {
   const [webhookTest, setWebhookTest] = useState(null);
   const [webhookTesting, setWebhookTesting] = useState(false);
   const [webhookLog, setWebhookLog] = useState(null);
+  const [diagnoseResult, setDiagnoseResult] = useState(null);
+  const [diagnosing, setDiagnosing] = useState(false);
 
   /* AYARLAR YÜKLE */
   useEffect(() => {
@@ -1674,8 +1676,13 @@ const NetsantralTab = () => {
       const debug = r?.data?.debug || {};
       const hataMesaj = resp.hata_mesaj || resp.raw_response || r?.error || 'BAĞLANTI HATASI';
       const hataKodu = resp.hata_kodu || '';
+      const cozumOnerisi = resp.cozum_onerisi || '';
+      const denemeSayisi = resp.deneme_sayisi || 0;
       const errText = hataKodu ? `HATA KODU: ${hataKodu} - ${hataMesaj}` : hataMesaj;
-      setTestResult({success: false, error: errText, debug: debug, httpCode: r?.data?.http_code});
+      if (denemeSayisi > 1) {
+        debug._denemeSayisi = denemeSayisi + ' FARKLI AYARLA DENENDİ';
+      }
+      setTestResult({success: false, error: errText, debug: debug, httpCode: r?.data?.http_code, cozumOnerisi: cozumOnerisi});
       setMesaj({type: 'error', text: 'BAĞLANTI HATASI: ' + errText});
     }
     setTesting(false);
@@ -1693,6 +1700,19 @@ const NetsantralTab = () => {
       setWebhookTest({hata: 'BAĞLANTI HATASI'});
     }
     setWebhookTesting(false);
+  };
+
+  /* ADIM ADIM TANILAMA */
+  const runDiagnose = async () => {
+    setDiagnosing(true);
+    setDiagnoseResult(null);
+    try {
+      const r = await api.req('/netsantral/test-webhook.php?mode=diagnose');
+      setDiagnoseResult(r?.data || r);
+    } catch(e) {
+      setDiagnoseResult({hata: 'TANILAMA BAŞLATILAMADI'});
+    }
+    setDiagnosing(false);
   };
 
   /* WEBHOOK LOG GÖSTERİM */
@@ -1883,6 +1903,26 @@ const NetsantralTab = () => {
                       {testResult.error}
                     </div>
                   )}
+                  {/* ÇÖZÜM ÖNERİSİ */}
+                  {!testResult.success && testResult.cozumOnerisi && (
+                    <div style={{
+                      marginTop: 4, marginBottom: 8, padding: '8px 10px', borderRadius: 6,
+                      background: `${C.warning}15`, border: `1px solid ${C.warning}33`,
+                      fontSize: 10, color: C.warning
+                    }}>
+                      <strong>ÇÖZÜM:</strong> {testResult.cozumOnerisi}
+                    </div>
+                  )}
+                  {/* HATA DETAY - TANILAMA BUTONU */}
+                  {!testResult.success && (
+                    <button onClick={runDiagnose} disabled={diagnosing} style={{
+                      ...S.btn, width: '100%', justifyContent: 'center', marginBottom: 8,
+                      background: C.warning, color: '#000', fontSize: 10, padding: '8px 12px'
+                    }}>
+                      <LIcon name="Search" size={12} color="#000"/>
+                      {diagnosing ? 'TANILAMA YAPILIYOR...' : 'ADIM ADIM TANILAMA BAŞLAT'}
+                    </button>
+                  )}
                   {/* DEBUG BİLGİLERİ */}
                   {testResult.debug && (
                     <div style={{
@@ -1895,8 +1935,50 @@ const NetsantralTab = () => {
                       {testResult.debug.santral_no_api && <div>SANTRAL NO (API): {testResult.debug.santral_no_api}</div>}
                       {testResult.debug.username_api && <div>KULLANICI (API): {testResult.debug.username_api}</div>}
                       {testResult.httpCode !== undefined && <div>HTTP KOD: {testResult.httpCode}</div>}
+                      {testResult.debug.primary_ip && <div>SUNUCU IP: {testResult.debug.primary_ip}</div>}
                       {testResult.debug.sure && <div>SÜRE: {testResult.debug.sure}</div>}
+                      {testResult.debug.deneme && <div>DENEME: {testResult.debug.deneme}</div>}
                       {testResult.debug.curl_error && <div style={{color: C.danger}}>CURL: {testResult.debug.curl_error}</div>}
+                      {testResult.debug.curl_errno !== undefined && <div style={{color: C.danger}}>CURL ERRNO: {testResult.debug.curl_errno}</div>}
+                    </div>
+                  )}
+                  {/* TANILAMA SONUÇLARI */}
+                  {diagnoseResult && diagnoseResult.adimlar && (
+                    <div style={{
+                      marginTop: 8, padding: '10px 12px', borderRadius: 8,
+                      background: `${C.bg}`, border: `1px solid ${C.border}`,
+                      fontSize: 10
+                    }}>
+                      <div style={{fontWeight: 700, color: C.accent, marginBottom: 8, fontSize: 11}}>
+                        TANILAMA SONUÇLARI - {diagnoseResult.ozet}
+                      </div>
+                      {diagnoseResult.adimlar.map((adim, i) => (
+                        <div key={i} style={{
+                          marginBottom: 6, padding: '6px 8px', borderRadius: 6,
+                          background: adim.durum === 'TAMAM' ? `${C.success}10` : `${C.danger}10`,
+                          border: `1px solid ${adim.durum === 'TAMAM' ? C.success + '33' : C.danger + '33'}`
+                        }}>
+                          <div style={{display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3}}>
+                            <LIcon name={adim.durum === 'TAMAM' ? 'CheckCircle' : 'XCircle'} size={12}
+                              color={adim.durum === 'TAMAM' ? C.success : C.danger}/>
+                            <span style={{fontWeight: 700, color: adim.durum === 'TAMAM' ? C.success : C.danger}}>
+                              ADIM {adim.adim}: {adim.baslik}
+                            </span>
+                          </div>
+                          {adim.detay && (
+                            <div style={{marginLeft: 18, fontFamily: 'monospace', fontSize: 9, color: C.textMuted, lineHeight: 1.6}}>
+                              {Object.entries(adim.detay).map(([k, v]) => (
+                                <div key={k}>{k}: {typeof v === 'object' ? JSON.stringify(v) : String(v)}</div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      {diagnoseResult.sunucu_bilgi && (
+                        <div style={{marginTop: 6, fontSize: 9, color: C.textMuted, fontFamily: 'monospace'}}>
+                          SUNUCU: PHP {diagnoseResult.sunucu_bilgi.php} | CURL {diagnoseResult.sunucu_bilgi.curl} | SSL {diagnoseResult.sunucu_bilgi.ssl}
+                        </div>
+                      )}
                     </div>
                   )}
                   {/* BAŞARILI İSE KUYRUK BİLGİSİ */}
