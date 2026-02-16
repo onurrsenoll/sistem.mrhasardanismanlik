@@ -77,6 +77,12 @@ MR.api = {
   tanimCreate(d) { return this.req('/tanim/create.php', { method: 'POST', body: JSON.stringify(d) }); },
   tanimUpdate(d) { return this.req('/tanim/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
   tanimDelete(id) { return this.req('/tanim/delete.php?id=' + id, { method: 'DELETE' }); },
+  // NETSANTRAL
+  netsantralAyarGetir() { return this.req('/netsantral/ayarlar-getir.php'); },
+  netsantralAyarKaydet(d) { return this.req('/netsantral/ayarlar-kaydet.php', { method: 'POST', body: JSON.stringify(d) }); },
+  netsantralBaglantiTest(d) { return this.req('/netsantral/baglanti-test.php', { method: 'POST', body: JSON.stringify(d) }); },
+  netsantralAramaKayitlari(p = {}) { return this.req('/netsantral/arama-kayitlari.php?' + new URLSearchParams(p)); },
+  netsantralCagriBaslat(d) { return this.req('/netsantral/cagri-baslat.php', { method: 'POST', body: JSON.stringify(d) }); },
 };
 
 // ═══ RENKLER ═══

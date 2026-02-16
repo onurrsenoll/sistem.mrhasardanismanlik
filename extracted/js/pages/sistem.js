@@ -835,6 +835,354 @@ const LogTab = () => {
 };
 
 /* ════════════════════════════════════════════════════════════════
+   TAB 4 - NETSANTRAL AYARLARI
+   ════════════════════════════════════════════════════════════════ */
+const NetSantralTab = () => {
+  const {C, S, LIcon, Badge, Loading, EmptyState, Modal, FormGroup, Confirm, api} = MR;
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testSonuc, setTestSonuc] = useState(null);
+  const [kullanicilar, setKullanicilar] = useState([]);
+  const [aramaKayitlari, setAramaKayitlari] = useState([]);
+  const [aramaLoading, setAramaLoading] = useState(false);
+  const [aramaTotal, setAramaTotal] = useState(0);
+  const [aramaSayfa, setAramaSayfa] = useState(0);
+
+  const [form, setForm] = useState({
+    santral_no: '', kullanici_adi: '', sifre: '', api_key: '',
+    varsayilan_dahili: '102', gelen_cagri_modu: 'dinamik_tts',
+    webhook_aktif: 1, netsipp_aktif: 1, dahililer: []
+  });
+
+  const [mevcutAyar, setMevcutAyar] = useState(null);
+  const [altTab, setAltTab] = useState('baglanti');
+
+  const up = (k, v) => setForm(p => ({...p, [k]: v}));
+
+  const siteUrl = window.location.origin;
+  const webhookUrl = siteUrl + '/api/v1/netsantral/webhook.php';
+  const netsippUrl = siteUrl + '/api/v1/netsipp/gelen-cagri.php';
+
+  const load = async () => {
+    setLoading(true);
+    const [ayarR, kulR] = await Promise.all([
+      api.netsantralAyarGetir(), api.kullaniciList()
+    ]);
+    if (ayarR?.success && ayarR.data) {
+      const d = ayarR.data;
+      setMevcutAyar(d);
+      setForm({
+        santral_no: d.santral_no || '', kullanici_adi: d.kullanici_adi || '', sifre: '',
+        api_key: d.api_key || '', varsayilan_dahili: d.varsayilan_dahili || '102',
+        gelen_cagri_modu: d.gelen_cagri_modu || 'dinamik_tts',
+        webhook_aktif: d.webhook_aktif ?? 1, netsipp_aktif: d.netsipp_aktif ?? 1,
+        dahililer: d.dahililer || []
+      });
+      if (d.son_baglanti_durumu === 'basarili') {
+        setTestSonuc({durum: 'basarili', mesaj: 'BAĞLANTI BAŞARILI', tarih: d.son_baglanti_tarihi});
+      }
+    }
+    if (kulR?.success) {
+      const items = kulR.data?.items || kulR.data || [];
+      setKullanicilar(Array.isArray(items) ? items : []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const loadAramalar = useCallback(async () => {
+    setAramaLoading(true);
+    const r = await api.netsantralAramaKayitlari({page: aramaSayfa + 1, limit: 15});
+    if (r?.success) {
+      const items = r.data?.items || r.data || [];
+      setAramaKayitlari(Array.isArray(items) ? items : []);
+      setAramaTotal(r.data?.pagination?.total || 0);
+    }
+    setAramaLoading(false);
+  }, [aramaSayfa]);
+
+  useEffect(() => { if (altTab === 'arama_gecmisi') loadAramalar(); }, [altTab, loadAramalar]);
+
+  const kaydet = async () => {
+    if (!form.santral_no || !form.kullanici_adi) return;
+    setSaving(true);
+    const r = await api.netsantralAyarKaydet(form);
+    if (r?.success) { setTestSonuc(null); await load(); }
+    setSaving(false);
+  };
+
+  const baglantiTest = async () => {
+    setTesting(true); setTestSonuc(null);
+    const r = await api.netsantralBaglantiTest({
+      santral_no: form.santral_no, kullanici_adi: form.kullanici_adi,
+      sifre: form.sifre || undefined
+    });
+    if (r?.success) {
+      setTestSonuc({durum:'basarili', mesaj: r.message || 'BAĞLANTI BAŞARILI', yetenekler: r.data?.yetenekler || []});
+    } else {
+      setTestSonuc({durum:'basarisiz', mesaj: r?.error || 'BAĞLANTI HATASI - KULLANICI DOĞRULANAMADI'});
+    }
+    setTesting(false);
+  };
+
+  const dahiliEkle = () => up('dahililer', [...form.dahililer, {dahili:'', kullanici_id:''}]);
+  const dahiliGuncelle = (idx, key, val) => {
+    const yeni = [...form.dahililer]; yeni[idx] = {...yeni[idx], [key]: val}; up('dahililer', yeni);
+  };
+  const dahiliSil = (idx) => up('dahililer', form.dahililer.filter((_, i) => i !== idx));
+  const kopyala = (text) => navigator.clipboard.writeText(text);
+
+  if (loading) return React.createElement(Loading);
+
+  const altTabs = [
+    {key:'baglanti', label:'BAĞLANTI AYARLARI', icon:'Settings'},
+    {key:'webhook', label:'WEBHOOK & ENTEGRASYON', icon:'Link'},
+    {key:'arama_gecmisi', label:'ARAMA GEÇMİŞİ', icon:'Phone'}
+  ];
+
+  const durumRenk = d => ({caliyor:C.warning, cevaplandi:C.success, mesgul:C.danger, cevaplanmadi:C.danger, transfer:C.purple}[d] || C.textMuted);
+  const durumLabel = d => ({caliyor:'ÇALIYOR', cevaplandi:'CEVAPLANDI', mesgul:'MEŞGUL', cevaplanmadi:'CEVAPLANMADI', transfer:'TRANSFER'}[d] || 'BİLİNMİYOR');
+
+  return (
+    React.createElement('div', null,
+      /* ALT TAB MENÜSÜ */
+      React.createElement('div', {style:{display:'flex',gap:4,marginBottom:16,background:C.bgCard,borderRadius:10,padding:4,border:`1px solid ${C.border}`}},
+        altTabs.map(t => React.createElement('div', {key:t.key, onClick:()=>setAltTab(t.key), style:{
+          display:'flex',alignItems:'center',gap:8,padding:'10px 18px',borderRadius:8,cursor:'pointer',
+          fontSize:11,fontWeight:altTab===t.key?700:500,color:altTab===t.key?'#fff':C.textSec,
+          background:altTab===t.key?C.accent:'transparent',transition:'all .2s',flex:1,justifyContent:'center'
+        }}, React.createElement(LIcon,{name:t.icon,size:14,color:altTab===t.key?'#fff':C.textMuted}), t.label))
+      ),
+
+      /* ─── BAĞLANTI AYARLARI TAB ─── */
+      altTab==='baglanti' && React.createElement('div', null,
+        /* BAĞLANTI DURUMU */
+        testSonuc && React.createElement('div', {style:{...S.card,marginBottom:16,borderColor:(testSonuc.durum==='basarili'?C.success:C.danger)+'44'}},
+          React.createElement('div', {style:{padding:'16px 20px',display:'flex',alignItems:'center',gap:14,background:(testSonuc.durum==='basarili'?`${C.success}11`:`${C.danger}11`)}},
+            React.createElement('div', {style:{width:44,height:44,borderRadius:12,background:(testSonuc.durum==='basarili'?`${C.success}22`:`${C.danger}22`),display:'flex',alignItems:'center',justifyContent:'center'}},
+              React.createElement(LIcon, {name:testSonuc.durum==='basarili'?'CheckCircle':'XCircle',size:22,color:testSonuc.durum==='basarili'?C.success:C.danger})
+            ),
+            React.createElement('div', {style:{flex:1}},
+              React.createElement('div', {style:{fontSize:14,fontWeight:800,color:testSonuc.durum==='basarili'?C.success:C.danger}}, testSonuc.mesaj),
+              testSonuc.tarih && React.createElement('div', {style:{fontSize:10,color:C.textMuted,marginTop:2}}, 'Son test: '+testSonuc.tarih)
+            ),
+            testSonuc.durum==='basarili' && React.createElement(Badge, {text:'AKTİF',color:C.success})
+          ),
+          testSonuc.yetenekler && testSonuc.yetenekler.length>0 && React.createElement('div', {style:{padding:'14px 20px',display:'flex',flexWrap:'wrap',gap:8,borderTop:`1px solid ${C.border}`}},
+            testSonuc.yetenekler.map((y,i) => React.createElement('div', {key:i,style:{display:'flex',alignItems:'center',gap:6,padding:'6px 14px',borderRadius:20,background:`${C.success}11`,border:`1px solid ${C.success}22`,fontSize:10,fontWeight:600,color:C.success}},
+              React.createElement(LIcon, {name:'Check',size:12,color:C.success}), y.label
+            ))
+          )
+        ),
+
+        /* FORM - 2 KOLON */
+        React.createElement('div', {style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}},
+          /* SOL - BAĞLANTI BİLGİLERİ */
+          React.createElement('div', {style:S.card},
+            React.createElement('div', {style:S.cardHead},
+              React.createElement(LIcon, {name:'Phone',size:14,color:C.accent}),
+              React.createElement('span', {style:{fontSize:12,fontWeight:700}}, 'SANTRAL BAĞLANTI BİLGİLERİ')
+            ),
+            React.createElement('div', {style:{...S.cardBody,display:'grid',gap:16}},
+              React.createElement(FormGroup, {label:'SANTRAL NUMARASI *'}, React.createElement('input', {style:S.input,value:form.santral_no,onChange:e=>up('santral_no',e.target.value),placeholder:'03625026502'})),
+              React.createElement(FormGroup, {label:'KULLANICI ADI *'}, React.createElement('input', {style:S.input,value:form.kullanici_adi,onChange:e=>up('kullanici_adi',e.target.value),placeholder:'3625026502'})),
+              React.createElement(FormGroup, {label:mevcutAyar?'ŞİFRE (BOŞ BIRAKIRSAN DEĞİŞMEZ)':'ŞİFRE *'}, React.createElement('input', {style:S.input,type:'password',value:form.sifre,onChange:e=>up('sifre',e.target.value),placeholder:mevcutAyar?'••••••••':'Şifre giriniz'})),
+              React.createElement(FormGroup, {label:'API ANAHTARI'}, React.createElement('input', {style:S.input,value:form.api_key,onChange:e=>up('api_key',e.target.value),placeholder:'MR_HASAR_2026'})),
+              React.createElement(FormGroup, {label:'VARSAYILAN DAHİLİ'}, React.createElement('input', {style:S.input,value:form.varsayilan_dahili,onChange:e=>up('varsayilan_dahili',e.target.value),placeholder:'102'})),
+              React.createElement(FormGroup, {label:'GELEN ÇAĞRI YÖNLENDİRME MODU'},
+                React.createElement('select', {style:S.select,value:form.gelen_cagri_modu,onChange:e=>up('gelen_cagri_modu',e.target.value)},
+                  React.createElement('option', {value:'dinamik_tts'}, 'Dinamik - TTS + Dahili Yönlendirme (Önerilen)'),
+                  React.createElement('option', {value:'sabit_dahili'}, 'Sabit Dahili Yönlendirme'),
+                  React.createElement('option', {value:'kuyruk'}, 'Kuyruk Yönlendirme')
+                )
+              ),
+              React.createElement('div', {style:{display:'flex',gap:8,marginTop:4}},
+                React.createElement('button', {style:{...S.btn,...S.btnP,flex:1,justifyContent:'center',opacity:saving?0.7:1},onClick:kaydet,disabled:saving},
+                  React.createElement(LIcon, {name:'Save',size:14,color:'#fff'}), saving?'KAYDEDİLİYOR...':'AYARLARI KAYDET'
+                ),
+                React.createElement('button', {style:{...S.btn,...S.btnS,justifyContent:'center',opacity:testing?0.7:1},onClick:baglantiTest,disabled:testing},
+                  React.createElement(LIcon, {name:testing?'Loader':'Wifi',size:14,color:'#fff'}), testing?'TEST EDİLİYOR...':'BAĞLANTI TESTİ'
+                )
+              )
+            )
+          ),
+
+          /* SAĞ - DAHİLİ EŞLEŞMELERİ + TOGGLE */
+          React.createElement('div', {style:S.card},
+            React.createElement('div', {style:{...S.cardHead,justifyContent:'space-between'}},
+              React.createElement('div', {style:{display:'flex',alignItems:'center',gap:10}},
+                React.createElement(LIcon, {name:'Users',size:14,color:C.accent}),
+                React.createElement('span', {style:{fontSize:12,fontWeight:700}}, 'DAHİLİ - KULLANICI EŞLEŞMESİ')
+              ),
+              React.createElement('button', {style:{...S.btn,...S.btnP,fontSize:10,padding:'6px 12px'},onClick:dahiliEkle},
+                React.createElement(LIcon, {name:'Plus',size:12,color:'#fff'}), 'EKLE'
+              )
+            ),
+            React.createElement('div', {style:S.cardBody},
+              form.dahililer.length===0
+                ? React.createElement('div', {style:{textAlign:'center',padding:'30px 0',color:C.textMuted,fontSize:12}},
+                    React.createElement(LIcon, {name:'PhoneOff',size:24,color:C.textMuted}),
+                    React.createElement('div', {style:{marginTop:8}}, 'Henüz dahili eşleşmesi yok'),
+                    React.createElement('div', {style:{fontSize:10,marginTop:4}}, '"EKLE" butonuna tıklayarak dahili-kullanıcı eşleşmesi tanımlayın')
+                  )
+                : React.createElement('div', {style:{display:'grid',gap:8}},
+                    form.dahililer.map((d,idx) => React.createElement('div', {key:idx,style:{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderRadius:8,border:`1px solid ${C.border}`,background:C.bgHover}},
+                      React.createElement('input', {style:{...S.input,width:80,flex:'none'},value:d.dahili||'',placeholder:'DAHİLİ',onChange:e=>dahiliGuncelle(idx,'dahili',e.target.value)}),
+                      React.createElement('select', {style:{...S.select,flex:1},value:d.kullanici_id||'',onChange:e=>dahiliGuncelle(idx,'kullanici_id',e.target.value)},
+                        React.createElement('option', {value:''}, 'Kullanıcı seçin...'),
+                        kullanicilar.filter(u=>u.aktif!==0).map(u => React.createElement('option', {key:u.id,value:u.id}, u.ad_soyad+' ('+((u.rol||'').toUpperCase())+')'))
+                      ),
+                      React.createElement('div', {onClick:()=>dahiliSil(idx),style:{cursor:'pointer',padding:6,borderRadius:6}},
+                        React.createElement(LIcon, {name:'Trash2',size:14,color:C.danger})
+                      )
+                    ))
+                  ),
+              /* TOGGLE'LAR */
+              React.createElement('div', {style:{marginTop:20,padding:'16px 0',borderTop:`1px solid ${C.border}`,display:'grid',gap:12}},
+                React.createElement('div', {style:{fontSize:11,fontWeight:700,color:C.textSec,marginBottom:4}}, 'ENTEGRASYON DURUMLARI'),
+                [
+                  {key:'webhook_aktif', label:'Webhook Bildirimleri', icon:'Link'},
+                  {key:'netsipp_aktif', label:'Netsipp+ Entegrasyonu', icon:'Monitor'}
+                ].map(t => React.createElement('div', {key:t.key,style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`}},
+                  React.createElement('div', {style:{display:'flex',alignItems:'center',gap:8}},
+                    React.createElement(LIcon, {name:t.icon,size:14,color:form[t.key]?C.success:C.textMuted}),
+                    React.createElement('span', {style:{fontSize:12,fontWeight:600}}, t.label)
+                  ),
+                  React.createElement('div', {onClick:()=>up(t.key,form[t.key]?0:1),style:{width:40,height:22,borderRadius:11,cursor:'pointer',transition:'all .2s',position:'relative',background:form[t.key]?C.success:C.borderLight}},
+                    React.createElement('div', {style:{width:18,height:18,borderRadius:9,background:'#fff',position:'absolute',top:2,left:form[t.key]?20:2,transition:'all .2s'}})
+                  )
+                ))
+              )
+            )
+          )
+        )
+      ),
+
+      /* ─── WEBHOOK & ENTEGRASYON TAB ─── */
+      altTab==='webhook' && React.createElement('div', {style:{display:'grid',gap:16}},
+        /* WEBHOOK URL */
+        React.createElement('div', {style:S.card},
+          React.createElement('div', {style:S.cardHead},
+            React.createElement(LIcon, {name:'Link',size:14,color:C.accent}),
+            React.createElement('span', {style:{fontSize:12,fontWeight:700}}, 'WEBHOOK URL (NETGSM PANELİNE GİRİLECEK)')
+          ),
+          React.createElement('div', {style:S.cardBody},
+            React.createElement('div', {style:{display:'flex',alignItems:'center',gap:8,padding:'12px 16px',borderRadius:8,background:C.bgHover,border:`1px solid ${C.border}`,fontFamily:'monospace',fontSize:12}},
+              React.createElement('span', {style:{flex:1,color:C.accent,wordBreak:'break-all'}}, webhookUrl),
+              React.createElement('button', {style:{...S.btn,...S.btnP,fontSize:10,padding:'6px 12px'},onClick:()=>kopyala(webhookUrl)},
+                React.createElement(LIcon, {name:'Copy',size:12,color:'#fff'}), 'KOPYALA')
+            ),
+            form.api_key && React.createElement('div', {style:{marginTop:8,fontSize:10,color:C.textMuted}},
+              'API Key ile: ', React.createElement('span', {style:{color:C.accent,fontFamily:'monospace'}}, webhookUrl+'?key='+form.api_key))
+          )
+        ),
+        /* NETSİPP+ URL */
+        React.createElement('div', {style:S.card},
+          React.createElement('div', {style:S.cardHead},
+            React.createElement(LIcon, {name:'Monitor',size:14,color:C.purple}),
+            React.createElement('span', {style:{fontSize:12,fontWeight:700}}, 'NETSİPP+ ENTEGRASYON URL')
+          ),
+          React.createElement('div', {style:S.cardBody},
+            React.createElement('div', {style:{display:'flex',alignItems:'center',gap:8,padding:'12px 16px',borderRadius:8,background:C.bgHover,border:`1px solid ${C.border}`,fontFamily:'monospace',fontSize:12}},
+              React.createElement('span', {style:{flex:1,color:C.purple,wordBreak:'break-all'}}, netsippUrl+'?arayan=%caller%&aranan=%called%&aramaid=%callid%'),
+              React.createElement('button', {style:{...S.btn,background:C.purple,color:'#fff',fontSize:10,padding:'6px 12px'},onClick:()=>kopyala(netsippUrl+'?arayan=%caller%&aranan=%called%&aramaid=%callid%')},
+                React.createElement(LIcon, {name:'Copy',size:12,color:'#fff'}), 'KOPYALA')
+            ),
+            React.createElement('div', {style:{marginTop:12,display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}},
+              [{param:'%caller%',aciklama:'arayan',label:'Arayan Numara'},{param:'%called%',aciklama:'aranan',label:'Aranan Numara'},{param:'%callid%',aciklama:'aramaid',label:'Arama ID'}].map(p =>
+                React.createElement('div', {key:p.param,style:{padding:'8px 12px',borderRadius:8,background:`${C.purple}11`,border:`1px solid ${C.purple}22`,fontSize:10}},
+                  React.createElement('div', {style:{fontWeight:700,color:C.purple,fontFamily:'monospace'}}, p.param),
+                  React.createElement('div', {style:{color:C.textMuted,marginTop:2}}, p.aciklama+' → '+p.label)
+                )
+              )
+            )
+          )
+        ),
+        /* KURULUM TALİMATLARI */
+        React.createElement('div', {style:S.card},
+          React.createElement('div', {style:S.cardHead},
+            React.createElement(LIcon, {name:'BookOpen',size:14,color:C.warning}),
+            React.createElement('span', {style:{fontSize:12,fontWeight:700}}, 'KURULUM TALİMATLARI')
+          ),
+          React.createElement('div', {style:{...S.cardBody,display:'grid',gap:16}},
+            [
+              {no:'1', baslik:'NetGSM Paneline Giriş Yapın', aciklama:'netsantral.netgsm.com.tr adresine giderek santral yönetim panelinize giriş yapın.'},
+              {no:'2', baslik:'Webhook URL Tanımlayın', aciklama:'Santral Ayarları > Bildirim Ayarları bölümünde yukarıdaki Webhook URL\'sini yapıştırın. Çağrı başlangıç ve bitiş olaylarını seçin.'},
+              {no:'3', baslik:'Netsipp+ Uygulamasını Yapılandırın', aciklama:'Netsipp+ masaüstü uygulamasında Entegrasyon ayarlarına gidin. "Tarayıcıda Link Aç" seçeneğini etkinleştirin ve yukarıdaki Netsipp+ URL\'sini yapıştırın.'},
+              {no:'4', baslik:'Bağlantıyı Test Edin', aciklama:'"Bağlantı Ayarları" sekmesinden "BAĞLANTI TESTİ" butonuna tıklayarak entegrasyonu doğrulayın.'}
+            ].map(a => React.createElement('div', {key:a.no,style:{display:'flex',gap:12}},
+              React.createElement('div', {style:{width:28,height:28,borderRadius:14,background:`${C.accent}22`,color:C.accent,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:800,flex:'none'}}, a.no),
+              React.createElement('div', null,
+                React.createElement('div', {style:{fontSize:12,fontWeight:700}}, a.baslik),
+                React.createElement('div', {style:{fontSize:11,color:C.textSec,marginTop:4}}, a.aciklama)
+              )
+            ))
+          )
+        )
+      ),
+
+      /* ─── ARAMA GEÇMİŞİ TAB ─── */
+      altTab==='arama_gecmisi' && React.createElement('div', null,
+        React.createElement('div', {style:S.card},
+          React.createElement('div', {style:{...S.cardHead,justifyContent:'space-between'}},
+            React.createElement('div', {style:{display:'flex',alignItems:'center',gap:10}},
+              React.createElement(LIcon, {name:'Phone',size:14,color:C.accent}),
+              React.createElement('span', {style:{fontSize:13,fontWeight:700}}, 'ARAMA GEÇMİŞİ'),
+              React.createElement(Badge, {text:aramaTotal+' KAYIT',color:C.accent})
+            ),
+            React.createElement('button', {style:{...S.btn,...S.btnG,fontSize:10,padding:'6px 12px'},onClick:loadAramalar},
+              React.createElement(LIcon, {name:'RefreshCw',size:12,color:C.textSec}), 'YENİLE')
+          ),
+          aramaLoading ? React.createElement(Loading)
+            : aramaKayitlari.length===0
+              ? React.createElement(EmptyState, {icon:'Phone',title:'ARAMA KAYDI BULUNAMADI',desc:'Henüz arama kaydı oluşturulmamış'})
+              : React.createElement('div', {style:{overflowX:'auto'}},
+                  React.createElement('table', {style:{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:900}},
+                    React.createElement('thead', null,
+                      React.createElement('tr', {style:{background:C.bgHover}},
+                        ['TARİH','YÖN','ARAYAN','ARANAN','DAHİLİ','DURUM','SÜRE','KAYNAK','CRM / DOSYA'].map(h =>
+                          React.createElement('th', {key:h,style:{padding:'10px 12px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}, h)
+                        )
+                      )
+                    ),
+                    React.createElement('tbody', null,
+                      aramaKayitlari.map((ak,i) => React.createElement('tr', {key:ak.id||i,style:{borderBottom:`1px solid ${C.border}`},
+                        onMouseEnter:e=>e.currentTarget.style.background=C.bgHover, onMouseLeave:e=>e.currentTarget.style.background='transparent'},
+                        React.createElement('td', {style:{padding:'10px 12px',fontSize:10,color:C.textMuted,whiteSpace:'nowrap'}}, ak.baslangic_zamani||ak.created_at||'-'),
+                        React.createElement('td', {style:{padding:'10px 12px'}}, React.createElement(Badge, {text:ak.yon==='gelen'?'GELEN':'GİDEN',color:ak.yon==='gelen'?C.success:C.accent})),
+                        React.createElement('td', {style:{padding:'10px 12px',fontWeight:600}}, ak.arayan||'-'),
+                        React.createElement('td', {style:{padding:'10px 12px',color:C.textSec}}, ak.aranan||'-'),
+                        React.createElement('td', {style:{padding:'10px 12px',color:C.textMuted,fontFamily:'monospace'}}, ak.dahili||'-'),
+                        React.createElement('td', {style:{padding:'10px 12px'}}, React.createElement(Badge, {text:durumLabel(ak.durum),color:durumRenk(ak.durum)})),
+                        React.createElement('td', {style:{padding:'10px 12px',color:C.textSec}}, ak.sure>0?(Math.floor(ak.sure/60)+':'+String(ak.sure%60).padStart(2,'0')):'-'),
+                        React.createElement('td', {style:{padding:'10px 12px'}}, React.createElement(Badge, {text:(ak.kaynak||'').toUpperCase(),color:C.purple})),
+                        React.createElement('td', {style:{padding:'10px 12px',fontSize:10}},
+                          ak.crm_adi ? React.createElement('span', {style:{color:C.cyan}}, ak.crm_adi) : null,
+                          ak.dosya_no ? React.createElement('span', {style:{color:C.warning,marginLeft:ak.crm_adi?8:0}}, ak.dosya_no) : null,
+                          !ak.crm_adi && !ak.dosya_no ? '-' : null
+                        )
+                      ))
+                    )
+                  )
+                ),
+          aramaTotal>15 && React.createElement('div', {style:{padding:'14px 20px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}},
+            React.createElement('span', {style:{fontSize:10,color:C.textMuted}}, 'TOPLAM '+aramaTotal+' KAYIT'),
+            React.createElement('div', {style:{display:'flex',gap:4}},
+              React.createElement('button', {onClick:()=>setAramaSayfa(p=>Math.max(0,p-1)),disabled:aramaSayfa===0,style:{...S.btn,...S.btnG,fontSize:10,padding:'6px 10px',opacity:aramaSayfa===0?0.4:1}},
+                React.createElement(LIcon, {name:'ChevronLeft',size:12,color:C.textSec}), 'ÖNCEKİ'),
+              React.createElement('button', {onClick:()=>setAramaSayfa(p=>p+1),disabled:(aramaSayfa+1)*15>=aramaTotal,style:{...S.btn,...S.btnG,fontSize:10,padding:'6px 10px',opacity:(aramaSayfa+1)*15>=aramaTotal?0.4:1}},
+                'SONRAKİ', React.createElement(LIcon, {name:'ChevronRight',size:12,color:C.textSec}))
+            )
+          )
+        )
+      )
+    )
+  );
+};
+
+/* ════════════════════════════════════════════════════════════════
    ANA SAYFA BİLEŞENİ - MR.SistemPage
    ════════════════════════════════════════════════════════════════ */
 MR.SistemPage = ({setPage, user, subPage}) => {
@@ -844,7 +1192,8 @@ MR.SistemPage = ({setPage, user, subPage}) => {
   const tabs = [
     {key: 'tanimlamalar', label: 'TANIMLAMALAR',       icon: 'Database',     desc: 'KATEGORİ VE DEĞER YÖNETİMİ'},
     {key: 'kullanici',    label: 'KULLANICI YÖNETİMİ', icon: 'Users',        desc: 'KULLANICI OLUŞTUR, DÜZENLE, YÖNETİMİ'},
-    {key: 'log',          label: 'LOG KAYITLARI',       icon: 'Activity',     desc: 'SİSTEM OLAY GEÇMİŞİ'}
+    {key: 'log',          label: 'LOG KAYITLARI',       icon: 'Activity',     desc: 'SİSTEM OLAY GEÇMİŞİ'},
+    {key: 'netsantral',   label: 'NETSANTRAL',          icon: 'Phone',        desc: 'SANTRAL & ÇAĞRI YÖNETİMİ'}
   ];
 
   /* ADMİN DEĞİLSE KULLANICI TAB'INI GİZLE */
@@ -918,6 +1267,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
         {aktifTab === 'tanimlamalar' && <TanimlamalarTab/>}
         {aktifTab === 'kullanici' && isAdmin && <KullaniciTab/>}
         {aktifTab === 'log' && <LogTab/>}
+        {aktifTab === 'netsantral' && isAdmin && <NetSantralTab/>}
       </div>
     </div>
   );

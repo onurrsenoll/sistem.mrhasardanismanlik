@@ -32,7 +32,8 @@ const MENU = [
   {id:'sistem', label:'SİSTEM', icon:'Shield', sub:[
     {id:'sistem-tanimlamalar', label:'TANIMLAMALAR', icon:'Database'},
     {id:'sistem-kullanici', label:'KULLANICI YÖNETİMİ', icon:'UserCog'},
-    {id:'sistem-log', label:'LOG KAYITLARI', icon:'FileText'}
+    {id:'sistem-log', label:'LOG KAYITLARI', icon:'FileText'},
+    {id:'sistem-netsantral', label:'NETSANTRAL', icon:'Phone'}
   ]}
 ];
 
@@ -448,6 +449,9 @@ const App = () => {
       }}>
         MR HASAR DANIŞMANLIK © 2025 — DOSYA TAKİP SİSTEMİ — HER ZAMAN FARK EDER
       </div>
+
+      {/* SOFTPHONE WIDGET */}
+      {MR.SoftphoneWidget && <MR.SoftphoneWidget user={user}/>}
     </div>
   );
 };
