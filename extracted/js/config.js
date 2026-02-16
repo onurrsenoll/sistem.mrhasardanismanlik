@@ -77,6 +77,11 @@ MR.api = {
   tanimCreate(d) { return this.req('/tanim/create.php', { method: 'POST', body: JSON.stringify(d) }); },
   tanimUpdate(d) { return this.req('/tanim/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
   tanimDelete(id) { return this.req('/tanim/delete.php?id=' + id, { method: 'DELETE' }); },
+  // SOHBET
+  sohbetKonusmalar() { return this.req('/sohbet/konusmalar.php'); },
+  sohbetMesajlar(kisiId) { return this.req('/sohbet/mesajlar.php?kisi_id=' + kisiId); },
+  sohbetGonder(aliciId, mesaj) { return this.req('/sohbet/gonder.php', { method: 'POST', body: JSON.stringify({ alici_id: aliciId, mesaj: mesaj }) }); },
+  sohbetKullanicilar() { return this.req('/sohbet/kullanicilar.php'); },
 };
 
 // ═══ RENKLER ═══

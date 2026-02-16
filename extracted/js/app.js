@@ -369,11 +369,11 @@ const PageRouter = ({page, setPage, user}) => {
   if (page === 'home') return <MR.HomePage setPage={setPage} user={user}/>;
   if (page === 'dosya-liste') return <MR.DosyaListePage setPage={setPage} user={user}/>;
   if (page === 'dosya-yeni') return <MR.DosyaYeniPage setPage={setPage} user={user}/>;
-  if (dosyaIdMatch) return <MR.DosyaDetayPage setPage={setPage} user={user} dosyaId={parseInt(dosyaIdMatch[1])}/>;
+  if (dosyaIdMatch) return <MR.DosyaDetay dosyaId={parseInt(dosyaIdMatch[1])} setPage={setPage} user={user}/>;
 
-  if (page === 'crm-liste') return <MR.CrmPage setPage={setPage} user={user} view="liste"/>;
-  if (page === 'crm-yeni') return <MR.CrmPage setPage={setPage} user={user} view="yeni"/>;
-  if (crmIdMatch) return <MR.CrmPage setPage={setPage} user={user} view="detay" crmId={parseInt(crmIdMatch[1])}/>;
+  if (page === 'crm-liste') return <MR.CRMListesi setPage={setPage} user={user}/>;
+  if (page === 'crm-yeni') return <MR.CRMYeni setPage={setPage} user={user}/>;
+  if (crmIdMatch) return <MR.CRMListesi setPage={setPage} user={user}/>;
 
   if (page === 'hesap-adk') return <MR.HesapADKPage setPage={setPage} user={user}/>;
   if (page === 'hesap-bh') return <MR.HesapBHPage setPage={setPage} user={user}/>;
@@ -448,6 +448,9 @@ const App = () => {
       }}>
         MR HASAR DANIŞMANLIK © 2025 — DOSYA TAKİP SİSTEMİ — HER ZAMAN FARK EDER
       </div>
+
+      {/* SOHBET PANELİ */}
+      {MR.SohbetPanel && <MR.SohbetPanel user={user}/>}
     </div>
   );
 };
