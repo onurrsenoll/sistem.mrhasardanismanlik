@@ -1306,6 +1306,260 @@ const LogTab = () => {
 /* ════════════════════════════════════════════════════════════════
    TAB 5 - NETSANTRAL AYARLARI
    ════════════════════════════════════════════════════════════════ */
+/* ═══ NETSANTRAL ÇAĞRI GEÇMİŞİ BİLEŞENİ ═══ */
+const NetsantralCagriGecmisi = () => {
+  const {C, S, LIcon, Badge, Loading, StatCard, api} = MR;
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({toplam: 0, gelen: 0, giden: 0, bugun: 0, toplam_sure: 0});
+  const [sayfa, setSayfa] = useState(1);
+  const [toplamSayfa, setToplamSayfa] = useState(1);
+  const [toplamKayit, setToplamKayit] = useState(0);
+  const [yonF, setYonF] = useState('');
+  const [search, setSearch] = useState('');
+  const [tarihBas, setTarihBas] = useState('');
+  const [tarihBit, setTarihBit] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const p = {page: sayfa, limit: 30};
+    if (yonF) p.yon = yonF;
+    if (search) p.q = search;
+    if (tarihBas) p.tarih_baslangic = tarihBas;
+    if (tarihBit) p.tarih_bitis = tarihBit;
+    const r = await api.netsantralAramaList(p);
+    if (r?.success) {
+      setData(r.data?.items || []);
+      if (r.data?.stats) setStats(r.data.stats);
+      if (r.data?.pagination) {
+        setToplamSayfa(r.data.pagination.totalPages || 1);
+        setToplamKayit(r.data.pagination.total || 0);
+      }
+    }
+    setLoading(false);
+  }, [sayfa, yonF, search, tarihBas, tarihBit]);
+
+  useEffect(() => { load(); }, []);
+  useEffect(() => { const t = setTimeout(load, 400); return () => clearTimeout(t); }, [search, yonF, tarihBas, tarihBit, sayfa]);
+
+  const fmtSure = (s) => {
+    if (!s || s <= 0) return '-';
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m > 0 ? `${m}DK ${sec}SN` : `${sec}SN`;
+  };
+
+  const durumRenk = (d) => {
+    if (!d) return C.textMuted;
+    const dl = d.toLowerCase();
+    if (dl === 'gorusmede' || dl === 'baglandi') return C.success;
+    if (dl === 'araniyor' || dl === 'calıyor') return C.warning;
+    if (dl === 'sonlandi') return C.accent;
+    if (dl === 'basarisiz') return C.danger;
+    return C.textMuted;
+  };
+
+  const durumLabel = (d) => {
+    if (!d) return 'BİLİNMİYOR';
+    const dl = d.toLowerCase();
+    if (dl === 'gorusmede' || dl === 'baglandi') return 'GÖRÜŞME';
+    if (dl === 'araniyor' || dl === 'calıyor') return 'ARANIYOR';
+    if (dl === 'sonlandi') return 'SONLANDI';
+    if (dl === 'basarisiz') return 'BAŞARISIZ';
+    return d.toUpperCase();
+  };
+
+  const thSt = {padding:'8px 10px', textAlign:'left', color:C.textMuted, fontWeight:600, fontSize:10, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:C.bgCard, zIndex:1};
+  const tdSt = {padding:'8px 10px', fontSize:11, borderBottom:`1px solid ${C.border}22`, whiteSpace:'nowrap'};
+
+  return (
+    <div style={S.card}>
+      <div style={{...S.cardHead, justifyContent:'space-between'}}>
+        <div style={{display:'flex', alignItems:'center', gap:10}}>
+          <LIcon name="PhoneCall" size={14} color={C.accent}/>
+          <span style={{fontSize:13, fontWeight:700}}>ÇAĞRI GEÇMİŞİ</span>
+          <Badge text={stats.toplam + ' TOPLAM'} color={C.accent}/>
+        </div>
+        <div style={{display:'flex', gap:6, alignItems:'center'}}>
+          <input placeholder="NUMARA VEYA İSİM ARA..." value={search} onChange={e => {setSearch(e.target.value); setSayfa(1);}}
+            style={{...S.input, width:180, fontSize:10, padding:'6px 10px'}}/>
+          <button onClick={load} style={{...S.btn, padding:'6px 10px', background:`${C.accent}22`, border:'none'}}>
+            <LIcon name="RefreshCw" size={14} color={C.accent}/>
+          </button>
+        </div>
+      </div>
+
+      {/* İSTATİSTİK BANTLARI */}
+      <div style={{display:'flex', gap:0, borderBottom:`1px solid ${C.border}`}}>
+        {[
+          {label:'BUGÜN', value:stats.bugun, c:C.accent, icon:'Calendar'},
+          {label:'GELEN', value:stats.gelen, c:C.success, icon:'PhoneIncoming'},
+          {label:'GİDEN', value:stats.giden, c:C.purple, icon:'PhoneOutgoing'},
+          {label:'TOPLAM SÜRE', value: fmtSure(stats.toplam_sure), c:C.cyan, icon:'Clock'}
+        ].map((item,i) => (
+          <div key={i} style={{
+            flex:1, padding:'12px 16px', display:'flex', alignItems:'center', gap:10,
+            borderRight: i < 3 ? `1px solid ${C.border}` : 'none',
+            background:`${item.c}05`
+          }}>
+            <div style={{
+              width:32, height:32, borderRadius:8, background:`${item.c}15`,
+              display:'flex', alignItems:'center', justifyContent:'center'
+            }}>
+              <LIcon name={item.icon} size={14} color={item.c}/>
+            </div>
+            <div>
+              <div style={{fontSize:16, fontWeight:800, color:item.c}}>{item.value}</div>
+              <div style={{fontSize:9, color:C.textMuted}}>{item.label}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* FİLTRE */}
+      <div style={{padding:'10px 16px', borderBottom:`1px solid ${C.border}`, display:'flex', gap:6, alignItems:'center', flexWrap:'wrap'}}>
+        <span style={{fontSize:9, fontWeight:700, color:C.textMuted, marginRight:6}}>YÖN:</span>
+        {[
+          {val:'', label:'HEPSİ', c:C.accent},
+          {val:'gelen', label:'GELEN', c:C.success},
+          {val:'giden', label:'GİDEN', c:C.purple}
+        ].map(d => (
+          <span key={d.val} onClick={() => {setYonF(d.val); setSayfa(1);}}
+            style={{
+              padding:'5px 12px', borderRadius:20, fontSize:10, fontWeight: yonF === d.val ? 700 : 500,
+              cursor:'pointer',
+              background: yonF === d.val ? `${d.c}18` : 'transparent',
+              color: yonF === d.val ? d.c : C.textSec,
+              border:`1px solid ${yonF === d.val ? d.c + '44' : C.border}`
+            }}>
+            {d.label}
+          </span>
+        ))}
+        <div style={{marginLeft:'auto', display:'flex', gap:6, alignItems:'center'}}>
+          <span style={{fontSize:9, color:C.textMuted}}>TARİH:</span>
+          <input type="date" value={tarihBas} onChange={e => {setTarihBas(e.target.value); setSayfa(1);}}
+            style={{...S.input, width:130, fontSize:10, padding:'5px 8px'}}/>
+          <span style={{fontSize:9, color:C.textMuted}}>-</span>
+          <input type="date" value={tarihBit} onChange={e => {setTarihBit(e.target.value); setSayfa(1);}}
+            style={{...S.input, width:130, fontSize:10, padding:'5px 8px'}}/>
+        </div>
+      </div>
+
+      {/* TABLO */}
+      {loading ? <Loading/> : data.length === 0 ? (
+        <div style={{padding:40, textAlign:'center'}}>
+          <LIcon name="PhoneOff" size={32} color={C.textMuted} style={{opacity:.3, marginBottom:8}}/>
+          <div style={{fontSize:12, color:C.textMuted}}>ÇAĞRI KAYDI BULUNAMADI</div>
+        </div>
+      ) : (
+        <div style={{overflowX:'auto', maxHeight:'calc(100vh - 700px)'}}>
+          <table style={{width:'100%', borderCollapse:'collapse', fontSize:11, minWidth:900}}>
+            <thead>
+              <tr style={{background:C.bgHover}}>
+                <th style={thSt}>NO</th>
+                <th style={thSt}>YÖN</th>
+                <th style={thSt}>ARAYAN</th>
+                <th style={thSt}>ARANAN</th>
+                <th style={thSt}>ARAYAN ADI</th>
+                <th style={thSt}>TARİH</th>
+                <th style={thSt}>DURUM</th>
+                <th style={thSt}>SÜRE</th>
+                <th style={thSt}>CRM</th>
+                <th style={thSt}>NOTLAR</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((item, i) => (
+                <tr key={item.id} style={{
+                  background: i % 2 === 1 ? `${C.bgHover}66` : 'transparent'
+                }}
+                  onMouseEnter={e => e.currentTarget.style.background = `${C.accent}08`}
+                  onMouseLeave={e => e.currentTarget.style.background = i % 2 === 1 ? `${C.bgHover}66` : 'transparent'}
+                >
+                  <td style={{...tdSt, fontWeight:700, color:C.accent, fontSize:10}}>{item.id}</td>
+                  <td style={tdSt}>
+                    <span style={{
+                      padding:'3px 8px', borderRadius:6, fontSize:9, fontWeight:700,
+                      background: item.yon === 'gelen' ? `${C.success}18` : `${C.purple}18`,
+                      color: item.yon === 'gelen' ? C.success : C.purple,
+                      display:'inline-flex', alignItems:'center', gap:4
+                    }}>
+                      <LIcon name={item.yon === 'gelen' ? 'PhoneIncoming' : 'PhoneOutgoing'} size={10}
+                        color={item.yon === 'gelen' ? C.success : C.purple}/>
+                      {item.yon === 'gelen' ? 'GELEN' : 'GİDEN'}
+                    </span>
+                  </td>
+                  <td style={{...tdSt, fontFamily:'monospace', fontWeight:600}}>{item.arayan || '-'}</td>
+                  <td style={{...tdSt, fontFamily:'monospace', fontWeight:600}}>{item.aranan || '-'}</td>
+                  <td style={{...tdSt, fontWeight:600}}>{item.arayan_adi || item.crm_ad_soyad || '-'}</td>
+                  <td style={{...tdSt, color:C.textMuted, fontSize:10}}>
+                    {item.arama_tarihi ? new Date(item.arama_tarihi).toLocaleString('tr-TR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '-'}
+                  </td>
+                  <td style={tdSt}>
+                    <span style={{
+                      padding:'3px 8px', borderRadius:6, fontSize:9, fontWeight:700,
+                      background: `${durumRenk(item.durum)}18`,
+                      color: durumRenk(item.durum)
+                    }}>
+                      {durumLabel(item.durum)}
+                    </span>
+                  </td>
+                  <td style={{...tdSt, fontWeight:700, color: item.sure > 0 ? C.text : C.textMuted}}>
+                    {fmtSure(item.sure)}
+                  </td>
+                  <td style={tdSt}>
+                    {item.crm_id ? (
+                      <span style={{
+                        padding:'2px 6px', borderRadius:4, fontSize:9, fontWeight:600,
+                        background:`${C.accent}18`, color:C.accent, cursor:'pointer'
+                      }} title={'CRM #' + item.crm_id}>
+                        <LIcon name="User" size={10} color={C.accent}/> #{item.crm_id}
+                      </span>
+                    ) : '-'}
+                  </td>
+                  <td style={{...tdSt, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', color:C.textMuted, fontSize:10}}>
+                    {item.notlar || '-'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* SAYFALAMA */}
+      {data.length > 0 && (
+        <div style={{padding:'12px 16px', borderTop:`1px solid ${C.border}`, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+          <span style={{fontSize:10, color:C.textMuted}}>
+            {toplamKayit} KAYIT
+          </span>
+          <div style={{display:'flex', alignItems:'center', gap:4}}>
+            <button disabled={sayfa <= 1} onClick={() => setSayfa(s => Math.max(1, s - 1))}
+              style={{...S.btn, ...S.btnG, fontSize:10, padding:'4px 8px', opacity: sayfa <= 1 ? 0.4 : 1}}>&lsaquo;</button>
+            {Array.from({length: Math.min(5, toplamSayfa)}, (_, i) => {
+              let p = sayfa - 2 + i;
+              if (p < 1) p = i + 1;
+              if (p > toplamSayfa) p = toplamSayfa - (4 - i);
+              if (p < 1) p = i + 1;
+              return p;
+            }).filter((v, i, a) => v >= 1 && v <= toplamSayfa && a.indexOf(v) === i).map(p => (
+              <button key={p} onClick={() => setSayfa(p)}
+                style={{
+                  width:28, height:28, borderRadius:6, border:`1px solid ${p === sayfa ? C.accent : C.borderLight}`,
+                  background: p === sayfa ? C.accent : 'transparent', color: p === sayfa ? '#fff' : C.textSec,
+                  cursor:'pointer', fontSize:11, fontWeight:600, display:'flex', alignItems:'center', justifyContent:'center'
+                }}>{p}</button>
+            ))}
+            <button disabled={sayfa >= toplamSayfa} onClick={() => setSayfa(s => Math.min(toplamSayfa, s + 1))}
+              style={{...S.btn, ...S.btnG, fontSize:10, padding:'4px 8px', opacity: sayfa >= toplamSayfa ? 0.4 : 1}}>&rsaquo;</button>
+            <span style={{fontSize:9, color:C.textMuted, marginLeft:6}}>SAYFA {sayfa} / {toplamSayfa}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const NetsantralTab = () => {
   const {C, S, LIcon, Badge, Loading, StatCard, api} = MR;
   const [ayarlar, setAyarlar] = useState({
@@ -1769,7 +2023,8 @@ const NetsantralTab = () => {
 
       {/* KAYDET BUTONU */}
       <div style={{
-        ...S.card, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+        ...S.card, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: 16
       }}>
         <div style={{fontSize: 12, color: C.textMuted}}>
           <LIcon name="Info" size={14} color={C.textMuted} style={{verticalAlign: 'middle'}}/>{' '}
@@ -1783,6 +2038,9 @@ const NetsantralTab = () => {
           {saving ? 'KAYDEDİLİYOR...' : 'AYARLARI KAYDET'}
         </button>
       </div>
+
+      {/* ═══ ÇAĞRI GEÇMİŞİ ═══ */}
+      <NetsantralCagriGecmisi/>
     </div>
   );
 };

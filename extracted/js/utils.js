@@ -67,37 +67,55 @@ MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
     detail: { telefon: cleanNum, ad: ad || '', yon: 'giden', timestamp: Date.now() }
   }));
 
+  /* GİDEN ARAMA LOGU OLUŞTUR (PBX'TEN ÖNCE) */
+  let _aramaLogId = 0;
+  try {
+    const logR = await MR.api.netsantralAramaLogCreate({
+      arayan: MR._netsantralDahili,
+      aranan: cleanNum,
+      arayan_adi: ad || '',
+      yon: 'giden',
+      durum: 'araniyor'
+    });
+    if (logR?.success && logR.data?.log_id) {
+      _aramaLogId = logR.data.log_id;
+    }
+  } catch(e) {}
+
   /* NETSANTRAL PBX ORIGINATE API İLE GİDEN ÇAĞRI BAŞLAT */
   try {
     const r = await MR.api.netsantralOriginate(cleanNum, MR._netsantralDahili);
     console.log('[NETSANTRAL] ORIGINATE YANIT:', JSON.stringify(r));
     if (r?.success && r.data?.success_api) {
-      /* PBX BAŞARIYLA GİDEN ÇAĞRI BAŞLATTI */
+      /* PBX BAŞARIYLA GİDEN ÇAĞRI BAŞLATTI - LOG GÜNCELLE */
+      if (_aramaLogId) {
+        MR.api.netsantralAramaLogUpdate({ log_id: _aramaLogId, durum: 'gorusmede' }).catch(() => {});
+      }
       window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
-        detail: { basarili: true, telefon: cleanNum, ad: ad || '' }
+        detail: { basarili: true, telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
       }));
     } else {
-      /* PBX HATASI */
+      /* PBX HATASI - LOG GÜNCELLE */
       const hataMesaj = r?.data?.response?.hata_mesaj || r?.error || 'PBX ÇAĞRI BAŞLATILAMADI';
       console.error('[NETSANTRAL] ORIGINATE HATA:', hataMesaj, r);
+      if (_aramaLogId) {
+        MR.api.netsantralAramaLogUpdate({ log_id: _aramaLogId, durum: 'basarisiz', notlar: hataMesaj }).catch(() => {});
+      }
       alert('ARAMA HATASI: ' + hataMesaj);
       window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
-        detail: { basarili: false, hata: hataMesaj, telefon: cleanNum, ad: ad || '' }
+        detail: { basarili: false, hata: hataMesaj, telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
       }));
     }
   } catch(e) {
     console.error('[NETSANTRAL] BAĞLANTI HATASI:', e);
+    if (_aramaLogId) {
+      MR.api.netsantralAramaLogUpdate({ log_id: _aramaLogId, durum: 'basarisiz', notlar: 'BAĞLANTI HATASI' }).catch(() => {});
+    }
     alert('NETSANTRAL BAĞLANTI HATASI! İNTERNET BAĞLANTINIZI KONTROL EDİN.');
     window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
-      detail: { basarili: false, hata: 'NETSANTRAL BAĞLANTI HATASI: ' + (e?.message || ''), telefon: cleanNum, ad: ad || '' }
+      detail: { basarili: false, hata: 'NETSANTRAL BAĞLANTI HATASI: ' + (e?.message || ''), telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
     }));
   }
-
-  /* GİDEN ARAMA LOGUNU KAYDET */
-  MR.api.req('/netsipp/giden-cagri.php', {
-    method: 'POST',
-    body: JSON.stringify({ arayan: cleanNum, aranan_adi: ad || '', yon: 'giden' })
-  }).catch(() => {});
 
   /* OTOMATİK CRM KAYIT EKRANI AÇ (LİSTEDEN ARANDIĞINDA) */
   if (otomatikCrmAc !== false) {

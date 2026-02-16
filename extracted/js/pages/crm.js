@@ -1062,10 +1062,7 @@ MR._CRMYeniInner = ({setPage}) => {
         setCallActive(true);
       }
 
-      /* GİDEN ARAMA LOGU */
-      api.req('/netsipp/giden-cagri.php', {
-        method: 'POST', body: JSON.stringify({ arayan: cleanNum, aranan_adi: f.ad_soyad || '', yon: 'giden' })
-      }).catch(() => {});
+      /* GİDEN ARAMA LOGU - netsantral arama-log endpoint'i üzerinden kaydedilir (aramaBaslat içinde) */
     }
   };
 

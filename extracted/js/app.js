@@ -535,6 +535,7 @@ const NetsantralPanel = ({user}) => {
   const callStartRef = useRef(null);
   const panelRef = useRef(null);
   const pbxOriginatedRef = useRef(false);
+  const activeLogIdRef = useRef(0);
 
   // DAHİLİ NUMARASI APP BİLEŞENİNDE YÜKLENİYOR (MR._netsantralDahili)
 
@@ -599,6 +600,7 @@ const NetsantralPanel = ({user}) => {
     };
     const handlePbxSonuc = (e) => {
       const data = e.detail || {};
+      if (data.logId) activeLogIdRef.current = data.logId;
       if (data.basarili) {
         pbxOriginatedRef.current = true;
         setActiveCall(true);
@@ -609,6 +611,7 @@ const NetsantralPanel = ({user}) => {
         setStatus('hazir');
         setStatusMsg(data.hata || 'GİDEN ARAMA BAŞLATILAMADI');
         pbxOriginatedRef.current = false;
+        activeLogIdRef.current = 0;
       }
       setTimeout(() => setStatusMsg(''), 5000);
     };
@@ -675,6 +678,21 @@ const NetsantralPanel = ({user}) => {
 
     console.log('[NETSANTRAL PANEL] ARAMA:', cleanNum, '| DAHİLİ:', MR._netsantralDahili);
 
+    /* GİDEN ARAMA LOGU OLUŞTUR */
+    activeLogIdRef.current = 0;
+    try {
+      const logR = await api.netsantralAramaLogCreate({
+        arayan: MR._netsantralDahili,
+        aranan: cleanNum,
+        arayan_adi: '',
+        yon: 'giden',
+        durum: 'araniyor'
+      });
+      if (logR?.success && logR.data?.log_id) {
+        activeLogIdRef.current = logR.data.log_id;
+      }
+    } catch(e) {}
+
     /* PBX ORIGINATE: ÖNCEKİ DAHİLİNİZİ ÇALDIRIR, AÇTIĞINIZDA HEDEF NUMARAYI BAĞLAR */
     try {
       const r = await api.netsantralOriginate(cleanNum, MR._netsantralDahili);
@@ -684,23 +702,31 @@ const NetsantralPanel = ({user}) => {
         setActiveCall(true);
         setStatus('gorusmede');
         setStatusMsg('ÇAĞRI BAĞLANDI - ' + cleanNum);
+        /* LOG GÜNCELLE: GÖRÜŞMEDE */
+        if (activeLogIdRef.current) {
+          api.netsantralAramaLogUpdate({ log_id: activeLogIdRef.current, durum: 'gorusmede' }).catch(() => {});
+        }
       } else {
         const hataMesaj = r?.data?.response?.hata_mesaj || r?.error || 'PBX ÇAĞRI BAŞLATILAMADI';
         setStatusMsg('HATA: ' + hataMesaj);
         setStatus('hazir');
+        /* LOG GÜNCELLE: BAŞARISIZ */
+        if (activeLogIdRef.current) {
+          api.netsantralAramaLogUpdate({ log_id: activeLogIdRef.current, durum: 'basarisiz', notlar: hataMesaj }).catch(() => {});
+          activeLogIdRef.current = 0;
+        }
         alert('ARAMA HATASI: ' + hataMesaj);
       }
     } catch(e) {
       console.error('[NETSANTRAL PANEL] BAĞLANTI HATASI:', e);
       setStatusMsg('NETSANTRAL BAĞLANTI HATASI - İNTERNET BAĞLANTINIZI KONTROL EDİN');
       setStatus('hazir');
+      if (activeLogIdRef.current) {
+        api.netsantralAramaLogUpdate({ log_id: activeLogIdRef.current, durum: 'basarisiz', notlar: 'BAĞLANTI HATASI' }).catch(() => {});
+        activeLogIdRef.current = 0;
+      }
       alert('NETSANTRAL BAĞLANTI HATASI! İNTERNET BAĞLANTINIZI KONTROL EDİN.');
     }
-
-    /* GİDEN ARAMA LOGU KAYDET */
-    api.req('/netsipp/giden-cagri.php', {
-      method: 'POST', body: JSON.stringify({ arayan: cleanNum, aranan_adi: '', yon: 'giden' })
-    }).catch(() => {});
 
     setTimeout(() => setStatusMsg(''), 5000);
   };
@@ -740,12 +766,22 @@ const NetsantralPanel = ({user}) => {
 
     setHangupLoading(false);
 
+    /* ARAMA LOGUNU GÜNCELLE: SONLANDI + SÜRE */
+    const aramaLogSure = callStartRef.current ? Math.floor((Date.now() - callStartRef.current) / 1000) : callTimer;
+    if (activeLogIdRef.current) {
+      api.netsantralAramaLogHangup({ log_id: activeLogIdRef.current, sure: aramaLogSure }).catch(() => {});
+    } else {
+      /* LOG ID YOK - EN SON AKTİF ÇAĞRIYI SONLANDIR */
+      api.netsantralAramaLogHangup({ log_id: 0, sure: aramaLogSure }).catch(() => {});
+    }
+
     /* UI'I TEMİZLE - PBX YANIT VERMEMİŞ OLSA BİLE ÇAĞRI BİTMİŞ SAYILIR */
     setActiveCall(false);
     setMuted(false);
     setStatus('hazir');
     setTransferOpen(false);
     pbxOriginatedRef.current = false;
+    activeLogIdRef.current = 0;
     setStatusMsg(hangupOk ? 'ÇAĞRI SONLANDIRILDI' : 'ÇAĞRI SONLANDIRILDI (PBX ZATEN KAPANMIŞ OLABİLİR)');
     window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
     setTimeout(() => setStatusMsg(''), 3000);
@@ -753,11 +789,16 @@ const NetsantralPanel = ({user}) => {
 
   // ZORLA ÇAĞRI SONLANDIR (NETSANTRAL'DAN YANIT ALINAMADIĞINDA)
   const zorlaKapat = () => {
+    const aramaLogSure = callStartRef.current ? Math.floor((Date.now() - callStartRef.current) / 1000) : callTimer;
+    if (activeLogIdRef.current) {
+      api.netsantralAramaLogHangup({ log_id: activeLogIdRef.current, sure: aramaLogSure }).catch(() => {});
+    }
     setActiveCall(false);
     setMuted(false);
     setStatus('hazir');
     setTransferOpen(false);
     pbxOriginatedRef.current = false;
+    activeLogIdRef.current = 0;
     setStatusMsg('ÇAĞRI ZORLA SONLANDIRILDI');
     setHangupLoading(false);
     window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
