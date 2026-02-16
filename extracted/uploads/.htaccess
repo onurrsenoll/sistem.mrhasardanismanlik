@@ -2,15 +2,20 @@
 # MR HASAR DANIŞMANLIK - Uploads Güvenlik
 # Konum: public_html/uploads/.htaccess
 #
-# ⚠️ Bu dosya sayesinde uploads/ klasöründeki
-#    PDF'lere direkt URL ile erişilemez.
-#    Sadece API üzerinden (auth kontrolüyle) indirilebilir.
+# PDF'lere direkt URL ile erişilemez.
+# Sadece API üzerinden (auth kontrolüyle) indirilebilir.
+# Resim dosyalarına (logo vb.) erişime izin verilir.
 # ═══════════════════════════════════════════
 
 # Tüm direkt erişimi engelle
 Require all denied
 
-# PHP çalıştırmayı da engelle (güvenlik)
+# Resim dosyalarına erişime izin ver (logo, görseller)
+<FilesMatch "\.(png|jpg|jpeg|svg|gif|ico|webp)$">
+    Require all granted
+</FilesMatch>
+
+# PHP çalıştırmayı engelle (güvenlik)
 <FilesMatch "\.php$">
     Require all denied
 </FilesMatch>

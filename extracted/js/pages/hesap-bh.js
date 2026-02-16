@@ -1,542 +1,766 @@
-/* ============================================================
-   MR HASAR DANIŞMANLIK – BH HESAPLAMA SAYFASI (hesap-bh.js)
-   BEDENİ HASAR (MALULİYET) TAZMİNATI HESAPLAYICI
-   ============================================================ */
+// BH (Bedeni Hasar) Hesaplama Sayfası - Profesyonel Tazminat Robotu
+(() => {
+  'use strict';
 
-const MR = window.MR || (window.MR = {});
-const {useState, useMemo, useRef} = React;
+  const { useState, useEffect, useMemo, useCallback } = React;
 
-MR.HesapBHPage = ({setPage, user}) => {
-  const {C, S, LIcon, Badge, SectionTitle, FormGroup, EmptyState, fmt, fmtK, parseNum, fmtInput, BH_EMSAL, yasHesapla, asgariUcretBul, pmfDeger, progresifRant} = MR;
+  window.MR = window.MR || {};
 
-  /* ---------- SABİTLER ---------- */
-  const EMEKLILIK_YASI = 65;
-  const PMF_TABLOLARI = ['TRH2010', 'CSO1980', 'PMF1931'];
+  MR.HesapBHPage = () => {
+    // MOD SEÇİMİ
+    const [mod, setMod] = useState('hizli');
 
-  /* ---------- FORM STATE ---------- */
-  const [form, setForm] = useState({
-    magdurAdi: '',
-    dogumTarihi: '',
-    cinsiyet: '',
-    kazaTarihi: '',
-    maluliyetOrani: '',
-    meslek: '',
-    aylikGelir: '',
-    asgariUcretKullan: false,
-    pmfTablosu: 'TRH2010',
-    teknikFaiz: '10',
-    kusurOrani: '100'
-  });
+    // FORM STATE
+    const [form, setForm] = useState({
+      dosyaNo: '',
+      dosyaAdi: '',
+      davaTuru: 'TRAFIK_KAZASI',
+      magdurAdi: '',
+      dogumTarihi: '',
+      cinsiyet: 'ERKEK',
+      kazaTarihi: '',
+      hesapTarihi: new Date().toISOString().split('T')[0],
+      yasalFaizTarihi: '',
+      maluliyetOrani: '',
+      meslek: '',
+      aylikGelir: '',
+      asgariUcretKullan: false,
+      asgariUcretTuru: 'BEKAR',
+      maasNet: true,
+      maasGuncel: true,
+      pmfTablosu: 'TRH2010',
+      teknikFaiz: '1.8',
+      kusurOrani: '100',
+      // GEÇİCİ İŞ GÖREMEZLİK
+      gigsAktif: false,
+      gigsGun: '0',
+      // BAKICI
+      bakiciAktif: false,
+      bakiciGun: '0',
+      // PSD
+      psdAktif: false,
+      psdTutari: '0',
+      // SEÇENEKLER
+      tamHayat: false,
+      yasYuvarla: false,
+      yilSonunaKaydir: false,
+      bakiyeKazadan: false
+    });
 
-  const [sonuc, setSonuc] = useState(null);
-  const [hata, setHata] = useState('');
-  const sonucRef = useRef(null);
+    // OCR & DOSYALAR
+    const [dosyalar, setDosyalar] = useState([]);
+    const [dragOver, setDragOver] = useState(false);
+    const [ocrYukleniyor, setOcrYukleniyor] = useState(false);
+    const [ocrSonuc, setOcrSonuc] = useState(null);
 
-  const u = (k, v) => setForm(p => ({...p, [k]: v}));
+    // HESAPLAMA
+    const [sonuc, setSonuc] = useState(null);
+    const [hesaplaniyor, setHesaplaniyor] = useState(false);
 
-  /* ---------- ASGARİ ÜCRET BİLGİSİ ---------- */
-  const asgariUcretBilgi = useMemo(() => {
-    if (form.kazaTarihi) return asgariUcretBul(form.kazaTarihi);
-    return asgariUcretBul(MR.today());
-  }, [form.kazaTarihi]);
+    // AI ANALİZ
+    const [aiAnaliz, setAiAnaliz] = useState(null);
+    const [aiYukleniyor, setAiYukleniyor] = useState(false);
 
-  /* ---------- HESAPLAMA ---------- */
-  const hesapla = () => {
-    setHata('');
-    setSonuc(null);
+    // PDF
+    const [pdfYukleniyor, setPdfYukleniyor] = useState(false);
 
-    /* VALİDASYON */
-    if (!form.magdurAdi.trim()) { setHata('MAĞDUR ADI SOYADI GİRİNİZ'); return; }
-    if (!form.dogumTarihi) { setHata('DOĞUM TARİHİ GİRİNİZ'); return; }
-    if (!form.cinsiyet) { setHata('CİNSİYET SEÇİNİZ'); return; }
-    if (!form.kazaTarihi) { setHata('KAZA TARİHİ GİRİNİZ'); return; }
+    // EMSAL
+    const [emsalArama, setEmsalArama] = useState('');
 
-    const maluliyet = Number(form.maluliyetOrani);
-    if (!maluliyet || maluliyet < 1 || maluliyet > 100) { setHata('MALULİYET ORANI 1-100 ARASI OLMAILIDIR'); return; }
+    const C = MR.C, S = MR.S;
 
-    const teknikFaiz = Number(form.teknikFaiz);
-    if (isNaN(teknikFaiz) || teknikFaiz < 0) { setHata('TEKNİK FAİZ ORANI GEÇERSİZ'); return; }
+    const DAVA_TURLERI = [
+      { value: 'TRAFIK_KAZASI', label: 'TRAFİK KAZASI' },
+      { value: 'IS_KAZASI', label: 'İŞ KAZASI' },
+      { value: 'MALPRAKTIS', label: 'MALPRAKTİS' },
+      { value: 'DIGER', label: 'DİĞER' }
+    ];
 
-    const kusur = Number(form.kusurOrani) || 100;
-
-    /* GELİR BELİRLEME */
-    let aylikGelir = 0;
-    let gelirKaynagi = '';
-
-    if (form.asgariUcretKullan) {
-      const au = asgariUcretBul(form.kazaTarihi);
-      if (au) {
-        aylikGelir = au.ucret;
-        gelirKaynagi = 'ASGARİ ÜCRET (' + au.donem + ')';
-      } else {
-        setHata('ASGARİ ÜCRET BİLGİSİ BULUNAMADI');
-        return;
-      }
-    } else {
-      aylikGelir = parseNum(form.aylikGelir);
-      if (aylikGelir <= 0) { setHata('AYLIK GELİR GİRİNİZ VEYA ASGARİ ÜCRET SEÇİNİZ'); return; }
-      gelirKaynagi = 'BEYAN EDİLEN GELİR';
-    }
-
-    /* YAŞ HESAPLAMA */
-    const yas = yasHesapla(form.dogumTarihi, form.kazaTarihi);
-    if (yas <= 0) { setHata('YAŞ HESAPLANAMADI - TARİHLERİ KONTROL EDİNİZ'); return; }
-
-    /* PMF - KALAN ÖMÜR */
-    const cinsiyetKod = form.cinsiyet === 'ERKEK' ? 'E' : 'K';
-    const kalanOmur = pmfDeger(form.pmfTablosu, cinsiyetKod, yas);
-
-    if (kalanOmur <= 0) { setHata('PMF TABLOSUNDAN DEĞER ALINAMADI'); return; }
-
-    /* AKTİF DÖNEM (ŞİMDİDEN EMEKLİLİĞE KADAR) */
-    const aktifKalanYil = Math.max(0, EMEKLILIK_YASI - yas);
-
-    /* PASİF DÖNEM (EMEKLİLİKTEN SONRA) */
-    const pasifKalanYil = Math.max(0, kalanOmur - aktifKalanYil);
-
-    /* RANT KATSAYILARI */
-    const faizOrani = teknikFaiz / 100;
-    const aktifRant = progresifRant(aktifKalanYil, faizOrani);
-    const pasifRant = progresifRant(pasifKalanYil, faizOrani);
-
-    /* PASİF DÖNEM İÇİN İSKONTO FAKTÖRÜ (AKTİF DÖNEM SONRASINA ERTELENMİŞ) */
-    const pasifIskonto = aktifKalanYil > 0 ? (1 / Math.pow(1 + faizOrani, aktifKalanYil)) : 1;
-
-    /* AKTİF DÖNEM GELİR KAYBI */
-    const yillikGelir = aylikGelir * 12;
-    const aktifGelirKaybi = yillikGelir * (maluliyet / 100) * aktifRant;
-
-    /* PASİF DÖNEM GELİR KAYBI (ASGARİ ÜCRET ÜZERİNDEN) */
-    const pasifAylikGelir = (asgariUcretBilgi ? asgariUcretBilgi.ucret : aylikGelir);
-    const pasifYillikGelir = pasifAylikGelir * 12;
-    const pasifGelirKaybi = pasifYillikGelir * (maluliyet / 100) * pasifRant * pasifIskonto;
-
-    /* TOPLAM */
-    const toplamGelirKaybi = aktifGelirKaybi + pasifGelirKaybi;
-
-    /* KUSUR ORANI UYGULA */
-    const aktifKusurlu = aktifGelirKaybi * (kusur / 100);
-    const pasifKusurlu = pasifGelirKaybi * (kusur / 100);
-    const toplamKusurlu = Math.round(aktifKusurlu + pasifKusurlu);
-
-    const sonucObj = {
-      magdurAdi: form.magdurAdi,
-      dogumTarihi: form.dogumTarihi,
-      cinsiyet: form.cinsiyet,
-      cinsiyetKod,
-      kazaTarihi: form.kazaTarihi,
-      yas,
-      maluliyet,
-      meslek: form.meslek || '-',
-      aylikGelir,
-      gelirKaynagi,
-      yillikGelir,
-      pmfTablosu: form.pmfTablosu,
-      teknikFaiz,
-      kalanOmur,
-      aktifKalanYil,
-      pasifKalanYil,
-      aktifRant: Math.round(aktifRant * 10000) / 10000,
-      pasifRant: Math.round(pasifRant * 10000) / 10000,
-      pasifIskonto: Math.round(pasifIskonto * 10000) / 10000,
-      aktifGelirKaybi: Math.round(aktifGelirKaybi),
-      pasifGelirKaybi: Math.round(pasifGelirKaybi),
-      pasifAylikGelir,
-      toplamGelirKaybi: Math.round(toplamGelirKaybi),
-      kusurOrani: kusur,
-      aktifKusurlu: Math.round(aktifKusurlu),
-      pasifKusurlu: Math.round(pasifKusurlu),
-      toplamKusurlu
+    // FORM DEĞİŞİKLİĞİ
+    const handleChange = (key, value) => {
+      setForm(prev => ({ ...prev, [key]: value }));
     };
 
-    setSonuc(sonucObj);
-
-    /* SONUÇ ALANINA KAYDIRMA */
-    setTimeout(() => {
-      if (sonucRef.current) sonucRef.current.scrollIntoView({behavior: 'smooth', block: 'start'});
-    }, 100);
-  };
-
-  /* ---------- TEMİZLE ---------- */
-  const temizle = () => {
-    setForm({
-      magdurAdi: '', dogumTarihi: '', cinsiyet: '', kazaTarihi: '',
-      maluliyetOrani: '', meslek: '', aylikGelir: '', asgariUcretKullan: false,
-      pmfTablosu: 'TRH2010', teknikFaiz: '10', kusurOrani: '100'
-    });
-    setSonuc(null);
-    setHata('');
-  };
-
-  /* ---------- PDF ÇIKTI ---------- */
-  const pdfCikti = () => {
-    alert('PDF ÇIKTI FONKSİYONU YAKINDA AKTİF OLACAKTIR.\nHESAPLAMA SONUÇLARI PDF OLARAK İNDİRİLEBİLECEKTİR.');
-  };
-
-  /* ---------- DOSYAYA KAYDET ---------- */
-  const dosyayaKaydet = async () => {
-    if (!sonuc) return;
-    const urlParts = (window.location.hash || '').split('dosya_id=');
-    const dosyaId = urlParts.length > 1 ? urlParts[1] : null;
-    if (!dosyaId) {
-      alert('BU HESAPLAMAYI BİR DOSYAYA KAYDETMEK İÇİN DOSYA DETAY SAYFASINDAN ERİŞİNİZ.');
-      return;
-    }
-    try {
-      const r = await MR.api.req('/dosya/hesaplama-kaydet.php', {
-        method: 'POST',
-        body: JSON.stringify({
-          dosya_id: dosyaId,
-          hesap_turu: 'BH',
-          sonuc: sonuc
-        })
+    // DOSYA YÜKLEME
+    const handleDosyaEkle = (files) => {
+      const yeniDosyalar = Array.from(files).filter(f => {
+        const uzanti = f.name.split('.').pop().toLowerCase();
+        return ['pdf', 'jpg', 'jpeg', 'png'].includes(uzanti);
       });
-      if (r?.success) alert('HESAPLAMA DOSYAYA KAYDEDİLDİ');
-      else alert(r?.error || 'KAYDETME HATASI');
-    } catch (e) {
-      alert('BAĞLANTI HATASI');
-    }
-  };
+      setDosyalar(prev => [...prev, ...yeniDosyalar]);
+    };
 
-  /* ---------- TABLO STİLLERİ ---------- */
-  const thStyle = {padding: '10px 12px', textAlign: 'left', color: C.textMuted, fontWeight: 600, fontSize: 10, borderBottom: `1px solid ${C.border}`};
-  const tdStyle = {padding: '10px 12px', fontSize: 12, borderBottom: `1px solid ${C.border}`};
+    const dosyaCikar = (index) => {
+      setDosyalar(prev => prev.filter((_, i) => i !== index));
+    };
 
-  /* ---------- TOGGLE STİLİ ---------- */
-  const toggleStyle = (aktif) => ({
-    width: 44, height: 24, borderRadius: 12, padding: 2,
-    background: aktif ? C.success : C.borderLight,
-    cursor: 'pointer', transition: 'all .2s',
-    display: 'flex', alignItems: 'center',
-    justifyContent: aktif ? 'flex-end' : 'flex-start'
-  });
-  const toggleDot = {width: 20, height: 20, borderRadius: 10, background: '#fff', transition: 'all .2s'};
+    // OCR ANALİZ
+    const ocrAnaliz = async () => {
+      if (dosyalar.length === 0) { alert('LÜTFEN EN AZ BİR DOSYA YÜKLEYİNİZ'); return; }
+      setOcrYukleniyor(true);
+      try {
+        const fd = new FormData();
+        dosyalar.forEach((f, i) => fd.append('dosya_' + i, f));
+        fd.append('dosya_sayisi', dosyalar.length);
+        fd.append('tip', 'bh');
+        const headers = {};
+        if (MR.api.token) headers['Authorization'] = 'Bearer ' + MR.api.token;
+        const resp = await fetch('/api/v1/hesap/ocr-analiz.php', { method: 'POST', headers: headers, body: fd });
+        const data = await resp.json();
+        if (data.success && data.data) {
+          setOcrSonuc(data.data);
+          if (data.data.magdurAdi) handleChange('magdurAdi', data.data.magdurAdi);
+          if (data.data.dogumTarihi) handleChange('dogumTarihi', data.data.dogumTarihi);
+          if (data.data.cinsiyet) handleChange('cinsiyet', data.data.cinsiyet.toUpperCase());
+          if (data.data.kazaTarihi) handleChange('kazaTarihi', data.data.kazaTarihi);
+          if (data.data.maluliyetOrani) handleChange('maluliyetOrani', data.data.maluliyetOrani.toString());
+          if (data.data.meslek) handleChange('meslek', data.data.meslek);
+          if (data.data.aylikGelir) handleChange('aylikGelir', data.data.aylikGelir.toString());
+          alert('OCR ANALİZİ TAMAMLANDI!\nBİLGİLER FORMA AKTARILDI.');
+        } else {
+          alert(data.error || data.message || 'OCR ANALİZİ BAŞARISIZ');
+        }
+      } catch (err) {
+        console.error('OCR hatası:', err);
+        alert('OCR HATASI: ' + err.message);
+      } finally {
+        setOcrYukleniyor(false);
+      }
+    };
 
-  /* ═══════════════════════════════════════════ RENDER ═══════════════════════════════════════════ */
-  return (
-    <div className="fade-in">
-      {/* BAŞLIK */}
-      <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20}}>
-        <div style={{display: 'flex', alignItems: 'center', gap: 14}}>
-          <div style={{width: 44, height: 44, borderRadius: 12, background: `${C.purple}22`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-            <LIcon name="Heart" size={22} color={C.purple}/>
+    // ─── HESAPLAMA MOTORU ───
+    const hesaplaTemel = (teknikFaiz, pmfTablosu) => {
+      const dogumTarihi = new Date(form.dogumTarihi);
+      const kazaTarihi = new Date(form.kazaTarihi);
+      let hesapTarihi = new Date(form.hesapTarihi || new Date());
+
+      if (form.yilSonunaKaydir) {
+        hesapTarihi = new Date(hesapTarihi.getFullYear(), 11, 31);
+      }
+
+      const cinsiyet = form.cinsiyet;
+      const maluliyet = MR.parseNum(form.maluliyetOrani);
+      const faiz = teknikFaiz;
+      const kusur = MR.parseNum(form.kusurOrani) || 100;
+
+      // YAŞ
+      let yas = MR.yasHesapla(dogumTarihi, kazaTarihi);
+      if (form.yasYuvarla) yas = Math.round(yas);
+
+      // GELİR
+      let aylikGelir = 0;
+      let asgariUcretYil = null;
+      if (form.asgariUcretKullan) {
+        const asgariData = MR.asgariUcretBul(kazaTarihi);
+        if (asgariData) {
+          aylikGelir = asgariData.ucret;
+          asgariUcretYil = asgariData.yil;
+        }
+      } else {
+        aylikGelir = MR.parseNum(form.aylikGelir);
+      }
+
+      // BRÜT/NET DÖNÜŞÜM
+      if (!form.maasNet && aylikGelir > 0) {
+        aylikGelir = aylikGelir * 0.83; // Brütten nete yaklaşık
+      }
+
+      // PMF VE KALAN ÖMÜR
+      const cinsiyetKod = cinsiyet === 'ERKEK' ? 'E' : 'K';
+      const hesapYasi = form.bakiyeKazadan ? yas : MR.yasHesapla(dogumTarihi, hesapTarihi);
+      const kalanOmur = MR.pmfDeger(pmfTablosu, cinsiyetKod, hesapYasi);
+
+      // AKTİF/PASİF DÖNEM
+      let aktifKalanYil, pasifKalanYil;
+      if (form.tamHayat) {
+        aktifKalanYil = kalanOmur;
+        pasifKalanYil = 0;
+      } else {
+        aktifKalanYil = Math.max(0, 65 - hesapYasi);
+        pasifKalanYil = Math.max(0, kalanOmur - aktifKalanYil);
+      }
+
+      // RANT KATSAYILARI (Progresif 1/Ln)
+      const aktifRant = MR.progresifRant(aktifKalanYil, faiz / 100);
+      const pasifRant = MR.progresifRant(pasifKalanYil, faiz / 100);
+      const pasifIskonto = aktifKalanYil > 0 ? 1 / Math.pow(1 + faiz / 100, aktifKalanYil) : 1;
+
+      // GELİR KAYBI
+      const aktifGelirKaybi = aylikGelir * 12 * (maluliyet / 100) * aktifRant;
+      const pasifAylikGelir = form.asgariUcretKullan ? aylikGelir : (MR.asgariUcretBul(kazaTarihi)?.ucret || aylikGelir);
+      const pasifGelirKaybi = pasifAylikGelir * 12 * (maluliyet / 100) * pasifRant * pasifIskonto;
+
+      // GEÇİCİ İŞ GÖREMEZLİK
+      let gigsTopla = 0;
+      if (form.gigsAktif && parseInt(form.gigsGun) > 0) {
+        const gunlukGelir = aylikGelir / 30;
+        gigsTopla = gunlukGelir * parseInt(form.gigsGun);
+      }
+
+      // BAKICI ÜCRETİ
+      let bakiciToplam = 0;
+      if (form.bakiciAktif && parseInt(form.bakiciGun) > 0) {
+        const asgari = MR.asgariUcretBul(kazaTarihi);
+        const bakiciGunluk = asgari ? asgari.ucret / 30 : 0;
+        bakiciToplam = bakiciGunluk * parseInt(form.bakiciGun);
+      }
+
+      // KUSUR UYGULAMASI
+      const aktifKusurlu = aktifGelirKaybi * (kusur / 100);
+      const pasifKusurlu = pasifGelirKaybi * (kusur / 100);
+      const gigsKusurlu = gigsTopla * (kusur / 100);
+      const bakiciKusurlu = bakiciToplam * (kusur / 100);
+
+      // PSD DÜŞÜMÜ
+      let psdDeger = 0;
+      if (form.psdAktif) {
+        psdDeger = MR.parseNum(form.psdTutari);
+      }
+
+      const toplamBrut = aktifGelirKaybi + pasifGelirKaybi + gigsTopla + bakiciToplam;
+      const toplamKusurlu = aktifKusurlu + pasifKusurlu + gigsKusurlu + bakiciKusurlu;
+      const toplamNet = Math.max(0, toplamKusurlu - psdDeger);
+
+      return {
+        yas, hesapYasi, aylikGelir, asgariUcretYil, kalanOmur, pmfTablosu, teknikFaiz: faiz,
+        kusur, maluliyet,
+        aktifKalanYil, pasifKalanYil,
+        aktifRant, pasifRant, pasifIskonto,
+        aktifGelirKaybi, pasifGelirKaybi, aktifKusurlu, pasifKusurlu,
+        gigsTopla, gigsKusurlu, gigsGun: parseInt(form.gigsGun) || 0,
+        bakiciToplam, bakiciKusurlu, bakiciGun: parseInt(form.bakiciGun) || 0,
+        psdDeger,
+        toplamBrut: Math.round(toplamBrut),
+        toplamKusurlu: Math.round(toplamKusurlu),
+        toplamNet: Math.round(toplamNet)
+      };
+    };
+
+    const hesapla = async () => {
+      // VALIDATION
+      if (!form.dogumTarihi) { alert('DOĞUM TARİHİ GİRİNİZ'); return; }
+      if (!form.kazaTarihi) { alert('KAZA TARİHİ GİRİNİZ'); return; }
+      if (!form.maluliyetOrani || MR.parseNum(form.maluliyetOrani) <= 0) { alert('GEÇERLİ MALULİYET ORANI GİRİNİZ (1-100)'); return; }
+      if (!form.asgariUcretKullan && (!form.aylikGelir || MR.parseNum(form.aylikGelir) <= 0)) { alert('AYLIK GELİR GİRİNİZ VEYA ASGARİ ÜCRET SEÇİN'); return; }
+
+      setHesaplaniyor(true);
+      try {
+        const faiz = MR.parseNum(form.teknikFaiz) || 1.8;
+        const ana = hesaplaTemel(faiz, form.pmfTablosu);
+
+        const hesapSonuc = {
+          ...ana,
+          magdurAdi: form.magdurAdi,
+          dosyaNo: form.dosyaNo,
+          dosyaAdi: form.dosyaAdi,
+          davaTuru: DAVA_TURLERI.find(d => d.value === form.davaTuru)?.label || form.davaTuru,
+          dogumTarihi: form.dogumTarihi,
+          kazaTarihi: form.kazaTarihi,
+          hesapTarihi: form.hesapTarihi,
+          yasalFaizTarihi: form.yasalFaizTarihi,
+          cinsiyet: form.cinsiyet,
+          meslek: form.meslek || '-',
+          asgariUcretKullan: form.asgariUcretKullan,
+          tamHayat: form.tamHayat,
+          tarih: new Date().toISOString()
+        };
+
+        setSonuc(hesapSonuc);
+        aiAnalizBaslat(hesapSonuc);
+      } catch (err) {
+        console.error('Hesaplama hatası:', err);
+        alert('HESAPLAMA HATASI: ' + err.message);
+      } finally {
+        setHesaplaniyor(false);
+      }
+    };
+
+    // AI ANALİZ
+    const aiAnalizBaslat = async (hesapSonuc) => {
+      setAiYukleniyor(true);
+      try {
+        const resp = await MR.api.bhAiAnaliz({
+          magdur: hesapSonuc.magdurAdi, dogumTarihi: hesapSonuc.dogumTarihi,
+          kazaTarihi: hesapSonuc.kazaTarihi, cinsiyet: hesapSonuc.cinsiyet,
+          yas: hesapSonuc.yas, maluliyet: hesapSonuc.maluliyet,
+          meslek: hesapSonuc.meslek, aylikGelir: hesapSonuc.aylikGelir,
+          pmfTablosu: hesapSonuc.pmfTablosu, kalanOmur: hesapSonuc.kalanOmur,
+          aktifYil: hesapSonuc.aktifKalanYil, pasifYil: hesapSonuc.pasifKalanYil,
+          aktifTazminat: hesapSonuc.aktifKusurlu, pasifTazminat: hesapSonuc.pasifKusurlu,
+          toplamTazminat: hesapSonuc.toplamNet, teknikFaiz: hesapSonuc.teknikFaiz,
+          kusur: hesapSonuc.kusur, davaTuru: hesapSonuc.davaTuru,
+          gigs: hesapSonuc.gigsKusurlu, bakici: hesapSonuc.bakiciKusurlu
+        });
+        if (resp.success && resp.data) setAiAnaliz(resp.data);
+      } catch (err) { console.error('AI analiz hatası:', err); }
+      finally { setAiYukleniyor(false); }
+    };
+
+    // ÇOKLU TRH KARŞILAŞTIRMA
+    const trhKarsilastirma = useMemo(() => {
+      if (!sonuc) return [];
+      const faizler = [
+        { label: 'TRH 1.8', faiz: 1.8 },
+        { label: 'TRH 0', faiz: 0 },
+        { label: 'TRH 1.65', faiz: 1.65 }
+      ];
+      return faizler.map(f => {
+        try {
+          const r = hesaplaTemel(f.faiz, 'TRH2010');
+          return { ...f, ...r };
+        } catch (e) { return { ...f, toplamNet: 0 }; }
+      });
+    }, [sonuc]);
+
+    // PMF KARŞILAŞTIRMA
+    const pmfKarsilastirma = useMemo(() => {
+      if (!sonuc) return [];
+      const tablolar = ['TRH2010', 'CSO1980', 'PMF1931'];
+      const faiz = sonuc.teknikFaiz;
+      return tablolar.map(tablo => {
+        try {
+          const r = hesaplaTemel(faiz, tablo);
+          return { tablo, ...r };
+        } catch (e) { return { tablo, toplamNet: 0, kalanOmur: 0, aktifKalanYil: 0, pasifKalanYil: 0 }; }
+      });
+    }, [sonuc]);
+
+    // EMSAL FİLTRELEME
+    const emsalFiltrelenmis = useMemo(() => {
+      if (!sonuc || !MR.BH_EMSAL) return [];
+      const hedefMaluliyet = sonuc.maluliyet;
+      let emsaller = MR.BH_EMSAL.map(e => ({
+        ...e, benzerlik: 100 - Math.abs(e.maluliyet - hedefMaluliyet)
+      })).filter(e => e.benzerlik >= 50);
+      if (emsalArama.trim()) {
+        const ara = emsalArama.toLowerCase();
+        emsaller = emsaller.filter(e => (e.aciklama || e.detay || '').toLowerCase().includes(ara) || (e.kaynak || '').toLowerCase().includes(ara));
+      }
+      return emsaller.sort((a, b) => b.benzerlik - a.benzerlik).slice(0, 10);
+    }, [sonuc, emsalArama]);
+
+    // PDF BİLİRKİŞİ RAPORU
+    const pdfIndir = (tip) => {
+      if (!sonuc) return;
+      setPdfYukleniyor(true);
+      const raporNo = 'BH-' + Date.now().toString().slice(-8);
+      const tarih = new Date().toLocaleDateString('tr-TR');
+      const fmtTarih = (t) => t ? new Date(t).toLocaleDateString('tr-TR') : '-';
+      const fmtPara = (n) => MR.fmtK(n);
+
+      const bilirkisiHtml = tip === 'bilirkisi' ? `
+        <div style="margin-bottom:20px;padding:15px;background:#f8f8f8;border:1px solid #ccc;">
+          <h3 style="margin:0 0 10px;font-size:14px;color:#333;">BİLİRKİŞİ NOTU</h3>
+          <p style="margin:5px 0;font-size:11px;line-height:1.6;">Mahkemenizin ${sonuc.dosyaNo || '...'} Esas sayılı dosyası kapsamında, davacı ${sonuc.magdurAdi || '...'} adına düzenlenen ${sonuc.davaTuru || 'trafik kazası'} nedeniyle oluşan bedeni hasar tazminatı hesaplama raporudur.</p>
+          <p style="margin:5px 0;font-size:11px;line-height:1.6;">Hesaplama ${sonuc.pmfTablosu} yaşam tablosu, %${sonuc.teknikFaiz} teknik faiz oranı ve 1/Ln progresif rant yöntemi kullanılarak yapılmıştır.</p>
+        </div>` : '';
+
+      const html = `<div style="font-family:Arial,sans-serif;padding:30px;max-width:800px;margin:0 auto;color:#333;font-size:12px;">
+        <div style="text-align:center;border-bottom:3px solid #9333ea;padding-bottom:15px;margin-bottom:20px;">
+          <h1 style="color:#9333ea;margin:0;font-size:20px;">MR HASAR DANIŞMANLIK</h1>
+          <h2 style="color:#555;margin:8px 0 0;font-size:15px;">${tip === 'bilirkisi' ? 'BİLİRKİŞİ TAZMİNAT HESAP RAPORU' : 'BEDENİ HASAR TAZMİNAT HESAP SONUCU'}</h2>
+          <p style="margin:8px 0 0;font-size:10px;color:#888;">Rapor No: ${raporNo} | Tarih: ${tarih}</p>
+        </div>
+
+        ${bilirkisiHtml}
+
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+          <tr style="background:#9333ea;color:white;"><td colspan="4" style="padding:8px;font-weight:700;">MAĞDUR BİLGİLERİ</td></tr>
+          <tr><td style="border:1px solid #ddd;padding:6px;width:25%;background:#f5f5f5;font-weight:600;">AD SOYAD</td><td style="border:1px solid #ddd;padding:6px;">${sonuc.magdurAdi || '-'}</td><td style="border:1px solid #ddd;padding:6px;width:25%;background:#f5f5f5;font-weight:600;">CİNSİYET</td><td style="border:1px solid #ddd;padding:6px;">${sonuc.cinsiyet}</td></tr>
+          <tr><td style="border:1px solid #ddd;padding:6px;background:#f5f5f5;font-weight:600;">DOĞUM TARİHİ</td><td style="border:1px solid #ddd;padding:6px;">${fmtTarih(sonuc.dogumTarihi)}</td><td style="border:1px solid #ddd;padding:6px;background:#f5f5f5;font-weight:600;">KAZA TARİHİ</td><td style="border:1px solid #ddd;padding:6px;">${fmtTarih(sonuc.kazaTarihi)}</td></tr>
+          <tr><td style="border:1px solid #ddd;padding:6px;background:#f5f5f5;font-weight:600;">KAZA ANINDA YAŞ</td><td style="border:1px solid #ddd;padding:6px;">${sonuc.yas}</td><td style="border:1px solid #ddd;padding:6px;background:#f5f5f5;font-weight:600;">MESLEK</td><td style="border:1px solid #ddd;padding:6px;">${sonuc.meslek}</td></tr>
+          <tr><td style="border:1px solid #ddd;padding:6px;background:#f5f5f5;font-weight:600;">MALULİYET ORANI</td><td style="border:1px solid #ddd;padding:6px;font-weight:700;color:#9333ea;">%${sonuc.maluliyet}</td><td style="border:1px solid #ddd;padding:6px;background:#f5f5f5;font-weight:600;">DAVA TÜRÜ</td><td style="border:1px solid #ddd;padding:6px;">${sonuc.davaTuru}</td></tr>
+        </table>
+
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+          <tr style="background:#9333ea;color:white;"><td colspan="4" style="padding:8px;font-weight:700;">HESAPLAMA PARAMETRELERİ</td></tr>
+          <tr><td style="border:1px solid #ddd;padding:6px;width:25%;background:#f5f5f5;font-weight:600;">AYLIK GELİR</td><td style="border:1px solid #ddd;padding:6px;">${fmtPara(sonuc.aylikGelir)} TL ${sonuc.asgariUcretKullan ? '(ASGARİ ÜCRET)' : ''}</td><td style="border:1px solid #ddd;padding:6px;width:25%;background:#f5f5f5;font-weight:600;">PMF TABLOSU</td><td style="border:1px solid #ddd;padding:6px;">${sonuc.pmfTablosu}</td></tr>
+          <tr><td style="border:1px solid #ddd;padding:6px;background:#f5f5f5;font-weight:600;">KALAN ÖMÜR</td><td style="border:1px solid #ddd;padding:6px;">${sonuc.kalanOmur} YIL</td><td style="border:1px solid #ddd;padding:6px;background:#f5f5f5;font-weight:600;">TEKNİK FAİZ</td><td style="border:1px solid #ddd;padding:6px;">%${sonuc.teknikFaiz}</td></tr>
+          <tr><td style="border:1px solid #ddd;padding:6px;background:#f5f5f5;font-weight:600;">KUSUR ORANI</td><td style="border:1px solid #ddd;padding:6px;">%${sonuc.kusur}</td><td style="border:1px solid #ddd;padding:6px;background:#f5f5f5;font-weight:600;">HESAP TARİHİ</td><td style="border:1px solid #ddd;padding:6px;">${fmtTarih(sonuc.hesapTarihi)}</td></tr>
+        </table>
+
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+          <tr style="background:#9333ea;color:white;"><th style="padding:8px;text-align:left;">DÖNEM</th><th style="padding:8px;text-align:right;">YIL</th><th style="padding:8px;text-align:right;">RANT</th><th style="padding:8px;text-align:right;">BRÜT</th><th style="padding:8px;text-align:right;">KUSURLU</th></tr>
+          <tr><td style="border:1px solid #ddd;padding:6px;font-weight:600;">AKTİF DÖNEM</td><td style="border:1px solid #ddd;padding:6px;text-align:right;">${sonuc.aktifKalanYil}</td><td style="border:1px solid #ddd;padding:6px;text-align:right;">${sonuc.aktifRant.toFixed(4)}</td><td style="border:1px solid #ddd;padding:6px;text-align:right;">${fmtPara(sonuc.aktifGelirKaybi)} TL</td><td style="border:1px solid #ddd;padding:6px;text-align:right;font-weight:600;">${fmtPara(sonuc.aktifKusurlu)} TL</td></tr>
+          <tr><td style="border:1px solid #ddd;padding:6px;font-weight:600;">PASİF DÖNEM</td><td style="border:1px solid #ddd;padding:6px;text-align:right;">${sonuc.pasifKalanYil}</td><td style="border:1px solid #ddd;padding:6px;text-align:right;">${sonuc.pasifRant.toFixed(4)}</td><td style="border:1px solid #ddd;padding:6px;text-align:right;">${fmtPara(sonuc.pasifGelirKaybi)} TL</td><td style="border:1px solid #ddd;padding:6px;text-align:right;font-weight:600;">${fmtPara(sonuc.pasifKusurlu)} TL</td></tr>
+          ${sonuc.gigsGun > 0 ? '<tr><td style="border:1px solid #ddd;padding:6px;font-weight:600;">GEÇİCİ İŞ GÖREMEZLİK (' + sonuc.gigsGun + ' GÜN)</td><td colspan="2"></td><td style="border:1px solid #ddd;padding:6px;text-align:right;">' + fmtPara(sonuc.gigsTopla) + ' TL</td><td style="border:1px solid #ddd;padding:6px;text-align:right;font-weight:600;">' + fmtPara(sonuc.gigsKusurlu) + ' TL</td></tr>' : ''}
+          ${sonuc.bakiciGun > 0 ? '<tr><td style="border:1px solid #ddd;padding:6px;font-weight:600;">BAKICI ÜCRETİ (' + sonuc.bakiciGun + ' GÜN)</td><td colspan="2"></td><td style="border:1px solid #ddd;padding:6px;text-align:right;">' + fmtPara(sonuc.bakiciToplam) + ' TL</td><td style="border:1px solid #ddd;padding:6px;text-align:right;font-weight:600;">' + fmtPara(sonuc.bakiciKusurlu) + ' TL</td></tr>' : ''}
+          ${sonuc.psdDeger > 0 ? '<tr><td style="border:1px solid #ddd;padding:6px;font-weight:600;color:#d32f2f;">PSD DÜŞÜMÜ</td><td colspan="3"></td><td style="border:1px solid #ddd;padding:6px;text-align:right;font-weight:600;color:#d32f2f;">-' + fmtPara(sonuc.psdDeger) + ' TL</td></tr>' : ''}
+        </table>
+
+        <div style="text-align:center;background:linear-gradient(135deg,#9333ea,#ec4899);color:white;padding:25px;border-radius:8px;margin-bottom:20px;">
+          <h2 style="margin:0 0 8px;font-size:16px;">TOPLAM TAZMİNAT MİKTARI</h2>
+          <h1 style="margin:0;font-size:32px;">${fmtPara(sonuc.toplamNet)} TL</h1>
+        </div>
+
+        ${aiAnaliz ? '<div style="margin-bottom:20px;padding:15px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;"><h3 style="font-size:13px;color:#059669;margin:0 0 10px;">YAPAY ZEKA ANALİZİ</h3><div style="font-size:11px;line-height:1.7;white-space:pre-wrap;">' + (aiAnaliz.analiz || aiAnaliz.metin || '') + '</div></div>' : ''}
+
+        <div style="margin-top:40px;padding-top:15px;border-top:2px solid #ddd;text-align:center;font-size:9px;color:#888;">
+          <p><b>UYARI:</b> Bu rapor ön çalışma niteliğindedir. Kesin tazminat miktarı mahkeme kararı ile belirlenir.</p>
+          <p>MR HASAR DANIŞMANLIK - ${tarih} | © ${new Date().getFullYear()}</p>
+        </div>
+      </div>`;
+
+      const el = document.createElement('div');
+      el.innerHTML = html;
+      document.body.appendChild(el);
+      html2pdf().set({
+        margin: 10, filename: 'MR_BH_' + (tip === 'bilirkisi' ? 'Bilirkisi_' : 'Sonuc_') + raporNo + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).from(el).save().then(() => { document.body.removeChild(el); setPdfYukleniyor(false); }).catch(err => {
+        console.error('PDF hatası:', err); document.body.removeChild(el); setPdfYukleniyor(false);
+      });
+    };
+
+    // TEMİZLE
+    const temizle = () => {
+      setForm({ dosyaNo: '', dosyaAdi: '', davaTuru: 'TRAFIK_KAZASI', magdurAdi: '', dogumTarihi: '', cinsiyet: 'ERKEK', kazaTarihi: '', hesapTarihi: new Date().toISOString().split('T')[0], yasalFaizTarihi: '', maluliyetOrani: '', meslek: '', aylikGelir: '', asgariUcretKullan: false, asgariUcretTuru: 'BEKAR', maasNet: true, maasGuncel: true, pmfTablosu: 'TRH2010', teknikFaiz: '1.8', kusurOrani: '100', gigsAktif: false, gigsGun: '0', bakiciAktif: false, bakiciGun: '0', psdAktif: false, psdTutari: '0', tamHayat: false, yasYuvarla: false, yilSonunaKaydir: false, bakiyeKazadan: false });
+      setSonuc(null); setAiAnaliz(null); setDosyalar([]); setOcrSonuc(null); setEmsalArama('');
+    };
+
+    // ────────── CHECKBOX HELPER ──────────
+    const Chk = ({ checked, onChange, label }) => (
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.text, cursor: 'pointer', fontSize: 12 }}>
+        <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} />
+        <span>{label}</span>
+      </label>
+    );
+
+    const gridS = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 };
+    const grid3S = { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 };
+    const cardS = { ...S.card, marginBottom: 20 };
+
+    // ════════════════ RENDER ════════════════
+    return (
+      <div style={{ padding: '24px', maxWidth: '1600px', margin: '0 auto' }}>
+        {/* HEADER */}
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+            <div style={{ background: 'linear-gradient(135deg, ' + C.purple + ' 0%, ' + C.pink + ' 100%)', padding: 16, borderRadius: 12 }}>
+              <MR.LIcon name="Stethoscope" size={32} color="white" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>BEDENİ HASAR HESAPLAMA ROBOTU</h1>
+              <p style={{ margin: '6px 0 0', color: C.textSec, fontSize: 12 }}>PROFESYONEL TAZMİNAT HESAPLAMA - PMF + PROGRESİF RANT + AI ANALİZ</p>
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <span style={S.badge(C.purple)}>AI DESTEKLİ</span>
+              <span style={S.badge(C.danger)}>PDF RAPOR</span>
+              <span style={S.badge(C.cyan)}>PMF KARŞILAŞTIRMA</span>
+              <span style={S.badge(C.gold)}>EMSAL KARARLARI</span>
+            </div>
           </div>
-          <div>
-            <div style={{fontSize: 20, fontWeight: 800}}>BEDENİ HASAR HESAPLAMA</div>
-            <div style={{fontSize: 11, color: C.textMuted, letterSpacing: 1}}>MALULİYET TAZMİNATI HESAPLAYICI</div>
+          {/* MOD TABS */}
+          <div style={{ display: 'flex', gap: 12, borderBottom: '2px solid ' + C.border }}>
+            {[{ id: 'hizli', icon: 'Zap', label: 'HIZLI HESAPLAMA' }, { id: 'detayli', icon: 'FileText', label: 'DETAYLI RAPOR + OCR' }].map(t => (
+              <button key={t.id} onClick={() => setMod(t.id)} style={{
+                ...S.btn, background: mod === t.id ? 'linear-gradient(135deg, ' + C.purple + ', ' + C.pink + ')' : 'transparent',
+                color: mod === t.id ? 'white' : C.textSec, border: 'none',
+                borderBottom: mod === t.id ? '2px solid ' + C.purple : '2px solid transparent',
+                borderRadius: '8px 8px 0 0', padding: '12px 24px'
+              }}>
+                <MR.LIcon name={t.icon} size={18} /><span>{t.label}</span>
+              </button>
+            ))}
           </div>
         </div>
-        <button style={{...S.btn, ...S.btnG}} onClick={() => setPage('home')}>
-          <LIcon name="ArrowLeft" size={14}/> ANA SAYFA
-        </button>
-      </div>
 
-      {/* HATA MESAJI */}
-      {hata && (
-        <div style={{padding: '12px 16px', background: `${C.danger}22`, border: `1px solid ${C.danger}44`, borderRadius: 10, marginBottom: 16, fontSize: 12, color: C.danger, display: 'flex', alignItems: 'center', gap: 8}}>
-          <LIcon name="AlertCircle" size={16} color={C.danger}/> {hata}
-        </div>
-      )}
+        {/* GRID */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: 24 }}>
 
-      {/* ANA İÇERİK: SOL FORM + SAĞ SONUÇ */}
-      <div style={{display: 'grid', gridTemplateColumns: sonuc ? '1fr 1fr' : '1fr', gap: 20}}>
+          {/* ═══ SOL KOLON ═══ */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-        {/* ═══ SOL: HESAPLAMA FORMU ═══ */}
-        <div style={S.card}>
-          <SectionTitle icon="Stethoscope" title="MAĞDUR VE HESAPLAMA BİLGİLERİ" sub="BEDENİ HASAR PARAMETRELERİNİ GİRİNİZ"/>
-          <div style={S.cardBody}>
-            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
-
-              {/* MAĞDUR ADI SOYADI */}
-              <FormGroup label="MAĞDUR ADI SOYADI *" full>
-                <input style={S.input} value={form.magdurAdi} placeholder="ADI SOYADI GİRİNİZ"
-                  onChange={e => u('magdurAdi', e.target.value.toUpperCase())}/>
-              </FormGroup>
-
-              {/* DOĞUM TARİHİ */}
-              <FormGroup label="DOĞUM TARİHİ *">
-                <input type="date" style={S.input} value={form.dogumTarihi}
-                  onChange={e => u('dogumTarihi', e.target.value)}/>
-              </FormGroup>
-
-              {/* CİNSİYET */}
-              <FormGroup label="CİNSİYET *">
-                <select style={S.select} value={form.cinsiyet} onChange={e => u('cinsiyet', e.target.value)}>
-                  <option value="">CİNSİYET SEÇİNİZ</option>
-                  <option value="ERKEK">ERKEK</option>
-                  <option value="KADIN">KADIN</option>
-                </select>
-              </FormGroup>
-
-              {/* KAZA TARİHİ */}
-              <FormGroup label="KAZA TARİHİ *">
-                <input type="date" style={S.input} value={form.kazaTarihi}
-                  onChange={e => u('kazaTarihi', e.target.value)}/>
-              </FormGroup>
-
-              {/* MALULİYET ORANI */}
-              <FormGroup label="MALULİYET ORANI (%) *">
-                <input type="number" style={S.input} value={form.maluliyetOrani} min="1" max="100"
-                  onChange={e => u('maluliyetOrani', e.target.value)} placeholder="ÖRN: 15"/>
-              </FormGroup>
-
-              {/* MESLEK */}
-              <FormGroup label="MESLEK">
-                <input style={S.input} value={form.meslek} placeholder="MESLEK GİRİNİZ"
-                  onChange={e => u('meslek', e.target.value.toUpperCase())}/>
-              </FormGroup>
-
-              {/* ASGARİ ÜCRET TOGGLE */}
-              <FormGroup label="ASGARİ ÜCRET KULLAN" full>
-                <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
-                  <div style={toggleStyle(form.asgariUcretKullan)} onClick={() => u('asgariUcretKullan', !form.asgariUcretKullan)}>
-                    <div style={toggleDot}/>
+            {/* EVRAK YÜKLEME */}
+            {mod === 'detayli' && (
+              <div style={cardS}>
+                <div style={S.cardHead}><MR.LIcon name="Upload" size={20} color={C.purple} /><span>TIBBİ EVRAK YÜKLEME & OCR</span></div>
+                <div style={S.cardBody}>
+                  <div onDragOver={e => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)}
+                    onDrop={e => { e.preventDefault(); setDragOver(false); handleDosyaEkle(e.dataTransfer.files); }}
+                    onClick={() => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.pdf,.jpg,.jpeg,.png'; inp.multiple = true; inp.onchange = ev => handleDosyaEkle(ev.target.files); inp.click(); }}
+                    style={{ border: '2px dashed ' + (dragOver ? C.purple : C.border), borderRadius: 8, padding: 28, textAlign: 'center', background: dragOver ? C.purple + '10' : C.bgInput, cursor: 'pointer', marginBottom: 12 }}>
+                    <MR.LIcon name="Upload" size={40} color={dragOver ? C.purple : C.textMuted} />
+                    <p style={{ margin: '12px 0 4px', fontWeight: 600, fontSize: 13 }}>DOSYALARI SÜRÜKLE & BIRAK</p>
+                    <p style={{ margin: 0, color: C.textSec, fontSize: 11 }}>PDF, JPG, PNG (SAĞLIK RAPORU, MALULİYET BELGESİ)</p>
                   </div>
-                  <span style={{fontSize: 12, color: form.asgariUcretKullan ? C.success : C.textMuted, fontWeight: 600}}>
-                    {form.asgariUcretKullan ? 'AKTİF' : 'PASİF'}
-                    {form.asgariUcretKullan && asgariUcretBilgi && (
-                      <span style={{color: C.textSec, fontWeight: 400}}> - {fmtK(asgariUcretBilgi.ucret)} ({asgariUcretBilgi.donem})</span>
-                    )}
-                  </span>
+                  {dosyalar.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, background: C.bgHover, borderRadius: 6, marginBottom: 6 }}>
+                      <MR.LIcon name="FileText" size={16} color={C.purple} />
+                      <span style={{ flex: 1, fontSize: 12 }}>{f.name}</span>
+                      <span style={{ color: C.textMuted, fontSize: 10 }}>{(f.size / 1024).toFixed(1)} KB</span>
+                      <button onClick={() => dosyaCikar(i)} style={{ ...S.btnD, padding: '4px 10px', fontSize: 11 }}><MR.LIcon name="X" size={14} /></button>
+                    </div>
+                  ))}
+                  {dosyalar.length > 0 && (
+                    <button onClick={ocrAnaliz} disabled={ocrYukleniyor} style={{ ...S.btnP, width: '100%', marginTop: 10 }}>
+                      {ocrYukleniyor ? <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}><MR.Loading size={16} color="white" /><span>OCR ANALİZİ YAPILIYOR...</span></div>
+                        : <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}><MR.LIcon name="Brain" size={16} /><span>OCR ANALİZİ BAŞLAT</span></div>}
+                    </button>
+                  )}
+                  {ocrSonuc && <div style={{ marginTop: 12, padding: 12, background: C.success + '15', border: '1px solid ' + C.success, borderRadius: 6, fontSize: 12, color: C.success, display: 'flex', alignItems: 'center', gap: 8 }}><MR.LIcon name="CheckCircle" size={16} color={C.success} /><span>OCR ANALİZİ TAMAMLANDI - BİLGİLER FORMA AKTARILDI</span></div>}
                 </div>
-              </FormGroup>
+              </div>
+            )}
 
-              {/* AYLIK GELİR */}
-              {!form.asgariUcretKullan && (
-                <FormGroup label="AYLIK GELİR (₺) *" full>
-                  <input style={S.input} value={form.aylikGelir} placeholder="ÖRN: 25.000"
-                    onChange={e => u('aylikGelir', fmtInput(e.target.value))}/>
-                </FormGroup>
-              )}
+            {/* DOSYA BİLGİLERİ */}
+            <div style={cardS}>
+              <div style={S.cardHead}><MR.LIcon name="Folder" size={20} color={C.purple} /><span>DOSYA BİLGİLERİ</span></div>
+              <div style={S.cardBody}>
+                <div style={gridS}>
+                  <MR.FormGroup label="DOSYA NO"><input type="text" value={form.dosyaNo} onChange={e => handleChange('dosyaNo', e.target.value.toUpperCase())} placeholder="2026-0001" style={S.input} /></MR.FormGroup>
+                  <MR.FormGroup label="DAVA TÜRÜ"><select value={form.davaTuru} onChange={e => handleChange('davaTuru', e.target.value)} style={S.select}>
+                    {DAVA_TURLERI.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                  </select></MR.FormGroup>
+                </div>
+              </div>
+            </div>
+
+            {/* MAĞDUR BİLGİLERİ */}
+            <div style={cardS}>
+              <div style={S.cardHead}><MR.LIcon name="User" size={20} color={C.purple} /><span>MAĞDUR BİLGİLERİ</span></div>
+              <div style={S.cardBody}>
+                <MR.FormGroup label="MAĞDUR ADI SOYADI"><input type="text" value={form.magdurAdi} onChange={e => handleChange('magdurAdi', e.target.value.toUpperCase())} placeholder="AD SOYAD" style={S.input} /></MR.FormGroup>
+                <div style={gridS}>
+                  <MR.FormGroup label="DOĞUM TARİHİ *"><input type="date" value={form.dogumTarihi} onChange={e => handleChange('dogumTarihi', e.target.value)} style={S.input} /></MR.FormGroup>
+                  <MR.FormGroup label="CİNSİYET"><select value={form.cinsiyet} onChange={e => handleChange('cinsiyet', e.target.value)} style={S.select}><option value="ERKEK">ERKEK</option><option value="KADIN">KADIN</option></select></MR.FormGroup>
+                </div>
+                <div style={gridS}>
+                  <MR.FormGroup label="KAZA TARİHİ *"><input type="date" value={form.kazaTarihi} onChange={e => handleChange('kazaTarihi', e.target.value)} style={S.input} /></MR.FormGroup>
+                  <MR.FormGroup label="MALULİYET (SAKATLIK) ORANI % *"><input type="text" value={form.maluliyetOrani} onChange={e => handleChange('maluliyetOrani', MR.fmtInput(e.target.value))} placeholder="3" style={S.input} /></MR.FormGroup>
+                </div>
+                <MR.FormGroup label="MESLEK"><input type="text" value={form.meslek} onChange={e => handleChange('meslek', e.target.value.toUpperCase())} placeholder="MESLEK" style={S.input} /></MR.FormGroup>
+              </div>
+            </div>
+
+            {/* GELİR BİLGİLERİ */}
+            <div style={cardS}>
+              <div style={S.cardHead}><MR.LIcon name="DollarSign" size={20} color={C.success} /><span>GELİR BİLGİLERİ</span></div>
+              <div style={S.cardBody}>
+                <div style={{ display: 'flex', gap: 14, marginBottom: 14 }}>
+                  <Chk checked={form.asgariUcretKullan} onChange={v => handleChange('asgariUcretKullan', v)} label="MAAŞI ASGARİ ÜCRET ÜZERİNDE" />
+                </div>
+                {form.asgariUcretKullan ? (
+                  <MR.FormGroup label="ASGARİ ÜCRET TÜRÜ"><select value={form.asgariUcretTuru} onChange={e => handleChange('asgariUcretTuru', e.target.value)} style={S.select}>
+                    <option value="BEKAR">BEKAR</option><option value="EVLI">EVLİ</option>
+                  </select></MR.FormGroup>
+                ) : (
+                  <MR.FormGroup label="AYLIK GELİR (TL) *"><input type="text" value={form.aylikGelir} onChange={e => handleChange('aylikGelir', MR.fmtInput(e.target.value))} placeholder="0" style={S.input} /></MR.FormGroup>
+                )}
+                <div style={{ display: 'flex', gap: 20, marginTop: 10 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, cursor: 'pointer' }}>
+                    <input type="radio" checked={form.maasNet} onChange={() => handleChange('maasNet', true)} /><span>NET MAAŞ</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, cursor: 'pointer' }}>
+                    <input type="radio" checked={!form.maasNet} onChange={() => handleChange('maasNet', false)} /><span>BRÜT MAAŞ</span>
+                  </label>
+                  <span style={{ color: C.border }}>|</span>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, cursor: 'pointer' }}>
+                    <input type="radio" checked={form.maasGuncel} onChange={() => handleChange('maasGuncel', true)} /><span>GÜNCEL MAAŞ</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, cursor: 'pointer' }}>
+                    <input type="radio" checked={!form.maasGuncel} onChange={() => handleChange('maasGuncel', false)} /><span>KAZA TARİHİNDEKİ MAAŞ</span>
+                  </label>
+                </div>
+              </div>
             </div>
 
             {/* HESAPLAMA PARAMETRELERİ */}
-            <div style={{marginTop: 20, padding: '16px', background: `${C.accent}08`, borderRadius: 10, border: `1px solid ${C.accent}22`}}>
-              <div style={{fontSize: 11, fontWeight: 700, color: C.accent, marginBottom: 12, letterSpacing: 0.5}}>HESAPLAMA PARAMETRELERİ</div>
-              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14}}>
+            <div style={cardS}>
+              <div style={S.cardHead}><MR.LIcon name="Calculator" size={20} color={C.cyan} /><span>HESAPLAMA PARAMETRELERİ</span></div>
+              <div style={S.cardBody}>
+                <div style={gridS}>
+                  <MR.FormGroup label="HESAP TARİHİ"><input type="date" value={form.hesapTarihi} onChange={e => handleChange('hesapTarihi', e.target.value)} style={S.input} /></MR.FormGroup>
+                  <MR.FormGroup label="HAKLILIK (KUSUR) ORANI %"><input type="text" value={form.kusurOrani} onChange={e => handleChange('kusurOrani', MR.fmtInput(e.target.value))} placeholder="100" style={S.input} /></MR.FormGroup>
+                </div>
+                <div style={gridS}>
+                  <MR.FormGroup label="PMF TABLOSU"><select value={form.pmfTablosu} onChange={e => handleChange('pmfTablosu', e.target.value)} style={S.select}>
+                    <option value="TRH2010">TRH 2010</option><option value="CSO1980">CSO 1980</option><option value="PMF1931">PMF 1931</option>
+                  </select></MR.FormGroup>
+                  <MR.FormGroup label="TEKNİK FAİZ %"><select value={form.teknikFaiz} onChange={e => handleChange('teknikFaiz', e.target.value)} style={S.select}>
+                    <option value="1.8">%1.8 (STANDART)</option><option value="0">%0 (FAİZSİZ)</option><option value="1.65">%1.65</option><option value="10">%10 (ESKİ)</option>
+                  </select></MR.FormGroup>
+                </div>
+                <MR.FormGroup label="YASAL FAİZ TARİHİ"><input type="date" value={form.yasalFaizTarihi} onChange={e => handleChange('yasalFaizTarihi', e.target.value)} style={S.input} /></MR.FormGroup>
+              </div>
+            </div>
 
-                {/* PMF TABLOSU */}
-                <FormGroup label="PMF TABLOSU">
-                  <select style={S.select} value={form.pmfTablosu} onChange={e => u('pmfTablosu', e.target.value)}>
-                    {PMF_TABLOLARI.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </FormGroup>
-
-                {/* TEKNİK FAİZ */}
-                <FormGroup label="TEKNİK FAİZ (%)">
-                  <input type="number" style={S.input} value={form.teknikFaiz} min="0" max="30"
-                    onChange={e => u('teknikFaiz', e.target.value)} placeholder="10"/>
-                </FormGroup>
-
-                {/* KUSUR ORANI */}
-                <FormGroup label="KUSUR ORANI (%)">
-                  <input type="number" style={S.input} value={form.kusurOrani} min="0" max="100"
-                    onChange={e => u('kusurOrani', e.target.value)} placeholder="100"/>
-                </FormGroup>
+            {/* EK KALEMLER */}
+            <div style={cardS}>
+              <div style={S.cardHead}><MR.LIcon name="List" size={20} color={C.warning} /><span>EK KALEMLER & SEÇENEKLER</span></div>
+              <div style={S.cardBody}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <Chk checked={form.gigsAktif} onChange={v => handleChange('gigsAktif', v)} label="GEÇİCİ İŞ GÖREMEZLİK SÜRESİ" />
+                    {form.gigsAktif && <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 11, color: C.textMuted }}>GÜN:</span>
+                      <input type="text" value={form.gigsGun} onChange={e => handleChange('gigsGun', e.target.value.replace(/\D/g, ''))} style={{ ...S.input, width: 70, padding: '6px 10px' }} />
+                    </div>}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <Chk checked={form.bakiciAktif} onChange={v => handleChange('bakiciAktif', v)} label="BAKICI SÜRESİ" />
+                    {form.bakiciAktif && <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 11, color: C.textMuted }}>GÜN:</span>
+                      <input type="text" value={form.bakiciGun} onChange={e => handleChange('bakiciGun', e.target.value.replace(/\D/g, ''))} style={{ ...S.input, width: 70, padding: '6px 10px' }} />
+                    </div>}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <Chk checked={form.psdAktif} onChange={v => handleChange('psdAktif', v)} label="PSD TUTARI (PEŞİN SERMAYE DEĞERİ)" />
+                    {form.psdAktif && <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <input type="text" value={form.psdTutari} onChange={e => handleChange('psdTutari', MR.fmtInput(e.target.value))} placeholder="0" style={{ ...S.input, width: 120, padding: '6px 10px' }} /><span style={{ fontSize: 11, color: C.textMuted }}>TL</span>
+                    </div>}
+                  </div>
+                  <div style={{ borderTop: '1px solid ' + C.border, paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <Chk checked={form.tamHayat} onChange={v => handleChange('tamHayat', v)} label="TAM HAYAT HESABI (65 YAŞ SINIRI YOK)" />
+                    <Chk checked={form.yasYuvarla} onChange={v => handleChange('yasYuvarla', v)} label="YAŞLARI YUVARLA" />
+                    <Chk checked={form.yilSonunaKaydir} onChange={v => handleChange('yilSonunaKaydir', v)} label="HESAP TARİHİNİ YIL SONUNA KAYDIR" />
+                    <Chk checked={form.bakiyeKazadan} onChange={v => handleChange('bakiyeKazadan', v)} label="BAKİYE ÖMRÜ KAZA TARİHİNDEN HESAPLA" />
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* BUTONLAR */}
-            <div style={{display: 'flex', gap: 10, marginTop: 24}}>
-              <button style={{...S.btn, ...S.btnP, flex: 1, justifyContent: 'center'}} onClick={hesapla}>
-                <LIcon name="Calculator" size={16} color="#fff"/> HESAPLA
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={temizle} style={{ ...S.btnS, flex: 1 }}><MR.LIcon name="RotateCcw" size={16} /><span>TEMİZLE</span></button>
+              <button onClick={hesapla} disabled={hesaplaniyor} style={{ ...S.btnP, flex: 2 }}>
+                {hesaplaniyor ? <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}><MR.Loading size={16} color="white" /><span>HESAPLANIYOR...</span></div>
+                  : <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}><MR.LIcon name="Calculator" size={16} /><span>HESAPLA + AI ANALİZ</span></div>}
               </button>
-              <button style={{...S.btn, ...S.btnG}} onClick={temizle}>
-                <LIcon name="RefreshCw" size={14}/> TEMİZLE
-              </button>
-              {sonuc && (
-                <button style={{...S.btn, ...S.btnW}} onClick={pdfCikti}>
-                  <LIcon name="Printer" size={14}/> PDF ÇIKTI
-                </button>
-              )}
             </div>
           </div>
-        </div>
 
-        {/* ═══ SAĞ: SONUÇLAR PANELİ ═══ */}
-        {sonuc && (
-          <div ref={sonucRef}>
-            {/* ANA SONUÇ KARTI */}
-            <div style={{...S.card, marginBottom: 16, border: `1px solid ${C.purple}44`}}>
-              <div style={{...S.cardHead, background: `${C.purple}11`}}>
-                <LIcon name="Heart" size={18} color={C.purple}/>
-                <span style={{fontWeight: 700, fontSize: 14, color: C.purple}}>TAZMİNAT HESABI SONUCU</span>
-              </div>
-              <div style={S.cardBody}>
-                {/* BÜYÜK TUTAR */}
-                <div style={{textAlign: 'center', padding: '20px 0'}}>
-                  <div style={{fontSize: 11, color: C.textMuted, letterSpacing: 1, marginBottom: 6}}>TOPLAM TAZMİNAT</div>
-                  <div style={{fontSize: 40, fontWeight: 900, color: C.purple, letterSpacing: -1}}>{fmtK(sonuc.toplamKusurlu)}</div>
-                  {sonuc.kusurOrani < 100 && (
-                    <div style={{fontSize: 11, color: C.textMuted, marginTop: 4}}>
-                      TAM TUTAR: {fmtK(sonuc.toplamGelirKaybi)} | KUSUR: %{sonuc.kusurOrani}
+          {/* ═══ SAĞ KOLON ═══ */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {sonuc ? (
+              <div>
+                {/* TOPLAM */}
+                <div style={{ ...S.card, background: 'linear-gradient(135deg, ' + C.purple + ', ' + C.pink + ')', border: 'none', marginBottom: 20 }}>
+                  <div style={{ ...S.cardBody, textAlign: 'center', padding: 28 }}>
+                    <p style={{ margin: '0 0 6px', color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>TOPLAM TAZMİNAT MİKTARI</p>
+                    <h1 style={{ margin: 0, color: 'white', fontSize: 40, fontWeight: 700 }}>{MR.fmtK(sonuc.toplamNet)} TL</h1>
+                    <div style={{ display: 'flex', gap: 12, marginTop: 20, justifyContent: 'center', flexWrap: 'wrap' }}>
+                      {[
+                        { label: 'AKTİF', value: sonuc.aktifKusurlu },
+                        { label: 'PASİF', value: sonuc.pasifKusurlu },
+                        ...(sonuc.gigsGun > 0 ? [{ label: 'GİGS', value: sonuc.gigsKusurlu }] : []),
+                        ...(sonuc.bakiciGun > 0 ? [{ label: 'BAKICI', value: sonuc.bakiciKusurlu }] : []),
+                        ...(sonuc.psdDeger > 0 ? [{ label: 'PSD', value: -sonuc.psdDeger }] : [])
+                      ].map((d, i) => (
+                        <div key={i} style={{ background: 'rgba(255,255,255,0.15)', padding: '10px 16px', borderRadius: 8, minWidth: 100 }}>
+                          <p style={{ margin: '0 0 4px', color: 'rgba(255,255,255,0.7)', fontSize: 10 }}>{d.label}</p>
+                          <p style={{ margin: 0, color: d.value < 0 ? '#fca5a5' : 'white', fontSize: 16, fontWeight: 600 }}>{MR.fmtK(d.value)} TL</p>
+                        </div>
+                      ))}
                     </div>
-                  )}
-                </div>
-
-                {/* AKTİF VE PASİF DÖNEM KUTULARI */}
-                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16}}>
-                  {/* AKTİF DÖNEM */}
-                  <div style={{padding: '16px', background: `${C.success}11`, borderRadius: 10, border: `1px solid ${C.success}22`, textAlign: 'center'}}>
-                    <div style={{fontSize: 10, color: C.textMuted, letterSpacing: 0.5, marginBottom: 4}}>AKTİF DÖNEM</div>
-                    <div style={{fontSize: 22, fontWeight: 800, color: C.success}}>{fmtK(sonuc.aktifKusurlu)}</div>
-                    <div style={{fontSize: 11, color: C.textMuted, marginTop: 4}}>{sonuc.aktifKalanYil} YIL</div>
-                  </div>
-                  {/* PASİF DÖNEM */}
-                  <div style={{padding: '16px', background: `${C.cyan}11`, borderRadius: 10, border: `1px solid ${C.cyan}22`, textAlign: 'center'}}>
-                    <div style={{fontSize: 10, color: C.textMuted, letterSpacing: 0.5, marginBottom: 4}}>PASİF DÖNEM</div>
-                    <div style={{fontSize: 22, fontWeight: 800, color: C.cyan}}>{fmtK(sonuc.pasifKusurlu)}</div>
-                    <div style={{fontSize: 11, color: C.textMuted, marginTop: 4}}>{sonuc.pasifKalanYil.toFixed(1)} YIL</div>
                   </div>
                 </div>
 
-                {/* MAĞDUR BİLGİLERİ */}
-                <div style={{padding: '12px 16px', background: `${C.accent}11`, borderRadius: 8, marginBottom: 16}}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8}}>
-                    <LIcon name="User" size={16} color={C.accent}/>
-                    <span style={{fontSize: 13, fontWeight: 700}}>{sonuc.magdurAdi}</span>
-                    <Badge text={sonuc.cinsiyet} color={sonuc.cinsiyet === 'ERKEK' ? C.accent : C.pink}/>
-                    <Badge text={'%' + sonuc.maluliyet + ' MALULİYET'} color={C.danger}/>
-                  </div>
-                  <div style={{fontSize: 11, color: C.textMuted}}>
-                    {sonuc.yas} YAŞ | MESLEK: {sonuc.meslek} | KAZA: {sonuc.kazaTarihi}
+                {/* TRH KARŞILAŞTIRMA */}
+                <div style={{ ...S.card, marginBottom: 20 }}>
+                  <div style={S.cardHead}><MR.LIcon name="BarChart3" size={20} color={C.cyan} /><span>TEKNİK FAİZ KARŞILAŞTIRMASI</span></div>
+                  <div style={S.cardBody}>
+                    <div style={grid3S}>
+                      {trhKarsilastirma.map((t, i) => (
+                        <div key={i} style={{
+                          padding: 14, border: '2px solid ' + (t.faiz === sonuc.teknikFaiz ? C.cyan : C.border),
+                          background: t.faiz === sonuc.teknikFaiz ? C.cyan + '15' : C.bgHover, borderRadius: 10
+                        }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: C.text }}>{t.label}</div>
+                          <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 4 }}>FAİZ: %{t.faiz}</div>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: C.cyan, marginTop: 8 }}>{MR.fmtK(t.toplamNet)} TL</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* HESAPLAMA DETAYLARI */}
-                <div style={{fontSize: 12}}>
-                  <div style={{fontSize: 11, fontWeight: 700, color: C.textMuted, marginBottom: 10, letterSpacing: 0.5}}>HESAPLAMA DETAYLARI</div>
-
-                  {[
-                    {label: 'KAZA ANI YAŞI', value: sonuc.yas + ' YAŞ', icon: 'User', color: C.accent},
-                    {label: 'MALULİYET ORANI', value: '%' + sonuc.maluliyet, icon: 'Heart', color: C.danger},
-                    {label: 'AYLIK GELİR (' + sonuc.gelirKaynagi + ')', value: fmtK(sonuc.aylikGelir), icon: 'DollarSign', color: C.success},
-                    {label: 'YILLIK GELİR', value: fmtK(sonuc.yillikGelir), icon: 'TrendingUp', color: C.success},
-                    {label: 'PMF TABLOSU', value: sonuc.pmfTablosu, icon: 'Database', color: C.purple},
-                    {label: 'KALAN ÖMÜR (PMF)', value: sonuc.kalanOmur.toFixed(2) + ' YIL', icon: 'Clock', color: C.cyan},
-                    {label: 'TEKNİK FAİZ', value: '%' + sonuc.teknikFaiz, icon: 'Percent', color: C.warning},
-                    {label: 'AKTİF DÖNEM KALAN YIL', value: sonuc.aktifKalanYil + ' YIL (EMEKLİLİK YAŞI: ' + EMEKLILIK_YASI + ')', icon: 'Activity', color: C.success},
-                    {label: 'AKTİF DÖNEM RANT KATSAYISI', value: sonuc.aktifRant.toFixed(4), icon: 'BarChart3', color: C.success},
-                    {label: 'PASİF DÖNEM KALAN YIL', value: sonuc.pasifKalanYil.toFixed(1) + ' YIL', icon: 'Clock', color: C.cyan},
-                    {label: 'PASİF DÖNEM RANT KATSAYISI', value: sonuc.pasifRant.toFixed(4), icon: 'BarChart3', color: C.cyan},
-                    {label: 'PASİF DÖNEM İSKONTO', value: 'x' + sonuc.pasifIskonto.toFixed(4), icon: 'TrendingDown', color: C.warning},
-                    {label: 'PASİF DÖNEM GELİRİ (ASGARİ ÜCRET)', value: fmtK(sonuc.pasifAylikGelir) + '/AY', icon: 'Wallet', color: C.cyan}
-                  ].map((row, i) => (
-                    <div key={i} style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0', borderBottom: `1px solid ${C.border}`}}>
-                      <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
-                        <LIcon name={row.icon} size={13} color={row.color}/>
-                        <span style={{color: C.textSec, fontSize: 11}}>{row.label}</span>
-                      </div>
-                      <span style={{fontWeight: 700, fontSize: 12}}>{row.value}</span>
-                    </div>
-                  ))}
-
-                  {/* DÖNEM TUTARLARI */}
-                  <div style={{marginTop: 10}}>
-                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: `${C.success}11`, borderRadius: 8, marginBottom: 6}}>
-                      <span style={{fontWeight: 700, color: C.success, fontSize: 12}}>AKTİF DÖNEM GELİR KAYBI</span>
-                      <span style={{fontWeight: 800, fontSize: 14, color: C.success}}>{fmtK(sonuc.aktifKusurlu)}</span>
-                    </div>
-                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: `${C.cyan}11`, borderRadius: 8, marginBottom: 6}}>
-                      <span style={{fontWeight: 700, color: C.cyan, fontSize: 12}}>PASİF DÖNEM GELİR KAYBI</span>
-                      <span style={{fontWeight: 800, fontSize: 14, color: C.cyan}}>{fmtK(sonuc.pasifKusurlu)}</span>
-                    </div>
-                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: `${C.purple}15`, borderRadius: 8}}>
-                      <span style={{fontWeight: 800, color: C.purple}}>TOPLAM TAZMİNAT</span>
-                      <span style={{fontWeight: 900, fontSize: 18, color: C.purple}}>{fmtK(sonuc.toplamKusurlu)}</span>
+                {/* PMF KARŞILAŞTIRMA */}
+                <div style={{ ...S.card, marginBottom: 20 }}>
+                  <div style={S.cardHead}><MR.LIcon name="Database" size={20} color={C.purple} /><span>PMF TABLOSU KARŞILAŞTIRMASI</span></div>
+                  <div style={S.cardBody}>
+                    <div style={grid3S}>
+                      {pmfKarsilastirma.map((p, i) => (
+                        <div key={i} style={{
+                          padding: 14, border: '2px solid ' + (p.tablo === sonuc.pmfTablosu ? C.purple : C.border),
+                          background: p.tablo === sonuc.pmfTablosu ? C.purple + '15' : C.bgHover, borderRadius: 10
+                        }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>{p.tablo}</div>
+                          <div style={{ fontSize: 10, color: C.textMuted }}>KALAN ÖMÜR: {p.kalanOmur} YIL</div>
+                          <div style={{ fontSize: 10, color: C.textMuted }}>AKTİF: {p.aktifKalanYil} | PASİF: {p.pasifKalanYil}</div>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: C.purple, marginTop: 8 }}>{MR.fmtK(p.toplamNet)} TL</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
+                </div>
 
-                  {/* KUSUR BİLGİSİ */}
-                  {sonuc.kusurOrani < 100 && (
-                    <div style={{marginTop: 12, padding: '10px 14px', background: `${C.warning}15`, border: `1px solid ${C.warning}33`, borderRadius: 8}}>
-                      <div style={{fontSize: 11, fontWeight: 700, color: C.warning, marginBottom: 4}}>KUSUR İNDİRİMİ UYGULANMIŞTIR</div>
-                      <div style={{fontSize: 12, color: C.textSec}}>
-                        TAM TUTAR: {fmtK(sonuc.toplamGelirKaybi)} | KUSUR ORANI: %{sonuc.kusurOrani} | İNDİRİM: {fmtK(sonuc.toplamGelirKaybi - sonuc.toplamKusurlu)}
+                {/* AI ANALİZ */}
+                {aiYukleniyor ? (
+                  <div style={{ ...S.card, marginBottom: 20 }}>
+                    <div style={S.cardBody}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center', padding: 28 }}>
+                        <MR.Loading size={24} color={C.purple} /><span style={{ fontSize: 14 }}>AI ANALİZ YAPILIYOR...</span>
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                ) : aiAnaliz ? (
+                  <div style={{ ...S.card, background: C.purple + '08', border: '2px solid ' + C.purple, marginBottom: 20 }}>
+                    <div style={S.cardHead}><MR.LIcon name="Sparkles" size={20} color={C.purple} /><span>AI ANALİZ RAPORU</span><div style={{ marginLeft: 'auto' }}><span style={S.badge(C.purple)}>AI</span></div></div>
+                    <div style={S.cardBody}>
+                      <div style={{ padding: 16, background: C.bgCard, borderRadius: 8, fontSize: 12, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
+                        {aiAnaliz.analiz || aiAnaliz.metin || 'AI analiz sonucu bulunamadı'}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
 
-                {/* DOSYAYA KAYDET BUTONU */}
-                <div style={{marginTop: 16, display: 'flex', gap: 10}}>
-                  <button style={{...S.btn, ...S.btnP, flex: 1, justifyContent: 'center'}} onClick={dosyayaKaydet}>
-                    <LIcon name="Save" size={14} color="#fff"/> DOSYAYA KAYDET
+                {/* EMSAL */}
+                {emsalFiltrelenmis.length > 0 && (
+                  <div style={{ ...S.card, marginBottom: 20 }}>
+                    <div style={S.cardHead}><MR.LIcon name="Scale" size={20} color={C.gold} /><span>EMSAL KARARLARI ({emsalFiltrelenmis.length})</span></div>
+                    <div style={S.cardBody}>
+                      <input type="text" value={emsalArama} onChange={e => setEmsalArama(e.target.value)} placeholder="EMSAL ARA..." style={{ ...S.input, marginBottom: 12 }} />
+                      <div style={{ maxHeight: 300, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {emsalFiltrelenmis.map((e, i) => (
+                          <div key={i} style={{ padding: 12, background: C.gold + '10', border: '1px solid ' + C.gold + '44', borderRadius: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                              <span style={{ fontSize: 12, fontWeight: 600 }}>{e.aciklama || e.detay}</span>
+                              <span style={{ ...S.badge(C.cyan), fontSize: 10 }}>%{e.benzerlik.toFixed(0)} BENZER</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: 10, fontSize: 11 }}>
+                              <span style={S.badge(C.purple)}>%{e.maluliyet} MALULİYET</span>
+                              <span style={{ color: C.gold, fontWeight: 700 }}>{MR.fmtK(e.tutar)} TL</span>
+                              <span style={{ color: C.textMuted }}>{e.kaynak}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* PDF BUTONLARI */}
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <button onClick={() => pdfIndir('bilirkisi')} disabled={pdfYukleniyor} style={{ ...S.btnP, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                      <MR.LIcon name="FileText" size={16} /><span>BİLİRKİŞİ RAPORU</span>
+                    </div>
                   </button>
-                  <button style={{...S.btn, ...S.btnW}} onClick={pdfCikti}>
-                    <LIcon name="Printer" size={14}/> PDF ÇIKTI
+                  <button onClick={() => pdfIndir('sonuc')} disabled={pdfYukleniyor} style={{ ...S.btnD, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                      <MR.LIcon name="Download" size={16} /><span>HESAP SONUCU</span>
+                    </div>
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ═══ ALT: EMSAL KARARLAR ═══ */}
-      <div style={{...S.card, marginTop: 20}}>
-        <SectionTitle icon="Gavel" title="BEDENİ HASAR EMSAL KARARLARI" sub="TAHKİM KOMİSYONU VE YARGITAY KARARLARI"/>
-        <div style={S.cardBody}>
-          {BH_EMSAL && BH_EMSAL.length > 0 ? (
-            <div style={{overflowX: 'auto'}}>
-              <table style={{width: '100%', borderCollapse: 'collapse'}}>
-                <thead>
-                  <tr>
-                    {['KAYNAK', 'YIL', 'MALULİYET', 'TAZMİNAT TUTARI', 'DETAY'].map(h => (
-                      <th key={h} style={thStyle}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {BH_EMSAL.map((e, i) => (
-                    <tr key={i} style={{transition: 'background .2s'}}
-                      onMouseEnter={ev => ev.currentTarget.style.background = C.bgHover}
-                      onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
-                      <td style={tdStyle}>
-                        <Badge text={e.kaynak} color={e.kaynak === 'YARGITAY' ? C.danger : C.accent}/>
-                      </td>
-                      <td style={{...tdStyle, fontWeight: 600}}>{e.yil}</td>
-                      <td style={{...tdStyle, textAlign: 'center'}}>
-                        <Badge text={'%' + e.maluliyet} color={C.purple}/>
-                      </td>
-                      <td style={{...tdStyle, fontWeight: 700, color: C.success}}>{fmtK(e.tutar)}</td>
-                      <td style={{...tdStyle, color: C.textSec}}>{e.detay}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <EmptyState icon="Gavel" title="EMSAL BULUNAMADI" desc="BEDENİ HASAR EMSAL KARARLARI BULUNAMAMIŞTIR"/>
-          )}
-
-          {/* PMF BİLGİ NOTU */}
-          <div style={{marginTop: 16, padding: '12px 16px', background: `${C.purple}11`, borderRadius: 8, border: `1px solid ${C.purple}22`}}>
-            <div style={{fontSize: 11, fontWeight: 700, color: C.purple, marginBottom: 6}}>PMF TABLOSU BİLGİLERİ</div>
-            <div style={{fontSize: 12, color: C.textSec, lineHeight: 1.6}}>
-              <strong>TRH2010:</strong> TÜRKİYE HAYAT TABLOLARI 2010 - EN GÜNCEL VE YAYGIN KULLANILAN TABLO.
-              YARGITAY VE TAHKİM KOMİSYONU TARAFINDAN TERCİH EDİLMEKTEDİR.
-            </div>
-            <div style={{fontSize: 12, color: C.textSec, lineHeight: 1.6, marginTop: 4}}>
-              <strong>CSO1980:</strong> COMMISSIONERS STANDARD ORDINARY 1980 - ULUSLARARASI STANDART TABLO.
-            </div>
-            <div style={{fontSize: 12, color: C.textSec, lineHeight: 1.6, marginTop: 4}}>
-              <strong>PMF1931:</strong> POPULATION MASCULINE ET FEMININE 1931 - EN ESKİ TABLO. BAZI MAHKEMELER HALA KULLANMAKTADIR.
-            </div>
-          </div>
-
-          {/* HESAPLAMA AÇIKLAMASI */}
-          <div style={{marginTop: 12, padding: '12px 16px', background: `${C.accent}08`, borderRadius: 8, border: `1px solid ${C.accent}22`}}>
-            <div style={{fontSize: 11, fontWeight: 700, color: C.accent, marginBottom: 6}}>HESAPLAMA YÖNTEMİ</div>
-            <div style={{fontSize: 12, color: C.textSec, lineHeight: 1.6}}>
-              BEDENİ HASAR TAZMİNATI PROGRESİF RANT (1/LN) METODU İLE HESAPLANMAKTADIR.
-              AKTİF DÖNEM (KAZA YAŞINDAN EMEKLİLİK YAŞINA KADAR) VE PASİF DÖNEM
-              (EMEKLİLİKTEN PMF TABLONUNA GÖRE BEKLENEN ÖMÜR SONUNA KADAR) AYRI AYRI
-              HESAPLANARAK TOPLANIR. PASİF DÖNEM ASGARİ ÜCRET ÜZERİNDEN DEĞERLENDİRİLİR.
-            </div>
+            ) : (
+              <MR.EmptyState icon="Calculator" title="HESAPLAMA YAPILMADI" desc="MAĞDUR BİLGİLERİNİ GİRİP HESAPLA BUTONUNA BASIN" />
+            )}
           </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
+})();

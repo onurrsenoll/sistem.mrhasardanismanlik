@@ -15,7 +15,8 @@ $user = auth_required();
 $body = get_json_body();
 $db = getDB();
 
-if (!empty($body['hepsi'])) {
+// Frontend 'tumu' gönderir, backend 'hepsi' bekler
+if (!empty($body['hepsi']) || !empty($body['tumu'])) {
     // Tümünü okundu yap
     $stmt = $db->prepare('UPDATE bildirimler SET okundu = 1 WHERE alici_id = ? AND okundu = 0');
     $stmt->execute([$user['id']]);

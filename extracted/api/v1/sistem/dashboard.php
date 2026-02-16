@@ -17,7 +17,7 @@ $db = getDB();
 $stmt = $db->query('SELECT COUNT(*) as toplam FROM dosyalar');
 $dosyaToplam = (int)$stmt->fetch()['toplam'];
 
-$stmt = $db->query("SELECT COUNT(*) as c FROM dosyalar WHERE asama != 'Dosya Kapandı'");
+$stmt = $db->query("SELECT COUNT(*) as c FROM dosyalar WHERE UPPER(asama) != 'DOSYA KAPANDI'");
 $dosyaAcik = (int)$stmt->fetch()['c'];
 
 $stmt = $db->query("SELECT dosya_turu, COUNT(*) as adet FROM dosyalar GROUP BY dosya_turu");

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TASLAK - CRM YENİ KAYIT EKRANI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; text-transform: uppercase; }
+  body { background: #0B1120; color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; }
+
+  /* RENKLER */
+  :root {
+    --bg: #0B1120; --bgCard: #111827; --bgHover: #1F2937; --bgInput: #1a2332;
+    --border: #1F2937; --borderLight: #374151;
+    --accent: #2563eb; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+    --purple: #8b5cf6; --cyan: #06b6d4;
+    --text: #f1f5f9; --textSec: #94a3b8; --textMuted: #64748b;
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px 60px; }
+
+  /* KARTLAR */
+  .card { background: var(--bgCard); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+  .card-head { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: rgba(37,99,235,0.05); font-weight: 700; font-size: 12px; }
+
+  /* BUTONLAR */
+  .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all .2s; }
+  .btn-p { background: var(--accent); color: #fff; }
+  .btn-s { background: var(--success); color: #fff; }
+  .btn-w { background: var(--warning); color: #000; }
+  .btn-d { background: var(--danger); color: #fff; }
+  .btn-g { background: var(--borderLight); color: var(--textSec); }
+
+  /* INPUT */
+  .input, .select { width: 100%; padding: 10px 14px; background: var(--bgInput); border: 1px solid var(--borderLight); border-radius: 8px; color: var(--text); font-size: 13px; outline: none; }
+  .select { appearance: auto; }
+  textarea.input { min-height: 90px; resize: vertical; }
+
+  .label { font-size: 11px; font-weight: 600; color: var(--textSec); margin-bottom: 6px; display: block; letter-spacing: 0.5px; }
+
+  /* FIELDSET */
+  .fieldset { border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px 14px; margin-bottom: 16px; background: transparent; }
+  .fieldset legend { padding: 4px 12px; font-size: 12px; font-weight: 700; color: var(--textSec); display: flex; align-items: center; gap: 6px; letter-spacing: 0.5px; }
+
+  /* TOGGLE BUTON GRUPLARI */
+  .btn-group { display: flex; gap: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--borderLight); }
+  .btn-group .btn-opt {
+    flex: 1; padding: 12px 16px; border: none; cursor: pointer;
+    font-size: 12px; font-weight: 700; text-align: center;
+    background: var(--bgInput); color: var(--textMuted);
+    transition: all .25s ease; position: relative;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-group .btn-opt:not(:last-child) { border-right: 1px solid var(--borderLight); }
+
+  .btn-group .btn-opt.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(37,99,235,0.4);
+  }
+  .btn-group .btn-opt:hover:not(.active) {
+    background: rgba(37,99,235,0.12);
+    color: var(--accent);
+  }
+
+  /* KAZA TÜRÜ BUTONLARI */
+  .btn-group-alt .btn-opt.active {
+    background: var(--cyan);
+    box-shadow: 0 2px 12px rgba(6,182,212,0.4);
+  }
+  .btn-group-alt .btn-opt:hover:not(.active) {
+    background: rgba(6,182,212,0.12);
+    color: var(--cyan);
+  }
+
+  /* SOL PANEL */
+  .left-panel { width: 310px; min-width: 310px; flex-shrink: 0; }
+  .action-btn {
+    width: 100%; justify-content: flex-start; padding: 11px 14px;
+    border-radius: 10px; border: none; cursor: pointer; font-weight: 600;
+    font-size: 12px; display: flex; align-items: center; gap: 10px;
+    transition: all .2s;
+  }
+
+  /* GRİD */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
+
+  /* BADGE */
+  .badge { padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; display: inline-block; }
+
+  /* ANİMASYON */
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .pulse { animation: pulse 2s infinite; }
+
+  /* ÜST BAR */
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+
+  /* ALT BAR */
+  .bottom-bar { margin-top: 20px; padding: 18px 0 4px; display: flex; justify-content: center; gap: 12px; border-top: 1px solid var(--border); }
+
+  /* SVG İKONLARI İÇİN */
+  .icon { width: 16px; height: 16px; display: inline-block; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ÜST BAR -->
+  <div class="top-bar">
+    <button class="btn btn-g" style="font-size:11px;">&#8592; LİSTEYE DÖN</button>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="font-size:14px; font-weight:700;">&#128100; ÇAĞRI / CRM KAYIT EKRANI</span>
+    </div>
+    <div style="font-size:11px; color:var(--textMuted);">13.02.2026 | 10:35</div>
+  </div>
+
+  <!-- ANA LAYOUT -->
+  <div style="display:flex; gap:16px; align-items:flex-start;">
+
+    <!-- ═══ SOL PANEL ═══ -->
+    <div class="left-panel">
+
+      <!-- ÇAĞRI PANELİ -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-head">
+          <span>&#128266;</span> ANLIK ÇAĞRI & ANALİZ
+        </div>
+        <div style="padding:16px;">
+          <!-- TELEFON -->
+          <div style="background:rgba(37,99,235,0.15); border:1px solid rgba(37,99,235,0.4); border-radius:10px; padding:14px 16px; margin-bottom:12px; display:flex; align-items:center; gap:10px;">
+            <div style="width:36px;height:36px;border-radius:50%;background:rgba(37,99,235,0.25);display:flex;align-items:center;justify-content:center;">
+              &#128222;
+            </div>
+            <span style="font-size:18px; font-weight:800; letter-spacing:1.5px;">0XXX XXX XX XX</span>
+          </div>
+
+          <!-- ZAMANLAYICI -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:8px 0;">
+            <span>&#128339;</span>
+            <span style="font-size:28px;font-weight:800;font-family:monospace;letter-spacing:2px;color:var(--textMuted);">00:00</span>
+          </div>
+
+          <!-- ÇAĞRI KONTROL -->
+          <button class="btn btn-s" style="width:100%;justify-content:center;padding:12px;font-size:13px;border-radius:10px;">
+            &#128222; ÇAĞRI BAŞLAT
+          </button>
+        </div>
+      </div>
+
+      <!-- AI ANALİZ PANELİ -->
+      <div class="card">
+        <div class="card-head">
+          <span>&#129302;</span> AI ANALİZ
+        </div>
+        <div style="padding:16px;">
+          <div style="color:var(--textMuted);font-size:11px;text-align:center;padding:16px 0;">
+            BİLGİ GİRİLDİKÇE AI ANALİZ<br>SONUÇLARI OLUŞACAKTIR...
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+            <button class="action-btn" style="background:rgba(37,99,235,0.12);border:1px solid rgba(37,99,235,0.3);color:var(--accent);">
+              &#128202; DEĞER KAYBI HESAPLA
+            </button>
+            <button class="action-btn" style="background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.3);color:var(--purple);">
+              &#129657; BEDENİ HASAR HESAPLA
+            </button>
+            <button class="action-btn" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:var(--success);">
+              &#10148; DOSYAYI ONAYA GÖNDER
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SAĞ PANEL - FORM ═══ -->
+    <div style="flex:1;min-width:0;">
+
+      <!-- MÜŞTERİ BİLGİLERİ -->
+      <fieldset class="fieldset">
+        <legend>&#128100; MÜŞTERİ BİLGİLERİ</legend>
+        <div class="grid-2">
+          <div>
+            <label class="label">AD SOYAD *</label>
+            <input class="input" placeholder="AD SOYAD">
+          </div>
+          <div>
+            <label class="label">TELEFON *</label>
+            <input class="input" placeholder="05XX XXX XX XX">
+          </div>
+          <div>
+            <label class="label">İL</label>
+            <select class="select">
+              <option>SEÇİNİZ</option>
+              <option>İSTANBUL</option>
+              <option>ANKARA</option>
+              <option>İZMİR</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">İLÇE</label>
+            <input class="input" placeholder="İLÇE">
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- ═══ OLAY BİLGİLERİ ═══ -->
+      <fieldset class="fieldset">
+        <legend>&#128196; OLAY BİLGİLERİ</legend>
+        <div class="grid-2" style="margin-bottom:14px;">
+          <div>
+            <label class="label">DOSYA TÜRÜ</label>
+            <select class="select">
+              <option value="ADK">ADK</option>
+              <option value="BH">BEDENİ HASAR</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">KAYNAK</label>
+            <select class="select">
+              <option>TELEFON</option>
+              <option>WEB FORMU</option>
+              <option>SOSYAL MEDYA</option>
+              <option>YÖNLENDİRME</option>
+              <option>DİĞER</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ═══ YENİ: KAZA TARAFI SEÇİMİ ═══ -->
+        <div style="margin-bottom:14px;">
+          <label class="label">KAZA TARAFI</label>
+          <div class="btn-group" id="kazaTarafi">
+            <button class="btn-opt active" onclick="selectGroup('kazaTarafi', this)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
+              TEK TARAFLI
+            </button>
+            <button class="btn-opt" onclick="selectGroup('kazaTarafi', this)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="12" r="6"/><circle cx="16" cy="12" r="6"/></svg>
+              ÇİFT TARAFLI
+            </button>
+          </div>
+        </div>
+
+        <!-- ═══ YENİ: MAĞDUR POZİSYONU SEÇİMİ ═══ -->
+        <div style="margin-bottom:14px;">
+          <label class="label">MAĞDUR POZİSYONU</label>
+          <div class="btn-group btn-group-alt" id="magdurPozisyon">
+            <button class="btn-opt active" onclick="selectGroup('magdurPozisyon', this)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              YOLCU
+            </button>
+            <button class="btn-opt" onclick="selectGroup('magdurPozisyon', this)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              SÜRÜCÜ
+            </button>
+            <button class="btn-opt" onclick="selectGroup('magdurPozisyon', this)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 4v16"/><path d="M17 4v16"/><path d="M19 4H11a2 2 0 0 0-2 2v12"/><path d="M7 14l-4 6"/><path d="M7 14l4 6"/></svg>
+              YAYA
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="label">OLAY AÇIKLAMASI</label>
+          <textarea class="input" placeholder="MÜŞTERİ SAĞ ÖN ÇAMURLUK HASARLI, SİGORTA EKSPER BEKLİYOR, DEĞER KAYBI TALEP EDECEK..."></textarea>
+        </div>
+      </fieldset>
+    </div>
+  </div>
+
+  <!-- ═══ ALT AKSİYON BAR ═══ -->
+  <div class="bottom-bar">
+    <button class="btn btn-s" style="font-size:13px;padding:12px 28px;border-radius:10px;">&#128190; KAYDET</button>
+    <button class="btn btn-w" style="font-size:13px;padding:12px 28px;border-radius:10px;">&#10148; DOSYAYA DÖNÜŞTÜR</button>
+    <button class="btn btn-d" style="font-size:13px;padding:12px 28px;border-radius:10px;">&#128465; TEMİZLE</button>
+  </div>
+
+</div>
+
+<!-- ═══ AÇIKLAMA NOTU ═══ -->
+<div style="position:fixed;bottom:0;left:0;right:0;background:#1e293b;padding:10px 20px;border-top:2px solid var(--accent);z-index:100;">
+  <div style="max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:16px;">
+    <span style="font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap;">&#9432; TASLAK AÇIKLAMASI:</span>
+    <span style="font-size:11px;color:var(--textSec);">
+      DURUM VE ÖNCELİK DROPDOWN'LARI KALDIRILDI. YERİNE <span style="color:var(--accent);font-weight:700;">KAZA TARAFI (TEK TARAFLI / ÇİFT TARAFLI)</span>
+      VE <span style="color:var(--cyan);font-weight:700;">MAĞDUR POZİSYONU (YOLCU / SÜRÜCÜ / YAYA)</span> SEÇİM BUTONLARI EKLENDİ.
+      DAHİLİ GÖRÜŞME NOTU KALDIRILDI, OLAY AÇIKLAMASI TEK ALAN OLARAK ÜSTTE. SES/DOSYA/FOTOĞRAF BUTONLARI KALDIRILDI.
+    </span>
+  </div>
+</div>
+
+<script>
+  // TOGGLE BUTON SEÇİMİ
+  function selectGroup(groupId, btn) {
+    const group = document.getElementById(groupId);
+    const buttons = group.querySelectorAll('.btn-opt');
+    buttons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // SEÇİM DEĞERİNİ GÖSTER
+    console.log(groupId + ' seçildi: ' + btn.textContent.trim());
+  }
+</script>
+
+</body>
+</html>

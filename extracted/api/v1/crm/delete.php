@@ -21,8 +21,22 @@ $stmt->execute([$id]);
 $crm = $stmt->fetch();
 if (!$crm) json_error('CRM kaydı bulunamadı', 404);
 
-$stmt = $db->prepare('DELETE FROM crm WHERE id = ?');
-$stmt->execute([$id]);
+try {
+    $db->beginTransaction();
+    // İlişkili kayıtları önce sil
+    $stmt = $db->prepare('DELETE FROM crm_notlari WHERE crm_id = ?');
+    $stmt->execute([$id]);
+    try {
+        $stmt = $db->prepare('DELETE FROM crm_ekler WHERE crm_id = ?');
+        $stmt->execute([$id]);
+    } catch (Exception $e2) { /* crm_ekler tablosu yoksa devam et */ }
+    $stmt = $db->prepare('DELETE FROM crm WHERE id = ?');
+    $stmt->execute([$id]);
+    $db->commit();
+} catch (Exception $e) {
+    $db->rollBack();
+    json_error('Silme hatası: ' . $e->getMessage(), 500);
+}
 
 log_action($user['id'], 'crm_sil', "CRM silindi: {$crm['ad_soyad']}", 'crm', $id);
 

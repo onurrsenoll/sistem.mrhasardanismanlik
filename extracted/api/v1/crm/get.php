@@ -26,7 +26,7 @@ $crm = $stmt->fetch();
 if (!$crm) json_error('CRM kaydı bulunamadı', 404);
 
 // Notları getir
-$stmt = $db->prepare('SELECT cn.*, u.ad_soyad as kullanici_adi FROM crm_notlari cn LEFT JOIN users u ON u.id = cn.kullanici_id WHERE cn.crm_id = ? ORDER BY cn.created_at DESC');
+$stmt = $db->prepare('SELECT cn.*, u.ad_soyad as ekleyen_adi FROM crm_notlari cn LEFT JOIN users u ON u.id = cn.kullanici_id WHERE cn.crm_id = ? ORDER BY cn.created_at DESC');
 $stmt->execute([$id]);
 $crm['notlar'] = $stmt->fetchAll();
 

@@ -24,8 +24,8 @@ $params = [];
 
 if ($q !== '') {
     $search = "%$q%";
-    $where[] = '(c.ad_soyad LIKE ? OR c.telefon LIKE ? OR c.email LIKE ? OR c.il LIKE ?)';
-    $params = array_merge($params, [$search, $search, $search, $search]);
+    $where[] = '(c.ad_soyad LIKE ? OR c.telefon LIKE ? OR c.email LIKE ? OR c.il LIKE ? OR c.plaka LIKE ? OR c.tc_vergi_no LIKE ?)';
+    $params = array_merge($params, [$search, $search, $search, $search, $search, $search]);
 }
 
 if ($durum !== '') {
@@ -49,14 +49,17 @@ $stmt = $db->prepare("SELECT COUNT(*) as total FROM crm c $whereSQL");
 $stmt->execute($params);
 $total = (int)$stmt->fetch()['total'];
 
-$stmt = $db->prepare("SELECT c.*, u.ad_soyad as atanan_adi, cb.ad_soyad as olusturan_adi,
+$sql = "SELECT c.*, u.ad_soyad as atanan_adi, cb.ad_soyad as olusturan_adi,
     (SELECT COUNT(*) FROM crm_notlari cn WHERE cn.crm_id = c.id) as not_sayisi
     FROM crm c
     LEFT JOIN users u ON u.id = c.atanan_id
     LEFT JOIN users cb ON cb.id = c.created_by
     $whereSQL
     ORDER BY c.updated_at DESC
-    LIMIT {$pag['limit']} OFFSET {$pag['offset']}");
+    LIMIT ? OFFSET ?";
+$params[] = (int)$pag['limit'];
+$params[] = (int)$pag['offset'];
+$stmt = $db->prepare($sql);
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 

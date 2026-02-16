@@ -54,13 +54,16 @@ $stmt = $db->prepare("SELECT COUNT(*) as total FROM ajanda a $whereSQL");
 $stmt->execute($params);
 $total = (int)$stmt->fetch()['total'];
 
-$stmt = $db->prepare("SELECT a.*, u.ad_soyad as kullanici_adi, d.dosya_no
+$dataSQL = "SELECT a.*, u.ad_soyad as kullanici_adi, d.dosya_no
     FROM ajanda a
     LEFT JOIN users u ON u.id = a.kullanici_id
     LEFT JOIN dosyalar d ON d.id = a.dosya_id
     $whereSQL
     ORDER BY a.tarih ASC
-    LIMIT {$pag['limit']} OFFSET {$pag['offset']}");
+    LIMIT ? OFFSET ?";
+$params[] = (int)$pag['limit'];
+$params[] = (int)$pag['offset'];
+$stmt = $db->prepare($dataSQL);
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 

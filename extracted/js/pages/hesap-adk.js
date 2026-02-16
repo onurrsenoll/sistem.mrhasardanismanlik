@@ -1,526 +1,629 @@
-/* ============================================================
-   MR HASAR DANIŞMANLIK – ADK HESAPLAMA SAYFASI (hesap-adk.js)
-   ARAÇ DEĞER KAYBI HESAPLAYICI
-   ============================================================ */
-
 const MR = window.MR || (window.MR = {});
-const {useState, useMemo, useRef} = React;
+const {useState, useEffect, useCallback, useRef} = React;
 
-MR.HesapADKPage = ({setPage, user}) => {
-  const {C, S, LIcon, Badge, SectionTitle, FormGroup, EmptyState, fmt, fmtK, parseNum, fmtInput, ARAC_DB, TAHKIM_EMSALLERI} = MR;
+/* ═══════════════════════════════════════════════════════════
+   ADK HESAPLAMA - GERÇEK PİYASA RAYİÇ + 3 YÖNTEM HESAPLAMA
+   sahibinden.com + araban.com İLAN ARAŞTIRMASI
+   TAHKİM FORMÜLÜ + YARGITAY İÇTİHADI + TAHKİM EMSAL
+   ═══════════════════════════════════════════════════════════ */
 
-  /* ---------- FORM STATE ---------- */
-  const [form, setForm] = useState({
-    marka: '',
-    model: '',
-    modelYili: '',
-    kazaTarihi: '',
-    km: '',
-    onarimBedeli: '',
-    rayicDeger: '',
-    kusurOrani: '100',
-    oncekiHasar: '0',
-    hasarBolgesi: ''
-  });
+/* ──────── YARDIMCI ──────── */
+const fmtM = n => (n || 0).toLocaleString('tr-TR') + ' TL';
+const pct = n => (n * 100).toFixed(1) + '%';
 
-  const [sonuc, setSonuc] = useState(null);
-  const [hata, setHata] = useState('');
-  const sonucRef = useRef(null);
+/* ──────── 1. TAHKİM FORMÜLÜ ──────── */
+const hesaplaTahkim = (rayic, onarim, yil, km, onceki, bolge, kusur) => {
+  const aracYasi = new Date().getFullYear() - yil;
+  const hasarOrani = rayic > 0 ? onarim / rayic : 0;
 
-  const u = (k, v) => setForm(p => ({...p, [k]: v}));
+  // BAZ DEĞER KAYBI ORANI (hasar oranına göre - Tahkim uygulaması)
+  const bazOran = hasarOrani <= 0.05 ? 0.04 : hasarOrani <= 0.10 ? 0.06 : hasarOrani <= 0.15 ? 0.08 : hasarOrani <= 0.20 ? 0.10 : hasarOrani <= 0.30 ? 0.13 : 0.16;
 
-  /* ---------- MARKA LİSTESİ ---------- */
-  const markalar = useMemo(() => Object.keys(ARAC_DB).sort(), []);
+  // YAŞ KATSAYISI
+  const yasK = aracYasi <= 1 ? 1.00 : aracYasi <= 2 ? 0.95 : aracYasi <= 3 ? 0.90 : aracYasi <= 4 ? 0.85 : aracYasi <= 5 ? 0.78 : aracYasi <= 6 ? 0.70 : aracYasi <= 7 ? 0.62 : aracYasi <= 8 ? 0.53 : aracYasi <= 9 ? 0.44 : 0.35;
 
-  /* ---------- MODEL LİSTESİ ---------- */
-  const modeller = useMemo(() => {
-    if (!form.marka || !ARAC_DB[form.marka]) return [];
-    return ARAC_DB[form.marka].modeller || [];
-  }, [form.marka]);
+  // KM KATSAYISI
+  const kmK = km < 30000 ? 1.00 : km < 60000 ? 0.95 : km < 100000 ? 0.88 : km < 150000 ? 0.78 : km < 200000 ? 0.65 : 0.50;
 
-  /* ---------- YIL LİSTESİ ---------- */
-  const buYil = new Date().getFullYear();
-  const yillar = useMemo(() => Array.from({length: 20}, (_, i) => buYil - i), []);
+  // BÖLGE KATSAYISI (ön en yüksek etki)
+  const bolgeK = {on: 1.00, yan: 0.90, arka: 0.85, tavan: 0.75}[bolge] || 0.90;
 
-  /* ---------- HASAR BÖLGELERİ ---------- */
-  const hasarBolgeleri = ['ÖN', 'ARKA', 'YAN', 'TAVAN', 'ÇOKLU'];
+  // ÖNCEKİ HASAR
+  const oncekiK = onceki === 0 ? 1.00 : onceki === 1 ? 0.85 : onceki === 2 ? 0.70 : 0.55;
 
-  /* ---------- HESAPLAMA ---------- */
-  const hesapla = () => {
-    setHata('');
-    setSonuc(null);
+  const degerKaybi = Math.round(rayic * bazOran * yasK * kmK * bolgeK * oncekiK);
+  const kusurSonrasi = Math.round(degerKaybi * (kusur / 100));
 
-    /* VALİDASYON */
-    if (!form.marka) { setHata('ARAÇ MARKA SEÇİNİZ'); return; }
-    if (!form.model) { setHata('ARAÇ MODEL SEÇİNİZ'); return; }
-    if (!form.modelYili) { setHata('MODEL YILI SEÇİNİZ'); return; }
-    if (!form.kazaTarihi) { setHata('KAZA TARİHİ GİRİNİZ'); return; }
-    if (!form.hasarBolgesi) { setHata('HASAR BÖLGESİ SEÇİNİZ'); return; }
-
-    const rayic = parseNum(form.rayicDeger);
-    const onarim = parseNum(form.onarimBedeli);
-    const km = parseNum(form.km);
-    const kusur = Number(form.kusurOrani) || 100;
-    const oncekiHsr = Number(form.oncekiHasar) || 0;
-
-    if (rayic <= 0) { setHata('RAYİÇ DEĞER GİRİNİZ'); return; }
-    if (onarim <= 0) { setHata('ONARIM BEDELİ GİRİNİZ'); return; }
-
-    /* ARAÇ YAŞI */
-    const aracYasi = buYil - Number(form.modelYili);
-
-    /* PREMİUM KONTROL */
-    const premiumMi = ARAC_DB[form.marka]?.premium || false;
-
-    /* YÖNTEM BELİRLEME */
-    let yontem = 'GENEL HASAR';
-    if (onarim > rayic * 0.6) yontem = 'PERT TOTAL';
-    else if (onarim > rayic * 0.4) yontem = 'PERT FARKI';
-
-    /* YAŞ BAZLI ORAN */
-    let yasOrani = 0;
-    if (aracYasi <= 1) yasOrani = 0.12;
-    else if (aracYasi <= 2) yasOrani = 0.10;
-    else if (aracYasi <= 3) yasOrani = 0.09;
-    else if (aracYasi <= 5) yasOrani = 0.07;
-    else if (aracYasi <= 7) yasOrani = 0.05;
-    else if (aracYasi <= 10) yasOrani = 0.04;
-    else if (aracYasi <= 15) yasOrani = 0.03;
-    else yasOrani = 0.02;
-
-    /* HASAR BÖLGESİ KATSAYISI */
-    let bolgeKatsayisi = 1.0;
-    switch (form.hasarBolgesi) {
-      case 'ÖN': bolgeKatsayisi = 1.15; break;
-      case 'ARKA': bolgeKatsayisi = 1.0; break;
-      case 'YAN': bolgeKatsayisi = 1.05; break;
-      case 'TAVAN': bolgeKatsayisi = 1.20; break;
-      case 'ÇOKLU': bolgeKatsayisi = 1.30; break;
-    }
-
-    /* KM FAKTÖRÜ */
-    let kmFaktoru = 1.0;
-    if (km > 0) {
-      if (km < 30000) kmFaktoru = 1.10;
-      else if (km < 60000) kmFaktoru = 1.05;
-      else if (km < 100000) kmFaktoru = 1.0;
-      else if (km < 150000) kmFaktoru = 0.95;
-      else if (km < 200000) kmFaktoru = 0.90;
-      else kmFaktoru = 0.85;
-    }
-
-    /* PREMİUM BONUS */
-    const premiumBonus = premiumMi ? 1.15 : 1.0;
-
-    /* TEMEL DEĞER KAYBI */
-    let temelDK = rayic * yasOrani * bolgeKatsayisi;
-
-    /* ONARIM / RAYİÇ İLİŞKİSİ */
-    const onarimOrani = onarim / rayic;
-    let onarimFaktoru = 1.0;
-    if (onarimOrani >= 0.6) onarimFaktoru = 1.35;
-    else if (onarimOrani >= 0.4) onarimFaktoru = 1.20;
-    else if (onarimOrani >= 0.25) onarimFaktoru = 1.10;
-    else if (onarimOrani >= 0.10) onarimFaktoru = 1.0;
-    else onarimFaktoru = 0.85;
-
-    /* ÖNCEKİ HASAR DÜŞÜŞİ */
-    const oncekiHasarFaktoru = Math.max(0.50, 1 - (oncekiHsr * 0.05));
-
-    /* NİHAİ HESAPLAMA */
-    let degerKaybi = temelDK * kmFaktoru * premiumBonus * onarimFaktoru * oncekiHasarFaktoru;
-
-    /* KUSUR ORANI UYGULA */
-    const kusurluTutar = degerKaybi * (kusur / 100);
-
-    /* PERT TOTAL İSE FARK HESAPLA */
-    let pertFarki = 0;
-    if (yontem === 'PERT TOTAL') {
-      pertFarki = rayic - onarim;
-      if (pertFarki < 0) pertFarki = 0;
-    }
-
-    const nihai = Math.round(kusurluTutar);
-
-    const sonucObj = {
-      marka: form.marka,
-      model: form.model,
-      modelYili: form.modelYili,
-      aracYasi,
-      premiumMi,
-      rayic,
-      onarim,
-      km,
-      yontem,
-      yasOrani,
-      bolgeKatsayisi,
-      hasarBolgesi: form.hasarBolgesi,
-      kmFaktoru,
-      premiumBonus,
-      onarimFaktoru,
-      onarimOrani,
-      oncekiHasarFaktoru,
-      oncekiHasar: oncekiHsr,
-      kusurOrani: kusur,
-      temelDK: Math.round(temelDK),
-      degerKaybi: Math.round(degerKaybi),
-      kusurluTutar: nihai,
-      pertFarki,
-      kazaTarihi: form.kazaTarihi
-    };
-
-    setSonuc(sonucObj);
-
-    /* SONUÇ ALANINA KAYDIRMA */
-    setTimeout(() => {
-      if (sonucRef.current) sonucRef.current.scrollIntoView({behavior: 'smooth', block: 'start'});
-    }, 100);
+  return {
+    ad: 'TAHKİM FORMÜLÜ',
+    aciklama: 'Sigorta Tahkim Komisyonu hesaplama yöntemi',
+    degerKaybi, kusurSonrasi, bazOran, yasK, kmK, bolgeK, oncekiK, hasarOrani, aracYasi,
+    formul: `DK = Rayiç (${fmtM(rayic)}) × Baz Oran (%${(bazOran*100).toFixed(0)}) × Yaş K. (${yasK.toFixed(2)}) × KM K. (${kmK.toFixed(2)}) × Bölge K. (${bolgeK.toFixed(2)}) × Önceki K. (${oncekiK.toFixed(2)})`
   };
+};
 
-  /* ---------- TEMİZLE ---------- */
-  const temizle = () => {
-    setForm({
-      marka: '', model: '', modelYili: '', kazaTarihi: '', km: '',
-      onarimBedeli: '', rayicDeger: '', kusurOrani: '100', oncekiHasar: '0', hasarBolgesi: ''
-    });
-    setSonuc(null);
-    setHata('');
+/* ──────── 2. YARGITAY İÇTİHADI ──────── */
+const hesaplaYargitay = (rayic, onarim, yil, km, onceki, bolge, kusur) => {
+  const aracYasi = new Date().getFullYear() - yil;
+  const hasarOrani = rayic > 0 ? onarim / rayic : 0;
+
+  // HASAR ETKİ ORANI (Yargıtay 17. HD / 4. HD kararları bazında)
+  const hasarEtkisi = hasarOrani <= 0.05 ? 0.05 : hasarOrani <= 0.10 ? 0.08 : hasarOrani <= 0.15 ? 0.11 : hasarOrani <= 0.20 ? 0.14 : hasarOrani <= 0.30 ? 0.18 : 0.22;
+
+  // YIPRANMA PAYI (yaş + km bazlı)
+  const yasYipranma = Math.min(aracYasi * 0.04, 0.40);
+  const kmYipranma = Math.min(Math.floor(km / 50000) * 0.03, 0.20);
+  const toplamYipranma = Math.min(yasYipranma + kmYipranma, 0.50);
+
+  // BÖLGE KATSAYISI
+  const bolgeK = {on: 1.00, yan: 0.92, arka: 0.88, tavan: 0.78}[bolge] || 0.90;
+
+  // ÖNCEKİ HASAR
+  const oncekiK = onceki === 0 ? 1.00 : onceki === 1 ? 0.85 : onceki === 2 ? 0.70 : 0.55;
+
+  const degerKaybi = Math.round(rayic * hasarEtkisi * (1 - toplamYipranma) * bolgeK * oncekiK);
+  const kusurSonrasi = Math.round(degerKaybi * (kusur / 100));
+
+  return {
+    ad: 'YARGITAY İÇTİHADI',
+    aciklama: 'Yargıtay 17. HD / 4. HD Kesinti Yöntemi',
+    degerKaybi, kusurSonrasi, hasarEtkisi, yasYipranma, kmYipranma, toplamYipranma, bolgeK, oncekiK, hasarOrani: onarim/rayic, aracYasi,
+    formul: `DK = Rayiç (${fmtM(rayic)}) × Hasar Etkisi (%${(hasarEtkisi*100).toFixed(0)}) × (1 - Yıpranma %${(toplamYipranma*100).toFixed(0)}) × Bölge K. (${bolgeK.toFixed(2)}) × Önceki K. (${oncekiK.toFixed(2)})`
   };
+};
 
-  /* ---------- PDF ÇIKTI ---------- */
-  const pdfCikti = () => {
-    alert('PDF ÇIKTI FONKSİYONU YAKINDA AKTİF OLACAKTIR.\nHESAPLAMA SONUÇLARI PDF OLARAK İNDİRİLEBİLECEKTİR.');
-  };
+/* ═══════════════════════════════════════════════════════════
+   ANA COMPONENT
+   ═══════════════════════════════════════════════════════════ */
+MR.HesapADKPage = () => {
+  const C = MR.C, S = MR.S;
 
-  /* ---------- DOSYAYA KAYDET ---------- */
-  const dosyayaKaydet = async () => {
-    if (!sonuc) return;
-    const urlParts = (window.location.hash || '').split('dosya_id=');
-    const dosyaId = urlParts.length > 1 ? urlParts[1] : null;
-    if (!dosyaId) {
-      alert('BU HESAPLAMAYI BİR DOSYAYA KAYDETMEK İÇİN DOSYA DETAY SAYFASINDAN ERİŞİNİZ.');
-      return;
-    }
+  /* FORM */
+  const [marka, setMarka] = useState('');
+  const [model, setModel] = useState('');
+  const [yil, setYil] = useState('');
+  const [km, setKm] = useState('');
+  const [kazaTarihi, setKazaTarihi] = useState('');
+  const [onarim, setOnarim] = useState('');
+  const [kusur, setKusur] = useState('100');
+  const [onceki, setOnceki] = useState('0');
+  const [bolge, setBolge] = useState('on');
+  const [plaka, setPlaka] = useState('');
+
+  /* RAYİÇ ARAŞTIRMA */
+  const [rayicLoading, setRayicLoading] = useState(false);
+  const [rayicData, setRayicData] = useState(null);
+  const [rayicDeger, setRayicDeger] = useState('');
+
+  /* TAHKİM EMSAL */
+  const [emsalLoading, setEmsalLoading] = useState(false);
+  const [emsalData, setEmsalData] = useState(null);
+
+  /* HESAPLAMA SONUÇLARI */
+  const [tahkimSonuc, setTahkimSonuc] = useState(null);
+  const [yargitaySonuc, setYargitaySonuc] = useState(null);
+  const [emsalSonuc, setEmsalSonuc] = useState(null);
+  const [hesapLoading, setHesapLoading] = useState(false);
+
+  /* AI */
+  const [aiAnaliz, setAiAnaliz] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+
+  /* PDF */
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  /* modeller artık AracModelSelect ile yükleniyor */
+  const yillar = [];
+  for (let y = new Date().getFullYear(); y >= 2005; y--) yillar.push(y);
+
+  /* ──────── RAYİÇ ARAŞTIR ──────── */
+  const rayicArastir = async () => {
+    if (!marka || !model || !yil || !km) { alert('MARKA, MODEL, YIL VE KM GİRİNİZ'); return; }
+    setRayicLoading(true);
+    setRayicData(null);
     try {
-      const r = await MR.api.req('/dosya/hesaplama-kaydet.php', {
-        method: 'POST',
-        body: JSON.stringify({
-          dosya_id: dosyaId,
-          hesap_turu: 'ADK',
-          sonuc: sonuc
-        })
+      const r = await MR.api.rayicArastir({
+        marka, model, yil: parseInt(yil), km: MR.parseNum(km),
+        kaza_tarihi: kazaTarihi || new Date(Date.now() - 180*86400000).toISOString().split('T')[0]
       });
-      if (r?.success) alert('HESAPLAMA DOSYAYA KAYDEDİLDİ');
-      else alert(r?.error || 'KAYDETME HATASI');
-    } catch (e) {
-      alert('BAĞLANTI HATASI');
-    }
+      if (r?.success && r.data) {
+        setRayicData(r.data);
+        if (r.data.ortalama > 0) {
+          setRayicDeger(MR.fmtInput(String(r.data.ortalama)));
+        }
+      } else {
+        alert(r?.error || 'RAYİÇ ARAŞTIRMA HATASI');
+      }
+    } catch (e) { alert('RAYİÇ ARAŞTIRMA HATASI: ' + e.message); }
+    setRayicLoading(false);
   };
 
-  /* ---------- EMSAL FİLTRE ---------- */
-  const filtrelenmisEmsaller = useMemo(() => {
-    if (!sonuc) return TAHKIM_EMSALLERI;
-    return TAHKIM_EMSALLERI.filter(e => {
-      const yasUygun = Math.abs(e.aracYasi - sonuc.aracYasi) <= 3;
-      return yasUygun;
-    }).sort((a, b) => Math.abs(a.aracYasi - sonuc.aracYasi) - Math.abs(b.aracYasi - sonuc.aracYasi));
-  }, [sonuc]);
+  /* ──────── HESAPLA (3 YÖNTEM + EMSAL) ──────── */
+  const hesapla = async () => {
+    const r = MR.parseNum(rayicDeger), o = MR.parseNum(onarim);
+    if (!marka || !yil || !r || !o) { alert('MARKA, YIL, RAYİÇ DEĞER VE ONARIM BEDELİ GEREKLİ'); return; }
+    if (parseInt(kusur) === 0) { alert('TAM KUSURLU OLDUĞUNUZDA DEĞER KAYBI TALEP EDEMEZSİNİZ'); return; }
 
-  /* ---------- YÖNTEM RENGİ ---------- */
-  const yontemRenk = (y) => {
-    if (y === 'PERT TOTAL') return C.danger;
-    if (y === 'PERT FARKI') return C.warning;
-    return C.success;
+    setHesapLoading(true);
+    setEmsalLoading(true);
+
+    // 1. TAHKİM FORMÜLÜ
+    const t = hesaplaTahkim(r, o, parseInt(yil), MR.parseNum(km), parseInt(onceki), bolge, parseInt(kusur));
+    setTahkimSonuc(t);
+
+    // 2. YARGITAY İÇTİHADI
+    const y = hesaplaYargitay(r, o, parseInt(yil), MR.parseNum(km), parseInt(onceki), bolge, parseInt(kusur));
+    setYargitaySonuc(y);
+
+    setHesapLoading(false);
+
+    // 3. TAHKİM EMSAL (paralel - AI arama)
+    try {
+      const eR = await MR.api.tahkimEmsalAra({ marka, model, yil: parseInt(yil) });
+      if (eR?.success && eR.data) {
+        setEmsalData(eR.data);
+        setEmsalSonuc({
+          ad: 'TAHKİM EMSAL ORTALAMASI',
+          aciklama: 'Aynı marka/model/yaş tahkim kararları ortalaması',
+          degerKaybi: eR.data.ortalama_dk || 0,
+          kusurSonrasi: Math.round((eR.data.ortalama_dk || 0) * (parseInt(kusur) / 100)),
+          kararSayisi: eR.data.toplam_bulunan || 0,
+          formul: `En yüksek ${eR.data.toplam_bulunan || 0} tahkim kararının ortalaması`
+        });
+      }
+    } catch (e) { console.error('EMSAL HATA:', e); }
+    setEmsalLoading(false);
+
+    // AI ANALİZ (arka planda)
+    setAiLoading(true);
+    try {
+      const aiR = await MR.api.adkAiAnaliz({
+        marka, model, yil: parseInt(yil), km: MR.parseNum(km), rayic: r, onarim: o,
+        kusur: parseInt(kusur), onceki: parseInt(onceki), bolge,
+        nisbi: t.degerKaybi, piyasa: y.degerKaybi, tsb: 0,
+        fullRight: t.degerKaybi, kusurApplied: t.kusurSonrasi
+      });
+      if (aiR?.success && aiR.data?.analiz) setAiAnaliz(aiR.data.analiz);
+    } catch(e) {}
+    setAiLoading(false);
   };
 
-  /* ---------- TABLO STİLLERİ ---------- */
-  const thStyle = {padding: '10px 12px', textAlign: 'left', color: C.textMuted, fontWeight: 600, fontSize: 10, borderBottom: `1px solid ${C.border}`};
-  const tdStyle = {padding: '10px 12px', fontSize: 12, borderBottom: `1px solid ${C.border}`};
+  /* ──────── TEMİZLE ──────── */
+  const temizle = () => {
+    setMarka(''); setModel(''); setYil(''); setKm(''); setKazaTarihi('');
+    setOnarim(''); setKusur('100'); setOnceki('0'); setBolge('on'); setPlaka('');
+    setRayicData(null); setRayicDeger(''); setEmsalData(null);
+    setTahkimSonuc(null); setYargitaySonuc(null); setEmsalSonuc(null);
+    setAiAnaliz('');
+  };
 
-  /* ═══════════════════════════════════════════ RENDER ═══════════════════════════════════════════ */
+  /* ──────── PDF İNDİR ──────── */
+  const pdfIndir = () => {
+    if (!tahkimSonuc && !yargitaySonuc) return;
+    setPdfLoading(true);
+    const raporNo = 'MR-ADK-' + Date.now().toString().slice(-8);
+    const tarih = new Date().toLocaleDateString('tr-TR');
+    const saat = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit',minute:'2-digit'});
+    const r = MR.parseNum(rayicDeger), o = MR.parseNum(onarim);
+    const aracYasi = new Date().getFullYear() - parseInt(yil);
+    const hasarOrani = r > 0 ? ((o/r)*100).toFixed(1) : '0';
+    const yontemler = [tahkimSonuc, yargitaySonuc, emsalSonuc].filter(Boolean);
+    const renkY = ['#2563eb','#7c3aed','#d97706'];
+    const bgY = ['#eff6ff','#f5f3ff','#fffbeb'];
+    const ilanlar = (rayicData?.ilanlar || []).slice(0,10);
+    const kararlar = emsalData?.kararlar || [];
+
+    // ═══ İLAN SATIRLARI ═══
+    let ilanRows = '';
+    ilanlar.forEach((il, i) => {
+      ilanRows += '<tr style="background:'+(i%2===0?'#f8fafc':'#fff')+';"><td style="padding:2px 4px;font-size:6.5px;color:#94a3b8;">'+(i+1)+'</td><td style="padding:2px 4px;font-size:6.5px;">'+((il.kaynak||'').replace('.com','').replace('sahibinden','sahib.').replace('araban','araban'))+'</td><td style="padding:2px 4px;font-size:6.5px;max-width:120px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">'+((il.baslik||'').substring(0,40))+'</td><td style="padding:2px 4px;font-size:6.5px;font-weight:700;color:#059669;text-align:right;">'+fmtM(il.fiyat)+'</td><td style="padding:2px 4px;font-size:6.5px;text-align:right;color:#64748b;">'+((il.km||0)/1000).toFixed(0)+'K</td><td style="padding:2px 4px;font-size:6.5px;color:#64748b;">'+((il.sehir||'').substring(0,8))+'</td></tr>';
+    });
+
+    // ═══ EMSAL SATIRLARI ═══
+    let emsalRows = '';
+    kararlar.forEach((k, i) => {
+      emsalRows += '<tr style="background:'+(i%2===0?'#fffbeb':'#fff')+';"><td style="padding:2px 4px;font-size:6.5px;font-weight:600;color:#b45309;">'+(k.dosya_no||'-')+'</td><td style="padding:2px 4px;font-size:6.5px;">'+((k.marka||'')+' '+(k.model||'')+' ('+(k.yil||'')+')').substring(0,25)+'</td><td style="padding:2px 4px;font-size:6.5px;text-align:right;">'+fmtM(k.rayic)+'</td><td style="padding:2px 4px;font-size:6.5px;font-weight:700;color:#059669;text-align:right;">'+fmtM(k.deger_kaybi)+'</td></tr>';
+    });
+
+    // html2pdf flex desteklemez, TABLE kullan
+    const html = '<div style="font-family:Arial,Helvetica,sans-serif;padding:10px 14px;color:#1e293b;line-height:1.3;">'
+
+      // ═══ HEADER ═══
+      + '<table style="width:100%;margin-bottom:6px;"><tr>'
+      + '<td style="background:#1e3a5f;color:#fff;padding:10px 14px;border-radius:6px 0 0 6px;">'
+      + '<div style="font-size:14px;font-weight:800;letter-spacing:0.5px;">MR HASAR DANISMANLIK</div>'
+      + '<div style="font-size:8px;opacity:0.8;margin-top:1px;">ARAC DEGER KAYBI HESAPLAMA RAPORU</div>'
+      + '</td>'
+      + '<td style="background:#2563eb;color:#fff;padding:10px 14px;border-radius:0 6px 6px 0;text-align:right;width:140px;">'
+      + '<div style="font-size:7px;">RAPOR: <b>'+raporNo+'</b></div>'
+      + '<div style="font-size:7px;">TARIH: <b>'+tarih+' '+saat+'</b></div>'
+      + '</td>'
+      + '</tr></table>'
+
+      // ═══ ARAÇ + HASAR YAN YANA ═══
+      + '<table style="width:100%;margin-bottom:6px;border-collapse:separate;border-spacing:6px 0;"><tr>'
+      // Sol: Araç
+      + '<td style="width:50%;vertical-align:top;background:#f0f9ff;border:1px solid #bfdbfe;border-radius:5px;padding:6px 8px;">'
+      + '<div style="font-size:7.5px;font-weight:800;color:#2563eb;margin-bottom:4px;padding-bottom:2px;border-bottom:1px solid #bfdbfe;">ARAC BILGILERI</div>'
+      + '<table style="width:100%;font-size:7px;">'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">MARKA/MODEL:</td><td style="padding:2px 4px;font-weight:700;">'+marka+' '+model+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">YILI / YASI:</td><td style="padding:2px 4px;font-weight:600;">'+yil+' ('+aracYasi+' YAS)</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">KILOMETRE:</td><td style="padding:2px 4px;font-weight:600;">'+MR.parseNum(km).toLocaleString('tr-TR')+' KM</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">PLAKA:</td><td style="padding:2px 4px;font-weight:600;">'+(plaka||'-')+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">KAZA TARIHI:</td><td style="padding:2px 4px;font-weight:600;">'+(kazaTarihi||'-')+'</td></tr>'
+      + '</table></td>'
+      // Sağ: Hasar
+      + '<td style="width:50%;vertical-align:top;background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:6px 8px;">'
+      + '<div style="font-size:7.5px;font-weight:800;color:#dc2626;margin-bottom:4px;padding-bottom:2px;border-bottom:1px solid #fecaca;">HASAR BILGILERI</div>'
+      + '<table style="width:100%;font-size:7px;">'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">RAYIC DEGER:</td><td style="padding:2px 4px;font-weight:700;color:#2563eb;">'+fmtM(r)+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">ONARIM BEDELI:</td><td style="padding:2px 4px;font-weight:700;color:#dc2626;">'+fmtM(o)+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">HASAR ORANI:</td><td style="padding:2px 4px;font-weight:600;">%'+hasarOrani+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">KUSUR ORANI:</td><td style="padding:2px 4px;font-weight:600;">%'+kusur+(parseInt(kusur)===100?' (KUSURSUZ)':'')+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">ONCEKI HASAR:</td><td style="padding:2px 4px;font-weight:600;">'+(parseInt(onceki)===0?'YOK':onceki+' ADET')+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">HASARLI BOLGE:</td><td style="padding:2px 4px;font-weight:600;">'+({on:'ON KISIM',arka:'ARKA KISIM',yan:'YAN KISIM',tavan:'TAVAN'}[bolge]||bolge)+'</td></tr>'
+      + '</table></td>'
+      + '</tr></table>'
+
+      // ═══ 3 YÖNTEM KARŞILAŞTIRMA ═══
+      + '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:5px;padding:6px 8px;margin-bottom:6px;">'
+      + '<div style="font-size:7.5px;font-weight:800;color:#059669;margin-bottom:5px;padding-bottom:2px;border-bottom:1px solid #86efac;">HESAPLAMA SONUCLARI - '+yontemler.length+' YONTEM KARSILASTIRMASI</div>'
+      + '<table style="width:100%;border-collapse:separate;border-spacing:5px 0;"><tr>'
+      + yontemler.map((s,i) => '<td style="background:'+bgY[i]+';border:2px solid '+renkY[i]+'44;border-radius:5px;padding:6px 4px;text-align:center;width:'+Math.round(100/yontemler.length)+'%;">'
+        + '<div style="font-size:6.5px;font-weight:700;color:'+renkY[i]+';letter-spacing:0.3px;margin-bottom:3px;">'+s.ad+'</div>'
+        + '<div style="font-size:14px;font-weight:800;color:'+renkY[i]+';">'+fmtM(s.kusurSonrasi)+'</div>'
+        + '<div style="font-size:6px;color:#94a3b8;margin-top:1px;">%100: '+fmtM(s.degerKaybi)+'</div>'
+        + '</td>').join('')
+      + '</tr></table>'
+      + '</div>'
+
+      // ═══ FORMÜLLER YAN YANA ═══
+      + '<table style="width:100%;border-collapse:separate;border-spacing:5px 0;margin-bottom:6px;"><tr>'
+      + yontemler.map((y,i) => '<td style="vertical-align:top;background:'+bgY[i]+';border:1px solid '+renkY[i]+'33;border-radius:4px;padding:4px 6px;width:'+Math.round(100/yontemler.length)+'%;">'
+        + '<div style="font-size:6.5px;font-weight:700;color:'+renkY[i]+';margin-bottom:2px;">'+y.ad+'</div>'
+        + '<div style="font-size:6px;color:#475569;line-height:1.4;">'+y.formul+'</div>'
+        + '</td>').join('')
+      + '</tr></table>'
+
+      // ═══ İLANLAR + EMSAL YAN YANA ═══
+      + '<table style="width:100%;border-collapse:separate;border-spacing:6px 0;margin-bottom:6px;"><tr>'
+      // Sol: İlanlar
+      + (ilanlar.length > 0 ? '<td style="vertical-align:top;width:'+(kararlar.length>0?'58':'100')+'%;border:1px solid #bfdbfe;border-radius:5px;overflow:hidden;">'
+        + '<div style="background:#2563eb;color:#fff;padding:3px 6px;font-size:7px;font-weight:700;">PIYASA RAYIC ANALIZI ('+ilanlar.length+' ILAN)</div>'
+        + '<table style="width:100%;border-collapse:collapse;">'+ilanRows+'</table>'
+        + '<div style="background:#eff6ff;padding:3px 6px;text-align:center;font-size:7px;font-weight:700;color:#2563eb;">ORT: '+fmtM(rayicData?.ortalama||0)+' | MIN: '+fmtM(rayicData?.en_dusuk||0)+' | MAX: '+fmtM(rayicData?.en_yuksek||0)+'</div>'
+        + '</td>' : '')
+      // Sağ: Emsal
+      + (kararlar.length > 0 ? '<td style="vertical-align:top;width:'+(ilanlar.length>0?'42':'100')+'%;border:1px solid #fcd34d;border-radius:5px;overflow:hidden;">'
+        + '<div style="background:#d97706;color:#fff;padding:3px 6px;font-size:7px;font-weight:700;">TAHKIM EMSAL ('+kararlar.length+' KARAR)</div>'
+        + '<table style="width:100%;border-collapse:collapse;">'
+        + '<tr style="background:#fef3c7;"><th style="padding:2px 4px;font-size:6px;text-align:left;">DOSYA</th><th style="padding:2px 4px;font-size:6px;text-align:left;">ARAC</th><th style="padding:2px 4px;font-size:6px;text-align:right;">RAYIC</th><th style="padding:2px 4px;font-size:6px;text-align:right;">DK</th></tr>'
+        + emsalRows+'</table>'
+        + '<div style="background:#fef3c7;padding:3px 6px;text-align:center;font-size:7px;font-weight:700;color:#b45309;">EMSAL ORT: '+fmtM(emsalData?.ortalama_dk||0)+'</div>'
+        + '</td>' : '')
+      + '</tr></table>'
+
+      // ═══ AI ANALİZ (kısa) ═══
+      + (aiAnaliz ? '<div style="border:1px solid #c4b5fd;border-radius:5px;overflow:hidden;margin-bottom:6px;">'
+        + '<div style="background:#7c3aed;color:#fff;padding:3px 6px;font-size:7px;font-weight:700;">AI ANALIZ RAPORU</div>'
+        + '<div style="padding:4px 6px;font-size:6.5px;line-height:1.5;color:#334155;">'+aiAnaliz.substring(0,500).replace(/\n/g,'<br>')+'</div>'
+        + '</div>' : '')
+
+      // ═══ FOOTER ═══
+      + '<table style="width:100%;border-top:1px solid #e2e8f0;"><tr>'
+      + '<td style="padding-top:4px;font-size:6px;color:#94a3b8;">BU RAPOR BILGILENDIRME AMACLIDIR. RESMI ISLEMLERDE SIGORTA TAHKIM KOMISYONU KARARLARI ESAS ALINIR.</td>'
+      + '<td style="padding-top:4px;font-size:6.5px;font-weight:700;color:#2563eb;text-align:right;white-space:nowrap;">MR HASAR DANISMANLIK</td>'
+      + '</tr></table>'
+
+      + '</div>';
+
+    const el = document.createElement('div');
+    el.innerHTML = html;
+    el.style.width = '780px';
+    el.style.background = '#fff';
+    el.style.position = 'absolute';
+    el.style.left = '0';
+    el.style.top = '0';
+    el.style.zIndex = '-1';
+    document.body.appendChild(el);
+    setTimeout(() => {
+      html2pdf().set({
+        margin: [4, 4, 4, 4],
+        filename: 'MR_ADK_Rapor_' + raporNo + '.pdf',
+        image: {type:'jpeg', quality:0.95},
+        html2canvas: {scale:2, useCORS:true, scrollY: 0, scrollX: 0, windowWidth: 800},
+        jsPDF: {unit:'mm', format:'a4', orientation:'portrait'},
+        pagebreak: {mode:['avoid-all']}
+      }).from(el).save().then(() => { document.body.removeChild(el); setPdfLoading(false); }).catch(() => { document.body.removeChild(el); setPdfLoading(false); });
+    }, 200);
+  };
+
+  /* ═══════════════ RENDER ═══════════════ */
+  const gridS = {display:'grid', gridTemplateColumns:'1fr 1fr', gap:12};
+  const fullS = {gridColumn:'span 2'};
+  const sonucVar = tahkimSonuc || yargitaySonuc;
+
+  const SonucKutu = ({sonuc, renk, ikon}) => {
+    if (!sonuc) return null;
+    return (
+      <div style={{background:renk+'12', border:'2px solid '+renk+'44', borderRadius:12, padding:16, marginBottom:12}}>
+        <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10}}>
+          <MR.LIcon name={ikon} size={16} color={renk}/>
+          <span style={{fontSize:12, fontWeight:800, color:renk}}>{sonuc.ad}</span>
+        </div>
+        <div style={{fontSize:10, color:C.textMuted, marginBottom:8}}>{sonuc.aciklama}</div>
+        <div style={{display:'flex', gap:12, marginBottom:10}}>
+          <div style={{flex:1, textAlign:'center', padding:12, background:renk+'18', borderRadius:8}}>
+            <div style={{fontSize:9, color:C.textMuted}}>DEĞER KAYBI</div>
+            <div style={{fontSize:20, fontWeight:800, color:renk}}>{fmtM(sonuc.degerKaybi)}</div>
+          </div>
+          <div style={{flex:1, textAlign:'center', padding:12, background:C.success+'18', borderRadius:8}}>
+            <div style={{fontSize:9, color:C.textMuted}}>KUSUR SONRASI (%{kusur})</div>
+            <div style={{fontSize:20, fontWeight:800, color:C.success}}>{fmtM(sonuc.kusurSonrasi)}</div>
+          </div>
+        </div>
+        <div style={{padding:10, background:C.bgInput, borderRadius:8, fontSize:10, color:C.textSec, lineHeight:1.6}}>
+          <div style={{fontWeight:700, color:C.purple, marginBottom:4}}>FORMÜL:</div>
+          {sonuc.formul}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="fade-in">
-      {/* BAŞLIK */}
-      <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20}}>
-        <div style={{display: 'flex', alignItems: 'center', gap: 14}}>
-          <div style={{width: 44, height: 44, borderRadius: 12, background: `${C.success}22`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-            <LIcon name="Calculator" size={22} color={C.success}/>
+      {/* HEADER */}
+      <div style={{...S.card, marginBottom:16}}>
+        <div style={{padding:'14px 18px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10, borderBottom:'1px solid '+C.border, background:'linear-gradient(135deg,'+C.accent+'11,'+C.purple+'11)'}}>
+          <div style={{display:'flex', alignItems:'center', gap:10}}>
+            <div style={{width:40, height:40, borderRadius:10, background:'linear-gradient(135deg,'+C.purple+','+C.accent+')', display:'flex', alignItems:'center', justifyContent:'center'}}>
+              <MR.LIcon name="Calculator" size={18} color="#fff"/>
+            </div>
+            <div>
+              <div style={{fontSize:14, fontWeight:800}}>ADK HESAPLAMA - GERÇEK PİYASA VERİSİ</div>
+              <div style={{fontSize:10, color:C.textMuted}}>SAHİBİNDEN.COM + ARABAN.COM İLAN ANALİZİ + 3 YÖNTEM HESAPLAMA</div>
+            </div>
           </div>
-          <div>
-            <div style={{fontSize: 20, fontWeight: 800}}>ADK HESAPLAMA</div>
-            <div style={{fontSize: 11, color: C.textMuted, letterSpacing: 1}}>ARAÇ DEĞER KAYBI HESAPLAYICI</div>
+          <div style={{display:'flex', gap:4, flexWrap:'wrap'}}>
+            <span style={S.badge(C.success)}>GERÇEK İLAN</span>
+            <span style={S.badge(C.gold)}>TAHKİM EMSAL</span>
+            <span style={S.badge(C.purple)}>3 YÖNTEM</span>
+            <span style={S.badge(C.cyan)}>PDF RAPOR</span>
           </div>
         </div>
-        <button style={{...S.btn, ...S.btnG}} onClick={() => setPage('home')}>
-          <LIcon name="ArrowLeft" size={14}/> ANA SAYFA
-        </button>
       </div>
 
-      {/* HATA MESAJI */}
-      {hata && (
-        <div style={{padding: '12px 16px', background: `${C.danger}22`, border: `1px solid ${C.danger}44`, borderRadius: 10, marginBottom: 16, fontSize: 12, color: C.danger, display: 'flex', alignItems: 'center', gap: 8}}>
-          <LIcon name="AlertCircle" size={16} color={C.danger}/> {hata}
-        </div>
-      )}
+      {/* ANA İÇERİK */}
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1.3fr', gap:16}}>
 
-      {/* ANA İÇERİK: SOL FORM + SAĞ SONUÇ */}
-      <div style={{display: 'grid', gridTemplateColumns: sonuc ? '1fr 1fr' : '1fr', gap: 20}}>
-
-        {/* ═══ SOL: HESAPLAMA FORMU ═══ */}
-        <div style={S.card}>
-          <SectionTitle icon="Car" title="ARAÇ VE HASAR BİLGİLERİ" sub="HESAPLAMA PARAMETRELERİNİ GİRİNİZ"/>
-          <div style={S.cardBody}>
-            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
-
-              {/* MARKA */}
-              <FormGroup label="ARAÇ MARKA *">
-                <select style={S.select} value={form.marka} onChange={e => {u('marka', e.target.value); u('model', '');}}>
-                  <option value="">MARKA SEÇİNİZ</option>
-                  {markalar.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </FormGroup>
-
-              {/* MODEL */}
-              <FormGroup label="ARAÇ MODEL *">
-                <select style={S.select} value={form.model} onChange={e => u('model', e.target.value)} disabled={!form.marka}>
-                  <option value="">MODEL SEÇİNİZ</option>
-                  {modeller.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </FormGroup>
-
-              {/* MODEL YILI */}
-              <FormGroup label="MODEL YILI *">
-                <select style={S.select} value={form.modelYili} onChange={e => u('modelYili', e.target.value)}>
-                  <option value="">YIL SEÇİNİZ</option>
-                  {yillar.map(y => <option key={y} value={y}>{y}</option>)}
-                </select>
-              </FormGroup>
-
-              {/* KAZA TARİHİ */}
-              <FormGroup label="KAZA TARİHİ *">
-                <input type="date" style={S.input} value={form.kazaTarihi} onChange={e => u('kazaTarihi', e.target.value)}/>
-              </FormGroup>
-
-              {/* KM */}
-              <FormGroup label="KİLOMETRE (KM)">
-                <input style={S.input} value={form.km} placeholder="ÖRN: 85.000"
-                  onChange={e => u('km', fmtInput(e.target.value))}/>
-              </FormGroup>
-
-              {/* ONARIM BEDELİ */}
-              <FormGroup label="ONARIM BEDELİ (₺) *">
-                <input style={S.input} value={form.onarimBedeli} placeholder="ÖRN: 45.000"
-                  onChange={e => u('onarimBedeli', fmtInput(e.target.value))}/>
-              </FormGroup>
-
-              {/* RAYİÇ DEĞER */}
-              <FormGroup label="RAYİÇ DEĞER (₺) *">
-                <input style={S.input} value={form.rayicDeger} placeholder="ÖRN: 750.000"
-                  onChange={e => u('rayicDeger', fmtInput(e.target.value))}/>
-              </FormGroup>
-
-              {/* KUSUR ORANI */}
-              <FormGroup label="KUSUR ORANI (%)">
-                <input type="number" style={S.input} value={form.kusurOrani} min="0" max="100"
-                  onChange={e => u('kusurOrani', e.target.value)} placeholder="100"/>
-              </FormGroup>
-
-              {/* ÖNCEKİ HASAR SAYISI */}
-              <FormGroup label="ÖNCEKİ HASAR SAYISI">
-                <input type="number" style={S.input} value={form.oncekiHasar} min="0" max="10"
-                  onChange={e => u('oncekiHasar', e.target.value)} placeholder="0"/>
-              </FormGroup>
-
-              {/* HASAR BÖLGESİ */}
-              <FormGroup label="HASAR BÖLGESİ *">
-                <select style={S.select} value={form.hasarBolgesi} onChange={e => u('hasarBolgesi', e.target.value)}>
-                  <option value="">BÖLGE SEÇİNİZ</option>
-                  {hasarBolgeleri.map(b => <option key={b} value={b}>{b}</option>)}
-                </select>
-              </FormGroup>
-            </div>
-
-            {/* PREMİUM ARAÇ BİLGİSİ */}
-            {form.marka && ARAC_DB[form.marka]?.premium && (
-              <div style={{marginTop: 16, padding: '10px 14px', background: `${C.gold}15`, border: `1px solid ${C.gold}33`, borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8}}>
-                <LIcon name="Star" size={16} color={C.gold}/>
-                <span style={{fontSize: 12, color: C.gold, fontWeight: 600}}>PREMİUM SEGMENT ARAÇ - %15 EK DEĞER KAYBI UYGULANIR</span>
+        {/* ══════ SOL PANEL: FORM ══════ */}
+        <div>
+          {/* ARAÇ BİLGİLERİ */}
+          <div style={{...S.card, marginBottom:14}}>
+            <MR.SectionTitle icon="Car" title="ARAÇ BİLGİLERİ"/>
+            <div style={{...S.cardBody, paddingTop:12}}>
+              <div style={gridS}>
+                <MR.FormGroup label="MARKA *">
+                  <MR.AracMarkaSelect value={marka} onChange={v => {setMarka(v); setModel('');}}/>
+                </MR.FormGroup>
+                <MR.FormGroup label="MODEL / PAKET *">
+                  <MR.AracModelSelect marka={marka} value={model} onChange={v => setModel(v)}/>
+                </MR.FormGroup>
+                <MR.FormGroup label="MODEL YILI *">
+                  <select value={yil} onChange={e => setYil(e.target.value)} style={S.select}>
+                    <option value="">SEÇİNİZ</option>
+                    {yillar.map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </MR.FormGroup>
+                <MR.FormGroup label="KİLOMETRE *">
+                  <input value={km} onChange={e => setKm(MR.fmtInput(e.target.value))} placeholder="150.000" style={S.input}/>
+                </MR.FormGroup>
+                <MR.FormGroup label="KAZA TARİHİ">
+                  <input type="date" value={kazaTarihi} onChange={e => setKazaTarihi(e.target.value)} style={S.input}/>
+                </MR.FormGroup>
+                <MR.FormGroup label="PLAKA">
+                  <input value={plaka} onChange={e => setPlaka(e.target.value.toUpperCase())} placeholder="34 XX 000" style={S.input}/>
+                </MR.FormGroup>
               </div>
-            )}
 
-            {/* BUTONLAR */}
-            <div style={{display: 'flex', gap: 10, marginTop: 24}}>
-              <button style={{...S.btn, ...S.btnS, flex: 1, justifyContent: 'center'}} onClick={hesapla}>
-                <LIcon name="Calculator" size={16} color="#fff"/> HESAPLA
+              {/* RAYİÇ ARAŞTIR BUTONU */}
+              <button onClick={rayicArastir} disabled={rayicLoading || !marka || !model || !yil || !km}
+                style={{...S.btn, width:'100%', justifyContent:'center', marginTop:12, padding:12, fontSize:12, fontWeight:700, background:'linear-gradient(135deg,'+C.accent+','+C.purple+')', color:'#fff', opacity:(!marka||!model||!yil||!km||rayicLoading)?0.5:1}}>
+                {rayicLoading ? 'SAHİBİNDEN.COM + ARABAN.COM TARANIYOR...' : 'RAYİÇ DEĞER ARAŞTIR (SAHİBİNDEN + ARABAN)'}
               </button>
-              <button style={{...S.btn, ...S.btnG}} onClick={temizle}>
-                <LIcon name="RefreshCw" size={14}/> TEMİZLE
-              </button>
-              {sonuc && (
-                <button style={{...S.btn, ...S.btnW}} onClick={pdfCikti}>
-                  <LIcon name="Printer" size={14}/> PDF ÇIKTI
-                </button>
-              )}
             </div>
           </div>
-        </div>
 
-        {/* ═══ SAĞ: SONUÇLAR PANELİ ═══ */}
-        {sonuc && (
-          <div ref={sonucRef}>
-            {/* ANA SONUÇ KARTI */}
-            <div style={{...S.card, marginBottom: 16, border: `1px solid ${C.success}44`}}>
-              <div style={{...S.cardHead, background: `${C.success}11`}}>
-                <LIcon name="TrendingUp" size={18} color={C.success}/>
-                <span style={{fontWeight: 700, fontSize: 14, color: C.success}}>HESAPLAMA SONUCU</span>
-                <div style={{marginLeft: 'auto'}}>
-                  <Badge text={sonuc.yontem} color={yontemRenk(sonuc.yontem)}/>
-                </div>
+          {/* RAYİÇ SONUÇ */}
+          {rayicData && (
+            <div style={{...S.card, marginBottom:14, border:'2px solid '+C.success+'44'}}>
+              <div style={{padding:'10px 14px', background:C.success+'08', borderBottom:'1px solid '+C.border, display:'flex', alignItems:'center', gap:8}}>
+                <MR.LIcon name="TrendingUp" size={14} color={C.success}/>
+                <span style={{fontSize:12, fontWeight:700, color:C.success}}>PİYASA RAYİÇ ANALİZİ</span>
+                <span style={S.badge(C.accent)}>{rayicData.toplam_bulunan || 0} İLAN</span>
               </div>
-              <div style={S.cardBody}>
-                {/* BÜYÜK TUTAR */}
-                <div style={{textAlign: 'center', padding: '20px 0'}}>
-                  <div style={{fontSize: 11, color: C.textMuted, letterSpacing: 1, marginBottom: 6}}>HESAPLANAN DEĞER KAYBI</div>
-                  <div style={{fontSize: 36, fontWeight: 900, color: C.success, letterSpacing: -1}}>{fmtK(sonuc.kusurluTutar)}</div>
-                  {sonuc.kusurOrani < 100 && (
-                    <div style={{fontSize: 11, color: C.textMuted, marginTop: 4}}>
-                      KUSURSUZ TUTAR: {fmtK(sonuc.degerKaybi)} | KUSUR: %{sonuc.kusurOrani}
-                    </div>
-                  )}
+              <div style={{padding:12}}>
+                {/* ORTALAMA */}
+                <div style={{textAlign:'center', padding:14, background:C.success+'12', borderRadius:10, marginBottom:10}}>
+                  <div style={{fontSize:9, color:C.textMuted, marginBottom:2}}>ORTALAMA RAYİÇ DEĞER (EN YÜKSEK {rayicData.ilanlar?.length || 0} İLAN)</div>
+                  <div style={{fontSize:24, fontWeight:800, color:C.success}}>{fmtM(rayicData.ortalama)}</div>
+                  <div style={{fontSize:10, color:C.textMuted}}>EN DÜŞÜK: {fmtM(rayicData.en_dusuk)} — EN YÜKSEK: {fmtM(rayicData.en_yuksek)}</div>
                 </div>
-
-                {/* ARAÇ BİLGİSİ */}
-                <div style={{padding: '12px 16px', background: `${C.accent}11`, borderRadius: 8, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10}}>
-                  <LIcon name="Car" size={18} color={C.accent}/>
-                  <div>
-                    <div style={{fontSize: 13, fontWeight: 700}}>{sonuc.marka} {sonuc.model}</div>
-                    <div style={{fontSize: 11, color: C.textMuted}}>{sonuc.modelYili} MODEL | {sonuc.aracYasi} YAŞ</div>
-                  </div>
-                  {sonuc.premiumMi && (
-                    <Badge text="PREMİUM" color={C.gold}/>
-                  )}
-                </div>
-
-                {/* HESAPLAMA DETAYLARI */}
-                <div style={{fontSize: 12}}>
-                  <div style={{fontSize: 11, fontWeight: 700, color: C.textMuted, marginBottom: 10, letterSpacing: 0.5}}>HESAPLAMA DETAYLARI</div>
-
-                  {[
-                    {label: 'RAYİÇ DEĞER', value: fmtK(sonuc.rayic), icon: 'DollarSign', color: C.accent},
-                    {label: 'ONARIM BEDELİ', value: fmtK(sonuc.onarim), icon: 'Briefcase', color: C.warning},
-                    {label: 'ONARIM / RAYİÇ ORANI', value: '%' + (sonuc.onarimOrani * 100).toFixed(1), icon: 'Percent', color: C.purple},
-                    {label: 'YAŞ ORANI', value: '%' + (sonuc.yasOrani * 100).toFixed(1), icon: 'Clock', color: C.cyan},
-                    {label: 'BÖLGE KATSAYISI (' + sonuc.hasarBolgesi + ')', value: 'x' + sonuc.bolgeKatsayisi.toFixed(2), icon: 'Target', color: C.pink},
-                    {label: 'KM FAKTÖRÜ', value: 'x' + sonuc.kmFaktoru.toFixed(2), icon: 'Activity', color: C.success},
-                    {label: 'ONARIM FAKTÖRÜ', value: 'x' + sonuc.onarimFaktoru.toFixed(2), icon: 'TrendingUp', color: C.warning},
-                    {label: 'ÖNCEKİ HASAR FAKTÖRÜ (' + sonuc.oncekiHasar + ' HASAR)', value: 'x' + sonuc.oncekiHasarFaktoru.toFixed(2), icon: 'Layers', color: C.danger},
-                    {label: 'PREMİUM BONUS', value: sonuc.premiumMi ? 'x1.15' : 'x1.00', icon: 'Star', color: C.gold}
-                  ].map((row, i) => (
-                    <div key={i} style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${C.border}`}}>
-                      <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
-                        <LIcon name={row.icon} size={14} color={row.color}/>
-                        <span style={{color: C.textSec}}>{row.label}</span>
+                {/* İLAN LİSTESİ */}
+                {rayicData.ilanlar?.length > 0 && (
+                  <div style={{maxHeight:200, overflowY:'auto'}}>
+                    {rayicData.ilanlar.map((il, i) => (
+                      <div key={i} style={{display:'flex', alignItems:'center', gap:8, padding:'6px 8px', background:i%2===0?C.bgInput:'transparent', borderRadius:6, fontSize:10}}>
+                        <span style={{width:18, height:18, borderRadius:'50%', background:C.accent+'22', display:'flex', alignItems:'center', justifyContent:'center', fontSize:8, fontWeight:700, flexShrink:0, color:C.accent}}>{i+1}</span>
+                        <div style={{flex:1, minWidth:0}}>
+                          <div style={{fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{il.baslik || (marka+' '+model)}</div>
+                          <div style={{fontSize:9, color:C.textMuted}}>{il.kaynak} • {(il.km||0).toLocaleString('tr-TR')} KM • {il.sehir||''}</div>
+                        </div>
+                        <span style={{fontWeight:700, color:C.success, whiteSpace:'nowrap'}}>{fmtM(il.fiyat)}</span>
                       </div>
-                      <span style={{fontWeight: 700}}>{row.value}</span>
-                    </div>
-                  ))}
-
-                  {/* TEMEL DEĞER KAYBI */}
-                  <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', marginTop: 6, borderTop: `2px solid ${C.accent}44`}}>
-                    <span style={{fontWeight: 700, color: C.accent}}>TEMEL DEĞER KAYBI</span>
-                    <span style={{fontWeight: 800, fontSize: 14, color: C.accent}}>{fmtK(sonuc.temelDK)}</span>
-                  </div>
-
-                  {/* NİHAİ TUTAR */}
-                  <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: `${C.success}15`, borderRadius: 8, marginTop: 8}}>
-                    <span style={{fontWeight: 800, color: C.success}}>NİHAİ DEĞER KAYBI</span>
-                    <span style={{fontWeight: 900, fontSize: 18, color: C.success}}>{fmtK(sonuc.kusurluTutar)}</span>
-                  </div>
-                </div>
-
-                {/* PERT BİLGİSİ */}
-                {sonuc.yontem === 'PERT TOTAL' && (
-                  <div style={{marginTop: 12, padding: '10px 14px', background: `${C.danger}15`, border: `1px solid ${C.danger}33`, borderRadius: 8}}>
-                    <div style={{fontSize: 11, fontWeight: 700, color: C.danger, marginBottom: 4}}>PERT TOTAL TESPİTİ</div>
-                    <div style={{fontSize: 12, color: C.textSec}}>
-                      ONARIM BEDELİ RAYİÇ DEĞERİN %60'INI AŞMAKTADIR. ARAÇ EKONOMİK ÖMRÜNÜ TAMAMLAMIŞ SAYILIR.
-                      PERT FARKI: {fmtK(sonuc.pertFarki)}
-                    </div>
+                    ))}
                   </div>
                 )}
-
-                {sonuc.yontem === 'PERT FARKI' && (
-                  <div style={{marginTop: 12, padding: '10px 14px', background: `${C.warning}15`, border: `1px solid ${C.warning}33`, borderRadius: 8}}>
-                    <div style={{fontSize: 11, fontWeight: 700, color: C.warning, marginBottom: 4}}>PERT FARKI TESPİTİ</div>
-                    <div style={{fontSize: 12, color: C.textSec}}>
-                      ONARIM BEDELİ RAYİÇ DEĞERİN %40-60 ARALIĞINDADIR. PERT FARKI YÖNTEMİ UYGULANMIŞTIR.
-                    </div>
-                  </div>
-                )}
-
-                {/* DOSYAYA KAYDET BUTONU */}
-                <div style={{marginTop: 16, display: 'flex', gap: 10}}>
-                  <button style={{...S.btn, ...S.btnP, flex: 1, justifyContent: 'center'}} onClick={dosyayaKaydet}>
-                    <LIcon name="Save" size={14} color="#fff"/> DOSYAYA KAYDET
-                  </button>
-                  <button style={{...S.btn, ...S.btnW}} onClick={pdfCikti}>
-                    <LIcon name="Printer" size={14}/> PDF ÇIKTI
-                  </button>
-                </div>
+                {rayicData.analiz_notu && <div style={{marginTop:8, fontSize:10, color:C.textMuted, fontStyle:'italic'}}>{rayicData.analiz_notu}</div>}
               </div>
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* ═══ ALT: EMSAL KARARLAR ═══ */}
-      <div style={{...S.card, marginTop: 20}}>
-        <SectionTitle icon="Gavel" title="EMSAL KARARLAR" sub={sonuc ? 'BENZER KOŞULLARA GÖRE FİLTRELENMİŞ' : 'TAHKİM KOMİSYONU VE YARGITAY KARARLARI'}/>
-        <div style={S.cardBody}>
-          {filtrelenmisEmsaller.length > 0 ? (
-            <div style={{overflowX: 'auto'}}>
-              <table style={{width: '100%', borderCollapse: 'collapse'}}>
-                <thead>
-                  <tr>
-                    {['DOSYA NO', 'ARAÇ TİPİ', 'ARAÇ YAŞI', 'KM', 'ONARIM', 'RAYİÇ', 'DEĞER KAYBI', 'KUSUR', 'ÖNCEKİ HASAR', 'BÖLGE', 'YÖNTEM'].map(h => (
-                      <th key={h} style={thStyle}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtrelenmisEmsaller.map((e, i) => (
-                    <tr key={i} style={{transition: 'background .2s'}}
-                      onMouseEnter={ev => ev.currentTarget.style.background = C.bgHover}
-                      onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
-                      <td style={{...tdStyle, fontWeight: 600, color: C.accent}}>{e.dosyaNo}</td>
-                      <td style={tdStyle}><Badge text={e.aracTipi} color={e.aracTipi === 'PREMİUM' ? C.gold : e.aracTipi === 'ORTA' ? C.accent : C.cyan}/></td>
-                      <td style={{...tdStyle, textAlign: 'center'}}>{e.aracYasi} YIL</td>
-                      <td style={tdStyle}>{e.kmOrtalama ? e.kmOrtalama.toLocaleString('tr-TR') : '-'}</td>
-                      <td style={tdStyle}>{fmtK(e.onarimBedeli)}</td>
-                      <td style={tdStyle}>{fmtK(e.rayicDeger)}</td>
-                      <td style={{...tdStyle, fontWeight: 700, color: C.success}}>{fmtK(e.degerKaybi)}</td>
-                      <td style={{...tdStyle, textAlign: 'center'}}>%{e.kusurOrani}</td>
-                      <td style={{...tdStyle, textAlign: 'center'}}>{e.oncekiHasar}</td>
-                      <td style={tdStyle}><Badge text={e.hasarBolgesi} color={C.purple}/></td>
-                      <td style={tdStyle}><Badge text={e.yontem} color={yontemRenk(e.yontem)}/></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <EmptyState icon="Gavel" title="EMSAL BULUNAMADI" desc="BU KRİTERLERE UYGUN EMSAL KARAR BULUNAMAMIŞTIR"/>
           )}
 
-          {/* EMSAL KARŞILAŞTIRMA NOTU */}
-          {sonuc && filtrelenmisEmsaller.length > 0 && (
-            <div style={{marginTop: 16, padding: '12px 16px', background: `${C.accent}11`, borderRadius: 8, border: `1px solid ${C.accent}22`}}>
-              <div style={{fontSize: 11, fontWeight: 700, color: C.accent, marginBottom: 6}}>KARŞILAŞTIRMA NOTU</div>
-              <div style={{fontSize: 12, color: C.textSec, lineHeight: 1.5}}>
-                YUKARIDA LİSTELENEN EMSAL KARARLAR, SEÇİLEN ARACA YAKIN KOŞULLARDA VERİLMİŞ KARARLARDIR.
-                HESAPLANAN DEĞER KAYBI ({fmtK(sonuc.kusurluTutar)}) İLE EMSAL KARARLARIN KARŞILAŞTIRILMASI
-                DEĞERLENDİRME RAPORUNUZA ESAS TEŞKİL EDEBİLİR.
+          {/* HASAR BİLGİLERİ */}
+          <div style={{...S.card, marginBottom:14}}>
+            <MR.SectionTitle icon="AlertCircle" title="HASAR BİLGİLERİ"/>
+            <div style={{...S.cardBody, paddingTop:12}}>
+              <div style={gridS}>
+                <MR.FormGroup label="RAYİÇ DEĞER *">
+                  <input value={rayicDeger} onChange={e => setRayicDeger(MR.fmtInput(e.target.value))} placeholder={rayicData ? 'OTOMATİK DOLDURULDU' : 'RAYİÇ ARAŞTIR İLE DOLDUR'} style={{...S.input, borderColor: rayicData ? C.success+'88' : C.borderLight, fontWeight:700}}/>
+                </MR.FormGroup>
+                <MR.FormGroup label="ONARIM BEDELİ *">
+                  <input value={onarim} onChange={e => setOnarim(MR.fmtInput(e.target.value))} placeholder="75.000" style={S.input}/>
+                </MR.FormGroup>
+                <MR.FormGroup label="KUSUR ORANI">
+                  <select value={kusur} onChange={e => setKusur(e.target.value)} style={S.select}>
+                    <option value="100">%100 HAKLI (KUSURSUZ)</option>
+                    <option value="75">%75 HAKLI</option>
+                    <option value="50">%50 HAKLI</option>
+                    <option value="25">%25 HAKLI</option>
+                    <option value="0">%0 (TAM KUSURLU)</option>
+                  </select>
+                </MR.FormGroup>
+                <MR.FormGroup label="ÖNCEKİ HASAR">
+                  <select value={onceki} onChange={e => setOnceki(e.target.value)} style={S.select}>
+                    <option value="0">YOK</option>
+                    <option value="1">1 ADET</option>
+                    <option value="2">2 ADET</option>
+                    <option value="3">3+ ADET</option>
+                  </select>
+                </MR.FormGroup>
+                <div style={fullS}>
+                  <MR.FormGroup label="HASARLI BÖLGE">
+                    <select value={bolge} onChange={e => setBolge(e.target.value)} style={S.select}>
+                      <option value="on">ÖN KISIM</option>
+                      <option value="arka">ARKA KISIM</option>
+                      <option value="yan">YAN KISIM</option>
+                      <option value="tavan">TAVAN</option>
+                    </select>
+                  </MR.FormGroup>
+                </div>
               </div>
+              <div style={{display:'flex', gap:8, marginTop:14}}>
+                <button onClick={temizle} style={{...S.btn, ...S.btnG, flex:1, justifyContent:'center'}}>
+                  <MR.LIcon name="RotateCcw" size={13}/> TEMİZLE
+                </button>
+                <button onClick={hesapla} disabled={hesapLoading}
+                  style={{...S.btn, flex:2, justifyContent:'center', background:'linear-gradient(135deg,'+C.success+','+C.cyan+')', color:'#fff', fontWeight:700, fontSize:12, padding:12, opacity:hesapLoading?0.5:1}}>
+                  {hesapLoading ? 'HESAPLANIYOR...' : 'HESAPLA + TAHKİM EMSAL ARA'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ══════ SAĞ PANEL: SONUÇLAR ══════ */}
+        <div>
+          {!sonucVar && !hesapLoading && (
+            <div style={{...S.card}}>
+              <MR.SectionTitle icon="BarChart3" title="HESAPLAMA SONUÇLARI" sub="3 YÖNTEM KARŞILAŞTIRMASI"/>
+              <div style={S.cardBody}>
+                <MR.EmptyState icon="Calculator" title="HESAPLAMA BEKLENİYOR" desc="1. ARAÇ BİLGİLERİNİ GİRİP RAYİÇ ARAŞTIRIN. 2. HASAR BİLGİLERİNİ GİRİP HESAPLAYIN."/>
+              </div>
+            </div>
+          )}
+
+          {hesapLoading && <div style={{...S.card, padding:40}}><MR.Loading/></div>}
+
+          {sonucVar && (
+            <div>
+              {/* KARŞILAŞTIRMA TABLOSU */}
+              <div style={{...S.card, marginBottom:14}}>
+                <div style={{padding:'10px 14px', background:C.accent+'08', borderBottom:'1px solid '+C.border, display:'flex', alignItems:'center', gap:8}}>
+                  <MR.LIcon name="BarChart3" size={14} color={C.accent}/>
+                  <span style={{fontSize:12, fontWeight:700}}>3 YÖNTEM KARŞILAŞTIRMASI</span>
+                </div>
+                <div style={{padding:12}}>
+                  <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:12}}>
+                    {[tahkimSonuc, yargitaySonuc, emsalSonuc].filter(Boolean).map((s, i) => {
+                      const renkler = [C.accent, C.purple, C.gold];
+                      return (
+                        <div key={i} style={{textAlign:'center', padding:14, background:renkler[i]+'12', borderRadius:10, border:'2px solid '+renkler[i]+'33'}}>
+                          <div style={{fontSize:9, color:C.textMuted, fontWeight:600, marginBottom:6}}>{s.ad}</div>
+                          <div style={{fontSize:18, fontWeight:800, color:renkler[i]}}>{fmtM(s.kusurSonrasi)}</div>
+                          <div style={{fontSize:9, color:C.textMuted, marginTop:4}}>%100: {fmtM(s.degerKaybi)}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* ARAÇ BİLGİ BAR */}
+                  <div style={{display:'flex', gap:8, flexWrap:'wrap', padding:'8px 10px', background:C.bgInput, borderRadius:8, fontSize:10}}>
+                    <span style={{fontWeight:700}}>{marka} {model}</span>
+                    <span style={{color:C.textMuted}}>YIL: {yil}</span>
+                    <span style={{color:C.textMuted}}>KM: {MR.parseNum(km).toLocaleString('tr-TR')}</span>
+                    <span style={{color:C.accent, fontWeight:700}}>RAYİÇ: {fmtM(MR.parseNum(rayicDeger))}</span>
+                    <span style={{color:C.danger}}>ONARIM: {fmtM(MR.parseNum(onarim))}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 1. TAHKİM FORMÜLÜ */}
+              <SonucKutu sonuc={tahkimSonuc} renk={C.accent} ikon="Scale"/>
+
+              {/* 2. YARGITAY İÇTİHADI */}
+              <SonucKutu sonuc={yargitaySonuc} renk={C.purple} ikon="Gavel"/>
+
+              {/* 3. TAHKİM EMSAL */}
+              {emsalLoading && (
+                <div style={{padding:20, textAlign:'center', color:C.textMuted, fontSize:11}}>
+                  <div style={{width:20,height:20,border:'2px solid '+C.border,borderTopColor:C.gold,borderRadius:'50%',animation:'spin 1s linear infinite',margin:'0 auto 8px'}}/>
+                  TAHKİM EMSAL KARARLARI ARANIYOR...
+                </div>
+              )}
+              {emsalSonuc && <SonucKutu sonuc={emsalSonuc} renk={C.gold} ikon="Scale"/>}
+
+              {/* EMSAL KARARLAR DETAY */}
+              {emsalData?.kararlar?.length > 0 && (
+                <div style={{background:C.gold+'08', border:'1px solid '+C.gold+'33', borderRadius:12, padding:14, marginBottom:14}}>
+                  <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10}}>
+                    <MR.LIcon name="FileText" size={14} color={C.gold}/>
+                    <span style={{fontSize:11, fontWeight:700, color:C.gold}}>TAHKİM EMSAL KARARLARI ({emsalData.kararlar.length} KARAR)</span>
+                  </div>
+                  {emsalData.kararlar.map((k, i) => (
+                    <div key={i} style={{padding:10, background:'rgba(0,0,0,0.08)', borderRadius:8, marginBottom:6}}>
+                      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4}}>
+                        <span style={{fontSize:10, fontWeight:700, color:C.gold}}>{k.dosya_no}</span>
+                        <span style={{fontSize:12, fontWeight:800, color:C.success}}>{fmtM(k.deger_kaybi)}</span>
+                      </div>
+                      <div style={{fontSize:9, color:C.textMuted}}>
+                        {k.marka} {k.model} ({k.yil}) • {(k.km||0).toLocaleString('tr-TR')} KM • RAYİÇ: {fmtM(k.rayic)}
+                      </div>
+                      {k.ozet && <div style={{fontSize:9, color:C.textSec, marginTop:4}}>{k.ozet}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* AI ANALİZ */}
+              <div style={{background:C.purple+'08', border:'1px solid '+C.purple+'33', borderRadius:12, padding:14, marginBottom:14}}>
+                <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:8}}>
+                  <MR.LIcon name="Sparkles" size={14} color={C.purple}/>
+                  <span style={{fontSize:11, fontWeight:700, color:C.purple}}>AI ANALİZ RAPORU</span>
+                </div>
+                {aiLoading ? (
+                  <div style={{display:'flex', alignItems:'center', gap:8, padding:10, color:C.textMuted, fontSize:11}}>
+                    <div style={{width:14,height:14,border:'2px solid '+C.border,borderTopColor:C.purple,borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
+                    AI ANALİZ YAPILIYOR...
+                  </div>
+                ) : (
+                  <div style={{fontSize:11, lineHeight:1.7, color:C.textSec, whiteSpace:'pre-wrap'}}>{aiAnaliz || 'HESAPLAMA YAPINCA AI ANALİZ OTOMATİK BAŞLAR.'}</div>
+                )}
+              </div>
+
+              {/* PDF BUTON */}
+              <button onClick={pdfIndir} disabled={pdfLoading}
+                style={{...S.btn, width:'100%', justifyContent:'center', padding:14, fontSize:13, fontWeight:800, background:'linear-gradient(135deg,'+C.success+','+C.cyan+')', color:'#fff', opacity:pdfLoading?0.5:1}}>
+                {pdfLoading ? 'PDF OLUŞTURULUYOR...' : 'PDF RAPOR İNDİR (TÜM DETAYLAR)'}
+              </button>
             </div>
           )}
         </div>

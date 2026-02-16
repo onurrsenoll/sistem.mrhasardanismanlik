@@ -13,6 +13,14 @@ require_method('POST');
 
 $user = auth_required(['admin', 'muhasebe']);
 $body = get_json_body();
+
+// Frontend 'kaynak_id/hedef_id' gönderir, backend 'kaynak_kasa_id/hedef_kasa_id' bekler
+if (!isset($body['kaynak_kasa_id']) && isset($body['kaynak_id'])) {
+    $body['kaynak_kasa_id'] = $body['kaynak_id'];
+}
+if (!isset($body['hedef_kasa_id']) && isset($body['hedef_id'])) {
+    $body['hedef_kasa_id'] = $body['hedef_id'];
+}
 require_fields($body, ['kaynak_kasa_id', 'hedef_kasa_id', 'tutar']);
 
 $db = getDB();

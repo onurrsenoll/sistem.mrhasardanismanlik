@@ -18,17 +18,26 @@ require_fields($body, ['ad_soyad', 'dosya_turu']);
 
 $db = getDB();
 
+// Frontend 'dosya_kaynak' gönderir, backend 'dosya_kaynagi' bekler
+if (!isset($body['dosya_kaynagi']) && isset($body['dosya_kaynak'])) {
+    $body['dosya_kaynagi'] = $body['dosya_kaynak'];
+}
+// Frontend 'komisyon' gönderir, backend 'komisyon_orani' bekler
+if (!isset($body['komisyon_orani']) && isset($body['komisyon'])) {
+    $body['komisyon_orani'] = $body['komisyon'];
+}
+
 try {
     $db->beginTransaction();
-    
+
     // 1. Dosya No üret
     $dosyaNo = generate_dosya_no($db);
-    
+
     // 2. Dosya kaydı
     $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, talep_turu, asama, sigorta_sirket, police_no, sigorta_turu, dosya_kaynagi, avukat_id, sorumlu_id, haklilik, komisyon_orani, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, notlar, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), ?, ?)');
-    
+
     $hasar_no = 'HSR-' . date('Y') . '-' . str_pad(mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
-    
+
     $stmt->execute([
         $dosyaNo,
         clean($body['dosya_turu']),
@@ -53,12 +62,14 @@ try {
     $dosyaId = (int)$db->lastInsertId();
     
     // 3. Mağdur kaydı
-    $stmt = $db->prepare('INSERT INTO magdurlar (dosya_id, tc_kimlik, ad_soyad, telefon, iban, adres, il, ilce, dogum_tarihi, cinsiyet, meslek, gelir_durumu) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt = $db->prepare('INSERT INTO magdurlar (dosya_id, tc_kimlik, ad_soyad, telefon, telefon2, email, iban, adres, il, ilce, dogum_tarihi, cinsiyet, meslek, gelir_durumu) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $stmt->execute([
         $dosyaId,
         clean($body['tc_kimlik'] ?? ''),
         clean($body['ad_soyad']),
         clean($body['telefon'] ?? ''),
+        clean($body['telefon2'] ?? ''),
+        clean($body['email'] ?? ''),
         clean($body['iban'] ?? ''),
         clean($body['adres'] ?? ''),
         clean($body['il'] ?? ''),

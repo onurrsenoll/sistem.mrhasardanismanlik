@@ -24,11 +24,11 @@ try {
     $stmt = $db->query('SELECT COUNT(*) as total FROM dosyalar');
     $dosyaTotal = $stmt->fetch()['total'];
 
-    $stmt = $db->query("SELECT COUNT(*) as c FROM dosyalar WHERE asama != 'Dosya Kapandı'");
+    $stmt = $db->query("SELECT COUNT(*) as c FROM dosyalar WHERE UPPER(asama) != 'DOSYA KAPANDI'");
     $dosyaOpen = $stmt->fetch()['c'];
 
     // Bildirim sayisi
-    $stmt = $db->prepare('SELECT COUNT(*) as c FROM bildirimler WHERE kullanici_id = ? AND okundu = 0');
+    $stmt = $db->prepare('SELECT COUNT(*) as c FROM bildirimler WHERE alici_id = ? AND okundu = 0');
     $stmt->execute(array($user['id']));
     $row = $stmt->fetch();
     $bildirimSayisi = $row ? $row['c'] : 0;
@@ -39,10 +39,24 @@ try {
     $row2 = $stmt->fetch();
     $gorevSayisi = $row2 ? $row2['c'] : 0;
 
+    // Kullanıcının yetkileri (menü filtreleme için)
+    $yetkiler = array();
+    try {
+        $stmt = $db->prepare('SELECT modul, islem, izin FROM yetkiler WHERE kullanici_id = ?');
+        $stmt->execute(array($user['id']));
+        $yetkiItems = $stmt->fetchAll();
+        foreach ($yetkiItems as $y) {
+            $yetkiler[$y['modul'] . '_' . $y['islem']] = (int)$y['izin'];
+        }
+    } catch (Exception $e2) {}
+
+    $userData = $user;
+    $userData['yetkiler'] = $yetkiler;
+
     echo json_encode(array(
         'success' => true,
         'data' => array(
-            'user' => $user,
+            'user' => $userData,
             'stats' => array(
                 'dosya_total' => (int)$dosyaTotal,
                 'dosya_open' => (int)$dosyaOpen,
@@ -53,6 +67,7 @@ try {
     ));
 
 } catch (Exception $e) {
+    // İstatistik hatası user verisini engellemez, varsayılan stats ile devam
     echo json_encode(array(
         'success' => true,
         'data' => array(

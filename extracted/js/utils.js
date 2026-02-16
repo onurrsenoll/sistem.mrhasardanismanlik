@@ -5,6 +5,108 @@
 
 const MR = window.MR || (window.MR = {});
 
+/* ---------- GİDEN ARAMA BAŞLAT (NETSANTRAL PBX) ---------- */
+
+/**
+ * NETSANTRAL PBX ÜZERİNDEN GİDEN ARAMA BAŞLAT
+ * AKIŞ: ORIGINATE → PBX DAHİLİNİZİ ÇALDIRIR → AÇTIĞINIZDA HEDEF NUMARAYA BAĞLAR
+ * ÇAĞRI KONTROLÜ (KAPAT, SESİ KAPAT, TRANSFER) SİSTEM ÜZERİNDEN YAPILIR
+ *
+ * @param {string} telefon - ARANACAK TELEFON NUMARASI
+ * @param {string} ad - ARANAN KİŞİNİN ADI (OPSİYONEL)
+ * @param {boolean} otomatikCrmAc - CRM EKRANI AÇILSIN MI (VARSAYILAN: TRUE)
+ */
+MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
+  if (!telefon) {
+    alert('TELEFON NUMARASI BOŞ! LÜTFEN GEÇERLİ BİR NUMARA GİRİN.');
+    return;
+  }
+
+  /* NUMARA TEMİZLEME VE NORMALİZASYON
+     TÜM FORMATLAR DESTEKLER:
+     "05551234567"   → "905551234567"
+     "5551234567"    → "905551234567"
+     "+905551234567" → "905551234567"
+     "905551234567"  → "905551234567"
+  */
+  let cleanNum = telefon.replace(/[\s\-\(\)\+]/g, '');
+  if (cleanNum.startsWith('90') && cleanNum.length >= 12) {
+    /* ZATEN 90 İLE BAŞLIYOR - OLDUĞU GİBİ BIRAK */
+  } else if (cleanNum.startsWith('0') && cleanNum.length >= 11) {
+    cleanNum = '90' + cleanNum.substring(1);
+  } else if (cleanNum.length === 10 && /^[5]\d{9}$/.test(cleanNum)) {
+    cleanNum = '90' + cleanNum;
+  } else if (cleanNum.length === 10 && /^\d{10}$/.test(cleanNum)) {
+    cleanNum = '90' + cleanNum;
+  }
+
+  console.log('[NETSANTRAL] ARAMA BAŞLATILIYOR:', cleanNum, '| AD:', ad || '-', '| DAHİLİ:', MR._netsantralDahili || 'YOK', '| AKTİF:', MR._netsantralAktif);
+
+  /* NETSANTRAL AKTİF KONTROLÜ */
+  if (MR._netsantralAktif === false) {
+    const hata = 'NETSANTRAL PASİF DURUMDA! SİSTEM > AYARLAR > NETSANTRAL BÖLÜMÜNDEN AKTİF EDİN.';
+    alert(hata);
+    window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
+      detail: { basarili: false, hata: hata, telefon: cleanNum, ad: ad || '' }
+    }));
+    return;
+  }
+
+  /* DAHİLİ KONTROLÜ - DAHİLİ YOKSA ARAMA YAPILAMAZ */
+  if (!MR._netsantralDahili) {
+    const hata = 'DAHİLİ NUMARASI TANIMLI DEĞİL! SİSTEM > AYARLAR > NETSANTRAL BÖLÜMÜNDEN DAHİLİ NUMARASINI GİRİN.';
+    alert(hata);
+    window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
+      detail: { basarili: false, hata: hata, telefon: cleanNum, ad: ad || '' }
+    }));
+    return;
+  }
+
+  /* NETSANTRAL PANELİNE GİDEN ÇAĞRI BAŞLATILDIĞINI BİLDİR */
+  window.dispatchEvent(new CustomEvent('mr-arama-baslat', {
+    detail: { telefon: cleanNum, ad: ad || '', yon: 'giden', timestamp: Date.now() }
+  }));
+
+  /* NETSANTRAL PBX ORIGINATE API İLE GİDEN ÇAĞRI BAŞLAT */
+  try {
+    const r = await MR.api.netsantralOriginate(cleanNum, MR._netsantralDahili);
+    console.log('[NETSANTRAL] ORIGINATE YANIT:', JSON.stringify(r));
+    if (r?.success && r.data?.success_api) {
+      /* PBX BAŞARIYLA GİDEN ÇAĞRI BAŞLATTI */
+      window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
+        detail: { basarili: true, telefon: cleanNum, ad: ad || '' }
+      }));
+    } else {
+      /* PBX HATASI */
+      const hataMesaj = r?.data?.response?.hata_mesaj || r?.error || 'PBX ÇAĞRI BAŞLATILAMADI';
+      console.error('[NETSANTRAL] ORIGINATE HATA:', hataMesaj, r);
+      alert('ARAMA HATASI: ' + hataMesaj);
+      window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
+        detail: { basarili: false, hata: hataMesaj, telefon: cleanNum, ad: ad || '' }
+      }));
+    }
+  } catch(e) {
+    console.error('[NETSANTRAL] BAĞLANTI HATASI:', e);
+    alert('NETSANTRAL BAĞLANTI HATASI! İNTERNET BAĞLANTINIZI KONTROL EDİN.');
+    window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
+      detail: { basarili: false, hata: 'NETSANTRAL BAĞLANTI HATASI: ' + (e?.message || ''), telefon: cleanNum, ad: ad || '' }
+    }));
+  }
+
+  /* GİDEN ARAMA LOGUNU KAYDET */
+  MR.api.req('/netsipp/giden-cagri.php', {
+    method: 'POST',
+    body: JSON.stringify({ arayan: cleanNum, aranan_adi: ad || '', yon: 'giden' })
+  }).catch(() => {});
+
+  /* OTOMATİK CRM KAYIT EKRANI AÇ (LİSTEDEN ARANDIĞINDA) */
+  if (otomatikCrmAc !== false) {
+    MR._gelenCagriTelefon = telefon;
+    MR._gelenCagriAdi = ad || '';
+    window.dispatchEvent(new CustomEvent('mr-arama-crm-ac'));
+  }
+};
+
 /* ---------- PARA BİÇİMLENDİRME ---------- */
 
 /**

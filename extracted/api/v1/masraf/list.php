@@ -48,14 +48,17 @@ $stmt = $db->prepare("SELECT COUNT(*) as total FROM masraflar m $whereSQL");
 $stmt->execute($params);
 $total = (int)$stmt->fetch()['total'];
 
-$stmt = $db->prepare("SELECT m.*, k.ad as kasa_adi, u.ad_soyad as kullanici_adi, d.dosya_no
+$dataSQL = "SELECT m.*, k.ad as kasa_adi, u.ad_soyad as kullanici_adi, d.dosya_no
     FROM masraflar m
     LEFT JOIN kasalar k ON k.id = m.kasa_id
     LEFT JOIN users u ON u.id = m.kullanici_id
     LEFT JOIN dosyalar d ON d.id = m.dosya_id
     $whereSQL
     ORDER BY m.islem_tarihi DESC, m.id DESC
-    LIMIT {$pag['limit']} OFFSET {$pag['offset']}");
+    LIMIT ? OFFSET ?";
+$params[] = (int)$pag['limit'];
+$params[] = (int)$pag['offset'];
+$stmt = $db->prepare($dataSQL);
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 

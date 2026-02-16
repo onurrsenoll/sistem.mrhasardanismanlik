@@ -1,15 +1,15 @@
 const MR = window.MR || (window.MR = {});
 const {useState} = React;
 
-MR.YeniDosya = ({setPage}) => {
-  const {C, S, LIcon, Badge, SectionTitle, FormGroup, api, ARAC_DB, SIGORTA, ILLER, formatPlaka} = MR;
+MR.DosyaYeniPage = ({setPage, user}) => {
+  const {C, S, LIcon, Badge, SectionTitle, FormGroup, api, SIGORTA, ILLER, ILCELER, formatPlaka, AracMarkaSelect, AracModelSelect} = MR;
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [form, setForm] = useState({
     ad_soyad:'', tc_kimlik:'', telefon:'', iban:'', adres:'', il:'', ilce:'',
-    dosya_turu:'ADK', talep_turu:'', kaza_tarihi:'', haklilik:'100', meslek:'', komisyon:'',
+    dosya_turu:'ADK', talep_turu:'', kaza_tarihi:'', haklilik:'100', hak_mahrumiyet:'0', meslek:'', komisyon:'',
     ma_plaka:'', ma_marka:'', ma_model:'', ma_yil:'',
     ka_plaka:'', ka_marka:'', ka_yil:'', ka_trafik:'',
     sigorta_sirket:'', dosya_kaynak:'', notlar:''
@@ -56,8 +56,8 @@ MR.YeniDosya = ({setPage}) => {
           <FormGroup label="TELEFON"><input style={S.input} value={form.telefon} onChange={e=>u('telefon',e.target.value)} placeholder="05XX XXX XXXX"/></FormGroup>
           <FormGroup label="IBAN"><input style={S.input} value={form.iban} onChange={e=>u('iban',e.target.value)} placeholder="TR00 0000 ..."/></FormGroup>
           <FormGroup label="ADRES" full><input style={S.input} value={form.adres} onChange={e=>u('adres',e.target.value)} placeholder="AÇIK ADRES"/></FormGroup>
-          <FormGroup label="İL"><select style={S.select} value={form.il} onChange={e=>u('il',e.target.value)}><option value="">SEÇİNİZ</option>{ILLER.map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
-          <FormGroup label="İLÇE"><input style={S.input} value={form.ilce} onChange={e=>u('ilce',e.target.value)} placeholder="İLÇE"/></FormGroup>
+          <FormGroup label="İL"><select style={S.select} value={form.il} onChange={e=>{u('il',e.target.value);u('ilce','');}}><option value="">SEÇİNİZ</option>{ILLER.map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
+          <FormGroup label="İLÇE"><select style={S.select} value={form.ilce} onChange={e=>u('ilce',e.target.value)} disabled={!form.il}><option value="">SEÇİNİZ</option>{(ILCELER[form.il]||[]).map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
         </div>
       );
       case 1: return (
@@ -82,6 +82,20 @@ MR.YeniDosya = ({setPage}) => {
           </FormGroup>
           <FormGroup label="MESLEK"><input style={S.input} value={form.meslek} onChange={e=>u('meslek',e.target.value)} placeholder="MESLEK"/></FormGroup>
           <FormGroup label="KOMİSYON (%)"><input type="number" style={S.input} value={form.komisyon} onChange={e=>u('komisyon',e.target.value)} placeholder="20"/></FormGroup>
+          <FormGroup label="HAK MAHRUMİYET TALEP">
+            <div style={{display:'flex',gap:8,alignItems:'center'}}>
+              <div onClick={() => u('hak_mahrumiyet','1')}
+                style={{padding:'8px 20px',borderRadius:8,fontSize:12,fontWeight:700,cursor:'pointer',
+                  background:form.hak_mahrumiyet==='1'?`${C.success}22`:'transparent',
+                  color:form.hak_mahrumiyet==='1'?C.success:C.textMuted,
+                  border:`1px solid ${form.hak_mahrumiyet==='1'?C.success+'66':C.border}`}}>VAR</div>
+              <div onClick={() => u('hak_mahrumiyet','0')}
+                style={{padding:'8px 20px',borderRadius:8,fontSize:12,fontWeight:700,cursor:'pointer',
+                  background:form.hak_mahrumiyet!=='1'?`${C.danger}22`:'transparent',
+                  color:form.hak_mahrumiyet!=='1'?C.danger:C.textMuted,
+                  border:`1px solid ${form.hak_mahrumiyet!=='1'?C.danger+'66':C.border}`}}>YOK</div>
+            </div>
+          </FormGroup>
         </div>
       );
       case 2:
@@ -94,14 +108,10 @@ MR.YeniDosya = ({setPage}) => {
               <div style={{padding:16,display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
                 <FormGroup label="PLAKA *"><input style={S.input} value={form.ma_plaka} onChange={e=>u('ma_plaka',formatPlaka(e.target.value))} placeholder="55MR001"/></FormGroup>
                 <FormGroup label="MARKA">
-                  <select style={S.select} value={form.ma_marka} onChange={e=>{u('ma_marka',e.target.value);u('ma_model','');}}>
-                    <option value="">SEÇİNİZ</option>{Object.keys(ARAC_DB).sort().map(m=><option key={m} value={m}>{m}</option>)}
-                  </select>
+                  <AracMarkaSelect value={form.ma_marka} onChange={v=>{u('ma_marka',v);u('ma_model','');}}/>
                 </FormGroup>
-                <FormGroup label="MODEL">
-                  <select style={S.select} value={form.ma_model} onChange={e=>u('ma_model',e.target.value)}>
-                    <option value="">SEÇİNİZ</option>{(ARAC_DB[form.ma_marka]?.modeller||[]).map(m=><option key={m} value={m}>{m}</option>)}
-                  </select>
+                <FormGroup label="MODEL / PAKET">
+                  <AracModelSelect marka={form.ma_marka} value={form.ma_model} onChange={v=>u('ma_model',v)}/>
                 </FormGroup>
                 <FormGroup label="MODEL YILI">
                   <select style={S.select} value={form.ma_yil} onChange={e=>u('ma_yil',e.target.value)}>
@@ -122,9 +132,7 @@ MR.YeniDosya = ({setPage}) => {
                   </select>
                 </FormGroup>
                 <FormGroup label="MARKA">
-                  <select style={S.select} value={form.ka_marka} onChange={e=>u('ka_marka',e.target.value)}>
-                    <option value="">SEÇİNİZ</option>{Object.keys(ARAC_DB).sort().map(m=><option key={m} value={m}>{m}</option>)}
-                  </select>
+                  <AracMarkaSelect value={form.ka_marka} onChange={v=>u('ka_marka',v)}/>
                 </FormGroup>
                 <FormGroup label="MODEL YILI">
                   <select style={S.select} value={form.ka_yil} onChange={e=>u('ka_yil',e.target.value)}>

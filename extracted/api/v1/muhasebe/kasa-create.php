@@ -2,7 +2,7 @@
 /**
  * POST /api/v1/muhasebe/kasa-create.php
  * Yeni kasa/banka hesabı oluştur
- * Body: { "ad": "Yeni Kasa", "tip": "Banka", "banka_adi": "...", "hesap_no": "...", "iban": "...", "bakiye": 0 }
+ * Body: { "ad": "Yeni Kasa", "tur": "nakit", "banka_adi": "...", "hesap_no": "...", "iban": "...", "bakiye": 0 }
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -13,11 +13,14 @@ require_method('POST');
 
 $user = auth_required(['admin']);
 $body = get_json_body();
-require_fields($body, ['ad', 'tip']);
+require_fields($body, ['ad']);
 
 $db = getDB();
 
-$tip = clean($body['tip']);
+// Frontend 'tur' (küçük harf) gönderir, DB 'tip' (büyük harfle başlayan) bekler
+$tip = clean($body['tip'] ?? $body['tur'] ?? 'nakit');
+$tip = ucfirst(strtolower($tip)); // nakit → Nakit, banka → Banka
+
 if (!in_array($tip, ['Nakit', 'Banka'])) {
     json_error('Geçersiz kasa tipi. Nakit veya Banka olmalı', 422);
 }
