@@ -1637,13 +1637,17 @@ const NetsantralTab = () => {
                 <div style={{fontSize: 11, fontWeight: 700, color: C.warning, marginBottom: 6}}>
                   <LIcon name="BookOpen" size={12} color={C.warning}/> NETGSM PANEL KURULUM ADIMLARI
                 </div>
-                <div><strong style={{color: C.accent}}>1.</strong> NETGSM WEBPORTAL {'>'} NETSANTRAL {'>'} ENTEGRASYONLAR</div>
-                <div><strong style={{color: C.accent}}>2.</strong> PASİF ENTEGRASYONLARDAN "CUSTOM (ÖZEL API)" AKTİF EDİN</div>
-                <div><strong style={{color: C.accent}}>3.</strong> ÖZEL API OLUŞTUR {'>'} FONKSİYON URL: <strong style={{color: C.accent}}>YUKARIDAKİ URL</strong></div>
-                <div><strong style={{color: C.accent}}>4.</strong> FONKSİYON METOD: <strong style={{color: C.success}}>JSON POST</strong> SEÇİN</div>
-                <div><strong style={{color: C.accent}}>5.</strong> STATİK DEĞİŞKEN EKLE: <strong>api_key = mr_hasar_2026</strong></div>
-                <div><strong style={{color: C.accent}}>6.</strong> SONUÇ DURUMLARI {'>'} "dynamic" KODU EKLEYİN</div>
-                <div><strong style={{color: C.accent}}>7.</strong> FONKSİYONDAN MODÜL OLUŞTURUN VE IVR AKIŞINA EKLEYİN</div>
+                <div><strong style={{color: C.accent}}>1.</strong> NETGSM NETSANTRAL {'>'} MODÜLLER {'>'} ENTEGRASYONLAR {'>'} ÖZEL API</div>
+                <div><strong style={{color: C.accent}}>2.</strong> FONKSİYON İSMİ: <strong>MR HASAR CRM GELEN</strong></div>
+                <div><strong style={{color: C.accent}}>3.</strong> FONKSİYON URL: <strong style={{color: C.accent}}>YUKARIDAKİ WEBHOOK URL</strong></div>
+                <div><strong style={{color: C.accent}}>4.</strong> FONKSİYON METOD: <strong style={{color: C.success}}>HTTP POST</strong></div>
+                <div><strong style={{color: C.accent}}>5.</strong> SABİT DEĞİŞKEN EKLE: <strong>api_key = mr_hasar_2026</strong></div>
+                <div><strong style={{color: C.accent}}>6.</strong> SONUÇ DURUMLARI: <strong>e</strong>=HATA, <strong>t</strong>=ZAMAN AŞIMI, <strong>1</strong>=BAŞARILI (TTS)</div>
+                <div><strong style={{color: C.accent}}>7.</strong> FONKSİYONDAN MODÜL OLUŞTURUN</div>
+                <div><strong style={{color: C.accent}}>8.</strong> AYARLAR {'>'} IVR {'>'} TUŞLAMAYINCA {'>'} MODÜL {'>'} ÖZEL API MODÜLÜ SEÇİN</div>
+                <div style={{marginTop: 6, fontSize: 9, color: C.textMuted, fontStyle: 'italic'}}>
+                  NOT: DİNAMİK YÖNLENDİRME İÇİN RESULT ALANI DAHİLİ NUMARASINI İÇERİR (ÖRN: 102)
+                </div>
               </div>
 
               {/* WEBHOOK TEST BUTONLARI */}

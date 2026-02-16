@@ -5,6 +5,7 @@
  *
  * NetSantral gelen çağrılarda bu URL'yi çağırır.
  * AUTH GEREKMEZ - NetSantral sunucusu çağırır, JWT token göndermez.
+ * API_KEY ile doğrulama yapılır.
  *
  * POST Body (JSON veya form-encoded):
  * {
@@ -16,15 +17,16 @@
  *   "api_key": "mr_hasar_2026"  (sabit değişken)
  * }
  *
- * YANITLAR:
+ * YANITLAR (Tüm alanlar STRING olmalıdır):
  *
- * 1) TTS + DİNAMİK YÖNLENDİRME (DAHİLİYE AKTAR):
+ * 1) DİNAMİK YÖNLENDİRME (TTS + DAHİLİYE AKTAR):
  * {
  *   "status": "success",
- *   "result": "dynamic",
- *   "data": "Hosgeldiniz, cagrınız yonlendiriliyor.",
- *   "redirect": "102"
+ *   "result": "102",
+ *   "data": "Hosgeldiniz, cagrınız yonlendiriliyor."
  * }
+ * NOT: result alanı doğrudan hedef dahili numarasıdır.
+ * NetSantral TTS metnini okur, sonra result'taki numaraya yönlendirir.
  *
  * 2) SADECE TTS (YÖNLENDİRME YOK):
  * {
@@ -36,11 +38,11 @@
  * 3) HATA:
  * { "status": "error", "result": "e", "data": "hata mesaji" }
  *
- * Sonuç Durumları:
- * - "dynamic"    = TTS okunur + redirect numarasına yönlendirilir (ÖNERİLEN)
- * - "1"          = TTS ile data okunur (Netsantral panelindeki IVR akışına devam eder)
+ * Sonuç Durumları (NetSantral panelinde tanımlı):
  * - "e"          = Hata
  * - "t"          = Zaman aşımı
+ * - "1"          = Başarılı - TTS ile data okunur (IVR akışına devam eder)
+ * - "{dahili}"   = Dinamik Yönlendirme - TTS okunur + dahili numarasına aktarılır
  */
 
 error_reporting(E_ALL);
@@ -156,6 +158,17 @@ try {
     $db->prepare("INSERT INTO log_kayitlari (kullanici_id, islem, detay, tablo_adi, ip_adresi, user_agent) VALUES (NULL, ?, ?, ?, ?, ?)")
        ->execute(['netsantral_webhook', $logMsg, 'netsantral_bekleyen', $_SERVER['REMOTE_ADDR'] ?? '', substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255)]);
 } catch (Exception $e) {}
+
+// ══════════ API KEY DOĞRULAMA ══════════
+$VALID_API_KEY = 'mr_hasar_2026';
+if (empty($api_key) || $api_key !== $VALID_API_KEY) {
+    echo json_encode([
+        'status' => 'error',
+        'result' => 'e',
+        'data'   => 'Gecersiz api anahtari'
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 // ══════════ ARAYAN NUMARASI YOKSA HATA ══════════
 if (empty($arayan_no)) {
@@ -275,30 +288,30 @@ if (mb_strlen($anons) > 750) {
 
 // ══════════ YANIT OLUŞTUR ══════════
 // NOT: Netsantral Özel API tüm alanların STRING olmasını bekler
-// NOT: result="dynamic" → TTS okunur + redirect numarasına yönlendirilir
-// NOT: result="1" → TTS okunur, Netsantral panelindeki IVR akışına devam eder
+// NOT: result = dahili numarası → TTS okunur + o dahiliye yönlendirilir (DİNAMİK)
+// NOT: result = "1" → TTS okunur, Netsantral panelindeki IVR akışına devam eder
+// NOT: result = "e" → Hata durumu
 
 if (!empty($redirectHedef) && $yonlendirmeModu === 'dynamic') {
     // ═══ DİNAMİK YÖNLENDİRME ═══
-    // TTS metni okunduktan sonra redirect alanındaki numaraya yönlendirir
-    // redirect: dahili numarası (102) veya dış numara (05xxxxxxxxx) olabilir
+    // result alanı doğrudan hedef dahili numarasıdır
+    // NetSantral TTS metnini okur, sonra result'taki numaraya yönlendirir
     $response = [
-        'status'   => 'success',
-        'result'   => 'dynamic',
-        'data'     => strval($anons),
-        'redirect' => strval($redirectHedef)
+        'status' => 'success',
+        'result' => strval($redirectHedef),
+        'data'   => strval($anons)
     ];
 } elseif ($yonlendirmeModu === 'extensions' && !empty($dahili)) {
     // ═══ DAHİLİ YÖNLENDİRME ═══
-    // Direkt dahili numarasına yönlendir (TTS yok)
+    // result alanı dahili numarasıdır, TTS yok (data boş)
     $response = [
         'status' => 'success',
-        'result' => 'extensions',
-        'data'   => strval($dahili)
+        'result' => strval($dahili),
+        'data'   => ''
     ];
 } else {
     // ═══ SADECE TTS (YÖNLENDİRME YOK) ═══
-    // TTS okunur, sonra Netsantral panelindeki IVR akışına devam eder
+    // result = "1" → TTS okunur, sonra Netsantral panelindeki IVR akışına devam eder
     $response = [
         'status' => 'success',
         'result' => '1',

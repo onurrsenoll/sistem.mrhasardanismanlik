@@ -80,11 +80,13 @@ try {
     // Tablo yoksa sessizce devam et
 }
 
-// CRM'de bu numarayı ara
+// CRM'de bu numarayı ara (son 10 hane ile arama - alan kodu farklılıklarını tolere eder)
 $crmKayit = null;
+$rawNum = preg_replace('/[^0-9]/', '', $arayan);
+$searchNum = strlen($rawNum) > 10 ? substr($rawNum, -10) : $rawNum;
+$cleanNum = '%' . $searchNum . '%';
 try {
-    $stmt = $db->prepare('SELECT id, ad_soyad, telefon, il, dosya_turu, durum FROM crm WHERE telefon LIKE ? OR telefon2 LIKE ? LIMIT 1');
-    $cleanNum = '%' . preg_replace('/[^0-9]/', '', $arayan) . '%';
+    $stmt = $db->prepare('SELECT id, ad_soyad, telefon, il, dosya_turu, durum FROM crm WHERE telefon LIKE ? OR telefon2 LIKE ? ORDER BY id DESC LIMIT 1');
     $stmt->execute([$cleanNum, $cleanNum]);
     $crmKayit = $stmt->fetch();
 } catch (Exception $e) {}
@@ -107,19 +109,24 @@ $isBrowser = !isset($_SERVER['HTTP_AUTHORIZATION']) &&
 
 if ($isBrowser) {
     header('Content-Type: text/html; charset=UTF-8');
-    // JSON-safe escape
-    $jsArayan = addslashes($arayan);
-    $jsArayanAdi = addslashes($arayanAdiSonuc);
-    $jsAranan = addslashes($aranan);
-    $jsAramaTarihi = addslashes($aramaTarihi);
-    $jsAramaId = addslashes($aramaId);
-    $jsSenaryo = addslashes($senaryo);
-    $crmJSON = $crmKayit ? json_encode($crmKayit, JSON_UNESCAPED_UNICODE) : 'null';
+    // json_encode ile güvenli JS değişken oluşturma (XSS koruması)
+    $jsData = json_encode([
+        'arayan' => $arayan,
+        'arayanAdi' => $arayanAdiSonuc,
+        'aranan' => $aranan,
+        'aramaTarihi' => $aramaTarihi,
+        'aramaId' => $aramaId,
+        'senaryo' => $senaryo,
+        'yon' => 'gelen',
+        'crm_kayit' => $crmKayit ?: null,
+        'timestamp' => round(microtime(true) * 1000) // Date.now() eşdeğeri
+    ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 
     // MİNİMAL HTML - SADECE localStorage YAZ VE ANINDA KAPAT
     echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>GELEN ÇAĞRI</title></head><body style="background:#0B1120;margin:0"><script>
 try{
-var d={arayan:"' . $jsArayan . '",arayanAdi:"' . $jsArayanAdi . '",aranan:"' . $jsAranan . '",aramaTarihi:"' . $jsAramaTarihi . '",aramaId:"' . $jsAramaId . '",senaryo:"' . $jsSenaryo . '",yon:"gelen",crm_kayit:' . $crmJSON . ',timestamp:Date.now()};
+var d=' . $jsData . ';
+d.timestamp=Date.now();
 localStorage.setItem("mr_netsipp_gelen",JSON.stringify(d));
 }catch(e){}
 window.close();

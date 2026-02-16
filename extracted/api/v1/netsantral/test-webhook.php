@@ -119,21 +119,22 @@ if ($mode === 'status') {
             'mod' => $yonModu,
             'dahili' => $dahili,
             'aciklama' => $yonModu === 'dynamic'
-                ? 'TTS OKUNUR + DAHİLİYE YÖNLENDİRİLİR (redirect: ' . $dahili . ')'
+                ? 'TTS OKUNUR + DAHİLİYE YÖNLENDİRİLİR (result: ' . $dahili . ')'
                 : ($yonModu === 'extensions'
-                    ? 'DİREKT DAHİLİYE YÖNLENDİRİLİR (dahili: ' . $dahili . ')'
-                    : 'SADECE TTS OKUNUR - YÖNLENDİRME YOK')
+                    ? 'DİREKT DAHİLİYE YÖNLENDİRİLİR (result: ' . $dahili . ', data boş)'
+                    : 'SADECE TTS OKUNUR - YÖNLENDİRME YOK (result: 1)')
         ],
         'tablo_durumu' => $tabloDurumu,
         'api_testi' => $apiTest,
         'son_cagrilar' => $sonCagrilar,
         'kurulum_rehberi' => [
-            '1' => 'NETGSM WEBPORTAL > NETSANTRAL > ENTEGRASYONLAR > CUSTOM API AKTİF EDİN',
-            '2' => 'ENTEGRASYONLAR > ÖZEL API OLUŞTUR > FONKSİYON URL: ' . $webhookUrl,
-            '3' => 'FONKSİYON METOD: JSON POST SEÇİN',
-            '4' => 'SONUÇ DURUMLARI > "dynamic" KODUNU EKLEYP YÖNLENDİRME AKIŞINI TANIMLAYIN',
-            '5' => 'STATİK DEĞİŞKEN: api_key = mr_hasar_2026 (GÜVENLİK İÇİN)',
-            '6' => 'FONKSİYONDAN MODÜL OLUŞTURUN VE IVR AKIŞINA EKLEYİN'
+            '1' => 'NETGSM NETSANTRAL > MODÜLLER > ENTEGRASYONLAR > ÖZEL API OLUŞTUR',
+            '2' => 'FONKSİYON İSMİ: MR HASAR CRM GELEN | FONKSİYON URL: ' . $webhookUrl,
+            '3' => 'FONKSİYON METOD: HTTP POST',
+            '4' => 'SABİT DEĞİŞKEN EKLE: api_key = mr_hasar_2026',
+            '5' => 'SONUÇ DURUMLARI: e=HATA, t=ZAMAN AŞIMI, 1=BAŞARILI (TTS)',
+            '6' => 'FONKSİYONDAN MODÜL OLUŞTURUN',
+            '7' => 'AYARLAR > IVR > TUŞLAMAYINCA > ÖZEL API MODÜLÜ SEÇİN'
         ]
     ]);
     exit;
@@ -186,16 +187,16 @@ if ($mode === 'simulate') {
         'webhook_yanit_parsed' => $parsed,
         'dogrulama' => [
             'status_dogru' => ($parsed['status'] ?? '') === 'success' ? 'EVET' : 'HAYIR - "success" olmalı',
-            'result_tipi' => $parsed['result'] ?? 'YOK',
-            'result_aciklama' => ($parsed['result'] ?? '') === 'dynamic'
-                ? 'DİNAMİK YÖNLENDİRME - TTS OKUNUR + NUMARAYA AKTARILIR'
-                : (($parsed['result'] ?? '') === 'extensions'
-                    ? 'DAHİLİ YÖNLENDİRME - DİREKT DAHİLİYE BAĞLANIR'
-                    : (($parsed['result'] ?? '') === '1'
-                        ? 'SADECE TTS - YÖNLENDİRME YOK (IVR AKIŞINA DEVAM EDER)'
-                        : 'BİLİNMEYEN RESULT TİPİ')),
-            'data_dolu' => !empty($parsed['data'] ?? '') ? 'EVET' : 'HAYIR',
-            'redirect_dolu' => !empty($parsed['redirect'] ?? '') ? 'EVET (' . ($parsed['redirect'] ?? '') . ')' : 'HAYIR (dynamic modda redirect gerekli!)',
+            'result_degeri' => $parsed['result'] ?? 'YOK',
+            'result_aciklama' => ($parsed['result'] ?? '') === '1'
+                ? 'SADECE TTS - YÖNLENDİRME YOK (IVR AKIŞINA DEVAM EDER)'
+                : (($parsed['result'] ?? '') === 'e'
+                    ? 'HATA DURUMU'
+                    : (is_numeric($parsed['result'] ?? '')
+                        ? 'DİNAMİK YÖNLENDİRME - TTS OKUNUR + DAHİLİ ' . ($parsed['result'] ?? '') . ' NUMARASINA AKTARILIR'
+                        : 'BİLİNMEYEN RESULT: ' . ($parsed['result'] ?? ''))),
+            'data_dolu' => !empty($parsed['data'] ?? '') ? 'EVET - TTS METNİ: ' . mb_substr($parsed['data'] ?? '', 0, 80) : 'HAYIR',
+            'tum_alanlar_string' => (is_string($parsed['status'] ?? null) && is_string($parsed['result'] ?? null) && is_string($parsed['data'] ?? null)) ? 'EVET' : 'HAYIR - TÜM ALANLAR STRING OLMALI!',
         ]
     ]);
     exit;

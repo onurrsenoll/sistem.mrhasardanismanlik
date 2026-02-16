@@ -90,13 +90,15 @@ try {
     // Tablo yoksa sessizce devam et
 }
 
-// CRM'DE ARANAN NUMARAYI ARA
+// CRM'DE ARANAN NUMARAYI ARA (son 10 hane ile arama)
 $crmKayit = null;
 $yonlendirmeKayit = null;
 $searchNum = $aranan ?: $arayan;
+$rawNum = preg_replace('/[^0-9]/', '', $searchNum);
+$searchLast10 = strlen($rawNum) > 10 ? substr($rawNum, -10) : $rawNum;
+$cleanNum = '%' . $searchLast10 . '%';
 try {
-    $stmt = $db->prepare('SELECT id, ad_soyad, telefon, il, dosya_turu, durum FROM crm WHERE telefon LIKE ? OR telefon2 LIKE ? LIMIT 1');
-    $cleanNum = '%' . preg_replace('/[^0-9]/', '', $searchNum) . '%';
+    $stmt = $db->prepare('SELECT id, ad_soyad, telefon, il, dosya_turu, durum FROM crm WHERE telefon LIKE ? OR telefon2 LIKE ? ORDER BY id DESC LIMIT 1');
     $stmt->execute([$cleanNum, $cleanNum]);
     $crmKayit = $stmt->fetch();
 } catch (Exception $e) {}
