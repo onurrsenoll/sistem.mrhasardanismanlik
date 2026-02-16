@@ -47,13 +47,20 @@ if (empty($santralNo) || empty($username) || empty($password)) {
     json_error('NETSANTRAL AYARLARI YAPILANDIRILMAMIŞ. SİSTEM > NETSANTRAL AYARLARI BÖLÜMÜNDEN AYARLARI GİRİN.', 400);
 }
 
+// SANTRAL NO NORMALİZASYONU - API URL İÇİN BAŞINDAKİ 0'I TEMİZLE
+// NetGSM CRM Santral API: https://crmsntrl.netgsm.com.tr/{santral_no_without_leading_zero}/...
+$santralNoClean = ltrim($santralNo, '0');
+
+// KULLANICI ADI NORMALİZASYONU - BAŞINDAKİ 0'I TEMİZLE (NetGSM standart format)
+$usernameClean = ltrim($username, '0');
+
 // API URL OLUŞTUR
-$baseUrl = "https://crmsntrl.netgsm.com.tr/{$santralNo}";
+$baseUrl = "https://crmsntrl.netgsm.com.tr/{$santralNoClean}";
 $apiUrl = '';
 $queryParams = [];
 
-// ORTAK AUTH
-$queryParams['username'] = $username;
+// ORTAK AUTH (başındaki 0 temizlenmiş hali kullanılır)
+$queryParams['username'] = $usernameClean;
 $queryParams['password'] = $password;
 
 switch ($action) {
@@ -302,6 +309,8 @@ json_success([
     'success_api' => $apiBasarili,
     'debug' => [
         'api_url' => preg_replace('/password=[^&]+/', 'password=***', $fullUrl),
-        'santral_no' => $santralNo
+        'santral_no' => $santralNo,
+        'santral_no_api' => $santralNoClean,
+        'username_api' => $usernameClean
     ]
 ]);

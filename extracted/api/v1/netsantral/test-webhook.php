@@ -77,7 +77,10 @@ if ($mode === 'status') {
     } catch (Exception $e) {}
 
     if (!empty($santralNo) && !empty($username) && !empty($sifre)) {
-        $testUrl = "https://crmsntrl.netgsm.com.tr/{$santralNo}/queuestats?username={$username}&password={$sifre}";
+        // BAŞINDAKİ 0'LARI TEMİZLE (NetGSM API format)
+        $santralNoClean = ltrim($santralNo, '0');
+        $usernameClean = ltrim($username, '0');
+        $testUrl = "https://crmsntrl.netgsm.com.tr/{$santralNoClean}/queuestats?username={$usernameClean}&password={$sifre}";
         $ch = curl_init();
         curl_setopt_array($ch, [
             CURLOPT_URL => $testUrl,

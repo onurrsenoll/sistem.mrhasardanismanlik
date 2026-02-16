@@ -1322,25 +1322,39 @@ const NetsantralCagriGecmisi = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const p = {page: sayfa, limit: 30};
-    if (yonF) p.yon = yonF;
-    if (search) p.q = search;
-    if (tarihBas) p.tarih_baslangic = tarihBas;
-    if (tarihBit) p.tarih_bitis = tarihBit;
-    const r = await api.netsantralAramaList(p);
-    if (r?.success) {
-      setData(r.data?.items || []);
-      if (r.data?.stats) setStats(r.data.stats);
-      if (r.data?.pagination) {
-        setToplamSayfa(r.data.pagination.totalPages || 1);
-        setToplamKayit(r.data.pagination.total || 0);
+    try {
+      const p = {page: sayfa, limit: 30};
+      if (yonF) p.yon = yonF;
+      if (search) p.q = search;
+      if (tarihBas) p.tarih_baslangic = tarihBas;
+      if (tarihBit) p.tarih_bitis = tarihBit;
+      const r = await api.netsantralAramaList(p);
+      if (r?.success) {
+        const items = r.data?.items || [];
+        setData(items);
+        if (r.data?.stats) setStats(r.data.stats);
+        if (r.data?.pagination) {
+          setToplamSayfa(r.data.pagination.totalPages || 1);
+          setToplamKayit(r.data.pagination.total || 0);
+        }
+        if (r.data?.debug_error) {
+          console.warn('[NETSANTRAL ÇAĞRI GEÇMİŞİ] SQL HATASI:', r.data.debug_error);
+        }
+      } else {
+        console.error('[NETSANTRAL ÇAĞRI GEÇMİŞİ] API HATASI:', r?.error);
       }
+    } catch (err) {
+      console.error('[NETSANTRAL ÇAĞRI GEÇMİŞİ] YÜKLEME HATASI:', err);
     }
     setLoading(false);
   }, [sayfa, yonF, search, tarihBas, tarihBit]);
 
   useEffect(() => { load(); }, []);
-  useEffect(() => { const t = setTimeout(load, 400); return () => clearTimeout(t); }, [search, yonF, tarihBas, tarihBit, sayfa]);
+  useEffect(() => {
+    if (sayfa === 1 && !yonF && !search && !tarihBas && !tarihBit) return; // İLK YÜKLEME ZATEN YAPILDI
+    const t = setTimeout(load, 400);
+    return () => clearTimeout(t);
+  }, [search, yonF, tarihBas, tarihBit, sayfa]);
 
   const fmtSure = (s) => {
     if (!s || s <= 0) return '-';
@@ -1610,6 +1624,19 @@ const NetsantralTab = () => {
     const r = await api.ayarlarGuncelle(ayarlar);
     if (r?.success) {
       setMesaj({type: 'success', text: 'NETSANTRAL AYARLARI BAŞARIYLA KAYDEDİLDİ'});
+      /* GLOBAL DEĞİŞKENLERİ ANINDA GÜNCELLE - FLOATING PANEL HEMEN KULLLANSIN */
+      MR._netsantralDahili = ayarlar.netsantral_dahili || '';
+      MR._netsantralAktif = ayarlar.netsantral_aktif === '1';
+      MR._netsantralSantralNo = ayarlar.netsantral_santral_no || '';
+      /* DİĞER BİLEŞENLERE AYARLARIN DEĞİŞTİĞİNİ BİLDİR */
+      window.dispatchEvent(new CustomEvent('mr-netsantral-ayar-degisti', {
+        detail: {
+          dahili: MR._netsantralDahili,
+          aktif: MR._netsantralAktif,
+          santralNo: MR._netsantralSantralNo
+        }
+      }));
+      console.log('[NETSANTRAL] AYARLAR GÜNCELLENDİ - DAHİLİ:', MR._netsantralDahili, '| AKTİF:', MR._netsantralAktif);
     } else {
       setMesaj({type: 'error', text: r?.error || 'AYARLAR KAYDEDİLİRKEN HATA OLUŞTU'});
     }

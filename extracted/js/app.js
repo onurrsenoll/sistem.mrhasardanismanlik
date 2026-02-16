@@ -539,6 +539,18 @@ const NetsantralPanel = ({user}) => {
 
   // DAHİLİ NUMARASI APP BİLEŞENİNDE YÜKLENİYOR (MR._netsantralDahili)
 
+  // AYAR DEĞİŞİKLİĞİ DİNLE (SİSTEM > NETSANTRAL SAYFASINDAN KAYDET YAPILINCA)
+  useEffect(() => {
+    const handler = (e) => {
+      const data = e.detail || {};
+      console.log('[NETSANTRAL PANEL] AYARLAR GÜNCELLEME ALGILANDI:', data);
+      if (data.dahili) setStatusMsg('DAHİLİ GÜNCELLENDİ: ' + data.dahili);
+      setTimeout(() => setStatusMsg(''), 3000);
+    };
+    window.addEventListener('mr-netsantral-ayar-degisti', handler);
+    return () => window.removeEventListener('mr-netsantral-ayar-degisti', handler);
+  }, []);
+
   // ARAMA SÜRE SAYACI
   useEffect(() => {
     if (activeCall) {
@@ -1243,9 +1255,23 @@ const App = () => {
 
   const gelenCagriIsle = useCallback((data) => {
     if (!data || !data.timestamp || (Date.now() - data.timestamp > 30000)) return;
-    /* POPUP GÖSTER (KISA SÜRELİ) */
+    /* POPUP GÖSTER (15 SANİYE GÖRÜNSÜN - KULLANICI İŞLEM YAPANA KADAR) */
     setGelenCagri(data);
-    setTimeout(() => setGelenCagri(prev => prev?.timestamp === data.timestamp ? null : prev), 5000);
+    setTimeout(() => setGelenCagri(prev => prev?.timestamp === data.timestamp ? null : prev), 15000);
+    /* SES BİLDİRİMİ - TARAYıCı İZİN VERİYORSA */
+    try {
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.frequency.value = 800;
+      gain.gain.value = 0.15;
+      osc.start();
+      setTimeout(() => { osc.frequency.value = 1000; }, 200);
+      setTimeout(() => { osc.frequency.value = 800; }, 400);
+      setTimeout(() => { osc.stop(); ac.close(); }, 600);
+    } catch(e) {}
     /* OTOMATİK CRM YENİ KAYIT EKRANINA YÖNLENDİR */
     MR._gelenCagriTelefon = data.arayan;
     MR._gelenCagriAdi = data.arayanAdi || '';

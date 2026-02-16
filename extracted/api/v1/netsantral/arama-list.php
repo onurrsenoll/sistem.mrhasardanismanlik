@@ -81,19 +81,36 @@ try {
 
 $totalPages = max(1, ceil($total / $limit));
 
-// KAYITLARI GETİR
+// KAYITLARI GETİR - LEFT JOIN İLE CRM BİLGİSİ
 $items = [];
+$itemsError = '';
 try {
-    $sql = "SELECT a.*,
-            CASE WHEN a.crm_id IS NOT NULL THEN (SELECT ad_soyad FROM crm WHERE id = a.crm_id LIMIT 1) ELSE NULL END as crm_ad_soyad
+    $sql = "SELECT a.*, c.ad_soyad as crm_ad_soyad
             FROM arama_loglari a
+            LEFT JOIN crm c ON a.crm_id = c.id
             {$whereStr}
             ORDER BY a.id DESC
             LIMIT {$limit} OFFSET {$offset}";
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
     $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (Exception $e) {}
+} catch (Exception $e) {
+    $itemsError = $e->getMessage();
+    // FALLBACK: CRM JOIN OLMADAN DENE (crm tablosu yoksa)
+    try {
+        $sql2 = "SELECT a.*, NULL as crm_ad_soyad
+                FROM arama_loglari a
+                {$whereStr}
+                ORDER BY a.id DESC
+                LIMIT {$limit} OFFSET {$offset}";
+        $stmt2 = $db->prepare($sql2);
+        $stmt2->execute($params);
+        $items = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+        $itemsError = '';
+    } catch (Exception $e2) {
+        $itemsError = $e2->getMessage();
+    }
+}
 
 // İSTATİSTİKLER
 $stats = ['toplam' => $total, 'gelen' => 0, 'giden' => 0, 'bugun' => 0, 'toplam_sure' => 0];
@@ -115,7 +132,7 @@ try {
     }
 } catch (Exception $e) {}
 
-json_success([
+$response = [
     'items' => $items,
     'stats' => $stats,
     'pagination' => [
@@ -124,4 +141,10 @@ json_success([
         'total' => $total,
         'totalPages' => $totalPages
     ]
-]);
+];
+
+if ($itemsError) {
+    $response['debug_error'] = $itemsError;
+}
+
+json_success($response);
