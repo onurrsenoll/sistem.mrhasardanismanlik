@@ -254,11 +254,17 @@ const TopNav = ({user, page, setPage, onLogout}) => {
             width: 40, height: 40, minWidth: 40, borderRadius: 10, cursor: 'pointer',
             border: `1px solid ${C.border}`, display: 'flex',
             alignItems: 'center', justifyContent: 'center',
-            background: `${C.accent}22`
+            background: `${C.accent}22`, overflow: 'hidden'
           }} title={user?.ad_soyad || 'PROFİL'}>
-            <div style={{
-              fontSize: 15, fontWeight: 700, color: C.accent
-            }}>{(user?.ad_soyad || 'U')[0]}</div>
+            {user?.avatar ? (
+              <img src={user.avatar} alt="" style={{
+                width: 40, height: 40, objectFit: 'cover'
+              }}/>
+            ) : (
+              <div style={{
+                fontSize: 15, fontWeight: 700, color: C.accent
+              }}>{(user?.ad_soyad || 'U')[0]}</div>
+            )}
           </div>
 
           {profilOpen && (
@@ -268,9 +274,16 @@ const TopNav = ({user, page, setPage, onLogout}) => {
               borderRadius: 10, padding: 6, minWidth: 200,
               boxShadow: '0 10px 40px rgba(0,0,0,.5)', zIndex: 1001
             }}>
-              <div style={{padding: '10px 14px', borderBottom: `1px solid ${C.border}`, marginBottom: 4}}>
-                <div style={{fontSize: 12, fontWeight: 600}}>{user?.ad_soyad}</div>
-                <div style={{fontSize: 10, color: C.textMuted}}>{user?.email}</div>
+              <div style={{padding: '10px 14px', borderBottom: `1px solid ${C.border}`, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10}}>
+                {user?.avatar ? (
+                  <img src={user.avatar} alt="" style={{width: 32, height: 32, borderRadius: 8, objectFit: 'cover', flexShrink: 0}}/>
+                ) : (
+                  <div style={{width: 32, height: 32, borderRadius: 8, background: `${C.accent}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: C.accent, flexShrink: 0}}>{(user?.ad_soyad || 'U')[0]}</div>
+                )}
+                <div>
+                  <div style={{fontSize: 12, fontWeight: 600}}>{user?.ad_soyad}</div>
+                  <div style={{fontSize: 10, color: C.textMuted}}>{user?.email}</div>
+                </div>
               </div>
               <div onClick={() => { setPage('profil'); setProfilOpen(false); }}
                 style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12, color: C.textSec}}
@@ -378,7 +391,7 @@ const ROL_ACIKLAMALAR = {
   portal: {label: 'PORTAL KULLANICISI', renk: '#06b6d4', gorev: 'DOSYA GÖRÜNTÜLEME VE MESAJLAŞMA'}
 };
 
-const ProfilPage = ({user}) => {
+const ProfilPage = ({user, setUser}) => {
   const {C, S, LIcon, SectionTitle, FormGroup, api} = MR;
   /* ŞİFRE */
   const [eskiSifre, setEskiSifre] = useState('');
@@ -426,6 +439,7 @@ const ProfilPage = ({user}) => {
     setAvatarYukleniyor(false);
     if (r?.success && r.data?.avatar_url) {
       setAvatarUrl(r.data.avatar_url);
+      if (setUser) setUser(prev => ({...prev, avatar: r.data.avatar_url}));
       setMsg('PROFİL RESMİ BAŞARIYLA GÜNCELLENDİ');
     } else {
       setErr(r?.error || 'PROFİL RESMİ YÜKLEME HATASI');
@@ -623,7 +637,7 @@ const ProfilPage = ({user}) => {
 };
 
 /* ═══ SAYFA ROUTER ═══ */
-const PageRouter = ({page, setPage, user}) => {
+const PageRouter = ({page, setPage, user, setUser}) => {
   const dosyaIdMatch = page.match(/^dosya-detay-(\d+)$/);
   const crmIdMatch = page.match(/^crm-detay-(\d+)$/);
 
@@ -683,7 +697,7 @@ const PageRouter = ({page, setPage, user}) => {
     return <MR.SistemPage setPage={setPage} user={user} subPage={sub === 'sistem' ? 'kullanici' : sub}/>;
   }
 
-  if (page === 'profil') return <ProfilPage user={user}/>;
+  if (page === 'profil') return <ProfilPage user={user} setUser={setUser}/>;
 
   return <MR.HomePage setPage={setPage} user={user}/>;
 };
@@ -1739,7 +1753,7 @@ const App = () => {
 
       <div style={{maxWidth: 1400, margin: '0 auto', padding: '0 24px 40px', position: 'relative', zIndex: 1}}>
         <Breadcrumb page={page} setPage={setPage}/>
-        <PageRouter page={page} setPage={setPage} user={user}/>
+        <PageRouter page={page} setPage={setPage} user={user} setUser={setUser}/>
       </div>
 
       {/* MOTİVASYON SÖZÜ + SLOGAN - ALT KISIMDA SABİT */}
