@@ -20,9 +20,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../../config/auth.php';
-$user = auth_required();
 
 $evrakId = (int)($_GET['id'] ?? 0);
+$smsToken = $_GET['token'] ?? '';
+
+// SMS TOKEN İLE ERİŞİM (MÜŞTERİ SMS LİNKİNDEN GELİYORSA)
+if (!empty($smsToken) && $evrakId > 0) {
+    require_once __DIR__ . '/../../config/sms_helper.php';
+    if (!sms_evrak_token_dogrula($smsToken, $evrakId)) {
+        header('Content-Type: application/json');
+        json_error('EVRAK LİNKİ GEÇERSİZ VEYA SÜRESİ DOLMUŞ', 403);
+    }
+    // Token geçerli - auth gerekmez
+} else {
+    // Normal auth ile erişim
+    $user = auth_required();
+}
 if (!$evrakId) {
     header('Content-Type: application/json');
     json_error('Evrak ID gerekli', 422);

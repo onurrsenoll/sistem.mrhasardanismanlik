@@ -1304,6 +1304,320 @@ const LogTab = () => {
 };
 
 /* ════════════════════════════════════════════════════════════════
+   TAB 6 - SMS BİLDİRİM AYARLARI
+   DOSYA DURUM DEĞİŞİKLİĞİNDE OTOMATİK SMS GÖNDERİMİ
+   ════════════════════════════════════════════════════════════════ */
+const SmsTab = () => {
+  const {C, S, LIcon, Badge, FormGroup, Loading, api, fmt} = MR;
+  const [ayarlar, setAyarlar] = useState({sms_aktif:'0',sms_kullanici:'',sms_sifre:'',sms_baslik:''});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [mesaj, setMesaj] = useState(null);
+  const [testTel, setTestTel] = useState('');
+  const [testLoading, setTestLoading] = useState(false);
+  const [loglar, setLoglar] = useState([]);
+  const [logLoading, setLogLoading] = useState(false);
+  const [logPage, setLogPage] = useState(1);
+  const [logTotal, setLogTotal] = useState(0);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const r = await api.ayarlarList();
+      if (r?.success && r.data) {
+        const a = {};
+        (Array.isArray(r.data) ? r.data : []).forEach(item => {
+          if (item.anahtar && item.anahtar.startsWith('sms_')) a[item.anahtar] = item.deger || '';
+        });
+        if (Object.keys(a).length === 0 && typeof r.data === 'object' && !Array.isArray(r.data)) {
+          Object.keys(r.data).forEach(k => {
+            if (k.startsWith('sms_')) a[k] = r.data[k] || '';
+          });
+        }
+        setAyarlar(prev => ({...prev, ...a}));
+      }
+      setLoading(false);
+      smsLoglariYukle(1);
+    })();
+  }, []);
+
+  const smsLoglariYukle = async (page) => {
+    setLogLoading(true);
+    const r = await api.smsLogList({page, limit: 15});
+    if (r?.success && r.data) {
+      setLoglar(r.data.items || []);
+      setLogTotal(r.data.pagination?.total || 0);
+      setLogPage(page);
+    }
+    setLogLoading(false);
+  };
+
+  const kaydet = async () => {
+    setSaving(true); setMesaj(null);
+    const r = await api.ayarlarGuncelle(ayarlar);
+    if (r?.success) setMesaj({type:'success', text:'SMS AYARLARI KAYDEDİLDİ'});
+    else setMesaj({type:'error', text: r?.error || 'KAYIT HATASI'});
+    setSaving(false);
+  };
+
+  const testGonder = async () => {
+    if (!testTel) { setMesaj({type:'error', text:'TEST TELEFON NUMARASI GİRİN'}); return; }
+    setTestLoading(true); setMesaj(null);
+    const r = await api.smsTest({telefon: testTel});
+    if (r?.success && r.data?.basarili) {
+      setMesaj({type:'success', text:'TEST SMS GÖNDERİLDİ: ' + testTel});
+    } else {
+      setMesaj({type:'error', text: r?.data?.mesaj || r?.error || 'SMS GÖNDERİLEMEDİ'});
+    }
+    setTestLoading(false);
+    smsLoglariYukle(1);
+  };
+
+  const u = (k,v) => setAyarlar(p => ({...p, [k]: v}));
+
+  const durumRenk = (d) => {
+    if (d === 'gonderildi') return C.success;
+    if (d === 'hata') return C.danger;
+    if (d === 'pasif') return C.warning;
+    return C.textMuted;
+  };
+
+  if (loading) return <Loading/>;
+
+  return (
+    <div style={{display:'flex', flexDirection:'column', gap:16}}>
+      {/* BİLGİ BANNER */}
+      <div style={{padding:16, background:`${C.accent}11`, borderRadius:12, border:`1px solid ${C.accent}33`, display:'flex', alignItems:'center', gap:12}}>
+        <div style={{width:44, height:44, borderRadius:12, background:`${C.accent}22`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+          <LIcon name="MessageSquare" size={22} color={C.accent}/>
+        </div>
+        <div>
+          <div style={{fontSize:14, fontWeight:800, color:C.accent}}>OTOMATİK SMS BİLDİRİM SİSTEMİ</div>
+          <div style={{fontSize:11, color:C.textSec, marginTop:2}}>
+            DOSYA DURUMU HER DEĞİŞTİĞİNDE MAĞDURA OTOMATİK SMS GÖNDERİLİR. EVRAK YÜKLÜYSE PDF LİNKİ DE SMS İÇİNDE YER ALIR.
+          </div>
+        </div>
+      </div>
+
+      {/* MESAJ */}
+      {mesaj && (
+        <div style={{padding:12, background: mesaj.type==='success' ? `${C.success}18` : `${C.danger}18`,
+          borderRadius:8, border:`1px solid ${mesaj.type==='success' ? C.success+'33' : C.danger+'33'}`,
+          color: mesaj.type==='success' ? C.success : C.danger, fontSize:12, fontWeight:600,
+          display:'flex', alignItems:'center', gap:8}}>
+          <LIcon name={mesaj.type==='success' ? 'CheckCircle' : 'AlertCircle'} size={16}
+            color={mesaj.type==='success' ? C.success : C.danger}/>
+          {mesaj.text}
+          <span style={{marginLeft:'auto', cursor:'pointer', opacity:0.6}} onClick={() => setMesaj(null)}>✕</span>
+        </div>
+      )}
+
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16}}>
+        {/* SOL: AYARLAR */}
+        <div style={S.card}>
+          <div style={{...S.cardHead}}>
+            <LIcon name="Settings" size={16} color={C.accent}/>
+            <span style={{fontSize:13, fontWeight:700}}>NETGSM SMS AYARLARI</span>
+          </div>
+          <div style={{padding:20, display:'flex', flexDirection:'column', gap:14}}>
+            {/* AKTİF/PASİF */}
+            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:12,
+              background: ayarlar.sms_aktif==='1' ? `${C.success}11` : `${C.danger}08`,
+              borderRadius:10, border:`1px solid ${ayarlar.sms_aktif==='1' ? C.success+'33' : C.danger+'22'}`}}>
+              <div>
+                <div style={{fontSize:12, fontWeight:700}}>SMS BİLDİRİM</div>
+                <div style={{fontSize:10, color:C.textMuted, marginTop:2}}>
+                  {ayarlar.sms_aktif==='1' ? 'DURUM DEĞİŞİKLİKLERİNDE SMS GÖNDERİLİYOR' : 'SMS GÖNDERİMİ KAPALI'}
+                </div>
+              </div>
+              <div onClick={() => u('sms_aktif', ayarlar.sms_aktif==='1' ? '0' : '1')}
+                style={{width:52, height:28, borderRadius:14, cursor:'pointer', transition:'all .3s',
+                  background: ayarlar.sms_aktif==='1' ? C.success : C.borderLight, position:'relative'}}>
+                <div style={{width:22, height:22, borderRadius:11, background:'#fff', position:'absolute', top:3,
+                  left: ayarlar.sms_aktif==='1' ? 27 : 3, transition:'all .3s',
+                  boxShadow:'0 1px 3px rgba(0,0,0,0.3)'}}/>
+              </div>
+            </div>
+
+            <FormGroup label="NETGSM KULLANICI ADI (USERCODE)">
+              <input value={ayarlar.sms_kullanici||''} onChange={e => u('sms_kullanici', e.target.value)}
+                placeholder="8505551234" style={{...S.input, fontSize:12}}/>
+            </FormGroup>
+
+            <FormGroup label="NETGSM ŞİFRE">
+              <input type="password" value={ayarlar.sms_sifre||''} onChange={e => u('sms_sifre', e.target.value)}
+                placeholder="••••••••" style={{...S.input, fontSize:12}}/>
+            </FormGroup>
+
+            <FormGroup label="SMS BAŞLIĞI (SENDER / MSGHEADER)">
+              <input value={ayarlar.sms_baslik||''} onChange={e => u('sms_baslik', e.target.value)}
+                placeholder="MR HASAR" maxLength={11} style={{...S.input, fontSize:12}}/>
+              <div style={{fontSize:9, color:C.textMuted, marginTop:4}}>
+                NETGSM PANELİNDEN ONAYLANMIŞ BAŞLIK (MAX 11 KARAKTER)
+              </div>
+            </FormGroup>
+
+            <FormGroup label="SİTE URL (EVRAK LİNKLERİ İÇİN)">
+              <input value={ayarlar.site_url||''} onChange={e => u('site_url', e.target.value)}
+                placeholder="https://sistem.mrhasardanismanlik.com" style={{...S.input, fontSize:12}}/>
+              <div style={{fontSize:9, color:C.textMuted, marginTop:4}}>
+                EVRAK İNDİRME LİNKLERİ BU URL ÜZERİNDEN OLUŞTURULUR
+              </div>
+            </FormGroup>
+
+            <button onClick={kaydet} disabled={saving}
+              style={{...S.btn, ...S.btnS, justifyContent:'center', padding:14, fontSize:13, fontWeight:700}}>
+              <LIcon name="Save" size={16} color="#fff"/>
+              {saving ? 'KAYDEDİLİYOR...' : 'SMS AYARLARINI KAYDET'}
+            </button>
+          </div>
+        </div>
+
+        {/* SAĞ: TEST + BİLGİ */}
+        <div style={{display:'flex', flexDirection:'column', gap:16}}>
+          {/* TEST SMS */}
+          <div style={S.card}>
+            <div style={{...S.cardHead}}>
+              <LIcon name="Send" size={16} color={C.warning}/>
+              <span style={{fontSize:13, fontWeight:700}}>SMS TEST GÖNDERİMİ</span>
+            </div>
+            <div style={{padding:20}}>
+              <FormGroup label="TEST TELEFON NUMARASI">
+                <div style={{display:'flex', gap:8}}>
+                  <input value={testTel} onChange={e => setTestTel(e.target.value)}
+                    placeholder="05XX XXX XX XX" style={{...S.input, fontSize:12, flex:1}}/>
+                  <button onClick={testGonder} disabled={testLoading}
+                    style={{...S.btn, ...S.btnW, fontSize:11, padding:'8px 16px', whiteSpace:'nowrap'}}>
+                    <LIcon name="Send" size={13} color="#000"/>
+                    {testLoading ? 'GÖNDERİLİYOR...' : 'TEST GÖNDER'}
+                  </button>
+                </div>
+              </FormGroup>
+            </div>
+          </div>
+
+          {/* NASIL ÇALIŞIR */}
+          <div style={S.card}>
+            <div style={{...S.cardHead, background:`${C.cyan}06`}}>
+              <LIcon name="HelpCircle" size={16} color={C.cyan}/>
+              <span style={{fontSize:13, fontWeight:700}}>NASIL ÇALIŞIR?</span>
+            </div>
+            <div style={{padding:20, fontSize:11, color:C.textSec, lineHeight:1.8}}>
+              <div style={{display:'flex', gap:8, marginBottom:10}}>
+                <div style={{width:24, height:24, borderRadius:12, background:`${C.accent}22`, display:'flex',
+                  alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:11, fontWeight:800, color:C.accent}}>1</div>
+                <div>DOSYA DETAY SAYFASINDA DURUM (AŞAMA) DEĞİŞTİRİLİR</div>
+              </div>
+              <div style={{display:'flex', gap:8, marginBottom:10}}>
+                <div style={{width:24, height:24, borderRadius:12, background:`${C.success}22`, display:'flex',
+                  alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:11, fontWeight:800, color:C.success}}>2</div>
+                <div>SİSTEM OTOMATİK OLARAK MAĞDURUN TELEFONUNA SMS GÖNDER</div>
+              </div>
+              <div style={{display:'flex', gap:8, marginBottom:10}}>
+                <div style={{width:24, height:24, borderRadius:12, background:`${C.warning}22`, display:'flex',
+                  alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:11, fontWeight:800, color:C.warning}}>3</div>
+                <div>SMS İÇERİĞİ: YENİ DURUM BİLGİSİ + EVRAK PDF LİNKİ (VARSA)</div>
+              </div>
+              <div style={{display:'flex', gap:8}}>
+                <div style={{width:24, height:24, borderRadius:12, background:`${C.purple}22`, display:'flex',
+                  alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:11, fontWeight:800, color:C.purple}}>4</div>
+                <div>TÜM SMS GÖNDERİMLERİ LOGLANIR VE AŞAĞIDAKİ TABLODA GÖRÜNTÜLENİR</div>
+              </div>
+            </div>
+          </div>
+
+          {/* İSTATİSTİK */}
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10}}>
+            <div style={{...S.stat, textAlign:'center'}}>
+              <div style={{fontSize:20, fontWeight:800, color:C.success}}>{loglar.filter(l=>l.durum==='gonderildi').length}</div>
+              <div style={{fontSize:9, color:C.textMuted, marginTop:2}}>BAŞARILI</div>
+            </div>
+            <div style={{...S.stat, textAlign:'center'}}>
+              <div style={{fontSize:20, fontWeight:800, color:C.danger}}>{loglar.filter(l=>l.durum==='hata').length}</div>
+              <div style={{fontSize:9, color:C.textMuted, marginTop:2}}>BAŞARISIZ</div>
+            </div>
+            <div style={{...S.stat, textAlign:'center'}}>
+              <div style={{fontSize:20, fontWeight:800, color:C.accent}}>{logTotal}</div>
+              <div style={{fontSize:9, color:C.textMuted, marginTop:2}}>TOPLAM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SMS LOG TABLOSU */}
+      <div style={S.card}>
+        <div style={{...S.cardHead, justifyContent:'space-between'}}>
+          <div style={{display:'flex', alignItems:'center', gap:8}}>
+            <LIcon name="List" size={16} color={C.accent}/>
+            <span style={{fontSize:13, fontWeight:700}}>SMS GÖNDERİM GEÇMİŞİ</span>
+            <span style={{fontSize:10, color:C.textMuted}}>({logTotal} KAYIT)</span>
+          </div>
+          <button onClick={() => smsLoglariYukle(1)} style={{...S.btn, ...S.btnG, fontSize:10, padding:'5px 12px'}}>
+            <LIcon name="RefreshCw" size={12}/> YENİLE
+          </button>
+        </div>
+        {logLoading ? <div style={{padding:30, textAlign:'center'}}><Loading/></div> : (
+          loglar.length > 0 ? (
+            <div>
+              <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
+                <thead>
+                  <tr style={{background:C.bgHover}}>
+                    {['TARİH','TELEFON','DOSYA NO','DURUM','MESAJ','KULLANICI'].map(h =>
+                      <th key={h} style={{padding:'8px 10px', textAlign:'left', color:C.textMuted, fontWeight:600, fontSize:9, borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {loglar.map((log, i) => (
+                    <tr key={i} style={{borderBottom:`1px solid ${C.border}22`}}>
+                      <td style={{padding:'8px 10px', fontSize:10, color:C.textMuted, whiteSpace:'nowrap'}}>
+                        {log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-'}
+                      </td>
+                      <td style={{padding:'8px 10px', fontFamily:'monospace', fontSize:11, fontWeight:600}}>{log.telefon || '-'}</td>
+                      <td style={{padding:'8px 10px'}}>
+                        {log.dosya_no ? <Badge text={log.dosya_no} color={C.accent}/> : '-'}
+                      </td>
+                      <td style={{padding:'8px 10px'}}>
+                        <Badge text={log.durum === 'gonderildi' ? 'GÖNDERİLDİ' : log.durum === 'hata' ? 'HATA' : (log.durum || '').toUpperCase()} color={durumRenk(log.durum)}/>
+                      </td>
+                      <td style={{padding:'8px 10px', fontSize:10, color:C.textSec, maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                        {log.sonuc_mesaj || log.mesaj || '-'}
+                      </td>
+                      <td style={{padding:'8px 10px', fontSize:10, color:C.textMuted}}>{log.kullanici_adi || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {/* SAYFALAMA */}
+              {logTotal > 15 && (
+                <div style={{padding:12, display:'flex', justifyContent:'center', gap:6}}>
+                  {Array.from({length: Math.ceil(logTotal / 15)}, (_, i) => i + 1).slice(0, 10).map(p => (
+                    <div key={p} onClick={() => smsLoglariYukle(p)}
+                      style={{width:28, height:28, borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center',
+                        fontSize:10, fontWeight: p===logPage ? 800 : 500, cursor:'pointer',
+                        background: p===logPage ? `${C.accent}22` : 'transparent',
+                        color: p===logPage ? C.accent : C.textMuted,
+                        border:`1px solid ${p===logPage ? C.accent+'33' : 'transparent'}`}}>
+                      {p}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{padding:40, textAlign:'center'}}>
+              <LIcon name="MessageSquare" size={36} color={C.textMuted} style={{opacity:0.2}}/>
+              <div style={{fontSize:13, fontWeight:600, color:C.textMuted, marginTop:12}}>HENÜZ SMS GÖNDERİMİ YAPILMADI</div>
+              <div style={{fontSize:10, color:C.textMuted, marginTop:4}}>DOSYA DURUMU DEĞİŞTİĞİNDE SMS GÖNDERİMLERİ BURADA GÖRÜNECEK</div>
+            </div>
+          )
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════════════════════════
    TAB 5 - NETSANTRAL AYARLARI
    ════════════════════════════════════════════════════════════════ */
 /* ═══ NETSANTRAL ÇAĞRI GEÇMİŞİ BİLEŞENİ ═══ */
@@ -2197,6 +2511,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
     {key: 'yetki',     label: 'YETKİ YÖNETİMİ',     icon: 'KeyRound',  desc: 'MODÜL BAZLI İZİN YÖNETİMİ'},
     {key: 'ayarlar',   label: 'FİRMA AYARLARI',      icon: 'Settings',  desc: 'LOGO, ÜNVAN, SLOGAN, BİLGİLER'},
     {key: 'netsantral',label: 'NETSANTRAL',           icon: 'Phone',     desc: 'NETSANTRAL ENTEGRASYON AYARLARI'},
+    {key: 'sms',       label: 'SMS BİLDİRİM',         icon: 'MessageSquare', desc: 'DURUM DEĞİŞİKLİĞİ SMS BİLDİRİM AYARLARI'},
     {key: 'log',       label: 'LOG KAYITLARI',        icon: 'Activity',  desc: 'SİSTEM OLAY GEÇMİŞİ'}
   ];
 
@@ -2272,6 +2587,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
         {aktifTab === 'yetki' && isAdmin && <YetkiTab/>}
         {aktifTab === 'ayarlar' && isAdmin && <AyarlarTab/>}
         {aktifTab === 'netsantral' && isAdmin && <NetsantralTab/>}
+        {aktifTab === 'sms' && isAdmin && <SmsTab/>}
         {aktifTab === 'log' && <LogTab/>}
       </div>
     </div>

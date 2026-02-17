@@ -59,9 +59,22 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
   useEffect(() => { load(); }, [dosyaId]);
 
+  const [smsBildirim, setSmsBildirim] = useState(null);
+
   const asamaDegistir = async (yeniAsama) => {
     const r = await api.dosyaUpdate({id: dosya.id, asama: yeniAsama});
-    if (r?.success) load();
+    if (r?.success) {
+      load();
+      // SMS GÖNDERİM SONUCUNU GÖSTER
+      if (r.data?.sms_gonderildi) {
+        setSmsBildirim({type:'success', text:'DURUM DEĞİŞTİRİLDİ VE MAĞDURA SMS GÖNDERİLDİ'});
+      } else if (r.data?.sms_sonuc && !r.data.sms_sonuc.basarili) {
+        setSmsBildirim({type:'warning', text:'DURUM DEĞİŞTİRİLDİ - SMS: ' + (r.data.sms_sonuc.mesaj || 'GÖNDERİLEMEDİ')});
+      } else {
+        setSmsBildirim({type:'info', text:'DURUM DEĞİŞTİRİLDİ'});
+      }
+      setTimeout(() => setSmsBildirim(null), 5000);
+    }
   };
 
   const masrafSil = async (id) => {
@@ -166,6 +179,18 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
   return (
     <div className="fade-in">
+      {/* SMS BİLDİRİM TOAST */}
+      {smsBildirim && (
+        <div style={{position:'fixed', top:80, right:20, zIndex:9999, padding:'12px 20px', borderRadius:10,
+          background: smsBildirim.type==='success' ? C.success : smsBildirim.type==='warning' ? C.warning : C.accent,
+          color:'#fff', fontSize:12, fontWeight:700, display:'flex', alignItems:'center', gap:8,
+          boxShadow:'0 4px 20px rgba(0,0,0,0.3)', animation:'fadeIn 0.3s ease',maxWidth:420}}>
+          <LIcon name={smsBildirim.type==='success' ? 'CheckCircle' : smsBildirim.type==='warning' ? 'AlertTriangle' : 'MessageSquare'} size={16} color="#fff"/>
+          {smsBildirim.text}
+          <span style={{marginLeft:8, cursor:'pointer', opacity:0.7}} onClick={() => setSmsBildirim(null)}>✕</span>
+        </div>
+      )}
+
       {/* ÜST BAR */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
         <button style={{...S.btn,...S.btnG,fontSize:10,padding:'6px 14px'}} onClick={() => setPage('dosya-liste')}>

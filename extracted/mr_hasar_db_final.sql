@@ -732,6 +732,27 @@ CREATE TABLE IF NOT EXISTS arama_loglari (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
 -- ═══════════════════════════════════════════
+-- 32A. SMS LOGLARI
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS sms_loglari (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    telefon VARCHAR(30) NOT NULL,
+    mesaj TEXT NOT NULL,
+    dosya_id INT DEFAULT NULL,
+    kullanici_id INT DEFAULT NULL,
+    durum VARCHAR(20) NOT NULL DEFAULT 'bekliyor' COMMENT 'gonderildi, hata, pasif, bekliyor',
+    sonuc_mesaj VARCHAR(500) DEFAULT NULL,
+    bulk_id VARCHAR(100) DEFAULT NULL COMMENT 'NetGSM bulk ID',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_dosya (dosya_id),
+    INDEX idx_durum (durum),
+    INDEX idx_telefon (telefon),
+    INDEX idx_tarih (created_at),
+    FOREIGN KEY (dosya_id) REFERENCES dosyalar(id) ON DELETE SET NULL,
+    FOREIGN KEY (kullanici_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
 -- 32. NETSANTRAL BEKLEYEN ÇAĞRILAR
 -- ═══════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS netsantral_bekleyen (
@@ -1064,7 +1085,12 @@ INSERT IGNORE INTO ayarlar (anahtar, deger, tip) VALUES
 ('netsantral_aktif', '1', 'text'),
 ('netsantral_yonlendirme_modu', 'dynamic', 'text'),
 ('openai_api_key', '', 'text'),
-('ai_api_key', '', 'text');
+('ai_api_key', '', 'text'),
+('sms_aktif', '0', 'text'),
+('sms_kullanici', '', 'text'),
+('sms_sifre', '', 'text'),
+('sms_baslik', '', 'text'),
+('site_url', '', 'text');
 
 -- Admin Yetkileri (kullanici_id = 1)
 INSERT IGNORE INTO yetkiler (kullanici_id, modul, islem, izin) VALUES
@@ -1084,7 +1110,8 @@ INSERT IGNORE INTO yetkiler (kullanici_id, modul, islem, izin) VALUES
 (1, 'netsantral', 'goruntule', 1), (1, 'netsantral', 'arama_yap', 1), (1, 'netsantral', 'transfer', 1), (1, 'netsantral', 'ayarlar', 1),
 (1, 'netsipp', 'goruntule', 1), (1, 'netsipp', 'gelen_cagri', 1), (1, 'netsipp', 'giden_cagri', 1),
 (1, 'hesap', 'goruntule', 1), (1, 'hesap', 'ekle', 1), (1, 'hesap', 'duzenle', 1), (1, 'hesap', 'sil', 1),
-(1, 'rapor', 'goruntule', 1), (1, 'rapor', 'ekle', 1), (1, 'rapor', 'duzenle', 1), (1, 'rapor', 'sil', 1);
+(1, 'rapor', 'goruntule', 1), (1, 'rapor', 'ekle', 1), (1, 'rapor', 'duzenle', 1), (1, 'rapor', 'sil', 1),
+(1, 'sms', 'goruntule', 1), (1, 'sms', 'gonder', 1), (1, 'sms', 'ayarlar', 1);
 
 SET FOREIGN_KEY_CHECKS = 1;
 

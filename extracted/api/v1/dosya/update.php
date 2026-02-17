@@ -7,6 +7,7 @@
 
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
+require_once __DIR__ . '/../../config/sms_helper.php';
 
 setup_headers();
 require_method('PUT');
@@ -101,7 +102,23 @@ try {
 
     log_action($user['id'], 'dosya_guncelle', "Dosya güncellendi: {$dosya['dosya_no']}", 'dosyalar', $id);
 
-    json_success(['dosya_no' => $dosya['dosya_no']], 'Dosya güncellendi');
+    // ═══ AŞAMA DEĞİŞTİĞİNDE OTOMATİK SMS GÖNDER ═══
+    $smsGonderildi = false;
+    $smsSonuc = null;
+    if (array_key_exists('asama', $body) && $body['asama'] !== $dosya['asama']) {
+        try {
+            $smsSonuc = sms_durum_degisikligi_evrakli($id, $dosya['asama'], $body['asama'], $user['id']);
+            $smsGonderildi = ($smsSonuc && !empty($smsSonuc['basarili']));
+        } catch (Exception $e) {
+            // SMS hatası dosya güncellemeyi engellemez
+        }
+    }
+
+    json_success([
+        'dosya_no' => $dosya['dosya_no'],
+        'sms_gonderildi' => $smsGonderildi,
+        'sms_sonuc' => $smsSonuc
+    ], 'Dosya güncellendi');
 
 } catch (\Exception $e) {
     $db->rollBack();
