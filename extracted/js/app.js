@@ -1190,6 +1190,8 @@ const App = () => {
   const [, forceUpdate] = useState(0);
   const [bgLogoUrl, setBgLogoUrl] = useState(MR.logoUrl || '');
   const [gelenCagri, setGelenCagri] = useState(null);
+  const [motivasyonSoz, setMotivasyonSoz] = useState('');
+  const [sozFade, setSozFade] = useState(true);
 
   /* URL HASH ROUTING - SAYFA DEĞİŞİNCE URL GÜNCELLENİR */
   const setPage = useCallback((p) => {
@@ -1363,6 +1365,28 @@ const App = () => {
     MR._currentUser = user;
   }, [user]);
 
+  /* AI MOTİVASYON SÖZÜ - HER SAYFA GEÇİŞİNDE YENİ SÖZ */
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    setSozFade(false);
+    const timer = setTimeout(async () => {
+      try {
+        const r = await api.motivasyonSoz();
+        if (!cancelled && r?.success && r.data?.soz) {
+          setMotivasyonSoz(r.data.soz);
+          setTimeout(() => { if (!cancelled) setSozFade(true); }, 50);
+        }
+      } catch(e) {
+        if (!cancelled) {
+          setMotivasyonSoz('');
+          setSozFade(true);
+        }
+      }
+    }, 300);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [user, page]);
+
   /* LOGIN SONRASI ME.PHP'DEN YETKİLERİ ÇEK */
   const handleLogin = async (u) => {
     setUser(u);
@@ -1417,16 +1441,33 @@ const App = () => {
         <PageRouter page={page} setPage={setPage} user={user}/>
       </div>
 
-      {/* SLOGAN - TÜM SAYFALARDA ALT KISIMDA */}
+      {/* MOTİVASYON SÖZÜ + SLOGAN - ALT KISIMDA SABİT */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
-        textAlign: 'center', padding: '14px 0',
-        fontSize: 12, fontWeight: 700,
-        color: C.textMuted, letterSpacing: 5,
-        background: `linear-gradient(transparent, ${C.bg})`,
-        zIndex: 10
+        textAlign: 'center',
+        background: `linear-gradient(transparent, ${C.bg} 30%)`,
+        zIndex: 10, pointerEvents: 'none', padding: '20px 40px 10px'
       }}>
-        HER ZAMAN FARK EDER
+        {/* AI MOTİVASYON SÖZÜ */}
+        {motivasyonSoz && (
+          <div style={{
+            fontSize: 13, fontWeight: 500, fontStyle: 'italic',
+            color: '#ffffff', letterSpacing: 0.5, lineHeight: 1.6,
+            maxWidth: 700, margin: '0 auto 8px',
+            opacity: sozFade ? 0.85 : 0,
+            transform: sozFade ? 'translateY(0)' : 'translateY(6px)',
+            transition: 'opacity .8s ease, transform .8s ease'
+          }}>
+            {motivasyonSoz}
+          </div>
+        )}
+        {/* SLOGAN - SABİT, BEMBEYAZ */}
+        <div style={{
+          fontSize: 12, fontWeight: 800,
+          color: '#ffffff', letterSpacing: 6
+        }}>
+          HER ZAMAN FARK EDER
+        </div>
       </div>
 
       {/* GELEN ÇAĞRI POPUP - YETKİ KONTROLLÜ */}

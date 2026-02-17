@@ -195,6 +195,8 @@ MR.api = {
   // ARAÇ KATALOG
   aracMarkaList() { return this.req('/tanim/arac-marka-list.php'); },
   aracModelList(marka) { return this.req('/tanim/arac-model-list.php?marka=' + encodeURIComponent(marka)); },
+  // AI MOTİVASYON
+  motivasyonSoz() { return this.req('/ai/motivasyon.php', {}, 12000); },
 };
 
 // ═══ TEMA SİSTEMİ ═══
