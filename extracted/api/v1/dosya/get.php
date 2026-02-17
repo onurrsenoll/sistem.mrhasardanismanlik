@@ -46,13 +46,26 @@ $stmt = $db->prepare('SELECT e.id, e.evrak_turu, e.dosya_adi, e.dosya_boyutu, e.
 $stmt->execute([$dosya['id']]);
 $dosya['evraklar'] = $stmt->fetchAll();
 
-// Avukat & Sorumlu adı
-if ($dosya['avukat_id']) {
+// Ortak (İş Ortağı Avukat) bilgisi
+if (!empty($dosya['ortak_id'])) {
+    $stmt = $db->prepare('SELECT ad_soyad, firma, baro, sicil_no, odeme_orani, telefon FROM ortaklar WHERE id = ?');
+    $stmt->execute([$dosya['ortak_id']]);
+    $ortak = $stmt->fetch();
+    if ($ortak) {
+        $dosya['avukat_adi'] = $ortak['ad_soyad'];
+        $dosya['avukat_firma'] = $ortak['firma'] ?: '';
+        $dosya['avukat_baro'] = $ortak['baro'] ?: '';
+        $dosya['avukat_sicil_no'] = $ortak['sicil_no'] ?: '';
+        $dosya['avukat_odeme_orani'] = (float)$ortak['odeme_orani'];
+        $dosya['avukat_telefon'] = $ortak['telefon'] ?: '';
+    }
+} elseif (!empty($dosya['avukat_id'])) {
+    // Eski sistem: users tablosundaki avukat
     $stmt = $db->prepare('SELECT ad_soyad FROM users WHERE id = ?');
     $stmt->execute([$dosya['avukat_id']]);
     $dosya['avukat_adi'] = $stmt->fetchColumn() ?: '';
 }
-if ($dosya['sorumlu_id']) {
+if (!empty($dosya['sorumlu_id'])) {
     $stmt = $db->prepare('SELECT ad_soyad FROM users WHERE id = ?');
     $stmt->execute([$dosya['sorumlu_id']]);
     $dosya['sorumlu_adi'] = $stmt->fetchColumn() ?: '';

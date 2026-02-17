@@ -1,5 +1,5 @@
 const MR = window.MR || (window.MR = {});
-const {useState} = React;
+const {useState, useEffect} = React;
 
 MR.DosyaYeniPage = ({setPage, user}) => {
   const {C, S, LIcon, Badge, SectionTitle, FormGroup, api, SIGORTA, ILLER, ILCELER, formatPlaka, AracMarkaSelect, AracModelSelect} = MR;
@@ -7,14 +7,22 @@ MR.DosyaYeniPage = ({setPage, user}) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [ortaklar, setOrtaklar] = useState([]);
   const [form, setForm] = useState({
     ad_soyad:'', tc_kimlik:'', telefon:'', iban:'', adres:'', il:'', ilce:'',
     dosya_turu:'ADK', talep_turu:'', kaza_tarihi:'', haklilik:'100', hak_mahrumiyet:'0', meslek:'', komisyon:'',
     ma_plaka:'', ma_marka:'', ma_model:'', ma_yil:'',
     ka_plaka:'', ka_marka:'', ka_yil:'', ka_trafik:'',
-    sigorta_sirket:'', dosya_kaynak:'', notlar:''
+    sigorta_sirket:'', dosya_kaynak:'', notlar:'', ortak_id:''
   });
   const u = (k, v) => setForm(p => ({...p, [k]: v}));
+
+  // İŞ ORTAKLARI (AVUKATLAR) LİSTESİNİ YÜKLE
+  useEffect(() => {
+    api.ortakList({durum:'aktif', limit:200}).then(r => {
+      if (r?.success) setOrtaklar(r.data?.items || r.data || []);
+    });
+  }, []);
 
   const adkTT = ['TRAFİK SİGORTASI BAŞVURUSU','KASKO BAŞVURUSU','TAHKİM BAŞVURUSU','DAVA YOLU'];
   const bhTT = ['MALULİYET TAZMİNATI','GEÇİCİ İŞ GÖREMEZLİK','DESTEKTEN YOKSUN KALMA','BAKICI GİDERİ','TEDAVİ GİDERLERİ'];
@@ -25,7 +33,10 @@ MR.DosyaYeniPage = ({setPage, user}) => {
   const kaydet = async () => {
     if (!form.ad_soyad) { setError('MAĞDUR ADI GEREKLİ'); return; }
     setLoading(true); setError('');
-    const r = await api.dosyaCreate(form);
+    const gonder = {...form};
+    if (gonder.ortak_id) gonder.ortak_id = parseInt(gonder.ortak_id);
+    else delete gonder.ortak_id;
+    const r = await api.dosyaCreate(gonder);
     if (r?.success) setResult(r.data);
     else setError(r?.error || 'HATA');
     setLoading(false);
@@ -144,26 +155,58 @@ MR.DosyaYeniPage = ({setPage, user}) => {
           </div>
         );
         // BH falls through to default
-      default: return (
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-          <FormGroup label="SİGORTA ŞİRKETİ">
-            <select style={S.select} value={form.sigorta_sirket} onChange={e=>u('sigorta_sirket',e.target.value)}>
-              <option value="">SEÇİNİZ</option>{SIGORTA.map(s=><option key={s} value={s}>{s}</option>)}
-            </select>
-          </FormGroup>
-          <FormGroup label="DOSYA KAYNAĞI">
-            <select style={S.select} value={form.dosya_kaynak} onChange={e=>u('dosya_kaynak',e.target.value)}>
-              <option value="">SEÇİNİZ</option>
-              <option value="OFİS CRM">OFİS CRM</option>
-              <option value="YÖNLENDİREN">YÖNLENDİREN</option>
-              <option value="SAHA PERSONEL">SAHA PERSONEL</option>
-            </select>
-          </FormGroup>
-          <FormGroup label="NOTLAR" full>
-            <textarea style={{...S.input,minHeight:70}} value={form.notlar} onChange={e=>u('notlar',e.target.value)} placeholder="DOSYA İLE İLGİLİ NOTLAR..."/>
-          </FormGroup>
-        </div>
-      );
+      default: {
+        const seciliOrtak = ortaklar.find(o => String(o.id) === String(form.ortak_id));
+        return (
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+            <FormGroup label="SİGORTA ŞİRKETİ">
+              <select style={S.select} value={form.sigorta_sirket} onChange={e=>u('sigorta_sirket',e.target.value)}>
+                <option value="">SEÇİNİZ</option>{SIGORTA.map(s=><option key={s} value={s}>{s}</option>)}
+              </select>
+            </FormGroup>
+            <FormGroup label="DOSYA KAYNAĞI">
+              <select style={S.select} value={form.dosya_kaynak} onChange={e=>u('dosya_kaynak',e.target.value)}>
+                <option value="">SEÇİNİZ</option>
+                <option value="OFİS CRM">OFİS CRM</option>
+                <option value="YÖNLENDİREN">YÖNLENDİREN</option>
+                <option value="SAHA PERSONEL">SAHA PERSONEL</option>
+              </select>
+            </FormGroup>
+            {/* AVUKAT SEÇİMİ */}
+            <FormGroup label="AVUKAT (İŞ ORTAĞI)" full>
+              <select style={{...S.select,fontWeight:600}} value={form.ortak_id} onChange={e=>u('ortak_id',e.target.value)}>
+                <option value="">AVUKAT SEÇİNİZ</option>
+                {ortaklar.map(o => (
+                  <option key={o.id} value={o.id}>
+                    {o.ad_soyad}{o.firma ? ` - ${o.firma}` : ''}{o.baro ? ` (${o.baro})` : ''} — ÖDEME ORANI: %{o.odeme_orani || 0}
+                  </option>
+                ))}
+              </select>
+            </FormGroup>
+            {/* SEÇİLİ AVUKAT BİLGİ KARTI */}
+            {seciliOrtak && (
+              <div style={{gridColumn:'1 / -1',padding:14,background:`${C.purple}11`,borderRadius:10,border:`1px solid ${C.purple}33`,display:'flex',alignItems:'center',gap:16}}>
+                <div style={{width:44,height:44,borderRadius:10,background:`${C.purple}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  <LIcon name="Scale" size={20} color={C.purple}/>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:800,color:C.text}}>{seciliOrtak.ad_soyad}</div>
+                  <div style={{fontSize:10,color:C.textSec,marginTop:2}}>
+                    {seciliOrtak.firma ? `${seciliOrtak.firma} • ` : ''}{seciliOrtak.baro || ''}{seciliOrtak.sicil_no ? ` • SİCİL: ${seciliOrtak.sicil_no}` : ''}
+                  </div>
+                </div>
+                <div style={{textAlign:'center',padding:'8px 16px',background:`${C.purple}22`,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>ÖDEME ORANI</div>
+                  <div style={{fontSize:22,fontWeight:900,color:C.purple}}>%{seciliOrtak.odeme_orani || 0}</div>
+                </div>
+              </div>
+            )}
+            <FormGroup label="NOTLAR" full>
+              <textarea style={{...S.input,minHeight:70}} value={form.notlar} onChange={e=>u('notlar',e.target.value)} placeholder="DOSYA İLE İLGİLİ NOTLAR..."/>
+            </FormGroup>
+          </div>
+        );
+      }
     }
   };
 

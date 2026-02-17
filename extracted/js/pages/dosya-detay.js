@@ -39,6 +39,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
   const [dosyaSilConfirm, setDosyaSilConfirm] = useState(false);
+  const [ortaklar, setOrtaklar] = useState([]);
 
   // DOSYA KAPAT STATE
   const [kapatModal, setKapatModal] = useState(false);
@@ -58,6 +59,13 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   };
 
   useEffect(() => { load(); }, [dosyaId]);
+
+  // İŞ ORTAKLARI (AVUKATLAR) LİSTESİNİ YÜKLE
+  useEffect(() => {
+    api.ortakList({durum:'aktif', limit:200}).then(r => {
+      if (r?.success) setOrtaklar(r.data?.items || r.data || []);
+    });
+  }, []);
 
   const [smsBildirim, setSmsBildirim] = useState(null);
 
@@ -104,6 +112,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       hak_mahrumiyet: dosya.hak_mahrumiyet ? 1 : 0,
       plaka: getPlaka(),
       notlar: dosya.notlar || '',
+      ortak_id: dosya.ortak_id ? String(dosya.ortak_id) : '',
       magdur_ad_soyad: magdur.ad_soyad || '',
       magdur_tc_kimlik: magdur.tc_kimlik || '',
       magdur_telefon: magdur.telefon || '',
@@ -134,6 +143,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       hak_mahrumiyet: parseInt(editForm.hak_mahrumiyet) || 0,
       plaka: editForm.plaka,
       notlar: editForm.notlar,
+      ortak_id: editForm.ortak_id ? parseInt(editForm.ortak_id) : null,
       magdur_ad_soyad: editForm.magdur_ad_soyad,
       magdur_tc_kimlik: editForm.magdur_tc_kimlik,
       magdur_telefon: editForm.magdur_telefon,
@@ -265,7 +275,10 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <InfoRow label="SİGORTA ŞİRKETİ" value={dosya.sigorta_sirket}/>
               <InfoRow label="HASAR NO" value={dosya.hasar_no} mono/>
               <InfoRow label="DOSYA KAYNAĞI" value={dosya.dosya_kaynagi}/>
-              <InfoRow label="AVUKAT" value={dosya.avukat_adi}/>
+              <InfoRow label="AVUKAT" value={dosya.avukat_adi} bold color={C.purple}/>
+              {dosya.avukat_firma && <InfoRow label="AVUKAT FİRMA" value={dosya.avukat_firma}/>}
+              {dosya.avukat_baro && <InfoRow label="BARO" value={dosya.avukat_baro}/>}
+              {dosya.avukat_odeme_orani != null && dosya.avukat_odeme_orani > 0 && <InfoRow label="AVUKAT ÖDEME ORANI" value={`%${dosya.avukat_odeme_orani}`} bold color={C.purple}/>}
               <InfoRow label="SORUMLU" value={dosya.sorumlu_adi}/>
               <InfoRow label="AÇILIŞ TARİHİ" value={dosya.acilis_tarihi}/>
               <InfoRow label="KAZA TARİHİ" value={dosya.kaza_tarihi}/>
@@ -460,10 +473,13 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               {dosya.asama !== 'DOSYA KAPANDI' && (
                 <button style={{...S.btn,...S.btnS,fontSize:10,padding:'5px 12px'}} onClick={() => {
                   api.kasaList().then(r => { if(r?.success) setKasalar(r.data||[]); });
+                  // Avukat ödeme oranı: ortak varsa onun odeme_orani, yoksa komisyon_orani veya 50
+                  const avukatOran = dosya.avukat_odeme_orani || dosya.komisyon_orani || 50;
                   setKapatForm({
                     tazminat:'', vekalet_ucreti:'', faiz:'', stopaj:'', kdv_oran:'20',
                     noter_masrafi:'', cezaevi_harci:'', diger_masraf:'',
-                    dosya_basi_odenen:'0', kasa_id:1, pay_orani: String(dosya.komisyon_orani || 50)
+                    dosya_basi_odenen:'0', kasa_id:1, pay_orani: String(dosya.komisyon_orani || 50),
+                    avukat_pay_orani: String(avukatOran)
                   });
                   setKapatModal(true);
                 }}>
@@ -513,9 +529,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           const dosyaBasi = parseFloat(kapatForm.dosya_basi_odenen) || 0;
           const dosyaMasraflari = dosya.toplam_masraf || 0;
 
-          /* %50 / %50 PAY BÖLÜŞÜMÜ */
-          const mrPayYuzde = 50;
-          const avukatPayYuzde = 50;
+          /* PAY BÖLÜŞÜMÜ: AVUKAT ÖDEME ORANINA GÖRE DİNAMİK */
+          const avukatPayYuzde = parseFloat(kapatForm.avukat_pay_orani) || 50;
+          const mrPayYuzde = 100 - avukatPayYuzde;
           const mrBrutPay = netKazanc * mrPayYuzde / 100;
           const avukatHakedis = netKazanc * avukatPayYuzde / 100;
           const mrHakedis = mrBrutPay - dosyaBasi;
@@ -585,7 +601,27 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <FormGroup label="DOSYA BAŞI ÖDENEN">
                   <input type="number" value={kapatForm.dosya_basi_odenen} onChange={e=>kF('dosya_basi_odenen',e.target.value)} placeholder="0" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
                 </FormGroup>
+                <FormGroup label={`AVUKAT PAY ORANI (%${avukatPayYuzde})`}>
+                  <input type="number" min="0" max="100" value={kapatForm.avukat_pay_orani} onChange={e=>kF('avukat_pay_orani',e.target.value)} placeholder="50" style={{...S.input,padding:'8px 10px',fontSize:12,fontWeight:700,color:C.purple}}/>
+                </FormGroup>
               </div>
+
+              {/* AVUKAT BİLGİ BANNER */}
+              {dosya.avukat_adi && (
+                <div style={{padding:10,background:`${C.purple}11`,borderRadius:8,marginBottom:16,display:'flex',alignItems:'center',gap:12,border:`1px solid ${C.purple}33`}}>
+                  <LIcon name="Scale" size={16} color={C.purple}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:12,fontWeight:700}}>{dosya.avukat_adi}</div>
+                    <div style={{fontSize:9,color:C.textSec}}>
+                      {dosya.avukat_firma ? `${dosya.avukat_firma} • ` : ''}{dosya.avukat_baro || ''}
+                    </div>
+                  </div>
+                  <div style={{textAlign:'center',padding:'6px 10px',background:`${C.purple}22`,borderRadius:6}}>
+                    <div style={{fontSize:8,color:C.textMuted,fontWeight:600}}>KAYITLI ÖDEME ORANI</div>
+                    <div style={{fontSize:16,fontWeight:900,color:C.purple}}>%{dosya.avukat_odeme_orani || '-'}</div>
+                  </div>
+                </div>
+              )}
 
               {/* HESAP ÖZETİ */}
               <div style={{background:C.bgInput,borderRadius:10,padding:16,border:`1px solid ${C.border}`,marginBottom:16}}>
@@ -616,10 +652,10 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
                 <div style={{marginTop:10,paddingTop:10,borderTop:`2px solid ${C.purple}44`}}/>
                 <div style={{fontSize:10,fontWeight:700,color:C.purple,marginBottom:6,display:'flex',alignItems:'center',gap:4}}>
-                  PAY BÖLÜŞÜMÜ (%50 / %50)
+                  PAY BÖLÜŞÜMÜ (MR HASAR %{mrPayYuzde} / AVUKAT %{avukatPayYuzde})
                 </div>
-                {hesapRow('AVUKAT HAKEDİŞİ (%50)', avukatHakedis, {bold:true,color:'#8b5cf6'})}
-                {hesapRow('MR HASAR BRÜT PAY (%50)', mrBrutPay, {color:C.textSec})}
+                {hesapRow(`AVUKAT HAKEDİŞİ (%${avukatPayYuzde})`, avukatHakedis, {bold:true,color:'#8b5cf6'})}
+                {hesapRow(`MR HASAR BRÜT PAY (%${mrPayYuzde})`, mrBrutPay, {color:C.textSec})}
                 {hesapRow('DOSYA BAŞI ÖDENEN (DÜŞÜLEN)', dosyaBasi, {color:C.danger})}
                 {hesapRow('MR HASAR HAKEDİŞİ', mrHakedis, {bold:true,color:C.success,big:true,border:true})}
               </div>
@@ -735,6 +771,43 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                   border:`1px solid ${editForm.hak_mahrumiyet==0?C.danger+'66':C.border}`}}>YOK</div>
             </div>
           </FormGroup>
+        </div>
+
+        {/* AVUKAT SEÇİMİ BÖLÜMÜ */}
+        <div style={{fontSize:10,fontWeight:700,color:C.purple,marginBottom:8,marginTop:4,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
+          <LIcon name="Scale" size={12} color={C.purple}/> AVUKAT ATAMASI
+        </div>
+        <div style={{marginBottom:14}}>
+          <FormGroup label="AVUKAT (İŞ ORTAĞI)">
+            <select value={editForm.ortak_id || ''} onChange={e => u('ortak_id', e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11,fontWeight:600}}>
+              <option value="">AVUKAT SEÇİNİZ</option>
+              {ortaklar.map(o => (
+                <option key={o.id} value={o.id}>
+                  {o.ad_soyad}{o.firma ? ` - ${o.firma}` : ''}{o.baro ? ` (${o.baro})` : ''} — %{o.odeme_orani || 0}
+                </option>
+              ))}
+            </select>
+          </FormGroup>
+          {(() => {
+            const secili = ortaklar.find(o => String(o.id) === String(editForm.ortak_id));
+            return secili ? (
+              <div style={{marginTop:8,padding:10,background:`${C.purple}11`,borderRadius:8,border:`1px solid ${C.purple}33`,display:'flex',alignItems:'center',gap:12}}>
+                <div style={{width:36,height:36,borderRadius:8,background:`${C.purple}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  <LIcon name="Scale" size={16} color={C.purple}/>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:12,fontWeight:700}}>{secili.ad_soyad}</div>
+                  <div style={{fontSize:9,color:C.textSec}}>
+                    {secili.firma ? `${secili.firma} • ` : ''}{secili.baro || ''}{secili.sicil_no ? ` • SİCİL: ${secili.sicil_no}` : ''}
+                  </div>
+                </div>
+                <div style={{textAlign:'center',padding:'6px 12px',background:`${C.purple}22`,borderRadius:6}}>
+                  <div style={{fontSize:8,color:C.textMuted,fontWeight:600}}>ÖDEME ORANI</div>
+                  <div style={{fontSize:18,fontWeight:900,color:C.purple}}>%{secili.odeme_orani || 0}</div>
+                </div>
+              </div>
+            ) : null;
+          })()}
         </div>
 
         {/* MAĞDUR BİLGİLERİ BÖLÜMÜ */}

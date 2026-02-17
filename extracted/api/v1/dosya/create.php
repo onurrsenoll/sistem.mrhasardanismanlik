@@ -34,7 +34,7 @@ try {
     $dosyaNo = generate_dosya_no($db);
 
     // 2. Dosya kaydı
-    $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, talep_turu, asama, sigorta_sirket, police_no, sigorta_turu, dosya_kaynagi, avukat_id, sorumlu_id, haklilik, komisyon_orani, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, notlar, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), ?, ?)');
+    $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, talep_turu, asama, sigorta_sirket, police_no, sigorta_turu, dosya_kaynagi, avukat_id, ortak_id, sorumlu_id, haklilik, komisyon_orani, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, notlar, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), ?, ?)');
 
     $hasar_no = 'HSR-' . date('Y') . '-' . str_pad(mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
 
@@ -48,6 +48,7 @@ try {
         clean($body['sigorta_turu'] ?? ''),
         clean($body['dosya_kaynagi'] ?? ''),
         !empty($body['avukat_id']) ? (int)$body['avukat_id'] : null,
+        !empty($body['ortak_id']) ? (int)$body['ortak_id'] : null,
         !empty($body['sorumlu_id']) ? (int)$body['sorumlu_id'] : $user['id'],
         (int)($body['haklilik'] ?? 100),
         (float)($body['komisyon_orani'] ?? 0),

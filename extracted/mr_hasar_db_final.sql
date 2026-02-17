@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS dosyalar (
     sigorta_turu VARCHAR(50) DEFAULT NULL,
     dosya_kaynagi VARCHAR(50) DEFAULT NULL,
     avukat_id INT DEFAULT NULL,
+    ortak_id INT DEFAULT NULL,
     sorumlu_id INT DEFAULT NULL,
     haklilik INT NOT NULL DEFAULT 100,
     komisyon_orani DECIMAL(5,2) DEFAULT 0.00,
@@ -73,9 +74,11 @@ CREATE TABLE IF NOT EXISTS dosyalar (
     INDEX idx_dosya_turu (dosya_turu),
     INDEX idx_asama (asama),
     INDEX idx_avukat (avukat_id),
+    INDEX idx_ortak (ortak_id),
     INDEX idx_kaza_tarihi (kaza_tarihi),
     INDEX idx_created (created_at),
     FOREIGN KEY (avukat_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (ortak_id) REFERENCES ortaklar(id) ON DELETE SET NULL,
     FOREIGN KEY (sorumlu_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
@@ -920,13 +923,15 @@ SELECT
     d.acilis_tarihi,
     d.kapanma_tarihi,
     d.dosya_kaynagi,
+    d.ortak_id,
     m.tc_kimlik,
     m.ad_soyad AS magdur_adi,
     m.telefon AS magdur_tel,
     COALESCE(d.plaka, a.plaka) AS plaka,
     a.marka,
     a.model,
-    av.ad_soyad AS avukat_adi,
+    COALESCE(o.ad_soyad, av.ad_soyad) AS avukat_adi,
+    o.odeme_orani AS avukat_odeme_orani,
     s.ad_soyad AS sorumlu_adi,
     (SELECT COUNT(*) FROM masraflar ms WHERE ms.dosya_id = d.id) AS masraf_sayisi,
     (SELECT COALESCE(SUM(ms.tutar), 0) FROM masraflar ms WHERE ms.dosya_id = d.id) AS toplam_masraf,
@@ -936,6 +941,7 @@ FROM dosyalar d
 LEFT JOIN magdurlar m ON m.dosya_id = d.id
 LEFT JOIN araclar a ON a.dosya_id = d.id AND a.taraf = 'magdur'
 LEFT JOIN users av ON av.id = d.avukat_id
+LEFT JOIN ortaklar o ON o.id = d.ortak_id
 LEFT JOIN users s ON s.id = d.sorumlu_id;
 
 
@@ -1140,6 +1146,16 @@ INSERT IGNORE INTO yetkiler (kullanici_id, modul, islem, izin) VALUES
 (1, 'sms', 'goruntule', 1), (1, 'sms', 'gonder', 1), (1, 'sms', 'ayarlar', 1);
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- ═══════════════════════════════════════════════════════════════
+-- MEVCUT VERİTABANI UPGRADE (ortak_id ekleme)
+-- Eğer veritabanı zaten kuruluysa bu komutları çalıştırın:
+-- ═══════════════════════════════════════════════════════════════
+-- ALTER TABLE dosyalar ADD COLUMN ortak_id INT DEFAULT NULL AFTER avukat_id;
+-- ALTER TABLE dosyalar ADD INDEX idx_ortak (ortak_id);
+-- ALTER TABLE dosyalar ADD FOREIGN KEY (ortak_id) REFERENCES ortaklar(id) ON DELETE SET NULL;
+-- Ardından VIEW'ı güncellemek için yukarıdaki CREATE OR REPLACE VIEW v_dosya_ozet ... sorgusunu çalıştırın.
+-- ═══════════════════════════════════════════════════════════════
 
 -- ═══════════════════════════════════════════════════════════════
 -- KURULUM TAMAMLANDI!
