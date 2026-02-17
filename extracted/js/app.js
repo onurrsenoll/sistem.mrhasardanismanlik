@@ -239,25 +239,25 @@ const TopNav = ({user, page, setPage, onLogout}) => {
           setMenuOpen(null);
           window.dispatchEvent(new Event('mr-tema-degisti'));
         }} style={{
-          width: 34, height: 34, minWidth: 34, borderRadius: 8, cursor: 'pointer',
+          width: 40, height: 40, minWidth: 40, borderRadius: 10, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: MR.tema === 'koyu' ? `${C.warning}22` : `${C.purple}22`,
           border: `1px solid ${MR.tema === 'koyu' ? C.warning + '44' : C.purple + '44'}`,
           transition: 'all .2s'
         }} title={MR.tema === 'koyu' ? 'AÇIK TEMA' : 'KOYU TEMA'}>
-          <LIcon name={MR.tema === 'koyu' ? 'Sun' : 'Moon'} size={15} color={MR.tema === 'koyu' ? C.warning : C.purple}/>
+          <LIcon name={MR.tema === 'koyu' ? 'Sun' : 'Moon'} size={19} color={MR.tema === 'koyu' ? C.warning : C.purple}/>
         </div>
 
         {/* PROFİL */}
         <div style={{position: 'relative'}}>
           <div onClick={() => setProfilOpen(!profilOpen)} style={{
-            width: 34, height: 34, minWidth: 34, borderRadius: 8, cursor: 'pointer',
+            width: 40, height: 40, minWidth: 40, borderRadius: 10, cursor: 'pointer',
             border: `1px solid ${C.border}`, display: 'flex',
             alignItems: 'center', justifyContent: 'center',
             background: `${C.accent}22`
           }} title={user?.ad_soyad || 'PROFİL'}>
             <div style={{
-              fontSize: 13, fontWeight: 700, color: C.accent
+              fontSize: 15, fontWeight: 700, color: C.accent
             }}>{(user?.ad_soyad || 'U')[0]}</div>
           </div>
 
@@ -369,73 +369,251 @@ const Breadcrumb = ({page, setPage}) => {
 };
 
 /* ═══ PROFİL SAYFASI ═══ */
+const ROL_ACIKLAMALAR = {
+  admin: {label: 'SİSTEM YÖNETİCİSİ', renk: '#ef4444', gorev: 'TÜM SİSTEM YÖNETİMİ, KULLANICI YÖNETİMİ, YETKİ ATAMA, FİRMA AYARLARI VE TÜM MODÜLLERE ERİŞİM'},
+  avukat: {label: 'AVUKAT', renk: '#8b5cf6', gorev: 'DOSYA TAKİBİ, CRM YÖNETİMİ, HESAPLAMA MODÜLLERI, SERVİS TAKİBİ, ORTAK YÖNETİMİ VE AJANDA'},
+  uzman: {label: 'UZMAN', renk: '#2563eb', gorev: 'DOSYA TAKİBİ, HESAPLAMA MODÜLLERI, SERVİS TAKİBİ VE AJANDA'},
+  personel: {label: 'PERSONEL', renk: '#10b981', gorev: 'DOSYA TAKİBİ VE AJANDA YÖNETİMİ'},
+  muhasebe: {label: 'MUHASEBE', renk: '#f59e0b', gorev: 'DOSYA TAKİBİ, MUHASEBE İŞLEMLERİ, ORTAK YÖNETİMİ, TANIMLAMALAR VE AJANDA'},
+  portal: {label: 'PORTAL KULLANICISI', renk: '#06b6d4', gorev: 'DOSYA GÖRÜNTÜLEME VE MESAJLAŞMA'}
+};
+
 const ProfilPage = ({user}) => {
   const {C, S, LIcon, SectionTitle, FormGroup, api} = MR;
+  /* ŞİFRE */
   const [eskiSifre, setEskiSifre] = useState('');
   const [yeniSifre, setYeniSifre] = useState('');
   const [yeniSifre2, setYeniSifre2] = useState('');
+  /* TELEFON */
+  const [telefon, setTelefon] = useState(user?.telefon || '');
+  const [telefonDuzenle, setTelefonDuzenle] = useState(false);
+  /* AVATAR */
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar || '');
+  const [avatarYukleniyor, setAvatarYukleniyor] = useState(false);
+  /* MESAJLAR */
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
+  const fileRef = useRef(null);
+
+  const rolBilgi = ROL_ACIKLAMALAR[user?.rol] || {label: (user?.rol || '').toUpperCase(), renk: C.accent, gorev: '-'};
 
   const sifreDegistir = async () => {
     setMsg(''); setErr('');
     if (!eskiSifre || !yeniSifre) { setErr('TÜM ALANLAR GEREKLİ'); return; }
     if (yeniSifre.length < 6) { setErr('YENİ ŞİFRE EN AZ 6 KARAKTER OLMALI'); return; }
     if (yeniSifre !== yeniSifre2) { setErr('YENİ ŞİFRELER UYUŞMUYOR'); return; }
-    const r = await api.changePw({eski_sifre: eskiSifre, yeni_sifre: yeniSifre});
+    const r = await api.changePw({mevcut_sifre: eskiSifre, yeni_sifre: yeniSifre});
     if (r?.success) { setMsg('ŞİFRE BAŞARIYLA DEĞİŞTİRİLDİ'); setEskiSifre(''); setYeniSifre(''); setYeniSifre2(''); }
     else setErr(r?.error || 'HATA OLUŞTU');
+  };
+
+  const telefonKaydet = async () => {
+    setMsg(''); setErr('');
+    const r = await api.profilUpdate({telefon: telefon});
+    if (r?.success) { setMsg('TELEFON BAŞARIYLA GÜNCELLENDİ'); setTelefonDuzenle(false); }
+    else setErr(r?.error || 'HATA OLUŞTU');
+    setTimeout(() => setMsg(''), 3000);
+  };
+
+  const avatarSec = () => { fileRef.current?.click(); };
+  const avatarDegistir = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { setErr('DOSYA BOYUTU EN FAZLA 2MB OLABİLİR'); return; }
+    if (!['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(file.type)) { setErr('SADECE PNG, JPG VE WEBP KABUL EDİLİR'); return; }
+    setAvatarYukleniyor(true); setErr('');
+    const r = await api.avatarYukle(file);
+    setAvatarYukleniyor(false);
+    if (r?.success && r.data?.avatar_url) {
+      setAvatarUrl(r.data.avatar_url);
+      setMsg('PROFİL RESMİ BAŞARIYLA GÜNCELLENDİ');
+    } else {
+      setErr(r?.error || 'PROFİL RESMİ YÜKLEME HATASI');
+    }
+    setTimeout(() => setMsg(''), 3000);
+    e.target.value = '';
   };
 
   return (
     <div className="fade-in">
       <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20}}>
-        <div style={S.card}>
-          <SectionTitle icon="User" title="PROFİL BİLGİLERİ"/>
-          <div style={S.cardBody}>
-            <div style={{display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20}}>
-              <div style={{
-                width: 64, height: 64, borderRadius: 16,
-                background: `${C.accent}22`, display: 'flex',
-                alignItems: 'center', justifyContent: 'center',
-                fontSize: 24, fontWeight: 800, color: C.accent
-              }}>{(user?.ad_soyad || 'U')[0]}</div>
-              <div>
-                <div style={{fontSize: 18, fontWeight: 700}}>{user?.ad_soyad}</div>
-                <div style={{fontSize: 12, color: C.textMuted}}>{user?.email}</div>
+        {/* SOL KOLON: PROFİL BİLGİLERİ + ROL/GÖREV */}
+        <div style={{display: 'grid', gap: 20}}>
+          <div style={S.card}>
+            <SectionTitle icon="User" title="PROFİL BİLGİLERİ"/>
+            <div style={S.cardBody}>
+              {msg && <div style={{padding: '10px 14px', background: `${C.success}22`, border: `1px solid ${C.success}44`, borderRadius: 8, marginBottom: 16, fontSize: 12, color: C.success}}>{msg}</div>}
+              {err && <div style={{padding: '10px 14px', background: `${C.danger}22`, border: `1px solid ${C.danger}44`, borderRadius: 8, marginBottom: 16, fontSize: 12, color: C.danger}}>{err}</div>}
+
+              {/* AVATAR + İSİM */}
+              <div style={{display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24}}>
+                <div style={{position: 'relative'}}>
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="AVATAR" style={{
+                      width: 80, height: 80, borderRadius: 20, objectFit: 'cover',
+                      border: `3px solid ${C.accent}44`
+                    }}/>
+                  ) : (
+                    <div style={{
+                      width: 80, height: 80, borderRadius: 20,
+                      background: `${C.accent}22`, display: 'flex',
+                      alignItems: 'center', justifyContent: 'center',
+                      fontSize: 30, fontWeight: 800, color: C.accent,
+                      border: `3px solid ${C.accent}44`
+                    }}>{(user?.ad_soyad || 'U')[0]}</div>
+                  )}
+                  <div onClick={avatarSec} style={{
+                    position: 'absolute', bottom: -4, right: -4,
+                    width: 28, height: 28, borderRadius: '50%',
+                    background: C.accent, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', border: `2px solid ${C.bgCard}`,
+                    opacity: avatarYukleniyor ? 0.5 : 1
+                  }} title="PROFİL RESMİ DEĞİŞTİR">
+                    <LIcon name={avatarYukleniyor ? 'Loader2' : 'Camera'} size={14} color="#fff"/>
+                  </div>
+                  <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp"
+                    style={{display: 'none'}} onChange={avatarDegistir}/>
+                </div>
+                <div>
+                  <div style={{fontSize: 20, fontWeight: 800}}>{user?.ad_soyad}</div>
+                  <div style={{fontSize: 12, color: C.textMuted, marginTop: 2}}>{user?.email}</div>
+                  <div style={{marginTop: 6}}>
+                    <span style={{
+                      padding: '3px 12px', borderRadius: 20, fontSize: 10, fontWeight: 700,
+                      background: `${rolBilgi.renk}22`, color: rolBilgi.renk,
+                      border: `1px solid ${rolBilgi.renk}33`
+                    }}>{rolBilgi.label}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* TELEFON */}
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${C.border}`}}>
+                <span style={{fontSize: 12, color: C.textMuted, display: 'flex', alignItems: 'center', gap: 6}}>
+                  <LIcon name="Phone" size={14} color={C.textMuted}/> TELEFON
+                </span>
+                {telefonDuzenle ? (
+                  <div style={{display: 'flex', alignItems: 'center', gap: 6}}>
+                    <input value={telefon} onChange={e => setTelefon(e.target.value)} placeholder="05XX XXX XX XX"
+                      style={{...S.input, width: 160, padding: '6px 10px', fontSize: 12}}/>
+                    <button onClick={telefonKaydet} style={{...S.btn, padding: '6px 12px', fontSize: 11, background: C.success, color: '#fff'}}>
+                      <LIcon name="Check" size={12} color="#fff"/>
+                    </button>
+                    <button onClick={() => { setTelefonDuzenle(false); setTelefon(user?.telefon || ''); }}
+                      style={{...S.btn, padding: '6px 12px', fontSize: 11, background: C.borderLight, color: C.textSec}}>
+                      <LIcon name="X" size={12} color={C.textSec}/>
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
+                    <span style={{fontSize: 12, fontWeight: 600}}>{user?.telefon || '-'}</span>
+                    <div onClick={() => setTelefonDuzenle(true)} style={{cursor: 'pointer', padding: 4, borderRadius: 6}}
+                      onMouseEnter={e => e.currentTarget.style.background = `${C.accent}15`}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <LIcon name="Pencil" size={12} color={C.accent}/>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* KAYIT TARİHİ */}
+              <div style={{display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: `1px solid ${C.border}`}}>
+                <span style={{fontSize: 12, color: C.textMuted, display: 'flex', alignItems: 'center', gap: 6}}>
+                  <LIcon name="CalendarDays" size={14} color={C.textMuted}/> KAYIT TARİHİ
+                </span>
+                <span style={{fontSize: 12, fontWeight: 600}}>{user?.created_at || '-'}</span>
               </div>
             </div>
-            {[
-              ['ROL', (user?.rol || '').toUpperCase()],
-              ['TELEFON', user?.telefon || '-'],
-              ['KAYIT TARİHİ', user?.created_at || '-']
-            ].map(([k, v]) => (
-              <div key={k} style={{display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${C.border}`}}>
-                <span style={{fontSize: 12, color: C.textMuted}}>{k}</span>
-                <span style={{fontSize: 12, fontWeight: 600}}>{v}</span>
+          </div>
+
+          {/* ROL VE GÖREV BİLGİLERİ */}
+          <div style={S.card}>
+            <SectionTitle icon="Shield" title="ROL VE GÖREV BİLGİLERİ"/>
+            <div style={S.cardBody}>
+              <div style={{
+                padding: 16, borderRadius: 12,
+                background: `${rolBilgi.renk}08`, border: `1px solid ${rolBilgi.renk}22`
+              }}>
+                <div style={{display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12}}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 10,
+                    background: `${rolBilgi.renk}22`, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    <LIcon name="UserCog" size={18} color={rolBilgi.renk}/>
+                  </div>
+                  <div>
+                    <div style={{fontSize: 14, fontWeight: 700, color: rolBilgi.renk}}>{rolBilgi.label}</div>
+                    <div style={{fontSize: 10, color: C.textMuted}}>SİSTEM TARAFINDAN ATANMIŞ ROL</div>
+                  </div>
+                </div>
+                <div style={{
+                  padding: '10px 14px', borderRadius: 8, background: C.bgCard,
+                  border: `1px solid ${C.border}`, fontSize: 12, lineHeight: 1.6, color: C.textSec
+                }}>
+                  <div style={{fontSize: 10, fontWeight: 700, color: C.textMuted, marginBottom: 6, letterSpacing: 1}}>
+                    <LIcon name="Briefcase" size={12} color={C.textMuted}/> GÖREV TANIMI
+                  </div>
+                  {rolBilgi.gorev}
+                </div>
               </div>
-            ))}
+
+              {/* YETKİ ÖZETİ */}
+              {user?.yetkiler && Object.keys(user.yetkiler).length > 0 && (
+                <div style={{marginTop: 16}}>
+                  <div style={{fontSize: 11, fontWeight: 700, color: C.textMuted, marginBottom: 8, letterSpacing: 0.5}}>
+                    AKTİF YETKİLER
+                  </div>
+                  <div style={{display: 'flex', flexWrap: 'wrap', gap: 6}}>
+                    {Object.entries(user.yetkiler).filter(([k, v]) => v === 1 && k.endsWith('_goruntule')).map(([k]) => (
+                      <span key={k} style={{
+                        padding: '3px 10px', borderRadius: 20, fontSize: 9, fontWeight: 600,
+                        background: `${C.success}15`, color: C.success,
+                        border: `1px solid ${C.success}22`
+                      }}>{k.replace('_goruntule', '').toUpperCase()}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
+        {/* SAĞ KOLON: ŞİFRE DEĞİŞTİR */}
         <div style={S.card}>
           <SectionTitle icon="Lock" title="ŞİFRE DEĞİŞTİR"/>
           <div style={S.cardBody}>
-            {msg && <div style={{padding: '10px 14px', background: `${C.success}22`, border: `1px solid ${C.success}44`, borderRadius: 8, marginBottom: 16, fontSize: 12, color: C.success}}>{msg}</div>}
-            {err && <div style={{padding: '10px 14px', background: `${C.danger}22`, border: `1px solid ${C.danger}44`, borderRadius: 8, marginBottom: 16, fontSize: 12, color: C.danger}}>{err}</div>}
             <div style={{display: 'grid', gap: 16}}>
               <FormGroup label="MEVCUT ŞİFRE">
-                <input type="password" value={eskiSifre} onChange={e => setEskiSifre(e.target.value)} style={S.input}/>
+                <input type="password" value={eskiSifre} onChange={e => setEskiSifre(e.target.value)} style={S.input} placeholder="••••••••"/>
               </FormGroup>
               <FormGroup label="YENİ ŞİFRE">
-                <input type="password" value={yeniSifre} onChange={e => setYeniSifre(e.target.value)} style={S.input}/>
+                <input type="password" value={yeniSifre} onChange={e => setYeniSifre(e.target.value)} style={S.input} placeholder="EN AZ 6 KARAKTER"/>
               </FormGroup>
               <FormGroup label="YENİ ŞİFRE (TEKRAR)">
-                <input type="password" value={yeniSifre2} onChange={e => setYeniSifre2(e.target.value)} style={S.input}/>
+                <input type="password" value={yeniSifre2} onChange={e => setYeniSifre2(e.target.value)} style={S.input} placeholder="••••••••"/>
               </FormGroup>
               <button onClick={sifreDegistir} style={{...S.btn, ...S.btnP, justifyContent: 'center'}}>
                 <LIcon name="Lock" size={14} color="#fff"/> ŞİFREYİ DEĞİŞTİR
               </button>
+            </div>
+
+            {/* ŞİFRE GÜVENLİĞİ BİLGİSİ */}
+            <div style={{
+              marginTop: 20, padding: 14, borderRadius: 10,
+              background: `${C.warning}08`, border: `1px solid ${C.warning}22`
+            }}>
+              <div style={{fontSize: 11, fontWeight: 700, color: C.warning, marginBottom: 8}}>
+                <LIcon name="ShieldAlert" size={14} color={C.warning}/> ŞİFRE GÜVENLİĞİ
+              </div>
+              <div style={{fontSize: 11, color: C.textSec, lineHeight: 1.8}}>
+                {['EN AZ 6 KARAKTER KULLANIN', 'BÜYÜK VE KÜÇÜK HARF KARIŞIMI ÖNERİLİR', 'RAKAM VE ÖZEL KARAKTER EKLEYİN', 'KİŞİSEL BİLGİLERİNİZİ KULLANMAYIN'].map((t, i) => (
+                  <div key={i} style={{display: 'flex', alignItems: 'center', gap: 6}}>
+                    <LIcon name="CheckCircle2" size={10} color={C.textMuted}/> {t}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -1365,19 +1543,73 @@ const App = () => {
     MR._currentUser = user;
   }, [user]);
 
-  /* YEDEK SÖZLER - API BAŞARISIZ OLURSA BUNLARDAN GÖSTERİR */
+  /* YEDEK SÖZLER - API BAŞARISIZ OLURSA BUNLARDAN GÖSTERİR (100+ SÖZ) */
   const yedekSozler = useMemo(() => [
+    /* ═══ MAKYAVELİ BAKIŞ AÇISI - STRATEJİ, GÜÇ, PRAGMATIZM ═══ */
+    'Güç, onu nasıl kullanacağını bilenlerin elinde anlam kazanır.',
+    'Görünüş gerçekten daha çok konuşur; insanlar gözleriyle yargılar.',
+    'Kazanan, doğru zamanda doğru hamleyi yapandır. Şans değil, strateji belirler.',
+    'Korkulmak sevilmekten daha kalıcı bir saygı getirir.',
+    'Kadere güvenen kaybetmeyi hak eder; hazırlığa güvenen kazanır.',
+    'Her ittifak bir hesaptır; hesabını bilmeyen ortaklığa girmemeli.',
+    'Merhamet zayıflara yakışır; güçlü olan adalet dağıtır.',
+    'Düşmanını tanımak, dostunu tanımaktan daha önemlidir.',
+    'Bir plan yapmayan, başkasının planının parçası olmaya mahkumdur.',
+    'Fırsatlar hazırlanmış zihinlere gelir; tembelliğe değil.',
+    'Güçlü olmak yetmez, güçlü görünmek de gerekir.',
+    'Tarihten ders almayan, tarihin tekrarlanmasına mahkumdur.',
+    'Doğru zamanda sessiz kalmak, yanlış zamanda konuşmaktan daha etkilidir.',
+    'Bir zincir en zayıf halkası kadar güçlüdür; lider zayıflıklarını gizler.',
+    'Mağlubiyet geçicidir ama ders almayanlar için kalıcıdır.',
+    'İktidar koltuğu boş kalamaz; sen oturmasan başkası oturur.',
+    'İnsanlar çıkarlarını tehdit edeni asla affetmez.',
+    'Değişimi yönetemeyen, değişimin kurbanı olur.',
+    'Bilgi güçtür ama paylaşılmamış bilgi daha büyük güçtür.',
+    'Her karar bir bedeldir; bedelsiz kazanç yoktur.',
+    'Zafer planlanır, tesadüf olmaz; başarı bir süreçtir.',
+    'Düşmanına sırtını dönenin sonu hep aynıdır.',
+    'Yenilik düşmanları, eskiden faydalananların ilkidir.',
+    'Lider kararsız kalmaktansa yanlış karar vermelidir.',
+    'Zayıflığını gösteren yardım değil, saldırı davet eder.',
+    'Başarılı insan az konuşur, çok gözlemler.',
+    'Kaderin yarısı bizim elimizdedir; diğer yarısı için hazırlıklı ol.',
+    'Bir hedefe ulaşmak için bazen dolambaçlı yol en kısa yoldur.',
+    'Her kriz bir fırsattır; fırsatı gören kazanır, krizi gören kaybeder.',
+    'Kontrolü elinde tutan, sonucu belirler.',
+    'İnsanlar sözlerden çok sonuçlara bakar.',
+    'Gücünü gizleyen, gücünü kullanmaktan daha zekidir.',
+    'Sistem kuran kalıcı olur, kahraman olan geçici.',
+    'Savaş meydanında cesaret, masa başında zeka kazandırır.',
+    'İşini iyi yapan sessiz kalır; sonuç onun adına konuşur.',
+    'Barış, savaşa hazırlık döneminden başka bir şey değildir.',
+    'İnsan doğası değişmez; onu anlayan yönetir.',
+    'Zaman en büyük yargıçtır; bugünün kaybedeni yarının kazananı olabilir.',
+    'Söz vermek kolay, söz tutmak zor; ama iktidar söz tutana aittir.',
+    'Cesaret risk almaktır; korku ise yerinde saymaktır.',
+    'Güveni kazanmak yıllar alır, kaybetmek bir an; stratejist güveni silah gibi kullanır.',
+    'Dost çoğaldıkça düşman azalır; ama gerçek dost sayısı hep azdır.',
+    'Diplomasi, savaşın başka yollarla devam ettirilmesidir.',
+    'Halkı tanımak kendini tanımaktan daha önemlidir.',
+    'Rakamlar yalan söylemez ama onları sunanlar söyleyebilir.',
+    'Güçlü devletler güçlü kurumlarla, güçlü kurumlar güçlü insanlarla inşa edilir.',
+    'Saygınlık itaat ile değil, başarı ile kazanılır.',
+    'Herkes için mümkün olan bir iyilik kimse için değerli değildir.',
+    'Taht oyunlarında ikinci olmak, hiç oynamamaktan daha tehlikelidir.',
+    'Düşmanını küçümseyen, zaferi de küçümser.',
+    'Güç boşluk kabul etmez; birisi doldurmuyorsa başkası doldurur.',
+    'En tehlikeli düşman, dost gibi görünendir.',
+    'Bir lider her şeyi bilemez ama her şeyi bileni bulmalıdır.',
+    'Zamanı kontrol eden savaşı kontrol eder.',
+    /* ═══ GENEL MOTİVASYON VE İŞ HAYATI ═══ */
     'Başarı, her gün küçük çabaların tekrarlanmasının toplamıdır. - Robert Collier',
     'Gelecek, bugünden hazırlananlarındır. - Malcolm X',
     'Yapabileceğine inanan yapabilir, inanamayan yapamaz. Bu değişmez bir kuraldır. - Pablo Picasso',
-    'Başarısızlık, başarının baharatıdır. - Truman Capote',
     'Bir adım atmadan yol alınmaz, bir söz söylemeden dert anlatılmaz.',
     'Büyük işler küçük adımlarla başlar.',
     'Sabır acıdır ama meyvesi tatlıdır. - Jean-Jacques Rousseau',
     'Zorluklar, başarıya giden yolun taşlarıdır.',
     'Hedefine odaklanan zihin, her engeli aşar.',
     'Bugünün işini yarına bırakma, yarının ne getireceği belirsizdir.',
-    'Dürüstlük en iyi politikadır. - Benjamin Franklin',
     'Her şeyin bir başlangıcı vardır, ama devam eden kazanır.',
     'İnsan ancak hayal ettiği kadar büyüktür. - Atatürk',
     'Hayatta en hakiki mürşit ilimdir. - Atatürk',
@@ -1391,12 +1623,40 @@ const App = () => {
     'Azim ve kararlılık her kapıyı açan anahtardır.',
     'Bilgi güçtür ama uygulanan bilgi gerçek güçtür. - Francis Bacon',
     'Fırtına ne kadar sert olursa olsun, güneş mutlaka doğar.',
-    'Tek bir mumun ışığı, karanlığın tamamını yenebilir.',
     'Dünya cesur insanlar tarafından değiştirilir, korkaklar tarafından değil.',
-    'İş yapan insan hata yapabilir ama hiçbir şey yapmayan insan en büyük hatayı yapar.',
-    'Hayat bisiklete binmek gibidir. Dengenizi korumak için hareket etmeye devam etmelisiniz. - Albert Einstein',
+    'İş yapan insan hata yapabilir ama hiçbir şey yapmayan en büyük hatayı yapar.',
+    'Hayat bisiklete binmek gibidir. Dengenizi korumak için hareket etmeye devam etmelisiniz. - Einstein',
     'Başarılı insanlar işe başlar, başarısız insanlar bahane üretir.',
-    'Bir şeyi değiştirmek istiyorsanız önce kendinizi değiştirin. - Mahatma Gandhi'
+    'Bir şeyi değiştirmek istiyorsanız önce kendinizi değiştirin. - Gandhi',
+    'Disiplin, motivasyon bittiğinde devreye giren güçtür.',
+    'Başarı bir yolculuktur, varış noktası değil.',
+    'Her gün bir önceki günden daha iyi olmak en büyük başarıdır.',
+    'Sorunlara odaklanmayı bırak, çözümlere odaklan.',
+    'Çalışmak şansı, şans ise başarıyı getirir.',
+    'Vasat olmayı reddet, mükemmelliği hedefle.',
+    'Düşmeyen yürüyemez; yürüyemeyen hedefe ulaşamaz.',
+    'En iyi zaman şimdidir; en iyi yer buradasıdır.',
+    'Rakiplerini tanı ama asıl rakibin dünkü kendindir.',
+    'İmkansız diye bir şey yoktur, imkansızı mümkün kılan irade vardır.',
+    'Hayaller gerçek olur diyenler, gece uyumadan çalışanlardır.',
+    'Bir profesyonel, vazgeçmek istediğinde devam eden amatördür.',
+    'Konfor alanın dışında büyüme başlar.',
+    'Başarısızlık son değil, yeni bir başlangıçtır.',
+    'İyi bir lider yol gösterir, mükemmel bir lider yol açar.',
+    'Her sabah iki seçenek var: uyumaya devam et ya da kalk ve hayallerinin peşinden koş.',
+    'Küçük düşünenler küçük kalır; büyük düşünenler tarihe geçer.',
+    'Pes etmek kolaydır, devam etmek cesaret ister.',
+    'Başarı tesadüf değildir; hazırlık, fırsat ve cesaretin buluşma noktasıdır.',
+    'Engeller seni durdurmak için değil, ne kadar istediğini göstermek içindir.',
+    'Bugün ektiğin tohum, yarın topladığın hasattır.',
+    'İnanç dağları yerinden oynatır; kararlılık imparatorluklar kurar.',
+    'Tek bir kıvılcım ormanı yakabilir; tek bir fikir dünyayı değiştirebilir.',
+    'Zor zamanlarda güçlü insanlar ortaya çıkar.',
+    'Yaptığın iş seni tanımlasın, söylediğin sözler değil.',
+    'Mükemmel anı bekleme; anı mükemmel yap.',
+    'Öğrenmek bir lükstür değil, hayatta kalmanın şartıdır.',
+    'Hedefe giden yolda her adım önemlidir; hiçbiri boşa değildir.',
+    'Güneşi görmek için fırtınayı geçmek gerekir.'
   ], []);
 
   /* AI MOTİVASYON SÖZÜ - HER SAYFA GEÇİŞİNDE YENİ SÖZ */
@@ -1493,7 +1753,8 @@ const App = () => {
         {motivasyonSoz && (
           <div style={{
             fontSize: 13, fontWeight: 500, fontStyle: 'italic',
-            color: '#ffffff', letterSpacing: 0.5, lineHeight: 1.6,
+            color: MR.tema === 'koyu' ? '#ffffff' : '#0f172a',
+            letterSpacing: 0.5, lineHeight: 1.6,
             maxWidth: 700, margin: '0 auto 8px',
             opacity: sozFade ? 0.85 : 0,
             transform: sozFade ? 'translateY(0)' : 'translateY(6px)',
@@ -1502,10 +1763,12 @@ const App = () => {
             {motivasyonSoz}
           </div>
         )}
-        {/* SLOGAN - SABİT, BEMBEYAZ */}
+        {/* SLOGAN */}
         <div style={{
           fontSize: 12, fontWeight: 800,
-          color: '#ffffff', letterSpacing: 6
+          color: MR.tema === 'koyu' ? '#ffffff' : '#0f172a',
+          letterSpacing: 6,
+          opacity: 0.9
         }}>
           HER ZAMAN FARK EDER
         </div>

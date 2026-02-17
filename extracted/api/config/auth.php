@@ -59,7 +59,7 @@ function auth_required($allowedRoles = array()) {
         exit;
     }
     $db = getDB();
-    $stmt = $db->prepare('SELECT id, ad_soyad, email, rol, aktif FROM users WHERE id = ?');
+    $stmt = $db->prepare('SELECT id, ad_soyad, email, rol, telefon, avatar, aktif, created_at FROM users WHERE id = ?');
     $stmt->execute(array($payload['user_id']));
     $user = $stmt->fetch();
     if (!$user || !$user['aktif']) {

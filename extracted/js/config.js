@@ -29,6 +29,12 @@ MR.api = {
   login(e, s) { return this.req('/auth/login.php', { method: 'POST', body: JSON.stringify({ email: e, sifre: s }) }); },
   me() { return this.req('/auth/me.php'); },
   changePw(d) { return this.req('/auth/change-password.php', { method: 'POST', body: JSON.stringify(d) }); },
+  profilUpdate(d) { return this.req('/auth/profil-update.php', { method: 'POST', body: JSON.stringify(d) }); },
+  avatarYukle(file) {
+    const fd = new FormData(); fd.append('avatar', file);
+    const h = {}; if (this.token) h['Authorization'] = 'Bearer ' + this.token;
+    return fetch(API_BASE + '/auth/avatar-yukle.php', { method: 'POST', headers: h, body: fd }).then(r => r.json()).catch(() => ({success: false, error: 'BAĞLANTI HATASI'}));
+  },
   // DOSYA
   dosyaList(p = {}) { return this.req('/dosya/list.php?' + new URLSearchParams(p)); },
   dosyaGet(id) { return this.req('/dosya/get.php?id=' + id); },
