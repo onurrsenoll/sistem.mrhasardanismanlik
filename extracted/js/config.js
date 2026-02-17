@@ -52,6 +52,7 @@ MR.api = {
     return (await fetch(API_BASE + '/evrak/upload.php', { method: 'POST', headers: h, body: fd })).json();
   },
   evrakUrl(id) { return API_BASE + '/evrak/download.php?id=' + id; },
+  evrakPreviewUrl(id) { return API_BASE + '/evrak/download.php?id=' + id + '&mode=inline'; },
   evrakDelete(id) { return this.req('/evrak/delete.php?id=' + id, { method: 'DELETE' }); },
   // CRM
   crmList(p = {}) { return this.req('/crm/list.php?' + new URLSearchParams(p)); },

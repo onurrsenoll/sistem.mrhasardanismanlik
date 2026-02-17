@@ -58,9 +58,12 @@ if (!file_exists($filePath)) {
     json_error('Dosya sunucuda bulunamadı', 404);
 }
 
+// Ön izleme modu (inline) veya indirme (attachment)
+$mode = ($_GET['mode'] ?? 'attachment') === 'inline' ? 'inline' : 'attachment';
+
 // Dosyayı gönder
 header('Content-Type: ' . $evrak['mime_type']);
-header('Content-Disposition: attachment; filename="' . $evrak['dosya_adi'] . '"');
+header('Content-Disposition: ' . $mode . '; filename="' . $evrak['dosya_adi'] . '"');
 header('Content-Length: ' . filesize($filePath));
 header('Cache-Control: no-cache');
 

@@ -408,37 +408,97 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <LIcon name="Folder" size={14} color={C.accent}/>
               <span style={{fontSize:12,fontWeight:700}}>EVRAKLAR</span>
+              <span style={{fontSize:10,color:C.textMuted}}>
+                ({dosya.evraklar?.length || 0} / {(MR.EVRAK_T||[]).length} YÜKLÜ)
+              </span>
             </div>
-            <button style={{...S.btn,...S.btnS,fontSize:10,padding:'5px 12px'}} onClick={() => setEvrakM(true)}>
-              <LIcon name="Upload" size={12} color="#fff"/> EVRAK YÜKLE
-            </button>
+            {dosya.evraklar?.length > 0 && (
+              <button style={{...S.btn,...S.btnP,fontSize:10,padding:'5px 12px'}}
+                onClick={() => {
+                  dosya.evraklar.forEach((e,i) => {
+                    setTimeout(() => { window.open(api.evrakUrl(e.id), '_blank'); }, i * 500);
+                  });
+                }}>
+                <LIcon name="Download" size={12} color="#fff"/> TOPLU İNDİR ({dosya.evraklar?.length})
+              </button>
+            )}
           </div>
-          <div style={{padding:dosya.evraklar?.length?14:0}}>
-            {dosya.evraklar?.length > 0 ? (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
-                {dosya.evraklar.map((e, i) => (
-                  <div key={i} style={{padding:12,background:C.bgInput,borderRadius:8,border:`1px solid ${C.border}`}}>
-                    <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
-                      <LIcon name="FileText" size={16} color={C.accent}/>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:10,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{e.dosya_adi}</div>
-                        <div style={{fontSize:9,color:C.textMuted}}>{e.evrak_turu} • {(e.dosya_boyutu/1024).toFixed(0)} KB</div>
-                      </div>
-                    </div>
-                    <div style={{display:'flex',gap:4}}>
-                      <a href={api.evrakUrl(e.id)} target="_blank"
-                        style={{...S.btn,...S.btnP,fontSize:9,padding:'3px 8px',textDecoration:'none'}}>
-                        <LIcon name="Download" size={10} color="#fff"/> İNDİR
-                      </a>
-                      <button style={{...S.btn,...S.btnD,fontSize:9,padding:'3px 8px'}}
-                        onClick={() => setDeleteConfirm({type:'evrak', id:e.id, text:e.dosya_adi})}>
-                        <LIcon name="Trash2" size={10} color="#fff"/> SİL
-                      </button>
-                    </div>
+          <div style={{maxHeight:600,overflowY:'auto'}}>
+            {(MR.EVRAK_T||[]).map((tur, idx) => {
+              const yuklenen = (dosya.evraklar||[]).filter(e => e.evrak_turu === tur);
+              const yukluMu = yuklenen.length > 0;
+              return (
+                <div key={idx} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',
+                  borderBottom:`1px solid ${C.border}22`,
+                  background:yukluMu ? `${C.success}08` : 'transparent'}}>
+                  {/* SIRA NO */}
+                  <span style={{fontSize:9,color:C.textMuted,minWidth:22,textAlign:'center',fontWeight:600}}>{idx+1}</span>
+                  {/* DURUM İKONU */}
+                  <div style={{width:22,height:22,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+                    background:yukluMu ? `${C.success}22` : `${C.border}44`}}>
+                    <LIcon name={yukluMu ? 'Check' : 'Minus'} size={12} color={yukluMu ? C.success : C.textMuted}/>
                   </div>
-                ))}
-              </div>
-            ) : <EmptyState icon="Folder" title="EVRAK YOK" desc="PDF EVRAK YÜKLE BUTONUYLA EVRAK EKLEYEBİLİRSİNİZ"/>}
+                  {/* EVRAK TÜRÜ ADI */}
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:10,fontWeight:yukluMu?700:500,color:yukluMu?C.text:C.textSec,
+                      overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{tur}</div>
+                    {yukluMu && (
+                      <div style={{fontSize:8,color:C.textMuted,marginTop:1}}>
+                        {yuklenen.map(y => `${y.dosya_adi} (${(y.dosya_boyutu/1024).toFixed(0)}KB)`).join(', ')}
+                        {yuklenen[0]?.kullanici_adi ? ` • ${yuklenen[0].kullanici_adi}` : ''}
+                        {yuklenen[0]?.created_at ? ` • ${yuklenen[0].created_at.split(' ')[0]}` : ''}
+                      </div>
+                    )}
+                  </div>
+                  {/* DURUM BADGE */}
+                  {yukluMu ? (
+                    <span style={{fontSize:8,fontWeight:800,color:C.success,background:`${C.success}18`,padding:'3px 8px',borderRadius:4,flexShrink:0}}>
+                      YÜKLENDİ
+                    </span>
+                  ) : (
+                    <span style={{fontSize:8,fontWeight:600,color:C.textMuted,padding:'3px 8px',flexShrink:0}}>
+                      BEKLİYOR
+                    </span>
+                  )}
+                  {/* BUTONLAR */}
+                  <div style={{display:'flex',gap:3,flexShrink:0}}>
+                    {yukluMu && yuklenen.map(y => (
+                      <React.Fragment key={y.id}>
+                        <button title="ÖN İZLEME" onClick={() => window.open(api.evrakPreviewUrl(y.id), '_blank')}
+                          style={{...S.btn,padding:'3px 6px',fontSize:8,background:`${C.accent}18`,color:C.accent,border:`1px solid ${C.accent}33`,borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',gap:2}}>
+                          <LIcon name="Eye" size={10} color={C.accent}/>
+                        </button>
+                        <a href={api.evrakUrl(y.id)} target="_blank" title="İNDİR"
+                          style={{...S.btn,padding:'3px 6px',fontSize:8,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',gap:2,textDecoration:'none'}}>
+                          <LIcon name="Download" size={10} color={C.success}/>
+                        </a>
+                        <button title="SİL" onClick={() => setDeleteConfirm({type:'evrak', id:y.id, text:y.dosya_adi})}
+                          style={{...S.btn,padding:'3px 6px',fontSize:8,background:`${C.danger}18`,color:C.danger,border:`1px solid ${C.danger}33`,borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',gap:2}}>
+                          <LIcon name="Trash2" size={10} color={C.danger}/>
+                        </button>
+                      </React.Fragment>
+                    ))}
+                    {/* YÜKLE BUTONU - her zaman göster (aynı türe birden fazla yüklenebilir) */}
+                    <label title="PDF YÜKLE" style={{...S.btn,padding:'3px 6px',fontSize:8,
+                      background:yukluMu ? `${C.warning}18` : `${C.accent}18`,
+                      color:yukluMu ? C.warning : C.accent,
+                      border:`1px solid ${yukluMu ? C.warning+'33' : C.accent+'33'}`,
+                      borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',gap:2}}>
+                      <LIcon name="Upload" size={10} color={yukluMu ? C.warning : C.accent}/>
+                      <input type="file" accept=".pdf" style={{display:'none'}} onChange={async (ev) => {
+                        const f = ev.target.files[0];
+                        if (!f) return;
+                        if (f.type !== 'application/pdf') { alert('SADECE PDF DOSYA YÜKLENEBİLİR'); return; }
+                        const r = await api.evrakUpload(dosya.id, tur, f);
+                        if (r?.success) load();
+                        else alert(r?.error || 'YÜKLEME HATASI');
+                        ev.target.value = '';
+                      }}/>
+                    </label>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -688,7 +748,6 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
       {/* MODALLER */}
       <MR.MasrafEkle open={masrafM} onClose={() => setMasrafM(false)} dosyaId={dosya.id} onOk={load}/>
-      <MR.EvrakYukle open={evrakM} onClose={() => setEvrakM(false)} dosyaId={dosya.id} onOk={load}/>
 
       {/* MASRAF / EVRAK SİL */}
       <Confirm open={!!deleteConfirm} message={deleteConfirm ? `"${deleteConfirm.text}" SİLİNSİN Mİ?` : ''}
@@ -922,42 +981,4 @@ MR.MasrafEkle = ({open, onClose, dosyaId, onOk}) => {
   );
 };
 
-// EVRAK YÜKLEME MODAL
-MR.EvrakYukle = ({open, onClose, dosyaId, onOk}) => {
-  const {C, S, Modal, FormGroup, api, EVRAK_T} = MR;
-  const [tur, setTur] = useState('');
-  const [file, setFile] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const go = async () => {
-    if (!file || !tur) { setError('EVRAK TÜRÜ VE DOSYA GEREKLİ'); return; }
-    if (file.type !== 'application/pdf') { setError('SADECE PDF'); return; }
-    setLoading(true); setError('');
-    const r = await api.evrakUpload(dosyaId, tur, file);
-    if (r?.success) { onOk(); onClose(); setFile(null); setTur(''); }
-    else setError(r?.error || 'HATA');
-    setLoading(false);
-  };
-
-  return (
-    <Modal open={open} onClose={onClose} title="EVRAK YÜKLE (PDF)" width="450px">
-      {error && <div style={{padding:8,background:`${C.danger}18`,borderRadius:6,marginBottom:10,fontSize:11,color:C.danger}}>{error}</div>}
-      <div style={{display:'grid',gap:10}}>
-        <FormGroup label="EVRAK TÜRÜ">
-          <select value={tur} onChange={e => setTur(e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
-            <option value="">SEÇİNİZ</option>
-            {EVRAK_T.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </FormGroup>
-        <FormGroup label="PDF DOSYA">
-          <input type="file" accept=".pdf" onChange={e => setFile(e.target.files[0])} style={{...S.input, padding:6,fontSize:11}}/>
-        </FormGroup>
-        {file && <div style={{fontSize:10,color:C.textSec}}>SEÇİLEN: {file.name} ({(file.size/1024).toFixed(0)} KB)</div>}
-        <button onClick={go} disabled={loading} style={{...S.btn,...S.btnS,justifyContent:'center',padding:12,fontSize:12}}>
-          {loading ? 'YÜKLENİYOR...' : 'EVRAK YÜKLE'}
-        </button>
-      </div>
-    </Modal>
-  );
-};
+// EVRAK YÜKLEME - ARTIK İNLİNE (EVRAK TAB İÇİNDE SATIR SATIR YÜKLEME)
