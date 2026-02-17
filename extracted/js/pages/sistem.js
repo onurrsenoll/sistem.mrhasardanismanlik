@@ -708,6 +708,7 @@ const AyarlarTab = () => {
   const [logoPreview, setLogoPreview] = useState('');
   const [logoUploading, setLogoUploading] = useState(false);
   const fileInputRef = useRef(null);
+  const [apiTest, setApiTest] = useState({testing: false, sonuc: null});
 
   /* AYARLAR YÜKLE */
   useEffect(() => {
@@ -725,6 +726,21 @@ const AyarlarTab = () => {
 
   const up = (k, v) => setAyarlar(p => ({...p, [k]: v}));
 
+  /* GEMİNİ API TESTİ */
+  const geminiTestEt = async (key) => {
+    setApiTest({testing: true, sonuc: null});
+    try {
+      const r = await api.geminiTest(key ? {api_key: key} : {});
+      if (r?.success && r.data) {
+        setApiTest({testing: false, sonuc: r.data});
+      } else {
+        setApiTest({testing: false, sonuc: {basarili: false, ozet: r?.error || 'TEST SIRASINDA HATA OLUŞTU', hata_detay: r?.error || 'BİLİNMEYEN HATA'}});
+      }
+    } catch(e) {
+      setApiTest({testing: false, sonuc: {basarili: false, ozet: 'BAĞLANTI HATASI - SUNUCUYA ULAŞILAMIYOR', hata_detay: 'SUNUCUYA BAĞLANTI KURULAMADI'}});
+    }
+  };
+
   /* AYARLARI KAYDET */
   const kaydet = async () => {
     setSaving(true);
@@ -732,11 +748,13 @@ const AyarlarTab = () => {
     const r = await api.ayarlarGuncelle(ayarlar);
     if (r?.success) {
       setMesaj({type: 'success', text: 'AYARLAR BAŞARIYLA KAYDEDİLDİ'});
+      // KAYDETME SONRASI GEMİNİ API TESTİ YAP
+      geminiTestEt(ayarlar.gemini_api_key);
     } else {
       setMesaj({type: 'error', text: r?.error || 'AYARLAR KAYDEDİLİRKEN HATA OLUŞTU'});
     }
     setSaving(false);
-    setTimeout(() => setMesaj({type: '', text: ''}), 4000);
+    setTimeout(() => setMesaj({type: '', text: ''}), 6000);
   };
 
   /* LOGO DOSYA SEÇ */
@@ -1015,6 +1033,14 @@ const AyarlarTab = () => {
           <LIcon name="Sparkles" size={14} color={C.warning}/>
           <span style={{fontSize: 12, fontWeight: 700}}>GOOGLE GEMİNİ AI AYARLARI</span>
           <span style={{...S.badge(C.warning), marginLeft: 8, fontSize: 9}}>MOTİVASYON SÖZLERİ</span>
+          {apiTest.sonuc && (
+            <span style={{
+              ...S.badge(apiTest.sonuc.basarili ? C.success : C.danger),
+              marginLeft: 8, fontSize: 9
+            }}>
+              {apiTest.sonuc.basarili ? 'API AKTİF' : 'API HATALI'}
+            </span>
+          )}
         </div>
         <div style={{padding: 16}}>
           <div style={{
@@ -1025,21 +1051,144 @@ const AyarlarTab = () => {
             HER SAYFA GEÇİŞİNDE GOOGLE GEMİNİ AI İLE MOTİVE EDİCİ SÖZLER GÖSTERİLİR.
             API ANAHTARI LİMİTİ DOLDUĞUNDA BURADAN YENİ ANAHTAR GİREBİLİRSİNİZ.
             BOŞ BIRAKIRSANIZ VARSAYILAN ANAHTAR KULLANILIR.
+            API ÇALIŞMAZSA YEDEK SÖZLER OTOMATİK GÖSTERİLİR.
           </div>
           <div style={{display: 'grid', gap: 16}}>
             <div>
               <label style={S.label}>GOOGLE GEMİNİ API ANAHTARI</label>
-              <div style={{display: 'flex', gap: 8}}>
+              <div style={{display: 'flex', gap: 8, alignItems: 'center'}}>
                 <input style={{...S.input, flex: 1, fontFamily: 'monospace', fontSize: 12, letterSpacing: 0.5}}
                   value={ayarlar.gemini_api_key || ''}
                   onChange={e => up('gemini_api_key', e.target.value)}
                   placeholder="AIzaSy... (BOŞ BIRAKIRSANIZ VARSAYILAN KULLANILIR)"/>
+                <button style={{
+                  ...S.btn, background: C.accent, color: '#fff', fontSize: 11, padding: '10px 16px',
+                  fontWeight: 700, whiteSpace: 'nowrap', opacity: apiTest.testing ? 0.7 : 1,
+                  borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6
+                }} onClick={() => geminiTestEt(ayarlar.gemini_api_key)} disabled={apiTest.testing}>
+                  <LIcon name={apiTest.testing ? 'Loader2' : 'Zap'} size={14} color="#fff"/>
+                  {apiTest.testing ? 'TEST EDİLİYOR...' : 'API TEST ET'}
+                </button>
               </div>
               <div style={{fontSize: 10, color: C.textMuted, marginTop: 6}}>
                 GOOGLE AI STUDIO'DAN ÜCRETSİZ API ANAHTARI ALABİLİRSİNİZ: AISTUDIO.GOOGLE.COM
               </div>
             </div>
           </div>
+
+          {/* API TEST SONUCU PANELİ */}
+          {apiTest.testing && (
+            <div style={{
+              marginTop: 16, padding: '14px 16px', borderRadius: 10,
+              background: `${C.accent}10`, border: `1px solid ${C.accent}30`,
+              display: 'flex', alignItems: 'center', gap: 10
+            }}>
+              <div style={{
+                width: 20, height: 20, border: `2px solid ${C.accent}`,
+                borderTopColor: 'transparent', borderRadius: '50%',
+                animation: 'spin 1s linear infinite'
+              }}/>
+              <span style={{fontSize: 12, color: C.textSec, fontWeight: 600}}>
+                GEMİNİ API TEST EDİLİYOR... LÜTFEN BEKLEYİN
+              </span>
+            </div>
+          )}
+
+          {apiTest.sonuc && !apiTest.testing && (
+            <div style={{
+              marginTop: 16, padding: '16px', borderRadius: 10,
+              background: apiTest.sonuc.basarili ? `${C.success}10` : `${C.danger}10`,
+              border: `1px solid ${apiTest.sonuc.basarili ? C.success : C.danger}30`
+            }}>
+              {/* BAŞLIK */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12
+              }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: '50%',
+                  background: apiTest.sonuc.basarili ? `${C.success}20` : `${C.danger}20`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                  <LIcon name={apiTest.sonuc.basarili ? 'CheckCircle' : 'XCircle'} size={18}
+                    color={apiTest.sonuc.basarili ? C.success : C.danger}/>
+                </div>
+                <div>
+                  <div style={{fontSize: 13, fontWeight: 700, color: apiTest.sonuc.basarili ? C.success : C.danger}}>
+                    {apiTest.sonuc.basarili ? 'API BAŞARIYLA ÇALIŞIYOR!' : 'API ÇALIŞMIYOR!'}
+                  </div>
+                  <div style={{fontSize: 11, color: C.textSec, marginTop: 2}}>
+                    {apiTest.sonuc.key_kaynak || ''}
+                    {apiTest.sonuc.key_on_ek ? ` (${apiTest.sonuc.key_on_ek})` : ''}
+                  </div>
+                </div>
+              </div>
+
+              {/* DETAYLAR */}
+              <div style={{
+                display: 'grid', gap: 8, fontSize: 11, color: C.textSec
+              }}>
+                {/* GEREKÇE / HATA DETAYI */}
+                {apiTest.sonuc.hata_detay && !apiTest.sonuc.basarili && (
+                  <div style={{
+                    padding: '10px 14px', borderRadius: 8,
+                    background: `${C.danger}08`, border: `1px dashed ${C.danger}40`
+                  }}>
+                    <div style={{fontWeight: 700, color: C.danger, marginBottom: 4, fontSize: 11}}>
+                      <LIcon name="AlertTriangle" size={12} color={C.danger} style={{verticalAlign: 'middle'}}/> HATA GEREKÇESİ:
+                    </div>
+                    <div style={{color: C.text, lineHeight: 1.6, fontWeight: 600}}>
+                      {apiTest.sonuc.hata_detay}
+                    </div>
+                  </div>
+                )}
+
+                {/* TEKNİK BİLGİLER */}
+                <div style={{
+                  display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 6,
+                  padding: '10px 14px', borderRadius: 8, background: `${C.bgHover}`
+                }}>
+                  <div><span style={{color: C.textMuted}}>YÖNTEM:</span> <span style={{fontWeight: 600}}>{apiTest.sonuc.yontem || '-'}</span></div>
+                  <div><span style={{color: C.textMuted}}>HTTP KODU:</span> <span style={{fontWeight: 600, color: apiTest.sonuc.http_kodu === 200 ? C.success : C.danger}}>{apiTest.sonuc.http_kodu || '-'}</span></div>
+                  <div><span style={{color: C.textMuted}}>cURL:</span> <span style={{fontWeight: 600, color: apiTest.sonuc.curl_destegi ? C.success : C.danger}}>{apiTest.sonuc.curl_destegi ? 'AKTİF' : 'KAPALI'}</span></div>
+                  <div><span style={{color: C.textMuted}}>FILE_GET_CONTENTS:</span> <span style={{fontWeight: 600, color: apiTest.sonuc.file_get_contents_destegi ? C.success : C.danger}}>{apiTest.sonuc.file_get_contents_destegi ? 'AKTİF' : 'KAPALI'}</span></div>
+                </div>
+
+                {/* BAŞARILI İSE ÖRNEK SÖZ */}
+                {apiTest.sonuc.basarili && apiTest.sonuc.soz && (
+                  <div style={{
+                    padding: '10px 14px', borderRadius: 8,
+                    background: `${C.success}08`, border: `1px dashed ${C.success}40`,
+                    fontStyle: 'italic', color: C.text, lineHeight: 1.6
+                  }}>
+                    <div style={{fontWeight: 700, color: C.success, marginBottom: 4, fontSize: 10, fontStyle: 'normal'}}>
+                      <LIcon name="Quote" size={12} color={C.success} style={{verticalAlign: 'middle'}}/> ÖRNEK YANIT:
+                    </div>
+                    "{apiTest.sonuc.soz}"
+                  </div>
+                )}
+
+                {/* BAŞARISIZ İSE ÇÖZÜM ÖNERİLERİ */}
+                {!apiTest.sonuc.basarili && (
+                  <div style={{
+                    padding: '10px 14px', borderRadius: 8,
+                    background: `${C.warning}08`, border: `1px dashed ${C.warning}40`
+                  }}>
+                    <div style={{fontWeight: 700, color: C.warning, marginBottom: 6, fontSize: 11}}>
+                      <LIcon name="Lightbulb" size={12} color={C.warning} style={{verticalAlign: 'middle'}}/> ÇÖZÜM ÖNERİLERİ:
+                    </div>
+                    <div style={{lineHeight: 1.8, color: C.textSec}}>
+                      {apiTest.sonuc.http_kodu === 429 && '• KOTA DOLMUŞ: FARKLI BİR API ANAHTARI GİRİN VEYA 24 SAAT BEKLEYİN\n'}
+                      {(apiTest.sonuc.http_kodu === 401 || apiTest.sonuc.http_kodu === 403) && '• AISTUDIO.GOOGLE.COM ADRESINDEN YENİ API ANAHTARI OLUŞTURUN\n'}
+                      {apiTest.sonuc.http_kodu === 0 && '• SUNUCUNUZDA DIŞARI ÇIKIŞ (OUTBOUND) BAĞLANTISI KAPALI OLABİLİR - HOSTİNG FİRMANIZLA İLETİŞİME GEÇİN\n'}
+                      • BOŞ BIRAKIRSANIZ VARSAYILAN ANAHTAR KULLANILIR<br/>
+                      • API ÇALIŞMASA BİLE YEDEK SÖZLER OTOMATİK GÖSTERİLİR<br/>
+                      • AISTUDIO.GOOGLE.COM ADRESİNDEN ÜCRETSİZ YENİ ANAHTAR ALABİLİRSİNİZ
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

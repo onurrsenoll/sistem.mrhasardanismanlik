@@ -3,7 +3,7 @@
  * NAVİGASYON, ROUTER, BREADCRUMB, ANA YAPI
  */
 const MR = window.MR || (window.MR = {});
-const {useState, useEffect, useCallback, useRef} = React;
+const {useState, useEffect, useCallback, useRef, useMemo} = React;
 
 /* ═══ MENÜ YAPILANDIRMASI ═══ */
 const MENU = [
@@ -1365,27 +1365,68 @@ const App = () => {
     MR._currentUser = user;
   }, [user]);
 
+  /* YEDEK SÖZLER - API BAŞARISIZ OLURSA BUNLARDAN GÖSTERİR */
+  const yedekSozler = useMemo(() => [
+    'Başarı, her gün küçük çabaların tekrarlanmasının toplamıdır. - Robert Collier',
+    'Gelecek, bugünden hazırlananlarındır. - Malcolm X',
+    'Yapabileceğine inanan yapabilir, inanamayan yapamaz. Bu değişmez bir kuraldır. - Pablo Picasso',
+    'Başarısızlık, başarının baharatıdır. - Truman Capote',
+    'Bir adım atmadan yol alınmaz, bir söz söylemeden dert anlatılmaz.',
+    'Büyük işler küçük adımlarla başlar.',
+    'Sabır acıdır ama meyvesi tatlıdır. - Jean-Jacques Rousseau',
+    'Zorluklar, başarıya giden yolun taşlarıdır.',
+    'Hedefine odaklanan zihin, her engeli aşar.',
+    'Bugünün işini yarına bırakma, yarının ne getireceği belirsizdir.',
+    'Dürüstlük en iyi politikadır. - Benjamin Franklin',
+    'Her şeyin bir başlangıcı vardır, ama devam eden kazanır.',
+    'İnsan ancak hayal ettiği kadar büyüktür. - Atatürk',
+    'Hayatta en hakiki mürşit ilimdir. - Atatürk',
+    'Başarı yolculuğunda en büyük engel, kendi kendimize koyduğumuz sınırlardır.',
+    'Zafer, zafer benimdir diyebilenindir. - Atatürk',
+    'Yükselmek için tırmanmak gerekir, düşmek için bir anlık dikkatsizlik yeter.',
+    'Kararlı bir insanın yapamayacağı hiçbir şey yoktur. - Emerson',
+    'Güçlü insanlar başkaları için yol açar, zayıf insanlar yol kenarında bekler.',
+    'Her başarının arkasında cesaret, her cesaretin arkasında inanç vardır.',
+    'Adalet mülkün temelidir.',
+    'Azim ve kararlılık her kapıyı açan anahtardır.',
+    'Bilgi güçtür ama uygulanan bilgi gerçek güçtür. - Francis Bacon',
+    'Fırtına ne kadar sert olursa olsun, güneş mutlaka doğar.',
+    'Tek bir mumun ışığı, karanlığın tamamını yenebilir.',
+    'Dünya cesur insanlar tarafından değiştirilir, korkaklar tarafından değil.',
+    'İş yapan insan hata yapabilir ama hiçbir şey yapmayan insan en büyük hatayı yapar.',
+    'Hayat bisiklete binmek gibidir. Dengenizi korumak için hareket etmeye devam etmelisiniz. - Albert Einstein',
+    'Başarılı insanlar işe başlar, başarısız insanlar bahane üretir.',
+    'Bir şeyi değiştirmek istiyorsanız önce kendinizi değiştirin. - Mahatma Gandhi'
+  ], []);
+
   /* AI MOTİVASYON SÖZÜ - HER SAYFA GEÇİŞİNDE YENİ SÖZ */
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     setSozFade(false);
+    const yedekSozGoster = () => {
+      if (cancelled) return;
+      const rastgele = yedekSozler[Math.floor(Math.random() * yedekSozler.length)];
+      setMotivasyonSoz(rastgele);
+      setTimeout(() => { if (!cancelled) setSozFade(true); }, 50);
+    };
     const timer = setTimeout(async () => {
       try {
         const r = await api.motivasyonSoz();
-        if (!cancelled && r?.success && r.data?.soz) {
-          setMotivasyonSoz(r.data.soz);
-          setTimeout(() => { if (!cancelled) setSozFade(true); }, 50);
+        if (!cancelled) {
+          if (r?.success && r.data?.soz) {
+            setMotivasyonSoz(r.data.soz);
+            setTimeout(() => { if (!cancelled) setSozFade(true); }, 50);
+          } else {
+            yedekSozGoster();
+          }
         }
       } catch(e) {
-        if (!cancelled) {
-          setMotivasyonSoz('');
-          setSozFade(true);
-        }
+        yedekSozGoster();
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [user, page]);
+  }, [user, page, yedekSozler]);
 
   /* LOGIN SONRASI ME.PHP'DEN YETKİLERİ ÇEK */
   const handleLogin = async (u) => {
