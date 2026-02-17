@@ -85,6 +85,12 @@ const TanimGrubu = ({kategoriler, user}) => {
   const [hata, setHata] = useState('');
   const [confirm, setConfirm] = useState({open:false, id:null});
   const [arama, setArama] = useState('');
+  /* ── TOPLU YÜKLEME STATE ── */
+  const [bulkModalAcik, setBulkModalAcik] = useState(false);
+  const [bulkData, setBulkData] = useState([]);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkSonuc, setBulkSonuc] = useState(null);
+  const bulkFileRef = useRef(null);
 
   const seciliInfo = kategoriler.find(k => k.key === seciliKat) || kategoriler[0] || {};
 
@@ -190,6 +196,83 @@ const TanimGrubu = ({kategoriler, user}) => {
     if (r?.success) yukle();
   };
 
+  /* ── EXCEL ŞABLON İNDİR ── */
+  const excelSablonIndir = () => {
+    const ws_data = [
+      ['DEĞER'],
+      ['ÖRNEK TANIMLAMA 1'],
+      ['ÖRNEK TANIMLAMA 2'],
+      ['ÖRNEK TANIMLAMA 3']
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    ws['!cols'] = [{wch: 50}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, seciliInfo.label || 'TANIMLAMALAR');
+    XLSX.writeFile(wb, `${(seciliInfo.label || 'TANIMLAMALAR').replace(/\s+/g, '_')}_SABLON.xlsx`);
+  };
+
+  /* ── MEVCUT VERİLERİ EXCEL OLARAK İNDİR ── */
+  const mevcutExcelIndir = () => {
+    if (degerler.length === 0) return;
+    const ws_data = [['#', 'KOD', 'DEĞER', 'AÇIKLAMA', 'SIRA', 'DURUM']];
+    degerler.forEach((d, i) => {
+      ws_data.push([i + 1, d.kod || '', d.deger || '', d.aciklama || '', d.sira || 0, d.aktif == 1 ? 'AKTİF' : 'PASİF']);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    ws['!cols'] = [{wch:6},{wch:15},{wch:50},{wch:30},{wch:8},{wch:10}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, seciliInfo.label || 'TANIMLAMALAR');
+    XLSX.writeFile(wb, `${(seciliInfo.label || 'TANIMLAMALAR').replace(/\s+/g, '_')}_LISTE.xlsx`);
+  };
+
+  /* ── EXCEL DOSYASI OKU ── */
+  const excelOku = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const wb = XLSX.read(data, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+        // İlk satır başlık, kalanlar veri
+        const degerListesi = [];
+        for (let i = 1; i < rows.length; i++) {
+          const val = (rows[i][0] || '').toString().trim();
+          if (val) degerListesi.push(val.toUpperCase());
+        }
+        setBulkData(degerListesi);
+        setBulkSonuc(null);
+        setBulkModalAcik(true);
+      } catch (err) {
+        alert('EXCEL DOSYASI OKUNAMADI. LÜTFEN GEÇERLİ BİR .XLSX DOSYASI SEÇİN.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    if (bulkFileRef.current) bulkFileRef.current.value = '';
+  };
+
+  /* ── TOPLU YÜKLE (API) ── */
+  const topluYukle = async () => {
+    if (bulkData.length === 0) return;
+    setBulkLoading(true);
+    setBulkSonuc(null);
+    const r = await api.tanimBulkCreate({kategori: seciliKat, degerler: bulkData});
+    setBulkLoading(false);
+    if (r?.success) {
+      setBulkSonuc({
+        basarili: true,
+        eklenen: r.data?.eklenen || 0,
+        atlanan: r.data?.atlanan || 0,
+        mesaj: r.message || `${r.data?.eklenen || 0} KAYIT EKLENDİ`
+      });
+      yukle(); // Listeyi yenile
+    } else {
+      setBulkSonuc({basarili: false, mesaj: r?.error || 'TOPLU YÜKLEME BAŞARISIZ OLDU'});
+    }
+  };
+
   return (
     <div>
       {/* ── KATEGORİ SEÇİM KARTLARI ── */}
@@ -226,9 +309,27 @@ const TanimGrubu = ({kategoriler, user}) => {
         <SectionTitle icon={seciliInfo.icon || 'List'} title={seciliInfo.label || 'TANIMLAMALAR'}
           sub={`${istatistik.toplam} KAYIT LİSTELENİYOR`}
           right={
-            <button style={{...S.btn,...S.btnP}} onClick={yeniKayit}>
-              <LIcon name="Plus" size={14} color="#fff"/> YENİ EKLE
-            </button>
+            <div style={{display:'flex', gap:6, alignItems:'center', flexWrap:'wrap'}}>
+              {/* MEVCUT LİSTEYİ EXCEL İNDİR */}
+              {degerler.length > 0 && (
+                <button style={{...S.btn,...S.btnG, fontSize:10, padding:'6px 10px'}} onClick={mevcutExcelIndir} title="MEVCUT LİSTEYİ EXCEL OLARAK İNDİR">
+                  <LIcon name="Download" size={12} color={C.success}/> EXCEL İNDİR
+                </button>
+              )}
+              {/* EXCEL ŞABLON İNDİR */}
+              <button style={{...S.btn,...S.btnG, fontSize:10, padding:'6px 10px'}} onClick={excelSablonIndir} title="BOŞ EXCEL ŞABLONU İNDİR">
+                <LIcon name="FileSpreadsheet" size={12} color={C.accent}/> ŞABLON
+              </button>
+              {/* EXCEL TOPLU YÜKLE */}
+              <label style={{...S.btn,...S.btnG, fontSize:10, padding:'6px 10px', cursor:'pointer', display:'inline-flex', alignItems:'center', gap:4, margin:0}} title="EXCEL DOSYASINDAN TOPLU YÜKLE">
+                <LIcon name="Upload" size={12} color={C.warning}/> TOPLU YÜKLE
+                <input ref={bulkFileRef} type="file" accept=".xlsx,.xls,.csv" onChange={excelOku} style={{display:'none'}}/>
+              </label>
+              {/* TEK TEK EKLE */}
+              <button style={{...S.btn,...S.btnP, fontSize:10, padding:'6px 12px'}} onClick={yeniKayit}>
+                <LIcon name="Plus" size={12} color="#fff"/> YENİ EKLE
+              </button>
+            </div>
           }
         />
 
@@ -357,6 +458,105 @@ const TanimGrubu = ({kategoriler, user}) => {
             <LIcon name={editItem ? 'Save' : 'Plus'} size={14} color="#fff"/>
             {kayitLoading ? 'KAYDEDİLİYOR...' : (editItem ? 'GÜNCELLE' : 'KAYDET')}
           </button>
+        </div>
+      </Modal>
+
+      {/* ── TOPLU YÜKLEME MODAL ── */}
+      <Modal open={bulkModalAcik} onClose={() => { setBulkModalAcik(false); setBulkData([]); setBulkSonuc(null); }}
+        title={`TOPLU YÜKLEME - ${seciliInfo.label}`} width="640px">
+        <div>
+          {/* BİLGİ BARI */}
+          <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:16, padding:'10px 14px',
+            background:`${C.accent}08`, borderRadius:8, border:`1px solid ${C.accent}15`}}>
+            <LIcon name="Info" size={14} color={C.accent}/>
+            <span style={{fontSize:11, color:C.textSec}}>
+              EXCEL DOSYASINDAN <strong style={{color:C.accent}}>{bulkData.length}</strong> ADET KAYIT OKUNDU.
+              MEVCUT KAYITLARLA AYNI OLANLAR OTOMATİK ATLANACAKTIR.
+            </span>
+          </div>
+
+          {/* ÖNİZLEME LİSTESİ */}
+          <div style={{maxHeight:350, overflow:'auto', border:`1px solid ${C.border}`, borderRadius:8, marginBottom:16}}>
+            <table style={{width:'100%', borderCollapse:'collapse'}}>
+              <thead>
+                <tr>
+                  <th style={{...TH_STYLE, width:40, position:'sticky', top:0, zIndex:1}}>#</th>
+                  <th style={{...TH_STYLE, position:'sticky', top:0, zIndex:1}}>DEĞER</th>
+                  <th style={{...TH_STYLE, width:60, textAlign:'center', position:'sticky', top:0, zIndex:1}}>
+                    <div onClick={() => setBulkData([])} style={{cursor:'pointer', display:'inline-flex', alignItems:'center', gap:4}} title="TÜMÜNÜ TEMİZLE">
+                      <LIcon name="Trash2" size={11} color={C.danger}/>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {bulkData.map((d, i) => (
+                  <tr key={i}
+                    onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <td style={{...TD_STYLE, color:C.textMuted, fontSize:11}}>{i + 1}</td>
+                    <td style={{...TD_STYLE, fontWeight:600, fontSize:12}}>{d}</td>
+                    <td style={{...TD_STYLE, textAlign:'center'}}>
+                      <div onClick={() => setBulkData(prev => prev.filter((_, idx) => idx !== i))}
+                        style={{...BTN_KUCUK, background:`${C.danger}22`, cursor:'pointer', display:'inline-flex'}} title="KALDIR">
+                        <LIcon name="X" size={11} color={C.danger}/>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {bulkData.length === 0 && (
+                  <tr>
+                    <td colSpan={3} style={{...TD_STYLE, textAlign:'center', color:C.textMuted, padding:30}}>
+                      YÜKLENECEK KAYIT BULUNMUYOR
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* SONUÇ MESAJI */}
+          {bulkSonuc && (
+            <div style={{padding:'12px 16px', borderRadius:8, marginBottom:16,
+              background: bulkSonuc.basarili ? `${C.success}15` : `${C.danger}15`,
+              border: `1px solid ${bulkSonuc.basarili ? C.success : C.danger}33`}}>
+              <div style={{display:'flex', alignItems:'center', gap:8}}>
+                <LIcon name={bulkSonuc.basarili ? 'CheckCircle' : 'AlertTriangle'} size={16}
+                  color={bulkSonuc.basarili ? C.success : C.danger}/>
+                <div>
+                  <div style={{fontSize:12, fontWeight:700, color:bulkSonuc.basarili ? C.success : C.danger}}>
+                    {bulkSonuc.basarili ? 'TOPLU YÜKLEME TAMAMLANDI' : 'TOPLU YÜKLEME BAŞARISIZ'}
+                  </div>
+                  <div style={{fontSize:11, color:C.textSec, marginTop:4}}>{bulkSonuc.mesaj}</div>
+                  {bulkSonuc.basarili && (
+                    <div style={{fontSize:10, color:C.textMuted, marginTop:4}}>
+                      EKLENDİ: <strong style={{color:C.success}}>{bulkSonuc.eklenen}</strong> |
+                      ATLANDI: <strong style={{color:C.warning}}>{bulkSonuc.atlanan}</strong>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* BUTONLAR */}
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', borderTop:`1px solid ${C.border}`, paddingTop:16}}>
+            <div style={{fontSize:10, color:C.textMuted}}>
+              <LIcon name="FileSpreadsheet" size={11} color={C.textMuted} style={{marginRight:4}}/>
+              KATEGORİ: <strong style={{color:seciliInfo.color || C.accent}}>{seciliInfo.label}</strong>
+            </div>
+            <div style={{display:'flex', gap:10}}>
+              <button style={{...S.btn,...S.btnG}} onClick={() => { setBulkModalAcik(false); setBulkData([]); setBulkSonuc(null); }}>
+                {bulkSonuc?.basarili ? 'KAPAT' : 'İPTAL'}
+              </button>
+              {!bulkSonuc?.basarili && bulkData.length > 0 && (
+                <button style={{...S.btn,...S.btnP, opacity:bulkLoading?0.7:1}} disabled={bulkLoading} onClick={topluYukle}>
+                  <LIcon name="Upload" size={14} color="#fff"/>
+                  {bulkLoading ? 'YÜKLENİYOR...' : `${bulkData.length} KAYIT YÜKLE`}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </Modal>
 

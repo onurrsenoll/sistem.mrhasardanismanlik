@@ -1,5 +1,5 @@
 const MR = window.MR || (window.MR = {});
-const {useState, useEffect} = React;
+const {useState, useEffect, useRef, useCallback} = React;
 
 const ASAMALAR = MR.ASAMALAR || [];
 
@@ -23,12 +23,36 @@ const asamaRenk = (a) => {
   return '#6b7280';
 };
 
-MR.DosyaListePage = ({setPage, user}) => {
-  const onSelect = (id) => setPage('dosya-detay-' + id);
-  return <MR._DosyaListesiInner setPage={setPage} onSelect={onSelect}/>;
+/* ── RAPOR SÜTUNLARI ── */
+const RAPOR_SUTUNLAR = [
+  {key:'dosya_no',       label:'DOSYA NO',             width:10},
+  {key:'tc_kimlik',      label:'T.C. NO',              width:10},
+  {key:'magdur_adi',     label:'ADI SOYADI',           width:12},
+  {key:'dosya_kaynagi',  label:'DOSYA KAYNAĞI',        width:8},
+  {key:'avukat_adi',     label:'AVUKATI',              width:10},
+  {key:'dosya_turu',     label:'DOSYA TÜRÜ',           width:5},
+  {key:'talep_turu',     label:'BAŞVURU TÜRÜ',         width:8},
+  {key:'sigorta_sirket', label:'DAVALI ŞİRKET',       width:10},
+  {key:'hasar_no',       label:'SİGORTA HASAR NO',    width:9},
+  {key:'acilis_tarihi',  label:'AÇILIŞ TARİHİ',       width:8},
+  {key:'asama',          label:'DOSYA AŞAMA DURUMU',   width:14},
+  {key:'created_at',     label:'KAYIT TARİHİ',        width:8}
+];
+
+/* ── TARİH FORMAT ── */
+const tarihFormat = () => {
+  const n = new Date();
+  const g = String(n.getDate()).padStart(2,'0');
+  const a = String(n.getMonth()+1).padStart(2,'0');
+  return `${g}.${a}.${n.getFullYear()} ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
 };
 
-MR._DosyaListesiInner = ({setPage, onSelect}) => {
+MR.DosyaListePage = ({setPage, user}) => {
+  const onSelect = (id) => setPage('dosya-detay-' + id);
+  return <MR._DosyaListesiInner setPage={setPage} onSelect={onSelect} user={user}/>;
+};
+
+MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
   const {C, S, LIcon, Badge, StatCard, Loading, EmptyState, Confirm, api} = MR;
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +60,8 @@ MR._DosyaListesiInner = ({setPage, onSelect}) => {
   const [turF, setTurF] = useState('');
   const [asamaF, setAsamaF] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [raporLoading, setRaporLoading] = useState(false);
+  const raporRef = useRef(null);
 
   const load = async () => {
     setLoading(true);
@@ -61,6 +87,296 @@ MR._DosyaListesiInner = ({setPage, onSelect}) => {
   const bhDosya = data.filter(d => d.dosya_turu === 'BH').length;
   const acikDosya = data.filter(d => d.asama !== 'DOSYA KAPANDI').length;
 
+  /* ═══════════════════════════════════════════════════════════
+     EXCEL RAPOR OLUŞTUR
+     ═══════════════════════════════════════════════════════════ */
+  const excelRaporOlustur = useCallback(() => {
+    if (data.length === 0) return;
+    setRaporLoading(true);
+
+    try {
+      /* Başlık satırları */
+      const wsData = [];
+      wsData.push(['MR HASAR DANIŞMANLIK - DOSYA TAKİP SİSTEMİ']);
+      wsData.push([`RAPOR TARİHİ: ${tarihFormat()}`]);
+      wsData.push([`TOPLAM: ${data.length} DOSYA | ADK: ${adkDosya} | BH: ${bhDosya} | AÇIK: ${acikDosya}`]);
+      if (turF || asamaF || search) {
+        let filtre = 'FİLTRE:';
+        if (search) filtre += ` ARAMA="${search}"`;
+        if (turF) filtre += ` TÜR=${turF}`;
+        if (asamaF) filtre += ` AŞAMA=${asamaF}`;
+        wsData.push([filtre]);
+      }
+      wsData.push([]); /* Boş satır */
+
+      /* Başlık satırı */
+      const basliklar = ['#', ...RAPOR_SUTUNLAR.map(s => s.label)];
+      wsData.push(basliklar);
+
+      /* Veri satırları */
+      data.forEach((d, i) => {
+        wsData.push([
+          i + 1,
+          d.dosya_no || '-',
+          d.tc_kimlik || '-',
+          d.magdur_adi || '-',
+          d.dosya_kaynagi || '-',
+          d.avukat_adi || '-',
+          d.dosya_turu || '-',
+          d.talep_turu || '-',
+          d.sigorta_sirket || '-',
+          d.hasar_no || '-',
+          d.acilis_tarihi || '-',
+          d.asama || '-',
+          d.created_at ? d.created_at.split(' ')[0] : '-'
+        ]);
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      /* Sütun genişlikleri */
+      ws['!cols'] = [
+        {wch:5},  /* # */
+        {wch:14}, /* DOSYA NO */
+        {wch:14}, /* TC NO */
+        {wch:22}, /* ADI SOYADI */
+        {wch:15}, /* DOSYA KAYNAĞI */
+        {wch:18}, /* AVUKATI */
+        {wch:8},  /* DOSYA TÜRÜ */
+        {wch:14}, /* BAŞVURU TÜRÜ */
+        {wch:25}, /* DAVALI ŞİRKET */
+        {wch:18}, /* SİGORTA HASAR NO */
+        {wch:14}, /* AÇILIŞ TARİHİ */
+        {wch:45}, /* DOSYA AŞAMA DURUMU */
+        {wch:14}  /* KAYIT TARİHİ */
+      ];
+
+      /* Birleşik hücreler (başlık satırları) */
+      ws['!merges'] = [
+        {s:{r:0,c:0}, e:{r:0,c:12}},
+        {s:{r:1,c:0}, e:{r:1,c:12}},
+        {s:{r:2,c:0}, e:{r:2,c:12}}
+      ];
+      if (turF || asamaF || search) {
+        ws['!merges'].push({s:{r:3,c:0}, e:{r:3,c:12}});
+      }
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'DOSYA LİSTESİ');
+      XLSX.writeFile(wb, `MR_HASAR_DOSYA_RAPORU_${new Date().toISOString().slice(0,10)}.xlsx`);
+    } catch(e) {
+      console.error('EXCEL RAPOR HATASI:', e);
+      alert('EXCEL RAPOR OLUŞTURULURKEN HATA OLUŞTU');
+    }
+
+    setRaporLoading(false);
+  }, [data, turF, asamaF, search, adkDosya, bhDosya, acikDosya]);
+
+  /* ═══════════════════════════════════════════════════════════
+     PDF RAPOR OLUŞTUR
+     ═══════════════════════════════════════════════════════════ */
+  const pdfRaporOlustur = useCallback(() => {
+    if (data.length === 0) return;
+    setRaporLoading(true);
+
+    try {
+      /* PDF için HTML oluştur */
+      const filtreBilgi = [];
+      if (search) filtreBilgi.push(`ARAMA: "${search}"`);
+      if (turF) filtreBilgi.push(`TÜR: ${turF}`);
+      if (asamaF) filtreBilgi.push(`AŞAMA: ${asamaF}`);
+
+      let html = `
+        <div style="font-family: Arial, Helvetica, sans-serif; padding: 10px; color: #1a1a1a;">
+          <!-- BAŞLIK -->
+          <div style="text-align: center; margin-bottom: 15px; border-bottom: 3px solid #2563eb; padding-bottom: 12px;">
+            <div style="font-size: 16px; font-weight: 800; color: #2563eb; letter-spacing: 1px;">MR HASAR DANIŞMANLIK</div>
+            <div style="font-size: 11px; color: #666; margin-top: 4px;">DOSYA TAKİP SİSTEMİ - DOSYA LİSTESİ RAPORU</div>
+            <div style="font-size: 9px; color: #999; margin-top: 4px;">RAPOR TARİHİ: ${tarihFormat()}</div>
+          </div>
+
+          <!-- ÖZET BİLGİ -->
+          <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 12px; font-size: 10px;">
+            <span><strong>TOPLAM:</strong> ${data.length} DOSYA</span>
+            <span><strong>ADK:</strong> ${adkDosya}</span>
+            <span><strong>BH:</strong> ${bhDosya}</span>
+            <span><strong>AÇIK:</strong> ${acikDosya}</span>
+          </div>
+
+          ${filtreBilgi.length > 0 ? `<div style="text-align:center; font-size:9px; color:#666; margin-bottom:10px;">FİLTRE: ${filtreBilgi.join(' | ')}</div>` : ''}
+
+          <!-- TABLO -->
+          <table style="width: 100%; border-collapse: collapse; font-size: 7px;">
+            <thead>
+              <tr style="background: #2563eb; color: white;">
+                <th style="padding: 5px 3px; text-align: left; border: 1px solid #1d4ed8; font-weight: 700; font-size: 6.5px;">#</th>
+                ${RAPOR_SUTUNLAR.map(s => `<th style="padding: 5px 3px; text-align: left; border: 1px solid #1d4ed8; font-weight: 700; font-size: 6.5px;">${s.label}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${data.map((d, i) => `
+                <tr style="background: ${i % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; color: #6b7280; font-size: 6.5px;">${i + 1}</td>
+                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-weight: 700; color: #2563eb; font-size: 7px;">${d.dosya_no || '-'}</td>
+                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-family: monospace; font-size: 6.5px;">${d.tc_kimlik || '-'}</td>
+                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-weight: 600; font-size: 7px;">${d.magdur_adi || '-'}</td>
+                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.dosya_kaynagi || '-'}</td>
+                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.avukat_adi || '-'}</td>
+                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; text-align: center; font-weight: 700; font-size: 7px;">${d.dosya_turu || '-'}</td>
+                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.talep_turu || '-'}</td>
+                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.sigorta_sirket || '-'}</td>
+                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-family: monospace; font-size: 6.5px;">${d.hasar_no || '-'}</td>
+                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.acilis_tarihi || '-'}</td>
+                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6px; max-width: 120px; word-wrap: break-word; overflow-wrap: break-word;">${d.asama || '-'}</td>
+                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.created_at ? d.created_at.split(' ')[0] : '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <!-- FOOTER -->
+          <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 8px; color: #999;">
+            MR HASAR DANIŞMANLIK - DOSYA TAKİP SİSTEMİ | ${tarihFormat()} | SAYFA
+          </div>
+        </div>
+      `;
+
+      /* html2pdf ile oluştur */
+      const container = document.createElement('div');
+      container.innerHTML = html;
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      document.body.appendChild(container);
+
+      const opt = {
+        margin:       [8, 5, 8, 5],
+        filename:     `MR_HASAR_DOSYA_RAPORU_${new Date().toISOString().slice(0,10)}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, letterRendering: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' },
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      html2pdf().set(opt).from(container).save().then(() => {
+        document.body.removeChild(container);
+        setRaporLoading(false);
+      }).catch((err) => {
+        console.error('PDF OLUŞTURMA HATASI:', err);
+        document.body.removeChild(container);
+        setRaporLoading(false);
+        alert('PDF RAPOR OLUŞTURULURKEN HATA OLUŞTU');
+      });
+    } catch(e) {
+      console.error('PDF RAPOR HATASI:', e);
+      setRaporLoading(false);
+      alert('PDF RAPOR OLUŞTURULURKEN HATA OLUŞTU');
+    }
+  }, [data, turF, asamaF, search, adkDosya, bhDosya, acikDosya]);
+
+  /* ═══════════════════════════════════════════════════════════
+     YAZDIRMA
+     ═══════════════════════════════════════════════════════════ */
+  const yazdirRapor = useCallback(() => {
+    if (data.length === 0) return;
+
+    const filtreBilgi = [];
+    if (search) filtreBilgi.push(`ARAMA: "${search}"`);
+    if (turF) filtreBilgi.push(`TÜR: ${turF}`);
+    if (asamaF) filtreBilgi.push(`AŞAMA: ${asamaF}`);
+
+    const printHtml = `
+      <!DOCTYPE html>
+      <html lang="tr">
+      <head>
+        <meta charset="UTF-8">
+        <title>MR HASAR DANIŞMANLIK - DOSYA LİSTESİ</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: Arial, Helvetica, sans-serif; font-size: 9px; color: #1a1a1a; }
+          @page { size: A4 landscape; margin: 10mm 8mm; }
+          .header { text-align: center; margin-bottom: 12px; border-bottom: 3px solid #2563eb; padding-bottom: 10px; }
+          .header h1 { font-size: 18px; color: #2563eb; letter-spacing: 1px; margin-bottom: 4px; }
+          .header .sub { font-size: 11px; color: #666; }
+          .header .date { font-size: 9px; color: #999; margin-top: 3px; }
+          .ozet { display: flex; justify-content: center; gap: 25px; margin-bottom: 10px; font-size: 10px; }
+          .filtre { text-align: center; font-size: 9px; color: #666; margin-bottom: 8px; }
+          table { width: 100%; border-collapse: collapse; font-size: 7.5px; }
+          th { background: #2563eb; color: white; padding: 5px 4px; text-align: left; border: 1px solid #1d4ed8; font-weight: 700; font-size: 7px; }
+          td { padding: 4px; border: 1px solid #d1d5db; font-size: 7.5px; }
+          tr:nth-child(even) { background: #f8fafc; }
+          .dosya-no { font-weight: 700; color: #2563eb; }
+          .tc { font-family: monospace; font-size: 7px; }
+          .adi { font-weight: 600; }
+          .asama { font-size: 6.5px; max-width: 130px; word-wrap: break-word; }
+          .footer { text-align: center; margin-top: 12px; padding-top: 8px; border-top: 1px solid #d1d5db; font-size: 8px; color: #999; }
+          @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>MR HASAR DANIŞMANLIK</h1>
+          <div class="sub">DOSYA TAKİP SİSTEMİ - DOSYA LİSTESİ RAPORU</div>
+          <div class="date">RAPOR TARİHİ: ${tarihFormat()}</div>
+        </div>
+
+        <div class="ozet">
+          <span><strong>TOPLAM:</strong> ${data.length} DOSYA</span>
+          <span><strong>ADK:</strong> ${adkDosya}</span>
+          <span><strong>BH:</strong> ${bhDosya}</span>
+          <span><strong>AÇIK:</strong> ${acikDosya}</span>
+        </div>
+
+        ${filtreBilgi.length > 0 ? `<div class="filtre">FİLTRE: ${filtreBilgi.join(' | ')}</div>` : ''}
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              ${RAPOR_SUTUNLAR.map(s => `<th>${s.label}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map((d, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td class="dosya-no">${d.dosya_no || '-'}</td>
+                <td class="tc">${d.tc_kimlik || '-'}</td>
+                <td class="adi">${d.magdur_adi || '-'}</td>
+                <td>${d.dosya_kaynagi || '-'}</td>
+                <td>${d.avukat_adi || '-'}</td>
+                <td style="text-align:center; font-weight:700;">${d.dosya_turu || '-'}</td>
+                <td>${d.talep_turu || '-'}</td>
+                <td>${d.sigorta_sirket || '-'}</td>
+                <td class="tc">${d.hasar_no || '-'}</td>
+                <td>${d.acilis_tarihi || '-'}</td>
+                <td class="asama">${d.asama || '-'}</td>
+                <td>${d.created_at ? d.created_at.split(' ')[0] : '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          MR HASAR DANIŞMANLIK - DOSYA TAKİP SİSTEMİ | ${tarihFormat()}
+        </div>
+
+        <script>
+          window.onload = function() { window.print(); };
+        </script>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=1200,height=800');
+    if (printWindow) {
+      printWindow.document.write(printHtml);
+      printWindow.document.close();
+    } else {
+      alert('YAZICI PENCERESİ AÇILAMADI. LÜTFEN POPUP ENGELLEYİCİYİ KONTROL EDİN.');
+    }
+  }, [data, turF, asamaF, search, adkDosya, bhDosya, acikDosya]);
+
   const thS = {padding:'8px 6px',textAlign:'left',fontWeight:600,fontSize:9,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color:C.textMuted,position:'sticky',top:0,background:C.bgCard,zIndex:1};
   const tdS = {padding:'6px 6px',fontSize:10,whiteSpace:'nowrap',borderBottom:`1px solid ${C.border}22`};
 
@@ -76,7 +392,7 @@ MR._DosyaListesiInner = ({setPage, onSelect}) => {
 
       {/* DOSYA LİSTESİ */}
       <div style={S.card}>
-        {/* FİLTRELER */}
+        {/* FİLTRELER + RAPOR BUTONLARI */}
         <div style={{padding:'10px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:`1px solid ${C.border}`,flexWrap:'wrap',gap:8}}>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             <LIcon name="List" size={14} color={C.accent}/>
@@ -95,11 +411,43 @@ MR._DosyaListesiInner = ({setPage, onSelect}) => {
               <option value="">AŞAMA: TÜMÜ</option>
               {ASAMALAR.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
+
+            {/* RAPOR BUTONLARI AYIRICI */}
+            {data.length > 0 && (
+              <>
+                <div style={{width:1, height:24, background:C.border, margin:'0 2px'}}/>
+                {/* PDF RAPOR */}
+                <button style={{...S.btn,...S.btnG,fontSize:9,padding:'5px 8px',display:'flex',alignItems:'center',gap:4}}
+                  onClick={pdfRaporOlustur} disabled={raporLoading} title="PDF RAPOR İNDİR">
+                  <LIcon name="FileText" size={11} color="#ef4444"/> PDF
+                </button>
+                {/* EXCEL RAPOR */}
+                <button style={{...S.btn,...S.btnG,fontSize:9,padding:'5px 8px',display:'flex',alignItems:'center',gap:4}}
+                  onClick={excelRaporOlustur} disabled={raporLoading} title="EXCEL RAPOR İNDİR">
+                  <LIcon name="FileSpreadsheet" size={11} color="#22c55e"/> EXCEL
+                </button>
+                {/* YAZDIR */}
+                <button style={{...S.btn,...S.btnG,fontSize:9,padding:'5px 8px',display:'flex',alignItems:'center',gap:4}}
+                  onClick={yazdirRapor} disabled={raporLoading} title="YAZDIR">
+                  <LIcon name="Printer" size={11} color={C.accent}/> YAZDIR
+                </button>
+              </>
+            )}
+
             <button style={{...S.btn,...S.btnP,fontSize:10,padding:'6px 14px'}} onClick={() => setPage('dosya-yeni')}>
               <LIcon name="Plus" size={12} color="#fff"/> YENİ
             </button>
           </div>
         </div>
+
+        {/* RAPOR YÜKLEME GÖSTERGESİ */}
+        {raporLoading && (
+          <div style={{padding:'10px 14px', background:`${C.accent}08`, borderBottom:`1px solid ${C.border}22`,
+            display:'flex', alignItems:'center', gap:8}}>
+            <div style={{width:14,height:14,border:'2px solid transparent',borderTopColor:C.accent,borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
+            <span style={{fontSize:11, color:C.accent, fontWeight:600}}>RAPOR OLUŞTURULUYOR...</span>
+          </div>
+        )}
 
         {/* TABLO */}
         {loading ? <Loading/> : data.length === 0 ? (

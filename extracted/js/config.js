@@ -117,6 +117,7 @@ MR.api = {
   tanimCreate(d) { return this.req('/tanim/create.php', { method: 'POST', body: JSON.stringify(d) }); },
   tanimUpdate(d) { return this.req('/tanim/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
   tanimDelete(id) { return this.req('/tanim/delete.php?id=' + id, { method: 'DELETE' }); },
+  tanimBulkCreate(d) { return this.req('/tanim/bulk-create.php', { method: 'POST', body: JSON.stringify(d) }); },
   // SERVİS
   servisList(p = {}) { return this.req('/servis/list.php?' + new URLSearchParams(p)); },
   servisGet(id) { return this.req('/servis/get.php?id=' + id); },
