@@ -1009,6 +1009,40 @@ const AyarlarTab = () => {
         </div>
       </div>
 
+      {/* ─── BÖLÜM 4: GOOGLE GEMİNİ API AYARLARI ─── */}
+      <div style={{...S.card, marginBottom: 16}}>
+        <div style={{...S.cardHead, padding: '12px 16px'}}>
+          <LIcon name="Sparkles" size={14} color={C.warning}/>
+          <span style={{fontSize: 12, fontWeight: 700}}>GOOGLE GEMİNİ AI AYARLARI</span>
+          <span style={{...S.badge(C.warning), marginLeft: 8, fontSize: 9}}>MOTİVASYON SÖZLERİ</span>
+        </div>
+        <div style={{padding: 16}}>
+          <div style={{
+            padding: '10px 14px', background: `${C.accent}10`, borderRadius: 8,
+            border: `1px solid ${C.accent}20`, marginBottom: 16, fontSize: 11, color: C.textSec, lineHeight: 1.6
+          }}>
+            <LIcon name="Info" size={13} color={C.accent} style={{verticalAlign: 'middle'}}/>{' '}
+            HER SAYFA GEÇİŞİNDE GOOGLE GEMİNİ AI İLE MOTİVE EDİCİ SÖZLER GÖSTERİLİR.
+            API ANAHTARI LİMİTİ DOLDUĞUNDA BURADAN YENİ ANAHTAR GİREBİLİRSİNİZ.
+            BOŞ BIRAKIRSANIZ VARSAYILAN ANAHTAR KULLANILIR.
+          </div>
+          <div style={{display: 'grid', gap: 16}}>
+            <div>
+              <label style={S.label}>GOOGLE GEMİNİ API ANAHTARI</label>
+              <div style={{display: 'flex', gap: 8}}>
+                <input style={{...S.input, flex: 1, fontFamily: 'monospace', fontSize: 12, letterSpacing: 0.5}}
+                  value={ayarlar.gemini_api_key || ''}
+                  onChange={e => up('gemini_api_key', e.target.value)}
+                  placeholder="AIzaSy... (BOŞ BIRAKIRSANIZ VARSAYILAN KULLANILIR)"/>
+              </div>
+              <div style={{fontSize: 10, color: C.textMuted, marginTop: 6}}>
+                GOOGLE AI STUDIO'DAN ÜCRETSİZ API ANAHTARI ALABİLİRSİNİZ: AISTUDIO.GOOGLE.COM
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* KAYDET BUTONU */}
       <div style={{
         ...S.card, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
