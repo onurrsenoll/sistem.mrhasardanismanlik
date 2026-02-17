@@ -55,6 +55,7 @@ const MENU = [
     {id:'sistem-kullanici', label:'KULLANICI YÖNETİMİ', icon:'UserCog'},
     {id:'sistem-yetki', label:'YETKİ YÖNETİMİ', icon:'KeyRound'},
     {id:'sistem-ayarlar', label:'FİRMA AYARLARI', icon:'Settings'},
+    {id:'sistem-sms', label:'SMS BİLDİRİM', icon:'MessageSquare'},
     {id:'sistem-netsantral', label:'NETSANTRAL', icon:'Phone'},
     {id:'sistem-log', label:'LOG KAYITLARI', icon:'FileText'}
   ]}
