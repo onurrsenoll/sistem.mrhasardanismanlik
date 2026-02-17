@@ -753,7 +753,31 @@ CREATE TABLE IF NOT EXISTS sms_loglari (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
 -- ═══════════════════════════════════════════
--- 32. NETSANTRAL BEKLEYEN ÇAĞRILAR
+-- 32. GELEN SMSLER (İNTERAKTİF SMS WEBHOOK)
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS gelen_smsler (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    message_id VARCHAR(50) DEFAULT NULL COMMENT 'NetGSM messageId',
+    gonderen VARCHAR(30) NOT NULL COMMENT 'Gonderenin telefon numarasi',
+    alici VARCHAR(30) DEFAULT NULL COMMENT 'Alici numara (subscriberNumber)',
+    mesaj TEXT NOT NULL,
+    mesaj_tarihi DATETIME DEFAULT NULL COMMENT 'NetGSM messageDateTime',
+    crm_id INT DEFAULT NULL COMMENT 'CRM kaydı varsa ID',
+    dosya_id INT DEFAULT NULL COMMENT 'İlişkili dosya varsa ID',
+    gonderen_adi VARCHAR(100) DEFAULT NULL,
+    okundu TINYINT(1) DEFAULT 0,
+    islendi TINYINT(1) DEFAULT 0,
+    notlar TEXT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_gonderen (gonderen),
+    INDEX idx_crm (crm_id),
+    INDEX idx_okundu (okundu),
+    INDEX idx_tarih (created_at),
+    INDEX idx_message_id (message_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 33. NETSANTRAL BEKLEYEN ÇAĞRILAR
 -- ═══════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS netsantral_bekleyen (
     id INT AUTO_INCREMENT PRIMARY KEY,

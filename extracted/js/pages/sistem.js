@@ -1309,6 +1309,7 @@ const LogTab = () => {
    ════════════════════════════════════════════════════════════════ */
 const SmsTab = () => {
   const {C, S, LIcon, Badge, FormGroup, Loading, api, fmt} = MR;
+  const [smsAltTab, setSmsAltTab] = useState('ayarlar');
   const [ayarlar, setAyarlar] = useState({sms_aktif:'0',sms_kullanici:'',sms_sifre:'',sms_baslik:''});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1319,6 +1320,13 @@ const SmsTab = () => {
   const [logLoading, setLogLoading] = useState(false);
   const [logPage, setLogPage] = useState(1);
   const [logTotal, setLogTotal] = useState(0);
+  // GELEN SMS STATE
+  const [gelenSmsler, setGelenSmsler] = useState([]);
+  const [gelenLoading, setGelenLoading] = useState(false);
+  const [gelenPage, setGelenPage] = useState(1);
+  const [gelenTotal, setGelenTotal] = useState(0);
+  const [gelenOkunmamis, setGelenOkunmamis] = useState(0);
+  const [gelenArama, setGelenArama] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -1338,6 +1346,7 @@ const SmsTab = () => {
       }
       setLoading(false);
       smsLoglariYukle(1);
+      gelenSmsYukle(1, '');
     })();
   }, []);
 
@@ -1350,6 +1359,25 @@ const SmsTab = () => {
       setLogPage(page);
     }
     setLogLoading(false);
+  };
+
+  const gelenSmsYukle = async (page, arama) => {
+    setGelenLoading(true);
+    const p = {page, limit: 20};
+    if (arama) p.arama = arama;
+    const r = await api.smsGelenList(p);
+    if (r?.success && r.data) {
+      setGelenSmsler(r.data.items || []);
+      setGelenTotal(r.data.pagination?.total || 0);
+      setGelenOkunmamis(r.data.okunmamis || 0);
+      setGelenPage(page);
+    }
+    setGelenLoading(false);
+  };
+
+  const gelenOkunduYap = async (id) => {
+    const r = await api.smsGelenOkundu(id ? {id} : {hepsi: true});
+    if (r?.success) gelenSmsYukle(gelenPage, gelenArama);
   };
 
   const kaydet = async () => {
@@ -1386,6 +1414,281 @@ const SmsTab = () => {
 
   return (
     <div style={{display:'flex', flexDirection:'column', gap:16}}>
+      {/* SMS ALT TAB NAVİGASYONU */}
+      <div style={{display:'flex', gap:4, padding:4, background:C.bgHover, borderRadius:10}}>
+        {[
+          {id:'ayarlar', label:'SMS AYARLARI', icon:'Settings', color:C.accent},
+          {id:'gelen', label:'GELEN SMS', icon:'MessageCircle', color:C.success, badge: gelenOkunmamis},
+          {id:'gonderilenler', label:'GÖNDERİLEN SMS', icon:'Send', color:C.warning}
+        ].map(t => (
+          <div key={t.id} onClick={() => { setSmsAltTab(t.id); if(t.id==='gelen') gelenSmsYukle(1, gelenArama); }}
+            style={{flex:1, padding:'10px 16px', borderRadius:8, cursor:'pointer', textAlign:'center',
+              background: smsAltTab===t.id ? C.bgCard : 'transparent',
+              border: smsAltTab===t.id ? `1px solid ${C.border}` : '1px solid transparent',
+              boxShadow: smsAltTab===t.id ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
+              transition:'all .2s', display:'flex', alignItems:'center', justifyContent:'center', gap:8}}>
+            <LIcon name={t.icon} size={14} color={smsAltTab===t.id ? t.color : C.textMuted}/>
+            <span style={{fontSize:11, fontWeight: smsAltTab===t.id ? 700 : 500,
+              color: smsAltTab===t.id ? C.text : C.textMuted}}>{t.label}</span>
+            {t.badge > 0 && (
+              <span style={{background:C.danger, color:'#fff', fontSize:9, fontWeight:800,
+                padding:'2px 7px', borderRadius:10, minWidth:18, textAlign:'center'}}>
+                {t.badge}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* ═══ GELEN SMS PANELİ ═══ */}
+      {smsAltTab === 'gelen' && (
+        <div style={{display:'flex', flexDirection:'column', gap:16}}>
+          {/* GELEN SMS BANNER */}
+          <div style={{padding:16, background:`${C.success}11`, borderRadius:12, border:`1px solid ${C.success}33`, display:'flex', alignItems:'center', gap:12}}>
+            <div style={{width:44, height:44, borderRadius:12, background:`${C.success}22`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+              <LIcon name="MessageCircle" size={22} color={C.success}/>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:14, fontWeight:800, color:C.success}}>GELEN SMS KUTUSU</div>
+              <div style={{fontSize:11, color:C.textSec, marginTop:2}}>
+                NETGSM İNTERAKTİF SMS İLE GELEN MESAJLAR OTOMATİK OLARAK BURADA LİSTELENİR.
+              </div>
+            </div>
+            {gelenOkunmamis > 0 && (
+              <div style={{textAlign:'center'}}>
+                <div style={{fontSize:24, fontWeight:900, color:C.danger}}>{gelenOkunmamis}</div>
+                <div style={{fontSize:9, color:C.textMuted}}>OKUNMAMIŞ</div>
+              </div>
+            )}
+          </div>
+
+          {/* ARAMA + İŞLEMLER */}
+          <div style={{display:'flex', gap:10, alignItems:'center'}}>
+            <div style={{flex:1, position:'relative'}}>
+              <LIcon name="Search" size={14} color={C.textMuted} style={{position:'absolute', left:12, top:10}}/>
+              <input value={gelenArama} onChange={e => setGelenArama(e.target.value)}
+                onKeyDown={e => e.key==='Enter' && gelenSmsYukle(1, gelenArama)}
+                placeholder="TELEFON VEYA MESAJ İÇERİĞİNDE ARA..."
+                style={{...S.input, paddingLeft:36, fontSize:12}}/>
+            </div>
+            <button onClick={() => gelenSmsYukle(1, gelenArama)}
+              style={{...S.btn, ...S.btnP, fontSize:10, padding:'10px 16px'}}>
+              <LIcon name="Search" size={13} color="#fff"/> ARA
+            </button>
+            {gelenOkunmamis > 0 && (
+              <button onClick={() => gelenOkunduYap(null)}
+                style={{...S.btn, ...S.btnS, fontSize:10, padding:'10px 16px'}}>
+                <LIcon name="CheckCircle" size={13} color="#fff"/> TÜMÜNÜ OKUNDU YAP
+              </button>
+            )}
+            <button onClick={() => gelenSmsYukle(1, gelenArama)}
+              style={{...S.btn, ...S.btnG, fontSize:10, padding:'10px 16px'}}>
+              <LIcon name="RefreshCw" size={13}/> YENİLE
+            </button>
+          </div>
+
+          {/* İSTATİSTİKLER */}
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10}}>
+            <div style={{...S.stat, textAlign:'center'}}>
+              <div style={{fontSize:20, fontWeight:800, color:C.success}}>{gelenTotal}</div>
+              <div style={{fontSize:9, color:C.textMuted, marginTop:2}}>TOPLAM GELEN</div>
+            </div>
+            <div style={{...S.stat, textAlign:'center'}}>
+              <div style={{fontSize:20, fontWeight:800, color:C.danger}}>{gelenOkunmamis}</div>
+              <div style={{fontSize:9, color:C.textMuted, marginTop:2}}>OKUNMAMIŞ</div>
+            </div>
+            <div style={{...S.stat, textAlign:'center'}}>
+              <div style={{fontSize:20, fontWeight:800, color:C.accent}}>{gelenTotal - gelenOkunmamis}</div>
+              <div style={{fontSize:9, color:C.textMuted, marginTop:2}}>OKUNMUŞ</div>
+            </div>
+          </div>
+
+          {/* GELEN SMS TABLOSU */}
+          <div style={S.card}>
+            <div style={{...S.cardHead, justifyContent:'space-between'}}>
+              <div style={{display:'flex', alignItems:'center', gap:8}}>
+                <LIcon name="Inbox" size={16} color={C.success}/>
+                <span style={{fontSize:13, fontWeight:700}}>GELEN MESAJLAR</span>
+                <span style={{fontSize:10, color:C.textMuted}}>({gelenTotal} KAYIT)</span>
+              </div>
+            </div>
+            {gelenLoading ? <div style={{padding:30, textAlign:'center'}}><Loading/></div> : (
+              gelenSmsler.length > 0 ? (
+                <div>
+                  {gelenSmsler.map((sms, i) => (
+                    <div key={i} onClick={() => { if(!sms.okundu || sms.okundu==='0' || sms.okundu===0) gelenOkunduYap(sms.id); }}
+                      style={{padding:'14px 20px', borderBottom:`1px solid ${C.border}22`, cursor:'pointer',
+                        background: (!sms.okundu || sms.okundu==='0' || sms.okundu===0) ? `${C.accent}06` : 'transparent',
+                        transition:'all .2s'}}>
+                      <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:8}}>
+                        <div style={{width:36, height:36, borderRadius:18,
+                          background: (!sms.okundu || sms.okundu==='0' || sms.okundu===0) ? `${C.success}22` : `${C.textMuted}15`,
+                          display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+                          <LIcon name={(!sms.okundu || sms.okundu==='0' || sms.okundu===0) ? 'Mail' : 'MailOpen'} size={16}
+                            color={(!sms.okundu || sms.okundu==='0' || sms.okundu===0) ? C.success : C.textMuted}/>
+                        </div>
+                        <div style={{flex:1}}>
+                          <div style={{display:'flex', alignItems:'center', gap:8}}>
+                            <span style={{fontSize:12, fontWeight: (!sms.okundu || sms.okundu==='0' || sms.okundu===0) ? 800 : 600, color:C.text}}>
+                              {sms.gonderen_adi || 'BİLİNMEYEN'}
+                            </span>
+                            <span style={{fontSize:11, fontFamily:'monospace', color:C.textSec}}>{sms.gonderen}</span>
+                            {sms.dosya_no && <Badge text={sms.dosya_no} color={C.accent}/>}
+                            {(!sms.okundu || sms.okundu==='0' || sms.okundu===0) && (
+                              <span style={{width:8, height:8, borderRadius:4, background:C.success, flexShrink:0}}/>
+                            )}
+                          </div>
+                          <div style={{fontSize:10, color:C.textMuted, marginTop:2}}>
+                            {sms.mesaj_tarihi ? new Date(sms.mesaj_tarihi).toLocaleString('tr-TR') : (sms.created_at ? new Date(sms.created_at).toLocaleString('tr-TR') : '-')}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{fontSize:12, color: (!sms.okundu || sms.okundu==='0' || sms.okundu===0) ? C.text : C.textSec,
+                        lineHeight:1.6, marginLeft:48, fontWeight: (!sms.okundu || sms.okundu==='0' || sms.okundu===0) ? 600 : 400}}>
+                        {sms.mesaj}
+                      </div>
+                    </div>
+                  ))}
+                  {/* SAYFALAMA */}
+                  {gelenTotal > 20 && (
+                    <div style={{padding:12, display:'flex', justifyContent:'center', gap:6}}>
+                      {Array.from({length: Math.ceil(gelenTotal / 20)}, (_, i) => i + 1).slice(0, 10).map(p => (
+                        <div key={p} onClick={() => gelenSmsYukle(p, gelenArama)}
+                          style={{width:28, height:28, borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center',
+                            fontSize:10, fontWeight: p===gelenPage ? 800 : 500, cursor:'pointer',
+                            background: p===gelenPage ? `${C.accent}22` : 'transparent',
+                            color: p===gelenPage ? C.accent : C.textMuted,
+                            border:`1px solid ${p===gelenPage ? C.accent+'33' : 'transparent'}`}}>
+                          {p}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{padding:40, textAlign:'center'}}>
+                  <LIcon name="Inbox" size={36} color={C.textMuted} style={{opacity:0.2}}/>
+                  <div style={{fontSize:13, fontWeight:600, color:C.textMuted, marginTop:12}}>HENÜZ GELEN SMS BULUNMUYOR</div>
+                  <div style={{fontSize:10, color:C.textMuted, marginTop:4}}>NETGSM İNTERAKTİF SMS WEBHOOK AKTİF EDİLDİĞİNDE GELEN MESAJLAR BURADA GÖRÜNECEK</div>
+                </div>
+              )
+            )}
+          </div>
+
+          {/* WEBHOOK BİLGİ */}
+          <div style={S.card}>
+            <div style={{...S.cardHead, background:`${C.cyan}06`}}>
+              <LIcon name="Webhook" size={16} color={C.cyan}/>
+              <span style={{fontSize:13, fontWeight:700}}>WEBHOOK KURULUMU</span>
+            </div>
+            <div style={{padding:20, fontSize:11, color:C.textSec, lineHeight:1.8}}>
+              <div style={{marginBottom:12}}>NETGSM PORTALINDAN AŞAĞIDAKİ AYARLARI YAPIN:</div>
+              <div style={{display:'flex', gap:8, marginBottom:8}}>
+                <div style={{width:24, height:24, borderRadius:12, background:`${C.accent}22`, display:'flex',
+                  alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:11, fontWeight:800, color:C.accent}}>1</div>
+                <div><strong>PORTAL.NETGSM.COM.TR</strong> > SMS İŞLEMLERİ > İNTERAKTİF SMS > URL YÖNLENDİR</div>
+              </div>
+              <div style={{display:'flex', gap:8, marginBottom:8}}>
+                <div style={{width:24, height:24, borderRadius:12, background:`${C.success}22`, display:'flex',
+                  alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:11, fontWeight:800, color:C.success}}>2</div>
+                <div>URL ADRESİ: <code style={{background:C.bgHover, padding:'2px 8px', borderRadius:4, fontFamily:'monospace', fontSize:11}}>
+                  {(ayarlar.site_url || 'https://sistem.mrhasardanismanlik.com')}/api/v1/sms/webhook.php
+                </code></div>
+              </div>
+              <div style={{display:'flex', gap:8, marginBottom:8}}>
+                <div style={{width:24, height:24, borderRadius:12, background:`${C.warning}22`, display:'flex',
+                  alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:11, fontWeight:800, color:C.warning}}>3</div>
+                <div>HEADERS: <code style={{background:C.bgHover, padding:'2px 8px', borderRadius:4, fontFamily:'monospace', fontSize:11}}>
+                  xapi-key:mr_hasar_2026
+                </code></div>
+              </div>
+              <div style={{display:'flex', gap:8}}>
+                <div style={{width:24, height:24, borderRadius:12, background:`${C.purple}22`, display:'flex',
+                  alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:11, fontWeight:800, color:C.purple}}>4</div>
+                <div>BASICAUTH: <strong>BOŞ BIRAKIN</strong> (XAPI-KEY YETERLİ)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ GÖNDERİLEN SMS PANELİ (MEVCUT LOG) ═══ */}
+      {smsAltTab === 'gonderilenler' && (
+        <div style={{display:'flex', flexDirection:'column', gap:16}}>
+          {/* SMS LOG TABLOSU */}
+          <div style={S.card}>
+            <div style={{...S.cardHead, justifyContent:'space-between'}}>
+              <div style={{display:'flex', alignItems:'center', gap:8}}>
+                <LIcon name="List" size={16} color={C.accent}/>
+                <span style={{fontSize:13, fontWeight:700}}>SMS GÖNDERİM GEÇMİŞİ</span>
+                <span style={{fontSize:10, color:C.textMuted}}>({logTotal} KAYIT)</span>
+              </div>
+              <button onClick={() => smsLoglariYukle(1)} style={{...S.btn, ...S.btnG, fontSize:10, padding:'5px 12px'}}>
+                <LIcon name="RefreshCw" size={12}/> YENİLE
+              </button>
+            </div>
+            {logLoading ? <div style={{padding:30, textAlign:'center'}}><Loading/></div> : (
+              loglar.length > 0 ? (
+                <div>
+                  <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
+                    <thead>
+                      <tr style={{background:C.bgHover}}>
+                        {['TARİH','TELEFON','DOSYA NO','DURUM','MESAJ','KULLANICI'].map(h =>
+                          <th key={h} style={{padding:'8px 10px', textAlign:'left', color:C.textMuted, fontWeight:600, fontSize:9, borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loglar.map((log, i) => (
+                        <tr key={i} style={{borderBottom:`1px solid ${C.border}22`}}>
+                          <td style={{padding:'8px 10px', fontSize:10, color:C.textMuted, whiteSpace:'nowrap'}}>
+                            {log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-'}
+                          </td>
+                          <td style={{padding:'8px 10px', fontFamily:'monospace', fontSize:11, fontWeight:600}}>{log.telefon || '-'}</td>
+                          <td style={{padding:'8px 10px'}}>
+                            {log.dosya_no ? <Badge text={log.dosya_no} color={C.accent}/> : '-'}
+                          </td>
+                          <td style={{padding:'8px 10px'}}>
+                            <Badge text={log.durum === 'gonderildi' ? 'GÖNDERİLDİ' : log.durum === 'hata' ? 'HATA' : (log.durum || '').toUpperCase()} color={durumRenk(log.durum)}/>
+                          </td>
+                          <td style={{padding:'8px 10px', fontSize:10, color:C.textSec, maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                            {log.sonuc_mesaj || log.mesaj || '-'}
+                          </td>
+                          <td style={{padding:'8px 10px', fontSize:10, color:C.textMuted}}>{log.kullanici_adi || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {logTotal > 15 && (
+                    <div style={{padding:12, display:'flex', justifyContent:'center', gap:6}}>
+                      {Array.from({length: Math.ceil(logTotal / 15)}, (_, i) => i + 1).slice(0, 10).map(p => (
+                        <div key={p} onClick={() => smsLoglariYukle(p)}
+                          style={{width:28, height:28, borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center',
+                            fontSize:10, fontWeight: p===logPage ? 800 : 500, cursor:'pointer',
+                            background: p===logPage ? `${C.accent}22` : 'transparent',
+                            color: p===logPage ? C.accent : C.textMuted,
+                            border:`1px solid ${p===logPage ? C.accent+'33' : 'transparent'}`}}>
+                          {p}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{padding:40, textAlign:'center'}}>
+                  <LIcon name="MessageSquare" size={36} color={C.textMuted} style={{opacity:0.2}}/>
+                  <div style={{fontSize:13, fontWeight:600, color:C.textMuted, marginTop:12}}>HENÜZ SMS GÖNDERİMİ YAPILMADI</div>
+                  <div style={{fontSize:10, color:C.textMuted, marginTop:4}}>DOSYA DURUMU DEĞİŞTİĞİNDE SMS GÖNDERİMLERİ BURADA GÖRÜNECEK</div>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ SMS AYARLARI PANELİ ═══ */}
+      {smsAltTab === 'ayarlar' && (
+        <div style={{display:'flex', flexDirection:'column', gap:16}}>
       {/* BİLGİ BANNER */}
       <div style={{padding:16, background:`${C.accent}11`, borderRadius:12, border:`1px solid ${C.accent}33`, display:'flex', alignItems:'center', gap:12}}>
         <div style={{width:44, height:44, borderRadius:12, background:`${C.accent}22`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
@@ -1544,75 +1847,8 @@ const SmsTab = () => {
         </div>
       </div>
 
-      {/* SMS LOG TABLOSU */}
-      <div style={S.card}>
-        <div style={{...S.cardHead, justifyContent:'space-between'}}>
-          <div style={{display:'flex', alignItems:'center', gap:8}}>
-            <LIcon name="List" size={16} color={C.accent}/>
-            <span style={{fontSize:13, fontWeight:700}}>SMS GÖNDERİM GEÇMİŞİ</span>
-            <span style={{fontSize:10, color:C.textMuted}}>({logTotal} KAYIT)</span>
-          </div>
-          <button onClick={() => smsLoglariYukle(1)} style={{...S.btn, ...S.btnG, fontSize:10, padding:'5px 12px'}}>
-            <LIcon name="RefreshCw" size={12}/> YENİLE
-          </button>
         </div>
-        {logLoading ? <div style={{padding:30, textAlign:'center'}}><Loading/></div> : (
-          loglar.length > 0 ? (
-            <div>
-              <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
-                <thead>
-                  <tr style={{background:C.bgHover}}>
-                    {['TARİH','TELEFON','DOSYA NO','DURUM','MESAJ','KULLANICI'].map(h =>
-                      <th key={h} style={{padding:'8px 10px', textAlign:'left', color:C.textMuted, fontWeight:600, fontSize:9, borderBottom:`1px solid ${C.border}`}}>{h}</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {loglar.map((log, i) => (
-                    <tr key={i} style={{borderBottom:`1px solid ${C.border}22`}}>
-                      <td style={{padding:'8px 10px', fontSize:10, color:C.textMuted, whiteSpace:'nowrap'}}>
-                        {log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-'}
-                      </td>
-                      <td style={{padding:'8px 10px', fontFamily:'monospace', fontSize:11, fontWeight:600}}>{log.telefon || '-'}</td>
-                      <td style={{padding:'8px 10px'}}>
-                        {log.dosya_no ? <Badge text={log.dosya_no} color={C.accent}/> : '-'}
-                      </td>
-                      <td style={{padding:'8px 10px'}}>
-                        <Badge text={log.durum === 'gonderildi' ? 'GÖNDERİLDİ' : log.durum === 'hata' ? 'HATA' : (log.durum || '').toUpperCase()} color={durumRenk(log.durum)}/>
-                      </td>
-                      <td style={{padding:'8px 10px', fontSize:10, color:C.textSec, maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
-                        {log.sonuc_mesaj || log.mesaj || '-'}
-                      </td>
-                      <td style={{padding:'8px 10px', fontSize:10, color:C.textMuted}}>{log.kullanici_adi || '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {/* SAYFALAMA */}
-              {logTotal > 15 && (
-                <div style={{padding:12, display:'flex', justifyContent:'center', gap:6}}>
-                  {Array.from({length: Math.ceil(logTotal / 15)}, (_, i) => i + 1).slice(0, 10).map(p => (
-                    <div key={p} onClick={() => smsLoglariYukle(p)}
-                      style={{width:28, height:28, borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center',
-                        fontSize:10, fontWeight: p===logPage ? 800 : 500, cursor:'pointer',
-                        background: p===logPage ? `${C.accent}22` : 'transparent',
-                        color: p===logPage ? C.accent : C.textMuted,
-                        border:`1px solid ${p===logPage ? C.accent+'33' : 'transparent'}`}}>
-                      {p}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div style={{padding:40, textAlign:'center'}}>
-              <LIcon name="MessageSquare" size={36} color={C.textMuted} style={{opacity:0.2}}/>
-              <div style={{fontSize:13, fontWeight:600, color:C.textMuted, marginTop:12}}>HENÜZ SMS GÖNDERİMİ YAPILMADI</div>
-              <div style={{fontSize:10, color:C.textMuted, marginTop:4}}>DOSYA DURUMU DEĞİŞTİĞİNDE SMS GÖNDERİMLERİ BURADA GÖRÜNECEK</div>
-            </div>
-          )
-        )}
-      </div>
+      )}
     </div>
   );
 };

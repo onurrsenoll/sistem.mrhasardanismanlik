@@ -190,6 +190,8 @@ MR.api = {
   smsLogList(p = {}) { return this.req('/sms/log-list.php?' + new URLSearchParams(p)); },
   smsTest(d) { return this.req('/sms/test.php', { method: 'POST', body: JSON.stringify(d) }); },
   smsGonder(d) { return this.req('/sms/gonder.php', { method: 'POST', body: JSON.stringify(d) }); },
+  smsGelenList(p = {}) { return this.req('/sms/gelen-list.php?' + new URLSearchParams(p)); },
+  smsGelenOkundu(d) { return this.req('/sms/gelen-okundu.php', { method: 'POST', body: JSON.stringify(d) }); },
   // ARAÇ KATALOG
   aracMarkaList() { return this.req('/tanim/arac-marka-list.php'); },
   aracModelList(marka) { return this.req('/tanim/arac-model-list.php?marka=' + encodeURIComponent(marka)); },
