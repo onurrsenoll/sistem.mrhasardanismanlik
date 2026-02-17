@@ -1744,19 +1744,25 @@ const SmsTab = () => {
 
             <FormGroup label="NETGSM KULLANICI ADI (USERCODE)">
               <input value={ayarlar.sms_kullanici||''} onChange={e => u('sms_kullanici', e.target.value)}
-                placeholder="8505551234" style={{...S.input, fontSize:12}}/>
+                placeholder="5550984254" style={{...S.input, fontSize:12}}/>
+              <div style={{fontSize:9, color:C.textMuted, marginTop:4}}>
+                NETGSM PANELİNDEKİ "KULLANICI ADI" (TELEFON NUMARANIZ). ABONELİK BİLGİLERİ SAYFASINDAN KONTROL EDİN.
+              </div>
             </FormGroup>
 
             <FormGroup label="NETGSM ŞİFRE">
               <input type="password" value={ayarlar.sms_sifre||''} onChange={e => u('sms_sifre', e.target.value)}
                 placeholder="••••••••" style={{...S.input, fontSize:12}}/>
+              <div style={{fontSize:9, color:C.textMuted, marginTop:4}}>
+                NETGSM PANELİNE GİRİŞ ŞİFRENİZ
+              </div>
             </FormGroup>
 
             <FormGroup label="SMS BAŞLIĞI (SENDER / MSGHEADER)">
               <input value={ayarlar.sms_baslik||''} onChange={e => u('sms_baslik', e.target.value)}
                 placeholder="MR HASAR" maxLength={11} style={{...S.input, fontSize:12}}/>
               <div style={{fontSize:9, color:C.textMuted, marginTop:4}}>
-                NETGSM PANELİNDEN ONAYLANMIŞ BAŞLIK (MAX 11 KARAKTER)
+                NETGSM PANELİNDEN ONAYLANMIŞ GÖNDERİCİ ADI. "VARSAYILAN GÖNDERİCİ ADI" ALANIDIR (MAX 11 KARAKTER).
               </div>
             </FormGroup>
 
@@ -2213,12 +2219,19 @@ const NetsantralTab = () => {
     // Sonra test et
     const r = await api.netsantralTest();
     if (r?.success && r.data?.success_api) {
-      setTestResult({success: true, data: r.data?.response, debug: r.data?.debug});
-      setMesaj({type: 'success', text: 'NETSANTRAL BAĞLANTISI BAŞARILI!'});
+      const resp = r.data?.response || {};
+      setTestResult({success: true, data: resp, debug: r.data?.debug});
+      // Alternatif format başarılıysa bildir
+      if (resp.oneri_santral_no) {
+        setMesaj({type: 'success', text: 'BAĞLANTI BAŞARILI! ÖNERİ: SANTRAL NO\'YU "' + resp.oneri_santral_no + '" OLARAK GÜNCELLEYİN.'});
+        up('netsantral_santral_no', resp.oneri_santral_no);
+      } else {
+        setMesaj({type: 'success', text: 'NETSANTRAL BAĞLANTISI BAŞARILI!'});
+      }
 
       // Kuyruk bilgisini kaydet
-      if (r.data?.response) {
-        setQueueStats(r.data.response);
+      if (resp) {
+        setQueueStats(resp);
       }
     } else {
       // NETGSM HATA KODU KONTROLÜ
@@ -2228,11 +2241,20 @@ const NetsantralTab = () => {
       const hataKodu = resp.hata_kodu || '';
       const cozumOnerisi = resp.cozum_onerisi || '';
       const denemeSayisi = resp.deneme_sayisi || 0;
+      const formatOnerisi = resp.format_onerisi || '';
+      const hatKullaniciUyari = resp.hat_kullanici_uyari || '';
+      const oneriSantralNo = resp.oneri_santral_no || '';
+      const oneriMesaj = resp.oneri_mesaj || '';
       const errText = hataKodu ? `HATA KODU: ${hataKodu} - ${hataMesaj}` : hataMesaj;
       if (denemeSayisi > 1) {
         debug._denemeSayisi = denemeSayisi + ' FARKLI AYARLA DENENDİ';
       }
-      setTestResult({success: false, error: errText, debug: debug, httpCode: r?.data?.http_code, cozumOnerisi: cozumOnerisi});
+      // Eğer alternatif format önerisi varsa, çözüm olarak göster
+      let fullCozum = cozumOnerisi;
+      if (oneriMesaj) fullCozum = oneriMesaj;
+      else if (formatOnerisi) fullCozum = (fullCozum ? fullCozum + '. ' : '') + formatOnerisi;
+      if (hatKullaniciUyari) fullCozum = (fullCozum ? fullCozum + '. ' : '') + hatKullaniciUyari;
+      setTestResult({success: false, error: errText, debug: debug, httpCode: r?.data?.http_code, cozumOnerisi: fullCozum, oneriSantralNo: oneriSantralNo});
       setMesaj({type: 'error', text: 'BAĞLANTI HATASI: ' + errText});
     }
     setTesting(false);
@@ -2343,9 +2365,10 @@ const NetsantralTab = () => {
                 <label style={S.label}>SANTRAL NUMARASI *</label>
                 <input style={S.input} value={ayarlar.netsantral_santral_no}
                   onChange={e => up('netsantral_santral_no', e.target.value)}
-                  placeholder="08503XXXXXXX"/>
+                  placeholder="08503625026502"/>
                 <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
-                  NETGSM'DEN ALINAN SANTRAL NUMARANIZ (BAŞINDA 0 İLE)
+                  NETGSM NETSANTRAL HAT NUMARANIZ. FORMAT: <strong>0850 + ABONE NO</strong> (ÖRN: 08503625026502).
+                  NETGSM PANELİNDE ABONE BİLGİLERİ SAYFASINDAN "ABONE NO"YU ALIN VE BAŞINA 0850 EKLEYİN.
                 </div>
               </div>
 
@@ -2354,9 +2377,9 @@ const NetsantralTab = () => {
                 <label style={S.label}>KULLANICI ADI *</label>
                 <input style={S.input} value={ayarlar.netsantral_kullanici}
                   onChange={e => up('netsantral_kullanici', e.target.value)}
-                  placeholder="8503XXXXXXX"/>
+                  placeholder="5550984254"/>
                 <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
-                  SANTRAL NUMARASI (BAŞINDAKI 0 OLMADAN)
+                  NETGSM PANELİNDEKİ "KULLANICI ADI" (TELEFON NUMARANIZ). "HAT KULLANICI BİLGİSİ" SEKMESİNDEN DE KONTROL EDEBİLİRSİNİZ.
                 </div>
               </div>
 
@@ -2365,20 +2388,21 @@ const NetsantralTab = () => {
                 <label style={S.label}>ŞİFRE *</label>
                 <input style={S.input} type="password" value={ayarlar.netsantral_sifre}
                   onChange={e => up('netsantral_sifre', e.target.value)}
-                  placeholder="ALT KULLANICI ŞİFRENİZ"/>
+                  placeholder="NETGSM PANEL ŞİFRENİZ"/>
                 <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
-                  NETGSM ALT KULLANICI ŞİFRESİ
+                  NETGSM PANELİNE GİRİŞ ŞİFRENİZ VEYA "HAT KULLANICI BİLGİSİ"NDEKİ ALT KULLANICI ŞİFRESİ
                 </div>
               </div>
 
               {/* DAHİLİ */}
               <div>
-                <label style={S.label}>VARSAYILAN DAHİLİ</label>
+                <label style={S.label}>VARSAYILAN DAHİLİ *</label>
                 <input style={S.input} value={ayarlar.netsantral_dahili}
                   onChange={e => up('netsantral_dahili', e.target.value)}
                   placeholder="100"/>
                 <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
-                  VARSAYILAN DAHİLİ NUMARANIZ (ÖRN: 100, 101, 102...)
+                  NETSANTRAL DAHİLİ NUMARANIZ (ÖRN: 100, 101, 102). GELEN ÇAĞRILAR BU DAHİLİYE YÖNLENDİRİLİR.
+                  NETGSM NETSANTRAL PANELİNDEN DAHİLİ TANIMLAYIN.
                 </div>
               </div>
 
@@ -2461,6 +2485,17 @@ const NetsantralTab = () => {
                       fontSize: 10, color: C.warning
                     }}>
                       <strong>ÇÖZÜM:</strong> {testResult.cozumOnerisi}
+                      {testResult.oneriSantralNo && (
+                        <div style={{marginTop:6}}>
+                          <button onClick={() => {
+                            up('netsantral_santral_no', testResult.oneriSantralNo);
+                            setMesaj({type:'success', text:'SANTRAL NO "' + testResult.oneriSantralNo + '" OLARAK GÜNCELLENDİ. KAYDET VE TEKRAR TEST EDİN.'});
+                          }} style={{...S.btn, background:C.warning, color:'#000', fontSize:10, padding:'6px 12px'}}>
+                            <LIcon name="RefreshCw" size={11} color="#000"/>
+                            SANTRAL NO'YU "{testResult.oneriSantralNo}" OLARAK GÜNCELLE
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                   {/* HATA DETAY - TANILAMA BUTONU */}

@@ -47,11 +47,25 @@ if (empty($santralNo) || empty($username) || empty($password)) {
     json_error('NETSANTRAL AYARLARI YAPILANDIRILMAMIŞ. SİSTEM > NETSANTRAL AYARLARI BÖLÜMÜNDEN AYARLARI GİRİN.', 400);
 }
 
-// SANTRAL NO NORMALİZASYONU - API URL İÇİN BAŞINDAKİ 0'I TEMİZLE
-// NetGSM CRM Santral API: https://crmsntrl.netgsm.com.tr/{santral_no_without_leading_zero}/...
-$santralNoClean = ltrim($santralNo, '0');
+// SANTRAL NO NORMALİZASYONU - NetGSM CRM Santral API 850 prefiksi gerektirir
+// API URL: https://crmsntrl.netgsm.com.tr/{850XXXXXXXXXX}/...
+// Kullanıcı girişi: 0850..., 850..., veya sadece 10 haneli abone no olabilir
+$santralNoTrimmed = ltrim($santralNo, '0'); // Baştaki sıfırları temizle
+if (strpos($santralNo, '0850') === 0) {
+    // 0850 ile başlıyorsa sadece baştaki 0'ı kaldır → 850...
+    $santralNoClean = substr($santralNo, 1);
+} elseif (strpos($santralNo, '850') === 0) {
+    // 850 ile başlıyorsa olduğu gibi kullan
+    $santralNoClean = $santralNo;
+} elseif (strlen(ltrim($santralNo, '0')) === 10 && strpos(ltrim($santralNo, '0'), '850') !== 0) {
+    // 10 haneli ve 850 ile başlamıyorsa → 850 ekle
+    $santralNoClean = '850' . ltrim($santralNo, '0');
+} else {
+    // Diğer durumlar: baştaki 0'ları temizle (eski davranış)
+    $santralNoClean = $santralNoTrimmed;
+}
 
-// KULLANICI ADI NORMALİZASYONU - BAŞINDAKİ 0'I TEMİZLE (NetGSM standart format)
+// KULLANICI ADI NORMALİZASYONU - NetGSM CRM API hat kullanıcı formatı
 $usernameClean = ltrim($username, '0');
 
 // API URL OLUŞTUR
@@ -439,6 +453,64 @@ if ($httpCode === 0) {
     $apiBasarili = false;
     $parsed = $parsed ?? [];
     $parsed['hata_mesaj'] = 'NETGSM SUNUCU HATASI (HTTP ' . $httpCode . ') - BİRAZ SONRA TEKRAR DENEYİN';
+}
+
+// ═══ TEST AKSİYONU: ÇOKLU FORMAT DENEMESİ ═══
+if ($action === 'test' && !$apiBasarili) {
+    $altFormatlar = [];
+    $orijinalSantral = $santralNoClean;
+
+    // 850 prefiksi yoksa ekle
+    if (strpos($santralNoClean, '850') !== 0) {
+        $altFormatlar[] = '850' . $santralNoClean;
+    }
+    // 850 prefiksi varsa çıkar
+    if (strpos($santralNoClean, '850') === 0 && strlen($santralNoClean) > 3) {
+        $altFormatlar[] = substr($santralNoClean, 3);
+    }
+    // Orijinal girilen değeri de dene (trim edilmemiş hali)
+    $orijinalTrimmed = ltrim($santralNo, '0');
+    if ($orijinalTrimmed !== $santralNoClean && !in_array($orijinalTrimmed, $altFormatlar)) {
+        $altFormatlar[] = $orijinalTrimmed;
+    }
+
+    foreach ($altFormatlar as $altNo) {
+        $altQuery = http_build_query(['username' => $usernameClean, 'password' => $password]);
+        $altUrl = "https://crmsntrl.netgsm.com.tr/{$altNo}/queuestats?{$altQuery}";
+        $altResult = netsantral_curl_exec($altUrl, 1);
+
+        if (!empty($altResult['info']['curl_error'])) continue;
+
+        $altResp = trim($altResult['response']);
+        $altHata = ['30','60','70','100','101'];
+
+        if ($altResult['info']['http_code'] === 200 && !in_array($altResp, $altHata)) {
+            // Bu format çalıştı!
+            $apiBasarili = true;
+            $parsed = json_decode($altResult['response'], true);
+            if ($parsed === null) {
+                $parsed = ['raw_response' => $altResp];
+            }
+            $parsed['hata_mesaj'] = '';
+            $parsed['oneri_santral_no'] = '0' . $altNo;
+            $parsed['oneri_mesaj'] = 'SANTRAL NUMARANIZI "0' . $altNo . '" OLARAK GÜNCELLEYİN';
+            $santralNoClean = $altNo;
+
+            // Log başarılı alternatif format
+            @file_put_contents($logDir . '/netsantral_proxy.log',
+                date('Y-m-d H:i:s') . " | test | ALTERNATİF FORMAT BAŞARILI: {$altNo} (orijinal: {$orijinalSantral})\n",
+                FILE_APPEND | LOCK_EX
+            );
+            break;
+        }
+    }
+
+    // Hiçbir format çalışmadıysa, hata mesajına format önerisi ekle
+    if (!$apiBasarili) {
+        $parsed = $parsed ?? [];
+        $parsed['format_onerisi'] = 'SANTRAL NUMARASINI ŞU FORMATLARDA DENEYİN: 0850' . ltrim($santralNo, '0') . ' VEYA ' . $santralNo;
+        $parsed['hat_kullanici_uyari'] = 'NETGSM PANELDE "HAT KULLANICI BİLGİSİ" SEKMESINDEN KULLANICI ADI VE ŞİFRENİZİ KONTROL EDİN';
+    }
 }
 
 // BAŞARILI YANIT

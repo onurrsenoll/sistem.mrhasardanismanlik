@@ -136,6 +136,71 @@ if ($mode === 'status') {
         } else {
             $apiTest = ['durum' => 'HTTP_HATASI', 'http_kodu' => $httpCode, 'yanit' => substr($testResp, 0, 200), 'ip' => $primaryIp, 'sure' => $totalTime . 's'];
         }
+
+        // ═══ ALTERNATİF FORMAT DENEMESİ ═══
+        if ($apiTest['durum'] !== 'BAĞLI') {
+            $netgsmHatalar = [
+                '30' => 'GEÇERSİZ KULLANICI ADI VEYA ŞİFRE - NETSANTRAL AYARLARINI KONTROL EDİN',
+                '60' => 'GEÇERSİZ SANTRAL NUMARASI - SANTRAL NUMARASINI KONTROL EDİN',
+                '70' => 'GEÇERSİZ PARAMETRE',
+                '100' => 'NETGSM SİSTEM HATASI',
+                '101' => 'SİSTEMDE KAYITLI DEĞİL - SANTRAL NUMARASINI VE KULLANICI ADINI KONTROL EDİN'
+            ];
+            $altFormatlar = [];
+            if (strpos($santralNoClean, '850') !== 0) {
+                $altFormatlar[] = '850' . $santralNoClean;
+            }
+            if (strpos($santralNoClean, '850') === 0 && strlen($santralNoClean) > 3) {
+                $altFormatlar[] = substr($santralNoClean, 3);
+            }
+
+            foreach ($altFormatlar as $altNo) {
+                $altUrl = "https://crmsntrl.netgsm.com.tr/{$altNo}/queuestats?username={$usernameClean}&password={$sifre}";
+                $chAlt = curl_init();
+                curl_setopt_array($chAlt, [
+                    CURLOPT_URL => $altUrl,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_TIMEOUT => 15,
+                    CURLOPT_CONNECTTIMEOUT => 10,
+                    CURLOPT_SSL_VERIFYPEER => false,
+                    CURLOPT_SSL_VERIFYHOST => 0,
+                    CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                    CURLOPT_ENCODING => '',
+                    CURLOPT_HTTPHEADER => [
+                        'Accept: application/json, text/plain, */*',
+                        'User-Agent: MR-Hasar-CRM/1.0',
+                        'Connection: close'
+                    ]
+                ]);
+                $altResp = curl_exec($chAlt);
+                $altCode = curl_getinfo($chAlt, CURLINFO_HTTP_CODE);
+                $altErr = curl_error($chAlt);
+                curl_close($chAlt);
+
+                if (!$altErr && $altCode === 200) {
+                    $altTrimmed = trim($altResp);
+                    if (!isset($netgsmHatalar[$altTrimmed])) {
+                        $apiTest = [
+                            'durum' => 'BAĞLI',
+                            'http_kodu' => $altCode,
+                            'yanit' => substr($altResp, 0, 200),
+                            'ip' => $primaryIp,
+                            'sure' => $totalTime . 's',
+                            'oneri_santral_no' => '0' . $altNo,
+                            'oneri_mesaj' => 'SANTRAL NUMARANIZI "0' . $altNo . '" OLARAK GÜNCELLEYİN'
+                        ];
+                        break;
+                    }
+                }
+            }
+
+            // Hala başarısızsa format önerisi ekle
+            if ($apiTest['durum'] !== 'BAĞLI') {
+                $apiTest['format_onerisi'] = 'SANTRAL NUMARASINI "0850' . ltrim($santralNo, '0') . '" FORMATINDA DENEYİN';
+                $apiTest['hat_kullanici_uyari'] = 'NETGSM PANELDE "HAT KULLANICI BİLGİSİ" SEKMESINDEN KULLANICI ADI VE ŞİFRENİZİ KONTROL EDİN';
+            }
+        }
     } else {
         $apiTest = ['durum' => 'AYARLAR_EKSİK', 'mesaj' => 'Santral no, kullanıcı veya şifre boş'];
     }
@@ -331,6 +396,61 @@ if ($mode === 'diagnose') {
             }
         } else {
             $apiTestDetay = ['sonuc' => 'HTTP HATASI', 'http_code' => $testHttpCode, 'yanit' => substr($testResp, 0, 200), 'ip' => $testIp, 'sure' => $testTime . 's'];
+        }
+
+        // ═══ ALTERNATİF FORMAT DENEMESİ ═══
+        if (!$apiTestBasarili) {
+            $netgsmHatalar = ['30' => 'GEÇERSİZ KUL.ADI/ŞİFRE', '60' => 'GEÇERSİZ SANTRAL NO', '70' => 'GEÇERSİZ PARAMETRE', '100' => 'SİSTEM HATASI', '101' => 'KAYITLI DEĞİL'];
+            $altFormatlar = [];
+            if (strpos($santralNoClean, '850') !== 0) {
+                $altFormatlar[] = '850' . $santralNoClean;
+            }
+            if (strpos($santralNoClean, '850') === 0 && strlen($santralNoClean) > 3) {
+                $altFormatlar[] = substr($santralNoClean, 3);
+            }
+
+            foreach ($altFormatlar as $altNo) {
+                $altUrl = "https://crmsntrl.netgsm.com.tr/{$altNo}/queuestats?username={$usernameClean}&password={$sifre}";
+                $chAlt = curl_init();
+                curl_setopt_array($chAlt, [
+                    CURLOPT_URL => $altUrl,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_TIMEOUT => 15,
+                    CURLOPT_CONNECTTIMEOUT => 10,
+                    CURLOPT_SSL_VERIFYPEER => false,
+                    CURLOPT_SSL_VERIFYHOST => 0,
+                    CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                    CURLOPT_ENCODING => '',
+                    CURLOPT_HTTPHEADER => ['Accept: application/json, text/plain, */*', 'User-Agent: MR-Hasar-CRM/1.0', 'Connection: close']
+                ]);
+                $altResp = curl_exec($chAlt);
+                $altCode = curl_getinfo($chAlt, CURLINFO_HTTP_CODE);
+                $altErr = curl_error($chAlt);
+                curl_close($chAlt);
+
+                if (!$altErr && $altCode === 200) {
+                    $altTrimmed = trim($altResp);
+                    if (!isset($netgsmHatalar[$altTrimmed])) {
+                        $apiTestBasarili = true;
+                        $apiTestDetay = [
+                            'sonuc' => 'ALTERNATİF FORMAT İLE BAĞLANTI BAŞARILI',
+                            'yanit' => substr($altResp, 0, 200),
+                            'ip' => $testIp,
+                            'sure' => $testTime . 's',
+                            'oneri_santral_no' => '0' . $altNo,
+                            'oneri_mesaj' => 'SANTRAL NUMARANIZI "0' . $altNo . '" OLARAK GÜNCELLEYİN'
+                        ];
+                        break;
+                    }
+                }
+            }
+
+            // Hala başarısızsa format önerisi ekle
+            if (!$apiTestBasarili) {
+                $apiTestDetay['format_onerisi'] = 'SANTRAL NUMARASINI "0850' . ltrim($santralNo, '0') . '" FORMATINDA DENEYİN';
+                $apiTestDetay['hat_kullanici_uyari'] = 'NETGSM PANELDE "HAT KULLANICI BİLGİSİ" SEKMESINDEN KULLANICI ADI VE ŞİFRENİZİ KONTROL EDİN';
+            }
         }
     } else {
         $apiTestDetay = ['sonuc' => 'AYARLAR EKSİK - SANTRAL NO, KULLANICI VEYA ŞİFRE BOŞ'];
