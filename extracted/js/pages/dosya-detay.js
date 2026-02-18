@@ -29,26 +29,55 @@ const asamaRenk = (a) => {
 const EvrakPreviewIframe = ({evrakId}) => {
   const [url, setUrl] = React.useState(null);
   const [hata, setHata] = React.useState(false);
+  const urlRef = React.useRef(null);
+
   React.useEffect(() => {
-    let objectUrl = null;
+    let iptal = false;
+    setUrl(null);
+    setHata(false);
+
     const yukle = async () => {
       try {
         const token = MR.api.token;
         const r = await fetch('/api/v1/evrak/download.php?id=' + evrakId + '&mode=inline', {
           headers: token ? {'Authorization': 'Bearer ' + token} : {}
         });
+        if (iptal) return;
         if (!r.ok) { setHata(true); return; }
-        const blob = await r.blob();
-        objectUrl = URL.createObjectURL(blob);
+        const contentType = r.headers.get('content-type') || 'application/pdf';
+        const arrayBuffer = await r.arrayBuffer();
+        if (iptal) return;
+        /* Blob'u açıkça doğru MIME type ile oluştur */
+        const blob = new Blob([arrayBuffer], { type: contentType });
+        const objectUrl = URL.createObjectURL(blob);
+        /* Önceki URL varsa temizle */
+        if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+        urlRef.current = objectUrl;
         setUrl(objectUrl);
-      } catch(e) { setHata(true); }
+      } catch(e) {
+        if (!iptal) setHata(true);
+      }
     };
     yukle();
-    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl); };
+    return () => {
+      iptal = true;
+      if (urlRef.current) { URL.revokeObjectURL(urlRef.current); urlRef.current = null; }
+    };
   }, [evrakId]);
-  if (hata) return React.createElement('div', {style:{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'#ef4444',fontSize:14}}, 'EVRAK YÜKLENEMEDİ');
-  if (!url) return React.createElement('div', {style:{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'#6b7280',fontSize:12}}, 'YÜKLENİYOR...');
-  return React.createElement('iframe', {src: url, style:{width:'100%',height:'100%',border:'none'}});
+
+  if (hata) return (
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'#ef4444',fontSize:14,flexDirection:'column',gap:8}}>
+      <MR.LIcon name="AlertTriangle" size={24} color="#ef4444"/>
+      EVRAK YÜKLENEMEDİ
+    </div>
+  );
+  if (!url) return (
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'#6b7280',fontSize:12,flexDirection:'column',gap:8}}>
+      <div style={{width:24,height:24,border:'3px solid transparent',borderTopColor:'#2563eb',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
+      EVRAK YÜKLENİYOR...
+    </div>
+  );
+  return <iframe src={url + '#toolbar=1&navpanes=0'} style={{width:'100%',height:'100%',border:'none',background:'#fff'}} title="EVRAK ÖNİZLEME"/>;
 };
 
 MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {

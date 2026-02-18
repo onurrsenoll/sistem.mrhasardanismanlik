@@ -67,8 +67,15 @@ $stmt = $db->prepare($countSQL);
 $stmt->execute($params);
 $total = (int)$stmt->fetch()['total'];
 
-// Veri çek
-$dataSQL = "SELECT v.* FROM v_dosya_ozet v LEFT JOIN dosyalar d ON d.dosya_no = v.dosya_no $whereSQL ORDER BY v.created_at DESC LIMIT ? OFFSET ?";
+// Veri çek — avukat_adi için ortaklar ve users tablosu açıkça JOIN edilir
+// (v_dosya_ozet görünümü sunucuda eski kalabilir, bu JOIN güvenli çözüm sağlar)
+$dataSQL = "SELECT v.*,
+    COALESCE(ort.ad_soyad, avk.ad_soyad) AS avukat_adi
+    FROM v_dosya_ozet v
+    LEFT JOIN dosyalar d ON d.dosya_no = v.dosya_no
+    LEFT JOIN ortaklar ort ON ort.id = d.ortak_id
+    LEFT JOIN users avk ON avk.id = d.avukat_id
+    $whereSQL ORDER BY v.created_at DESC LIMIT ? OFFSET ?";
 $params[] = (int)$pag['limit'];
 $params[] = (int)$pag['offset'];
 $stmt = $db->prepare($dataSQL);

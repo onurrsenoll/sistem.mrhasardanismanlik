@@ -241,19 +241,26 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
         </div>
       `;
 
-      /* html2pdf ile oluştur */
+      /* html2pdf ile oluştur — container sayfada görünür ama gizli olmalı
+         (left:-9999px html2canvas'ın boş sayfa üretmesine neden olur) */
       const container = document.createElement('div');
       container.innerHTML = html;
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
+      container.style.position = 'fixed';
+      container.style.left = '0';
       container.style.top = '0';
+      container.style.width = '1123px';
+      container.style.zIndex = '-9999';
+      container.style.opacity = '0.01';
+      container.style.pointerEvents = 'none';
+      container.style.overflow = 'hidden';
+      container.style.background = '#ffffff';
       document.body.appendChild(container);
 
       const opt = {
         margin:       [8, 5, 8, 5],
         filename:     `MR_HASAR_DOSYA_RAPORU_${new Date().toISOString().slice(0,10)}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, letterRendering: true, logging: false },
+        html2canvas:  { scale: 2, useCORS: true, letterRendering: true, logging: false, width: 1123, windowWidth: 1123 },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' },
         pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
       };
