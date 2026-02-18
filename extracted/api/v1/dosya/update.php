@@ -36,9 +36,9 @@ try {
     }
 
     // Dosya güncelle
-    $dosyaFields = ['asama', 'talep_turu', 'sigorta_sirket', 'police_no', 'sigorta_turu',
+    $dosyaFields = ['asama', 'dosya_turu', 'talep_turu', 'sigorta_sirket', 'police_no', 'sigorta_turu',
         'dosya_kaynagi', 'avukat_id', 'ortak_id', 'sorumlu_id', 'haklilik', 'komisyon_orani',
-        'kaza_tarihi', 'kaza_il', 'kaza_ilce', 'pozisyon', 'kusur_durumu',
+        'kaza_tarihi', 'kaza_il', 'kaza_ilce', 'pozisyon', 'kusur_durumu', 'hasar_no',
         'sakatlik_aciklama', 'notlar', 'kapanma_tarihi', 'plaka', 'hak_mahrumiyet'];
 
     $sets = [];
