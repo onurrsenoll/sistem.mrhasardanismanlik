@@ -26,6 +26,31 @@ const asamaRenk = (a) => {
   return '#6b7280';
 };
 
+const EvrakPreviewIframe = ({evrakId}) => {
+  const [url, setUrl] = React.useState(null);
+  const [hata, setHata] = React.useState(false);
+  React.useEffect(() => {
+    let objectUrl = null;
+    const yukle = async () => {
+      try {
+        const token = MR.api.token;
+        const r = await fetch('/api/v1/evrak/download.php?id=' + evrakId + '&mode=inline', {
+          headers: token ? {'Authorization': 'Bearer ' + token} : {}
+        });
+        if (!r.ok) { setHata(true); return; }
+        const blob = await r.blob();
+        objectUrl = URL.createObjectURL(blob);
+        setUrl(objectUrl);
+      } catch(e) { setHata(true); }
+    };
+    yukle();
+    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [evrakId]);
+  if (hata) return React.createElement('div', {style:{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'#ef4444',fontSize:14}}, 'EVRAK YÜKLENEMEDİ');
+  if (!url) return React.createElement('div', {style:{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'#6b7280',fontSize:12}}, 'YÜKLENİYOR...');
+  return React.createElement('iframe', {src: url, style:{width:'100%',height:'100%',border:'none'}});
+};
+
 MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const {C, S, LIcon, Badge, SectionTitle, EmptyState, Loading, Modal, FormGroup, Confirm, api, fmt, MASRAF_K, EVRAK_T, ILLER, ILCELER, SIGORTA, today} = MR;
   const [dosya, setDosya] = useState(null);
@@ -40,6 +65,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const [editError, setEditError] = useState('');
   const [dosyaSilConfirm, setDosyaSilConfirm] = useState(false);
   const [ortaklar, setOrtaklar] = useState([]);
+  const [previewEvrak, setPreviewEvrak] = useState(null);
 
   // DOSYA KAPAT STATE
   const [kapatModal, setKapatModal] = useState(false);
@@ -273,7 +299,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <InfoRow label="DOSYA TÜRÜ" value={dosya.dosya_turu} bold/>
               <InfoRow label="BAŞVURU TÜRÜ" value={dosya.talep_turu}/>
               <InfoRow label="SİGORTA ŞİRKETİ" value={dosya.sigorta_sirket}/>
-              <InfoRow label="HASAR NO" value={dosya.hasar_no} mono/>
+              <InfoRow label="HASAR DOSYA NO" value={dosya.hasar_no} mono/>
               <InfoRow label="DOSYA KAYNAĞI" value={dosya.dosya_kaynagi}/>
               <InfoRow label="AVUKAT" value={dosya.avukat_adi} bold color={C.purple}/>
               {dosya.avukat_firma && <InfoRow label="AVUKAT FİRMA" value={dosya.avukat_firma}/>}
@@ -424,7 +450,27 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             )}
           </div>
           <div style={{maxHeight:600,overflowY:'auto'}}>
-            {(MR.EVRAK_T||[]).map((tur, idx) => {
+            {(() => {
+              const tumTurler = MR.EVRAK_T || [];
+              const evraklar = dosya.evraklar || [];
+              // Yüklü türleri üste çıkar, yüklenme tarihine göre sırala
+              const yukluTurler = [];
+              const beklenenTurler = [];
+              tumTurler.forEach(tur => {
+                const yuklenen = evraklar.filter(e => e.evrak_turu === tur);
+                if (yuklenen.length > 0) yukluTurler.push(tur);
+                else beklenenTurler.push(tur);
+              });
+              // Yüklü olanları yüklenme tarihine göre sırala (en yeni önce)
+              yukluTurler.sort((a, b) => {
+                const aEvrak = evraklar.find(e => e.evrak_turu === a);
+                const bEvrak = evraklar.find(e => e.evrak_turu === b);
+                const aDate = aEvrak?.created_at || '';
+                const bDate = bEvrak?.created_at || '';
+                return bDate.localeCompare(aDate);
+              });
+              const sirali = [...yukluTurler, ...beklenenTurler];
+              return sirali.map((tur, idx) => {
               const yuklenen = (dosya.evraklar||[]).filter(e => e.evrak_turu === tur);
               const yukluMu = yuklenen.length > 0;
               return (
@@ -464,7 +510,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                   <div style={{display:'flex',gap:3,flexShrink:0}}>
                     {yukluMu && yuklenen.map(y => (
                       <React.Fragment key={y.id}>
-                        <button title="ÖN İZLEME" onClick={() => window.open(api.evrakPreviewUrl(y.id), '_blank')}
+                        <button title="ÖN İZLEME" onClick={() => setPreviewEvrak(y)}
                           style={{...S.btn,padding:'3px 6px',fontSize:8,background:`${C.accent}18`,color:C.accent,border:`1px solid ${C.accent}33`,borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',gap:2}}>
                           <LIcon name="Eye" size={10} color={C.accent}/>
                         </button>
@@ -498,7 +544,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                   </div>
                 </div>
               );
-            })}
+            });})()}
           </div>
         </div>
       )}
@@ -749,6 +795,34 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       {/* MODALLER */}
       <MR.MasrafEkle open={masrafM} onClose={() => setMasrafM(false)} dosyaId={dosya.id} onOk={load}/>
 
+      {/* EVRAK ÖNİZLEME MODAL */}
+      {previewEvrak && (
+        <div onClick={() => setPreviewEvrak(null)} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.7)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
+          <div onClick={e => e.stopPropagation()} style={{width:'66vw',height:'85vh',background:C.bgCard,borderRadius:12,overflow:'hidden',display:'flex',flexDirection:'column',cursor:'default',boxShadow:'0 25px 50px rgba(0,0,0,0.5)'}}>
+            <div style={{padding:'10px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',background:`${C.accent}08`,flexShrink:0}}>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                <LIcon name="Eye" size={14} color={C.accent}/>
+                <span style={{fontSize:12,fontWeight:700}}>{previewEvrak.evrak_turu || previewEvrak.dosya_adi}</span>
+                <span style={{fontSize:9,color:C.textMuted}}>({(previewEvrak.dosya_boyutu/1024).toFixed(0)}KB)</span>
+              </div>
+              <div style={{display:'flex',gap:6}}>
+                <a href={api.evrakUrl(previewEvrak.id)} target="_blank"
+                  style={{...S.btn,padding:'4px 10px',fontSize:9,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:6,textDecoration:'none',display:'flex',alignItems:'center',gap:4}}>
+                  <LIcon name="Download" size={10} color={C.success}/> İNDİR
+                </a>
+                <button onClick={() => setPreviewEvrak(null)}
+                  style={{...S.btn,padding:'4px 10px',fontSize:9,background:`${C.danger}18`,color:C.danger,border:`1px solid ${C.danger}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
+                  <LIcon name="X" size={10} color={C.danger}/> KAPAT
+                </button>
+              </div>
+            </div>
+            <div style={{flex:1,overflow:'hidden'}}>
+              <EvrakPreviewIframe evrakId={previewEvrak.id}/>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MASRAF / EVRAK SİL */}
       <Confirm open={!!deleteConfirm} message={deleteConfirm ? `"${deleteConfirm.text}" SİLİNSİN Mİ?` : ''}
         onCancel={() => setDeleteConfirm(null)}
@@ -789,8 +863,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               {(SIGORTA || []).map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </FormGroup>
-          <FormGroup label="HASAR NO">
-            <input value={editForm.hasar_no||''} onChange={e => u('hasar_no',e.target.value)} placeholder="HASAR NO" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+          <FormGroup label="HASAR DOSYA NO">
+            <input value={editForm.hasar_no||''} onChange={e => u('hasar_no',e.target.value)} placeholder="HASAR DOSYA NO" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="DOSYA KAYNAĞI">
             <select value={editForm.dosya_kaynagi} onChange={e => u('dosya_kaynagi',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>

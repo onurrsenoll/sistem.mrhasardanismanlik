@@ -34,9 +34,9 @@ const RAPOR_SUTUNLAR = [
   {key:'talep_turu',     label:'BAŞVURU TÜRÜ',         width:8},
   {key:'sigorta_sirket', label:'DAVALI ŞİRKET',       width:10},
   {key:'hasar_no',       label:'SİGORTA HASAR NO',    width:9},
-  {key:'acilis_tarihi',  label:'AÇILIŞ TARİHİ',       width:8},
-  {key:'asama',          label:'DOSYA AŞAMA DURUMU',   width:14},
-  {key:'created_at',     label:'KAYIT TARİHİ',        width:8}
+  {key:'kaza_tarihi',    label:'KAZA TARİHİ',          width:8},
+  {key:'acilis_tarihi',  label:'AÇILIŞ TARİHİ',        width:8},
+  {key:'asama',          label:'DOSYA AŞAMA DURUMU',    width:14}
 ];
 
 /* ── TARİH FORMAT ── */
@@ -126,9 +126,9 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
           d.talep_turu || '-',
           d.sigorta_sirket || '-',
           d.hasar_no || '-',
+          d.kaza_tarihi || '-',
           d.acilis_tarihi || '-',
-          d.asama || '-',
-          d.created_at ? d.created_at.split(' ')[0] : '-'
+          d.asama || '-'
         ]);
       });
 
@@ -146,19 +146,19 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
         {wch:14}, /* BAŞVURU TÜRÜ */
         {wch:25}, /* DAVALI ŞİRKET */
         {wch:18}, /* SİGORTA HASAR NO */
+        {wch:14}, /* KAZA TARİHİ */
         {wch:14}, /* AÇILIŞ TARİHİ */
-        {wch:45}, /* DOSYA AŞAMA DURUMU */
-        {wch:14}  /* KAYIT TARİHİ */
+        {wch:45}  /* DOSYA AŞAMA DURUMU */
       ];
 
       /* Birleşik hücreler (başlık satırları) */
       ws['!merges'] = [
-        {s:{r:0,c:0}, e:{r:0,c:12}},
-        {s:{r:1,c:0}, e:{r:1,c:12}},
-        {s:{r:2,c:0}, e:{r:2,c:12}}
+        {s:{r:0,c:0}, e:{r:0,c:11}},
+        {s:{r:1,c:0}, e:{r:1,c:11}},
+        {s:{r:2,c:0}, e:{r:2,c:11}}
       ];
       if (turF || asamaF || search) {
-        ws['!merges'].push({s:{r:3,c:0}, e:{r:3,c:12}});
+        ws['!merges'].push({s:{r:3,c:0}, e:{r:3,c:11}});
       }
 
       const wb = XLSX.utils.book_new();
@@ -226,9 +226,9 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                   <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.talep_turu || '-'}</td>
                   <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.sigorta_sirket || '-'}</td>
                   <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-family: monospace; font-size: 6.5px;">${d.hasar_no || '-'}</td>
+                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.kaza_tarihi || '-'}</td>
                   <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.acilis_tarihi || '-'}</td>
                   <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6px; max-width: 120px; word-wrap: break-word; overflow-wrap: break-word;">${d.asama || '-'}</td>
-                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.created_at ? d.created_at.split(' ')[0] : '-'}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -349,9 +349,9 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                 <td>${d.talep_turu || '-'}</td>
                 <td>${d.sigorta_sirket || '-'}</td>
                 <td class="tc">${d.hasar_no || '-'}</td>
+                <td>${d.kaza_tarihi || '-'}</td>
                 <td>${d.acilis_tarihi || '-'}</td>
                 <td class="asama">${d.asama || '-'}</td>
-                <td>${d.created_at ? d.created_at.split(' ')[0] : '-'}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -466,9 +466,9 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                   <th style={{...thS,minWidth:90}}>BAŞVURU TÜRÜ</th>
                   <th style={{...thS,minWidth:100}}>DAVALI ŞİRKET</th>
                   <th style={{...thS,minWidth:100}}>SİGORTA HASAR NO</th>
+                  <th style={{...thS,minWidth:75}}>KAZA TARİHİ</th>
                   <th style={{...thS,minWidth:75}}>AÇILIŞ TARİHİ</th>
                   <th style={{...thS,minWidth:110}}>DOSYA AŞAMA DURUMU</th>
-                  <th style={{...thS,minWidth:75}}>KAYIT TARİHİ</th>
                   <th style={{...thS,minWidth:50,textAlign:'center'}}>İŞLEM</th>
                 </tr>
               </thead>
@@ -505,6 +505,8 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                       <td style={{...tdS,fontSize:9,maxWidth:110,overflow:'hidden',textOverflow:'ellipsis'}}>{d.sigorta_sirket || '-'}</td>
                       {/* SİGORTA HASAR NO */}
                       <td style={{...tdS,fontFamily:'monospace',fontSize:9,color:C.textSec}}>{d.hasar_no || '-'}</td>
+                      {/* KAZA TARİHİ */}
+                      <td style={{...tdS,color:C.textMuted,fontSize:10}}>{d.kaza_tarihi || '-'}</td>
                       {/* AÇILIŞ TARİHİ */}
                       <td style={{...tdS,color:C.textMuted,fontSize:10}}>{d.acilis_tarihi || '-'}</td>
                       {/* DOSYA AŞAMA DURUMU */}
@@ -514,8 +516,6 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                           {d.asama || '-'}
                         </span>
                       </td>
-                      {/* KAYIT TARİHİ */}
-                      <td style={{...tdS,color:C.textMuted,fontSize:10}}>{d.created_at?.split(' ')[0] || '-'}</td>
                       {/* İŞLEM */}
                       <td style={{...tdS,textAlign:'center'}}>
                         <div style={{display:'flex',gap:6,justifyContent:'center',alignItems:'center'}}>

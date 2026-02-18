@@ -13,9 +13,35 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     dosya_turu:'ADK', talep_turu:'', kaza_tarihi:'', haklilik:'100', hak_mahrumiyet:'0', meslek:'', komisyon:'',
     ma_plaka:'', ma_marka:'', ma_model:'', ma_yil:'',
     ka_plaka:'', ka_marka:'', ka_yil:'', ka_trafik:'',
-    sigorta_sirket:'', dosya_kaynak:'', notlar:'', ortak_id:''
+    sigorta_sirket:'', hasar_no:'', dosya_kaynak:'', notlar:'', ortak_id:''
   });
   const u = (k, v) => setForm(p => ({...p, [k]: v}));
+
+  const validateStep = (stepNum) => {
+    if (stepNum === 0) {
+      if (!form.ad_soyad.trim()) return 'MAĞDUR ADI SOYADI GEREKLİ';
+      if (!form.tc_kimlik.trim()) return 'T.C. KİMLİK NO GEREKLİ';
+      if (!form.telefon.trim()) return 'TELEFON GEREKLİ';
+      if (!form.il) return 'İL SEÇİMİ GEREKLİ';
+      if (!form.ilce) return 'İLÇE SEÇİMİ GEREKLİ';
+    }
+    if (stepNum === 1) {
+      if (!form.dosya_turu) return 'DOSYA TÜRÜ SEÇİMİ GEREKLİ';
+      if (!form.talep_turu) return 'TALEP TÜRÜ SEÇİMİ GEREKLİ';
+      if (!form.kaza_tarihi) return 'KAZA TARİHİ GEREKLİ';
+    }
+    if (stepNum === 2 && form.dosya_turu === 'ADK') {
+      if (!form.ma_plaka.trim()) return 'MAĞDUR ARACI PLAKASI GEREKLİ';
+    }
+    // Son adım (ATAMA) - ADK için step 3, BH için step 2
+    const sonAdim = form.dosya_turu === 'ADK' ? 3 : 2;
+    if (stepNum === sonAdim) {
+      if (!form.sigorta_sirket) return 'SİGORTA ŞİRKETİ SEÇİMİ GEREKLİ';
+      if (!form.hasar_no.trim()) return 'HASAR DOSYA NO GEREKLİ';
+      if (!form.dosya_kaynak) return 'DOSYA KAYNAĞI SEÇİMİ GEREKLİ';
+    }
+    return null;
+  };
 
   // İŞ ORTAKLARI (AVUKATLAR) LİSTESİNİ YÜKLE
   useEffect(() => {
@@ -31,6 +57,8 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     : ['MAĞDUR BİLGİLERİ','DOSYA BİLGİSİ','ATAMA'];
 
   const kaydet = async () => {
+    const eksik = validateStep(steps.length - 1);
+    if (eksik) { setError(eksik); return; }
     if (!form.ad_soyad) { setError('MAĞDUR ADI GEREKLİ'); return; }
     setLoading(true); setError('');
     const gonder = {...form};
@@ -164,6 +192,9 @@ MR.DosyaYeniPage = ({setPage, user}) => {
                 <option value="">SEÇİNİZ</option>{SIGORTA.map(s=><option key={s} value={s}>{s}</option>)}
               </select>
             </FormGroup>
+            <FormGroup label="HASAR DOSYA NO">
+              <input style={S.input} value={form.hasar_no} onChange={e=>u('hasar_no',e.target.value)} placeholder="HASAR DOSYA NO GİRİNİZ"/>
+            </FormGroup>
             <FormGroup label="DOSYA KAYNAĞI">
               <select style={S.select} value={form.dosya_kaynak} onChange={e=>u('dosya_kaynak',e.target.value)}>
                 <option value="">SEÇİNİZ</option>
@@ -235,8 +266,18 @@ MR.DosyaYeniPage = ({setPage, user}) => {
             <LIcon name="ArrowLeft" size={14}/> GERİ
           </button>
           {step < steps.length-1
-            ? <button style={{...S.btn,...S.btnP}} onClick={() => setStep(step+1)}>İLERİ <LIcon name="ArrowRight" size={14} color="#fff"/></button>
-            : <button style={{...S.btn,...S.btnS}} onClick={kaydet} disabled={loading}>
+            ? <button style={{...S.btn,...S.btnP}} onClick={() => {
+                const eksik = validateStep(step);
+                if (eksik) { setError(eksik); return; }
+                setError('');
+                setStep(step+1);
+              }}>İLERİ <LIcon name="ArrowRight" size={14} color="#fff"/></button>
+            : <button style={{...S.btn,...S.btnS}} onClick={() => {
+                const eksik = validateStep(step);
+                if (eksik) { setError(eksik); return; }
+                setError('');
+                kaydet();
+              }} disabled={loading}>
                 <LIcon name="Save" size={14} color="#fff"/> {loading ? 'KAYDEDİLİYOR...' : 'DOSYAYI KAYDET'}
               </button>
           }
