@@ -206,6 +206,16 @@ MR.api = {
   // AI MOTİVASYON
   motivasyonSoz() { return this.req('/ai/motivasyon.php', {}, 12000); },
   geminiTest(d = {}) { return this.req('/ai/motivasyon-test.php', { method: 'POST', body: JSON.stringify(d) }, 20000); },
+  // PERSONEL
+  personelList(p = {}) { return this.req('/personel/list.php?' + new URLSearchParams(p)); },
+  personelGet(id) { return this.req('/personel/get.php?id=' + id); },
+  personelCreate(d) { return this.req('/personel/create.php', { method: 'POST', body: JSON.stringify(d) }); },
+  personelUpdate(d) { return this.req('/personel/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  personelDelete(id) { return this.req('/personel/delete.php?id=' + id, { method: 'DELETE' }); },
+  // HAKEDİŞ
+  hakedisHesapla(d) { return this.req('/personel/hakedis-hesapla.php', { method: 'POST', body: JSON.stringify(d) }); },
+  hakedisList(p = {}) { return this.req('/personel/hakedis-list.php?' + new URLSearchParams(p)); },
+  hakedisOde(d) { return this.req('/personel/hakedis-ode.php', { method: 'PUT', body: JSON.stringify(d) }); },
 };
 
 // ═══ TEMA SİSTEMİ ═══
