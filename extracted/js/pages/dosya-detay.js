@@ -27,38 +27,61 @@ const asamaRenk = (a) => {
 };
 
 const EvrakPreviewIframe = ({evrakId}) => {
-  const [url, setUrl] = React.useState(null);
-  const [hata, setHata] = React.useState(false);
+  const [blobUrl, setBlobUrl] = React.useState(null);
+  const [mimeType, setMimeType] = React.useState('');
+  const [hata, setHata] = React.useState('');
   const urlRef = React.useRef(null);
+  const containerRef = React.useRef(null);
 
   React.useEffect(() => {
     let iptal = false;
-    setUrl(null);
-    setHata(false);
+    setBlobUrl(null);
+    setMimeType('');
+    setHata('');
 
     const yukle = async () => {
       try {
         const token = MR.api.token;
-        const r = await fetch('/api/v1/evrak/download.php?id=' + evrakId + '&mode=inline', {
-          headers: token ? {'Authorization': 'Bearer ' + token} : {}
+        if (!token) { if (!iptal) setHata('OTURUM BULUNAMADI. LÜTFEN YENİDEN GİRİŞ YAPIN.'); return; }
+
+        const apiBase = MR.api.base || '/api/v1';
+        const fetchUrl = apiBase + '/evrak/download.php?id=' + evrakId + '&mode=inline';
+
+        const r = await fetch(fetchUrl, {
+          headers: { 'Authorization': 'Bearer ' + token },
+          cache: 'no-cache'
         });
+
         if (iptal) return;
-        if (!r.ok) { setHata(true); return; }
-        const contentType = r.headers.get('content-type') || 'application/pdf';
-        const arrayBuffer = await r.arrayBuffer();
+
+        if (!r.ok) {
+          let hataMesaj = 'SUNUCU HATASI: ' + r.status;
+          try { const j = await r.json(); hataMesaj = j.error || hataMesaj; } catch(e) {}
+          setHata(hataMesaj);
+          return;
+        }
+
+        const ct = r.headers.get('content-type') || 'application/pdf';
+        const ab = await r.arrayBuffer();
         if (iptal) return;
-        /* Blob'u açıkça doğru MIME type ile oluştur */
-        const blob = new Blob([arrayBuffer], { type: contentType });
+
+        if (ab.byteLength === 0) { setHata('EVRAK DOSYASI BOŞ'); return; }
+
+        const blob = new Blob([ab], { type: ct });
         const objectUrl = URL.createObjectURL(blob);
+
         /* Önceki URL varsa temizle */
         if (urlRef.current) URL.revokeObjectURL(urlRef.current);
         urlRef.current = objectUrl;
-        setUrl(objectUrl);
+        setMimeType(ct.toLowerCase());
+        setBlobUrl(objectUrl);
       } catch(e) {
-        if (!iptal) setHata(true);
+        console.error('EVRAK ÖNIZLEME HATASI:', e);
+        if (!iptal) setHata('EVRAK YÜKLENİRKEN HATA: ' + (e.message || 'Bağlantı hatası'));
       }
     };
     yukle();
+
     return () => {
       iptal = true;
       if (urlRef.current) { URL.revokeObjectURL(urlRef.current); urlRef.current = null; }
@@ -66,18 +89,33 @@ const EvrakPreviewIframe = ({evrakId}) => {
   }, [evrakId]);
 
   if (hata) return (
-    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'#ef4444',fontSize:14,flexDirection:'column',gap:8}}>
-      <MR.LIcon name="AlertTriangle" size={24} color="#ef4444"/>
-      EVRAK YÜKLENEMEDİ
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'#ef4444',fontSize:13,flexDirection:'column',gap:8,padding:20,textAlign:'center'}}>
+      <MR.LIcon name="AlertTriangle" size={28} color="#ef4444"/>
+      <div style={{fontWeight:700}}>EVRAK YÜKLENEMEDİ</div>
+      <div style={{fontSize:10,color:'#6b7280',maxWidth:300}}>{hata}</div>
     </div>
   );
-  if (!url) return (
+
+  if (!blobUrl) return (
     <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'#6b7280',fontSize:12,flexDirection:'column',gap:8}}>
       <div style={{width:24,height:24,border:'3px solid transparent',borderTopColor:'#2563eb',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
       EVRAK YÜKLENİYOR...
     </div>
   );
-  return <iframe src={url + '#toolbar=1&navpanes=0'} style={{width:'100%',height:'100%',border:'none',background:'#fff'}} title="EVRAK ÖNİZLEME"/>;
+
+  /* Resim dosyaları için <img> kullan */
+  if (mimeType.startsWith('image/')) {
+    return <div style={{width:'100%',height:'100%',overflow:'auto',display:'flex',alignItems:'center',justifyContent:'center',background:'#f3f4f6',padding:10}}>
+      <img src={blobUrl} alt="EVRAK" style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain',borderRadius:4,boxShadow:'0 2px 8px rgba(0,0,0,0.15)'}}/>
+    </div>;
+  }
+
+  /* PDF ve diğer dosyalar için <object> + <embed> + <iframe> fallback zinciri */
+  return <div ref={containerRef} style={{width:'100%',height:'100%',background:'#f3f4f6'}}>
+    <object data={blobUrl} type={mimeType || 'application/pdf'} style={{width:'100%',height:'100%',border:'none'}}>
+      <embed src={blobUrl} type={mimeType || 'application/pdf'} style={{width:'100%',height:'100%',border:'none'}}/>
+    </object>
+  </div>;
 };
 
 MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
@@ -543,10 +581,27 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                           style={{...S.btn,padding:'3px 6px',fontSize:8,background:`${C.accent}18`,color:C.accent,border:`1px solid ${C.accent}33`,borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',gap:2}}>
                           <LIcon name="Eye" size={10} color={C.accent}/>
                         </button>
-                        <a href={api.evrakUrl(y.id)} target="_blank" title="İNDİR"
-                          style={{...S.btn,padding:'3px 6px',fontSize:8,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',gap:2,textDecoration:'none'}}>
+                        <button title="İNDİR" onClick={async () => {
+                          try {
+                            const token = MR.api.token;
+                            const apiBase = MR.api.base || '/api/v1';
+                            const r = await fetch(apiBase + '/evrak/download.php?id=' + y.id, {
+                              headers: token ? {'Authorization': 'Bearer ' + token} : {}
+                            });
+                            if (!r.ok) { alert('İNDİRME HATASI'); return; }
+                            const blob = await r.blob();
+                            const a = document.createElement('a');
+                            a.href = URL.createObjectURL(blob);
+                            a.download = y.dosya_adi || 'evrak.pdf';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+                          } catch(e) { alert('İNDİRME HATASI: ' + e.message); }
+                        }}
+                          style={{...S.btn,padding:'3px 6px',fontSize:8,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',gap:2}}>
                           <LIcon name="Download" size={10} color={C.success}/>
-                        </a>
+                        </button>
                         <button title="SİL" onClick={() => setDeleteConfirm({type:'evrak', id:y.id, text:y.dosya_adi})}
                           style={{...S.btn,padding:'3px 6px',fontSize:8,background:`${C.danger}18`,color:C.danger,border:`1px solid ${C.danger}33`,borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',gap:2}}>
                           <LIcon name="Trash2" size={10} color={C.danger}/>
@@ -827,7 +882,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       {/* EVRAK ÖNİZLEME MODAL */}
       {previewEvrak && (
         <div onClick={() => setPreviewEvrak(null)} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.7)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
-          <div onClick={e => e.stopPropagation()} style={{width:'66vw',height:'85vh',background:C.bgCard,borderRadius:12,overflow:'hidden',display:'flex',flexDirection:'column',cursor:'default',boxShadow:'0 25px 50px rgba(0,0,0,0.5)'}}>
+          <div onClick={e => e.stopPropagation()} style={{width:'70vw',height:'88vh',background:C.bgCard,borderRadius:12,overflow:'hidden',display:'flex',flexDirection:'column',cursor:'default',boxShadow:'0 25px 50px rgba(0,0,0,0.5)'}}>
             <div style={{padding:'10px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',background:`${C.accent}08`,flexShrink:0}}>
               <div style={{display:'flex',alignItems:'center',gap:8}}>
                 <LIcon name="Eye" size={14} color={C.accent}/>
@@ -835,10 +890,27 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <span style={{fontSize:9,color:C.textMuted}}>({(previewEvrak.dosya_boyutu/1024).toFixed(0)}KB)</span>
               </div>
               <div style={{display:'flex',gap:6}}>
-                <a href={api.evrakUrl(previewEvrak.id)} target="_blank"
-                  style={{...S.btn,padding:'4px 10px',fontSize:9,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:6,textDecoration:'none',display:'flex',alignItems:'center',gap:4}}>
+                <button onClick={async () => {
+                  try {
+                    const token = MR.api.token;
+                    const apiBase = MR.api.base || '/api/v1';
+                    const r = await fetch(apiBase + '/evrak/download.php?id=' + previewEvrak.id, {
+                      headers: token ? {'Authorization': 'Bearer ' + token} : {}
+                    });
+                    if (!r.ok) { alert('İNDİRME HATASI'); return; }
+                    const blob = await r.blob();
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = previewEvrak.dosya_adi || 'evrak.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+                  } catch(e) { alert('İNDİRME HATASI: ' + e.message); }
+                }}
+                  style={{...S.btn,padding:'4px 10px',fontSize:9,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
                   <LIcon name="Download" size={10} color={C.success}/> İNDİR
-                </a>
+                </button>
                 <button onClick={() => setPreviewEvrak(null)}
                   style={{...S.btn,padding:'4px 10px',fontSize:9,background:`${C.danger}18`,color:C.danger,border:`1px solid ${C.danger}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
                   <LIcon name="X" size={10} color={C.danger}/> KAPAT

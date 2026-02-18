@@ -173,112 +173,93 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
   }, [data, turF, asamaF, search, adkDosya, bhDosya, acikDosya]);
 
   /* ═══════════════════════════════════════════════════════════
-     PDF RAPOR OLUŞTUR
+     PDF RAPOR OLUŞTUR - html2pdf ile görünür element yakalama
+     (Türkçe karakter desteği için HTML render → canvas → PDF)
      ═══════════════════════════════════════════════════════════ */
   const pdfRaporOlustur = useCallback(() => {
     if (data.length === 0) return;
+    if (typeof html2pdf === 'undefined') {
+      alert('PDF KÜTÜPHANESİ YÜKLENEMEDİ. SAYFAYI YENİLEYİP TEKRAR DENEYİN.');
+      return;
+    }
     setRaporLoading(true);
 
-    try {
-      /* PDF için HTML oluştur */
-      const filtreBilgi = [];
-      if (search) filtreBilgi.push(`ARAMA: "${search}"`);
-      if (turF) filtreBilgi.push(`TÜR: ${turF}`);
-      if (asamaF) filtreBilgi.push(`AŞAMA: ${asamaF}`);
+    /* Filtre bilgisi */
+    const filtreBilgi = [];
+    if (search) filtreBilgi.push('ARAMA: "' + search + '"');
+    if (turF) filtreBilgi.push('TÜR: ' + turF);
+    if (asamaF) filtreBilgi.push('AŞAMA: ' + asamaF);
 
-      let html = `
-        <div style="font-family: Arial, Helvetica, sans-serif; padding: 10px; color: #1a1a1a;">
-          <!-- BAŞLIK -->
-          <div style="text-align: center; margin-bottom: 15px; border-bottom: 3px solid #2563eb; padding-bottom: 12px;">
-            <div style="font-size: 16px; font-weight: 800; color: #2563eb; letter-spacing: 1px;">MR HASAR DANIŞMANLIK</div>
-            <div style="font-size: 11px; color: #666; margin-top: 4px;">DOSYA TAKİP SİSTEMİ - DOSYA LİSTESİ RAPORU</div>
-            <div style="font-size: 9px; color: #999; margin-top: 4px;">RAPOR TARİHİ: ${tarihFormat()}</div>
-          </div>
+    /* HTML içeriği oluştur */
+    const satirlar = data.map((d, i) =>
+      '<tr style="' + (i % 2 === 1 ? 'background:#f8fafc;' : '') + '">' +
+      '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;text-align:center;">' + (i + 1) + '</td>' +
+      '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;font-weight:700;color:#2563eb;">' + (d.dosya_no || '-') + '</td>' +
+      '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:6.5px;font-family:monospace;">' + (d.tc_kimlik || '-') + '</td>' +
+      '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;font-weight:600;">' + (d.magdur_adi || '-') + '</td>' +
+      '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;">' + (d.dosya_kaynagi || '-') + '</td>' +
+      '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;">' + (d.avukat_adi || '-') + '</td>' +
+      '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;text-align:center;font-weight:700;">' + (d.dosya_turu || '-') + '</td>' +
+      '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;">' + (d.talep_turu || '-') + '</td>' +
+      '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;">' + (d.sigorta_sirket || '-') + '</td>' +
+      '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:6.5px;font-family:monospace;">' + (d.hasar_no || '-') + '</td>' +
+      '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;">' + (d.kaza_tarihi || '-') + '</td>' +
+      '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;">' + (d.acilis_tarihi || '-') + '</td>' +
+      '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:6.5px;max-width:130px;word-wrap:break-word;">' + (d.asama || '-') + '</td>' +
+      '</tr>'
+    ).join('');
 
-          <!-- ÖZET BİLGİ -->
-          <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 12px; font-size: 10px;">
-            <span><strong>TOPLAM:</strong> ${data.length} DOSYA</span>
-            <span><strong>ADK:</strong> ${adkDosya}</span>
-            <span><strong>BH:</strong> ${bhDosya}</span>
-            <span><strong>AÇIK:</strong> ${acikDosya}</span>
-          </div>
+    const htmlIcerik = '<div style="font-family:Arial,Helvetica,sans-serif;color:#1a1a1a;width:1100px;padding:15px;">' +
+      '<div style="text-align:center;margin-bottom:10px;border-bottom:3px solid #2563eb;padding-bottom:8px;">' +
+        '<div style="font-size:16px;color:#2563eb;font-weight:700;letter-spacing:1px;margin-bottom:3px;">MR HASAR DANIŞMANLIK</div>' +
+        '<div style="font-size:10px;color:#666;">DOSYA TAKİP SİSTEMİ - DOSYA LİSTESİ RAPORU</div>' +
+        '<div style="font-size:8px;color:#999;margin-top:2px;">RAPOR TARİHİ: ' + tarihFormat() + '</div>' +
+      '</div>' +
+      '<div style="text-align:center;font-size:9px;margin-bottom:6px;">' +
+        '<strong>TOPLAM:</strong> ' + data.length + ' DOSYA &nbsp;|&nbsp; <strong>ADK:</strong> ' + adkDosya +
+        ' &nbsp;|&nbsp; <strong>BH:</strong> ' + bhDosya + ' &nbsp;|&nbsp; <strong>AÇIK:</strong> ' + acikDosya +
+      '</div>' +
+      (filtreBilgi.length > 0 ? '<div style="text-align:center;font-size:8px;color:#666;margin-bottom:6px;">FİLTRE: ' + filtreBilgi.join(' | ') + '</div>' : '') +
+      '<table style="width:100%;border-collapse:collapse;">' +
+        '<thead><tr>' +
+          '<th style="background:#2563eb;color:#fff;padding:4px 4px;border:1px solid #1d4ed8;font-size:6.5px;font-weight:700;text-align:left;">#</th>' +
+          RAPOR_SUTUNLAR.map(s => '<th style="background:#2563eb;color:#fff;padding:4px 4px;border:1px solid #1d4ed8;font-size:6.5px;font-weight:700;text-align:left;">' + s.label + '</th>').join('') +
+        '</tr></thead>' +
+        '<tbody>' + satirlar + '</tbody>' +
+      '</table>' +
+      '<div style="text-align:center;margin-top:10px;padding-top:6px;border-top:1px solid #d1d5db;font-size:7px;color:#999;">' +
+        'MR HASAR DANIŞMANLIK - DOSYA TAKİP SİSTEMİ | ' + tarihFormat() +
+      '</div>' +
+    '</div>';
 
-          ${filtreBilgi.length > 0 ? `<div style="text-align:center; font-size:9px; color:#666; margin-bottom:10px;">FİLTRE: ${filtreBilgi.join(' | ')}</div>` : ''}
+    /* Geçici DOM elemanı oluştur — GÖRÜNÜR olmalı (html2canvas gizli elemanı yakalayamaz) */
+    const container = document.createElement('div');
+    container.id = 'mr-pdf-rapor-gecici';
+    container.style.cssText = 'position:fixed;top:0;left:0;width:1100px;z-index:99999;background:#fff;overflow:visible;';
+    container.innerHTML = htmlIcerik;
+    document.body.appendChild(container);
 
-          <!-- TABLO -->
-          <table style="width: 100%; border-collapse: collapse; font-size: 7px;">
-            <thead>
-              <tr style="background: #2563eb; color: white;">
-                <th style="padding: 5px 3px; text-align: left; border: 1px solid #1d4ed8; font-weight: 700; font-size: 6.5px;">#</th>
-                ${RAPOR_SUTUNLAR.map(s => `<th style="padding: 5px 3px; text-align: left; border: 1px solid #1d4ed8; font-weight: 700; font-size: 6.5px;">${s.label}</th>`).join('')}
-              </tr>
-            </thead>
-            <tbody>
-              ${data.map((d, i) => `
-                <tr style="background: ${i % 2 === 0 ? '#ffffff' : '#f8fafc'};">
-                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; color: #6b7280; font-size: 6.5px;">${i + 1}</td>
-                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-weight: 700; color: #2563eb; font-size: 7px;">${d.dosya_no || '-'}</td>
-                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-family: monospace; font-size: 6.5px;">${d.tc_kimlik || '-'}</td>
-                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-weight: 600; font-size: 7px;">${d.magdur_adi || '-'}</td>
-                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.dosya_kaynagi || '-'}</td>
-                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.avukat_adi || '-'}</td>
-                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; text-align: center; font-weight: 700; font-size: 7px;">${d.dosya_turu || '-'}</td>
-                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.talep_turu || '-'}</td>
-                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.sigorta_sirket || '-'}</td>
-                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-family: monospace; font-size: 6.5px;">${d.hasar_no || '-'}</td>
-                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.kaza_tarihi || '-'}</td>
-                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6.5px;">${d.acilis_tarihi || '-'}</td>
-                  <td style="padding: 4px 3px; border: 1px solid #e2e8f0; font-size: 6px; max-width: 120px; word-wrap: break-word; overflow-wrap: break-word;">${d.asama || '-'}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-
-          <!-- FOOTER -->
-          <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 8px; color: #999;">
-            MR HASAR DANIŞMANLIK - DOSYA TAKİP SİSTEMİ | ${tarihFormat()} | SAYFA
-          </div>
-        </div>
-      `;
-
-      /* html2pdf ile oluştur — container sayfada görünür ama gizli olmalı
-         (left:-9999px html2canvas'ın boş sayfa üretmesine neden olur) */
-      const container = document.createElement('div');
-      container.innerHTML = html;
-      container.style.position = 'fixed';
-      container.style.left = '0';
-      container.style.top = '0';
-      container.style.width = '1123px';
-      container.style.zIndex = '-9999';
-      container.style.opacity = '0.01';
-      container.style.pointerEvents = 'none';
-      container.style.overflow = 'hidden';
-      container.style.background = '#ffffff';
-      document.body.appendChild(container);
-
-      const opt = {
-        margin:       [8, 5, 8, 5],
-        filename:     `MR_HASAR_DOSYA_RAPORU_${new Date().toISOString().slice(0,10)}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, letterRendering: true, logging: false, width: 1123, windowWidth: 1123 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' },
-        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-      };
-
-      html2pdf().set(opt).from(container).save().then(() => {
-        document.body.removeChild(container);
-        setRaporLoading(false);
-      }).catch((err) => {
-        console.error('PDF OLUŞTURMA HATASI:', err);
-        document.body.removeChild(container);
-        setRaporLoading(false);
-        alert('PDF RAPOR OLUŞTURULURKEN HATA OLUŞTU');
-      });
-    } catch(e) {
-      console.error('PDF RAPOR HATASI:', e);
-      setRaporLoading(false);
-      alert('PDF RAPOR OLUŞTURULURKEN HATA OLUŞTU');
-    }
+    /* Tarayıcının render etmesi için bekle, sonra PDF oluştur */
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        html2pdf().set({
+          margin: [5, 5, 5, 5],
+          filename: 'MR_HASAR_DOSYA_RAPORU_' + new Date().toISOString().slice(0, 10) + '.pdf',
+          image: { type: 'jpeg', quality: 0.95 },
+          html2canvas: { scale: 2, useCORS: true, logging: false, width: 1100, scrollX: 0, scrollY: 0, windowWidth: 1100 },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        }).from(container).save().then(() => {
+          if (container.parentNode) container.parentNode.removeChild(container);
+          setRaporLoading(false);
+        }).catch(function(err) {
+          console.error('PDF RAPOR HATASI:', err);
+          if (container.parentNode) container.parentNode.removeChild(container);
+          setRaporLoading(false);
+          alert('PDF OLUŞTURULURKEN HATA: ' + (err.message || err));
+        });
+      }, 500);
+    });
   }, [data, turF, asamaF, search, adkDosya, bhDosya, acikDosya]);
 
   /* ═══════════════════════════════════════════════════════════

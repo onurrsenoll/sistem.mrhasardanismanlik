@@ -7,6 +7,7 @@ const MR = window.MR || (window.MR = {});
 // ═══ API ═══
 const API_BASE = '/api/v1';
 MR.api = {
+  base: API_BASE,
   token: localStorage.getItem('mr_token'),
   setToken(t) { this.token = t; if (t) localStorage.setItem('mr_token', t); else localStorage.removeItem('mr_token'); },
   async req(ep, o = {}, timeout = 30000) {
