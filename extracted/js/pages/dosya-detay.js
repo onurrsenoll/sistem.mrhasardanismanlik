@@ -507,10 +507,37 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             </div>
             {dosya.evraklar?.length > 0 && (
               <button style={{...S.btn,...S.btnP,fontSize:10,padding:'5px 12px'}}
-                onClick={() => {
-                  dosya.evraklar.forEach((e,i) => {
-                    setTimeout(() => { window.open(api.evrakUrl(e.id), '_blank'); }, i * 500);
-                  });
+                onClick={async () => {
+                  const token = MR.api.token;
+                  const apiBase = MR.api.base || '/api/v1';
+                  for (let i = 0; i < dosya.evraklar.length; i++) {
+                    const e = dosya.evraklar[i];
+                    try {
+                      const r = await fetch(apiBase + '/evrak/download.php?id=' + e.id, {
+                        headers: token ? {'Authorization': 'Bearer ' + token} : {}
+                      });
+                      if (!r.ok) {
+                        let hataMesaj = 'HATA ' + r.status;
+                        try { const j = await r.json(); hataMesaj = j.error || hataMesaj; } catch(ex){}
+                        console.warn('EVRAK İNDİRİLEMEDİ (' + e.dosya_adi + '):', hataMesaj);
+                        continue;
+                      }
+                      const blob = await r.blob();
+                      const a = document.createElement('a');
+                      a.href = URL.createObjectURL(blob);
+                      a.download = e.dosya_adi || ('evrak_' + e.id + '.pdf');
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+                      /* Tarayıcı indirme arasında kısa bekleme */
+                      if (i < dosya.evraklar.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 800));
+                      }
+                    } catch(err) {
+                      console.error('EVRAK İNDİRME HATASI:', err);
+                    }
+                  }
                 }}>
                 <LIcon name="Download" size={12} color="#fff"/> TOPLU İNDİR ({dosya.evraklar?.length})
               </button>
