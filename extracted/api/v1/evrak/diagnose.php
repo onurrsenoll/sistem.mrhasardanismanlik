@@ -1,16 +1,30 @@
 <?php
 /**
- * GET /api/v1/evrak/diagnose.php
- * Evrak upload/download yollarını kontrol et (sadece admin)
+ * GET /api/v1/evrak/diagnose.php?key=mrhasar2025
+ * Evrak upload/download yollarını kontrol et
+ * GÜVENLİK: Sadece doğru key parametresi ile erişilebilir
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
 
-setup_headers();
-require_method('GET');
+// CORS
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
+header("Access-Control-Allow-Origin: $origin");
+header('Content-Type: application/json; charset=utf-8');
 
-$user = auth_required(['admin']);
+// Basit parola kontrolü (tarayıcıdan direkt erişim için)
+$key = $_GET['key'] ?? '';
+if ($key !== 'mrhasar2025') {
+    // Key yoksa JWT auth dene
+    try {
+        $user = auth_required(['admin']);
+    } catch (Exception $ex) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Erisim icin ?key=mrhasar2025 ekleyin veya admin olarak giris yapin']);
+        exit;
+    }
+}
 
 $db = getDB();
 
@@ -18,7 +32,7 @@ $db = getDB();
 $uploadDir = UPLOAD_DIR;
 $uploadDirExists = is_dir($uploadDir);
 $uploadDirWritable = is_writable($uploadDir);
-$documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? 'BİLİNMİYOR';
+$documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? 'BILINMIYOR';
 
 // Yüklü evrak sayısı
 $stmt = $db->query('SELECT COUNT(*) as toplam FROM evraklar');
@@ -51,28 +65,35 @@ foreach ($evraklar as $e) {
 // uploads dizin içeriği
 $uploadIcerik = [];
 if ($uploadDirExists) {
-    $iter = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($uploadDir, RecursiveDirectoryIterator::SKIP_DOTS),
-        RecursiveIteratorIterator::SELF_FIRST
-    );
-    $sayac = 0;
-    foreach ($iter as $item) {
-        if ($sayac++ > 50) break;
-        $uploadIcerik[] = [
-            'yol' => str_replace($uploadDir, '', $item->getPathname()),
-            'tur' => $item->isDir() ? 'klasor' : 'dosya',
-            'boyut' => $item->isFile() ? $item->getSize() : null,
-        ];
+    try {
+        $iter = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($uploadDir, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+        $sayac = 0;
+        foreach ($iter as $item) {
+            if ($sayac++ > 50) break;
+            $uploadIcerik[] = [
+                'yol' => str_replace($uploadDir, '', $item->getPathname()),
+                'tur' => $item->isDir() ? 'klasor' : 'dosya',
+                'boyut' => $item->isFile() ? $item->getSize() : null,
+            ];
+        }
+    } catch (Exception $ex) {
+        $uploadIcerik[] = ['hata' => $ex->getMessage()];
     }
 }
 
-json_success([
-    'upload_dir' => $uploadDir,
-    'upload_dir_exists' => $uploadDirExists,
-    'upload_dir_writable' => $uploadDirWritable,
-    'document_root' => $documentRoot,
-    'database_php_dir' => dirname(__DIR__, 3) . '/api/config/',
-    'toplam_evrak_db' => $toplamEvrak,
-    'evrak_kontrol' => $kontrol,
-    'upload_icerik' => $uploadIcerik,
-]);
+echo json_encode([
+    'success' => true,
+    'data' => [
+        'upload_dir' => $uploadDir,
+        'upload_dir_exists' => $uploadDirExists,
+        'upload_dir_writable' => $uploadDirWritable,
+        'document_root' => $documentRoot,
+        'php_dir' => __DIR__,
+        'toplam_evrak_db' => $toplamEvrak,
+        'evrak_kontrol' => $kontrol,
+        'upload_icerik' => $uploadIcerik,
+    ]
+], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
