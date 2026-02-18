@@ -104,10 +104,20 @@ if (empty($mimeType) || $mimeType === 'application/octet-stream') {
     $mimeType = $finfo->file($filePath) ?: 'application/pdf';
 }
 
+// LiteSpeed/Apache gzip sıkıştırmasını devre dışı bırak
+// (sıkıştırılmış PDF blob olarak okunamaz)
+if (function_exists('apache_setenv')) {
+    @apache_setenv('no-gzip', '1');
+}
+@ini_set('zlib.output_compression', 'Off');
+
 // Dosyayı gönder
 header('Content-Type: ' . $mimeType);
 header('Content-Disposition: ' . $mode . '; filename="' . basename($evrak['dosya_adi']) . '"');
 header('Content-Length: ' . filesize($filePath));
+header('Content-Encoding: identity');
+header('X-Content-Type-Options: nosniff');
+header('Accept-Ranges: none');
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
 
