@@ -26,7 +26,7 @@ $stmt = $db->prepare("SELECT
     COUNT(*) as adet,
     SUM(tutar) as toplam,
     SUM(CASE WHEN tahsilat_durumu = 'tahsil_edildi' THEN tutar ELSE 0 END) as tahsil_edilen,
-    SUM(CASE WHEN tahsilat_durumu = 'bekliyor' THEN tutar ELSE 0 END) as bekleyen
+    SUM(CASE WHEN tahsilat_durumu = 'beklemede' THEN tutar ELSE 0 END) as bekleyen
     FROM gelirler
     WHERE DATE(created_at) BETWEEN ? AND ?
     GROUP BY gelir_turu

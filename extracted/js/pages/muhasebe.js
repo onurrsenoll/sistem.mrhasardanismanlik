@@ -1337,7 +1337,19 @@ const MaliyetAnalizi = ({setPage, user}) => {
   const yukle = async () => {
     setLoading(true);
     const r = await api.maliyetAnaliz();
-    if (r?.success) setVeriler(r.data?.items || r.data || []);
+    if (r?.success) {
+      /* Backend dosyalar dizisi döner - alan adlarını frontend'e uyumlu yap */
+      const raw = r.data?.dosyalar || r.data?.items || (Array.isArray(r.data) ? r.data : []);
+      const mapped = raw.map(d => ({
+        ...d,
+        dosya_id: d.id || d.dosya_id,
+        gelir: (parseFloat(d.toplam_gelir || d.gelir) || 0),
+        gider: (parseFloat(d.toplam_gider || d.gider) || 0) + (parseFloat(d.toplam_masraf || d.masraf) || 0),
+        komisyon: (parseFloat(d.toplam_komisyon || d.komisyon) || 0),
+        musteri: d.musteri || d.musteri_adi || d.sigorta_sirket || d.dosya_turu || '-'
+      }));
+      setVeriler(mapped);
+    }
     setLoading(false);
   };
 
@@ -1482,12 +1494,47 @@ const FinansalRaporlar = ({setPage, user}) => {
     const p = {};
     if (baslangic) p.baslangic = baslangic;
     if (bitis) p.bitis = bitis;
+    let data = null;
     const r = await api.finansalRapor(p);
-    if (r?.success) setRapor(r.data || {});
+    if (r?.success) data = r.data;
     else {
-      /* FALLBACK: ESKİ muhasebeRapor API */
       const r2 = await api.muhasebeRapor(p);
-      if (r2?.success) setRapor(r2.data || {});
+      if (r2?.success) data = r2.data;
+    }
+    if (data) {
+      /* Backend genel_ozet döner - düzleştir */
+      const ozet = data.genel_ozet || {};
+      const mapped = {
+        toplam_gelir: ozet.toplam_gelir ?? data.toplam_gelir ?? 0,
+        toplam_gider: (parseFloat(ozet.toplam_gider ?? data.toplam_gider ?? 0)) + (parseFloat(ozet.toplam_masraf ?? data.toplam_masraf ?? 0)),
+        toplam_komisyon: ozet.toplam_komisyon ?? data.toplam_komisyon ?? 0,
+        dosya_sayisi: (data.kaynak_analiz || []).reduce((t, k) => t + (parseInt(k.dosya_sayisi) || 0), 0) || data.dosya_sayisi || 0,
+        /* aylik_trend → aylik */
+        aylik: (data.aylik_trend || data.aylik || []).map(a => ({
+          ...a,
+          donem: a.ay || a.donem,
+          gelir: parseFloat(a.gelir) || 0,
+          gider: (parseFloat(a.gider) || 0) + (parseFloat(a.masraf) || 0)
+        })),
+        /* gider_ozet + gelir_ozet → kategoriler */
+        kategoriler: [
+          ...(data.gelir_ozet || []).map(g => ({kategori: g.gelir_turu || 'GELİR', tutar: parseFloat(g.toplam) || 0, tip:'gelir'})),
+          ...(data.gider_ozet || []).map(g => ({kategori: g.gider_turu || 'GİDER', tutar: parseFloat(g.toplam) || 0, tip:'gider'})),
+          ...(data.masraf_ozet || []).map(g => ({kategori: g.masraf_kalemi || 'MASRAF', tutar: parseFloat(g.toplam) || 0, tip:'masraf'})),
+          ...(data.komisyon_ozet || []).map(g => ({kategori: g.komisyon_turu || 'KOMİSYON', tutar: parseFloat(g.toplam) || 0, tip:'komisyon'}))
+        ].filter(k => k.tutar > 0).sort((a, b) => b.tutar - a.tutar),
+        /* aylik_trend detay olarak kullan */
+        detay: (data.aylik_trend || data.aylik || data.detay || []).map(a => ({
+          donem: a.ay || a.donem,
+          gelir: parseFloat(a.gelir) || 0,
+          gider: (parseFloat(a.gider) || 0) + (parseFloat(a.masraf) || 0),
+          komisyon: 0,
+          dosya_sayisi: a.dosya_sayisi || ''
+        })),
+        kaynak_analiz: data.kaynak_analiz || [],
+        kasalar: data.kasalar || []
+      };
+      setRapor(mapped);
     }
     setLoading(false);
   };
@@ -1544,7 +1591,7 @@ const FinansalRaporlar = ({setPage, user}) => {
           <button style={{...S.btn,...S.btnP,fontSize:11,marginLeft:8}} onClick={raporGetir}>
             <LIcon name="Search" size={14} color="#fff"/> RAPOR GETİR
           </button>
-          <button style={{...S.btn,...S.btnG,fontSize:11}} onClick={() => {setBaslangic('');setBitis('');setTimeout(yukle,0);}}>
+          <button style={{...S.btn,...S.btnG,fontSize:11}} onClick={() => {setBaslangic('');setBitis('');setRapor(null);setTimeout(yukle,100);}}>
             <LIcon name="RotateCcw" size={13} color={C.textSec}/> TEMİZLE
           </button>
         </div>

@@ -31,6 +31,8 @@ $faturaNo = clean($body['fatura_no'] ?? '');
 // Frontend 'tarih' gönderir
 $faturaTarihi = !empty($body['fatura_tarihi']) ? clean($body['fatura_tarihi']) : (!empty($body['tarih']) ? clean($body['tarih']) : null);
 $tahsilatDurumu = clean($body['tahsilat_durumu'] ?? 'tahsil_edildi');
+// Frontend 'bekliyor' gönderebilir, DB ENUM 'beklemede' bekler
+if ($tahsilatDurumu === 'bekliyor') $tahsilatDurumu = 'beklemede';
 $tahsilatTarihi = !empty($body['tahsilat_tarihi']) ? clean($body['tahsilat_tarihi']) : null;
 
 if ($tutar <= 0) json_error('Tutar 0\'dan büyük olmalı', 422);

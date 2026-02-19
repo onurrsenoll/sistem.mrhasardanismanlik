@@ -60,7 +60,7 @@ $total = (int)$stmt->fetch()['total'];
 $stmt = $db->prepare("SELECT
     COALESCE(SUM(g.tutar), 0) as toplam_tutar,
     COALESCE(SUM(CASE WHEN g.tahsilat_durumu = 'tahsil_edildi' THEN g.tutar ELSE 0 END), 0) as tahsil_edilen,
-    COALESCE(SUM(CASE WHEN g.tahsilat_durumu = 'bekliyor' THEN g.tutar ELSE 0 END), 0) as bekleyen
+    COALESCE(SUM(CASE WHEN g.tahsilat_durumu = 'beklemede' THEN g.tutar ELSE 0 END), 0) as bekleyen
     FROM gelirler g $whereSQL");
 $stmt->execute($params);
 $totals = $stmt->fetch();
