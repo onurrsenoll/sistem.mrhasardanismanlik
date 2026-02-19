@@ -22,6 +22,9 @@ const tarihFormat = (d) => {
 /* ═══ DEPARTMANLAR ═══ */
 const DEPARTMANLAR = ['HUKUK', 'SAHA', 'OFİS', 'MUHASEBE', 'İDARİ', 'BİLGİ TEKNOLOJİLERİ'];
 
+/* ═══ OFİS ROLLERİ ═══ */
+const OFIS_ROLLERI = ['OFİS ADK CRM', 'OFİS BH CRM', 'OFİS OPERASYON'];
+
 /* ═══ BOŞ FORM ═══ */
 const bosForm = () => ({
   ad_soyad: '', tc_kimlik: '', telefon: '', email: '',
@@ -305,13 +308,20 @@ const PersonelListesi = ({setPage, user}) => {
             <input style={S.input} type="email" value={editForm.email} onChange={e => ef('email', e.target.value)} placeholder="ORNEK@MRHASAR.COM"/>
           </FormGroup>
           <FormGroup label="DEPARTMAN">
-            <select style={S.select} value={editForm.departman} onChange={e => ef('departman', e.target.value)}>
+            <select style={S.select} value={editForm.departman} onChange={e => {ef('departman', e.target.value); if(e.target.value !== 'OFİS') ef('pozisyon','');}}>
               <option value="">SEÇİNİZ</option>
               {DEPARTMANLAR.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </FormGroup>
-          <FormGroup label="POZİSYON">
-            <input style={S.input} value={editForm.pozisyon} onChange={e => ef('pozisyon', e.target.value)} placeholder="POZİSYON"/>
+          <FormGroup label={editForm.departman === 'OFİS' ? 'ROL' : 'POZİSYON'}>
+            {editForm.departman === 'OFİS' ? (
+              <select style={S.select} value={editForm.pozisyon} onChange={e => ef('pozisyon', e.target.value)}>
+                <option value="">ROL SEÇİNİZ</option>
+                {OFIS_ROLLERI.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            ) : (
+              <input style={S.input} value={editForm.pozisyon} onChange={e => ef('pozisyon', e.target.value)} placeholder="POZİSYON"/>
+            )}
           </FormGroup>
           <FormGroup label="MAAŞ (₺)">
             <input style={S.input} type="number" step="0.01" value={editForm.maas} onChange={e => ef('maas', e.target.value)} placeholder="0,00"/>
@@ -430,13 +440,20 @@ const YeniPersonel = ({setPage, user}) => {
             <input style={S.input} type="email" value={form.email} onChange={e => f('email', e.target.value)} placeholder="ORNEK@MRHASAR.COM"/>
           </FormGroup>
           <FormGroup label="DEPARTMAN">
-            <select style={S.select} value={form.departman} onChange={e => f('departman', e.target.value)}>
+            <select style={S.select} value={form.departman} onChange={e => {f('departman', e.target.value); if(e.target.value !== 'OFİS') f('pozisyon','');}}>
               <option value="">SEÇİNİZ</option>
               {DEPARTMANLAR.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </FormGroup>
-          <FormGroup label="POZİSYON">
-            <input style={S.input} value={form.pozisyon} onChange={e => f('pozisyon', e.target.value)} placeholder="POZİSYON"/>
+          <FormGroup label={form.departman === 'OFİS' ? 'ROL' : 'POZİSYON'}>
+            {form.departman === 'OFİS' ? (
+              <select style={S.select} value={form.pozisyon} onChange={e => f('pozisyon', e.target.value)}>
+                <option value="">ROL SEÇİNİZ</option>
+                {OFIS_ROLLERI.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            ) : (
+              <input style={S.input} value={form.pozisyon} onChange={e => f('pozisyon', e.target.value)} placeholder="POZİSYON"/>
+            )}
           </FormGroup>
           <FormGroup label="MAAŞ (₺)">
             <input style={S.input} type="number" step="0.01" value={form.maas} onChange={e => f('maas', e.target.value)} placeholder="0,00"/>
