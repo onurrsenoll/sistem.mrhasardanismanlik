@@ -34,7 +34,7 @@ try {
     $dosyaNo = generate_dosya_no($db);
 
     // 2. Dosya kaydı
-    $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, talep_turu, asama, sigorta_sirket, police_no, sigorta_turu, dosya_kaynagi, avukat_id, ortak_id, sorumlu_id, haklilik, komisyon_orani, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, notlar, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), ?, ?)');
+    $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, talep_turu, asama, sigorta_sirket, police_no, sigorta_turu, dosya_kaynagi, avukat_id, ortak_id, sorumlu_id, paydas_id, haklilik, komisyon_orani, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, notlar, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), ?, ?)');
 
     // HASAR NO: KULLANICININ MANUEL GİRDİĞİ DEĞER KULLANILIR (SİSTEM OTOMATİK ATAMAZ)
     $hasar_no = clean($body['hasar_no'] ?? '');
@@ -51,6 +51,7 @@ try {
         !empty($body['avukat_id']) ? (int)$body['avukat_id'] : null,
         !empty($body['ortak_id']) ? (int)$body['ortak_id'] : null,
         !empty($body['sorumlu_id']) ? (int)$body['sorumlu_id'] : $user['id'],
+        !empty($body['paydas_id']) ? (int)$body['paydas_id'] : null,
         (int)($body['haklilik'] ?? 100),
         (float)($body['komisyon_orani'] ?? 0),
         !empty($body['kaza_tarihi']) ? $body['kaza_tarihi'] : null,

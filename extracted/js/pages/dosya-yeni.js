@@ -9,12 +9,13 @@ MR.DosyaYeniPage = ({setPage, user}) => {
   const [error, setError] = useState('');
   const [ortaklar, setOrtaklar] = useState([]);
   const [personeller, setPersoneller] = useState([]);
+  const [paydaslar, setPaydaslar] = useState([]);
   const [form, setForm] = useState({
     ad_soyad:'', tc_kimlik:'', telefon:'', iban:'', adres:'', il:'', ilce:'',
     dosya_turu:'ADK', talep_turu:'', kaza_tarihi:'', haklilik:'100', hak_mahrumiyet:'0', meslek:'', komisyon:'',
     ma_plaka:'', ma_marka:'', ma_model:'', ma_yil:'',
     ka_plaka:'', ka_marka:'', ka_yil:'', ka_trafik:'',
-    sigorta_sirket:'', hasar_no:'', dosya_kaynak:'', notlar:'', ortak_id:'', sorumlu_id:''
+    sigorta_sirket:'', hasar_no:'', dosya_kaynak:'', notlar:'', ortak_id:'', sorumlu_id:'', paydas_id:''
   });
   const u = (k, v) => setForm(p => ({...p, [k]: v}));
 
@@ -52,6 +53,9 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     api.personelList({durum:'aktif'}).then(r => {
       if (r?.success) setPersoneller(r.data?.items || r.data || []);
     });
+    api.paydasList({durum:'aktif', limit:200}).then(r => {
+      if (r?.success) setPaydaslar(r.data?.items || r.data || []);
+    });
   }, []);
 
   const adkTT = ['TRAFİK SİGORTASI BAŞVURUSU','KASKO BAŞVURUSU','TAHKİM BAŞVURUSU','DAVA YOLU'];
@@ -70,6 +74,8 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     else delete gonder.ortak_id;
     if (gonder.sorumlu_id) gonder.sorumlu_id = parseInt(gonder.sorumlu_id);
     else delete gonder.sorumlu_id;
+    if (gonder.paydas_id) gonder.paydas_id = parseInt(gonder.paydas_id);
+    else delete gonder.paydas_id;
     const r = await api.dosyaCreate(gonder);
     if (r?.success) setResult(r.data);
     else setError(r?.error || 'HATA');
@@ -192,14 +198,15 @@ MR.DosyaYeniPage = ({setPage, user}) => {
       default: {
         const seciliOrtak = ortaklar.find(o => String(o.id) === String(form.ortak_id));
         /* DOSYA KAYNAĞI'NA GÖRE PERSONEL FİLTRELE */
+        const isYonlendiren = form.dosya_kaynak === 'YÖNLENDİREN';
         const filtreliPersonel = personeller.filter(p => {
-          if (!form.dosya_kaynak) return false;
+          if (!form.dosya_kaynak || isYonlendiren) return false;
           if (form.dosya_kaynak === 'OFİS CRM') return (p.departman || '').toUpperCase() === 'OFİS';
           if (form.dosya_kaynak === 'SAHA PERSONEL') return (p.departman || '').toUpperCase() === 'SAHA';
-          if (form.dosya_kaynak === 'YÖNLENDİREN') return true;
           return false;
         });
         const seciliSorumlu = personeller.find(p => String(p.id) === String(form.sorumlu_id));
+        const seciliPaydas = paydaslar.find(p => String(p.id) === String(form.paydas_id));
         return (
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
             <FormGroup label="SİGORTA ŞİRKETİ">
@@ -211,15 +218,15 @@ MR.DosyaYeniPage = ({setPage, user}) => {
               <input style={S.input} value={form.hasar_no} onChange={e=>u('hasar_no',e.target.value)} placeholder="HASAR DOSYA NO GİRİNİZ"/>
             </FormGroup>
             <FormGroup label="DOSYA KAYNAĞI">
-              <select style={S.select} value={form.dosya_kaynak} onChange={e=>{u('dosya_kaynak',e.target.value);u('sorumlu_id','');}}>
+              <select style={S.select} value={form.dosya_kaynak} onChange={e=>{u('dosya_kaynak',e.target.value);u('sorumlu_id','');u('paydas_id','');}}>
                 <option value="">SEÇİNİZ</option>
                 <option value="OFİS CRM">OFİS CRM</option>
                 <option value="YÖNLENDİREN">YÖNLENDİREN</option>
                 <option value="SAHA PERSONEL">SAHA PERSONEL</option>
               </select>
             </FormGroup>
-            {/* DOSYA SORUMLUSU - KAYNAĞA GÖRE DİNAMİK */}
-            {form.dosya_kaynak && (
+            {/* DOSYA SORUMLUSU - OFİS CRM / SAHA PERSONEL İÇİN */}
+            {form.dosya_kaynak && !isYonlendiren && (
               <FormGroup label="DOSYA SORUMLUSU">
                 <select style={{...S.select,fontWeight:600}} value={form.sorumlu_id} onChange={e=>u('sorumlu_id',e.target.value)}>
                   <option value="">SORUMLU SEÇİNİZ</option>
@@ -232,7 +239,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
               </FormGroup>
             )}
             {/* SEÇİLİ SORUMLU BİLGİ KARTI */}
-            {seciliSorumlu && (
+            {seciliSorumlu && !isYonlendiren && (
               <div style={{gridColumn:'1 / -1',padding:14,background:`${C.accent}11`,borderRadius:10,border:`1px solid ${C.accent}33`,display:'flex',alignItems:'center',gap:16}}>
                 <div style={{width:44,height:44,borderRadius:10,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                   <LIcon name="UserCheck" size={20} color={C.accent}/>
@@ -246,6 +253,37 @@ MR.DosyaYeniPage = ({setPage, user}) => {
                 <div style={{textAlign:'center',padding:'8px 16px',background:`${C.accent}22`,borderRadius:8}}>
                   <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>KAYNAK</div>
                   <div style={{fontSize:12,fontWeight:800,color:C.accent}}>{form.dosya_kaynak}</div>
+                </div>
+              </div>
+            )}
+            {/* YÖNLENDİREN SEÇİMİ - İŞ PAYDAŞLARI */}
+            {isYonlendiren && (
+              <FormGroup label="YÖNLENDİREN (İŞ PAYDAŞI)">
+                <select style={{...S.select,fontWeight:600}} value={form.paydas_id} onChange={e=>u('paydas_id',e.target.value)}>
+                  <option value="">PAYDAŞ SEÇİNİZ</option>
+                  {paydaslar.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.ad}{p.yetkili ? ` - ${p.yetkili}` : ''}{p.tur ? ` (${p.tur})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </FormGroup>
+            )}
+            {/* SEÇİLİ PAYDAŞ BİLGİ KARTI */}
+            {isYonlendiren && seciliPaydas && (
+              <div style={{gridColumn:'1 / -1',padding:14,background:`${C.gold}11`,borderRadius:10,border:`1px solid ${C.gold}33`,display:'flex',alignItems:'center',gap:16}}>
+                <div style={{width:44,height:44,borderRadius:10,background:`${C.gold}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  <LIcon name="Users" size={20} color={C.gold}/>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:800,color:C.text}}>{seciliPaydas.ad}</div>
+                  <div style={{fontSize:10,color:C.textSec,marginTop:2}}>
+                    {seciliPaydas.yetkili ? `${seciliPaydas.yetkili}` : ''}{seciliPaydas.telefon ? ` • ${seciliPaydas.telefon}` : ''}{seciliPaydas.tur ? ` • ${seciliPaydas.tur}` : ''}
+                  </div>
+                </div>
+                <div style={{textAlign:'center',padding:'8px 16px',background:`${C.gold}22`,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>KOMİSYON ORANI</div>
+                  <div style={{fontSize:22,fontWeight:900,color:C.gold}}>%{seciliPaydas.komisyon_orani || 0}</div>
                 </div>
               </div>
             )}

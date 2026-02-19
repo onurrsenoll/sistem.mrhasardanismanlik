@@ -70,6 +70,19 @@ if (!empty($dosya['sorumlu_id'])) {
     $stmt->execute([$dosya['sorumlu_id']]);
     $dosya['sorumlu_adi'] = $stmt->fetchColumn() ?: '';
 }
+// Paydaş (Yönlendiren) bilgisi
+if (!empty($dosya['paydas_id'])) {
+    $stmt = $db->prepare('SELECT ad, yetkili, telefon, tur, komisyon_orani FROM paydaslar WHERE id = ?');
+    $stmt->execute([$dosya['paydas_id']]);
+    $paydas = $stmt->fetch();
+    if ($paydas) {
+        $dosya['paydas_adi'] = $paydas['ad'];
+        $dosya['paydas_yetkili'] = $paydas['yetkili'] ?: '';
+        $dosya['paydas_telefon'] = $paydas['telefon'] ?: '';
+        $dosya['paydas_tur'] = $paydas['tur'] ?: '';
+        $dosya['paydas_komisyon_orani'] = (float)$paydas['komisyon_orani'];
+    }
+}
 
 // Toplam masraf
 $dosya['toplam_masraf'] = array_sum(array_column($dosya['masraflar'], 'tutar'));

@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS dosyalar (
     avukat_id INT DEFAULT NULL,
     ortak_id INT DEFAULT NULL,
     sorumlu_id INT DEFAULT NULL,
+    paydas_id INT DEFAULT NULL,
     haklilik INT NOT NULL DEFAULT 100,
     komisyon_orani DECIMAL(5,2) DEFAULT 0.00,
     hak_mahrumiyet TINYINT(1) NOT NULL DEFAULT 0,
@@ -75,11 +76,13 @@ CREATE TABLE IF NOT EXISTS dosyalar (
     INDEX idx_asama (asama),
     INDEX idx_avukat (avukat_id),
     INDEX idx_ortak (ortak_id),
+    INDEX idx_paydas (paydas_id),
     INDEX idx_kaza_tarihi (kaza_tarihi),
     INDEX idx_created (created_at),
     FOREIGN KEY (avukat_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (ortak_id) REFERENCES ortaklar(id) ON DELETE SET NULL,
     FOREIGN KEY (sorumlu_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (paydas_id) REFERENCES paydaslar(id) ON DELETE SET NULL,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
