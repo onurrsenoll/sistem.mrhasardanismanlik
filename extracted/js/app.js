@@ -22,19 +22,12 @@ const MENU = [
     {id:'hesap-adk', label:'ARAÇ DEĞER KAYBI', icon:'Car'},
     {id:'hesap-bh', label:'BEDENİ HASAR', icon:'Heart'}
   ]},
-  {id:'servis', label:'SERVİSLER', icon:'Wrench', sub:[
-    {id:'servis-liste', label:'SERVİS LİSTESİ', icon:'List'},
+  {id:'paydaslar', label:'PAYDAŞLAR', icon:'Handshake', sub:[
+    {id:'ortaklar-ortaklar', label:'İŞ ORTAKLARI', icon:'Briefcase'},
+    {id:'ortaklar-paydaslar', label:'İŞ PAYDAŞLARI', icon:'Network'},
+    {id:'servis-liste', label:'SERVİS LİSTESİ', icon:'Wrench'},
     {id:'servis-yeni', label:'YENİ SERVİS', icon:'Plus'},
     {id:'servis-rapor', label:'SERVİS RAPORLARI', icon:'BarChart3'}
-  ]},
-  {id:'ortaklar', label:'ORTAKLAR', icon:'Handshake', sub:[
-    {id:'ortaklar-ortaklar', label:'İŞ ORTAKLARI', icon:'Briefcase'},
-    {id:'ortaklar-paydaslar', label:'İŞ PAYDAŞLARI', icon:'Network'}
-  ]},
-  {id:'personel', label:'PERSONEL', icon:'Users', sub:[
-    {id:'personel-liste', label:'PERSONEL LİSTESİ', icon:'List'},
-    {id:'personel-yeni', label:'YENİ PERSONEL', icon:'UserPlus'},
-    {id:'personel-hakedis', label:'HAKEDİŞ TAKİBİ', icon:'Calculator'}
   ]},
   {id:'police', label:'POLİÇE', icon:'FileCheck', sub:[
     {id:'police-liste', label:'POLİÇE LİSTESİ', icon:'List'},
@@ -50,40 +43,36 @@ const MENU = [
     {id:'muhasebe-komisyon', label:'KOMİSYON / PRİM', icon:'Percent'},
     {id:'muhasebe-kasa', label:'KASA / BANKA', icon:'Wallet'},
     {id:'muhasebe-maliyet', label:'MALİYET ANALİZİ', icon:'PieChart'},
-    {id:'muhasebe-rapor', label:'FİNANSAL RAPORLAR', icon:'BarChart3'}
-  ]},
-  {id:'tanimlamalar', label:'TANIMLAMALAR', icon:'Database', sub:[
-    {id:'tanimlamalar-dosya', label:'DOSYA TANIMLAMALARI', icon:'Folder'},
-    {id:'tanimlamalar-evrak', label:'EVRAK TANIMLAMALARI', icon:'FileText'},
-    {id:'tanimlamalar-finansal', label:'FİNANSAL TANIMLAMALAR', icon:'Wallet'},
-    {id:'tanimlamalar-sablon', label:'MATBU EVRAK / SÖZLEŞME', icon:'FileSignature'},
-    {id:'tanimlamalar-genel', label:'GENEL TANIMLAMALAR', icon:'Settings'}
+    {id:'muhasebe-rapor', label:'FİNANSAL RAPORLAR', icon:'BarChart3'},
+    {id:'personel-liste', label:'PERSONEL LİSTESİ', icon:'Users'},
+    {id:'personel-yeni', label:'YENİ PERSONEL', icon:'UserPlus'},
+    {id:'personel-hakedis', label:'HAKEDİŞ TAKİBİ', icon:'Calculator'}
   ]},
   {id:'ajanda', label:'AJANDA', icon:'CalendarDays'},
-  {id:'mesajlar', label:'MESAJLAR', icon:'Mail', sub:[
-    {id:'mesajlar-gelen', label:'GELEN KUTUSU', icon:'Inbox'},
-    {id:'mesajlar-giden', label:'GİDEN KUTUSU', icon:'Send'},
-    {id:'mesajlar-yeni', label:'YENİ MESAJ', icon:'PenSquare'},
-    {id:'mesajlar-sistem', label:'SİSTEM BİLDİRİMLERİ', icon:'Bell'}
-  ]},
   {id:'sistem', label:'SİSTEM', icon:'Shield', sub:[
     {id:'sistem-kullanici', label:'KULLANICI YÖNETİMİ', icon:'UserCog'},
     {id:'sistem-yetki', label:'YETKİ YÖNETİMİ', icon:'KeyRound'},
     {id:'sistem-ayarlar', label:'FİRMA AYARLARI', icon:'Settings'},
     {id:'sistem-sms', label:'SMS BİLDİRİM', icon:'MessageSquare'},
     {id:'sistem-netsantral', label:'NETSANTRAL', icon:'Phone'},
-    {id:'sistem-log', label:'LOG KAYITLARI', icon:'FileText'}
+    {id:'sistem-log', label:'LOG KAYITLARI', icon:'FileText'},
+    {id:'mesajlar-sistem', label:'SİSTEM BİLDİRİMLERİ', icon:'Bell'},
+    {id:'tanimlamalar-dosya', label:'DOSYA TANIMLAMALARI', icon:'Folder'},
+    {id:'tanimlamalar-evrak', label:'EVRAK TANIMLAMALARI', icon:'FileText'},
+    {id:'tanimlamalar-finansal', label:'FİNANSAL TANIMLAMALAR', icon:'Wallet'},
+    {id:'tanimlamalar-sablon', label:'MATBU EVRAK / SÖZLEŞME', icon:'FileSignature'},
+    {id:'tanimlamalar-genel', label:'GENEL TANIMLAMALAR', icon:'Settings'}
   ]}
 ];
 
 /* ═══ ROL BAZLI ERİŞİM ═══ */
 const ROL_ERISIM = {
   admin: null,
-  avukat: ['home','dosya','crm','hesap','servis','ortaklar','ajanda','mesajlar'],
-  uzman: ['home','dosya','hesap','servis','ajanda','mesajlar'],
-  personel: ['home','dosya','crm','ajanda','mesajlar'],
-  muhasebe: ['home','dosya','police','muhasebe','ortaklar','personel','tanimlamalar','ajanda','mesajlar'],
-  portal: ['home','dosya','mesajlar']
+  avukat: ['home','dosya','crm','hesap','paydaslar','ajanda'],
+  uzman: ['home','dosya','hesap','paydaslar','ajanda'],
+  personel: ['home','dosya','crm','ajanda'],
+  muhasebe: ['home','dosya','police','muhasebe','paydaslar','ajanda','sistem'],
+  portal: ['home','dosya']
 };
 
 /* MENÜ ID → VERİTABANI MODÜL ADI EŞLEMESİ */
@@ -91,14 +80,10 @@ const MENU_MODUL = {
   dosya: 'dosya',
   crm: 'crm',
   hesap: 'hesaplamalar',
-  servis: 'servis',
-  ortaklar: 'ortaklar',
-  personel: 'personel',
+  paydaslar: 'paydaslar',
   muhasebe: 'muhasebe',
-  tanimlamalar: 'tanimlamalar',
   ajanda: 'ajanda',
   police: 'police',
-  mesajlar: 'mesajlar',
   sistem: 'sistem'
 };
 
@@ -108,17 +93,23 @@ function menuErisim(user) {
 
   const yetkiler = user?.yetkiler;
 
-  /* YETKİLER VARSA VERİTABANINDAKİ İZİNLERE GÖRE FİLTRELE */
+  /* YETKİLER VARSA VERİTABANINDAKİ İZİNLERE GÖRE ALT MODÜL BAZLI FİLTRELE */
   if (yetkiler && Object.keys(yetkiler).length > 0) {
-    return MENU.filter(m => {
-      /* ANA SAYFA HER ZAMAN GÖRÜNSİN */
-      if (m.id === 'home') return true;
-      /* MODÜL ADINI BUL */
+    return MENU.map(m => {
+      if (m.id === 'home') return m;
       const modul = MENU_MODUL[m.id];
-      if (!modul) return false;
-      /* modul_goruntule = 1 İSE GÖSTER */
-      return yetkiler[modul + '_goruntule'] === 1;
-    });
+      if (!modul) return null;
+
+      if (m.sub) {
+        /* ALT MODÜL BAZLI: HER SUB-ITEM İÇİN İZİN KONTROLÜ */
+        const filteredSub = m.sub.filter(s => yetkiler[modul + '_' + s.id] === 1);
+        if (filteredSub.length === 0) return null;
+        return {...m, sub: filteredSub};
+      }
+
+      /* SUB YOK (AJANDA GİBİ): GENEL GÖRÜNTÜLE İZNİ */
+      return yetkiler[modul + '_goruntule'] === 1 ? m : null;
+    }).filter(Boolean);
   }
 
   /* YETKİLER YOKSA STATİK ROL ERİŞİMİNE GERİ DÖN */
@@ -204,7 +195,7 @@ const TopNav = ({user, page, setPage, onLogout}) => {
             >
               <LIcon name={m.icon} size={13} color={isActive(m) ? C.accent : C.textSec}/>
               <span>{m.label}</span>
-              {m.id === 'mesajlar' && bildirimSayisi > 0 && (
+              {m.id === 'sistem' && bildirimSayisi > 0 && (
                 <span style={{
                   position: 'absolute', top: 0, right: 0,
                   width: 14, height: 14, borderRadius: '50%',
@@ -728,10 +719,9 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   /* AJANDA */
   if (page === 'ajanda') return <MR.AjandaPage setPage={setPage} user={user}/>;
 
-  /* MESAJLAR */
-  if (page.startsWith('mesajlar')) {
-    const sub = page.replace('mesajlar-', '') || 'gelen';
-    return <MR.MesajlarPage setPage={setPage} user={user} subPage={sub === 'mesajlar' ? 'gelen' : sub}/>;
+  /* MESAJLAR (sistem bildirimleri artık sistem menüsünde) */
+  if (page === 'mesajlar-sistem') {
+    return <MR.MesajlarPage setPage={setPage} user={user} subPage="sistem"/>;
   }
 
   /* SİSTEM */

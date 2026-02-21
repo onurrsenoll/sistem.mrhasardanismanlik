@@ -23,12 +23,12 @@ $db = getDB();
 try {
     $stmt = $db->prepare("INSERT INTO saha_dosyalar
         (personel_id, durum, musteri_adi, musteri_telefon, musteri_tc,
-         hasar_tipi, hasar_tarihi, hasar_yeri, hasar_aciklama,
+         hasar_tipi, hasar_tarihi, hasar_yeri, hasar_aciklama, hasar_tutari,
          hasar_durumu, gecmis_hasar, dosya_kaynagi,
          arac_plaka, arac_marka, arac_model, arac_model_yili, arac_km,
          arac_ruhsat_sahibi, arac_kusur_durumu, arac_renk, arac_sasi_no,
          karsi_plaka, karsi_sigorta, created_at)
-        VALUES (?, 'taslak', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+        VALUES (?, 'taslak', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
 
     $stmt->execute([
         $user['id'],
@@ -39,6 +39,7 @@ try {
         !empty($body['hasar_tarihi']) ? $body['hasar_tarihi'] : null,
         clean($body['hasar_yeri'] ?? ''),
         clean($body['hasar_aciklama'] ?? ''),
+        !empty($body['hasar_tutari']) ? (float)$body['hasar_tutari'] : null,
         !empty($body['hasar_durumu']) ? clean($body['hasar_durumu']) : 'dosya_acik',
         !empty($body['gecmis_hasar']) ? clean($body['gecmis_hasar']) : 'yok',
         clean($body['dosya_kaynagi'] ?? ''),

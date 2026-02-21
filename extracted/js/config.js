@@ -244,6 +244,7 @@ MR.api = {
   },
   sahaMedyaList(sahaId) { return this.req('/saha/medya-list.php?saha_dosya_id=' + sahaId); },
   sahaDosyaSil(id) { return this.req('/saha/dosya-sil.php?id=' + id, { method: 'DELETE' }); },
+  sahaSil(id) { return this.req('/saha/sil.php?id=' + id, { method: 'DELETE' }); },
 };
 
 // ═══ TEMA SİSTEMİ ═══

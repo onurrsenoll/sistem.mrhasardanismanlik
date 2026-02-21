@@ -30,15 +30,21 @@ if ($user['rol'] === 'personel' && (int)$kayit['personel_id'] !== (int)$user['id
     json_error('BU KAYDI GÜNCELLEME YETKİNİZ YOK', 403);
 }
 
-// Sadece taslak veya beklemede durumundaki kayıtlar güncellenebilir
-if (!in_array($kayit['durum'], ['taslak', 'beklemede'])) {
-    json_error('SADECE TASLAK VEYA BEKLEMEDE DURUMUNDAKI KAYITLAR GÜNCELLENEBİLİR', 400);
+// Taslak, beklemede veya reddedildi durumundaki kayıtlar güncellenebilir
+if (!in_array($kayit['durum'], ['taslak', 'beklemede', 'reddedildi'])) {
+    json_error('BU DURUMDA GÜNCELLEME YAPILAMAZ', 400);
+}
+
+// Reddedildi durumundaki kayıt güncellenince taslak'a döner
+$durumDegisti = false;
+if ($kayit['durum'] === 'reddedildi') {
+    $durumDegisti = true;
 }
 
 // Güncellenebilir alanlar
 $alanlar = [
     'musteri_adi', 'musteri_telefon', 'musteri_tc',
-    'hasar_tipi', 'hasar_tarihi', 'hasar_yeri', 'hasar_aciklama',
+    'hasar_tipi', 'hasar_tarihi', 'hasar_yeri', 'hasar_aciklama', 'hasar_tutari',
     'hasar_durumu', 'gecmis_hasar', 'dosya_kaynagi',
     'arac_plaka', 'arac_marka', 'arac_model', 'arac_model_yili', 'arac_km',
     'arac_ruhsat_sahibi', 'arac_kusur_durumu', 'arac_renk', 'arac_sasi_no',
@@ -53,6 +59,8 @@ foreach ($alanlar as $alan) {
         $setClauses[] = "$alan = ?";
         if ($alan === 'hasar_tarihi') {
             $params[] = !empty($body[$alan]) ? $body[$alan] : null;
+        } elseif ($alan === 'hasar_tutari') {
+            $params[] = !empty($body[$alan]) ? (float)$body[$alan] : null;
         } elseif (in_array($alan, ['arac_model_yili', 'arac_km'])) {
             $params[] = !empty($body[$alan]) ? (int)$body[$alan] : null;
         } else {
@@ -63,6 +71,12 @@ foreach ($alanlar as $alan) {
 
 if (empty($setClauses)) json_error('GÜNCELLENECEK ALAN BELİRTİLMEDİ', 400);
 
+// Reddedilen kayıt güncellenince taslak'a döner
+if ($durumDegisti) {
+    $setClauses[] = "durum = 'taslak'";
+    $setClauses[] = "red_nedeni = NULL";
+}
+
 $setClauses[] = "updated_at = NOW()";
 $params[] = $id;
 
@@ -71,9 +85,9 @@ try {
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
 
-    log_action($user['id'], 'saha_guncelle', "Saha dosya güncellendi", 'saha_dosyalar', $id);
+    log_action($user['id'], 'saha_guncelle', "Saha dosya güncellendi" . ($durumDegisti ? " (reddedildi→taslak)" : ""), 'saha_dosyalar', $id);
 
-    json_success(null, 'SAHA DOSYASI GÜNCELLENDİ');
+    json_success(null, $durumDegisti ? 'SAHA DOSYASI GÜNCELLENDİ VE TASLAK DURUMUNA ALINDI' : 'SAHA DOSYASI GÜNCELLENDİ');
 
 } catch (\Exception $e) {
     json_error('GÜNCELLEME HATASI: ' . $e->getMessage(), 500);

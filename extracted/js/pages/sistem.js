@@ -38,59 +38,66 @@ const LOG_ISLEM_RENK = (islem) => {
 };
 
 /* ─── YETKİ MODÜL HARİTASI ─── */
+/* ─── YETKİ MODÜL HARİTASI (ALT MODÜL BAZLI) ─── */
+/* Her modülün islemleri = menü alt öğeleri (sub-items) */
 const MODUL_YETKILERI = [
   {modul: 'dosya', label: 'DOSYA İŞLEMLERİ', icon: 'FolderOpen', islemler: [
-    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
-    {key: 'ekle', label: 'EKLE'},
-    {key: 'duzenle', label: 'DÜZENLE'},
-    {key: 'sil', label: 'SİL'}
+    {key: 'dosya-liste', label: 'DOSYA LİSTESİ'},
+    {key: 'dosya-yeni', label: 'YENİ DOSYA'}
   ]},
-  {modul: 'crm', label: 'CRM', icon: 'Users', islemler: [
-    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
-    {key: 'ekle', label: 'EKLE'},
-    {key: 'duzenle', label: 'DÜZENLE'},
-    {key: 'sil', label: 'SİL'},
-    {key: 'donustur', label: 'DÖNÜŞTÜR'}
+  {modul: 'crm', label: 'CRM / SAHA', icon: 'Users', islemler: [
+    {key: 'crm-liste', label: 'CRM LİSTESİ'},
+    {key: 'crm-yeni', label: 'YENİ KAYIT'},
+    {key: 'crm-arama', label: 'ARAMA LİSTESİ'},
+    {key: 'saha-liste', label: 'SAHA DOSYALARI'},
+    {key: 'saha-yeni', label: 'YENİ SAHA KAYDI'}
   ]},
   {modul: 'hesaplamalar', label: 'HESAPLAMALAR', icon: 'Calculator', islemler: [
-    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
-    {key: 'kullan', label: 'HESAPLA'}
+    {key: 'hesap-adk', label: 'ARAÇ DEĞER KAYBI'},
+    {key: 'hesap-bh', label: 'BEDENİ HASAR'}
   ]},
-  {modul: 'servis', label: 'SERVİSLER', icon: 'Wrench', islemler: [
-    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
-    {key: 'ekle', label: 'EKLE'},
-    {key: 'duzenle', label: 'DÜZENLE'},
-    {key: 'sil', label: 'SİL'}
+  {modul: 'paydaslar', label: 'PAYDAŞLAR', icon: 'Handshake', islemler: [
+    {key: 'ortaklar-ortaklar', label: 'İŞ ORTAKLARI'},
+    {key: 'ortaklar-paydaslar', label: 'İŞ PAYDAŞLARI'},
+    {key: 'servis-liste', label: 'SERVİS LİSTESİ'},
+    {key: 'servis-yeni', label: 'YENİ SERVİS'},
+    {key: 'servis-rapor', label: 'SERVİS RAPORLARI'}
   ]},
-  {modul: 'ortaklar', label: 'ORTAKLAR', icon: 'Handshake', islemler: [
-    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
-    {key: 'ekle', label: 'EKLE'},
-    {key: 'duzenle', label: 'DÜZENLE'},
-    {key: 'sil', label: 'SİL'}
+  {modul: 'police', label: 'POLİÇE', icon: 'FileCheck', islemler: [
+    {key: 'police-liste', label: 'POLİÇE LİSTESİ'},
+    {key: 'police-yeni', label: 'YENİ POLİÇE'},
+    {key: 'police-yenileme', label: 'YENİLEME TAKİBİ'},
+    {key: 'police-tahsilat', label: 'TAHSİLAT / CARİ'},
+    {key: 'police-rapor', label: 'RAPORLAR'},
+    {key: 'police-kazanc', label: 'KAZANÇ'}
   ]},
   {modul: 'muhasebe', label: 'MUHASEBE', icon: 'Landmark', islemler: [
-    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
-    {key: 'ekle', label: 'EKLE'},
-    {key: 'duzenle', label: 'DÜZENLE'},
-    {key: 'sil', label: 'SİL'},
-    {key: 'rapor', label: 'RAPOR'}
-  ]},
-  {modul: 'tanimlamalar', label: 'TANIMLAMALAR', icon: 'Database', islemler: [
-    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
-    {key: 'ekle', label: 'EKLE'},
-    {key: 'duzenle', label: 'DÜZENLE'},
-    {key: 'sil', label: 'SİL'}
+    {key: 'muhasebe-gelir', label: 'GELİR YÖNETİMİ'},
+    {key: 'muhasebe-gider', label: 'GİDER YÖNETİMİ'},
+    {key: 'muhasebe-komisyon', label: 'KOMİSYON / PRİM'},
+    {key: 'muhasebe-kasa', label: 'KASA / BANKA'},
+    {key: 'muhasebe-maliyet', label: 'MALİYET ANALİZİ'},
+    {key: 'muhasebe-rapor', label: 'FİNANSAL RAPORLAR'},
+    {key: 'personel-liste', label: 'PERSONEL LİSTESİ'},
+    {key: 'personel-yeni', label: 'YENİ PERSONEL'},
+    {key: 'personel-hakedis', label: 'HAKEDİŞ TAKİBİ'}
   ]},
   {modul: 'ajanda', label: 'AJANDA', icon: 'Calendar', islemler: [
-    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
-    {key: 'ekle', label: 'EKLE'},
-    {key: 'duzenle', label: 'DÜZENLE'},
-    {key: 'sil', label: 'SİL'}
+    {key: 'goruntule', label: 'AJANDA GÖRÜNTÜLE'}
   ]},
-  {modul: 'mesajlar', label: 'MESAJLAR', icon: 'Mail', islemler: [
-    {key: 'goruntule', label: 'GÖRÜNTÜLE'},
-    {key: 'gonder', label: 'GÖNDER'},
-    {key: 'sil', label: 'SİL'}
+  {modul: 'sistem', label: 'SİSTEM', icon: 'Shield', islemler: [
+    {key: 'sistem-kullanici', label: 'KULLANICI YÖNETİMİ'},
+    {key: 'sistem-yetki', label: 'YETKİ YÖNETİMİ'},
+    {key: 'sistem-ayarlar', label: 'FİRMA AYARLARI'},
+    {key: 'sistem-sms', label: 'SMS BİLDİRİM'},
+    {key: 'sistem-netsantral', label: 'NETSANTRAL'},
+    {key: 'sistem-log', label: 'LOG KAYITLARI'},
+    {key: 'mesajlar-sistem', label: 'SİSTEM BİLDİRİMLERİ'},
+    {key: 'tanimlamalar-dosya', label: 'DOSYA TANIMLAMALARI'},
+    {key: 'tanimlamalar-evrak', label: 'EVRAK TANIMLAMALARI'},
+    {key: 'tanimlamalar-finansal', label: 'FİNANSAL TANIMLAMALAR'},
+    {key: 'tanimlamalar-sablon', label: 'MATBU EVRAK / SÖZLEŞME'},
+    {key: 'tanimlamalar-genel', label: 'GENEL TANIMLAMALAR'}
   ]},
   {modul: 'netsantral', label: 'NETSANTRAL (GİDEN ARAMA)', icon: 'Phone', islemler: [
     {key: 'goruntule', label: 'ARAMA PANELİ GÖRÜNTÜLE'},
@@ -102,12 +109,6 @@ const MODUL_YETKILERI = [
     {key: 'goruntule', label: 'ÇAĞRI PANELİ GÖRÜNTÜLE'},
     {key: 'gelen_cagri', label: 'GELEN ÇAĞRI BİLDİRİMİ'},
     {key: 'giden_cagri', label: 'GİDEN ÇAĞRI LOGU'}
-  ]},
-  {modul: 'sistem', label: 'SİSTEM', icon: 'Shield', islemler: [
-    {key: 'kullanici_yonet', label: 'KULLANICI YÖNETİMİ'},
-    {key: 'yetki_yonet', label: 'YETKİ YÖNETİMİ'},
-    {key: 'ayarlar', label: 'AYARLAR'},
-    {key: 'log', label: 'LOG GÖRÜNTÜLE'}
   ]}
 ];
 

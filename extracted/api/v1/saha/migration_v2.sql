@@ -26,6 +26,7 @@ CREATE TABLE saha_dosyalar (
   hasar_tarihi DATE DEFAULT NULL,
   hasar_yeri VARCHAR(200) DEFAULT NULL,
   hasar_aciklama TEXT,
+  hasar_tutari DECIMAL(12,2) DEFAULT NULL,
   hasar_durumu ENUM('dosya_acik','dosya_kapali','onarim_devam') DEFAULT 'dosya_acik',
   gecmis_hasar ENUM('var','yok') DEFAULT 'yok',
 
