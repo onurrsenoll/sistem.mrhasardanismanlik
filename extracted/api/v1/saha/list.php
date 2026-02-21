@@ -1,0 +1,79 @@
+<?php
+/**
+ * GET /api/v1/saha/list.php
+ * SAHA DOSYALARI LİSTESİ — ARAMA, FİLTRELEME, SAYFALAMA
+ *
+ * Query params: ?durum=beklemede&personel_id=5&arama=ali&page=1&limit=25
+ */
+
+require_once __DIR__ . '/../../config/helpers.php';
+require_once __DIR__ . '/../../config/auth.php';
+
+setup_headers();
+require_method('GET');
+
+$user = auth_required(['admin', 'muhasebe', 'uzman', 'personel', 'avukat']);
+$db = getDB();
+$pag = get_pagination();
+
+// Filtreler
+$durum       = clean($_GET['durum'] ?? '');
+$personel_id = clean($_GET['personel_id'] ?? '');
+$arama       = clean($_GET['arama'] ?? '');
+
+$where  = [];
+$params = [];
+
+// Personel sadece kendi kayıtlarını görebilir
+if ($user['rol'] === 'personel') {
+    $where[]  = 's.personel_id = ?';
+    $params[] = $user['id'];
+}
+
+// Durum filtresi
+if ($durum !== '') {
+    $where[]  = 's.durum = ?';
+    $params[] = $durum;
+}
+
+// Personel ID filtresi (admin vb. için)
+if ($personel_id !== '' && $user['rol'] !== 'personel') {
+    $where[]  = 's.personel_id = ?';
+    $params[] = (int)$personel_id;
+}
+
+// Arama
+if ($arama !== '') {
+    $search   = "%$arama%";
+    $where[]  = '(s.musteri_adi LIKE ? OR s.musteri_telefon LIKE ? OR s.plaka LIKE ? OR s.sigorta_sirketi LIKE ? OR s.musteri_tc LIKE ?)';
+    $params   = array_merge($params, [$search, $search, $search, $search, $search]);
+}
+
+$whereSQL = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+
+// Toplam sayı
+$countSQL = "SELECT COUNT(*) as total FROM saha_dosyalar s $whereSQL";
+$stmt = $db->prepare($countSQL);
+$stmt->execute($params);
+$total = (int)$stmt->fetch()['total'];
+
+// Veri çek
+$dataSQL = "SELECT s.*,
+    u.ad_soyad AS personel_adi,
+    u2.ad_soyad AS onaylayan_adi,
+    d.dosya_no
+    FROM saha_dosyalar s
+    LEFT JOIN users u ON u.id = s.personel_id
+    LEFT JOIN users u2 ON u2.id = s.onaylayan_id
+    LEFT JOIN dosyalar d ON d.id = s.dosya_id
+    $whereSQL
+    ORDER BY s.created_at DESC
+    LIMIT ? OFFSET ?";
+
+$params[] = (int)$pag['limit'];
+$params[] = (int)$pag['offset'];
+$stmt = $db->prepare($dataSQL);
+$stmt->execute($params);
+$items = $stmt->fetchAll();
+
+paginated_response($items, $total, $pag);

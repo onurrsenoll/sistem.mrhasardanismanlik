@@ -11,10 +11,12 @@ const MENU = [
     {id:'dosya-liste', label:'DOSYA LİSTESİ', icon:'List'},
     {id:'dosya-yeni', label:'YENİ DOSYA', icon:'Plus'}
   ]},
-  {id:'crm', label:'CRM', icon:'Users', sub:[
+  {id:'crm', label:'CRM / SAHA', icon:'Users', sub:[
     {id:'crm-liste', label:'CRM LİSTESİ', icon:'List'},
     {id:'crm-yeni', label:'YENİ KAYIT', icon:'UserPlus'},
-    {id:'crm-arama', label:'ARAMA LİSTESİ', icon:'PhoneCall'}
+    {id:'crm-arama', label:'ARAMA LİSTESİ', icon:'PhoneCall'},
+    {id:'saha-liste', label:'SAHA DOSYALARI', icon:'MapPin'},
+    {id:'saha-yeni', label:'YENİ SAHA KAYDI', icon:'PlusCircle'}
   ]},
   {id:'hesap', label:'HESAPLAMALAR', icon:'Calculator', sub:[
     {id:'hesap-adk', label:'ARAÇ DEĞER KAYBI', icon:'Car'},
@@ -79,7 +81,7 @@ const ROL_ERISIM = {
   admin: null,
   avukat: ['home','dosya','crm','hesap','servis','ortaklar','ajanda','mesajlar'],
   uzman: ['home','dosya','hesap','servis','ajanda','mesajlar'],
-  personel: ['home','dosya','ajanda','mesajlar'],
+  personel: ['home','dosya','crm','ajanda','mesajlar'],
   muhasebe: ['home','dosya','police','muhasebe','ortaklar','personel','tanimlamalar','ajanda','mesajlar'],
   portal: ['home','dosya','mesajlar']
 };
@@ -360,8 +362,16 @@ const Breadcrumb = ({page, setPage}) => {
     }
     if (page.startsWith('crm-detay-')) {
       if (m.id === 'crm') {
-        parts.push({label: 'CRM', id: 'crm-liste'});
+        parts.push({label: 'CRM / SAHA', id: 'crm-liste'});
         parts.push({label: 'CRM DETAY', id: page});
+        break;
+      }
+    }
+    if (page.startsWith('saha-')) {
+      if (m.id === 'crm') {
+        parts.push({label: 'CRM / SAHA', id: 'crm-liste'});
+        const sahaLabels = {'saha-liste':'SAHA DOSYALARI','saha-yeni':'YENİ SAHA KAYDI','saha-beklemede':'ONAY İÇİN BEKLEYEN','saha-onaylanan':'ONAYLANAN','saha-dosyaya_donusen':'DOSYAYA DÖNÜŞEN'};
+        parts.push({label: sahaLabels[page] || 'SAHA DOSYALARI', id: page});
         break;
       }
     }
@@ -668,6 +678,12 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   if (page === 'crm-yeni') return <MR.CrmPage setPage={setPage} user={user} view="yeni"/>;
   if (page === 'crm-arama') return <MR.CrmAramaPage setPage={setPage} user={user}/>;
   if (crmIdMatch) return <MR.CrmPage setPage={setPage} user={user} view="detay" crmId={parseInt(crmIdMatch[1])}/>;
+
+  /* SAHA DOSYALARI */
+  if (page.startsWith('saha')) {
+    const sub = page.replace('saha-', '') || 'liste';
+    return <MR.SahaPage setPage={setPage} user={user} subPage={sub === 'saha' ? 'liste' : sub}/>;
+  }
 
   /* HESAPLAMALAR */
   if (page === 'hesap-adk') return <MR.HesapADKPage setPage={setPage} user={user}/>;

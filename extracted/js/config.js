@@ -227,6 +227,15 @@ MR.api = {
   policeTahsilatList(p = {}) { return this.req('/police/tahsilat-list.php?' + new URLSearchParams(p)); },
   policeRapor(p = {}) { return this.req('/police/rapor.php?' + new URLSearchParams(p)); },
   policeHatirlatma() { return this.req('/police/hatirlatma-kontrol.php'); },
+  policeExcelImport(d) { return this.req('/police/excel-import.php', { method: 'POST', body: JSON.stringify(d) }); },
+  // SAHA
+  sahaList(p = {}) { return this.req('/saha/list.php?' + new URLSearchParams(p)); },
+  sahaGet(id) { return this.req('/saha/get.php?id=' + id); },
+  sahaCreate(d) { return this.req('/saha/create.php', { method: 'POST', body: JSON.stringify(d) }); },
+  sahaUpdate(d) { return this.req('/saha/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  sahaOnayla(d) { return this.req('/saha/onayla.php', { method: 'POST', body: JSON.stringify(d) }); },
+  sahaReddet(d) { return this.req('/saha/reddet.php', { method: 'POST', body: JSON.stringify(d) }); },
+  sahaDosyayaDonustur(d) { return this.req('/saha/dosyaya-donustur.php', { method: 'POST', body: JSON.stringify(d) }); },
 };
 
 // ═══ TEMA SİSTEMİ ═══

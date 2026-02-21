@@ -7,6 +7,7 @@ const {useState, useEffect, useMemo, useCallback} = React;
 
 /* ═══ SABİTLER ═══ */
 const BRANSLAR = ['KASKO','TRAFİK','DASK','KONUT','İŞYERİ','SAĞLIK','HAYAT','YANGIN','NAKLİYAT','MÜHENDİSLİK','SORUMLULUK','FERDİ KAZA','DİĞER'];
+const BRANS_KODLARI = {TRF:'TRAFİK', KSK:'KASKO', TSS:'TAMAMLAYICI SAĞLIK', DSK:'DASK', KNT:'KONUT', IMM:'İMM'};
 const ODEME_SEKILLERI = [{v:'nakit',l:'NAKİT'},{v:'havale',l:'HAVALE/EFT'},{v:'kredi_karti',l:'KREDİ KARTI'},{v:'cek',l:'ÇEK'},{v:'diger',l:'DİĞER'}];
 const DURUM_RENK = (d,C) => ({aktif:C.success, suresi_doldu:C.danger, iptal:C.textMuted, yenilendi:C.purple}[d] || C.textSec);
 const DURUM_LABEL = {aktif:'AKTİF', suresi_doldu:'SÜRESİ DOLDU', iptal:'İPTAL', yenilendi:'YENİLENDİ'};
@@ -16,6 +17,18 @@ const TAHSILAT_LABEL = {tahsil_edildi:'TAHSİL EDİLDİ', kismen_tahsil:'KISMİ 
 const fmt = (n) => (parseFloat(n)||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₺';
 const parseNum = (v) => parseFloat(String(v).replace(/\./g,'').replace(',','.'))||0;
 const fmtTarih = (t) => t ? new Date(t).toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '-';
+// Excel date parser (handles both serial dates and string dates DD.MM.YYYY)
+const parseExcelDate = (v) => {
+  if (!v) return '';
+  if (typeof v === 'number') { const d = new Date((v - 25569) * 86400000); return d.toISOString().slice(0,10); }
+  const s = String(v).trim();
+  const parts = s.split(/[.\/-]/);
+  if (parts.length === 3) {
+    if (parts[0].length === 4) return s;
+    if (parts[2].length === 4) return parts[2]+'-'+parts[1].padStart(2,'0')+'-'+parts[0].padStart(2,'0');
+  }
+  return s;
+};
 
 /* ═══════════════════════════════════════════════════════════
    ANA POLİÇE SAYFA BİLEŞENİ
@@ -402,18 +415,36 @@ const PoliceListe = ({setPage, user}) => {
 };
 
 /* ═══════════════════════════════════════════════════════════
-   SEKME 2: YENİ POLİÇE
+   SEKME 2: YENİ POLİÇE (GELİŞTİRİLMİŞ)
    ═══════════════════════════════════════════════════════════ */
 const PoliceYeni = ({setPage, user, prefill}) => {
   const {C, S, LIcon, SectionTitle, FormGroup, api} = MR;
-  const bosForm = {police_no:'',yenileme_no:'',police_turu:'yeni',sigorta_sirketi:'',brans:'',musteri_adi:'',musteri_tc:'',musteri_telefon:'',musteri_email:'',plaka:'',
-    tanzim_tarihi:new Date().toISOString().slice(0,10),baslangic_tarihi:new Date().toISOString().slice(0,10),bitis_tarihi:'',
-    brut_prim:'',net_prim:'',komisyon_orani:'',hatirlatma_gun:'30',notlar:''};
+  const bosForm = {
+    police_no:'', yenileme_no:'', police_turu:'yeni', personel:'',
+    sigorta_sirketi:'', brans:'', plaka:'', belge_seri:'',
+    musteri_adi:'', musteri_tc:'', musteri_telefon:'', musteri_email:'', dogum_tarihi:'',
+    tanzim_tarihi:new Date().toISOString().slice(0,10),
+    baslangic_tarihi:new Date().toISOString().slice(0,10),
+    bitis_tarihi:'',
+    brut_prim:'', net_prim:'', komisyon_orani:'',
+    notlar:''
+  };
   const [form, setForm] = useState(prefill ? {...bosForm,...prefill} : {...bosForm});
   const [kayitLoading, setKayitLoading] = useState(false);
   const [hata, setHata] = useState('');
   const [basari, setBasari] = useState('');
   const f = (k,v) => setForm(p => ({...p, [k]: v}));
+
+  // Başlangıç tarihi değişince bitiş tarihini +1 yıl yap
+  useEffect(() => {
+    if (form.baslangic_tarihi) {
+      try {
+        const dt = new Date(form.baslangic_tarihi);
+        dt.setFullYear(dt.getFullYear() + 1);
+        f('bitis_tarihi', dt.toISOString().slice(0,10));
+      } catch(e) {}
+    }
+  }, [form.baslangic_tarihi]);
 
   // Komisyon otomatik hesapla
   const komisyonTutari = useMemo(() => {
@@ -437,13 +468,16 @@ const PoliceYeni = ({setPage, user, prefill}) => {
       police_no: form.police_no.trim(),
       yenileme_no: form.yenileme_no.trim() || undefined,
       police_turu: form.police_turu,
+      personel: form.personel.trim() || undefined,
       sigorta_sirketi: form.sigorta_sirketi.trim(),
       brans: form.brans,
       musteri_adi: form.musteri_adi.trim(),
       musteri_tc: form.musteri_tc.trim() || undefined,
       musteri_telefon: form.musteri_telefon.trim() || undefined,
       musteri_email: form.musteri_email.trim() || undefined,
+      dogum_tarihi: form.dogum_tarihi || undefined,
       plaka: form.plaka.trim() || undefined,
+      belge_seri: form.belge_seri.trim() || undefined,
       tanzim_tarihi: form.tanzim_tarihi,
       baslangic_tarihi: form.baslangic_tarihi,
       bitis_tarihi: form.bitis_tarihi,
@@ -451,7 +485,6 @@ const PoliceYeni = ({setPage, user, prefill}) => {
       net_prim: parseNum(form.net_prim),
       komisyon_orani: parseFloat(form.komisyon_orani) || 0,
       komisyon_tutari: komisyonTutari,
-      hatirlatma_gun: parseInt(form.hatirlatma_gun) || 30,
       notlar: form.notlar.trim() || undefined
     };
 
@@ -477,7 +510,7 @@ const PoliceYeni = ({setPage, user, prefill}) => {
 
         {/* POLİÇE BİLGİLERİ */}
         <div style={{fontSize:11,fontWeight:700,color:C.accent,marginBottom:12,display:'flex',alignItems:'center',gap:6}}><LIcon name="FileCheck" size={14} color={C.accent}/> POLİÇE BİLGİLERİ</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,marginBottom:20}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:16,marginBottom:20}}>
           <FormGroup label="POLİÇE NO *"><input style={S.input} value={form.police_no} onChange={e=>f('police_no',e.target.value)} placeholder="POLİÇE NUMARASI"/></FormGroup>
           <FormGroup label="YENİLEME NO"><input style={S.input} value={form.yenileme_no} onChange={e=>f('yenileme_no',e.target.value)} placeholder="ESKİ POLİÇE NO (YENİLEME İSE)"/></FormGroup>
           <FormGroup label="POLİÇE TÜRÜ">
@@ -485,11 +518,12 @@ const PoliceYeni = ({setPage, user, prefill}) => {
               <option value="yeni">YENİ</option><option value="yenileme">YENİLEME</option><option value="zeyil">ZEYİL</option>
             </select>
           </FormGroup>
+          <FormGroup label="PERSONEL"><input style={S.input} value={form.personel} onChange={e=>f('personel',e.target.value)} placeholder="TAKİP EDEN PERSONEL"/></FormGroup>
         </div>
 
         {/* SİGORTA BİLGİLERİ */}
         <div style={{fontSize:11,fontWeight:700,color:C.purple,marginBottom:12,display:'flex',alignItems:'center',gap:6}}><LIcon name="Shield" size={14} color={C.purple}/> SİGORTA BİLGİLERİ</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,marginBottom:20}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:16,marginBottom:20}}>
           <FormGroup label="SİGORTA ŞİRKETİ *"><input style={S.input} value={form.sigorta_sirketi} onChange={e=>f('sigorta_sirketi',e.target.value)} placeholder="SİGORTA ŞİRKETİ"/></FormGroup>
           <FormGroup label="BRANŞ *">
             <select style={S.select} value={form.brans} onChange={e=>f('brans',e.target.value)}>
@@ -498,17 +532,19 @@ const PoliceYeni = ({setPage, user, prefill}) => {
             </select>
           </FormGroup>
           <FormGroup label="PLAKA"><input style={S.input} value={form.plaka} onChange={e=>f('plaka',e.target.value)} placeholder="PLAKA (ARAÇ SİGORTASI İÇİN)"/></FormGroup>
+          <FormGroup label="BELGE SERİ NO"><input style={S.input} value={form.belge_seri} onChange={e=>f('belge_seri',e.target.value)} placeholder="RUHSAT / BELGE SERİ NO"/></FormGroup>
         </div>
 
         {/* MÜŞTERİ BİLGİLERİ */}
         <div style={{fontSize:11,fontWeight:700,color:C.cyan,marginBottom:12,display:'flex',alignItems:'center',gap:6}}><LIcon name="User" size={14} color={C.cyan}/> MÜŞTERİ BİLGİLERİ</div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,marginBottom:20}}>
           <FormGroup label="MÜŞTERİ ADI *"><input style={S.input} value={form.musteri_adi} onChange={e=>f('musteri_adi',e.target.value)} placeholder="AD SOYAD / FİRMA ADI"/></FormGroup>
-          <FormGroup label="TC KİMLİK NO"><input style={S.input} value={form.musteri_tc} onChange={e=>f('musteri_tc',e.target.value)} maxLength={11} placeholder="TC KİMLİK NO"/></FormGroup>
+          <FormGroup label="TC / VERGİ NO"><input style={S.input} value={form.musteri_tc} onChange={e=>f('musteri_tc',e.target.value)} maxLength={11} placeholder="TC KİMLİK NO / VERGİ NO"/></FormGroup>
           <FormGroup label="TELEFON"><input style={S.input} value={form.musteri_telefon} onChange={e=>f('musteri_telefon',e.target.value)} placeholder="0532 XXX XX XX"/></FormGroup>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr',gap:16,marginBottom:20}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20}}>
           <FormGroup label="E-POSTA"><input style={S.input} value={form.musteri_email} onChange={e=>f('musteri_email',e.target.value)} placeholder="E-POSTA ADRESİ"/></FormGroup>
+          <FormGroup label="DOĞUM TARİHİ"><input style={S.input} type="date" value={form.dogum_tarihi} onChange={e=>f('dogum_tarihi',e.target.value)}/></FormGroup>
         </div>
 
         {/* TARİHLER */}
@@ -516,7 +552,7 @@ const PoliceYeni = ({setPage, user, prefill}) => {
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,marginBottom:20}}>
           <FormGroup label="TANZİM TARİHİ"><input style={S.input} type="date" value={form.tanzim_tarihi} onChange={e=>f('tanzim_tarihi',e.target.value)}/></FormGroup>
           <FormGroup label="BAŞLANGIÇ TARİHİ *"><input style={S.input} type="date" value={form.baslangic_tarihi} onChange={e=>f('baslangic_tarihi',e.target.value)}/></FormGroup>
-          <FormGroup label="BİTİŞ TARİHİ *"><input style={S.input} type="date" value={form.bitis_tarihi} onChange={e=>f('bitis_tarihi',e.target.value)}/></FormGroup>
+          <FormGroup label="BİTİŞ TARİHİ (YENİLEME TARİHİ) *"><input style={S.input} type="date" value={form.bitis_tarihi} onChange={e=>f('bitis_tarihi',e.target.value)}/></FormGroup>
         </div>
 
         {/* FİNANSAL BİLGİLER */}
@@ -532,9 +568,9 @@ const PoliceYeni = ({setPage, user, prefill}) => {
           </FormGroup>
         </div>
 
-        {/* HATIRLATMA VE NOTLAR */}
-        <div style={{display:'grid',gridTemplateColumns:'200px 1fr',gap:16,marginBottom:20}}>
-          <FormGroup label="HATIRLATMA (GÜN)"><input style={S.input} type="number" value={form.hatirlatma_gun} onChange={e=>f('hatirlatma_gun',e.target.value)} placeholder="30"/></FormGroup>
+        {/* DİĞER */}
+        <div style={{fontSize:11,fontWeight:700,color:C.textMuted,marginBottom:12,display:'flex',alignItems:'center',gap:6}}><LIcon name="FileText" size={14} color={C.textMuted}/> DİĞER</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr',gap:16,marginBottom:20}}>
           <FormGroup label="NOTLAR"><textarea style={{...S.input,minHeight:60,resize:'vertical'}} value={form.notlar} onChange={e=>f('notlar',e.target.value)} placeholder="NOTLAR"/></FormGroup>
         </div>
 
@@ -553,13 +589,16 @@ const PoliceYeni = ({setPage, user, prefill}) => {
 };
 
 /* ═══════════════════════════════════════════════════════════
-   SEKME 3: YENİLEME TAKİBİ
+   SEKME 3: YENİLEME TAKİBİ (TAM YENİDEN YAZILDI)
    ═══════════════════════════════════════════════════════════ */
 const PoliceYenileme = ({setPage, user}) => {
   const {C, S, LIcon, StatCard, SectionTitle, Badge, EmptyState, Loading, api} = MR;
   const [loading, setLoading] = useState(true);
   const [policeler, setPoliceler] = useState([]);
   const [basari, setBasari] = useState('');
+  const [hata, setHata] = useState('');
+  const [importData, setImportData] = useState(null);
+  const fileInputRef = React.useRef(null);
 
   const yukle = useCallback(async () => {
     setLoading(true);
@@ -567,38 +606,196 @@ const PoliceYenileme = ({setPage, user}) => {
     if (r?.success) {
       const items = r.data?.items || r.data || [];
       const bugun = new Date();
-      const yaklasan = items.filter(p => {
+      bugun.setHours(0,0,0,0);
+      const hesaplanmis = items.map(p => {
         const bitis = new Date(p.bitis_tarihi);
-        const kalan = Math.ceil((bitis - bugun) / 86400000);
-        return kalan >= 0 && kalan <= 90;
-      }).map(p => {
-        const bitis = new Date(p.bitis_tarihi);
+        bitis.setHours(0,0,0,0);
         const kalan = Math.ceil((bitis - bugun) / 86400000);
         return {...p, kalan_gun: kalan};
       }).sort((a,b) => a.kalan_gun - b.kalan_gun);
-      setPoliceler(yaklasan);
+      setPoliceler(hesaplanmis);
     }
     setLoading(false);
   }, []);
 
   useEffect(() => { yukle(); }, []);
 
+  // Gruplar
+  const kritik = useMemo(() => policeler.filter(p => p.kalan_gun <= 15), [policeler]);
+  const acil = useMemo(() => policeler.filter(p => p.kalan_gun >= 16 && p.kalan_gun <= 20), [policeler]);
+  const yaklasan = useMemo(() => policeler.filter(p => p.kalan_gun >= 21 && p.kalan_gun <= 60), [policeler]);
+  const ileriTarih = useMemo(() => policeler.filter(p => p.kalan_gun > 60), [policeler]);
+
   const hatirlatmaGonder = async () => {
     const r = await api.policeHatirlatma();
     if (r?.success) {
       setBasari((r.data?.gonderilen || 0) + ' ADET HATIRLATMA BİLDİRİMİ GÖNDERİLDİ');
       setTimeout(() => setBasari(''), 4000);
+      yukle();
+    } else {
+      setHata(r?.error || 'HATIRLATMA GÖNDERİLEMEDİ');
+      setTimeout(() => setHata(''), 4000);
     }
   };
 
-  const yenile = (p) => {
-    setPage('police-yeni');
-    // prefill desteği olmadığından kullanıcı manuel dolduracak
+  // Excel şablon indir / Mevcut listeyi dışa aktar
+  const downloadExcel = (policelerData) => {
+    const headers = ['PERSONEL','TRF','KSK','TSS','DSK','KNT','İMM','POLİÇE','MÜŞTERİ','YENİLEME TARİHİ','TC VERGİ NO','DOĞUM TARİHİ','PLAKA','BELGE SERİ','TELEFON','AÇIKLAMA'];
+    const rows = policelerData.map(p => {
+      const b = (p.brans||'').toUpperCase();
+      return [
+        p.olusturan_adi||p.personel||'',
+        b.includes('TRAFİK')||b==='TRF'?'\u2713':'',
+        b.includes('KASKO')||b==='KSK'?'\u2713':'',
+        b.includes('SAĞLIK')||b.includes('TSS')?'\u2713':'',
+        b.includes('DASK')||b==='DSK'?'\u2713':'',
+        b.includes('KONUT')||b==='KNT'?'\u2713':'',
+        b.includes('İMM')||b==='IMM'?'\u2713':'',
+        p.police_no||'',
+        p.musteri_adi||'',
+        fmtTarih(p.bitis_tarihi),
+        p.musteri_tc||'',
+        p.dogum_tarihi ? fmtTarih(p.dogum_tarihi) : '',
+        p.plaka||'',
+        p.belge_seri||'',
+        p.musteri_telefon||'',
+        p.notlar||''
+      ];
+    });
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    ws['!cols'] = headers.map(h => ({wch: Math.max(h.length+2, 14)}));
+    XLSX.utils.book_append_sheet(wb, ws, 'YENİLEME LİSTESİ');
+    XLSX.writeFile(wb, 'police_yenileme_listesi.xlsx');
   };
 
-  const gun30 = policeler.filter(p => p.kalan_gun <= 30);
-  const gun60 = policeler.filter(p => p.kalan_gun > 30 && p.kalan_gun <= 60);
-  const gun90 = policeler.filter(p => p.kalan_gun > 60 && p.kalan_gun <= 90);
+  // Excel yükle
+  const handleExcelUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const wb = XLSX.read(evt.target.result, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, {header:1});
+        const rows = data.slice(1).filter(r => r.length > 1 && (r[7]||r[8]));
+        const mapped = rows.map(r => {
+          const branslar = [];
+          if (r[1]) branslar.push('TRAFİK');
+          if (r[2]) branslar.push('KASKO');
+          if (r[3]) branslar.push('TSS');
+          if (r[4]) branslar.push('DASK');
+          if (r[5]) branslar.push('KONUT');
+          if (r[6]) branslar.push('İMM');
+          return {
+            personel: String(r[0]||''),
+            brans: branslar.join(', ') || 'DİĞER',
+            police_no: String(r[7]||''),
+            musteri_adi: String(r[8]||''),
+            bitis_tarihi: parseExcelDate(r[9]),
+            musteri_tc: String(r[10]||''),
+            dogum_tarihi: parseExcelDate(r[11]),
+            plaka: String(r[12]||''),
+            belge_seri: String(r[13]||''),
+            musteri_telefon: String(r[14]||''),
+            notlar: String(r[15]||'')
+          };
+        });
+        if (mapped.length === 0) {
+          setHata('EXCEL DOSYASINDA GEÇERLİ VERİ BULUNAMADI');
+          setTimeout(() => setHata(''), 4000);
+        } else {
+          setImportData(mapped);
+          setBasari(mapped.length + ' ADET KAYIT OKUNDU. ÖNİZLEMEYİ KONTROL EDİP TOPLU KAYDET BUTONUNA BASIN.');
+          setTimeout(() => setBasari(''), 6000);
+        }
+      } catch(err) {
+        setHata('EXCEL OKUMA HATASI: ' + (err.message||'BİLİNMEYEN HATA'));
+        setTimeout(() => setHata(''), 4000);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = '';
+  };
+
+  // Toplu kaydet
+  const topluKaydet = async () => {
+    if (!importData || importData.length === 0) return;
+    setLoading(true);
+    const policelerPayload = importData.map(d => ({
+      ...d,
+      sigorta_sirketi: d.personel || '-',
+      baslangic_tarihi: d.bitis_tarihi ? (() => {
+        const dt = new Date(d.bitis_tarihi);
+        dt.setFullYear(dt.getFullYear()-1);
+        return dt.toISOString().slice(0,10);
+      })() : '',
+      brut_prim: 0,
+      net_prim: 0,
+      komisyon_orani: 0
+    }));
+    const r = await api.policeExcelImport({policeler: policelerPayload});
+    if (r?.success) {
+      setImportData(null);
+      setBasari((r.data?.eklenen || importData.length) + ' ADET POLİÇE BAŞARIYLA İÇE AKTARILDI');
+      setTimeout(() => setBasari(''), 4000);
+      yukle();
+    } else {
+      setHata(r?.error || 'İÇE AKTARMA HATASI');
+      setTimeout(() => setHata(''), 4000);
+      setLoading(false);
+    }
+  };
+
+  // Tablo satırı render
+  const renderRow = (p, i, renk) => (
+    <tr key={p.id||i} style={{borderBottom:`1px solid ${C.border}`,borderLeft:`3px solid ${renk}`}}>
+      <td style={{padding:'10px 8px',fontWeight:700,color:C.accent,fontSize:11}}>{p.police_no}</td>
+      <td style={{padding:'10px 8px',fontWeight:600,fontSize:11}}>{p.musteri_adi}</td>
+      <td style={{padding:'10px 8px'}}><Badge text={p.brans} color={C.cyan}/></td>
+      <td style={{padding:'10px 8px',fontSize:10,color:C.textSec}}>{p.sigorta_sirketi}</td>
+      <td style={{padding:'10px 8px',fontSize:10}}>{p.plaka||'-'}</td>
+      <td style={{padding:'10px 8px',fontSize:10,fontWeight:600}}>{fmtTarih(p.bitis_tarihi)}</td>
+      <td style={{padding:'10px 8px'}}>
+        <span style={{padding:'4px 10px',borderRadius:12,fontSize:11,fontWeight:800,
+          background:`${renk}22`,color:renk,border:`1px solid ${renk}44`}}>
+          {p.kalan_gun} GÜN
+        </span>
+      </td>
+      <td style={{padding:'10px 8px',fontWeight:600,fontSize:11}}>{fmt(p.brut_prim)}</td>
+      <td style={{padding:'10px 8px'}}>
+        {p.hatirlatma_gonderildi >= 2 && <Badge text="15 GÜN \u2713" color={C.danger}/>}
+        {p.hatirlatma_gonderildi === 1 && <Badge text="20 GÜN \u2713" color={C.warning}/>}
+      </td>
+      <td style={{padding:'10px 8px'}}>
+        <button style={{...S.btn,...S.btnP,fontSize:9,padding:'5px 10px'}} onClick={()=>setPage('police-yeni')}>
+          <LIcon name="RefreshCw" size={10} color="#fff"/> YENİLE
+        </button>
+      </td>
+    </tr>
+  );
+
+  const renderGrup = (label, desc, data, renk, icon, gi) => {
+    if (data.length === 0) return null;
+    return (
+      <div key={gi} style={{...S.card,marginBottom:16}}>
+        <SectionTitle icon={icon} title={label} sub={data.length + ' POLİÇE - ' + desc}/>
+        <div style={{overflowX:'auto'}}>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:1050}}>
+            <thead><tr style={{background:C.bgHover}}>
+              {['POLİÇE NO','MÜŞTERİ','BRANŞ','ŞİRKET','PLAKA','BİTİŞ','KALAN GÜN','PRİM','HATIRLATMA','İŞLEM'].map(h=>
+                <th key={h} style={{padding:'10px 8px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`,letterSpacing:.5}}>{h}</th>
+              )}
+            </tr></thead>
+            <tbody>
+              {data.map((p,i) => renderRow(p, i, renk))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
 
   if (loading) return <Loading/>;
 
@@ -606,64 +803,82 @@ const PoliceYenileme = ({setPage, user}) => {
     <div>
       {basari && <div style={{padding:'12px 20px',marginBottom:16,borderRadius:10,background:`${C.success}18`,border:`1px solid ${C.success}44`,display:'flex',alignItems:'center',gap:10}}>
         <LIcon name="CheckCircle" size={16} color={C.success}/><span style={{fontSize:12,fontWeight:600,color:C.success}}>{basari}</span></div>}
+      {hata && <div style={{padding:'12px 20px',marginBottom:16,borderRadius:10,background:`${C.danger}18`,border:`1px solid ${C.danger}44`,display:'flex',alignItems:'center',gap:10}}>
+        <LIcon name="AlertCircle" size={16} color={C.danger}/><span style={{fontSize:12,fontWeight:600,color:C.danger}}>{hata}</span></div>}
 
+      {/* İSTATİSTİK KARTLARI */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
-        <StatCard icon="AlertTriangle" label="30 GÜN İÇİNDE" value={gun30.length} color={C.danger}/>
-        <StatCard icon="Clock" label="60 GÜN İÇİNDE" value={gun60.length} color={C.warning}/>
-        <StatCard icon="Calendar" label="90 GÜN İÇİNDE" value={gun90.length} color={C.cyan}/>
-        <StatCard icon="RefreshCw" label="TOPLAM YAKLAŞAN" value={policeler.length} color={C.accent}/>
+        <StatCard icon="AlertTriangle" label="KRİTİK (15 GÜN VE ALTI)" value={kritik.length} color={C.danger}/>
+        <StatCard icon="AlertCircle" label="ACİL (16-20 GÜN)" value={acil.length} color={C.warning}/>
+        <StatCard icon="Clock" label="YAKLAŞAN (21-60 GÜN)" value={yaklasan.length} color={C.cyan}/>
+        <StatCard icon="RefreshCw" label="TOPLAM" value={policeler.length} color={C.accent}/>
       </div>
 
-      <div style={{marginBottom:12,display:'flex',justifyContent:'flex-end'}}>
-        <button style={{...S.btn,...S.btnW,fontSize:11,padding:'8px 16px'}} onClick={hatirlatmaGonder}>
-          <LIcon name="Bell" size={14} color="#000"/> HATIRLATMA GÖNDER
+      {/* BUTONLAR SATIRI */}
+      <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap'}}>
+        <button style={{...S.btn,...S.btnW,fontSize:11,padding:'10px 18px'}} onClick={() => downloadExcel(policeler)}>
+          <LIcon name="Download" size={14} color="#000"/> EXCEL ŞABLON İNDİR
+        </button>
+        <button style={{...S.btn,...S.btnS,fontSize:11,padding:'10px 18px'}} onClick={() => fileInputRef.current && fileInputRef.current.click()}>
+          <LIcon name="Upload" size={14} color="#fff"/> EXCEL YÜKLE
+        </button>
+        <input ref={fileInputRef} type="file" accept=".xlsx,.xls" style={{display:'none'}} onChange={handleExcelUpload}/>
+        <button style={{...S.btn,...S.btnP,fontSize:11,padding:'10px 18px'}} onClick={hatirlatmaGonder}>
+          <LIcon name="Bell" size={14} color="#fff"/> HATIRLATMA GÖNDER
         </button>
       </div>
 
-      {policeler.length === 0 ? (
-        <div style={S.card}><EmptyState icon="CheckCircle" title="YAKLAŞAN YENİLEME YOK" desc="90 GÜN İÇİNDE BİTECEK POLİÇE BULUNMUYOR"/></div>
-      ) : (
-        [{label:'30 GÜN İÇİNDE (ACİL)',data:gun30,color:C.danger,icon:'AlertTriangle'},
-         {label:'30-60 GÜN İÇİNDE',data:gun60,color:C.warning,icon:'Clock'},
-         {label:'60-90 GÜN İÇİNDE',data:gun90,color:C.cyan,icon:'Calendar'}
-        ].filter(g=>g.data.length>0).map((g,gi)=>(
-          <div key={gi} style={{...S.card,marginBottom:16}}>
-            <SectionTitle icon={g.icon} title={g.label} sub={g.data.length + ' POLİÇE'} iconColor={g.color}/>
-            <div style={{overflowX:'auto'}}>
-              <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:900}}>
-                <thead><tr style={{background:C.bgHover}}>
-                  {['POLİÇE NO','MÜŞTERİ','BRANŞ','SİGORTA ŞİRKETİ','PLAKA','BİTİŞ TARİHİ','KALAN GÜN','PRİM','İŞLEM'].map(h=>
-                    <th key={h} style={{padding:'10px 8px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
-                  )}
-                </tr></thead>
-                <tbody>
-                  {g.data.map((p,i)=>(
-                    <tr key={p.id||i} style={{borderBottom:`1px solid ${C.border}`,borderLeft:`3px solid ${g.color}`}}>
-                      <td style={{padding:'10px 8px',fontWeight:700,color:C.accent}}>{p.police_no}</td>
-                      <td style={{padding:'10px 8px',fontWeight:600}}>{p.musteri_adi}</td>
-                      <td style={{padding:'10px 8px'}}><Badge text={p.brans} color={C.cyan}/></td>
-                      <td style={{padding:'10px 8px',fontSize:10,color:C.textSec}}>{p.sigorta_sirketi}</td>
-                      <td style={{padding:'10px 8px',fontSize:10}}>{p.plaka||'-'}</td>
-                      <td style={{padding:'10px 8px',fontSize:10,fontWeight:600}}>{fmtTarih(p.bitis_tarihi)}</td>
-                      <td style={{padding:'10px 8px'}}>
-                        <span style={{padding:'4px 10px',borderRadius:12,fontSize:11,fontWeight:800,
-                          background:`${g.color}22`,color:g.color,border:`1px solid ${g.color}44`}}>
-                          {p.kalan_gun} GÜN
-                        </span>
-                      </td>
-                      <td style={{padding:'10px 8px',fontWeight:600}}>{fmt(p.brut_prim)}</td>
-                      <td style={{padding:'10px 8px'}}>
-                        <button style={{...S.btn,...S.btnP,fontSize:9,padding:'5px 10px'}} onClick={()=>yenile(p)}>
-                          <LIcon name="RefreshCw" size={10} color="#fff"/> YENİLE
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+      {/* EXCEL İMPORT ÖNİZLEME */}
+      {importData && importData.length > 0 && (
+        <div style={{...S.card,marginBottom:16}}>
+          <SectionTitle icon="FileSpreadsheet" title="EXCEL ÖNİZLEME" sub={importData.length + ' KAYIT OKUNDU'}/>
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%',borderCollapse:'collapse',fontSize:10,minWidth:900}}>
+              <thead><tr style={{background:C.bgHover}}>
+                {['PERSONEL','BRANŞ','POLİÇE NO','MÜŞTERİ','YENİLEME TARİHİ','TC VERGİ NO','DOĞUM TARİHİ','PLAKA','BELGE SERİ','TELEFON'].map(h=>
+                  <th key={h} style={{padding:'8px 6px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                )}
+              </tr></thead>
+              <tbody>
+                {importData.slice(0,50).map((d,i)=>(
+                  <tr key={i} style={{borderBottom:`1px solid ${C.border}`}}>
+                    <td style={{padding:'6px',fontSize:10}}>{d.personel}</td>
+                    <td style={{padding:'6px'}}><Badge text={d.brans} color={C.cyan}/></td>
+                    <td style={{padding:'6px',fontWeight:600,color:C.accent,fontSize:10}}>{d.police_no}</td>
+                    <td style={{padding:'6px',fontWeight:600,fontSize:10}}>{d.musteri_adi}</td>
+                    <td style={{padding:'6px',fontSize:10}}>{d.bitis_tarihi ? fmtTarih(d.bitis_tarihi) : '-'}</td>
+                    <td style={{padding:'6px',fontSize:10}}>{d.musteri_tc||'-'}</td>
+                    <td style={{padding:'6px',fontSize:10}}>{d.dogum_tarihi ? fmtTarih(d.dogum_tarihi) : '-'}</td>
+                    <td style={{padding:'6px',fontSize:10}}>{d.plaka||'-'}</td>
+                    <td style={{padding:'6px',fontSize:10}}>{d.belge_seri||'-'}</td>
+                    <td style={{padding:'6px',fontSize:10}}>{d.musteri_telefon||'-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {importData.length > 50 && <div style={{padding:10,textAlign:'center',fontSize:10,color:C.textMuted}}>VE {importData.length - 50} KAYIT DAHA...</div>}
           </div>
-        ))
+          <div style={{padding:'12px 20px',borderTop:`1px solid ${C.border}`,display:'flex',gap:10}}>
+            <button style={{...S.btn,...S.btnS,fontSize:12,padding:'10px 24px'}} onClick={topluKaydet}>
+              <LIcon name="Save" size={14} color="#fff"/> TOPLU KAYDET ({importData.length} KAYIT)
+            </button>
+            <button style={{...S.btn,...S.btnG,fontSize:12,padding:'10px 24px'}} onClick={()=>setImportData(null)}>
+              <LIcon name="X" size={14} color={C.textSec}/> İPTAL
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* YENİLEME LİSTESİ */}
+      {policeler.length === 0 ? (
+        <div style={S.card}><EmptyState icon="CheckCircle" title="YAKLAŞAN YENİLEME YOK" desc="AKTİF POLİÇELER İÇİNDE YENİLEME BEKLEYENİ BULUNMUYOR"/></div>
+      ) : (
+        <>
+          {renderGrup('KRİTİK - 15 GÜN VE ALTI', 'SİGORTA ŞİRKETLERİ TEKLİF EKRANLARINI AÇIYOR!', kritik, C.danger, 'AlertTriangle', 0)}
+          {renderGrup('ACİL - 16-20 GÜN', 'İLK HATIRLATMA BÖLGESİ', acil, C.warning, 'AlertCircle', 1)}
+          {renderGrup('YAKLAŞAN - 21-60 GÜN', '', yaklasan, C.cyan, 'Clock', 2)}
+          {renderGrup('İLERİ TARİH - 60+ GÜN', '', ileriTarih, C.textMuted, 'Calendar', 3)}
+        </>
       )}
     </div>
   );
@@ -813,11 +1028,11 @@ const PoliceTahsilat = ({setPage, user}) => {
 };
 
 /* ═══════════════════════════════════════════════════════════
-   SEKME 5: RAPORLAR
+   SEKME 5: RAPORLAR (DÜZELTİLMİŞ)
    ═══════════════════════════════════════════════════════════ */
 const PoliceRapor = ({setPage, user}) => {
-  const {C, S, LIcon, StatCard, SectionTitle, Badge, EmptyState, Loading, api} = MR;
-  const [loading, setLoading] = useState(false);
+  const {C, S, LIcon, StatCard, SectionTitle, Badge, EmptyState, Loading, FormGroup, api} = MR;
+  const [loading, setLoading] = useState(true);
   const [rapor, setRapor] = useState(null);
   const [baslangic, setBaslangic] = useState(new Date().getFullYear()+'-01-01');
   const [bitis, setBitis] = useState(new Date().getFullYear()+'-12-31');
@@ -830,8 +1045,6 @@ const PoliceRapor = ({setPage, user}) => {
   };
 
   useEffect(() => { yukle(); }, []);
-
-  if (loading) return <Loading/>;
 
   const oz = rapor?.genel_ozet || {};
   const branslar = rapor?.brans_analiz || [];
@@ -854,7 +1067,9 @@ const PoliceRapor = ({setPage, user}) => {
         </div>
       </div>
 
-      {!rapor ? <div style={S.card}><EmptyState icon="BarChart3" title="RAPOR OLUŞTURUN" desc="TARİH ARALIĞI SEÇİP RAPOR OLUŞTUR BUTONUNA BASIN"/></div> : (
+      {loading ? <Loading/> : !rapor ? (
+        <div style={S.card}><EmptyState icon="BarChart3" title="RAPOR OLUŞTURUN" desc="TARİH ARALIĞI SEÇİP RAPOR OLUŞTUR BUTONUNA BASIN"/></div>
+      ) : (
         <>
           {/* ÖZET KARTLAR */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:10,marginBottom:20}}>
@@ -863,7 +1078,7 @@ const PoliceRapor = ({setPage, user}) => {
             <StatCard icon="Banknote" label="TOPLAM PRİM" value={fmt(oz.toplam_prim)} color={C.purple}/>
             <StatCard icon="Percent" label="TOPLAM KOMİSYON" value={fmt(oz.toplam_komisyon)} color={C.cyan}/>
             <StatCard icon="CheckCircle" label="TAHSİL EDİLEN" value={fmt(oz.tahsil_edilen)} color={C.success}/>
-            <StatCard icon="TrendingUp" label="NET KAZANÇ" value={fmt((parseFloat(oz.toplam_komisyon)||0))} color={C.gold}/>
+            <StatCard icon="TrendingUp" label="CARİ BAKİYE" value={fmt((parseFloat(oz.toplam_komisyon)||0) - (parseFloat(oz.tahsil_edilen)||0))} color={C.gold}/>
           </div>
 
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
@@ -935,7 +1150,7 @@ const PoliceRapor = ({setPage, user}) => {
           {/* YENİLEME BEKLEYEN */}
           {yenileme.length > 0 && (
             <div style={S.card}>
-              <SectionTitle icon="RefreshCw" title="YENİLEME BEKLEYEN (60 GÜN)" sub={yenileme.length + ' POLİÇE'} iconColor={C.warning}/>
+              <SectionTitle icon="RefreshCw" title="YENİLEME BEKLEYEN (60 GÜN)" sub={yenileme.length + ' POLİÇE'}/>
               <div style={{overflowX:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
                   <thead><tr style={{background:C.bgHover}}>
@@ -1011,7 +1226,7 @@ const PoliceKazanc = ({setPage, user}) => {
   const buAyData = aylikData.find(a => a.donem === new Date().toISOString().slice(0,7));
   const buAyKazanc = buAyData ? buAyData.tahsil_edilen : 0;
 
-  // Kazanç girişi → gelir olarak kaydet
+  // Kazanç girişi -> gelir olarak kaydet
   const kazancKaydet = async () => {
     if (!kazancModal) return;
     const aktifKasalar = kasalar.filter(k => k.aktif);

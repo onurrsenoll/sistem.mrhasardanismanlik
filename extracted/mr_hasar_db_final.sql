@@ -1281,6 +1281,48 @@ INSERT IGNORE INTO yetkiler (kullanici_id, modul, islem, izin) VALUES
 (1, 'rapor', 'goruntule', 1), (1, 'rapor', 'ekle', 1), (1, 'rapor', 'duzenle', 1), (1, 'rapor', 'sil', 1),
 (1, 'sms', 'goruntule', 1), (1, 'sms', 'gonder', 1), (1, 'sms', 'ayarlar', 1);
 
+-- ═══════════════════════════════════════════
+-- 37. SAHA DOSYALARI
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS saha_dosyalar (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  personel_id INT NOT NULL,
+  durum ENUM('beklemede','onaylandi','reddedildi','dosyaya_donustu') DEFAULT 'beklemede',
+
+  -- Müşteri/hasar bilgileri
+  musteri_adi VARCHAR(150) NOT NULL,
+  musteri_telefon VARCHAR(20) DEFAULT NULL,
+  musteri_tc VARCHAR(11) DEFAULT NULL,
+  hasar_tipi VARCHAR(50) DEFAULT NULL,
+  hasar_tarihi DATE DEFAULT NULL,
+  hasar_yeri VARCHAR(200) DEFAULT NULL,
+  hasar_aciklama TEXT,
+
+  -- Sigorta bilgileri
+  sigorta_sirketi VARCHAR(100) DEFAULT NULL,
+  police_no VARCHAR(50) DEFAULT NULL,
+  plaka VARCHAR(20) DEFAULT NULL,
+  karsi_plaka VARCHAR(20) DEFAULT NULL,
+  karsi_sigorta VARCHAR(100) DEFAULT NULL,
+
+  -- Onay bilgileri
+  onaylayan_id INT DEFAULT NULL,
+  onay_tarihi DATETIME DEFAULT NULL,
+  onay_notu TEXT,
+  red_nedeni TEXT,
+
+  -- Dosyaya dönüşme
+  dosya_id INT DEFAULT NULL,
+  dosyaya_donusme_tarihi DATETIME DEFAULT NULL,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  INDEX idx_saha_personel (personel_id),
+  INDEX idx_saha_durum (durum),
+  INDEX idx_saha_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ═══════════════════════════════════════════════════════════════
