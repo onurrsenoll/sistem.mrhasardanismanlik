@@ -217,6 +217,16 @@ MR.api = {
   hakedisHesapla(d) { return this.req('/personel/hakedis-hesapla.php', { method: 'POST', body: JSON.stringify(d) }); },
   hakedisList(p = {}) { return this.req('/personel/hakedis-list.php?' + new URLSearchParams(p)); },
   hakedisOde(d) { return this.req('/personel/hakedis-ode.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  // POLİÇE
+  policeList(p = {}) { return this.req('/police/list.php?' + new URLSearchParams(p)); },
+  policeGet(id) { return this.req('/police/get.php?id=' + id); },
+  policeCreate(d) { return this.req('/police/create.php', { method: 'POST', body: JSON.stringify(d) }); },
+  policeUpdate(d) { return this.req('/police/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  policeDelete(id) { return this.req('/police/delete.php?id=' + id, { method: 'DELETE' }); },
+  policeTahsilatEkle(d) { return this.req('/police/tahsilat-ekle.php', { method: 'POST', body: JSON.stringify(d) }); },
+  policeTahsilatList(p = {}) { return this.req('/police/tahsilat-list.php?' + new URLSearchParams(p)); },
+  policeRapor(p = {}) { return this.req('/police/rapor.php?' + new URLSearchParams(p)); },
+  policeHatirlatma() { return this.req('/police/hatirlatma-kontrol.php'); },
 };
 
 // ═══ TEMA SİSTEMİ ═══

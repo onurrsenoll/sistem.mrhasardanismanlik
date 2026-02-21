@@ -1003,6 +1003,70 @@ CREATE TABLE IF NOT EXISTS personel_hakedis (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
 
+-- ═══════════════════════════════════════════
+-- 35. POLİÇELER (SİGORTA POLİÇE TAKİBİ)
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS policeler (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    police_no VARCHAR(50) NOT NULL,
+    yenileme_no VARCHAR(50) DEFAULT NULL,
+    sigorta_sirketi VARCHAR(100) NOT NULL,
+    brans VARCHAR(100) NOT NULL,
+    police_turu ENUM('yeni','yenileme','zeyil') NOT NULL DEFAULT 'yeni',
+    musteri_adi VARCHAR(150) NOT NULL,
+    musteri_tc VARCHAR(11) DEFAULT NULL,
+    musteri_telefon VARCHAR(20) DEFAULT NULL,
+    musteri_email VARCHAR(100) DEFAULT NULL,
+    plaka VARCHAR(20) DEFAULT NULL,
+    tanzim_tarihi DATE NOT NULL,
+    baslangic_tarihi DATE NOT NULL,
+    bitis_tarihi DATE NOT NULL,
+    brut_prim DECIMAL(12,2) NOT NULL DEFAULT 0,
+    net_prim DECIMAL(12,2) NOT NULL DEFAULT 0,
+    komisyon_orani DECIMAL(5,2) NOT NULL DEFAULT 0,
+    komisyon_tutari DECIMAL(12,2) NOT NULL DEFAULT 0,
+    tahsilat_durumu ENUM('beklemede','kismen_tahsil','tahsil_edildi') NOT NULL DEFAULT 'beklemede',
+    tahsil_edilen DECIMAL(12,2) NOT NULL DEFAULT 0,
+    durum ENUM('aktif','suresi_doldu','iptal','yenilendi') NOT NULL DEFAULT 'aktif',
+    hatirlatma_gun INT NOT NULL DEFAULT 30,
+    hatirlatma_gonderildi TINYINT(1) NOT NULL DEFAULT 0,
+    notlar TEXT DEFAULT NULL,
+    olusturan_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_police_no (police_no),
+    INDEX idx_bitis (bitis_tarihi),
+    INDEX idx_durum (durum),
+    INDEX idx_tahsilat (tahsilat_durumu),
+    INDEX idx_sirket (sigorta_sirketi),
+    INDEX idx_musteri (musteri_adi),
+    INDEX idx_brans (brans),
+    FOREIGN KEY (olusturan_id) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 36. POLİÇE TAHSİLATLARI
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS police_tahsilatlar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    police_id INT NOT NULL,
+    tutar DECIMAL(12,2) NOT NULL,
+    tahsilat_tarihi DATE NOT NULL,
+    odeme_sekli ENUM('nakit','havale','kredi_karti','cek','diger') NOT NULL DEFAULT 'nakit',
+    aciklama VARCHAR(500) DEFAULT NULL,
+    kasa_id INT DEFAULT NULL,
+    kazanc_kaydedildi TINYINT(1) NOT NULL DEFAULT 0,
+    olusturan_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_police (police_id),
+    INDEX idx_tarih (tahsilat_tarihi),
+    INDEX idx_kasa (kasa_id),
+    FOREIGN KEY (police_id) REFERENCES policeler(id) ON DELETE CASCADE,
+    FOREIGN KEY (kasa_id) REFERENCES kasalar(id) ON DELETE SET NULL,
+    FOREIGN KEY (olusturan_id) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+
 -- ═══════════════════════════════════════════════════════════════
 -- VARSAYILAN VERİLER
 -- ═══════════════════════════════════════════════════════════════
@@ -1148,7 +1212,21 @@ INSERT IGNORE INTO tanimlamalar (kategori, deger, sira) VALUES
 ('sablon_kategori', 'VEKALETNAME', 3),
 ('sablon_kategori', 'İHTARNAME', 4),
 ('sablon_kategori', 'TUTANAK', 5),
-('sablon_kategori', 'DİĞER', 6);
+('sablon_kategori', 'DİĞER', 6),
+('police_brans', 'KASKO', 1),
+('police_brans', 'TRAFİK', 2),
+('police_brans', 'DASK', 3),
+('police_brans', 'KONUT', 4),
+('police_brans', 'İŞYERİ', 5),
+('police_brans', 'SAĞLIK', 6),
+('police_brans', 'HAYAT', 7),
+('police_brans', 'YANGIN', 8),
+('police_brans', 'NAKLİYAT', 9),
+('police_brans', 'MÜHENDİSLİK', 10),
+('police_brans', 'SORUMLULUK', 11),
+('police_brans', 'FERDİ KAZA', 12),
+('police_brans', 'DİĞER', 13),
+('gelir_turu', 'POLİÇE KOMİSYON', 7);
 
 -- Varsayılan Ayarlar
 INSERT IGNORE INTO ayarlar (anahtar, deger, tip) VALUES

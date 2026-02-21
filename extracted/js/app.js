@@ -34,6 +34,14 @@ const MENU = [
     {id:'personel-yeni', label:'YENİ PERSONEL', icon:'UserPlus'},
     {id:'personel-hakedis', label:'HAKEDİŞ TAKİBİ', icon:'Calculator'}
   ]},
+  {id:'police', label:'POLİÇE', icon:'FileCheck', sub:[
+    {id:'police-liste', label:'POLİÇE LİSTESİ', icon:'List'},
+    {id:'police-yeni', label:'YENİ POLİÇE', icon:'Plus'},
+    {id:'police-yenileme', label:'YENİLEME TAKİBİ', icon:'RefreshCw'},
+    {id:'police-tahsilat', label:'TAHSİLAT / CARİ', icon:'Wallet'},
+    {id:'police-rapor', label:'RAPORLAR', icon:'BarChart3'},
+    {id:'police-kazanc', label:'KAZANÇ', icon:'TrendingUp'}
+  ]},
   {id:'muhasebe', label:'MUHASEBE', icon:'Landmark', sub:[
     {id:'muhasebe-gelir', label:'GELİR YÖNETİMİ', icon:'TrendingUp'},
     {id:'muhasebe-gider', label:'GİDER YÖNETİMİ', icon:'TrendingDown'},
@@ -72,7 +80,7 @@ const ROL_ERISIM = {
   avukat: ['home','dosya','crm','hesap','servis','ortaklar','ajanda','mesajlar'],
   uzman: ['home','dosya','hesap','servis','ajanda','mesajlar'],
   personel: ['home','dosya','ajanda','mesajlar'],
-  muhasebe: ['home','dosya','muhasebe','ortaklar','personel','tanimlamalar','ajanda','mesajlar'],
+  muhasebe: ['home','dosya','police','muhasebe','ortaklar','personel','tanimlamalar','ajanda','mesajlar'],
   portal: ['home','dosya','mesajlar']
 };
 
@@ -87,6 +95,7 @@ const MENU_MODUL = {
   muhasebe: 'muhasebe',
   tanimlamalar: 'tanimlamalar',
   ajanda: 'ajanda',
+  police: 'police',
   mesajlar: 'mesajlar',
   sistem: 'sistem'
 };
@@ -680,6 +689,12 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   if (page.startsWith('personel')) {
     const sub = page.replace('personel-', '') || 'liste';
     return <MR.PersonelPage setPage={setPage} user={user} subPage={sub === 'personel' ? 'liste' : sub}/>;
+  }
+
+  /* POLİÇE */
+  if (page.startsWith('police')) {
+    const sub = page.replace('police-', '') || 'liste';
+    return <MR.PolicePage setPage={setPage} user={user} subPage={sub === 'police' ? 'liste' : sub}/>;
   }
 
   /* MUHASEBE */
