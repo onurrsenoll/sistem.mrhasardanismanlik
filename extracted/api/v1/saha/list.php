@@ -45,8 +45,8 @@ if ($personel_id !== '' && $user['rol'] !== 'personel') {
 // Arama
 if ($arama !== '') {
     $search   = "%$arama%";
-    $where[]  = '(s.musteri_adi LIKE ? OR s.musteri_telefon LIKE ? OR s.plaka LIKE ? OR s.sigorta_sirketi LIKE ? OR s.musteri_tc LIKE ?)';
-    $params   = array_merge($params, [$search, $search, $search, $search, $search]);
+    $where[]  = '(s.musteri_adi LIKE ? OR s.musteri_telefon LIKE ? OR s.arac_plaka LIKE ? OR s.musteri_tc LIKE ?)';
+    $params   = array_merge($params, [$search, $search, $search, $search]);
 }
 
 $whereSQL = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';

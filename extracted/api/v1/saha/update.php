@@ -1,7 +1,7 @@
 <?php
 /**
  * PUT /api/v1/saha/update.php
- * SAHA DOSYASI GÜNCELLE (SADECE BEKLEMEDE DURUMUNDA)
+ * SAHA DOSYASI GÜNCELLE (TASLAK VEYA BEKLEMEDE DURUMUNDA)
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -30,16 +30,19 @@ if ($user['rol'] === 'personel' && (int)$kayit['personel_id'] !== (int)$user['id
     json_error('BU KAYDI GÜNCELLEME YETKİNİZ YOK', 403);
 }
 
-// Sadece beklemede durumundaki kayıtlar güncellenebilir
-if ($kayit['durum'] !== 'beklemede') {
-    json_error('SADECE BEKLEMEDE DURUMUNDAKI KAYITLAR GÜNCELLENEBİLİR', 400);
+// Sadece taslak veya beklemede durumundaki kayıtlar güncellenebilir
+if (!in_array($kayit['durum'], ['taslak', 'beklemede'])) {
+    json_error('SADECE TASLAK VEYA BEKLEMEDE DURUMUNDAKI KAYITLAR GÜNCELLENEBİLİR', 400);
 }
 
 // Güncellenebilir alanlar
 $alanlar = [
     'musteri_adi', 'musteri_telefon', 'musteri_tc',
     'hasar_tipi', 'hasar_tarihi', 'hasar_yeri', 'hasar_aciklama',
-    'sigorta_sirketi', 'police_no', 'plaka', 'karsi_plaka', 'karsi_sigorta'
+    'hasar_durumu', 'gecmis_hasar', 'dosya_kaynagi',
+    'arac_plaka', 'arac_marka', 'arac_model', 'arac_model_yili', 'arac_km',
+    'arac_ruhsat_sahibi', 'arac_kusur_durumu', 'arac_renk', 'arac_sasi_no',
+    'karsi_plaka', 'karsi_sigorta'
 ];
 
 $setClauses = [];
@@ -50,6 +53,8 @@ foreach ($alanlar as $alan) {
         $setClauses[] = "$alan = ?";
         if ($alan === 'hasar_tarihi') {
             $params[] = !empty($body[$alan]) ? $body[$alan] : null;
+        } elseif (in_array($alan, ['arac_model_yili', 'arac_km'])) {
+            $params[] = !empty($body[$alan]) ? (int)$body[$alan] : null;
         } else {
             $params[] = clean($body[$alan]);
         }
@@ -58,6 +63,7 @@ foreach ($alanlar as $alan) {
 
 if (empty($setClauses)) json_error('GÜNCELLENECEK ALAN BELİRTİLMEDİ', 400);
 
+$setClauses[] = "updated_at = NOW()";
 $params[] = $id;
 
 try {

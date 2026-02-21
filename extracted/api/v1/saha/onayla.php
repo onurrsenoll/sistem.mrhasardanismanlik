@@ -39,7 +39,7 @@ try {
     ]);
 
     // Personele bildirim gönder
-    $icerik = $kayit['musteri_adi'] . ' - ' . ($kayit['plaka'] ?: 'PLAKA YOK') . ' SAHA DOSYASI ONAYLANDI. DOSYA ALINABİLİR.';
+    $icerik = $kayit['musteri_adi'] . ' - ' . ($kayit['arac_plaka'] ?: 'PLAKA YOK') . ' SAHA DOSYASI ONAYLANDI. DOSYA ALINABİLİR.';
     $stmt2 = $db->prepare("INSERT INTO bildirimler (gonderen_id, alici_id, baslik, icerik, tip, okundu) VALUES (?, ?, ?, ?, 'bilgi', 0)");
     $stmt2->execute([
         $user['id'],

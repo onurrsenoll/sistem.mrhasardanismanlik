@@ -20,7 +20,8 @@ $db = getDB();
 $stmt = $db->prepare("SELECT s.*,
     u.ad_soyad AS personel_adi,
     u2.ad_soyad AS onaylayan_adi,
-    d.dosya_no
+    d.dosya_no,
+    (SELECT COUNT(*) FROM saha_dosya_medya WHERE saha_dosya_id = s.id) AS medya_sayisi
     FROM saha_dosyalar s
     LEFT JOIN users u ON u.id = s.personel_id
     LEFT JOIN users u2 ON u2.id = s.onaylayan_id
