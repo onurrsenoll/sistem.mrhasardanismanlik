@@ -38,14 +38,22 @@ try {
         $id
     ]);
 
-    // Personele bildirim gönder
-    $icerik = $kayit['musteri_adi'] . ' - ' . ($kayit['arac_plaka'] ?: 'PLAKA YOK') . ' SAHA DOSYASI ONAYLANDI. DOSYA ALINABİLİR.';
-    $stmt2 = $db->prepare("INSERT INTO bildirimler (gonderen_id, alici_id, baslik, icerik, tip, okundu) VALUES (?, ?, ?, ?, 'bilgi', 0)");
+    // Personele bildirim gönder - vekalet takip süresi bilgisi
+    $icerik = $kayit['musteri_adi'] . ' - ' . ($kayit['arac_plaka'] ?: 'PLAKA YOK') . ' SAHA DOSYASI ONAYLANDI. 3 GÜN İÇİNDE VEKALET ALINARAK DOSYAYA DÖNÜŞTÜRÜLMESİ GEREKMEKTEDİR.';
+    $stmt2 = $db->prepare("INSERT INTO bildirimler (gonderen_id, alici_id, baslik, icerik, tip, okundu) VALUES (?, ?, ?, ?, 'uyari', 0)");
     $stmt2->execute([
         $user['id'],
         $kayit['personel_id'],
-        'SAHA DOSYA ONAYLANDI - ALINABİLİR',
+        'SAHA DOSYA ONAYLANDI - 3 GÜN SÜRE',
         $icerik
+    ]);
+
+    // Ajanda kaydı - 3 gün sonrası için vekalet takip hatırlatması
+    $stmt3 = $db->prepare("INSERT INTO ajanda (kullanici_id, baslik, aciklama, tarih, hatirlatma, oncelik, renk) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 3 DAY), DATE_ADD(NOW(), INTERVAL 2 DAY), 'acil', '#ef4444')");
+    $stmt3->execute([
+        $kayit['personel_id'],
+        'VEKALET TAKİP - ' . $kayit['musteri_adi'],
+        $kayit['musteri_adi'] . ' - ' . ($kayit['arac_plaka'] ?: '') . ' SAHA DOSYASI İÇİN VEKALET ALINMASI GEREKİYOR. SON GÜN!'
     ]);
 
     log_action($user['id'], 'saha_onayla', "Saha dosya onaylandı: " . $kayit['musteri_adi'], 'saha_dosyalar', $id);

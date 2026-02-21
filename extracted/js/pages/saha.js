@@ -1,7 +1,7 @@
 /**
- * MR HASAR DANIŞMANLIK - SAHA DOSYALARI MODÜLÜ V2
+ * MR HASAR DANIŞMANLIK - SAHA DOSYALARI MODÜLÜ V3
  * SAHA PERSONELİ DOSYA ONAY İŞ AKIŞI
- * Görsel/PDF yükleme, Araç bilgileri, Mobil uyumlu
+ * TL Format, Araç Katalog, Evrak Önce Yükle, Direkt Onaya Gönder, 3 Gün Süre
  */
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect, useMemo, useCallback, useRef} = React;
@@ -10,17 +10,54 @@ const {useState, useEffect, useMemo, useCallback, useRef} = React;
 const HASAR_TIPLERI = ['TRAFİK KAZASI','DASK','YANGIN','SU BASKIN','HIRSIZLIK','DİĞER'];
 const HASAR_DURUMLARI = [{v:'dosya_acik',l:'DOSYA AÇIK'},{v:'dosya_kapali',l:'DOSYA KAPALI'},{v:'onarim_devam',l:'ONARIM SÜRECİ DEVAM EDİYOR'}];
 const DOSYA_KAYNAKLARI = ['YÖNLENDİREN','SERVİS','ACENTE','ANLAŞMALI KURUM','BİREYSEL BAŞVURU','DİĞER'];
-const KUSUR_DURUMLARI = ['KUSURSUZ','TAM KUSURLU','YARI KUSURLU (%25)','YARI KUSURLU (%50)','YARI KUSURLU (%75)','BELİRSİZ'];
+const KUSUR_DURUMLARI = ['KUSUR YOK (%0)','%25 KUSURLU','%50 KUSURLU','%75 KUSURLU','%100 KUSURLU'];
 
 const fmtTarih = (t) => t ? new Date(t).toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '-';
 const fmtTarihSaat = (t) => t ? new Date(t).toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-';
 
+/* ═══ TL PARA FORMATI ═══ */
+const fmtTL = (val) => {
+  if (val === '' || val === null || val === undefined) return '';
+  const num = parseInt(String(val).replace(/\./g,'').replace(/[^0-9]/g,''), 10);
+  if (isNaN(num)) return '';
+  return num.toLocaleString('tr-TR');
+};
+const parseTL = (str) => {
+  if (!str) return '';
+  return str.replace(/\./g,'').replace(/[^0-9]/g,'');
+};
+
 const DURUM_RENK = (d) => {
   const C = MR.C;
-  return {taslak:C.textMuted, beklemede:C.warning, onaylandi:C.success, reddedildi:C.danger, dosyaya_donustu:C.purple}[d] || C.textMuted;
+  return {taslak:C.textMuted, beklemede:C.warning, onaylandi:C.success, reddedildi:C.danger, dosyaya_donustu:C.purple, suresi_doldu:C.textMuted}[d] || C.textMuted;
 };
-const DURUM_LABEL = {taslak:'TASLAK', beklemede:'ONAY BEKLİYOR', onaylandi:'ONAYLANDI', reddedildi:'REDDEDİLDİ', dosyaya_donustu:'DOSYAYA DÖNÜŞTÜ'};
+const DURUM_LABEL = {taslak:'TASLAK', beklemede:'ONAY BEKLİYOR', onaylandi:'ONAYLANDI', reddedildi:'REDDEDİLDİ', dosyaya_donustu:'DOSYAYA DÖNÜŞTÜ', suresi_doldu:'SÜRESİ DOLDU'};
 const HASAR_DURUMU_LABEL = {dosya_acik:'DOSYA AÇIK', dosya_kapali:'DOSYA KAPALI', onarim_devam:'ONARIM DEVAM EDİYOR'};
+
+/* ═══ SÜRE HESAPLAMA (3 GÜN COUNTDOWN) ═══ */
+const kalanSure = (onay_tarihi) => {
+  if (!onay_tarihi) return null;
+  const onay = new Date(onay_tarihi);
+  const son = new Date(onay.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const simdi = new Date();
+  const fark = son.getTime() - simdi.getTime();
+  if (fark <= 0) return {gun:0, saat:0, gecmis:true};
+  const gun = Math.floor(fark / (24*60*60*1000));
+  const saat = Math.floor((fark % (24*60*60*1000)) / (60*60*1000));
+  return {gun, saat, gecmis:false};
+};
+const sureRenk = (kalan) => {
+  const C = MR.C;
+  if (!kalan || kalan.gecmis) return C.textMuted;
+  if (kalan.gun >= 2) return C.success;
+  if (kalan.gun >= 1) return C.warning;
+  return C.danger;
+};
+const sureLabel = (kalan) => {
+  if (!kalan || kalan.gecmis) return 'SÜRESİ DOLDU';
+  if (kalan.gun > 0) return `${kalan.gun} GÜN ${kalan.saat} SAAT`;
+  return `${kalan.saat} SAAT`;
+};
 
 /* ═══ UYARI/BAŞARI MESAJI ═══ */
 const Msg = ({text, type, onClose}) => {
@@ -35,7 +72,91 @@ const Msg = ({text, type, onClose}) => {
   );
 };
 
-/* ═══ MEDYA UPLOAD ZONE ═══ */
+/* ═══ TL INPUT BİLEŞENİ ═══ */
+const TLInput = ({value, onChange, disabled, placeholder}) => {
+  const S = MR.S;
+  const formatted = fmtTL(value);
+  const handleChange = (e) => {
+    const raw = parseTL(e.target.value);
+    onChange(raw);
+  };
+  return (
+    <div style={{position:'relative'}}>
+      <input style={{...S.input, paddingRight:30}} value={formatted} onChange={handleChange} disabled={disabled} placeholder={placeholder||'0'}/>
+      <span style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',fontSize:12,fontWeight:700,color:MR.C.textMuted,pointerEvents:'none'}}>₺</span>
+    </div>
+  );
+};
+
+/* ═══ YEREL MEDYA YÜKLEME ZONE (KAYIT ÖNCESİ) ═══ */
+const LocalMedyaZone = ({files, setFiles}) => {
+  const {C, LIcon} = MR;
+  const [dragging, setDragging] = useState(false);
+  const fileRef = useRef(null);
+
+  const addFiles = (newFiles) => {
+    if (!newFiles?.length) return;
+    setFiles(prev => [...prev, ...Array.from(newFiles)]);
+  };
+  const removeFile = (idx) => {
+    setFiles(prev => prev.filter((_, i) => i !== idx));
+  };
+  const onDrop = (e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); };
+
+  return (
+    <div>
+      <div
+        onClick={() => fileRef.current?.click()}
+        onDrop={onDrop}
+        onDragOver={e => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        style={{
+          border:`2px dashed ${dragging ? C.accent : C.borderLight}`,
+          borderRadius:12, padding:'30px 20px', textAlign:'center', cursor:'pointer',
+          background: dragging ? `${C.accent}11` : C.bgInput,
+          transition:'all .2s', marginBottom:16
+        }}>
+        <LIcon name="Upload" size={32} color={dragging ? C.accent : C.textMuted} style={{marginBottom:8}}/>
+        <div style={{fontSize:13,fontWeight:600,color:C.text,marginBottom:4}}>
+          DOSYA YÜKLEMEK İÇİN TIKLAYIN VEYA SÜRÜKLEYİN
+        </div>
+        <div style={{fontSize:11,color:C.textMuted}}>JPG, PNG, PDF DOSYALARI DESTEKLENİR (MAX 20MB)</div>
+        <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,application/pdf"
+          onChange={e => {addFiles(e.target.files); e.target.value='';}} style={{display:'none'}}/>
+      </div>
+
+      {files.length > 0 && (
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))',gap:10}}>
+          {files.map((f, i) => {
+            const isImg = f.type?.startsWith('image/');
+            const url = isImg ? URL.createObjectURL(f) : null;
+            return (
+              <div key={i} style={{position:'relative',borderRadius:8,overflow:'hidden',border:`1px solid ${C.border}`,background:C.bgCard}}>
+                {isImg ? (
+                  <img src={url} alt={f.name} style={{width:'100%',height:100,objectFit:'cover'}}/>
+                ) : (
+                  <div style={{width:'100%',height:100,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:8}}>
+                    <LIcon name="FileText" size={28} color={C.danger}/>
+                    <div style={{fontSize:9,color:C.textMuted,marginTop:4,textAlign:'center',wordBreak:'break-all',lineHeight:1.2}}>{f.name}</div>
+                  </div>
+                )}
+                <button onClick={() => removeFile(i)} style={{
+                  position:'absolute',top:4,right:4,width:22,height:22,borderRadius:'50%',border:'none',
+                  background:'rgba(239,68,68,0.9)',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12
+                }}>✕</button>
+                <div style={{padding:'4px 6px',fontSize:9,color:C.textMuted,borderTop:`1px solid ${C.border}`,textOverflow:'ellipsis',overflow:'hidden',whiteSpace:'nowrap'}}>
+                  {f.name}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ═══ MEDYA UPLOAD ZONE (KAYIT SONRASI - SERVER) ═══ */
 const MedyaUploadZone = ({sahaId, medyalar, setMedyalar}) => {
   const {C, S, LIcon, api} = MR;
   const [yukleniyor, setYukleniyor] = useState(false);
@@ -50,7 +171,6 @@ const MedyaUploadZone = ({sahaId, medyalar, setMedyalar}) => {
       const r = await api.sahaDosyaYukle(sahaId, file, '');
       if (!r?.success) { setHata(r?.error || 'YÜKLEME HATASI'); }
     }
-    // Medya listesini yenile
     const lr = await api.sahaMedyaList(sahaId);
     if (lr?.success) setMedyalar(lr.data || []);
     setYukleniyor(false);
@@ -66,16 +186,13 @@ const MedyaUploadZone = ({sahaId, medyalar, setMedyalar}) => {
   };
 
   const onDrop = (e) => { e.preventDefault(); setDragging(false); yukle(e.dataTransfer.files); };
-  const onDragOver = (e) => { e.preventDefault(); setDragging(true); };
-  const onDragLeave = () => setDragging(false);
 
   return (
     <div>
       {hata && <Msg text={hata} type="error"/>}
-      {/* DROP ZONE */}
       <div
         onClick={() => fileRef.current?.click()}
-        onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave}
+        onDrop={onDrop} onDragOver={e => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)}
         style={{
           border:`2px dashed ${dragging ? C.accent : C.borderLight}`,
           borderRadius:12, padding:'30px 20px', textAlign:'center', cursor:'pointer',
@@ -91,7 +208,6 @@ const MedyaUploadZone = ({sahaId, medyalar, setMedyalar}) => {
           onChange={e => {yukle(e.target.files); e.target.value='';}} style={{display:'none'}}/>
       </div>
 
-      {/* MEDYA GRID */}
       {medyalar.length > 0 && (
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))',gap:10}}>
           {medyalar.map(m => {
@@ -224,7 +340,7 @@ const SahaDetayModal = ({item, onClose, user, onOnayla, onReddet}) => {
         <div style={{padding:16}}>
           <Satir label="HASAR TİPİ" value={item.hasar_tipi}/>
           <Satir label="HASAR TARİHİ" value={fmtTarih(item.hasar_tarihi)}/>
-          <Satir label="HASAR TUTARI" value={item.hasar_tutari ? Number(item.hasar_tutari).toLocaleString('tr-TR',{minimumFractionDigits:2}) + ' ₺' : '-'}/>
+          <Satir label="HASAR TUTARI" value={item.hasar_tutari ? fmtTL(item.hasar_tutari) + ' ₺' : '-'}/>
           <Satir label="HASAR YERİ" value={item.hasar_yeri}/>
           <Satir label="AÇIKLAMA" value={item.hasar_aciklama}/>
           <Satir label="HASAR DURUMU" value={HASAR_DURUMU_LABEL[item.hasar_durumu] || item.hasar_durumu}/>
@@ -314,35 +430,6 @@ const SahaDetayModal = ({item, onClose, user, onOnayla, onReddet}) => {
         </div>
       )}
     </Modal>
-  );
-};
-
-/* ═══════════════════════════════════════════════════════════
-   TABLO LİSTELEME YARDIMCISI
-   ═══════════════════════════════════════════════════════════ */
-const SahaListeTablosu = ({data, kolonlar, onRowClick, renderIslem, emptyIcon, emptyTitle, emptyDesc}) => {
-  const {C, S, EmptyState} = MR;
-  if (!data.length) return <EmptyState icon={emptyIcon||'Inbox'} title={emptyTitle||'KAYIT YOK'} desc={emptyDesc||''}/>;
-  return (
-    <div style={{overflowX:'auto'}}>
-      <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
-        <thead>
-          <tr style={{background:`${C.accent}08`}}>
-            {kolonlar.map(k => <th key={k} style={{padding:'10px 12px',textAlign:'left',fontWeight:700,fontSize:10,color:C.textMuted,borderBottom:`1px solid ${C.border}`}}>{k}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((item, i) => (
-            <tr key={item.id||i} style={{borderBottom:`1px solid ${C.border}22`,cursor:'pointer'}}
-              onClick={() => onRowClick && onRowClick(item)}
-              onMouseEnter={e=>e.currentTarget.style.background=C.bgHover}
-              onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-              {renderIslem(item)}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
   );
 };
 
@@ -440,7 +527,7 @@ const SahaBekleyen = ({setPage, user}) => {
                     <td style={{padding:'10px 12px'}}>{item.arac_km ? Number(item.arac_km).toLocaleString('tr-TR') : '-'}</td>
                     <td style={{padding:'10px 12px',fontSize:10}}>{item.arac_kusur_durumu||'-'}</td>
                     <td style={{padding:'10px 12px',whiteSpace:'nowrap'}}>{fmtTarih(item.hasar_tarihi)}</td>
-                    <td style={{padding:'10px 12px',fontWeight:600,color:C.warning,whiteSpace:'nowrap'}}>{item.hasar_tutari ? Number(item.hasar_tutari).toLocaleString('tr-TR',{minimumFractionDigits:2}) + ' ₺' : '-'}</td>
+                    <td style={{padding:'10px 12px',fontWeight:600,color:C.warning,whiteSpace:'nowrap'}}>{item.hasar_tutari ? fmtTL(item.hasar_tutari) + ' ₺' : '-'}</td>
                     <td style={{padding:'10px 12px'}} onClick={e=>e.stopPropagation()}>
                       <div style={{display:'flex',gap:6}}>
                         {isAdmin ? (<>
@@ -502,7 +589,7 @@ const SahaBekleyen = ({setPage, user}) => {
 };
 
 /* ═══════════════════════════════════════════════════════════
-   SEKME 2: ONAYLANAN
+   SEKME 2: ONAYLANAN (3 GÜN COUNTDOWN + SÜRESİ DOLDU)
    ═══════════════════════════════════════════════════════════ */
 const SahaOnaylanan = ({setPage, user}) => {
   const {C, S, LIcon, StatCard, Badge, SectionTitle, EmptyState, Loading, Modal, FormGroup, api} = MR;
@@ -512,7 +599,6 @@ const SahaOnaylanan = ({setPage, user}) => {
   const [basari, setBasari] = useState('');
   const [hata, setHata] = useState('');
   const [detayItem, setDetayItem] = useState(null);
-  // DOSYAYA DÖNÜŞTÜR MODALI
   const [donusturItem, setDonusturItem] = useState(null);
   const [donusturForm, setDonusturForm] = useState({sigorta_sirketi:'', police_no:''});
   const [donusturLoading, setDonusturLoading] = useState(false);
@@ -520,7 +606,7 @@ const SahaOnaylanan = ({setPage, user}) => {
 
   const yukle = useCallback(async () => {
     setLoading(true);
-    const r = await api.sahaList({durum:'onaylandi', limit:500});
+    const r = await api.sahaList({durum:'onaylandi,suresi_doldu', limit:500});
     if (r?.success) { setData(r.data?.items||[]); setToplam(r.data?.pagination?.total||0); }
     setLoading(false);
   }, []);
@@ -543,58 +629,106 @@ const SahaOnaylanan = ({setPage, user}) => {
 
   if (loading) return <Loading/>;
 
+  const aktifler = data.filter(d => d.durum === 'onaylandi');
+  const suresiDolanlar = data.filter(d => d.durum === 'suresi_doldu');
+
   return (
     <div>
       {basari && <Msg text={basari} type="success"/>}
       {hata && <Msg text={hata} type="error"/>}
 
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:12,marginBottom:20}}>
-        <StatCard icon="CheckCircle" label="TOPLAM ONAYLANAN" value={toplam} color={C.success}/>
+        <StatCard icon="CheckCircle" label="AKTİF ONAYLANAN" value={aktifler.length} color={C.success}/>
+        {suresiDolanlar.length > 0 && <StatCard icon="Clock" label="SÜRESİ DOLAN" value={suresiDolanlar.length} color={C.textMuted}/>}
       </div>
 
-      <div style={S.card}>
-        <SectionTitle icon="CheckCircle" title="ONAYLANAN SAHA DOSYALARI" sub={`${toplam} KAYIT`}/>
+      {/* AKTİF ONAYLANANLAR */}
+      <div style={{...S.card, marginBottom:20}}>
+        <SectionTitle icon="CheckCircle" title="ONAYLANAN SAHA DOSYALARI" sub={`${aktifler.length} KAYIT`}/>
         <div style={{overflowX:'auto'}}>
-          {data.length === 0 ? <EmptyState icon="CheckCircle" title="ONAYLANAN KAYIT YOK" desc="HENÜZ ONAYLANMIŞ SAHA DOSYASI BULUNMUYOR"/> : (
+          {aktifler.length === 0 ? <EmptyState icon="CheckCircle" title="ONAYLANAN KAYIT YOK" desc="HENÜZ ONAYLANMIŞ SAHA DOSYASI BULUNMUYOR"/> : (
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
               <thead>
                 <tr style={{background:`${C.accent}08`}}>
-                  {['PERSONEL','MÜŞTERİ','TELEFON','PLAKA','ONAY TARİHİ','ONAYLAYAN','İŞLEM'].map(h=>(
+                  {['PERSONEL','MÜŞTERİ','TELEFON','PLAKA','ONAY TARİHİ','KALAN SÜRE','İŞLEM'].map(h=>(
                     <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:700,fontSize:10,color:C.textMuted,borderBottom:`1px solid ${C.border}`}}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {data.map(item=>(
-                  <tr key={item.id} style={{borderBottom:`1px solid ${C.border}22`,cursor:'pointer'}}
-                    onClick={()=>setDetayItem(item)}
-                    onMouseEnter={e=>e.currentTarget.style.background=C.bgHover}
-                    onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-                    <td style={{padding:'10px 12px',fontWeight:600}}>{item.personel_adi||'-'}</td>
-                    <td style={{padding:'10px 12px',fontWeight:600,color:C.accent}}>{item.musteri_adi}</td>
-                    <td style={{padding:'10px 12px'}}>{item.musteri_telefon||'-'}</td>
-                    <td style={{padding:'10px 12px',fontWeight:600}}>{item.arac_plaka||'-'}</td>
-                    <td style={{padding:'10px 12px',color:C.textSec}}>{fmtTarihSaat(item.onay_tarihi)}</td>
-                    <td style={{padding:'10px 12px'}}>{item.onaylayan_adi||'-'}</td>
-                    <td style={{padding:'10px 12px'}} onClick={e=>e.stopPropagation()}>
-                      {isAdmin ? (
-                        <button style={{...S.btn,background:C.accent,color:'#fff',padding:'6px 14px',fontSize:10}}
-                          onClick={()=>{setDonusturItem(item);setDonusturForm({sigorta_sirketi:'',police_no:''});}}>
-                          <LIcon name="FolderPlus" size={12}/> DOSYAYA DÖNÜŞTÜR
-                        </button>
-                      ) : (
-                        <button style={{...S.btn,...S.btnP,padding:'6px 12px',fontSize:10}} onClick={()=>setDetayItem(item)}>
-                          <LIcon name="Eye" size={12}/> DETAY
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {aktifler.map(item=>{
+                  const kalan = kalanSure(item.onay_tarihi);
+                  const kRenk = sureRenk(kalan);
+                  return (
+                    <tr key={item.id} style={{borderBottom:`1px solid ${C.border}22`,cursor:'pointer'}}
+                      onClick={()=>setDetayItem(item)}
+                      onMouseEnter={e=>e.currentTarget.style.background=C.bgHover}
+                      onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                      <td style={{padding:'10px 12px',fontWeight:600}}>{item.personel_adi||'-'}</td>
+                      <td style={{padding:'10px 12px',fontWeight:600,color:C.accent}}>{item.musteri_adi}</td>
+                      <td style={{padding:'10px 12px'}}>{item.musteri_telefon||'-'}</td>
+                      <td style={{padding:'10px 12px',fontWeight:600}}>{item.arac_plaka||'-'}</td>
+                      <td style={{padding:'10px 12px',color:C.textSec}}>{fmtTarihSaat(item.onay_tarihi)}</td>
+                      <td style={{padding:'10px 12px'}}>
+                        <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',borderRadius:20,background:`${kRenk}18`,border:`1px solid ${kRenk}44`}}>
+                          <LIcon name="Clock" size={12} color={kRenk}/>
+                          <span style={{fontSize:10,fontWeight:700,color:kRenk}}>{sureLabel(kalan)}</span>
+                        </div>
+                      </td>
+                      <td style={{padding:'10px 12px'}} onClick={e=>e.stopPropagation()}>
+                        {isAdmin ? (
+                          <button style={{...S.btn,background:C.accent,color:'#fff',padding:'6px 14px',fontSize:10}}
+                            onClick={()=>{setDonusturItem(item);setDonusturForm({sigorta_sirketi:'',police_no:''});}}>
+                            <LIcon name="FolderPlus" size={12}/> DOSYAYA DÖNÜŞTÜR
+                          </button>
+                        ) : (
+                          <button style={{...S.btn,...S.btnP,padding:'6px 12px',fontSize:10}} onClick={()=>setDetayItem(item)}>
+                            <LIcon name="Eye" size={12}/> DETAY
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
         </div>
       </div>
+
+      {/* SÜRESİ DOLANLAR */}
+      {suresiDolanlar.length > 0 && (
+        <div style={{...S.card, opacity:0.7}}>
+          <SectionTitle icon="Clock" title="SÜRESİ DOLMUŞ DOSYALAR" sub={`${suresiDolanlar.length} KAYIT - PASİF`}/>
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+              <thead>
+                <tr style={{background:`${C.accent}08`}}>
+                  {['PERSONEL','MÜŞTERİ','PLAKA','ONAY TARİHİ','DURUM'].map(h=>(
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:700,fontSize:10,color:C.textMuted,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {suresiDolanlar.map(item=>(
+                  <tr key={item.id} style={{borderBottom:`1px solid ${C.border}22`,cursor:'pointer'}}
+                    onClick={()=>setDetayItem(item)}
+                    onMouseEnter={e=>e.currentTarget.style.background=C.bgHover}
+                    onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                    <td style={{padding:'10px 12px',fontWeight:600}}>{item.personel_adi||'-'}</td>
+                    <td style={{padding:'10px 12px',color:C.textMuted}}>{item.musteri_adi}</td>
+                    <td style={{padding:'10px 12px'}}>{item.arac_plaka||'-'}</td>
+                    <td style={{padding:'10px 12px',color:C.textMuted}}>{fmtTarihSaat(item.onay_tarihi)}</td>
+                    <td style={{padding:'10px 12px'}}>
+                      <Badge text="SÜRESİ DOLDU" color={C.textMuted}/>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {detayItem && <SahaDetayModal item={detayItem} onClose={()=>setDetayItem(null)} user={user}/>}
 
@@ -623,7 +757,7 @@ const SahaOnaylanan = ({setPage, user}) => {
 };
 
 /* ═══════════════════════════════════════════════════════════
-   SEKME 3: REDDEDİLEN
+   SEKME 3: REDDEDİLEN (TL INPUT + MARKA/MODEL SELECT)
    ═══════════════════════════════════════════════════════════ */
 const SahaReddedilen = ({setPage, user}) => {
   const {C, S, LIcon, StatCard, SectionTitle, EmptyState, Loading, Modal, FormGroup, api} = MR;
@@ -633,13 +767,24 @@ const SahaReddedilen = ({setPage, user}) => {
   const [detayItem, setDetayItem] = useState(null);
   const [basari, setBasari] = useState('');
   const [hata, setHata] = useState('');
-  // DÜZENLE MODAL
   const [editItem, setEditItem] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [editLoading, setEditLoading] = useState(false);
   const [editMedyalar, setEditMedyalar] = useState([]);
-  // SİL
   const [silLoading, setSilLoading] = useState(null);
+  /* MARKA/MODEL */
+  const [markalar, setMarkalar] = useState([]);
+  const [modeller, setModeller] = useState([]);
+
+  useEffect(() => {
+    api.aracMarkaList().then(r => { if (r?.success) setMarkalar(r.data?.markalar || Object.keys(r.data || {})); });
+  }, []);
+
+  useEffect(() => {
+    if (editForm.arac_marka) {
+      api.aracModelList(editForm.arac_marka).then(r => { if (r?.success) setModeller(r.data?.modeller || []); });
+    } else { setModeller([]); }
+  }, [editForm.arac_marka]);
 
   const yukle = useCallback(async () => {
     setLoading(true);
@@ -651,14 +796,13 @@ const SahaReddedilen = ({setPage, user}) => {
   useEffect(() => { yukle(); }, []);
 
   const duzenleAc = async (item) => {
-    // Detay bilgisini çek (medya dahil)
     const r = await api.sahaGet(item.id);
     const d = r?.success ? r.data : item;
     setEditForm({
       id: d.id,
       musteri_adi: d.musteri_adi||'', musteri_telefon: d.musteri_telefon||'', musteri_tc: d.musteri_tc||'',
       hasar_tipi: d.hasar_tipi||'', hasar_tarihi: d.hasar_tarihi||'', hasar_yeri: d.hasar_yeri||'',
-      hasar_aciklama: d.hasar_aciklama||'', hasar_tutari: d.hasar_tutari||'',
+      hasar_aciklama: d.hasar_aciklama||'', hasar_tutari: d.hasar_tutari ? String(Math.round(Number(d.hasar_tutari))) : '',
       hasar_durumu: d.hasar_durumu||'dosya_acik', gecmis_hasar: d.gecmis_hasar||'yok', dosya_kaynagi: d.dosya_kaynagi||'',
       arac_plaka: d.arac_plaka||'', arac_marka: d.arac_marka||'', arac_model: d.arac_model||'',
       arac_model_yili: d.arac_model_yili||'', arac_km: d.arac_km||'',
@@ -666,7 +810,6 @@ const SahaReddedilen = ({setPage, user}) => {
       arac_renk: d.arac_renk||'', arac_sasi_no: d.arac_sasi_no||'',
       karsi_plaka: d.karsi_plaka||'', karsi_sigorta: d.karsi_sigorta||''
     });
-    // Medya listesi
     const mr = await api.sahaMedyaList(d.id);
     if (mr?.success) setEditMedyalar(mr.data||[]);
     setEditItem(d);
@@ -675,19 +818,15 @@ const SahaReddedilen = ({setPage, user}) => {
   const editKaydet = async (veTekrarGonder) => {
     if (!editForm.musteri_adi?.trim()) { setHata('MÜŞTERİ ADI ZORUNLU'); setTimeout(()=>setHata(''),3000); return; }
     setEditLoading(true);
-    // 1. Güncelle (reddedildi → taslak otomatik)
     const r = await api.sahaUpdate(editForm);
     if (!r?.success) { setHata(r?.error||'GÜNCELLEME HATASI'); setEditLoading(false); setTimeout(()=>setHata(''),4000); return; }
-
     if (veTekrarGonder) {
-      // 2. Onaya gönder (taslak → beklemede)
       const r2 = await api.sahaOnayaGonder({id: editForm.id});
       if (!r2?.success) { setHata(r2?.error||'ONAYA GÖNDERME HATASI'); setEditLoading(false); setTimeout(()=>setHata(''),4000); return; }
       setBasari('DOSYA GÜNCELLENDİ VE TEKRAR ONAYA GÖNDERİLDİ');
     } else {
       setBasari('DOSYA GÜNCELLENDİ (TASLAK DURUMUNA ALINDI)');
     }
-
     setEditLoading(false);
     setEditItem(null);
     setTimeout(()=>setBasari(''),4000);
@@ -763,7 +902,7 @@ const SahaReddedilen = ({setPage, user}) => {
       <Modal open={!!editItem} onClose={()=>setEditItem(null)} title="SAHA DOSYASINI DÜZENLE" width="800px">
         {editItem && (
           <div>
-            {/* RED NEDENİ BİLGİSİ */}
+            {/* RED NEDENİ */}
             <div style={{padding:'12px 16px',marginBottom:16,borderRadius:8,background:`${C.danger}12`,border:`1px solid ${C.danger}33`}}>
               <div style={{fontSize:11,fontWeight:600,color:C.danger,marginBottom:4}}>RED NEDENİ:</div>
               <div style={{fontSize:12,color:C.text}}>{editItem.red_nedeni||'-'}</div>
@@ -797,7 +936,9 @@ const SahaReddedilen = ({setPage, user}) => {
                   <FormGroup label="HASAR TARİHİ"><input type="date" style={S.input} value={editForm.hasar_tarihi} onChange={e=>setE('hasar_tarihi',e.target.value)}/></FormGroup>
                 </div>
                 <div style={{...grid2, marginTop:12}}>
-                  <FormGroup label="HASAR TUTARI (₺)"><input type="number" style={S.input} value={editForm.hasar_tutari} onChange={e=>setE('hasar_tutari',e.target.value)} placeholder="0.00" step="0.01"/></FormGroup>
+                  <FormGroup label="HASAR TUTARI (₺)">
+                    <TLInput value={editForm.hasar_tutari} onChange={v=>setE('hasar_tutari',v)}/>
+                  </FormGroup>
                   <FormGroup label="DOSYA KAYNAĞI">
                     <select style={S.select} value={editForm.dosya_kaynagi} onChange={e=>setE('dosya_kaynagi',e.target.value)}>
                       <option value="">SEÇİNİZ</option>
@@ -814,14 +955,24 @@ const SahaReddedilen = ({setPage, user}) => {
               </div>
             </div>
 
-            {/* ARAÇ */}
+            {/* ARAÇ (MARKA/MODEL API SEÇİM) */}
             <div style={{...S.card, marginBottom:12}}>
               <SectionHeader icon="Car" title="ARAÇ BİLGİLERİ" color={C.accent}/>
               <div style={{padding:16}}>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
                   <FormGroup label="PLAKA"><input style={S.input} value={editForm.arac_plaka} onChange={e=>setE('arac_plaka',e.target.value)}/></FormGroup>
-                  <FormGroup label="MARKA"><input style={S.input} value={editForm.arac_marka} onChange={e=>setE('arac_marka',e.target.value)}/></FormGroup>
-                  <FormGroup label="MODEL"><input style={S.input} value={editForm.arac_model} onChange={e=>setE('arac_model',e.target.value)}/></FormGroup>
+                  <FormGroup label="MARKA">
+                    <select style={S.select} value={editForm.arac_marka} onChange={e=>{setE('arac_marka',e.target.value);setE('arac_model','');}}>
+                      <option value="">SEÇİNİZ</option>
+                      {markalar.map(m=><option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </FormGroup>
+                  <FormGroup label="MODEL">
+                    <select style={S.select} value={editForm.arac_model} onChange={e=>setE('arac_model',e.target.value)} disabled={!editForm.arac_marka}>
+                      <option value="">SEÇİNİZ</option>
+                      {modeller.map(m=><option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </FormGroup>
                 </div>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginTop:12}}>
                   <FormGroup label="MODEL YILI"><input type="number" style={S.input} value={editForm.arac_model_yili} onChange={e=>setE('arac_model_yili',e.target.value)}/></FormGroup>
@@ -938,22 +1089,30 @@ const SahaDosyayaDonusen = ({setPage, user}) => {
 };
 
 /* ═══════════════════════════════════════════════════════════
-   SEKME 5: YENİ SAHA KAYDI (MOBİL AĞIRLIKLI)
+   SEKME 5: YENİ SAHA KAYDI V3
+   TL Input, Araç Katalog, Evrak Önce Yükle, Direkt Onaya Gönder
    ═══════════════════════════════════════════════════════════ */
 const SahaYeniKayit = ({setPage, user}) => {
   const {C, S, LIcon, FormGroup, api} = MR;
   const [loading, setLoading] = useState(false);
   const [basari, setBasari] = useState('');
   const [hata, setHata] = useState('');
-  const [savedId, setSavedId] = useState(null);
-  const [medyalar, setMedyalar] = useState([]);
-  const [onayaGonderLoading, setOnayaGonderLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  /* YEREL DOSYALAR (KAYIT ÖNCESİ) */
+  const [localFiles, setLocalFiles] = useState([]);
+  /* ARAÇ KATALOG */
+  const [markalar, setMarkalar] = useState([]);
+  const [modeller, setModeller] = useState([]);
 
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', h);
     return () => window.removeEventListener('resize', h);
+  }, []);
+
+  // Marka listesi yükle
+  useEffect(() => {
+    api.aracMarkaList().then(r => { if (r?.success) setMarkalar(r.data?.markalar || Object.keys(r.data || {})); });
   }, []);
 
   const [form, setForm] = useState({
@@ -967,31 +1126,52 @@ const SahaYeniKayit = ({setPage, user}) => {
 
   const set = (k,v) => setForm(f=>({...f,[k]:v}));
 
-  const kaydet = async () => {
+  // Marka değişince model listesini güncelle
+  useEffect(() => {
+    if (form.arac_marka) {
+      api.aracModelList(form.arac_marka).then(r => { if (r?.success) setModeller(r.data?.modeller || []); });
+    } else { setModeller([]); }
+  }, [form.arac_marka]);
+
+  /* KAYDET VEYA DİREKT ONAYA GÖNDER */
+  const kaydet = async (onayaGonder = false) => {
     if (!form.musteri_adi.trim()) { setHata('MÜŞTERİ ADI ZORUNLUDUR'); setTimeout(()=>setHata(''),3000); return; }
     setLoading(true); setHata('');
-    const r = await api.sahaCreate(form);
-    setLoading(false);
-    if (r?.success) {
-      setSavedId(r.data?.id);
-      setBasari('SAHA DOSYASI TASLAK OLARAK KAYDEDİLDİ. ŞİMDİ GÖRSEL/PDF YÜKLEYEBİLİR VE ONAYA GÖNDEREBİLİRSİNİZ.');
-      setTimeout(()=>setBasari(''),8000);
-    } else {
-      setHata(r?.error||'KAYIT HATASI'); setTimeout(()=>setHata(''),4000);
-    }
-  };
 
-  const onayaGonder = async () => {
-    if (!savedId) return;
-    setOnayaGonderLoading(true);
-    const r = await api.sahaOnayaGonder({id:savedId});
-    setOnayaGonderLoading(false);
-    if (r?.success) {
-      setBasari('SAHA DOSYASI ONAYA GÖNDERİLDİ!');
-      setTimeout(()=>{ setBasari(''); setPage('saha-liste'); }, 2000);
-    } else {
-      setHata(r?.error||'ONAYA GÖNDERME HATASI'); setTimeout(()=>setHata(''),4000);
+    // 1. Kayıt oluştur (taslak)
+    const r = await api.sahaCreate(form);
+    if (!r?.success) {
+      setHata(r?.error||'KAYIT HATASI'); setLoading(false); setTimeout(()=>setHata(''),4000);
+      return;
     }
+    const sahaId = r.data?.id;
+
+    // 2. Yerel dosyaları yükle
+    if (localFiles.length > 0 && sahaId) {
+      for (const file of localFiles) {
+        await api.sahaDosyaYukle(sahaId, file, '');
+      }
+    }
+
+    // 3. Onaya gönder (opsiyonel)
+    if (onayaGonder && sahaId) {
+      const r2 = await api.sahaOnayaGonder({id: sahaId});
+      if (r2?.success) {
+        setBasari('SAHA DOSYASI KAYDEDİLDİ VE ONAYA GÖNDERİLDİ!');
+        setLoading(false);
+        setTimeout(() => { setBasari(''); setPage('saha-liste'); }, 2000);
+        return;
+      } else {
+        setHata('KAYIT OLUŞTU FAKAT ONAYA GÖNDERME HATASI: ' + (r2?.error||''));
+        setLoading(false);
+        setTimeout(()=>setHata(''),6000);
+        return;
+      }
+    }
+
+    setBasari('SAHA DOSYASI TASLAK OLARAK KAYDEDİLDİ');
+    setLoading(false);
+    setTimeout(() => { setBasari(''); setPage('saha-liste'); }, 2000);
   };
 
   const grid2 = {display:'grid',gridTemplateColumns: isMobile ? '1fr' : 'repeat(2,1fr)',gap:16};
@@ -1003,33 +1183,21 @@ const SahaYeniKayit = ({setPage, user}) => {
       {basari && <Msg text={basari} type="success"/>}
       {hata && <Msg text={hata} type="error"/>}
 
-      {/* KAYIT SONRASI ONAYA GÖNDER */}
-      {savedId && (
-        <div style={{padding:20,marginBottom:20,borderRadius:12,background:`${C.success}12`,border:`2px solid ${C.success}44`,textAlign:'center'}}>
-          <LIcon name="CheckCircle" size={40} color={C.success} style={{marginBottom:10}}/>
-          <div style={{fontSize:16,fontWeight:700,color:C.success,marginBottom:8}}>TASLAK KAYDEDİLDİ</div>
-          <div style={{fontSize:12,color:C.textSec,marginBottom:16}}>GÖRSEL VE PDF YÜKLEYEBİLİR, ARDINDAN ONAYA GÖNDEREBİLİRSİNİZ.</div>
-          <button style={{...S.btn,...S.btnS,padding:'14px 40px',fontSize:15,fontWeight:700}} onClick={onayaGonder} disabled={onayaGonderLoading}>
-            <LIcon name="Send" size={18}/> {onayaGonderLoading ? 'GÖNDERİLİYOR...' : 'DOSYAYI ONAYA GÖNDER'}
-          </button>
-        </div>
-      )}
-
       {/* 1. MÜŞTERİ BİLGİLERİ */}
       <div style={{...S.card, marginBottom:20}}>
         <SectionHeader icon="User" title="MÜŞTERİ BİLGİLERİ" subtitle="MÜŞTERİ İLETİŞİM BİLGİLERİ" color={C.cyan}/>
         <div style={{...S.cardBody}}>
           <div style={grid2}>
             <FormGroup label="MÜŞTERİ ADI *">
-              <input style={S.input} value={form.musteri_adi} onChange={e=>set('musteri_adi',e.target.value)} placeholder="MÜŞTERİ AD SOYAD" disabled={!!savedId}/>
+              <input style={S.input} value={form.musteri_adi} onChange={e=>set('musteri_adi',e.target.value)} placeholder="MÜŞTERİ AD SOYAD" disabled={loading}/>
             </FormGroup>
             <FormGroup label="TELEFON">
-              <input style={S.input} value={form.musteri_telefon} onChange={e=>set('musteri_telefon',e.target.value)} placeholder="05XX XXX XX XX" disabled={!!savedId}/>
+              <input style={S.input} value={form.musteri_telefon} onChange={e=>set('musteri_telefon',e.target.value)} placeholder="05XX XXX XX XX" disabled={loading}/>
             </FormGroup>
           </div>
           <div style={{marginTop:16}}>
             <FormGroup label="TC KİMLİK NO">
-              <input style={{...S.input,maxWidth:300}} value={form.musteri_tc} onChange={e=>set('musteri_tc',e.target.value)} placeholder="XXXXXXXXXXX" maxLength={11} disabled={!!savedId}/>
+              <input style={{...S.input,maxWidth:300}} value={form.musteri_tc} onChange={e=>set('musteri_tc',e.target.value)} placeholder="XXXXXXXXXXX" maxLength={11} disabled={loading}/>
             </FormGroup>
           </div>
         </div>
@@ -1041,36 +1209,36 @@ const SahaYeniKayit = ({setPage, user}) => {
         <div style={{...S.cardBody}}>
           <div style={grid2}>
             <FormGroup label="HASAR TİPİ">
-              <select style={S.select} value={form.hasar_tipi} onChange={e=>set('hasar_tipi',e.target.value)} disabled={!!savedId}>
+              <select style={S.select} value={form.hasar_tipi} onChange={e=>set('hasar_tipi',e.target.value)} disabled={loading}>
                 <option value="">SEÇİNİZ</option>
                 {HASAR_TIPLERI.map(t=><option key={t} value={t}>{t}</option>)}
               </select>
             </FormGroup>
             <FormGroup label="HASAR TARİHİ">
-              <input type="date" style={S.input} value={form.hasar_tarihi} onChange={e=>set('hasar_tarihi',e.target.value)} disabled={!!savedId}/>
+              <input type="date" style={S.input} value={form.hasar_tarihi} onChange={e=>set('hasar_tarihi',e.target.value)} disabled={loading}/>
             </FormGroup>
           </div>
           <div style={{...grid2, marginTop:16}}>
             <FormGroup label="HASAR TUTARI (₺)">
-              <input type="number" style={S.input} value={form.hasar_tutari} onChange={e=>set('hasar_tutari',e.target.value)} placeholder="0.00" step="0.01" disabled={!!savedId}/>
+              <TLInput value={form.hasar_tutari} onChange={v=>set('hasar_tutari',v)} disabled={loading}/>
             </FormGroup>
             <FormGroup label="HASAR YERİ">
-              <input style={S.input} value={form.hasar_yeri} onChange={e=>set('hasar_yeri',e.target.value)} placeholder="KAZA / HASAR YERİ ADRESİ" disabled={!!savedId}/>
+              <input style={S.input} value={form.hasar_yeri} onChange={e=>set('hasar_yeri',e.target.value)} placeholder="KAZA / HASAR YERİ ADRESİ" disabled={loading}/>
             </FormGroup>
           </div>
           <div style={{marginTop:16}}>
             <FormGroup label="HASAR AÇIKLAMASI">
-              <textarea style={{...S.input,minHeight:80,resize:'vertical'}} value={form.hasar_aciklama} onChange={e=>set('hasar_aciklama',e.target.value)} placeholder="HASAR İLE İLGİLİ DETAYLI AÇIKLAMA..." disabled={!!savedId}/>
+              <textarea style={{...S.input,minHeight:80,resize:'vertical'}} value={form.hasar_aciklama} onChange={e=>set('hasar_aciklama',e.target.value)} placeholder="HASAR İLE İLGİLİ DETAYLI AÇIKLAMA..." disabled={loading}/>
             </FormGroup>
           </div>
           <div style={{...grid2, marginTop:16}}>
             <FormGroup label="HASAR DURUMU">
-              <select style={S.select} value={form.hasar_durumu} onChange={e=>set('hasar_durumu',e.target.value)} disabled={!!savedId}>
+              <select style={S.select} value={form.hasar_durumu} onChange={e=>set('hasar_durumu',e.target.value)} disabled={loading}>
                 {HASAR_DURUMLARI.map(d=><option key={d.v} value={d.v}>{d.l}</option>)}
               </select>
             </FormGroup>
             <FormGroup label="GEÇMİŞ HASAR">
-              <select style={S.select} value={form.gecmis_hasar} onChange={e=>set('gecmis_hasar',e.target.value)} disabled={!!savedId}>
+              <select style={S.select} value={form.gecmis_hasar} onChange={e=>set('gecmis_hasar',e.target.value)} disabled={loading}>
                 <option value="yok">YOK</option>
                 <option value="var">VAR</option>
               </select>
@@ -1084,7 +1252,7 @@ const SahaYeniKayit = ({setPage, user}) => {
         <SectionHeader icon="Folder" title="DOSYA BİLGİLERİ" subtitle="DOSYA KAYNAĞI" color={C.purple}/>
         <div style={{...S.cardBody}}>
           <FormGroup label="DOSYA KAYNAĞI">
-            <select style={S.select} value={form.dosya_kaynagi} onChange={e=>set('dosya_kaynagi',e.target.value)} disabled={!!savedId}>
+            <select style={S.select} value={form.dosya_kaynagi} onChange={e=>set('dosya_kaynagi',e.target.value)} disabled={loading}>
               <option value="">SEÇİNİZ</option>
               {DOSYA_KAYNAKLARI.map(k=><option key={k} value={k}>{k}</option>)}
             </select>
@@ -1092,38 +1260,44 @@ const SahaYeniKayit = ({setPage, user}) => {
         </div>
       </div>
 
-      {/* 4. HASARLI ARAÇ BİLGİLERİ */}
+      {/* 4. HASARLI ARAÇ BİLGİLERİ (MARKA/MODEL API SEÇİM) */}
       <div style={{...S.card, marginBottom:20}}>
         <SectionHeader icon="Car" title="HASARLI ARAÇ BİLGİLERİ" subtitle="MAĞDUR ARACI" color={C.accent}/>
         <div style={{...S.cardBody}}>
           <div style={grid3}>
             <FormGroup label="PLAKA">
-              <input style={S.input} value={form.arac_plaka} onChange={e=>set('arac_plaka',e.target.value)} placeholder="34 XX 1234" disabled={!!savedId}/>
+              <input style={S.input} value={form.arac_plaka} onChange={e=>set('arac_plaka',e.target.value)} placeholder="34 XX 1234" disabled={loading}/>
             </FormGroup>
             <FormGroup label="MARKA">
-              <input style={S.input} value={form.arac_marka} onChange={e=>set('arac_marka',e.target.value)} placeholder="ÖRN: TOYOTA" disabled={!!savedId}/>
+              <select style={S.select} value={form.arac_marka} onChange={e=>{set('arac_marka',e.target.value);set('arac_model','');}} disabled={loading}>
+                <option value="">SEÇİNİZ</option>
+                {markalar.map(m=><option key={m} value={m}>{m}</option>)}
+              </select>
             </FormGroup>
             <FormGroup label="MODEL">
-              <input style={S.input} value={form.arac_model} onChange={e=>set('arac_model',e.target.value)} placeholder="ÖRN: COROLLA" disabled={!!savedId}/>
+              <select style={S.select} value={form.arac_model} onChange={e=>set('arac_model',e.target.value)} disabled={loading || !form.arac_marka}>
+                <option value="">{form.arac_marka ? 'SEÇİNİZ' : 'ÖNCE MARKA SEÇİNİZ'}</option>
+                {modeller.map(m=><option key={m} value={m}>{m}</option>)}
+              </select>
             </FormGroup>
           </div>
           <div style={{...grid3, marginTop:16}}>
             <FormGroup label="MODEL YILI">
-              <input type="number" style={S.input} value={form.arac_model_yili} onChange={e=>set('arac_model_yili',e.target.value)} placeholder="2024" disabled={!!savedId}/>
+              <input type="number" style={S.input} value={form.arac_model_yili} onChange={e=>set('arac_model_yili',e.target.value)} placeholder="2024" disabled={loading}/>
             </FormGroup>
             <FormGroup label="KM">
-              <input type="number" style={S.input} value={form.arac_km} onChange={e=>set('arac_km',e.target.value)} placeholder="45000" disabled={!!savedId}/>
+              <input type="number" style={S.input} value={form.arac_km} onChange={e=>set('arac_km',e.target.value)} placeholder="45000" disabled={loading}/>
             </FormGroup>
             <FormGroup label="RENK">
-              <input style={S.input} value={form.arac_renk} onChange={e=>set('arac_renk',e.target.value)} placeholder="BEYAZ" disabled={!!savedId}/>
+              <input style={S.input} value={form.arac_renk} onChange={e=>set('arac_renk',e.target.value)} placeholder="BEYAZ" disabled={loading}/>
             </FormGroup>
           </div>
           <div style={{...grid2, marginTop:16}}>
             <FormGroup label="RUHSAT SAHİBİ">
-              <input style={S.input} value={form.arac_ruhsat_sahibi} onChange={e=>set('arac_ruhsat_sahibi',e.target.value)} placeholder="RUHSAT SAHİBİ AD SOYAD" disabled={!!savedId}/>
+              <input style={S.input} value={form.arac_ruhsat_sahibi} onChange={e=>set('arac_ruhsat_sahibi',e.target.value)} placeholder="RUHSAT SAHİBİ AD SOYAD" disabled={loading}/>
             </FormGroup>
             <FormGroup label="KUSUR DURUMU">
-              <select style={S.select} value={form.arac_kusur_durumu} onChange={e=>set('arac_kusur_durumu',e.target.value)} disabled={!!savedId}>
+              <select style={S.select} value={form.arac_kusur_durumu} onChange={e=>set('arac_kusur_durumu',e.target.value)} disabled={loading}>
                 <option value="">SEÇİNİZ</option>
                 {KUSUR_DURUMLARI.map(k=><option key={k} value={k}>{k}</option>)}
               </select>
@@ -1131,7 +1305,7 @@ const SahaYeniKayit = ({setPage, user}) => {
           </div>
           <div style={{marginTop:16}}>
             <FormGroup label="ŞASİ NO">
-              <input style={S.input} value={form.arac_sasi_no} onChange={e=>set('arac_sasi_no',e.target.value)} placeholder="ŞASİ NUMARASI" disabled={!!savedId}/>
+              <input style={S.input} value={form.arac_sasi_no} onChange={e=>set('arac_sasi_no',e.target.value)} placeholder="ŞASİ NUMARASI" disabled={loading}/>
             </FormGroup>
           </div>
         </div>
@@ -1143,39 +1317,39 @@ const SahaYeniKayit = ({setPage, user}) => {
         <div style={{...S.cardBody}}>
           <div style={grid2}>
             <FormGroup label="KARŞI PLAKA">
-              <input style={S.input} value={form.karsi_plaka} onChange={e=>set('karsi_plaka',e.target.value)} placeholder="KARŞI TARAF PLAKASI" disabled={!!savedId}/>
+              <input style={S.input} value={form.karsi_plaka} onChange={e=>set('karsi_plaka',e.target.value)} placeholder="KARŞI TARAF PLAKASI" disabled={loading}/>
             </FormGroup>
             <FormGroup label="KARŞI SİGORTA">
-              <input style={S.input} value={form.karsi_sigorta} onChange={e=>set('karsi_sigorta',e.target.value)} placeholder="KARŞI TARAF SİGORTA ŞİRKETİ" disabled={!!savedId}/>
+              <input style={S.input} value={form.karsi_sigorta} onChange={e=>set('karsi_sigorta',e.target.value)} placeholder="KARŞI TARAF SİGORTA ŞİRKETİ" disabled={loading}/>
             </FormGroup>
           </div>
         </div>
       </div>
 
-      {/* 6. GÖRSEL VE EVRAK - SADECE KAYIT SONRASI */}
-      {savedId && (
-        <div style={{...S.card, marginBottom:20}}>
-          <SectionHeader icon="Camera" title="GÖRSEL VE EVRAK YÜKLE" subtitle="FOTOĞRAF VE PDF DOSYALARI" color={C.gold}/>
-          <div style={{...S.cardBody}}>
-            <MedyaUploadZone sahaId={savedId} medyalar={medyalar} setMedyalar={setMedyalar}/>
-          </div>
+      {/* 6. GÖRSEL VE EVRAK - KAYIT ÖNCESİ YÜKLEME */}
+      <div style={{...S.card, marginBottom:20}}>
+        <SectionHeader icon="Camera" title="GÖRSEL VE EVRAK YÜKLE" subtitle="FOTOĞRAF VE PDF DOSYALARI (KAYIT ÖNCESİ)" color={C.gold}/>
+        <div style={{...S.cardBody}}>
+          <LocalMedyaZone files={localFiles} setFiles={setLocalFiles}/>
+          {localFiles.length > 0 && (
+            <div style={{marginTop:8,fontSize:11,color:C.success,fontWeight:600}}>
+              <LIcon name="CheckCircle" size={12} color={C.success}/> {localFiles.length} DOSYA KAYIT İLE BİRLİKTE YÜKLENECEKTİR
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* BUTONLAR */}
-      <div style={{display:'flex',justifyContent:'flex-end',gap:10,flexWrap:'wrap'}}>
-        <button style={{...S.btn,...S.btnG}} onClick={()=>setPage('saha-liste')}>
+      <div style={{display:'flex',justifyContent:'flex-end',gap:10,flexWrap:'wrap',marginBottom:40}}>
+        <button style={{...S.btn,...S.btnG}} onClick={()=>setPage('saha-liste')} disabled={loading}>
           <LIcon name="ArrowLeft" size={14}/> GERİ DÖN
         </button>
-        {!savedId ? (
-          <button style={{...S.btn,...S.btnS,padding:'12px 30px',fontSize:14}} onClick={kaydet} disabled={loading}>
-            <LIcon name="Save" size={16}/> {loading ? 'KAYDEDİLİYOR...' : 'KAYDET'}
-          </button>
-        ) : (
-          <button style={{...S.btn,...S.btnS,padding:'12px 30px',fontSize:14}} onClick={onayaGonder} disabled={onayaGonderLoading}>
-            <LIcon name="Send" size={16}/> {onayaGonderLoading ? 'GÖNDERİLİYOR...' : 'DOSYAYI ONAYA GÖNDER'}
-          </button>
-        )}
+        <button style={{...S.btn,...S.btnW,padding:'12px 24px',fontSize:13}} onClick={()=>kaydet(false)} disabled={loading}>
+          <LIcon name="Save" size={16}/> {loading ? 'KAYDEDİLİYOR...' : 'TASLAK KAYDET'}
+        </button>
+        <button style={{...S.btn,...S.btnS,padding:'12px 24px',fontSize:13}} onClick={()=>kaydet(true)} disabled={loading}>
+          <LIcon name="Send" size={16}/> {loading ? 'GÖNDERİLİYOR...' : 'KAYDET VE ONAYA GÖNDER'}
+        </button>
       </div>
     </div>
   );

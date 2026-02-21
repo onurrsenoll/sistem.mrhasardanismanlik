@@ -60,7 +60,7 @@ foreach ($alanlar as $alan) {
         if ($alan === 'hasar_tarihi') {
             $params[] = !empty($body[$alan]) ? $body[$alan] : null;
         } elseif ($alan === 'hasar_tutari') {
-            $params[] = !empty($body[$alan]) ? (float)$body[$alan] : null;
+            $params[] = !empty($body[$alan]) ? (float)str_replace(['.', ','], ['', '.'], strval($body[$alan])) : null;
         } elseif (in_array($alan, ['arac_model_yili', 'arac_km'])) {
             $params[] = !empty($body[$alan]) ? (int)$body[$alan] : null;
         } else {

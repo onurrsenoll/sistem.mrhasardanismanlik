@@ -39,7 +39,7 @@ try {
         !empty($body['hasar_tarihi']) ? $body['hasar_tarihi'] : null,
         clean($body['hasar_yeri'] ?? ''),
         clean($body['hasar_aciklama'] ?? ''),
-        !empty($body['hasar_tutari']) ? (float)$body['hasar_tutari'] : null,
+        !empty($body['hasar_tutari']) ? (float)str_replace(['.', ','], ['', '.'], strval($body['hasar_tutari'])) : null,
         !empty($body['hasar_durumu']) ? clean($body['hasar_durumu']) : 'dosya_acik',
         !empty($body['gecmis_hasar']) ? clean($body['gecmis_hasar']) : 'yok',
         clean($body['dosya_kaynagi'] ?? ''),

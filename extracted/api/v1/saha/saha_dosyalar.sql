@@ -6,7 +6,7 @@
 CREATE TABLE IF NOT EXISTS saha_dosyalar (
   id INT AUTO_INCREMENT PRIMARY KEY,
   personel_id INT NOT NULL,
-  durum ENUM('taslak','beklemede','onaylandi','reddedildi','dosyaya_donustu') DEFAULT 'taslak',
+  durum ENUM('taslak','beklemede','onaylandi','reddedildi','dosyaya_donustu','suresi_doldu') DEFAULT 'taslak',
 
   -- Müşteri bilgileri
   musteri_adi VARCHAR(150) NOT NULL,

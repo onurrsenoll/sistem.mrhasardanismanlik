@@ -16,6 +16,11 @@ $user = auth_required(['admin', 'muhasebe', 'uzman', 'personel', 'avukat']);
 $db = getDB();
 $pag = get_pagination();
 
+// Auto-expire: 3 gün geçmiş onaylanan kayıtları suresi_doldu yap
+try {
+    $db->exec("UPDATE saha_dosyalar SET durum = 'suresi_doldu' WHERE durum = 'onaylandi' AND onay_tarihi IS NOT NULL AND onay_tarihi < DATE_SUB(NOW(), INTERVAL 3 DAY)");
+} catch (\Exception $e) { /* İlk kurulumda ENUM henüz güncellenmemiş olabilir */ }
+
 // Filtreler
 $durum       = clean($_GET['durum'] ?? '');
 $personel_id = clean($_GET['personel_id'] ?? '');
@@ -30,10 +35,17 @@ if ($user['rol'] === 'personel') {
     $params[] = $user['id'];
 }
 
-// Durum filtresi
+// Durum filtresi (virgülle ayrılmış çoklu durum desteği)
 if ($durum !== '') {
-    $where[]  = 's.durum = ?';
-    $params[] = $durum;
+    if (strpos($durum, ',') !== false) {
+        $durumlar = array_map('trim', explode(',', $durum));
+        $placeholders = implode(',', array_fill(0, count($durumlar), '?'));
+        $where[]  = "s.durum IN ($placeholders)";
+        $params   = array_merge($params, $durumlar);
+    } else {
+        $where[]  = 's.durum = ?';
+        $params[] = $durum;
+    }
 }
 
 // Personel ID filtresi (admin vb. için)
