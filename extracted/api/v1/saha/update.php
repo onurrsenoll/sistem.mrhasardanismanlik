@@ -30,9 +30,15 @@ if ($user['rol'] === 'personel' && (int)$kayit['personel_id'] !== (int)$user['id
     json_error('BU KAYDI GÜNCELLEME YETKİNİZ YOK', 403);
 }
 
-// Taslak, beklemede veya reddedildi durumundaki kayıtlar güncellenebilir
-if (!in_array($kayit['durum'], ['taslak', 'beklemede', 'reddedildi'])) {
+// Taslak, beklemede, reddedildi veya onaylandi durumundaki kayıtlar güncellenebilir
+// Admin onaylanan kayıtları da düzenleyebilir
+if (!in_array($kayit['durum'], ['taslak', 'beklemede', 'reddedildi', 'onaylandi', 'suresi_doldu'])) {
     json_error('BU DURUMDA GÜNCELLEME YAPILAMAZ', 400);
+}
+
+// Onaylandi/suresi_doldu durumunda sadece admin düzenleyebilir
+if (in_array($kayit['durum'], ['onaylandi', 'suresi_doldu']) && $user['rol'] !== 'admin') {
+    json_error('ONAYLANMIŞ KAYITLARI SADECE ADMİN DÜZENLEYEBİLİR', 403);
 }
 
 // Reddedildi durumundaki kayıt güncellenince taslak'a döner

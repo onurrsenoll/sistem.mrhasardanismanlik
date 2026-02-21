@@ -589,7 +589,7 @@ const SahaBekleyen = ({setPage, user}) => {
 };
 
 /* ═══════════════════════════════════════════════════════════
-   SEKME 2: ONAYLANAN (3 GÜN COUNTDOWN + SÜRESİ DOLDU)
+   SEKME 2: ONAYLANAN (3 GÜN COUNTDOWN + DÜZELTME + SİLME)
    ═══════════════════════════════════════════════════════════ */
 const SahaOnaylanan = ({setPage, user}) => {
   const {C, S, LIcon, StatCard, Badge, SectionTitle, EmptyState, Loading, Modal, FormGroup, api} = MR;
@@ -599,10 +599,31 @@ const SahaOnaylanan = ({setPage, user}) => {
   const [basari, setBasari] = useState('');
   const [hata, setHata] = useState('');
   const [detayItem, setDetayItem] = useState(null);
+  /* DOSYAYA DÖNÜŞTÜR */
   const [donusturItem, setDonusturItem] = useState(null);
   const [donusturForm, setDonusturForm] = useState({sigorta_sirketi:'', police_no:''});
   const [donusturLoading, setDonusturLoading] = useState(false);
+  /* DÜZENLEME */
+  const [editItem, setEditItem] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [editLoading, setEditLoading] = useState(false);
+  const [editMedyalar, setEditMedyalar] = useState([]);
+  /* SİLME */
+  const [silLoading, setSilLoading] = useState(null);
+  /* MARKA/MODEL */
+  const [markalar, setMarkalar] = useState([]);
+  const [modeller, setModeller] = useState([]);
   const isAdmin = user?.rol === 'admin';
+
+  useEffect(() => {
+    api.aracMarkaList().then(r => { if (r?.success) setMarkalar(r.data?.markalar || Object.keys(r.data || {})); });
+  }, []);
+
+  useEffect(() => {
+    if (editForm.arac_marka) {
+      api.aracModelList(editForm.arac_marka).then(r => { if (r?.success) setModeller(r.data?.modeller || []); });
+    } else { setModeller([]); }
+  }, [editForm.arac_marka]);
 
   const yukle = useCallback(async () => {
     setLoading(true);
@@ -626,6 +647,53 @@ const SahaOnaylanan = ({setPage, user}) => {
       yukle();
     } else { setHata(r?.error||'DÖNÜŞTÜRME HATASI'); setTimeout(()=>setHata(''),4000); }
   };
+
+  /* DÜZENLE MODAL AÇ */
+  const duzenleAc = async (item) => {
+    const r = await api.sahaGet(item.id);
+    const d = r?.success ? r.data : item;
+    setEditForm({
+      id: d.id,
+      musteri_adi: d.musteri_adi||'', musteri_telefon: d.musteri_telefon||'', musteri_tc: d.musteri_tc||'',
+      hasar_tipi: d.hasar_tipi||'', hasar_tarihi: d.hasar_tarihi||'', hasar_yeri: d.hasar_yeri||'',
+      hasar_aciklama: d.hasar_aciklama||'', hasar_tutari: d.hasar_tutari ? String(Math.round(Number(d.hasar_tutari))) : '',
+      hasar_durumu: d.hasar_durumu||'dosya_acik', gecmis_hasar: d.gecmis_hasar||'yok', dosya_kaynagi: d.dosya_kaynagi||'',
+      arac_plaka: d.arac_plaka||'', arac_marka: d.arac_marka||'', arac_model: d.arac_model||'',
+      arac_model_yili: d.arac_model_yili||'', arac_km: d.arac_km||'',
+      arac_ruhsat_sahibi: d.arac_ruhsat_sahibi||'', arac_kusur_durumu: d.arac_kusur_durumu||'',
+      arac_renk: d.arac_renk||'', arac_sasi_no: d.arac_sasi_no||'',
+      karsi_plaka: d.karsi_plaka||'', karsi_sigorta: d.karsi_sigorta||''
+    });
+    const mr = await api.sahaMedyaList(d.id);
+    if (mr?.success) setEditMedyalar(mr.data||[]);
+    setEditItem(d);
+  };
+
+  /* DÜZENLEME KAYDET */
+  const editKaydet = async () => {
+    if (!editForm.musteri_adi?.trim()) { setHata('MÜŞTERİ ADI ZORUNLU'); setTimeout(()=>setHata(''),3000); return; }
+    setEditLoading(true);
+    const r = await api.sahaUpdate(editForm);
+    if (!r?.success) { setHata(r?.error||'GÜNCELLEME HATASI'); setEditLoading(false); setTimeout(()=>setHata(''),4000); return; }
+    setBasari('SAHA DOSYASI GÜNCELLENDİ');
+    setEditLoading(false);
+    setEditItem(null);
+    setTimeout(()=>setBasari(''),4000);
+    yukle();
+  };
+
+  /* SİL */
+  const sil = async (item) => {
+    if (!confirm(`${item.musteri_adi} - SAHA DOSYASINI SİLMEK İSTEDİĞİNİZE EMİN MİSİNİZ?`)) return;
+    setSilLoading(item.id);
+    const r = await api.sahaSil(item.id);
+    setSilLoading(null);
+    if (r?.success) { setBasari('SAHA DOSYASI SİLİNDİ'); setTimeout(()=>setBasari(''),4000); yukle(); }
+    else { setHata(r?.error||'SİLME HATASI'); setTimeout(()=>setHata(''),4000); }
+  };
+
+  const setE = (k,v) => setEditForm(f=>({...f,[k]:v}));
+  const grid2 = {display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:16};
 
   if (loading) return <Loading/>;
 
@@ -676,16 +744,29 @@ const SahaOnaylanan = ({setPage, user}) => {
                         </div>
                       </td>
                       <td style={{padding:'10px 12px'}} onClick={e=>e.stopPropagation()}>
-                        {isAdmin ? (
-                          <button style={{...S.btn,background:C.accent,color:'#fff',padding:'6px 14px',fontSize:10}}
-                            onClick={()=>{setDonusturItem(item);setDonusturForm({sigorta_sirketi:'',police_no:''});}}>
-                            <LIcon name="FolderPlus" size={12}/> DOSYAYA DÖNÜŞTÜR
-                          </button>
-                        ) : (
-                          <button style={{...S.btn,...S.btnP,padding:'6px 12px',fontSize:10}} onClick={()=>setDetayItem(item)}>
-                            <LIcon name="Eye" size={12}/> DETAY
-                          </button>
-                        )}
+                        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                          {isAdmin && (
+                            <button style={{...S.btn,background:C.accent,color:'#fff',padding:'6px 12px',fontSize:10}}
+                              onClick={()=>{setDonusturItem(item);setDonusturForm({sigorta_sirketi:'',police_no:''});}}>
+                              <LIcon name="FolderPlus" size={12}/> DÖNÜŞTÜR
+                            </button>
+                          )}
+                          {isAdmin && (
+                            <button style={{...S.btn,...S.btnW,padding:'6px 12px',fontSize:10}} onClick={()=>duzenleAc(item)}>
+                              <LIcon name="Pencil" size={12}/> DÜZENLE
+                            </button>
+                          )}
+                          {isAdmin && (
+                            <button style={{...S.btn,...S.btnD,padding:'6px 12px',fontSize:10}} onClick={()=>sil(item)} disabled={silLoading===item.id}>
+                              <LIcon name="Trash2" size={12}/> {silLoading===item.id ? '...' : 'SİL'}
+                            </button>
+                          )}
+                          {!isAdmin && (
+                            <button style={{...S.btn,...S.btnP,padding:'6px 12px',fontSize:10}} onClick={()=>setDetayItem(item)}>
+                              <LIcon name="Eye" size={12}/> DETAY
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -699,12 +780,12 @@ const SahaOnaylanan = ({setPage, user}) => {
       {/* SÜRESİ DOLANLAR */}
       {suresiDolanlar.length > 0 && (
         <div style={{...S.card, opacity:0.7}}>
-          <SectionTitle icon="Clock" title="SÜRESİ DOLMUŞ DOSYALAR" sub={`${suresiDolanlar.length} KAYIT - PASİF`}/>
+          <SectionTitle icon="Clock" title="SÜRESİ DOLMUŞ DOSYALAR" sub={`${suresiDolanlar.length} KAYIT`}/>
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
               <thead>
                 <tr style={{background:`${C.accent}08`}}>
-                  {['PERSONEL','MÜŞTERİ','PLAKA','ONAY TARİHİ','DURUM'].map(h=>(
+                  {['PERSONEL','MÜŞTERİ','PLAKA','ONAY TARİHİ','DURUM','İŞLEM'].map(h=>(
                     <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:700,fontSize:10,color:C.textMuted,borderBottom:`1px solid ${C.border}`}}>{h}</th>
                   ))}
                 </tr>
@@ -721,6 +802,18 @@ const SahaOnaylanan = ({setPage, user}) => {
                     <td style={{padding:'10px 12px',color:C.textMuted}}>{fmtTarihSaat(item.onay_tarihi)}</td>
                     <td style={{padding:'10px 12px'}}>
                       <Badge text="SÜRESİ DOLDU" color={C.textMuted}/>
+                    </td>
+                    <td style={{padding:'10px 12px'}} onClick={e=>e.stopPropagation()}>
+                      {isAdmin && (
+                        <div style={{display:'flex',gap:6}}>
+                          <button style={{...S.btn,...S.btnW,padding:'6px 12px',fontSize:10}} onClick={()=>duzenleAc(item)}>
+                            <LIcon name="Pencil" size={12}/> DÜZENLE
+                          </button>
+                          <button style={{...S.btn,...S.btnD,padding:'6px 12px',fontSize:10}} onClick={()=>sil(item)} disabled={silLoading===item.id}>
+                            <LIcon name="Trash2" size={12}/> {silLoading===item.id ? '...' : 'SİL'}
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -751,6 +844,130 @@ const SahaOnaylanan = ({setPage, user}) => {
             <LIcon name="FolderPlus" size={14}/> {donusturLoading?'DÖNÜŞTÜRÜLÜYOR...':'DOSYAYA DÖNÜŞTÜR'}
           </button>
         </div>
+      </Modal>
+
+      {/* DÜZENLEME MODALI */}
+      <Modal open={!!editItem} onClose={()=>setEditItem(null)} title="ONAYLANAN SAHA DOSYASINI DÜZENLE" width="800px">
+        {editItem && (
+          <div>
+            {/* ONAY BİLGİSİ */}
+            <div style={{padding:'12px 16px',marginBottom:16,borderRadius:8,background:`${C.success}12`,border:`1px solid ${C.success}33`}}>
+              <div style={{fontSize:11,fontWeight:600,color:C.success,marginBottom:4}}>ONAYLAYAN: {editItem.onaylayan_adi||'-'}</div>
+              <div style={{fontSize:11,color:C.text}}>ONAY TARİHİ: {fmtTarihSaat(editItem.onay_tarihi)} {editItem.onay_notu ? ` — NOT: ${editItem.onay_notu}` : ''}</div>
+            </div>
+
+            {/* MÜŞTERİ */}
+            <div style={{...S.card, marginBottom:12}}>
+              <SectionHeader icon="User" title="MÜŞTERİ BİLGİLERİ" color={C.cyan}/>
+              <div style={{padding:16}}>
+                <div style={grid2}>
+                  <FormGroup label="MÜŞTERİ ADI *"><input style={S.input} value={editForm.musteri_adi} onChange={e=>setE('musteri_adi',e.target.value)}/></FormGroup>
+                  <FormGroup label="TELEFON"><input style={S.input} value={editForm.musteri_telefon} onChange={e=>setE('musteri_telefon',e.target.value)}/></FormGroup>
+                </div>
+                <div style={{marginTop:12}}>
+                  <FormGroup label="TC KİMLİK"><input style={{...S.input,maxWidth:300}} value={editForm.musteri_tc} onChange={e=>setE('musteri_tc',e.target.value)} maxLength={11}/></FormGroup>
+                </div>
+              </div>
+            </div>
+
+            {/* HASAR */}
+            <div style={{...S.card, marginBottom:12}}>
+              <SectionHeader icon="AlertTriangle" title="HASAR BİLGİLERİ" color={C.warning}/>
+              <div style={{padding:16}}>
+                <div style={grid2}>
+                  <FormGroup label="HASAR TİPİ">
+                    <select style={S.select} value={editForm.hasar_tipi} onChange={e=>setE('hasar_tipi',e.target.value)}>
+                      <option value="">SEÇİNİZ</option>
+                      {HASAR_TIPLERI.map(t=><option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </FormGroup>
+                  <FormGroup label="HASAR TARİHİ"><input type="date" style={S.input} value={editForm.hasar_tarihi} onChange={e=>setE('hasar_tarihi',e.target.value)}/></FormGroup>
+                </div>
+                <div style={{...grid2, marginTop:12}}>
+                  <FormGroup label="HASAR TUTARI (₺)">
+                    <TLInput value={editForm.hasar_tutari} onChange={v=>setE('hasar_tutari',v)}/>
+                  </FormGroup>
+                  <FormGroup label="DOSYA KAYNAĞI">
+                    <select style={S.select} value={editForm.dosya_kaynagi} onChange={e=>setE('dosya_kaynagi',e.target.value)}>
+                      <option value="">SEÇİNİZ</option>
+                      {DOSYA_KAYNAKLARI.map(k=><option key={k} value={k}>{k}</option>)}
+                    </select>
+                  </FormGroup>
+                </div>
+                <div style={{marginTop:12}}>
+                  <FormGroup label="HASAR YERİ"><input style={S.input} value={editForm.hasar_yeri} onChange={e=>setE('hasar_yeri',e.target.value)}/></FormGroup>
+                </div>
+                <div style={{marginTop:12}}>
+                  <FormGroup label="AÇIKLAMA"><textarea style={{...S.input,minHeight:60,resize:'vertical'}} value={editForm.hasar_aciklama} onChange={e=>setE('hasar_aciklama',e.target.value)}/></FormGroup>
+                </div>
+              </div>
+            </div>
+
+            {/* ARAÇ (MARKA/MODEL API SEÇİM) */}
+            <div style={{...S.card, marginBottom:12}}>
+              <SectionHeader icon="Car" title="ARAÇ BİLGİLERİ" color={C.accent}/>
+              <div style={{padding:16}}>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+                  <FormGroup label="PLAKA"><input style={S.input} value={editForm.arac_plaka} onChange={e=>setE('arac_plaka',e.target.value)}/></FormGroup>
+                  <FormGroup label="MARKA">
+                    <select style={S.select} value={editForm.arac_marka} onChange={e=>{setE('arac_marka',e.target.value);setE('arac_model','');}}>
+                      <option value="">SEÇİNİZ</option>
+                      {markalar.map(m=><option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </FormGroup>
+                  <FormGroup label="MODEL">
+                    <select style={S.select} value={editForm.arac_model} onChange={e=>setE('arac_model',e.target.value)} disabled={!editForm.arac_marka}>
+                      <option value="">SEÇİNİZ</option>
+                      {modeller.map(m=><option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </FormGroup>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginTop:12}}>
+                  <FormGroup label="MODEL YILI"><input type="number" style={S.input} value={editForm.arac_model_yili} onChange={e=>setE('arac_model_yili',e.target.value)}/></FormGroup>
+                  <FormGroup label="KM"><input type="number" style={S.input} value={editForm.arac_km} onChange={e=>setE('arac_km',e.target.value)}/></FormGroup>
+                  <FormGroup label="RENK"><input style={S.input} value={editForm.arac_renk} onChange={e=>setE('arac_renk',e.target.value)}/></FormGroup>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginTop:12}}>
+                  <FormGroup label="RUHSAT SAHİBİ"><input style={S.input} value={editForm.arac_ruhsat_sahibi} onChange={e=>setE('arac_ruhsat_sahibi',e.target.value)}/></FormGroup>
+                  <FormGroup label="ŞASİ NO"><input style={S.input} value={editForm.arac_sasi_no} onChange={e=>setE('arac_sasi_no',e.target.value)}/></FormGroup>
+                  <FormGroup label="KUSUR DURUMU">
+                    <select style={S.select} value={editForm.arac_kusur_durumu} onChange={e=>setE('arac_kusur_durumu',e.target.value)}>
+                      <option value="">SEÇİNİZ</option>
+                      {KUSUR_DURUMLARI.map(k=><option key={k} value={k}>{k}</option>)}
+                    </select>
+                  </FormGroup>
+                </div>
+              </div>
+            </div>
+
+            {/* KARŞI ARAÇ */}
+            <div style={{...S.card, marginBottom:12}}>
+              <SectionHeader icon="ArrowLeftRight" title="KARŞI ARAÇ BİLGİLERİ" color={C.danger}/>
+              <div style={{padding:16}}>
+                <div style={grid2}>
+                  <FormGroup label="KARŞI PLAKA"><input style={S.input} value={editForm.karsi_plaka} onChange={e=>setE('karsi_plaka',e.target.value)}/></FormGroup>
+                  <FormGroup label="KARŞI SİGORTA"><input style={S.input} value={editForm.karsi_sigorta} onChange={e=>setE('karsi_sigorta',e.target.value)}/></FormGroup>
+                </div>
+              </div>
+            </div>
+
+            {/* MEDYA YÜKLEME */}
+            <div style={{...S.card, marginBottom:16}}>
+              <SectionHeader icon="Camera" title="GÖRSELLER / EVRAKLAR" color={C.gold}/>
+              <div style={{padding:16}}>
+                <MedyaUploadZone sahaId={editItem.id} medyalar={editMedyalar} setMedyalar={setEditMedyalar}/>
+              </div>
+            </div>
+
+            {/* BUTONLAR */}
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end',flexWrap:'wrap'}}>
+              <button style={{...S.btn,...S.btnG}} onClick={()=>setEditItem(null)}>İPTAL</button>
+              <button style={{...S.btn,...S.btnS}} onClick={editKaydet} disabled={editLoading}>
+                <LIcon name="Save" size={14}/> {editLoading ? 'KAYDEDİLİYOR...' : 'KAYDET'}
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );
