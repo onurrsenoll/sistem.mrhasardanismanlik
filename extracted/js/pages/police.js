@@ -892,21 +892,26 @@ const PoliceTahsilat = ({setPage, user}) => {
   const [loading, setLoading] = useState(true);
   const [policeler, setPoliceler] = useState([]);
   const [kasalar, setKasalar] = useState([]);
+  const [kullanicilar, setKullanicilar] = useState([]);
   const [tahsilatModal, setTahsilatModal] = useState(null);
+  const [mutabakatModal, setMutabakatModal] = useState(null);
   const [basari, setBasari] = useState('');
-  const [tForm, setTForm] = useState({tutar:'',tarih:new Date().toISOString().slice(0,10),odeme_sekli:'nakit',kasa_id:'',aciklama:''});
+  const [hata, setHata] = useState('');
+  const [tForm, setTForm] = useState({tutar:'',tarih:new Date().toISOString().slice(0,10),odeme_sekli:'nakit',kasa_id:'',aciklama:'',kullanici_id:''});
+  const [mForm, setMForm] = useState({devir_tarih:'',aciklama:''});
 
   const yukle = useCallback(async () => {
     setLoading(true);
-    const [pR, kR] = await Promise.all([api.policeList({limit:500}), api.kasaList()]);
+    const [pR, kR, uR] = await Promise.all([api.policeList({limit:500}), api.kasaList(), api.kullaniciList()]);
     if (pR?.success) setPoliceler(pR.data?.items || pR.data || []);
     if (kR?.success) setKasalar(kR.data || []);
+    if (uR?.success) setKullanicilar(uR.data?.items || uR.data || []);
     setLoading(false);
   }, []);
 
   useEffect(() => { yukle(); }, []);
 
-  // Cari bakiye olan poliçeler (komisyon_tutari > 0 ve tahsil_edilen < brut_prim)
+  // Cari bakiye olan poliçeler
   const cariler = useMemo(() => {
     return policeler.filter(p => {
       const komisyon = parseFloat(p.komisyon_tutari) || 0;
@@ -926,25 +931,105 @@ const PoliceTahsilat = ({setPage, user}) => {
   const topTahsilKomisyon = cariler.reduce((t,p) => t + p.tahsil_komisyon, 0);
   const topCariBakiye = cariler.reduce((t,p) => t + p.cari_bakiye, 0);
 
+  // Aylık kazanç hesaplama (tahsilat yap'ta kullanıcı seçince otomatik getirmek için)
+  const aylikKazanc = useMemo(() => {
+    const buAy = new Date().toISOString().slice(0,7);
+    const gecenAyD = new Date(); gecenAyD.setMonth(gecenAyD.getMonth()-1);
+    const gecenAy = gecenAyD.toISOString().slice(0,7);
+    let buAyT = 0, gecenAyT = 0;
+    cariler.forEach(p => {
+      const ay = (p.tanzim_tarihi || '').slice(0, 7);
+      if (ay === buAy) buAyT += p.tahsil_komisyon;
+      if (ay === gecenAy) gecenAyT += p.tahsil_komisyon;
+    });
+    return {buAy: buAyT, gecenAy: gecenAyT, buAyLabel: buAy, gecenAyLabel: gecenAy};
+  }, [cariler]);
+
+  /* TAHSİLAT YAP */
+  const tahsilatYapAc = (p) => {
+    const cariB = p ? p.cari_bakiye : topCariBakiye;
+    setTForm({
+      tutar: String(Math.round(cariB * 100) / 100),
+      tarih: new Date().toISOString().slice(0,10),
+      odeme_sekli: 'nakit',
+      kasa_id: kasalar.filter(k=>k.aktif)?.[0]?.id || '',
+      aciklama: p ? `${p.police_no} TAHSİLATI` : 'AY SONU TOPLU TAHSİLAT',
+      kullanici_id: '',
+      police_id: p ? p.id : null
+    });
+    setTahsilatModal(p || {id:null, police_no:'TOPLU TAHSİLAT', musteri_adi:'TÜM POLİÇELER', cari_bakiye:topCariBakiye});
+  };
+
   const tahsilatKaydet = async () => {
     if (!tahsilatModal) return;
     const t = parseNum(tForm.tutar);
-    if (t <= 0) return;
-    const r = await api.policeTahsilatEkle({
-      police_id: tahsilatModal.id,
-      tutar: t,
-      tahsilat_tarihi: tForm.tarih,
-      odeme_sekli: tForm.odeme_sekli,
-      kasa_id: tForm.kasa_id ? parseInt(tForm.kasa_id) : undefined,
-      aciklama: tForm.aciklama
+    if (t <= 0) { setHata('TUTAR GİRİNİZ'); setTimeout(()=>setHata(''),3000); return; }
+    if (!tForm.kasa_id) { setHata('KASA SEÇİNİZ'); setTimeout(()=>setHata(''),3000); return; }
+
+    if (tahsilatModal.id) {
+      // Tekil poliçe tahsilatı
+      const r = await api.policeTahsilatEkle({
+        police_id: tahsilatModal.id,
+        tutar: t,
+        tahsilat_tarihi: tForm.tarih,
+        odeme_sekli: tForm.odeme_sekli,
+        kasa_id: parseInt(tForm.kasa_id),
+        aciklama: tForm.aciklama
+      });
+      if (r?.success) {
+        setTahsilatModal(null);
+        yukle();
+        setBasari('TAHSİLAT BAŞARIYLA KAYDEDİLDİ');
+        setTimeout(()=>setBasari(''),4000);
+      } else { setHata(r?.error||'TAHSİLAT HATASI'); setTimeout(()=>setHata(''),4000); }
+    } else {
+      // Toplu tahsilat - gelir olarak kasaya kaydet
+      const r = await api.gelirCreate({
+        gelir_turu: 'POLİÇE TAHSİLAT',
+        tutar: t,
+        kasa_id: parseInt(tForm.kasa_id),
+        aciklama: tForm.aciklama,
+        tarih: tForm.tarih,
+        tahsilat_durumu: 'tahsil_edildi'
+      });
+      if (r?.success) {
+        setTahsilatModal(null);
+        yukle();
+        setBasari('TAHSİLAT KASAYA KAYDEDİLDİ');
+        setTimeout(()=>setBasari(''),4000);
+      } else { setHata(r?.error||'TAHSİLAT HATASI'); setTimeout(()=>setHata(''),4000); }
+    }
+  };
+
+  /* MÜTABAKAT */
+  const mutabakatAc = () => {
+    const buAy = new Date().toISOString().slice(0,7);
+    const sonrakiAyD = new Date(); sonrakiAyD.setMonth(sonrakiAyD.getMonth()+1);
+    const sonrakiAy = sonrakiAyD.toISOString().slice(0,7);
+    setMForm({
+      devir_tarih: sonrakiAy + '-01',
+      devir_bakiye: String(Math.round(topCariBakiye * 100) / 100),
+      aciklama: buAy + ' DÖNEMİ CARİ BAKİYE DEVİR',
+      donem: buAy
+    });
+    setMutabakatModal(true);
+  };
+
+  const mutabakatKaydet = async () => {
+    const devir = parseNum(mForm.devir_bakiye);
+    // Mütabakat: Devir bakiyeyi ajandaya not olarak kaydet
+    const r = await api.ajandaCreate({
+      baslik: 'MÜTABAKAT DEVİR BAKİYE - ' + mForm.donem,
+      aciklama: mForm.aciklama + ' - DEVİR TUTAR: ' + fmt(devir) + ' - ÖDEME SAĞLANMADI, TAKİP EDEN AYA DEVREDİLDİ',
+      tarih: mForm.devir_tarih,
+      oncelik: 'yuksek',
+      renk: '#f59e0b'
     });
     if (r?.success) {
-      setTahsilatModal(null);
-      setTForm({tutar:'',tarih:new Date().toISOString().slice(0,10),odeme_sekli:'nakit',kasa_id:'',aciklama:''});
-      yukle();
-      setBasari('TAHSİLAT EKLENDİ');
-      setTimeout(()=>setBasari(''),3000);
-    }
+      setMutabakatModal(false);
+      setBasari('MÜTABAKAT KAYDEDİLDİ - DEVİR BAKİYE: ' + fmt(devir));
+      setTimeout(()=>setBasari(''),5000);
+    } else { setHata(r?.error||'MÜTABAKAT HATASI'); setTimeout(()=>setHata(''),4000); }
   };
 
   if (loading) return <Loading/>;
@@ -953,11 +1038,24 @@ const PoliceTahsilat = ({setPage, user}) => {
     <div>
       {basari && <div style={{padding:'12px 20px',marginBottom:16,borderRadius:10,background:`${C.success}18`,border:`1px solid ${C.success}44`,display:'flex',alignItems:'center',gap:10}}>
         <LIcon name="CheckCircle" size={16} color={C.success}/><span style={{fontSize:12,fontWeight:600,color:C.success}}>{basari}</span></div>}
+      {hata && <div style={{padding:'12px 20px',marginBottom:16,borderRadius:10,background:`${C.danger}18`,border:`1px solid ${C.danger}44`,display:'flex',alignItems:'center',gap:10}}>
+        <LIcon name="AlertTriangle" size={16} color={C.danger}/><span style={{fontSize:12,fontWeight:600,color:C.danger}}>{hata}</span></div>}
 
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:20}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
         <StatCard icon="Banknote" label="TOPLAM KOMİSYON" value={fmt(topKomisyon)} color={C.accent}/>
         <StatCard icon="CheckCircle" label="TAHSİL EDİLEN KOMİSYON" value={fmt(topTahsilKomisyon)} color={C.success}/>
         <StatCard icon="Wallet" label="CARİ BAKİYE" value={fmt(topCariBakiye)} color={C.warning}/>
+        <StatCard icon="TrendingUp" label="BU AY KAZANÇ" value={fmt(aylikKazanc.buAy)} color={C.gold}/>
+      </div>
+
+      {/* TAHSİLAT YAP + MÜTABAKAT BUTONLARI */}
+      <div style={{display:'flex',gap:12,marginBottom:20}}>
+        <button style={{...S.btn,...S.btnS,flex:1,justifyContent:'center',padding:'16px 20px',fontSize:14}} onClick={()=>tahsilatYapAc(null)}>
+          <LIcon name="Banknote" size={20} color="#fff"/> TAHSİLAT YAP
+        </button>
+        <button style={{...S.btn,...S.btnW,flex:1,justifyContent:'center',padding:'16px 20px',fontSize:14}} onClick={mutabakatAc}>
+          <LIcon name="FileCheck" size={20} color="#000"/> MÜTABAKAT
+        </button>
       </div>
 
       <div style={S.card}>
@@ -983,8 +1081,8 @@ const PoliceTahsilat = ({setPage, user}) => {
                     <td style={{padding:'10px 8px',fontWeight:700,color:p.cari_bakiye>0?C.warning:C.success}}>{fmt(p.cari_bakiye)}</td>
                     <td style={{padding:'10px 8px'}}><Badge text={TAHSILAT_LABEL[p.tahsilat_durumu]||''} color={TAHSILAT_RENK(p.tahsilat_durumu,C)}/></td>
                     <td style={{padding:'10px 8px'}}>
-                      <button style={{...S.btn,...S.btnS,fontSize:9,padding:'5px 10px'}} onClick={()=>setTahsilatModal(p)}>
-                        <LIcon name="Plus" size={10} color="#fff"/> TAHSİLAT
+                      <button style={{...S.btn,...S.btnS,fontSize:9,padding:'5px 10px'}} onClick={()=>tahsilatYapAc(p)}>
+                        <LIcon name="Plus" size={10} color="#fff"/> TAHSİLAT YAP
                       </button>
                     </td>
                   </tr>
@@ -1001,27 +1099,120 @@ const PoliceTahsilat = ({setPage, user}) => {
         )}
       </div>
 
-      <Modal open={!!tahsilatModal} onClose={()=>setTahsilatModal(null)} title="TAHSİLAT EKLE" width="550px">
+      {/* TAHSİLAT YAP MODAL */}
+      <Modal open={!!tahsilatModal} onClose={()=>setTahsilatModal(null)} title="TAHSİLAT YAP" width="600px">
         {tahsilatModal && (
           <div>
-            <div style={{padding:12,borderRadius:8,background:C.bgHover,border:`1px solid ${C.border}`,marginBottom:16}}>
-              <div style={{fontSize:13,fontWeight:700,color:C.accent}}>{tahsilatModal.police_no}</div>
-              <div style={{fontSize:11,color:C.textSec,marginTop:4}}>{tahsilatModal.musteri_adi} - {tahsilatModal.brans}</div>
-              <div style={{fontSize:11,color:C.warning,fontWeight:600,marginTop:4}}>CARİ BAKİYE: {fmt(tahsilatModal.cari_bakiye)}</div>
+            <div style={{padding:16,borderRadius:10,background:`${C.success}11`,border:`1px solid ${C.success}33`,marginBottom:20}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div>
+                  <div style={{fontSize:14,fontWeight:700,color:C.accent}}>{tahsilatModal.police_no}</div>
+                  <div style={{fontSize:11,color:C.textSec,marginTop:4}}>{tahsilatModal.musteri_adi}</div>
+                </div>
+                <div style={{textAlign:'right'}}>
+                  <div style={{fontSize:10,color:C.textMuted}}>CARİ BAKİYE</div>
+                  <div style={{fontSize:20,fontWeight:800,color:C.warning}}>{fmt(tahsilatModal.cari_bakiye)}</div>
+                </div>
+              </div>
             </div>
+
+            {/* AY SONU KAZANÇ OTOMATİK GETİR */}
+            {!tahsilatModal.id && (
+              <div style={{padding:12,borderRadius:8,background:`${C.gold}11`,border:`1px solid ${C.gold}33`,marginBottom:16}}>
+                <div style={{fontSize:11,fontWeight:600,color:C.gold,marginBottom:8}}>AY SONU KAZANÇ BAKİYESİ</div>
+                <div style={{display:'flex',gap:12}}>
+                  <button style={{...S.btn,...S.btnG,fontSize:10,flex:1}} onClick={()=>setTForm(f=>({...f,tutar:String(Math.round(aylikKazanc.gecenAy*100)/100)}))}>
+                    GEÇEN AY ({aylikKazanc.gecenAyLabel}): {fmt(aylikKazanc.gecenAy)}
+                  </button>
+                  <button style={{...S.btn,...S.btnG,fontSize:10,flex:1}} onClick={()=>setTForm(f=>({...f,tutar:String(Math.round(aylikKazanc.buAy*100)/100)}))}>
+                    BU AY ({aylikKazanc.buAyLabel}): {fmt(aylikKazanc.buAy)}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-              <FormGroup label="TUTAR *"><input style={S.input} type="number" step="0.01" value={tForm.tutar} onChange={e=>setTForm({...tForm,tutar:e.target.value})} placeholder="0.00"/></FormGroup>
-              <FormGroup label="TARİH"><input style={S.input} type="date" value={tForm.tarih} onChange={e=>setTForm({...tForm,tarih:e.target.value})}/></FormGroup>
-              <FormGroup label="ÖDEME ŞEKLİ"><select style={S.select} value={tForm.odeme_sekli} onChange={e=>setTForm({...tForm,odeme_sekli:e.target.value})}>{ODEME_SEKILLERI.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}</select></FormGroup>
-              <FormGroup label="KASA"><select style={S.select} value={tForm.kasa_id} onChange={e=>setTForm({...tForm,kasa_id:e.target.value})}><option value="">KASA SEÇİNİZ</option>{kasalar.filter(k=>k.aktif).map(k=><option key={k.id} value={k.id}>{k.ad}</option>)}</select></FormGroup>
+              <FormGroup label="TUTAR (₺) *">
+                <input style={{...S.input,fontSize:16,fontWeight:700}} type="number" step="0.01" value={tForm.tutar}
+                  onChange={e=>setTForm({...tForm,tutar:e.target.value})} placeholder="0.00"/>
+              </FormGroup>
+              <FormGroup label="TARİH">
+                <input style={S.input} type="date" value={tForm.tarih} onChange={e=>setTForm({...tForm,tarih:e.target.value})}/>
+              </FormGroup>
+              <FormGroup label="ÖDEME ŞEKLİ">
+                <select style={S.select} value={tForm.odeme_sekli} onChange={e=>setTForm({...tForm,odeme_sekli:e.target.value})}>
+                  {ODEME_SEKILLERI.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}
+                </select>
+              </FormGroup>
+              <FormGroup label="KASA *">
+                <select style={S.select} value={tForm.kasa_id} onChange={e=>setTForm({...tForm,kasa_id:e.target.value})}>
+                  <option value="">KASA SEÇİNİZ</option>
+                  {kasalar.filter(k=>k.aktif).map(k=><option key={k.id} value={k.id}>{k.ad} ({fmt(k.bakiye)})</option>)}
+                </select>
+              </FormGroup>
             </div>
-            <FormGroup label="AÇIKLAMA"><input style={S.input} value={tForm.aciklama} onChange={e=>setTForm({...tForm,aciklama:e.target.value})} placeholder="AÇIKLAMA"/></FormGroup>
-            <div style={{display:'flex',gap:8,marginTop:16}}>
-              <button style={{...S.btn,...S.btnS,fontSize:12}} onClick={tahsilatKaydet}><LIcon name="Check" size={14} color="#fff"/> TAHSİLAT KAYDET</button>
-              <button style={{...S.btn,...S.btnG,fontSize:12}} onClick={()=>setTahsilatModal(null)}><LIcon name="X" size={14} color={C.textSec}/> İPTAL</button>
+            <FormGroup label="AÇIKLAMA">
+              <input style={S.input} value={tForm.aciklama} onChange={e=>setTForm({...tForm,aciklama:e.target.value.toUpperCase()})} placeholder="TAHSİLAT AÇIKLAMASI"/>
+            </FormGroup>
+            <div style={{display:'flex',gap:8,marginTop:20}}>
+              <button style={{...S.btn,...S.btnS,fontSize:13,flex:1,justifyContent:'center'}} onClick={tahsilatKaydet}>
+                <LIcon name="Banknote" size={16} color="#fff"/> TAHSİLAT KAYDET
+              </button>
+              <button style={{...S.btn,...S.btnG,fontSize:13}} onClick={()=>setTahsilatModal(null)}>
+                <LIcon name="X" size={14} color={C.textSec}/> İPTAL
+              </button>
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* MÜTABAKAT MODAL */}
+      <Modal open={!!mutabakatModal} onClose={()=>setMutabakatModal(false)} title="MÜTABAKAT - DEVİR BAKİYE" width="600px">
+        <div>
+          <div style={{padding:16,borderRadius:10,background:`${C.warning}11`,border:`1px solid ${C.warning}33`,marginBottom:20}}>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <LIcon name="AlertTriangle" size={24} color={C.warning}/>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:C.warning}}>ÖDEME SAĞLANMADI</div>
+                <div style={{fontSize:11,color:C.textSec,marginTop:4}}>
+                  {mForm.donem} DÖNEMİ CARİ BAKİYE TAKİP EDEN AYA DEVREDİLECEK.
+                  ÜRETİM KAZANÇLARI ÜZERİNE TOPLANMAYA DEVAM EDECEK.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{padding:16,borderRadius:10,background:C.bgHover,marginBottom:20,textAlign:'center'}}>
+            <div style={{fontSize:10,color:C.textMuted,marginBottom:4}}>DEVİR BAKİYE TUTARI</div>
+            <div style={{fontSize:28,fontWeight:800,color:C.warning}}>{fmt(parseNum(mForm.devir_bakiye))}</div>
+            <div style={{fontSize:10,color:C.textMuted,marginTop:4}}>{mForm.donem} → TAKİP EDEN AY</div>
+          </div>
+
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+            <FormGroup label="DEVİR BAKİYE (₺)">
+              <input style={{...S.input,fontSize:16,fontWeight:700}} value={mForm.devir_bakiye}
+                onChange={e=>setMForm(f=>({...f,devir_bakiye:e.target.value}))} placeholder="0.00"/>
+            </FormGroup>
+            <FormGroup label="DEVİR TARİHİ">
+              <input style={S.input} type="date" value={mForm.devir_tarih}
+                onChange={e=>setMForm(f=>({...f,devir_tarih:e.target.value}))}/>
+            </FormGroup>
+          </div>
+          <FormGroup label="AÇIKLAMA">
+            <textarea style={{...S.input,minHeight:60,resize:'vertical'}} value={mForm.aciklama}
+              onChange={e=>setMForm(f=>({...f,aciklama:e.target.value.toUpperCase()}))}
+              placeholder="MÜTABAKAT AÇIKLAMASI"/>
+          </FormGroup>
+
+          <div style={{display:'flex',gap:8,marginTop:20}}>
+            <button style={{...S.btn,...S.btnW,fontSize:13,flex:1,justifyContent:'center'}} onClick={mutabakatKaydet}>
+              <LIcon name="FileCheck" size={16} color="#000"/> MÜTABAKAT KAYDET (DEVİR)
+            </button>
+            <button style={{...S.btn,...S.btnG,fontSize:13}} onClick={()=>setMutabakatModal(false)}>
+              <LIcon name="X" size={14} color={C.textSec}/> İPTAL
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

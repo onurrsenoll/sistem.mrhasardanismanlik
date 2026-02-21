@@ -146,7 +146,8 @@ const GelirYonetimi = ({setPage, user}) => {
   /* TOPLAM */
   const toplamTutar = useMemo(() => filtrelenmis.reduce((t, g) => t + (parseFloat(g.tutar) || 0), 0), [filtrelenmis]);
 
-  const gelirTurleri = ['DANIŞMANLIK ÜCRETİ','SİGORTA TAHSİLATI','MAHKEME TAZMİNATI','KOMİSYON','DİĞER GELİR'];
+  const [gelirTurleri, setGelirTurleri] = useState(['DANIŞMANLIK ÜCRETİ','SİGORTA TAHSİLATI','MAHKEME TAZMİNATI','KOMİSYON','DİĞER GELİR']);
+  useEffect(() => { api.tanimList({kategori:'gelir_turu'}).then(r => { if(r?.success && Array.isArray(r.data) && r.data.length > 0) setGelirTurleri(r.data.map(t=>t.deger)); }); }, []);
 
   /* YENİ GELİR MODAL */
   const yeniGelirAc = () => {
@@ -343,7 +344,8 @@ const GiderYonetimi = ({setPage, user}) => {
   const [baslangic, setBaslangic] = useState('');
   const [bitis, setBitis] = useState('');
 
-  const giderKategorileri = ['OFİS GİDERİ','PERSONEL GİDERİ','ULAŞIM','YAKIT','BİLİRKİŞİ ÜCRETİ','AVUKAT ÜCRETİ','KİRA','VERGİ / HARÇ','DOSYA MASRAFI','DİĞER GİDER'];
+  const [giderKategorileri, setGiderKategorileri] = useState(['OFİS GİDERİ','PERSONEL GİDERİ','ULAŞIM','YAKIT','BİLİRKİŞİ ÜCRETİ','AVUKAT ÜCRETİ','KİRA','VERGİ / HARÇ','DOSYA MASRAFI','DİĞER GİDER']);
+  useEffect(() => { api.tanimList({kategori:'gider_turu'}).then(r => { if(r?.success && Array.isArray(r.data) && r.data.length > 0) setGiderKategorileri(r.data.map(t=>t.deger)); }); }, []);
 
   const yukle = async () => {
     setLoading(true);
@@ -878,6 +880,7 @@ const KomisyonPrim = ({setPage, user}) => {
    ═══════════════════════════════════════════════════════════ */
 const KasaBanka = ({setPage, user}) => {
   const {C, S, LIcon, StatCard, Badge, SectionTitle, Loading, EmptyState, Modal, FormGroup, Confirm, api, fmt, fmtInput, parseNum} = MR;
+  const isAdmin = user?.rol === 'admin';
   const [kasalar, setKasalar] = useState([]);
   const [hareketler, setHareketler] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -890,6 +893,9 @@ const KasaBanka = ({setPage, user}) => {
   const [hata, setHata] = useState('');
   const [basari, setBasari] = useState('');
   const [confirm, setConfirm] = useState({open:false, msg:'', cb:null});
+  /* BAKİYE DÜZELTME (SADECE ADMİN) */
+  const [duzeltmeModal, setDuzeltmeModal] = useState(null);
+  const [duzeltmeForm, setDuzeltmeForm] = useState({yeni_bakiye:'', aciklama:''});
 
   /* HAREKET FİLTRELERİ */
   const [hKasaF, setHKasaF] = useState('');
@@ -1047,8 +1053,11 @@ const KasaBanka = ({setPage, user}) => {
       <div style={S.card}>
         <SectionTitle icon="Wallet" title="KASALAR"
           sub={`${kasalar.length} KASA TANIMLI`}
-          right={
+          right={isAdmin ? (
             <div style={{display:'flex',gap:8}}>
+              <button style={{...S.btn,...S.btnD,fontSize:11}} onClick={()=>setConfirm({open:true,msg:'TÜM KASA BAKİYELERİNİ SIFIRLAMAK İSTEDİĞİNİZE EMİN MİSİNİZ? BU İŞLEM GERİ ALINAMAZ!',cb:async()=>{setConfirm({open:false,msg:'',cb:null});const r=await api.bakiyeSifirla();if(r?.success){setBasari('TÜM BAKİYELER SIFIRLANDI');kasaYukle();hareketYukle();setTimeout(()=>setBasari(''),4000);}else{setHata(r?.error||'SIFIRLAMA HATASI');setTimeout(()=>setHata(''),4000);}}})}>
+                <LIcon name="RotateCcw" size={14} color="#fff"/> BAKİYELERİ SIFIRLA
+              </button>
               <button style={{...S.btn,...S.btnW,fontSize:11}} onClick={transferAc}>
                 <LIcon name="ArrowRightLeft" size={14} color="#000"/> TRANSFER
               </button>
@@ -1056,7 +1065,7 @@ const KasaBanka = ({setPage, user}) => {
                 <LIcon name="Plus" size={14} color="#fff"/> YENİ KASA
               </button>
             </div>
-          }/>
+          ) : null}/>
         <div style={S.cardBody}>
           {kasalar.length === 0 ? (
             <EmptyState icon="Wallet" title="KASA BULUNAMADI" desc="YENİ KASA OLUŞTURMAK İÇİN YUKARIDAKI BUTONA TIKLAYIN"/>
@@ -1078,14 +1087,19 @@ const KasaBanka = ({setPage, user}) => {
                         <Badge text={kasa.tur === 'nakit' ? 'NAKİT' : 'BANKA'} color={turRenk}/>
                         {pasif && <span style={{marginLeft:6}}><Badge text="PASİF" color={C.danger}/></span>}
                       </div>
-                      <div style={{display:'flex',gap:6}}>
-                        <div onClick={() => duzenleAc(kasa)} style={{width:30,height:30,borderRadius:8,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title="DÜZENLE">
-                          <LIcon name="Pencil" size={13} color={C.accent}/>
+                      {isAdmin && (
+                        <div style={{display:'flex',gap:6}}>
+                          <div onClick={() => duzenleAc(kasa)} style={{width:30,height:30,borderRadius:8,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title="DÜZENLE">
+                            <LIcon name="Pencil" size={13} color={C.accent}/>
+                          </div>
+                          <div onClick={() => {setDuzeltmeModal(kasa);setDuzeltmeForm({yeni_bakiye:String(Math.round(parseFloat(kasa.bakiye)||0)),aciklama:''});}} style={{width:30,height:30,borderRadius:8,background:`${C.warning}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title="BAKİYE DÜZELT">
+                            <LIcon name="Calculator" size={13} color={C.warning}/>
+                          </div>
+                          <div onClick={() => toggleAktif(kasa)} style={{width:30,height:30,borderRadius:8,background: pasif ? `${C.success}22` : `${C.danger}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title={pasif ? 'AKTİF ET' : 'PASİF YAP'}>
+                            <LIcon name={pasif ? 'ToggleRight' : 'ToggleLeft'} size={13} color={pasif ? C.success : C.danger}/>
+                          </div>
                         </div>
-                        <div onClick={() => toggleAktif(kasa)} style={{width:30,height:30,borderRadius:8,background: pasif ? `${C.success}22` : `${C.danger}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title={pasif ? 'AKTİF ET' : 'PASİF YAP'}>
-                          <LIcon name={pasif ? 'ToggleRight' : 'ToggleLeft'} size={13} color={pasif ? C.success : C.danger}/>
-                        </div>
-                      </div>
+                      )}
                     </div>
                     <div style={{fontSize:26,fontWeight:800,color: bakiye >= 0 ? C.success : C.danger, marginBottom:16, letterSpacing:-0.5}}>
                       {fmt(bakiye)}
@@ -1226,6 +1240,40 @@ const KasaBanka = ({setPage, user}) => {
             <LIcon name="Save" size={14} color="#fff"/> {kayitLoading ? 'KAYDEDİLİYOR...' : 'KAYDET'}
           </button>
         </div>
+      </Modal>
+
+      {/* BAKİYE DÜZELTME MODAL (SADECE ADMİN) */}
+      <Modal open={!!duzeltmeModal} onClose={()=>setDuzeltmeModal(null)} title="BAKİYE DÜZELT" width="500px">
+        {duzeltmeModal && (
+          <div>
+            <HataMesaji mesaj={hata}/>
+            <div style={{padding:12,borderRadius:8,background:`${C.warning}11`,border:`1px solid ${C.warning}33`,marginBottom:16}}>
+              <div style={{fontSize:13,fontWeight:700}}>{duzeltmeModal.ad}</div>
+              <div style={{fontSize:11,color:C.textSec,marginTop:4}}>MEVCUT BAKİYE: <strong style={{color:C.text,fontSize:16}}>{fmt(parseFloat(duzeltmeModal.bakiye)||0)}</strong></div>
+            </div>
+            <FormGroup label="YENİ BAKİYE (₺) *">
+              <input style={{...S.input,fontSize:18,fontWeight:700}} value={duzeltmeForm.yeni_bakiye}
+                onChange={e=>setDuzeltmeForm(f=>({...f,yeni_bakiye:e.target.value.replace(/[^0-9.,\-]/g,'')}))}
+                placeholder="0"/>
+            </FormGroup>
+            <FormGroup label="DÜZELTME NEDENİ">
+              <input style={S.input} value={duzeltmeForm.aciklama}
+                onChange={e=>setDuzeltmeForm(f=>({...f,aciklama:e.target.value.toUpperCase()}))}
+                placeholder="DÜZELTME NEDENİNİ YAZINIZ"/>
+            </FormGroup>
+            <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:20}}>
+              <button style={{...S.btn,...S.btnG}} onClick={()=>setDuzeltmeModal(null)}>İPTAL</button>
+              <button style={{...S.btn,...S.btnW}} onClick={async()=>{
+                const yb = parseNum(duzeltmeForm.yeni_bakiye);
+                const r = await api.bakiyeDuzelt({kasa_id:duzeltmeModal.id, yeni_bakiye:yb, aciklama:duzeltmeForm.aciklama||'MANUEL DÜZELTME'});
+                if(r?.success){setDuzeltmeModal(null);setBasari('BAKİYE DÜZELTİLDİ');kasaYukle();hareketYukle();setTimeout(()=>setBasari(''),4000);}
+                else{setHata(r?.error||'DÜZELTME HATASI');setTimeout(()=>setHata(''),4000);}
+              }}>
+                <LIcon name="Calculator" size={14} color="#000"/> BAKİYE DÜZELT
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* TRANSFER MODAL */}
