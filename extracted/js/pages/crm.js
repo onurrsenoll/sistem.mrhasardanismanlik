@@ -86,6 +86,12 @@ MR._CRMListesiInner = ({setPage, user}) => {
   // SİL ONAY
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
+  // TOPLU SİLME (ADMIN)
+  const [secililer, setSecililer] = useState([]);
+  const [topluSilConfirm, setTopluSilConfirm] = useState(false);
+  const [topluSilLoading, setTopluSilLoading] = useState(false);
+  const isAdmin = user?.rol === 'admin';
+
   const durumlar = ['', 'Yeni', 'Takipte', 'Olumlu', 'Olumsuz'];
   const durumLabels = {'': 'TÜMÜ', 'Yeni': 'YENİ', 'Takipte': 'TAKİPTE', 'Olumlu': 'OLUMLU', 'Olumsuz': 'OLUMSUZ'};
   const kaynaklar = ['TELEFON', 'WEB FORMU', 'SOSYAL MEDYA', 'YÖNLENDİRME', 'DİĞER'];
@@ -179,6 +185,19 @@ MR._CRMListesiInner = ({setPage, user}) => {
     }
   };
 
+  // TOPLU SİLME FONKSİYONLARI
+  const toggleSecim = (id) => setSecililer(p => p.includes(id) ? p.filter(x=>x!==id) : [...p, id]);
+  const tumunuSec = () => { if (secililer.length === data.length) setSecililer([]); else setSecililer(data.map(d=>d.id)); };
+  const topluSil = async () => {
+    if (secililer.length === 0) return;
+    setTopluSilLoading(true);
+    const r = await api.crmBulkDelete(secililer);
+    setTopluSilLoading(false);
+    setTopluSilConfirm(false);
+    if (r?.success) { setSecililer([]); load(); }
+    else alert(r?.error || 'TOPLU SİLME HATASI');
+  };
+
   const cellSt = {padding: '10px 8px'};
   const thSt = {padding: '10px 8px', textAlign: 'left', color: C.textMuted, fontWeight: 600, fontSize: 9, borderBottom: `1px solid ${C.border}`};
   const iconBtn = (bg) => ({
@@ -205,9 +224,15 @@ MR._CRMListesiInner = ({setPage, user}) => {
             <span style={{fontSize: 14, fontWeight: 700}}>CRM - POTANSİYEL MÜŞTERİLER</span>
             <Badge text={`${data.length} KAYIT`} color={C.accent}/>
           </div>
-          <div style={{display: 'flex', gap: 8}}>
+          <div style={{display: 'flex', gap: 8, alignItems: 'center'}}>
             <input placeholder="AD VEYA TELEFON ARA..." value={filter} onChange={e => setFilter(e.target.value)}
               style={{...S.input, width: 220, fontSize: 11}}/>
+            {isAdmin && secililer.length > 0 && (
+              <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px',display:'flex',alignItems:'center',gap:4}}
+                onClick={() => setTopluSilConfirm(true)} disabled={topluSilLoading}>
+                <LIcon name="Trash2" size={11} color="#fff"/> TOPLU SİL ({secililer.length})
+              </button>
+            )}
             <button style={{...S.btn, ...S.btnP, fontSize: 11}} onClick={() => setPage('crm-yeni')}>
               <LIcon name="Plus" size={14} color="#fff"/> YENİ KAYIT
             </button>
@@ -234,6 +259,10 @@ MR._CRMListesiInner = ({setPage, user}) => {
             <table style={{width: '100%', borderCollapse: 'collapse', fontSize: 11, minWidth: 1000}}>
               <thead>
                 <tr style={{background: C.bgHover}}>
+                  {isAdmin && <th style={{...thSt,minWidth:35,textAlign:'center',padding:'8px 4px'}}>
+                    <input type="checkbox" checked={data.length > 0 && secililer.length === data.length}
+                      onChange={tumunuSec} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                  </th>}
                   {['AD SOYAD', 'TELEFON', 'İL', 'TÜR', 'KAYNAK', 'DURUM', 'SON İLETİŞİM', 'İŞLEMLER'].map(h =>
                     <th key={h} style={thSt}>{h}</th>
                   )}
@@ -241,11 +270,15 @@ MR._CRMListesiInner = ({setPage, user}) => {
               </thead>
               <tbody>
                 {data.length === 0 ? (
-                  <tr><td colSpan={8}><EmptyState icon="Users" title="CRM KAYDI BULUNAMADI" desc="YENİ CRM KAYDI OLUŞTURUN"/></td></tr>
+                  <tr><td colSpan={isAdmin ? 9 : 8}><EmptyState icon="Users" title="CRM KAYDI BULUNAMADI" desc="YENİ CRM KAYDI OLUŞTURUN"/></td></tr>
                 ) : data.map((c, i) => (
                   <tr key={c.id || i} style={{borderBottom: `1px solid ${C.border}`, position: 'relative'}}
                     onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    {isAdmin && <td style={{...cellSt,textAlign:'center',padding:'6px 4px'}} onClick={e => e.stopPropagation()}>
+                      <input type="checkbox" checked={secililer.includes(c.id)} onChange={() => toggleSecim(c.id)}
+                        style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                    </td>}
                     <td style={{...cellSt, fontWeight: 600}}>{c.ad_soyad}</td>
                     <td style={{...cellSt, color: C.textSec, display:'flex', alignItems:'center', gap:6}}>
                       {c.telefon || '-'}
@@ -429,6 +462,12 @@ MR._CRMListesiInner = ({setPage, user}) => {
 
       {/* SİL ONAY */}
       <Confirm open={!!deleteConfirm} message="BU CRM KAYDINI SİLMEK İSTEDİĞİNİZE EMİN MİSİNİZ? BU İŞLEM GERİ ALINAMAZ." onConfirm={handleSil} onCancel={() => setDeleteConfirm(null)}/>
+
+      {/* TOPLU SİL ONAY */}
+      <Confirm open={topluSilConfirm}
+        message={`SEÇİLEN ${secililer.length} CRM KAYDI KALICI OLARAK SİLİNECEK!\n\nBU İŞLEM GERİ ALINAMAZ! DEVAM EDİLSİN Mİ?`}
+        onCancel={() => setTopluSilConfirm(false)}
+        onConfirm={topluSil}/>
     </div>
   );
 };

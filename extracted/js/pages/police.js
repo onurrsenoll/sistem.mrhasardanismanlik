@@ -92,6 +92,38 @@ const PoliceListe = ({setPage, user}) => {
   const [basari, setBasari] = useState('');
   const [tahsilatForm, setTahsilatForm] = useState(null);
   const [kasalar, setKasalar] = useState([]);
+  const [secililer, setSecililer] = useState([]);
+  const [topluSilConfirm, setTopluSilConfirm] = useState(false);
+  const [topluSilLoading, setTopluSilLoading] = useState(false);
+
+  const isAdmin = user?.rol === 'admin';
+
+  const toggleSecim = (id) => {
+    setSecililer(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const tumunuSec = () => {
+    if (secililer.length === policeler.length) {
+      setSecililer([]);
+    } else {
+      setSecililer(policeler.map(p => p.id));
+    }
+  };
+
+  const topluSil = async () => {
+    if (secililer.length === 0) return;
+    setTopluSilLoading(true);
+    const silinecekAdet = secililer.length;
+    const r = await api.policeBulkDelete(secililer);
+    if (r?.success) {
+      setSecililer([]);
+      setTopluSilConfirm(false);
+      yukle();
+      setBasari(silinecekAdet + ' POLİÇE SİLİNDİ');
+      setTimeout(() => setBasari(''), 3000);
+    }
+    setTopluSilLoading(false);
+  };
 
   const yukle = useCallback(async () => {
     setLoading(true);
@@ -171,7 +203,14 @@ const PoliceListe = ({setPage, user}) => {
 
       <div style={S.card}>
         <SectionTitle icon="List" title="POLİÇE LİSTESİ" sub={toplam + ' POLİÇE'}
-          right={<button style={{...S.btn,...S.btnP,fontSize:10,padding:'8px 14px'}} onClick={()=>setPage('police-yeni')}><LIcon name="Plus" size={14} color="#fff"/> YENİ POLİÇE</button>}/>
+          right={<div style={{display:'flex',gap:6,alignItems:'center'}}>
+            {isAdmin && secililer.length > 0 && (
+              <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px',display:'flex',alignItems:'center',gap:4}} onClick={()=>setTopluSilConfirm(true)}>
+                <LIcon name="Trash2" size={12} color="#fff"/> TOPLU SİL ({secililer.length})
+              </button>
+            )}
+            <button style={{...S.btn,...S.btnP,fontSize:10,padding:'8px 14px'}} onClick={()=>setPage('police-yeni')}><LIcon name="Plus" size={14} color="#fff"/> YENİ POLİÇE</button>
+          </div>}/>
 
         {/* FİLTRE */}
         <div style={{padding:'12px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',gap:10,flexWrap:'wrap',alignItems:'center'}}>
@@ -207,6 +246,9 @@ const PoliceListe = ({setPage, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:1100}}>
               <thead>
                 <tr style={{background:C.bgHover}}>
+                  {isAdmin && <th style={{padding:'10px 8px',textAlign:'center',borderBottom:`1px solid ${C.border}`,width:30}}>
+                    <input type="checkbox" checked={policeler.length > 0 && secililer.length === policeler.length} onChange={tumunuSec} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                  </th>}
                   {['POLİÇE NO','MÜŞTERİ','SİGORTA ŞİRKETİ','BRANŞ','BRÜT PRİM','KOMİSYON','BAŞLANGIÇ','BİTİŞ','TAHSİLAT','DURUM','İŞLEM'].map(h=>
                     <th key={h} style={{padding:'10px 8px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`,letterSpacing:.5}}>{h}</th>
                   )}
@@ -218,6 +260,9 @@ const PoliceListe = ({setPage, user}) => {
                     onClick={()=>detayAc(p)}
                     onMouseEnter={e=>e.currentTarget.style.background=C.bgHover}
                     onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                    {isAdmin && <td style={{padding:'10px 8px',textAlign:'center'}} onClick={e=>e.stopPropagation()}>
+                      <input type="checkbox" checked={secililer.includes(p.id)} onChange={()=>toggleSecim(p.id)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                    </td>}
                     <td style={{padding:'10px 8px',fontWeight:700,color:C.accent,fontSize:12}}>{p.police_no}</td>
                     <td style={{padding:'10px 8px',fontWeight:600}}>{p.musteri_adi}</td>
                     <td style={{padding:'10px 8px',fontSize:10,color:C.textSec}}>{p.sigorta_sirketi}</td>
@@ -410,6 +455,7 @@ const PoliceListe = ({setPage, user}) => {
       </Modal>
 
       <Confirm open={!!silOnay} message={'BU POLİÇEYİ SİLMEK İSTEDİĞİNİZDEN EMİN MİSİNİZ? "' + (silOnay?.police_no||'') + '"'} onConfirm={sil} onCancel={()=>setSilOnay(null)}/>
+      <Confirm open={topluSilConfirm} message={'SEÇİLEN ' + secililer.length + ' POLİÇE KALICI OLARAK SİLİNECEK!\n\nBU İŞLEM GERİ ALINAMAZ! DEVAM EDİLSİN Mİ?'} onConfirm={topluSil} onCancel={()=>setTopluSilConfirm(false)}/>
     </div>
   );
 };

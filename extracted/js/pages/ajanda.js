@@ -17,6 +17,11 @@ MR.AjandaPage = ({setPage, user}) => {
   const [durumF, setDurumF] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [secililer, setSecililer] = useState([]);
+  const [topluSilConfirm, setTopluSilConfirm] = useState(false);
+  const [topluSilLoading, setTopluSilLoading] = useState(false);
+
+  const isAdmin = user?.rol === 'admin';
 
   const bosForm = {
     baslik: '', aciklama: '', tarih: '', bitis_tarihi: '', hatirlatma: '',
@@ -123,6 +128,32 @@ MR.AjandaPage = ({setPage, user}) => {
       setSilOnay(null);
       yukle();
     }
+  };
+
+  const toggleSecim = (id) => {
+    setSecililer(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const tumunuSec = (liste) => {
+    const ids = liste.map(g => g.id);
+    const hepsiSecili = ids.length > 0 && ids.every(id => secililer.includes(id));
+    if (hepsiSecili) {
+      setSecililer(prev => prev.filter(id => !ids.includes(id)));
+    } else {
+      setSecililer(prev => [...new Set([...prev, ...ids])]);
+    }
+  };
+
+  const topluSil = async () => {
+    if (secililer.length === 0) return;
+    setTopluSilLoading(true);
+    const r = await api.ajandaBulkDelete(secililer);
+    if (r?.success) {
+      setSecililer([]);
+      setTopluSilConfirm(false);
+      yukle();
+    }
+    setTopluSilLoading(false);
   };
 
   // ═══ İSTATİSTİKLER ═══
@@ -233,6 +264,11 @@ MR.AjandaPage = ({setPage, user}) => {
               onClick={() => setGorunum('liste')}>
               <LIcon name="List" size={14} color={gorunum === 'liste' ? '#fff' : C.textSec}/> LİSTE
             </button>
+            {isAdmin && secililer.length > 0 && (
+              <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px',display:'flex',alignItems:'center',gap:4}} onClick={() => setTopluSilConfirm(true)}>
+                <LIcon name="Trash2" size={12} color="#fff"/> TOPLU SİL ({secililer.length})
+              </button>
+            )}
             <button style={{...S.btn,...S.btnS,fontSize:11}} onClick={() => modalAc(null)}>
               <LIcon name="Plus" size={14} color="#fff"/> YENİ GÖREV
             </button>

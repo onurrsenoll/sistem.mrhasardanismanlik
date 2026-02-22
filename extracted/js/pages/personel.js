@@ -111,6 +111,10 @@ const PersonelListesi = ({setPage, user}) => {
   const [search, setSearch] = useState('');
   const [durumF, setDurumF] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [secililer, setSecililer] = useState([]);
+  const [topluSilConfirm, setTopluSilConfirm] = useState(false);
+  const [topluSilLoading, setTopluSilLoading] = useState(false);
+  const isAdmin = user?.rol === 'admin';
   const [hata, setHata] = useState('');
   const [basari, setBasari] = useState('');
 
@@ -138,6 +142,19 @@ const PersonelListesi = ({setPage, user}) => {
   const aktifPersonel = data.filter(d => d.durum === 'aktif').length;
   const pasifPersonel = data.filter(d => (d.durum || '').toUpperCase() === 'PASİF').length;
   const toplamMaas = data.filter(d => d.durum === 'aktif').reduce((s, d) => s + (parseFloat(d.maas) || 0), 0);
+
+  /* TOPLU SEÇİM */
+  const toggleSecim = (id) => setSecililer(p => p.includes(id) ? p.filter(x=>x!==id) : [...p, id]);
+  const tumunuSec = () => { if (secililer.length === data.length) setSecililer([]); else setSecililer(data.map(d=>d.id)); };
+  const topluSil = async () => {
+    if (secililer.length === 0) return;
+    setTopluSilLoading(true);
+    const r = await api.personelBulkDelete(secililer);
+    setTopluSilLoading(false);
+    setTopluSilConfirm(false);
+    if (r?.success) { setSecililer([]); yukle(); setBasari('SEÇİLEN PERSONELLER BAŞARIYLA SİLİNDİ'); setTimeout(() => setBasari(''), 3000); }
+    else { setHata(r?.error || 'TOPLU SİLME HATASI'); setTimeout(() => setHata(''), 3000); }
+  };
 
   /* SİL */
   const personelSil = async (id) => {
@@ -221,6 +238,12 @@ const PersonelListesi = ({setPage, user}) => {
               <option value="aktif">AKTİF</option>
               <option value="pasif">PASİF</option>
             </select>
+            {isAdmin && secililer.length > 0 && (
+              <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px',display:'flex',alignItems:'center',gap:4}}
+                onClick={() => setTopluSilConfirm(true)} disabled={topluSilLoading}>
+                <LIcon name="Trash2" size={11} color="#fff"/> TOPLU SİL ({secililer.length})
+              </button>
+            )}
             <button style={{...S.btn,...S.btnP,fontSize:10,padding:'6px 14px'}} onClick={() => setPage('personel-yeni')}>
               <LIcon name="Plus" size={12} color="#fff"/> YENİ
             </button>
@@ -235,6 +258,10 @@ const PersonelListesi = ({setPage, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',minWidth:1100}}>
               <thead>
                 <tr>
+                  {isAdmin && <th style={{...thS,minWidth:35,textAlign:'center',padding:'8px 4px'}}>
+                    <input type="checkbox" checked={data.length > 0 && secililer.length === data.length}
+                      onChange={tumunuSec} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                  </th>}
                   <th style={{...thS,minWidth:35,textAlign:'center'}}>#</th>
                   <th style={{...thS,minWidth:130}}>ADI SOYADI</th>
                   <th style={{...thS,minWidth:100}}>T.C. NO</th>
@@ -254,6 +281,10 @@ const PersonelListesi = ({setPage, user}) => {
                     onClick={() => duzenleAc(d)}
                     onMouseEnter={e => e.currentTarget.style.background=`${C.accent}0a`}
                     onMouseLeave={e => e.currentTarget.style.background=i%2===1?`${C.bgHover}66`:'transparent'}>
+                    {isAdmin && <td style={{...tdS,textAlign:'center',padding:'6px 4px'}} onClick={e => e.stopPropagation()}>
+                      <input type="checkbox" checked={secililer.includes(d.id)} onChange={() => toggleSecim(d.id)}
+                        style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                    </td>}
                     <td style={{...tdS,textAlign:'center',color:C.textMuted,fontWeight:600}}>{i+1}</td>
                     <td style={{...tdS,fontWeight:700,color:C.accent}}>{d.ad_soyad || '-'}</td>
                     <td style={{...tdS,fontFamily:'monospace',fontSize:10,color:C.textSec,letterSpacing:0.3}}>{d.tc_kimlik || '-'}</td>
@@ -369,6 +400,12 @@ const PersonelListesi = ({setPage, user}) => {
       <Confirm open={!!deleteConfirm} message={deleteConfirm ? `"${deleteConfirm.text}" PERSONEL SİLİNSİN Mİ?` : ''}
         onCancel={() => setDeleteConfirm(null)}
         onConfirm={() => deleteConfirm && personelSil(deleteConfirm.id)}/>
+
+      {/* TOPLU SİLME ONAY */}
+      <Confirm open={topluSilConfirm}
+        message={`SEÇİLEN ${secililer.length} PERSONEL KALICI OLARAK SİLİNECEK!\n\nBU İŞLEM GERİ ALINAMAZ! DEVAM EDİLSİN Mİ?`}
+        onCancel={() => setTopluSilConfirm(false)}
+        onConfirm={topluSil}/>
     </div>
   );
 };

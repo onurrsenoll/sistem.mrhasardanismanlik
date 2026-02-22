@@ -78,6 +78,11 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
   // ═══ SİSTEM BİLDİRİMLERİ STATE ═══
   const [bildirimler, setBildirimler] = useState([]);
 
+  // ═══ TOPLU SİLME STATE (ADMIN) ═══
+  const [secililer, setSecililer] = useState([]);
+  const [topluSilConfirm, setTopluSilConfirm] = useState(false);
+  const [topluSilLoading, setTopluSilLoading] = useState(false);
+
   const isAdmin = user?.rol === 'admin' || user?.rol === 'yonetici';
 
   // ═══ FORM GÜNCELLE ═══
@@ -137,6 +142,7 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
 
   // ═══ SEKME DEĞİŞTİĞİNDE YENİDEN YÜKLE ═══
   useEffect(() => {
+    setSecililer([]);
     if (aktifSekme === 'gelen') gelenYukle();
     else if (aktifSekme === 'giden') gidenYukle();
     else if (aktifSekme === 'sistem') bildirimYukle();
@@ -330,6 +336,42 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
       bildirimYukle();
       setBasariMesaji('TÜM BİLDİRİMLER OKUNDU OLARAK İŞARETLENDİ');
     }
+  };
+
+  // ═══ TOPLU SİLME FONKSİYONLARI (ADMIN) ═══
+  const toggleSecim = (id) => {
+    setSecililer(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const tumunuSec = (liste) => {
+    const tumIds = liste.map(m => m.id);
+    const hepsiSecili = tumIds.length > 0 && tumIds.every(id => secililer.includes(id));
+    if (hepsiSecili) {
+      setSecililer(prev => prev.filter(id => !tumIds.includes(id)));
+    } else {
+      setSecililer(prev => [...new Set([...prev, ...tumIds])]);
+    }
+  };
+
+  const topluSil = async () => {
+    if (secililer.length === 0) return;
+    setTopluSilLoading(true);
+    try {
+      const r = await api.mesajBulkDelete(secililer);
+      if (r?.success) {
+        setSecililer([]);
+        setTopluSilConfirm(false);
+        await Promise.all([gelenYukle(), gidenYukle()]);
+        setBasariMesaji(secililer.length + ' MESAJ BAŞARIYLA SİLİNDİ');
+      } else {
+        setError(r?.error || 'TOPLU SİLME İŞLEMİ BAŞARISIZ');
+        setTopluSilConfirm(false);
+      }
+    } catch (err) {
+      setError('TOPLU SİLME İŞLEMİ SIRASINDA HATA OLUŞTU');
+      setTopluSilConfirm(false);
+    }
+    setTopluSilLoading(false);
   };
 
   if (loading) return <Loading/>;

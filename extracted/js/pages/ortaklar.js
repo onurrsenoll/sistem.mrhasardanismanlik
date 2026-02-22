@@ -82,6 +82,12 @@ const IsOrtaklari = ({setPage, user}) => {
   /* CONFIRM */
   const [confirm, setConfirm] = useState({open:false, msg:'', cb:null});
 
+  /* TOPLU SİLME STATE */
+  const [secililer, setSecililer] = useState([]);
+  const [topluSilConfirm, setTopluSilConfirm] = useState(false);
+  const [topluSilLoading, setTopluSilLoading] = useState(false);
+  const isAdmin = user?.rol === 'admin';
+
   /* SAYFALAMA */
   const limit = 20;
   const [offset, setOffset] = useState(0);
@@ -205,6 +211,28 @@ const IsOrtaklari = ({setPage, user}) => {
     });
   };
 
+  /* ─── TOPLU SİLME FONKSİYONLARI ─── */
+  const toggleSecim = (id) => {
+    setSecililer(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+  const tumunuSec = () => {
+    if (secililer.length === ortaklar.length) {
+      setSecililer([]);
+    } else {
+      setSecililer(ortaklar.map(o => o.id));
+    }
+  };
+  const topluSil = async () => {
+    setTopluSilLoading(true);
+    const r = await api.ortakBulkDelete(secililer);
+    if (r?.success) {
+      setSecililer([]);
+      setTopluSilConfirm(false);
+      yukle();
+    }
+    setTopluSilLoading(false);
+  };
+
   /* ─── DETAY MODAL AÇ ─── */
   const detayAc = async (ortak) => {
     setSeciliOrtak(ortak);
@@ -301,9 +329,16 @@ const IsOrtaklari = ({setPage, user}) => {
         <SectionTitle icon="Briefcase" title="İŞ ORTAKLARI"
           sub={`TOPLAM ${totalCount} ORTAK KAYITLI`}
           right={
-            <button style={{...S.btn,...S.btnP,fontSize:11}} onClick={yeniOrtakAc}>
-              <LIcon name="Plus" size={14} color="#fff"/> YENİ ORTAK
-            </button>
+            <div style={{display:'flex',gap:6,alignItems:'center'}}>
+              {isAdmin && secililer.length > 0 && (
+                <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px'}} onClick={() => setTopluSilConfirm(true)}>
+                  <LIcon name="Trash2" size={12} color="#fff"/> TOPLU SİL ({secililer.length})
+                </button>
+              )}
+              <button style={{...S.btn,...S.btnP,fontSize:11}} onClick={yeniOrtakAc}>
+                <LIcon name="Plus" size={14} color="#fff"/> YENİ ORTAK
+              </button>
+            </div>
           }/>
 
         {/* FİLTRE BAR */}
@@ -337,6 +372,11 @@ const IsOrtaklari = ({setPage, user}) => {
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:900}}>
                   <thead>
                     <tr style={{background:C.bgHover}}>
+                      {isAdmin && (
+                        <th style={{padding:'10px 6px',textAlign:'center',borderBottom:`1px solid ${C.border}`,width:32}}>
+                          <input type="checkbox" checked={ortaklar.length > 0 && secililer.length === ortaklar.length} onChange={tumunuSec} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                        </th>
+                      )}
                       {['AD SOYAD','FİRMA','BARO','SİCİL NO','ÖDEME ORANI','İL','DURUM','İŞLEMLER'].map(h =>
                         <th key={h} style={{padding:'10px 10px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
                       )}
@@ -344,9 +384,14 @@ const IsOrtaklari = ({setPage, user}) => {
                   </thead>
                   <tbody>
                     {ortaklar.map((ortak, i) => (
-                      <tr key={ortak.id || i} style={{borderBottom:`1px solid ${C.border}`}}
-                        onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <tr key={ortak.id || i} style={{borderBottom:`1px solid ${C.border}`,background: secililer.includes(ortak.id) ? `${C.accent}11` : 'transparent'}}
+                        onMouseEnter={e => { if(!secililer.includes(ortak.id)) e.currentTarget.style.background = C.bgHover; }}
+                        onMouseLeave={e => { if(!secililer.includes(ortak.id)) e.currentTarget.style.background = 'transparent'; }}>
+                        {isAdmin && (
+                          <td style={{padding:'10px 6px',textAlign:'center',width:32}}>
+                            <input type="checkbox" checked={secililer.includes(ortak.id)} onChange={() => toggleSecim(ortak.id)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                          </td>
+                        )}
                         <td style={{padding:'10px 10px',fontWeight:600}}>
                           <div style={{display:'flex',alignItems:'center',gap:8}}>
                             <div style={{width:32,height:32,borderRadius:8,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -690,6 +735,11 @@ const IsOrtaklari = ({setPage, user}) => {
         </div>
       </Modal>
 
+      {/* TOPLU SİL ONAY DİALOG */}
+      <Confirm open={topluSilConfirm} message={`SEÇİLİ ${secililer.length} İŞ ORTAĞINI SİLMEK İSTİYOR MUSUNUZ? BU İŞLEM GERİ ALINAMAZ.`}
+        onConfirm={topluSil}
+        onCancel={() => setTopluSilConfirm(false)}/>
+
       {/* ONAY DİALOG */}
       <Confirm open={confirm.open} message={confirm.msg}
         onConfirm={() => confirm.cb && confirm.cb()}
@@ -742,6 +792,12 @@ const IsPaydaslari = ({setPage, user}) => {
 
   /* CONFIRM */
   const [confirm, setConfirm] = useState({open:false, msg:'', cb:null});
+
+  /* TOPLU SİLME STATE */
+  const [secililerP, setSecililerP] = useState([]);
+  const [topluSilConfirmP, setTopluSilConfirmP] = useState(false);
+  const [topluSilLoadingP, setTopluSilLoadingP] = useState(false);
+  const isAdmin = user?.rol === 'admin';
 
   /* SAYFALAMA */
   const limit = 20;
@@ -851,6 +907,28 @@ const IsPaydaslari = ({setPage, user}) => {
     });
   };
 
+  /* ─── TOPLU SİLME FONKSİYONLARI ─── */
+  const toggleSecimP = (id) => {
+    setSecililerP(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+  const tumunuSecP = () => {
+    if (secililerP.length === paydaslar.length) {
+      setSecililerP([]);
+    } else {
+      setSecililerP(paydaslar.map(p => p.id));
+    }
+  };
+  const topluSilP = async () => {
+    setTopluSilLoadingP(true);
+    const r = await api.paydasBulkDelete(secililerP);
+    if (r?.success) {
+      setSecililerP([]);
+      setTopluSilConfirmP(false);
+      yukle();
+    }
+    setTopluSilLoadingP(false);
+  };
+
   /* ─── KOMİSYON TAKİP MODAL AÇ ─── */
   const komisyonAc = async (paydas) => {
     setSeciliPaydas(paydas);
@@ -926,9 +1004,16 @@ const IsPaydaslari = ({setPage, user}) => {
         <SectionTitle icon="Network" title="İŞ PAYDAŞLARI"
           sub={`TOPLAM ${totalCount} PAYDAŞ KAYITLI`}
           right={
-            <button style={{...S.btn,...S.btnP,fontSize:11}} onClick={yeniPaydasAc}>
-              <LIcon name="Plus" size={14} color="#fff"/> YENİ PAYDAŞ
-            </button>
+            <div style={{display:'flex',gap:6,alignItems:'center'}}>
+              {isAdmin && secililerP.length > 0 && (
+                <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px'}} onClick={() => setTopluSilConfirmP(true)}>
+                  <LIcon name="Trash2" size={12} color="#fff"/> TOPLU SİL ({secililerP.length})
+                </button>
+              )}
+              <button style={{...S.btn,...S.btnP,fontSize:11}} onClick={yeniPaydasAc}>
+                <LIcon name="Plus" size={14} color="#fff"/> YENİ PAYDAŞ
+              </button>
+            </div>
           }/>
 
         {/* FİLTRE BAR */}
@@ -966,6 +1051,11 @@ const IsPaydaslari = ({setPage, user}) => {
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:900}}>
                   <thead>
                     <tr style={{background:C.bgHover}}>
+                      {isAdmin && (
+                        <th style={{padding:'10px 6px',textAlign:'center',borderBottom:`1px solid ${C.border}`,width:32}}>
+                          <input type="checkbox" checked={paydaslar.length > 0 && secililerP.length === paydaslar.length} onChange={tumunuSecP} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                        </th>
+                      )}
                       {['AD','TÜR','YETKİLİ','TELEFON','İL','KOMİSYON ORANI','DURUM','İŞLEMLER'].map(h =>
                         <th key={h} style={{padding:'10px 10px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
                       )}
@@ -973,9 +1063,14 @@ const IsPaydaslari = ({setPage, user}) => {
                   </thead>
                   <tbody>
                     {paydaslar.map((paydas, i) => (
-                      <tr key={paydas.id || i} style={{borderBottom:`1px solid ${C.border}`}}
-                        onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <tr key={paydas.id || i} style={{borderBottom:`1px solid ${C.border}`,background: secililerP.includes(paydas.id) ? `${C.accent}11` : 'transparent'}}
+                        onMouseEnter={e => { if(!secililerP.includes(paydas.id)) e.currentTarget.style.background = C.bgHover; }}
+                        onMouseLeave={e => { if(!secililerP.includes(paydas.id)) e.currentTarget.style.background = 'transparent'; }}>
+                        {isAdmin && (
+                          <td style={{padding:'10px 6px',textAlign:'center',width:32}}>
+                            <input type="checkbox" checked={secililerP.includes(paydas.id)} onChange={() => toggleSecimP(paydas.id)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                          </td>
+                        )}
                         <td style={{padding:'10px 10px',fontWeight:600}}>
                           <div style={{display:'flex',alignItems:'center',gap:8}}>
                             <div style={{width:32,height:32,borderRadius:8,background:`${turRenk(paydas.tur)}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>

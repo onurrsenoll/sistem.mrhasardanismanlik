@@ -61,6 +61,10 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [raporLoading, setRaporLoading] = useState(false);
   const raporRef = useRef(null);
+  const [secililer, setSecililer] = useState([]);
+  const [topluSilConfirm, setTopluSilConfirm] = useState(false);
+  const [topluSilLoading, setTopluSilLoading] = useState(false);
+  const isAdmin = user?.rol === 'admin';
   const [page, setPage2] = useState(1);
   const [limit, setLimit] = useState(25);
   const [pgInfo, setPgInfo] = useState({total:0, totalPages:0});
@@ -91,6 +95,18 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
   const dosyaSil = async (id) => {
     const r = await api.dosyaDelete(id);
     if (r?.success) { load(); setDeleteConfirm(null); }
+  };
+
+  const toggleSecim = (id) => setSecililer(p => p.includes(id) ? p.filter(x=>x!==id) : [...p, id]);
+  const tumunuSec = () => { if (secililer.length === data.length) setSecililer([]); else setSecililer(data.map(d=>d.id)); };
+  const topluSil = async () => {
+    if (secililer.length === 0) return;
+    setTopluSilLoading(true);
+    const r = await api.dosyaBulkDelete(secililer);
+    setTopluSilLoading(false);
+    setTopluSilConfirm(false);
+    if (r?.success) { setSecililer([]); load(); }
+    else alert(r?.error || 'TOPLU SİLME HATASI');
   };
 
   const toplamDosya = stats.toplam || pgInfo.total || data.length;
@@ -426,6 +442,12 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                   onClick={yazdirRapor} disabled={raporLoading} title="YAZDIR">
                   <LIcon name="Printer" size={11} color={C.accent}/> YAZDIR
                 </button>
+                {isAdmin && secililer.length > 0 && (
+                  <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px',display:'flex',alignItems:'center',gap:4}}
+                    onClick={() => setTopluSilConfirm(true)} disabled={topluSilLoading}>
+                    <LIcon name="Trash2" size={11} color="#fff"/> TOPLU SİL ({secililer.length})
+                  </button>
+                )}
               </>
             )}
 
@@ -452,6 +474,10 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',minWidth:1350}}>
               <thead>
                 <tr>
+                  {isAdmin && <th style={{...thS,minWidth:35,textAlign:'center',padding:'8px 4px'}}>
+                    <input type="checkbox" checked={data.length > 0 && secililer.length === data.length}
+                      onChange={tumunuSec} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                  </th>}
                   <th style={{...thS,minWidth:80}}>DOSYA NO</th>
                   <th style={{...thS,minWidth:85}}>T.C. NO</th>
                   <th style={{...thS,minWidth:110}}>ADI SOYADI</th>
@@ -475,6 +501,10 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                       onClick={() => onSelect(d.id)}
                       onMouseEnter={e => e.currentTarget.style.background=`${C.accent}0a`}
                       onMouseLeave={e => e.currentTarget.style.background=i%2===1?`${C.bgHover}66`:'transparent'}>
+                      {isAdmin && <td style={{...tdS,textAlign:'center',padding:'6px 4px'}} onClick={e => e.stopPropagation()}>
+                        <input type="checkbox" checked={secililer.includes(d.id)} onChange={() => toggleSecim(d.id)}
+                          style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                      </td>}
                       {/* DOSYA NO */}
                       <td style={{...tdS,fontWeight:700,color:C.accent}}>{d.dosya_no}</td>
                       {/* T.C. NO */}
@@ -577,6 +607,11 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
       <Confirm open={!!deleteConfirm} message={deleteConfirm ? `"${deleteConfirm.text}" DOSYASI SİLİNSİN Mİ?` : ''}
         onCancel={() => setDeleteConfirm(null)}
         onConfirm={() => deleteConfirm && dosyaSil(deleteConfirm.id)}/>
+
+      <Confirm open={topluSilConfirm}
+        message={`SEÇİLEN ${secililer.length} DOSYA VE TÜM İLİŞKİLİ KAYITLARI (EVRAK, MASRAF, MAĞDUR, ARAÇ) KALICI OLARAK SİLİNECEK!\n\nBU İŞLEM GERİ ALINAMAZ! DEVAM EDİLSİN Mİ?`}
+        onCancel={() => setTopluSilConfirm(false)}
+        onConfirm={topluSil}/>
     </div>
   );
 };

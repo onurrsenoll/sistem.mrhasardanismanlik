@@ -108,6 +108,12 @@ const ServisListesi = ({setPage, user}) => {
   /* SİLME ONAY */
   const [confirm, setConfirm] = useState({open:false, msg:'', cb:null});
 
+  /* TOPLU SİLME */
+  const [secililer, setSecililer] = useState([]);
+  const [topluSilConfirm, setTopluSilConfirm] = useState(false);
+  const [topluSilLoading, setTopluSilLoading] = useState(false);
+  const isAdmin = user?.rol === 'admin';
+
   /* VERİ YÜKLE */
   const yukle = useCallback(async () => {
     setLoading(true);
@@ -240,6 +246,30 @@ const ServisListesi = ({setPage, user}) => {
     if (r?.success && seciliServis) ihbarYukle(seciliServis.id);
   };
 
+  /* TOPLU SİLME FONKSİYONLARI */
+  const toggleSecim = (id) => {
+    setSecililer(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const tumunuSec = () => {
+    if (secililer.length === data.length) {
+      setSecililer([]);
+    } else {
+      setSecililer(data.map(s => s.id));
+    }
+  };
+
+  const topluSil = async () => {
+    setTopluSilLoading(true);
+    const r = await api.servisBulkDelete(secililer);
+    if (r?.success) {
+      setSecililer([]);
+      setTopluSilConfirm(false);
+      yukle();
+    }
+    setTopluSilLoading(false);
+  };
+
   /* HİZMET TÜRLERİ PARSE */
   const hizmetParse = (str) => {
     if (!str) return [];
@@ -309,6 +339,9 @@ const ServisListesi = ({setPage, user}) => {
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:1000}}>
                   <thead>
                     <tr style={{background:C.bgHover}}>
+                      {isAdmin && <th style={{padding:'10px 12px',textAlign:'center',borderBottom:`1px solid ${C.border}`,width:36}}>
+                        <input type="checkbox" checked={data.length > 0 && secililer.length === data.length} onChange={tumunuSec} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                      </th>}
                       {['FİRMA ADI','YETKİLİ','TELEFON','İL','HİZMET TÜRLERİ','DURUM','İŞLEMLER'].map(h =>
                         <th key={h} style={{padding:'10px 12px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:10,borderBottom:`1px solid ${C.border}`}}>{h}</th>
                       )}
@@ -323,6 +356,9 @@ const ServisListesi = ({setPage, user}) => {
                           onMouseEnter={e=>e.currentTarget.style.background=C.bgHover}
                           onMouseLeave={e=>e.currentTarget.style.background='transparent'}
                           onClick={() => detayAc(s)}>
+                          {isAdmin && <td style={{padding:'10px 12px',textAlign:'center'}} onClick={e => e.stopPropagation()}>
+                            <input type="checkbox" checked={secililer.includes(s.id)} onChange={() => toggleSecim(s.id)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                          </td>}
                           <td style={{padding:'10px 12px',fontWeight:600}}>{s.firma_adi}</td>
                           <td style={{padding:'10px 12px',color:C.textSec}}>{s.yetkili_adi || '-'}</td>
                           <td style={{padding:'10px 12px',color:C.textSec}}>{s.telefon || '-'}</td>
