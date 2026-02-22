@@ -209,16 +209,20 @@ const MedyaUploadZone = ({sahaId, medyalar, setMedyalar}) => {
       </div>
 
       {medyalar.length > 0 && (
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))',gap:10}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))',gap:10}}>
           {medyalar.map(m => {
             const isImg = (m.mime_type||'').startsWith('image/');
+            const previewUrl = `/api/v1/saha/medya-download.php?id=${m.id}&mode=inline`;
+            const downloadUrl = `/api/v1/saha/medya-download.php?id=${m.id}&mode=attachment`;
             return (
               <div key={m.id} style={{position:'relative',borderRadius:8,overflow:'hidden',border:`1px solid ${C.border}`,background:C.bgCard}}>
                 {isImg ? (
-                  <img src={`/api/v1/saha/medya-download.php?id=${m.id}&mode=inline`} alt={m.dosya_adi}
-                    style={{width:'100%',height:100,objectFit:'cover'}}/>
+                  <img src={previewUrl} alt={m.dosya_adi}
+                    style={{width:'100%',height:100,objectFit:'cover',cursor:'pointer'}}
+                    onClick={() => window.open(previewUrl, '_blank')}/>
                 ) : (
-                  <div style={{width:'100%',height:100,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:8}}>
+                  <div style={{width:'100%',height:100,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:8,cursor:'pointer'}}
+                    onClick={() => window.open(previewUrl, '_blank')}>
                     <LIcon name="FileText" size={28} color={C.danger}/>
                     <div style={{fontSize:9,color:C.textMuted,marginTop:4,textAlign:'center',wordBreak:'break-all',lineHeight:1.2}}>{m.dosya_adi}</div>
                   </div>
@@ -227,7 +231,17 @@ const MedyaUploadZone = ({sahaId, medyalar, setMedyalar}) => {
                   position:'absolute',top:4,right:4,width:22,height:22,borderRadius:'50%',border:'none',
                   background:'rgba(239,68,68,0.9)',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12
                 }}>✕</button>
-                <div style={{padding:'4px 6px',fontSize:9,color:C.textMuted,borderTop:`1px solid ${C.border}`,textOverflow:'ellipsis',overflow:'hidden',whiteSpace:'nowrap'}}>
+                <div style={{display:'flex',gap:4,padding:'5px 6px',borderTop:`1px solid ${C.border}`}}>
+                  <button onClick={() => window.open(previewUrl, '_blank')} title="ÖNİZLE"
+                    style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:3,padding:'4px 0',borderRadius:5,border:`1px solid ${C.accent}44`,background:`${C.accent}11`,color:C.accent,cursor:'pointer',fontSize:8,fontWeight:700}}>
+                    <LIcon name="Eye" size={10}/> ÖNİZLE
+                  </button>
+                  <a href={downloadUrl} download={m.dosya_adi} title="İNDİR"
+                    style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:3,padding:'4px 0',borderRadius:5,border:`1px solid ${C.success}44`,background:`${C.success}11`,color:C.success,cursor:'pointer',fontSize:8,fontWeight:700,textDecoration:'none'}}>
+                    <LIcon name="Download" size={10}/> İNDİR
+                  </a>
+                </div>
+                <div style={{padding:'3px 6px',fontSize:8,color:C.textMuted,borderTop:`1px solid ${C.border}22`,textOverflow:'ellipsis',overflow:'hidden',whiteSpace:'nowrap'}}>
                   {m.dosya_adi}
                 </div>
               </div>
@@ -381,19 +395,37 @@ const SahaDetayModal = ({item, onClose, user, onOnayla, onReddet}) => {
         <div style={{...S.card, marginBottom:12}}>
           <SectionHeader icon="Camera" title={`YÜKLENEN GÖRSELLER / EVRAKLAR (${medyalar.length})`} color={C.gold}/>
           <div style={{padding:16}}>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(100px,1fr))',gap:8}}>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:10}}>
               {medyalar.map(m => {
                 const isImg = (m.mime_type||'').startsWith('image/');
+                const token = MR.api?.token ? '&token=' + MR.api.token : '';
+                const previewUrl = `/api/v1/saha/medya-download.php?id=${m.id}&mode=inline`;
+                const downloadUrl = `/api/v1/saha/medya-download.php?id=${m.id}&mode=attachment`;
                 return (
-                  <div key={m.id} style={{borderRadius:6,overflow:'hidden',border:`1px solid ${C.border}`}}>
+                  <div key={m.id} style={{borderRadius:8,overflow:'hidden',border:`1px solid ${C.border}`,background:C.bgCard}}>
                     {isImg ? (
-                      <img src={`/api/v1/saha/medya-download.php?id=${m.id}&mode=inline`} style={{width:'100%',height:80,objectFit:'cover'}}/>
+                      <img src={previewUrl} alt={m.dosya_adi} style={{width:'100%',height:100,objectFit:'cover',cursor:'pointer'}}
+                        onClick={() => window.open(previewUrl, '_blank')}/>
                     ) : (
-                      <div style={{height:80,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-                        <LIcon name="FileText" size={24} color={C.danger}/>
-                        <div style={{fontSize:8,color:C.textMuted,marginTop:2}}>{m.dosya_adi}</div>
+                      <div style={{height:100,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',cursor:'pointer',padding:8}}
+                        onClick={() => window.open(previewUrl, '_blank')}>
+                        <LIcon name="FileText" size={28} color={C.danger}/>
+                        <div style={{fontSize:9,color:C.textMuted,marginTop:4,textAlign:'center',wordBreak:'break-all',lineHeight:1.2}}>{m.dosya_adi}</div>
                       </div>
                     )}
+                    <div style={{display:'flex',gap:4,padding:'6px 8px',borderTop:`1px solid ${C.border}`,background:`${C.bgCard}`}}>
+                      <button onClick={() => window.open(previewUrl, '_blank')} title="ÖNİZLE"
+                        style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'5px 0',borderRadius:6,border:`1px solid ${C.accent}44`,background:`${C.accent}11`,color:C.accent,cursor:'pointer',fontSize:9,fontWeight:700}}>
+                        <LIcon name="Eye" size={12}/> ÖNİZLE
+                      </button>
+                      <a href={downloadUrl} download={m.dosya_adi} title="İNDİR"
+                        style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'5px 0',borderRadius:6,border:`1px solid ${C.success}44`,background:`${C.success}11`,color:C.success,cursor:'pointer',fontSize:9,fontWeight:700,textDecoration:'none'}}>
+                        <LIcon name="Download" size={12}/> İNDİR
+                      </a>
+                    </div>
+                    <div style={{padding:'3px 8px',fontSize:8,color:C.textMuted,borderTop:`1px solid ${C.border}22`,textOverflow:'ellipsis',overflow:'hidden',whiteSpace:'nowrap'}}>
+                      {m.dosya_adi}
+                    </div>
                   </div>
                 );
               })}

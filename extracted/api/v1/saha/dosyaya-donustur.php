@@ -89,25 +89,27 @@ try {
         ]);
     }
 
-    // 6. Saha medyalarını evraklara kopyala
+    // 6. Saha medyalarını SİL (dosyaya dönüştürüldüğünde evraklar AKTARILMAZ)
     $stmtMediaList = $db->prepare("SELECT * FROM saha_dosya_medya WHERE saha_dosya_id = ?");
     $stmtMediaList->execute([$id]);
     $medyalar = $stmtMediaList->fetchAll();
 
+    // Fiziksel dosyaları sil
     foreach ($medyalar as $medya) {
-        $stmtEvrak = $db->prepare("INSERT INTO evraklar
-            (dosya_id, evrak_turu, dosya_adi, sunucu_adi, dosya_yolu, dosya_boyutu, mime_type, kullanici_id)
-            VALUES (?, 'Saha Belgesi', ?, ?, ?, ?, ?, ?)");
-        $stmtEvrak->execute([
-            $dosyaId,
-            $medya['dosya_adi'],
-            $medya['sunucu_adi'],
-            $medya['dosya_yolu'],
-            $medya['dosya_boyutu'] ?? 0,
-            $medya['mime_type'] ?? 'application/octet-stream',
-            $user['id']
-        ]);
+        $dosyaTamYol = UPLOAD_DIR . $medya['dosya_yolu'];
+        if (file_exists($dosyaTamYol)) {
+            @unlink($dosyaTamYol);
+        }
+        // Alternatif yol
+        $altYol = UPLOAD_DIR . '/' . $medya['dosya_yolu'];
+        if (file_exists($altYol)) {
+            @unlink($altYol);
+        }
     }
+
+    // Veritabanından medya kayıtlarını sil
+    $stmtDelMedia = $db->prepare("DELETE FROM saha_dosya_medya WHERE saha_dosya_id = ?");
+    $stmtDelMedia->execute([$id]);
 
     // 7. Saha dosyasını güncelle - Sigorta bilgilerini kaydet
     $stmt = $db->prepare("UPDATE saha_dosyalar
