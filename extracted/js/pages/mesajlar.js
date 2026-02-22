@@ -356,13 +356,14 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
   const topluSil = async () => {
     if (secililer.length === 0) return;
     setTopluSilLoading(true);
+    const silinecekAdet = secililer.length;
     try {
       const r = await api.mesajBulkDelete(secililer);
       if (r?.success) {
         setSecililer([]);
         setTopluSilConfirm(false);
         await Promise.all([gelenYukle(), gidenYukle()]);
-        setBasariMesaji(secililer.length + ' MESAJ BAŞARIYLA SİLİNDİ');
+        setBasariMesaji(silinecekAdet + ' MESAJ BAŞARIYLA SİLİNDİ');
       } else {
         setError(r?.error || 'TOPLU SİLME İŞLEMİ BAŞARISIZ');
         setTopluSilConfirm(false);
