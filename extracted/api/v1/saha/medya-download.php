@@ -52,15 +52,35 @@ if ($user['rol'] === 'personel' && (int)$medya['personel_id'] !== (int)$user['id
 
 // Dosya yolunu bul - birden fazla alternatif dene
 $dosyaYolu = $medya['dosya_yolu'];
+$sunucuAdi = $medya['sunucu_adi'] ?? '';
 $filePath = null;
 
+// dosya_yolu başında uploads/ varsa temizle
+if (strpos($dosyaYolu, 'uploads/') === 0) {
+    $dosyaYolu = substr($dosyaYolu, 8);
+}
+
+$uploadBase = rtrim(UPLOAD_DIR, '/') . '/';
+
 $denenecekYollar = [
-    UPLOAD_DIR . $dosyaYolu,
-    UPLOAD_DIR . '/' . $dosyaYolu,
+    $uploadBase . $dosyaYolu,
+    $uploadBase . ltrim($dosyaYolu, '/'),
     $_SERVER['DOCUMENT_ROOT'] . '/uploads/' . $dosyaYolu,
     dirname($_SERVER['DOCUMENT_ROOT']) . '/uploads/' . $dosyaYolu,
-    realpath(UPLOAD_DIR) ? realpath(UPLOAD_DIR) . '/' . $dosyaYolu : null,
 ];
+
+if ($sunucuAdi) {
+    if (preg_match('#(\d{4})/(\d{2})/#', $dosyaYolu, $ym)) {
+        $denenecekYollar[] = $uploadBase . $ym[1] . '/' . $ym[2] . '/' . $sunucuAdi;
+    }
+    $denenecekYollar[] = $uploadBase . $sunucuAdi;
+    $denenecekYollar[] = $uploadBase . date('Y') . '/' . date('m') . '/' . $sunucuAdi;
+}
+
+$realUpload = realpath(UPLOAD_DIR);
+if ($realUpload) {
+    $denenecekYollar[] = $realUpload . '/' . $dosyaYolu;
+}
 
 foreach ($denenecekYollar as $yol) {
     if ($yol && file_exists($yol) && is_file($yol)) {
@@ -74,6 +94,13 @@ if (!$filePath) {
     $debug = '';
     if ($user['rol'] === 'admin') {
         $debug = ' | UPLOAD_DIR: ' . UPLOAD_DIR . ' | dosya_yolu: ' . $dosyaYolu;
+        if (preg_match('#(\d{4}/\d{2})/#', $dosyaYolu, $subDir)) {
+            $subPath = $uploadBase . $subDir[1];
+            if (is_dir($subPath)) {
+                $files = scandir($subPath);
+                $debug .= ' | Klasördeki dosyalar: ' . implode(', ', array_slice(array_diff($files, ['.', '..']), 0, 5));
+            }
+        }
     }
     json_error('DOSYA SUNUCUDA BULUNAMADI' . $debug, 404);
 }

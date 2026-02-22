@@ -57,19 +57,43 @@ if (!$evrak) {
 
 // Dosya yolunu bul - birden fazla alternatif dene
 $dosyaYolu = $evrak['dosya_yolu'];
+$sunucuAdi = $evrak['sunucu_adi'] ?? '';
 $filePath = null;
 
-// Denenecek yollar listesi
+// dosya_yolu başında uploads/ varsa temizle
+if (strpos($dosyaYolu, 'uploads/') === 0) {
+    $dosyaYolu = substr($dosyaYolu, 8);
+}
+
+// UPLOAD_DIR'ı normalize et (sonunda / olsun)
+$uploadBase = rtrim(UPLOAD_DIR, '/') . '/';
+
+// Denenecek yollar listesi (en olası → en az olası)
 $denenecekYollar = [
-    UPLOAD_DIR . $dosyaYolu,
+    $uploadBase . $dosyaYolu,
+    $uploadBase . ltrim($dosyaYolu, '/'),
     $_SERVER['DOCUMENT_ROOT'] . '/uploads/' . $dosyaYolu,
     dirname($_SERVER['DOCUMENT_ROOT']) . '/uploads/' . $dosyaYolu,
-    realpath(UPLOAD_DIR) ? realpath(UPLOAD_DIR) . '/' . $dosyaYolu : null,
 ];
 
-// Eğer UPLOAD_DIR sonunda / yoksa ekle
-if (substr(UPLOAD_DIR, -1) !== '/') {
-    array_unshift($denenecekYollar, UPLOAD_DIR . '/' . $dosyaYolu);
+// sunucu_adi ile de dene (farklı alt klasörlerde arama)
+if ($sunucuAdi) {
+    $yil = date('Y');
+    $ay = date('m');
+    $denenecekYollar[] = $uploadBase . $yil . '/' . $ay . '/' . $sunucuAdi;
+    // dosya_yolu'ndan yıl/ay çıkar
+    if (preg_match('#(\d{4})/(\d{2})/#', $dosyaYolu, $ym)) {
+        $denenecekYollar[] = $uploadBase . $ym[1] . '/' . $ym[2] . '/' . $sunucuAdi;
+    }
+    // Doğrudan uploads altında
+    $denenecekYollar[] = $uploadBase . $sunucuAdi;
+}
+
+// realpath ile de dene
+$realUpload = realpath(UPLOAD_DIR);
+if ($realUpload) {
+    $denenecekYollar[] = $realUpload . '/' . $dosyaYolu;
+    $denenecekYollar[] = $realUpload . '/' . ltrim($dosyaYolu, '/');
 }
 
 foreach ($denenecekYollar as $yol) {
@@ -81,14 +105,20 @@ foreach ($denenecekYollar as $yol) {
 
 if (!$filePath) {
     header('Content-Type: application/json');
-    // Admin kullanıcılara debug bilgisi göster
     $debug = '';
     if (isset($user) && isset($user['rol']) && $user['rol'] === 'admin') {
-        $debug = ' | UPLOAD_DIR: ' . UPLOAD_DIR . ' | dosya_yolu: ' . $dosyaYolu . ' | Denenen: ' . UPLOAD_DIR . $dosyaYolu;
-        if (is_dir(UPLOAD_DIR)) {
-            $debug .= ' | uploads/ dizini MEVCUT';
-        } else {
-            $debug .= ' | uploads/ dizini YOK (' . UPLOAD_DIR . ')';
+        $debug = ' | UPLOAD_DIR: ' . UPLOAD_DIR . ' | dosya_yolu: ' . $dosyaYolu;
+        $debug .= ' | Denenen: ' . $uploadBase . $dosyaYolu;
+        $debug .= is_dir(UPLOAD_DIR) ? ' | uploads/ dizini MEVCUT' : ' | uploads/ dizini YOK';
+        // Klasör içeriğini kontrol et
+        if (preg_match('#(\d{4}/\d{2})/#', $dosyaYolu, $subDir)) {
+            $subPath = $uploadBase . $subDir[1];
+            if (is_dir($subPath)) {
+                $files = scandir($subPath);
+                $debug .= ' | Klasördeki dosyalar(' . count($files) . '): ' . implode(', ', array_slice(array_diff($files, ['.', '..']), 0, 5));
+            } else {
+                $debug .= ' | Alt klasör YOK: ' . $subPath;
+            }
         }
     }
     json_error('Dosya sunucuda bulunamadı' . $debug, 404);

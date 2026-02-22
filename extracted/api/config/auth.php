@@ -42,6 +42,10 @@ function get_token_from_request() {
     if (isset($_COOKIE['mr_token'])) {
         return $_COOKIE['mr_token'];
     }
+    // URL query param fallback (dosya indirme/önizleme - img src & yeni sekme için)
+    if (isset($_GET['auth']) && !empty($_GET['auth'])) {
+        return $_GET['auth'];
+    }
     return null;
 }
 

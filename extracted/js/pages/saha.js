@@ -156,12 +156,122 @@ const LocalMedyaZone = ({files, setFiles}) => {
   );
 };
 
+/* ═══ SAHA MEDYA ÖNİZLEME MODALI (3:2 ORANDA ORTALI) ═══ */
+const SahaMedyaPreview = ({medya, onClose}) => {
+  const {C, LIcon} = MR;
+  const [blobUrl, setBlobUrl] = React.useState(null);
+  const [mimeType, setMimeType] = React.useState('');
+  const [hata, setHata] = React.useState('');
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (!medya) return;
+    let iptal = false;
+    const yukle = async () => {
+      try {
+        const token = MR.api?.token;
+        const r = await fetch(`/api/v1/saha/medya-download.php?id=${medya.id}&mode=inline`, {
+          headers: token ? {'Authorization': 'Bearer ' + token} : {},
+          cache: 'no-cache'
+        });
+        if (iptal) return;
+        if (!r.ok) {
+          let msg = 'HATA: ' + r.status;
+          try { const j = await r.json(); msg = j.error || msg; } catch(e){}
+          setHata(msg); setLoading(false); return;
+        }
+        const ct = r.headers.get('content-type') || 'application/octet-stream';
+        const ab = await r.arrayBuffer();
+        if (iptal) return;
+        if (ab.byteLength === 0) { setHata('DOSYA BOŞ'); setLoading(false); return; }
+        const blob = new Blob([ab], {type: ct});
+        setBlobUrl(URL.createObjectURL(blob));
+        setMimeType(ct.toLowerCase());
+        setLoading(false);
+      } catch(e) {
+        if (!iptal) { setHata('BAĞLANTI HATASI: ' + e.message); setLoading(false); }
+      }
+    };
+    yukle();
+    return () => { iptal = true; if (blobUrl) URL.revokeObjectURL(blobUrl); };
+  }, [medya?.id]);
+
+  const indir = async () => {
+    try {
+      const token = MR.api?.token;
+      const r = await fetch(`/api/v1/saha/medya-download.php?id=${medya.id}&mode=attachment`, {
+        headers: token ? {'Authorization': 'Bearer ' + token} : {}
+      });
+      if (!r.ok) { alert('İNDİRME HATASI'); return; }
+      const blob = await r.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = medya.dosya_adi || 'dosya';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    } catch(e) { alert('İNDİRME HATASI: ' + e.message); }
+  };
+
+  if (!medya) return null;
+  const isImg = mimeType.startsWith('image/');
+
+  return (
+    <div onClick={onClose} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.75)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width:'min(900px, 85vw)', height:'min(600px, 80vh)',
+        background:C.bgCard, borderRadius:14, overflow:'hidden',
+        display:'flex', flexDirection:'column', cursor:'default',
+        boxShadow:'0 25px 60px rgba(0,0,0,0.6)'
+      }}>
+        {/* BAŞLIK */}
+        <div style={{padding:'10px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',background:`${C.accent}08`,flexShrink:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0,flex:1}}>
+            <LIcon name="Eye" size={14} color={C.accent}/>
+            <span style={{fontSize:12,fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{medya.dosya_adi}</span>
+            {medya.dosya_boyutu && <span style={{fontSize:9,color:C.textMuted,flexShrink:0}}>({(medya.dosya_boyutu/1024).toFixed(0)}KB)</span>}
+          </div>
+          <div style={{display:'flex',gap:6,flexShrink:0}}>
+            <button onClick={indir} style={{padding:'5px 12px',fontSize:9,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontWeight:700}}>
+              <LIcon name="Download" size={11} color={C.success}/> İNDİR
+            </button>
+            <button onClick={onClose} style={{padding:'5px 12px',fontSize:9,background:`${C.danger}18`,color:C.danger,border:`1px solid ${C.danger}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontWeight:700}}>
+              <LIcon name="X" size={11} color={C.danger}/> KAPAT
+            </button>
+          </div>
+        </div>
+        {/* İÇERİK */}
+        <div style={{flex:1,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',background:'#0f172a'}}>
+          {loading ? (
+            <div style={{color:'#6b7280',fontSize:12,display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
+              <div style={{width:28,height:28,border:'3px solid transparent',borderTopColor:C.accent,borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
+              YÜKLENİYOR...
+            </div>
+          ) : hata ? (
+            <div style={{color:'#ef4444',fontSize:12,display:'flex',flexDirection:'column',alignItems:'center',gap:8,padding:20,textAlign:'center'}}>
+              <LIcon name="AlertTriangle" size={32} color="#ef4444"/>
+              <div style={{fontWeight:700}}>DOSYA YÜKLENEMEDİ</div>
+              <div style={{fontSize:10,color:'#6b7280',maxWidth:400}}>{hata}</div>
+            </div>
+          ) : isImg ? (
+            <img src={blobUrl} alt={medya.dosya_adi} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
+          ) : (
+            <object data={blobUrl} type={mimeType || 'application/pdf'} style={{width:'100%',height:'100%',border:'none'}}>
+              <embed src={blobUrl} type={mimeType || 'application/pdf'} style={{width:'100%',height:'100%',border:'none'}}/>
+            </object>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* ═══ MEDYA UPLOAD ZONE (KAYIT SONRASI - SERVER) ═══ */
 const MedyaUploadZone = ({sahaId, medyalar, setMedyalar}) => {
   const {C, S, LIcon, api} = MR;
   const [yukleniyor, setYukleniyor] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [hata, setHata] = useState('');
+  const [previewMedya, setPreviewMedya] = useState(null);
   const fileRef = useRef(null);
 
   const yukle = async (files) => {
@@ -186,6 +296,9 @@ const MedyaUploadZone = ({sahaId, medyalar, setMedyalar}) => {
   };
 
   const onDrop = (e) => { e.preventDefault(); setDragging(false); yukle(e.dataTransfer.files); };
+
+  // Auth token'lı URL (img src ve a href için)
+  const authParam = MR.api?.token ? '&auth=' + MR.api.token : '';
 
   return (
     <div>
@@ -212,17 +325,16 @@ const MedyaUploadZone = ({sahaId, medyalar, setMedyalar}) => {
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))',gap:10}}>
           {medyalar.map(m => {
             const isImg = (m.mime_type||'').startsWith('image/');
-            const previewUrl = `/api/v1/saha/medya-download.php?id=${m.id}&mode=inline`;
-            const downloadUrl = `/api/v1/saha/medya-download.php?id=${m.id}&mode=attachment`;
+            const thumbUrl = `/api/v1/saha/medya-download.php?id=${m.id}&mode=inline${authParam}`;
             return (
               <div key={m.id} style={{position:'relative',borderRadius:8,overflow:'hidden',border:`1px solid ${C.border}`,background:C.bgCard}}>
                 {isImg ? (
-                  <img src={previewUrl} alt={m.dosya_adi}
+                  <img src={thumbUrl} alt={m.dosya_adi}
                     style={{width:'100%',height:100,objectFit:'cover',cursor:'pointer'}}
-                    onClick={() => window.open(previewUrl, '_blank')}/>
+                    onClick={() => setPreviewMedya(m)}/>
                 ) : (
                   <div style={{width:'100%',height:100,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:8,cursor:'pointer'}}
-                    onClick={() => window.open(previewUrl, '_blank')}>
+                    onClick={() => setPreviewMedya(m)}>
                     <LIcon name="FileText" size={28} color={C.danger}/>
                     <div style={{fontSize:9,color:C.textMuted,marginTop:4,textAlign:'center',wordBreak:'break-all',lineHeight:1.2}}>{m.dosya_adi}</div>
                   </div>
@@ -232,14 +344,28 @@ const MedyaUploadZone = ({sahaId, medyalar, setMedyalar}) => {
                   background:'rgba(239,68,68,0.9)',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12
                 }}>✕</button>
                 <div style={{display:'flex',gap:4,padding:'5px 6px',borderTop:`1px solid ${C.border}`}}>
-                  <button onClick={() => window.open(previewUrl, '_blank')} title="ÖNİZLE"
+                  <button onClick={() => setPreviewMedya(m)} title="ÖNİZLE"
                     style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:3,padding:'4px 0',borderRadius:5,border:`1px solid ${C.accent}44`,background:`${C.accent}11`,color:C.accent,cursor:'pointer',fontSize:8,fontWeight:700}}>
                     <LIcon name="Eye" size={10}/> ÖNİZLE
                   </button>
-                  <a href={downloadUrl} download={m.dosya_adi} title="İNDİR"
-                    style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:3,padding:'4px 0',borderRadius:5,border:`1px solid ${C.success}44`,background:`${C.success}11`,color:C.success,cursor:'pointer',fontSize:8,fontWeight:700,textDecoration:'none'}}>
+                  <button onClick={async () => {
+                    try {
+                      const token = MR.api?.token;
+                      const r = await fetch(`/api/v1/saha/medya-download.php?id=${m.id}&mode=attachment`, {
+                        headers: token ? {'Authorization':'Bearer '+token} : {}
+                      });
+                      if (!r.ok) { alert('İNDİRME HATASI'); return; }
+                      const blob = await r.blob();
+                      const a = document.createElement('a');
+                      a.href = URL.createObjectURL(blob);
+                      a.download = m.dosya_adi || 'dosya';
+                      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+                    } catch(e) { alert('İNDİRME HATASI: ' + e.message); }
+                  }} title="İNDİR"
+                    style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:3,padding:'4px 0',borderRadius:5,border:`1px solid ${C.success}44`,background:`${C.success}11`,color:C.success,cursor:'pointer',fontSize:8,fontWeight:700}}>
                     <LIcon name="Download" size={10}/> İNDİR
-                  </a>
+                  </button>
                 </div>
                 <div style={{padding:'3px 6px',fontSize:8,color:C.textMuted,borderTop:`1px solid ${C.border}22`,textOverflow:'ellipsis',overflow:'hidden',whiteSpace:'nowrap'}}>
                   {m.dosya_adi}
@@ -249,6 +375,8 @@ const MedyaUploadZone = ({sahaId, medyalar, setMedyalar}) => {
           })}
         </div>
       )}
+      {/* ÖNİZLEME MODALI */}
+      {previewMedya && <SahaMedyaPreview medya={previewMedya} onClose={() => setPreviewMedya(null)}/>}
     </div>
   );
 };
@@ -317,6 +445,7 @@ MR.SahaPage = ({setPage, user, subPage}) => {
 const SahaDetayModal = ({item, onClose, user, onOnayla, onReddet}) => {
   const {C, S, LIcon, Modal, Badge, api} = MR;
   const [medyalar, setMedyalar] = useState([]);
+  const [detayPreviewMedya, setDetayPreviewMedya] = useState(null);
   if (!item) return null;
   const isAdmin = user?.rol === 'admin';
 
@@ -391,37 +520,51 @@ const SahaDetayModal = ({item, onClose, user, onOnayla, onReddet}) => {
       )}
 
       {/* MEDYALAR */}
-      {medyalar.length > 0 && (
+      {medyalar.length > 0 && (() => {
+        const authParam = MR.api?.token ? '&auth=' + MR.api.token : '';
+        return (
         <div style={{...S.card, marginBottom:12}}>
           <SectionHeader icon="Camera" title={`YÜKLENEN GÖRSELLER / EVRAKLAR (${medyalar.length})`} color={C.gold}/>
           <div style={{padding:16}}>
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:10}}>
               {medyalar.map(m => {
                 const isImg = (m.mime_type||'').startsWith('image/');
-                const token = MR.api?.token ? '&token=' + MR.api.token : '';
-                const previewUrl = `/api/v1/saha/medya-download.php?id=${m.id}&mode=inline`;
-                const downloadUrl = `/api/v1/saha/medya-download.php?id=${m.id}&mode=attachment`;
+                const thumbUrl = `/api/v1/saha/medya-download.php?id=${m.id}&mode=inline${authParam}`;
                 return (
                   <div key={m.id} style={{borderRadius:8,overflow:'hidden',border:`1px solid ${C.border}`,background:C.bgCard}}>
                     {isImg ? (
-                      <img src={previewUrl} alt={m.dosya_adi} style={{width:'100%',height:100,objectFit:'cover',cursor:'pointer'}}
-                        onClick={() => window.open(previewUrl, '_blank')}/>
+                      <img src={thumbUrl} alt={m.dosya_adi} style={{width:'100%',height:100,objectFit:'cover',cursor:'pointer'}}
+                        onClick={() => setDetayPreviewMedya(m)}/>
                     ) : (
                       <div style={{height:100,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',cursor:'pointer',padding:8}}
-                        onClick={() => window.open(previewUrl, '_blank')}>
+                        onClick={() => setDetayPreviewMedya(m)}>
                         <LIcon name="FileText" size={28} color={C.danger}/>
                         <div style={{fontSize:9,color:C.textMuted,marginTop:4,textAlign:'center',wordBreak:'break-all',lineHeight:1.2}}>{m.dosya_adi}</div>
                       </div>
                     )}
                     <div style={{display:'flex',gap:4,padding:'6px 8px',borderTop:`1px solid ${C.border}`,background:`${C.bgCard}`}}>
-                      <button onClick={() => window.open(previewUrl, '_blank')} title="ÖNİZLE"
+                      <button onClick={() => setDetayPreviewMedya(m)} title="ÖNİZLE"
                         style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'5px 0',borderRadius:6,border:`1px solid ${C.accent}44`,background:`${C.accent}11`,color:C.accent,cursor:'pointer',fontSize:9,fontWeight:700}}>
                         <LIcon name="Eye" size={12}/> ÖNİZLE
                       </button>
-                      <a href={downloadUrl} download={m.dosya_adi} title="İNDİR"
-                        style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'5px 0',borderRadius:6,border:`1px solid ${C.success}44`,background:`${C.success}11`,color:C.success,cursor:'pointer',fontSize:9,fontWeight:700,textDecoration:'none'}}>
+                      <button onClick={async () => {
+                        try {
+                          const token = MR.api?.token;
+                          const r = await fetch(`/api/v1/saha/medya-download.php?id=${m.id}&mode=attachment`, {
+                            headers: token ? {'Authorization':'Bearer '+token} : {}
+                          });
+                          if (!r.ok) { alert('İNDİRME HATASI'); return; }
+                          const blob = await r.blob();
+                          const a = document.createElement('a');
+                          a.href = URL.createObjectURL(blob);
+                          a.download = m.dosya_adi || 'dosya';
+                          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                          setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+                        } catch(e) { alert('İNDİRME HATASI: ' + e.message); }
+                      }} title="İNDİR"
+                        style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'5px 0',borderRadius:6,border:`1px solid ${C.success}44`,background:`${C.success}11`,color:C.success,cursor:'pointer',fontSize:9,fontWeight:700}}>
                         <LIcon name="Download" size={12}/> İNDİR
-                      </a>
+                      </button>
                     </div>
                     <div style={{padding:'3px 8px',fontSize:8,color:C.textMuted,borderTop:`1px solid ${C.border}22`,textOverflow:'ellipsis',overflow:'hidden',whiteSpace:'nowrap'}}>
                       {m.dosya_adi}
@@ -431,8 +574,11 @@ const SahaDetayModal = ({item, onClose, user, onOnayla, onReddet}) => {
               })}
             </div>
           </div>
+          {/* ÖNİZLEME MODALI */}
+          {detayPreviewMedya && <SahaMedyaPreview medya={detayPreviewMedya} onClose={() => setDetayPreviewMedya(null)}/>}
         </div>
-      )}
+        );
+      })()}
 
       {/* İŞLEM */}
       <div style={{...S.card, marginBottom:12}}>

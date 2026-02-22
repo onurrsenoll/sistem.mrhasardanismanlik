@@ -906,17 +906,22 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       {/* MODALLER */}
       <MR.MasrafEkle open={masrafM} onClose={() => setMasrafM(false)} dosyaId={dosya.id} onOk={load}/>
 
-      {/* EVRAK ÖNİZLEME MODAL */}
+      {/* EVRAK ÖNİZLEME MODAL (3:2 ORAN - ORTALI) */}
       {previewEvrak && (
-        <div onClick={() => setPreviewEvrak(null)} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.7)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
-          <div onClick={e => e.stopPropagation()} style={{width:'70vw',height:'88vh',background:C.bgCard,borderRadius:12,overflow:'hidden',display:'flex',flexDirection:'column',cursor:'default',boxShadow:'0 25px 50px rgba(0,0,0,0.5)'}}>
+        <div onClick={() => setPreviewEvrak(null)} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.75)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
+          <div onClick={e => e.stopPropagation()} style={{
+            width:'min(900px, 85vw)', height:'min(600px, 80vh)',
+            background:C.bgCard, borderRadius:14, overflow:'hidden',
+            display:'flex', flexDirection:'column', cursor:'default',
+            boxShadow:'0 25px 60px rgba(0,0,0,0.6)'
+          }}>
             <div style={{padding:'10px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',background:`${C.accent}08`,flexShrink:0}}>
-              <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0,flex:1}}>
                 <LIcon name="Eye" size={14} color={C.accent}/>
-                <span style={{fontSize:12,fontWeight:700}}>{previewEvrak.evrak_turu || previewEvrak.dosya_adi}</span>
-                <span style={{fontSize:9,color:C.textMuted}}>({(previewEvrak.dosya_boyutu/1024).toFixed(0)}KB)</span>
+                <span style={{fontSize:12,fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{previewEvrak.evrak_turu || previewEvrak.dosya_adi}</span>
+                <span style={{fontSize:9,color:C.textMuted,flexShrink:0}}>({(previewEvrak.dosya_boyutu/1024).toFixed(0)}KB)</span>
               </div>
-              <div style={{display:'flex',gap:6}}>
+              <div style={{display:'flex',gap:6,flexShrink:0}}>
                 <button onClick={async () => {
                   try {
                     const token = MR.api.token;
@@ -935,12 +940,12 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
                   } catch(e) { alert('İNDİRME HATASI: ' + e.message); }
                 }}
-                  style={{...S.btn,padding:'4px 10px',fontSize:9,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
-                  <LIcon name="Download" size={10} color={C.success}/> İNDİR
+                  style={{padding:'5px 12px',fontSize:9,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontWeight:700}}>
+                  <LIcon name="Download" size={11} color={C.success}/> İNDİR
                 </button>
                 <button onClick={() => setPreviewEvrak(null)}
-                  style={{...S.btn,padding:'4px 10px',fontSize:9,background:`${C.danger}18`,color:C.danger,border:`1px solid ${C.danger}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
-                  <LIcon name="X" size={10} color={C.danger}/> KAPAT
+                  style={{padding:'5px 12px',fontSize:9,background:`${C.danger}18`,color:C.danger,border:`1px solid ${C.danger}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontWeight:700}}>
+                  <LIcon name="X" size={11} color={C.danger}/> KAPAT
                 </button>
               </div>
             </div>
