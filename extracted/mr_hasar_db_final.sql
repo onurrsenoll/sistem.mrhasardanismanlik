@@ -1072,25 +1072,28 @@ CREATE TABLE IF NOT EXISTS police_tahsilatlar (
 -- ═══════════════════════════════════════════════════════════════
 
 -- Admin kullanıcı (şifre: password → İlk girişte değiştirin!)
-INSERT INTO users (ad_soyad, email, sifre_hash, rol, telefon) VALUES
+-- NOT: INSERT IGNORE kullanıyoruz - mevcut kullanıcılar ASLA silinmez/değişmez!
+INSERT IGNORE INTO users (ad_soyad, email, sifre_hash, rol, telefon) VALUES
 ('Sistem Yöneticisi', 'admin@mrhasar.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', '0500 000 0000');
 
 -- Örnek kullanıcılar
-INSERT INTO users (ad_soyad, email, sifre_hash, rol, telefon) VALUES
+INSERT IGNORE INTO users (ad_soyad, email, sifre_hash, rol, telefon) VALUES
 ('Av. Mehmet Kaya', 'mehmet@mrhasar.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'avukat', '0532 111 2233'),
 ('Murat Bey', 'murat@mrhasar.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'uzman', '0533 222 3344'),
 ('Selin Hanım', 'selin@mrhasar.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'personel', '0534 333 4455'),
 ('Av. Ayşe Çelik', 'ayse@mrhasar.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'avukat', '0535 444 5566');
 
 -- Kasalar
-INSERT INTO kasalar (ad, tip, banka_adi, bakiye) VALUES
+-- NOT: INSERT IGNORE - mevcut kasa kayıtları ve bakiyeleri KORUNUR!
+INSERT IGNORE INTO kasalar (ad, tip, banka_adi, bakiye) VALUES
 ('Ana Kasa', 'Nakit', NULL, 125000.00),
 ('Ziraat Bankası', 'Banka', 'Ziraat Bankası', 340000.00),
 ('İş Bankası', 'Banka', 'İş Bankası', 215000.00),
 ('Avukat Kasa', 'Nakit', NULL, 45000.00);
 
 -- Tanımlamalar: Sigorta Şirketleri
-INSERT INTO tanimlamalar (kategori, deger, sira) VALUES
+-- NOT: INSERT IGNORE - mevcut tanımlamalar KORUNUR!
+INSERT IGNORE INTO tanimlamalar (kategori, deger, sira) VALUES
 ('sigorta_sirket', 'Axa Sigorta', 1),
 ('sigorta_sirket', 'Allianz Sigorta', 2),
 ('sigorta_sirket', 'Mapfre Sigorta', 3),
@@ -1115,7 +1118,7 @@ INSERT INTO tanimlamalar (kategori, deger, sira) VALUES
 ('sigorta_sirket', 'Koru Sigorta', 22);
 
 -- Tanımlamalar: Masraf Kalemleri
-INSERT INTO tanimlamalar (kategori, deger, sira) VALUES
+INSERT IGNORE INTO tanimlamalar (kategori, deger, sira) VALUES
 ('masraf_kalemi', 'Eksper Ücreti', 1),
 ('masraf_kalemi', 'Bilirkişi Ücreti', 2),
 ('masraf_kalemi', 'Mahkeme Harcı', 3),
@@ -1133,7 +1136,7 @@ INSERT INTO tanimlamalar (kategori, deger, sira) VALUES
 ('masraf_kalemi', 'Diğer', 15);
 
 -- Tanımlamalar: Evrak Türleri
-INSERT INTO tanimlamalar (kategori, deger, sira) VALUES
+INSERT IGNORE INTO tanimlamalar (kategori, deger, sira) VALUES
 ('evrak_turu', 'Kaza Tespit Tutanağı', 1),
 ('evrak_turu', 'Trafik Kazası Raporu', 2),
 ('evrak_turu', 'Nüfus Cüzdanı Fotokopisi', 3),
@@ -1153,7 +1156,7 @@ INSERT INTO tanimlamalar (kategori, deger, sira) VALUES
 ('evrak_turu', 'Diğer', 17);
 
 -- Tanımlamalar: Dosya Aşamaları
-INSERT INTO tanimlamalar (kategori, deger, sira) VALUES
+INSERT IGNORE INTO tanimlamalar (kategori, deger, sira) VALUES
 ('dosya_asama', 'Dosya Açık', 1),
 ('dosya_asama', 'Evrak Bekleniyor', 2),
 ('dosya_asama', 'Başvuru Hazırlanıyor', 3),
@@ -1167,7 +1170,7 @@ INSERT INTO tanimlamalar (kategori, deger, sira) VALUES
 ('dosya_asama', 'Dosya Kapandı', 11);
 
 -- Tanımlamalar: CRM Kaynakları
-INSERT INTO tanimlamalar (kategori, deger, sira) VALUES
+INSERT IGNORE INTO tanimlamalar (kategori, deger, sira) VALUES
 ('crm_kaynak', 'Telefon', 1),
 ('crm_kaynak', 'Web Formu', 2),
 ('crm_kaynak', 'Sosyal Medya', 3),
@@ -1177,7 +1180,7 @@ INSERT INTO tanimlamalar (kategori, deger, sira) VALUES
 ('crm_kaynak', 'Diğer', 7);
 
 -- Tanımlamalar: Dosya Kaynakları
-INSERT INTO tanimlamalar (kategori, deger, sira) VALUES
+INSERT IGNORE INTO tanimlamalar (kategori, deger, sira) VALUES
 ('dosya_kaynagi', 'Ofis CRM', 1),
 ('dosya_kaynagi', 'Yönlendiren (Servis, Kaportacı, Acente)', 2),
 ('dosya_kaynagi', 'Saha Personel', 3),
