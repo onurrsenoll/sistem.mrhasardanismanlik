@@ -447,6 +447,12 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
             sub={gelenToplam + ' MESAJ, ' + gelenOkunmamis + ' OKUNMAMIŞ'}
             right={
               <div style={{display:'flex',gap:6}}>
+                {isAdmin && secililer.length > 0 && (
+                  <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px',display:'flex',alignItems:'center',gap:4}}
+                    onClick={() => setTopluSilConfirm(true)}>
+                    <LIcon name="Trash2" size={12} color="#fff"/> TOPLU SİL ({secililer.length})
+                  </button>
+                )}
                 {gelenOkunmamis > 0 && (
                   <button style={{...S.btn,...S.btnW,fontSize:10,padding:'8px 12px'}} onClick={tumunuOkunduIsaretle}>
                     <LIcon name="CheckCheck" size={14} color="#000"/> TÜMÜNÜ OKUNDU İŞARETLE
@@ -505,6 +511,15 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
               <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:750}}>
                 <thead>
                   <tr style={{background:C.bgHover}}>
+                    {isAdmin && (
+                      <th style={{padding:'10px 8px',textAlign:'center',borderBottom:`1px solid ${C.border}`,width:30}} onClick={e => e.stopPropagation()}>
+                        <input type="checkbox"
+                          checked={filtrelenmisGelen.length > 0 && filtrelenmisGelen.every(m => secililer.includes(m.id))}
+                          onChange={() => tumunuSec(filtrelenmisGelen)}
+                          style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}
+                        />
+                      </th>
+                    )}
                     {['','GÖNDEREN','KONU','ÖNCELİK','TARİH','DURUM'].map(h =>
                       <th key={h||'dot'} style={{padding:'10px 12px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`,letterSpacing:0.5}}>{h}</th>
                     )}
@@ -526,6 +541,16 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
                         }}
                         onMouseEnter={e => e.currentTarget.style.background = `${C.accent}11`}
                         onMouseLeave={e => e.currentTarget.style.background = okunmadi ? `${C.accent}06` : 'transparent'}>
+                        {/* TOPLU SEÇİM CHECKBOX (ADMIN) */}
+                        {isAdmin && (
+                          <td style={{padding:'12px 8px',width:30,textAlign:'center'}} onClick={e => e.stopPropagation()}>
+                            <input type="checkbox"
+                              checked={secililer.includes(m.id)}
+                              onChange={() => toggleSecim(m.id)}
+                              style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}
+                            />
+                          </td>
+                        )}
                         {/* OKUNMADI NOKTASI */}
                         <td style={{padding:'12px 8px',width:24,textAlign:'center'}}>
                           {okunmadi && (
@@ -600,10 +625,18 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
           <SectionTitle icon="Send" title="GİDEN KUTUSU"
             sub={gidenMesajlar.length + ' GÖNDERİLEN MESAJ'}
             right={
-              <button style={{...S.btn,...S.btnP,fontSize:10,padding:'8px 12px'}}
-                onClick={() => setPage('mesajlar-yeni')}>
-                <LIcon name="PenSquare" size={14} color="#fff"/> YENİ MESAJ
-              </button>
+              <div style={{display:'flex',gap:6}}>
+                {isAdmin && secililer.length > 0 && (
+                  <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px',display:'flex',alignItems:'center',gap:4}}
+                    onClick={() => setTopluSilConfirm(true)}>
+                    <LIcon name="Trash2" size={12} color="#fff"/> TOPLU SİL ({secililer.length})
+                  </button>
+                )}
+                <button style={{...S.btn,...S.btnP,fontSize:10,padding:'8px 12px'}}
+                  onClick={() => setPage('mesajlar-yeni')}>
+                  <LIcon name="PenSquare" size={14} color="#fff"/> YENİ MESAJ
+                </button>
+              </div>
             }
           />
 
@@ -629,6 +662,15 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
               <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:750}}>
                 <thead>
                   <tr style={{background:C.bgHover}}>
+                    {isAdmin && (
+                      <th style={{padding:'10px 8px',textAlign:'center',borderBottom:`1px solid ${C.border}`,width:30}} onClick={e => e.stopPropagation()}>
+                        <input type="checkbox"
+                          checked={filtrelenmisGiden.length > 0 && filtrelenmisGiden.every(m => secililer.includes(m.id))}
+                          onChange={() => tumunuSec(filtrelenmisGiden)}
+                          style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}
+                        />
+                      </th>
+                    )}
                     {['ALICI','KONU','ÖNCELİK','TARİH','OKUNDU','İŞLEM'].map(h =>
                       <th key={h} style={{padding:'10px 12px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`,letterSpacing:0.5}}>{h}</th>
                     )}
@@ -643,6 +685,16 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
                         style={{borderBottom:`1px solid ${C.border}`,cursor:'pointer',transition:'all .15s'}}
                         onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        {/* TOPLU SEÇİM CHECKBOX (ADMIN) */}
+                        {isAdmin && (
+                          <td style={{padding:'12px 8px',width:30,textAlign:'center'}} onClick={e => e.stopPropagation()}>
+                            <input type="checkbox"
+                              checked={secililer.includes(m.id)}
+                              onChange={() => toggleSecim(m.id)}
+                              style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}
+                            />
+                          </td>
+                        )}
                         {/* ALICI */}
                         <td style={{padding:'12px',fontSize:12}}>
                           <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -1172,6 +1224,15 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
         }
         onConfirm={mesajSil}
         onCancel={() => setSilOnay(null)}
+      />
+
+      {/* ═══ TOPLU SİLME ONAY DİYALOGU (ADMIN) ═══ */}
+      <Confirm
+        open={topluSilConfirm}
+        message={'SEÇİLEN ' + secililer.length + ' MESAJ KALICI OLARAK SİLİNECEK!\n\nBU İŞLEM GERİ ALINAMAZ! DEVAM EDİLSİN Mİ?'}
+        onConfirm={topluSil}
+        onCancel={() => setTopluSilConfirm(false)}
+        loading={topluSilLoading}
       />
     </div>
   );

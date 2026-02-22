@@ -392,6 +392,13 @@ MR.AjandaPage = ({setPage, user}) => {
                 </button>
               </div>
 
+              {isAdmin && secilenGunGorevleri.length > 0 && (
+                <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
+                  <input type="checkbox" checked={secilenGunGorevleri.length > 0 && secilenGunGorevleri.every(g => secililer.includes(g.id))} onChange={() => tumunuSec(secilenGunGorevleri)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                  <span style={{fontSize:9,color:C.textMuted,fontWeight:600}}>TÜMÜNÜ SEÇ</span>
+                </div>
+              )}
+
               {secilenGunGorevleri.length === 0 ? (
                 <div style={{textAlign:'center',padding:30,color:C.textMuted}}>
                   <LIcon name="Calendar" size={32} color={C.textMuted} style={{opacity:0.3,marginBottom:8}}/>
@@ -408,6 +415,10 @@ MR.AjandaPage = ({setPage, user}) => {
                   onMouseLeave={e => e.currentTarget.style.borderColor = C.border}
                 >
                   <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                    {/* SEÇİM CHECKBOX */}
+                    {isAdmin && (
+                      <input type="checkbox" checked={secililer.includes(g.id)} onChange={() => toggleSecim(g.id)} onClick={e => e.stopPropagation()} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                    )}
                     {/* TAMAMLANDI CHECKBOX */}
                     <div onClick={(e) => { e.stopPropagation(); tamamlaToggle(g); }}
                       style={{
@@ -499,6 +510,11 @@ MR.AjandaPage = ({setPage, user}) => {
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:700}}>
                   <thead>
                     <tr style={{background:C.bgHover}}>
+                      {isAdmin && (
+                        <th style={{padding:'10px 8px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`,width:36}}>
+                          <input type="checkbox" checked={filtrelenmis.length > 0 && filtrelenmis.every(g => secililer.includes(g.id))} onChange={() => tumunuSec(filtrelenmis)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                        </th>
+                      )}
                       {['', 'BAŞLIK', 'TARİH', 'BİTİŞ TARİHİ', 'ÖNCELİK', 'DURUM', 'İŞLEMLER'].map(h =>
                         <th key={h||'chk'} style={{padding:'10px 8px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
                       )}
@@ -509,7 +525,13 @@ MR.AjandaPage = ({setPage, user}) => {
                       <tr key={i} style={{borderBottom:`1px solid ${C.border}`}}
                         onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                        {/* CHECKBOX */}
+                        {/* SEÇİM CHECKBOX */}
+                        {isAdmin && (
+                          <td style={{padding:'10px 8px',width:36}}>
+                            <input type="checkbox" checked={secililer.includes(g.id)} onChange={() => toggleSecim(g.id)} onClick={e => e.stopPropagation()} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
+                          </td>
+                        )}
+                        {/* TAMAMLANDI CHECKBOX */}
                         <td style={{padding:'10px 8px',width:36}}>
                           <div onClick={() => tamamlaToggle(g)}
                             style={{
@@ -633,6 +655,14 @@ MR.AjandaPage = ({setPage, user}) => {
         message={'BU GÖREVİ SİLMEK İSTEDİĞİNİZDEN EMİN MİSİNİZ? "' + (silOnay?.baslik || '') + '"'}
         onConfirm={sil}
         onCancel={() => setSilOnay(null)}
+      />
+
+      {/* ═══ TOPLU SİLME ONAY ═══ */}
+      <Confirm
+        open={topluSilConfirm}
+        message={'SEÇİLEN ' + secililer.length + ' GÖREV KALICI OLARAK SİLİNECEK!\n\nBU İŞLEM GERİ ALINAMAZ! DEVAM EDİLSİN Mİ?'}
+        onConfirm={topluSil}
+        onCancel={() => setTopluSilConfirm(false)}
       />
     </div>
   );

@@ -1386,6 +1386,11 @@ const IsPaydaslari = ({setPage, user}) => {
         </div>
       </Modal>
 
+      {/* TOPLU SİL ONAY DİALOG */}
+      <Confirm open={topluSilConfirmP} message={`SEÇİLİ ${secililerP.length} İŞ PAYDAŞINI SİLMEK İSTİYOR MUSUNUZ? BU İŞLEM GERİ ALINAMAZ.`}
+        onConfirm={topluSilP}
+        onCancel={() => setTopluSilConfirmP(false)}/>
+
       {/* ONAY DİALOG */}
       <Confirm open={confirm.open} message={confirm.msg}
         onConfirm={() => confirm.cb && confirm.cb()}

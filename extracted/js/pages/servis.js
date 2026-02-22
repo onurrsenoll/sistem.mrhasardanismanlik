@@ -295,9 +295,16 @@ const ServisListesi = ({setPage, user}) => {
         <SectionTitle icon="Truck" title="SERVİS LİSTESİ"
           sub={`${totalCount} SERVİS KAYITLI`}
           right={
-            <button style={{...S.btn,...S.btnP,fontSize:11}} onClick={() => setPage('servis-yeni')}>
-              <LIcon name="Plus" size={14} color="#fff"/> YENİ SERVİS
-            </button>
+            <div style={{display:'flex',gap:6,alignItems:'center'}}>
+              {isAdmin && secililer.length > 0 && (
+                <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px',display:'flex',alignItems:'center',gap:4}} onClick={() => setTopluSilConfirm(true)}>
+                  <LIcon name="Trash2" size={13} color="#fff"/> TOPLU SİL ({secililer.length})
+                </button>
+              )}
+              <button style={{...S.btn,...S.btnP,fontSize:11}} onClick={() => setPage('servis-yeni')}>
+                <LIcon name="Plus" size={14} color="#fff"/> YENİ SERVİS
+              </button>
+            </div>
           }/>
 
         {/* FİLTRE BARI */}
@@ -695,6 +702,12 @@ const ServisListesi = ({setPage, user}) => {
       <Confirm open={confirm.open} message={confirm.msg}
         onConfirm={() => confirm.cb && confirm.cb()}
         onCancel={() => setConfirm({open:false, msg:'', cb:null})}/>
+
+      {/* TOPLU SİLME ONAY DİALOG */}
+      <Confirm open={topluSilConfirm}
+        message={`SEÇİLEN ${secililer.length} SERVİS KALICI OLARAK SİLİNECEK!\n\nBU İŞLEM GERİ ALINAMAZ! DEVAM EDİLSİN Mİ?`}
+        onConfirm={topluSil}
+        onCancel={() => setTopluSilConfirm(false)}/>
     </div>
   );
 };
