@@ -64,7 +64,6 @@ $headers = array_map(function($h) {
 // Sütun eşleştirme haritası (CSV başlık → alan adı)
 $sutunMap = [
     'DOSYA TÜRÜ'        => 'dosya_turu',
-    'BAŞVURU TÜRÜ'      => 'talep_turu',
     'ADI SOYADI'        => 'ad_soyad',
     'T.C. KİMLİK'       => 'tc_kimlik',
     'TELEFON'           => 'telefon',
@@ -172,11 +171,10 @@ foreach ($dataLines as $lineIdx => $line) {
         if (empty($asama)) $asama = 'Dosya Açık';
 
         // 1. Dosya kaydı
-        $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, talep_turu, asama, sigorta_sirket, police_no, dosya_kaynagi, haklilik, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, notlar, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, 100, ?, ?, ?, ?, CURDATE(), ?, ?)');
+        $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, asama, sigorta_sirket, police_no, dosya_kaynagi, haklilik, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, notlar, created_by) VALUES (?, ?, ?, ?, ?, ?, 100, ?, ?, ?, ?, CURDATE(), ?, ?)');
         $stmt->execute([
             $dosyaNo,
             $dosyaTuru,
-            clean($getValue('talep_turu')),
             clean($asama),
             clean($getValue('sigorta_sirket')),
             clean($getValue('police_no')),

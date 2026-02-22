@@ -27,7 +27,6 @@ $user = auth_required(['admin']);
 // Şablon sütunları (dosya listesindeki alanlar + oluşturma alanları)
 $sutunlar = [
     'DOSYA TÜRÜ',          // ADK veya BH (zorunlu)
-    'BAŞVURU TÜRÜ',        // Talep türü
     'ADI SOYADI',          // Mağdur ad soyad (zorunlu)
     'T.C. KİMLİK',        // Mağdur TC
     'TELEFON',             // Mağdur telefon
@@ -53,7 +52,6 @@ $sutunlar = [
 // Örnek veri satırı
 $ornek = [
     'ADK',                          // DOSYA TÜRÜ
-    'TRAFİK SİGORTASI BAŞVURUSU',  // BAŞVURU TÜRÜ
     'Ahmet Yılmaz',                 // ADI SOYADI
     '12345678901',                  // T.C. KİMLİK
     '0532 111 2233',                // TELEFON
@@ -106,7 +104,6 @@ fputcsv($output, $ornek, ';');
 // Boş ikinci örnek satır (BH türü)
 $ornek2 = [
     'BH',                           // DOSYA TÜRÜ
-    'MALULİYET TAZMİNATI',          // BAŞVURU TÜRÜ
     'Fatma Demir',                   // ADI SOYADI
     '98765432109',                   // T.C. KİMLİK
     '0533 444 5566',                 // TELEFON

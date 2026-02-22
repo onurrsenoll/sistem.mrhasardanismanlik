@@ -9,7 +9,6 @@ const {useState, useEffect, useMemo, useCallback, useRef} = React;
 const SEKME_KATEGORILER = {
   dosya: [
     {key:'dosya_turu',     label:'DOSYA TÜRÜ',      icon:'Folder',       color: MR.C.accent},
-    {key:'hasar_turu',     label:'HASAR TÜRÜ',       icon:'AlertCircle',  color: MR.C.danger},
     {key:'musteri_kaynak', label:'MÜŞTERİ KAYNAK',   icon:'Globe',        color: MR.C.cyan}
   ],
   evrak: [
@@ -1092,7 +1091,7 @@ MR.TanimlamalarPage = ({setPage, user, subPage}) => {
 
   /* ── BAŞLIK BİLGİLERİ ── */
   const baslikBilgi = {
-    dosya:    {title:'DOSYA TANIMLAMALARI',    desc:'DOSYA TÜRÜ, HASAR TÜRÜ VE MÜŞTERİ KAYNAK TANIMLARINI YÖNETİN',   icon:'Folder'},
+    dosya:    {title:'DOSYA TANIMLAMALARI',    desc:'DOSYA TÜRÜ VE MÜŞTERİ KAYNAK TANIMLARINI YÖNETİN',   icon:'Folder'},
     evrak:    {title:'EVRAK TANIMLAMALARI',    desc:'EVRAK TÜRÜ VE MASRAF TÜRÜ TANIMLARINI YÖNETİN',                     icon:'FileText'},
     finansal: {title:'FİNANSAL TANIMLAMALAR',  desc:'GELİR, GİDER VE KOMİSYON TÜRÜ TANIMLARINI YÖNETİN',               icon:'Wallet'},
     sablon:   {title:'MATBU EVRAK / SÖZLEŞME', desc:'ŞABLON OLUŞTURUN, DÜZENLEYİN VE DEĞİŞKEN YÖNETİMİ YAPIN',       icon:'FileSignature'},

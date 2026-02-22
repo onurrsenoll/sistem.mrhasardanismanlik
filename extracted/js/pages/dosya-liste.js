@@ -31,7 +31,6 @@ const RAPOR_SUTUNLAR = [
   {key:'dosya_kaynagi',  label:'DOSYA KAYNAĞI',        width:8},
   {key:'avukat_adi',     label:'AVUKATI',              width:10},
   {key:'dosya_turu',     label:'DOSYA TÜRÜ',           width:5},
-  {key:'talep_turu',     label:'BAŞVURU TÜRÜ',         width:8},
   {key:'sigorta_sirket', label:'DAVALI ŞİRKET',       width:10},
   {key:'hasar_no',       label:'SİGORTA HASAR NO',    width:9},
   {key:'kaza_tarihi',    label:'KAZA TARİHİ',          width:8},
@@ -62,27 +61,37 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [raporLoading, setRaporLoading] = useState(false);
   const raporRef = useRef(null);
+  const [page, setPage2] = useState(1);
+  const [limit, setLimit] = useState(25);
+  const [pgInfo, setPgInfo] = useState({total:0, totalPages:0});
 
-  const load = async () => {
+  const load = async (p_page, p_limit) => {
     setLoading(true);
-    const p = {};
+    const cp = p_page || page;
+    const cl = p_limit || limit;
+    const p = {page: cp, limit: cl};
     if (search) p.q = search;
     if (turF) p.tur = turF;
     if (asamaF) p.asama = asamaF;
     const r = await api.dosyaList(p);
-    if (r?.success) setData(r.data.items || []);
+    if (r?.success) {
+      setData(r.data.items || []);
+      if (r.data.pagination) setPgInfo({total: r.data.pagination.total || 0, totalPages: r.data.pagination.totalPages || 0});
+    }
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
-  useEffect(() => { const t = setTimeout(load, 400); return () => clearTimeout(t); }, [search, turF, asamaF]);
+  useEffect(() => { setPage2(1); const t = setTimeout(() => load(1), 400); return () => clearTimeout(t); }, [search, turF, asamaF]);
+  const changePage = (np) => { setPage2(np); load(np); };
+  const changeLimit = (nl) => { setLimit(nl); setPage2(1); load(1, nl); };
 
   const dosyaSil = async (id) => {
     const r = await api.dosyaDelete(id);
     if (r?.success) { load(); setDeleteConfirm(null); }
   };
 
-  const toplamDosya = data.length;
+  const toplamDosya = pgInfo.total || data.length;
   const adkDosya = data.filter(d => d.dosya_turu === 'ADK').length;
   const bhDosya = data.filter(d => d.dosya_turu === 'BH').length;
   const acikDosya = data.filter(d => d.asama !== 'DOSYA KAPANDI').length;
@@ -123,7 +132,6 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
           d.dosya_kaynagi || '-',
           d.avukat_adi || '-',
           d.dosya_turu || '-',
-          d.talep_turu || '-',
           d.sigorta_sirket || '-',
           d.hasar_no || '-',
           d.kaza_tarihi || '-',
@@ -143,7 +151,6 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
         {wch:15}, /* DOSYA KAYNAĞI */
         {wch:18}, /* AVUKATI */
         {wch:8},  /* DOSYA TÜRÜ */
-        {wch:14}, /* BAŞVURU TÜRÜ */
         {wch:25}, /* DAVALI ŞİRKET */
         {wch:18}, /* SİGORTA HASAR NO */
         {wch:14}, /* KAZA TARİHİ */
@@ -153,12 +160,12 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
 
       /* Birleşik hücreler (başlık satırları) */
       ws['!merges'] = [
-        {s:{r:0,c:0}, e:{r:0,c:11}},
-        {s:{r:1,c:0}, e:{r:1,c:11}},
-        {s:{r:2,c:0}, e:{r:2,c:11}}
+        {s:{r:0,c:0}, e:{r:0,c:10}},
+        {s:{r:1,c:0}, e:{r:1,c:10}},
+        {s:{r:2,c:0}, e:{r:2,c:10}}
       ];
       if (turF || asamaF || search) {
-        ws['!merges'].push({s:{r:3,c:0}, e:{r:3,c:11}});
+        ws['!merges'].push({s:{r:3,c:0}, e:{r:3,c:10}});
       }
 
       const wb = XLSX.utils.book_new();
@@ -200,7 +207,6 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
       '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;">' + (d.dosya_kaynagi || '-') + '</td>' +
       '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;">' + (d.avukat_adi || '-') + '</td>' +
       '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;text-align:center;font-weight:700;">' + (d.dosya_turu || '-') + '</td>' +
-      '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;">' + (d.talep_turu || '-') + '</td>' +
       '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;">' + (d.sigorta_sirket || '-') + '</td>' +
       '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:6.5px;font-family:monospace;">' + (d.hasar_no || '-') + '</td>' +
       '<td style="padding:3px 4px;border:1px solid #d1d5db;font-size:7px;">' + (d.kaza_tarihi || '-') + '</td>' +
@@ -334,7 +340,6 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                 <td>${d.dosya_kaynagi || '-'}</td>
                 <td>${d.avukat_adi || '-'}</td>
                 <td style="text-align:center; font-weight:700;">${d.dosya_turu || '-'}</td>
-                <td>${d.talep_turu || '-'}</td>
                 <td>${d.sigorta_sirket || '-'}</td>
                 <td class="tc">${d.hasar_no || '-'}</td>
                 <td>${d.kaza_tarihi || '-'}</td>
@@ -385,7 +390,7 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             <LIcon name="List" size={14} color={C.accent}/>
             <span style={{fontSize:13,fontWeight:700}}>DOSYA LİSTESİ</span>
-            <span style={{padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:600,background:`${C.accent}18`,color:C.accent}}>{data.length} DOSYA</span>
+            <span style={{padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:600,background:`${C.accent}18`,color:C.accent}}>{toplamDosya} DOSYA</span>
           </div>
           <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
             <input placeholder="ARA (TC, İSİM, DOSYA NO, PLAKA)" value={search} onChange={e => setSearch(e.target.value)}
@@ -451,7 +456,6 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                   <th style={{...thS,minWidth:85}}>DOSYA KAYNAĞI</th>
                   <th style={{...thS,minWidth:90}}>AVUKATI</th>
                   <th style={{...thS,minWidth:55,textAlign:'center'}}>DOSYA TÜRÜ</th>
-                  <th style={{...thS,minWidth:90}}>BAŞVURU TÜRÜ</th>
                   <th style={{...thS,minWidth:100}}>DAVALI ŞİRKET</th>
                   <th style={{...thS,minWidth:100}}>SİGORTA HASAR NO</th>
                   <th style={{...thS,minWidth:75}}>KAZA TARİHİ</th>
@@ -487,8 +491,6 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                           {d.dosya_turu || '-'}
                         </span>
                       </td>
-                      {/* BAŞVURU TÜRÜ */}
-                      <td style={{...tdS,color:C.textSec,fontSize:9,maxWidth:100,overflow:'hidden',textOverflow:'ellipsis'}}>{d.talep_turu || '-'}</td>
                       {/* DAVALI ŞİRKET */}
                       <td style={{...tdS,fontSize:9,maxWidth:110,overflow:'hidden',textOverflow:'ellipsis'}}>{d.sigorta_sirket || '-'}</td>
                       {/* SİGORTA HASAR NO */}
@@ -521,6 +523,51 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* PAGINATION */}
+        {pgInfo.totalPages > 0 && (
+          <div style={{padding:'10px 14px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <span style={{fontSize:10,color:C.textMuted}}>SAYFA BAŞINA:</span>
+              {[25,50,100,250].map(v => (
+                <button key={v} onClick={() => changeLimit(v)}
+                  style={{padding:'4px 10px',borderRadius:6,fontSize:10,fontWeight:limit===v?700:500,cursor:'pointer',
+                    background:limit===v?`${C.accent}18`:'transparent',color:limit===v?C.accent:C.textSec,
+                    border:`1px solid ${limit===v?C.accent+'44':C.border}`}}>
+                  {v}
+                </button>
+              ))}
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <span style={{fontSize:10,color:C.textMuted}}>
+                {((page-1)*limit)+1}-{Math.min(page*limit, pgInfo.total)} / {pgInfo.total}
+              </span>
+              <button onClick={() => changePage(1)} disabled={page<=1}
+                style={{padding:'4px 8px',borderRadius:4,fontSize:10,cursor:page<=1?'default':'pointer',
+                  background:page<=1?C.bgInput:`${C.accent}11`,color:page<=1?C.textMuted:C.accent,border:`1px solid ${C.border}`,opacity:page<=1?0.5:1}}>
+                <LIcon name="ChevronsLeft" size={12}/>
+              </button>
+              <button onClick={() => changePage(page-1)} disabled={page<=1}
+                style={{padding:'4px 8px',borderRadius:4,fontSize:10,cursor:page<=1?'default':'pointer',
+                  background:page<=1?C.bgInput:`${C.accent}11`,color:page<=1?C.textMuted:C.accent,border:`1px solid ${C.border}`,opacity:page<=1?0.5:1}}>
+                <LIcon name="ChevronLeft" size={12}/>
+              </button>
+              <span style={{padding:'4px 10px',borderRadius:6,fontSize:11,fontWeight:700,background:`${C.accent}18`,color:C.accent}}>
+                {page} / {pgInfo.totalPages}
+              </span>
+              <button onClick={() => changePage(page+1)} disabled={page>=pgInfo.totalPages}
+                style={{padding:'4px 8px',borderRadius:4,fontSize:10,cursor:page>=pgInfo.totalPages?'default':'pointer',
+                  background:page>=pgInfo.totalPages?C.bgInput:`${C.accent}11`,color:page>=pgInfo.totalPages?C.textMuted:C.accent,border:`1px solid ${C.border}`,opacity:page>=pgInfo.totalPages?0.5:1}}>
+                <LIcon name="ChevronRight" size={12}/>
+              </button>
+              <button onClick={() => changePage(pgInfo.totalPages)} disabled={page>=pgInfo.totalPages}
+                style={{padding:'4px 8px',borderRadius:4,fontSize:10,cursor:page>=pgInfo.totalPages?'default':'pointer',
+                  background:page>=pgInfo.totalPages?C.bgInput:`${C.accent}11`,color:page>=pgInfo.totalPages?C.textMuted:C.accent,border:`1px solid ${C.border}`,opacity:page>=pgInfo.totalPages?0.5:1}}>
+                <LIcon name="ChevronsRight" size={12}/>
+              </button>
+            </div>
           </div>
         )}
       </div>

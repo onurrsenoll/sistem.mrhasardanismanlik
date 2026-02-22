@@ -75,7 +75,7 @@ function generate_dosya_no($db) {
 
 function get_pagination() {
     $page = max(1, intval(isset($_GET['page']) ? $_GET['page'] : 1));
-    $limit = min(100, max(10, intval(isset($_GET['limit']) ? $_GET['limit'] : 25)));
+    $limit = min(250, max(10, intval(isset($_GET['limit']) ? $_GET['limit'] : 25)));
     $offset = ($page - 1) * $limit;
     return array('page' => $page, 'limit' => $limit, 'offset' => $offset);
 }

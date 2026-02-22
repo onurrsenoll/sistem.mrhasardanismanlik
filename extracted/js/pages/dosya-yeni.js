@@ -12,7 +12,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
   const [paydaslar, setPaydaslar] = useState([]);
   const [form, setForm] = useState({
     ad_soyad:'', tc_kimlik:'', telefon:'', iban:'', adres:'', il:'', ilce:'',
-    dosya_turu:'ADK', talep_turu:'', kaza_tarihi:'', haklilik:'100', hak_mahrumiyet:'0', meslek:'', komisyon:'',
+    dosya_turu:'ADK', kaza_tarihi:'', haklilik:'100', hak_mahrumiyet:'0', meslek:'', komisyon:'',
     ma_plaka:'', ma_marka:'', ma_model:'', ma_yil:'',
     ka_plaka:'', ka_marka:'', ka_yil:'', ka_trafik:'',
     sigorta_sirket:'', hasar_no:'', dosya_kaynak:'', notlar:'', ortak_id:'', sorumlu_id:'', paydas_id:''
@@ -29,7 +29,6 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     }
     if (stepNum === 1) {
       if (!form.dosya_turu) return 'DOSYA TÜRÜ SEÇİMİ GEREKLİ';
-      if (!form.talep_turu) return 'TALEP TÜRÜ SEÇİMİ GEREKLİ';
       if (!form.kaza_tarihi) return 'KAZA TARİHİ GEREKLİ';
     }
     if (stepNum === 2 && form.dosya_turu === 'ADK') {
@@ -114,15 +113,9 @@ MR.DosyaYeniPage = ({setPage, user}) => {
       case 1: return (
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
           <FormGroup label="DOSYA TÜRÜ *">
-            <select style={S.select} value={form.dosya_turu} onChange={e=>{u('dosya_turu',e.target.value);u('talep_turu','');}}>
+            <select style={S.select} value={form.dosya_turu} onChange={e=>u('dosya_turu',e.target.value)}>
               <option value="ADK">ARAÇ DEĞER KAYBI (ADK)</option>
               <option value="BH">BEDENİ HASAR</option>
-            </select>
-          </FormGroup>
-          <FormGroup label="TALEP TÜRÜ">
-            <select style={S.select} value={form.talep_turu} onChange={e=>u('talep_turu',e.target.value)}>
-              <option value="">SEÇİNİZ</option>
-              {(form.dosya_turu==='ADK'?adkTT:bhTT).map(t=><option key={t} value={t}>{t}</option>)}
             </select>
           </FormGroup>
           <FormGroup label="KAZA TARİHİ"><input type="date" style={S.input} value={form.kaza_tarihi} onChange={e=>u('kaza_tarihi',e.target.value)}/></FormGroup>

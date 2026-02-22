@@ -2,8 +2,6 @@ const MR = window.MR || (window.MR = {});
 const {useState, useEffect} = React;
 
 const ASAMALAR = MR.ASAMALAR || [];
-const ADK_TT = ['TRAFİK SİGORTASI BAŞVURUSU','KASKO BAŞVURUSU','TAHKİM BAŞVURUSU','DAVA YOLU'];
-const BH_TT = ['MALULİYET TAZMİNATI','GEÇİCİ İŞ GÖREMEZLİK','DESTEKTEN YOKSUN KALMA','BAKICI GİDERİ','TEDAVİ GİDERLERİ'];
 const KAYNAKLAR = ['OFİS CRM','YÖNLENDİREN','SAHA PERSONEL'];
 
 const asamaRenk = (a) => {
@@ -194,7 +192,6 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
     const magdur = dosya.magdur || {};
     setEditForm({
       dosya_turu: dosya.dosya_turu || 'ADK',
-      talep_turu: dosya.talep_turu || '',
       sigorta_sirket: dosya.sigorta_sirket || '',
       hasar_no: dosya.hasar_no || '',
       dosya_kaynagi: dosya.dosya_kaynagi || '',
@@ -225,7 +222,6 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
     const r = await api.dosyaUpdate({
       id: dosya.id,
       dosya_turu: editForm.dosya_turu,
-      talep_turu: editForm.talep_turu,
       sigorta_sirket: editForm.sigorta_sirket,
       hasar_no: editForm.hasar_no,
       dosya_kaynagi: editForm.dosya_kaynagi,
@@ -364,7 +360,6 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             <div style={{padding:'10px 14px'}}>
               <InfoRow label="DOSYA NO" value={dosya.dosya_no} bold mono/>
               <InfoRow label="DOSYA TÜRÜ" value={dosya.dosya_turu} bold/>
-              <InfoRow label="BAŞVURU TÜRÜ" value={dosya.talep_turu}/>
               <InfoRow label="SİGORTA ŞİRKETİ" value={dosya.sigorta_sirket}/>
               <InfoRow label="HASAR DOSYA NO" value={dosya.hasar_no} mono/>
               <InfoRow label="DOSYA KAYNAĞI" value={dosya.dosya_kaynagi}/>
@@ -979,15 +974,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
         </div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
           <FormGroup label="DOSYA TÜRÜ">
-            <select value={editForm.dosya_turu} onChange={e => { u('dosya_turu',e.target.value); u('talep_turu',''); }} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+            <select value={editForm.dosya_turu} onChange={e => u('dosya_turu',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
               <option value="ADK">ADK</option>
               <option value="BH">BH</option>
-            </select>
-          </FormGroup>
-          <FormGroup label="BAŞVURU TÜRÜ">
-            <select value={editForm.talep_turu} onChange={e => u('talep_turu',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
-              <option value="">SEÇİNİZ</option>
-              {(editForm.dosya_turu==='ADK'?ADK_TT:BH_TT).map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </FormGroup>
           <FormGroup label="SİGORTA ŞİRKETİ">

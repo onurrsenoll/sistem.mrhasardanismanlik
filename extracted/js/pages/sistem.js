@@ -3041,7 +3041,7 @@ const TopluAktarimTab = () => {
           <div style={{background:C.bgInput,borderRadius:8,padding:12,marginBottom:16}}>
             <div style={{fontSize:10,fontWeight:700,color:C.textMuted,marginBottom:8}}>ŞABLON ALANLARI:</div>
             <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
-              {['DOSYA TÜRÜ *','BAŞVURU TÜRÜ','ADI SOYADI *','T.C. KİMLİK','TELEFON','TELEFON 2','E-POSTA',
+              {['DOSYA TÜRÜ *','ADI SOYADI *','T.C. KİMLİK','TELEFON','TELEFON 2','E-POSTA',
                 'SİGORTA ŞİRKETİ','HASAR NO','POLİÇE NO','KAZA TARİHİ','KAZA İL','KAZA İLÇE',
                 'PLAKA','MARKA','MODEL','MODEL YILI','KARŞI PLAKA','KARŞI SİGORTA','DOSYA KAYNAĞI','AŞAMA','NOTLAR'
               ].map((s,i) => (
