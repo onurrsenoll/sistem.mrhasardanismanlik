@@ -64,6 +64,7 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
   const [page, setPage2] = useState(1);
   const [limit, setLimit] = useState(25);
   const [pgInfo, setPgInfo] = useState({total:0, totalPages:0});
+  const [stats, setStats] = useState({toplam:0, adk:0, bh:0, acik:0});
 
   const load = async (p_page, p_limit) => {
     setLoading(true);
@@ -77,6 +78,7 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
     if (r?.success) {
       setData(r.data.items || []);
       if (r.data.pagination) setPgInfo({total: r.data.pagination.total || 0, totalPages: r.data.pagination.totalPages || 0});
+      if (r.data.stats) setStats(r.data.stats);
     }
     setLoading(false);
   };
@@ -91,10 +93,10 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
     if (r?.success) { load(); setDeleteConfirm(null); }
   };
 
-  const toplamDosya = pgInfo.total || data.length;
-  const adkDosya = data.filter(d => d.dosya_turu === 'ADK').length;
-  const bhDosya = data.filter(d => d.dosya_turu === 'BH').length;
-  const acikDosya = data.filter(d => d.asama !== 'DOSYA KAPANDI').length;
+  const toplamDosya = stats.toplam || pgInfo.total || data.length;
+  const adkDosya = stats.adk;
+  const bhDosya = stats.bh;
+  const acikDosya = stats.acik;
 
   /* ═══════════════════════════════════════════════════════════
      EXCEL RAPOR OLUŞTUR

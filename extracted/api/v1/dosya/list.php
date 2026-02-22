@@ -82,4 +82,29 @@ $stmt = $db->prepare($dataSQL);
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 
-paginated_response($items, $total, $pag);
+// Özet istatistikler (filtrelere bağlı, tüm sayfalardaki toplam)
+$statsSQL = "SELECT
+    COUNT(*) as toplam,
+    SUM(CASE WHEN v.dosya_turu = 'ADK' THEN 1 ELSE 0 END) as adk,
+    SUM(CASE WHEN v.dosya_turu = 'BH' THEN 1 ELSE 0 END) as bh,
+    SUM(CASE WHEN v.asama != 'DOSYA KAPANDI' OR v.asama IS NULL THEN 1 ELSE 0 END) as acik
+    FROM v_dosya_ozet v LEFT JOIN dosyalar d ON d.dosya_no = v.dosya_no $whereSQL";
+$stmtStats = $db->prepare($statsSQL);
+$stmtStats->execute(array_slice($params, 0, count($params) - 2));
+$stats = $stmtStats->fetch();
+
+json_success(array(
+    'items' => $items,
+    'pagination' => array(
+        'page' => $pag['page'],
+        'limit' => $pag['limit'],
+        'total' => $total,
+        'totalPages' => (int)ceil($total / $pag['limit'])
+    ),
+    'stats' => array(
+        'toplam' => (int)($stats['toplam'] ?? 0),
+        'adk' => (int)($stats['adk'] ?? 0),
+        'bh' => (int)($stats['bh'] ?? 0),
+        'acik' => (int)($stats['acik'] ?? 0)
+    )
+));
