@@ -1059,7 +1059,7 @@ const SahaOnaylanan = ({setPage, user}) => {
                       {HASAR_TIPLERI.map(t=><option key={t} value={t}>{t}</option>)}
                     </select>
                   </FormGroup>
-                  <FormGroup label="HASAR TARİHİ"><input type="date" style={S.input} value={editForm.hasar_tarihi} onChange={e=>setE('hasar_tarihi',e.target.value)}/></FormGroup>
+                  <FormGroup label="HASAR TARİHİ"><MR.DateInput value={editForm.hasar_tarihi} onChange={v=>setE('hasar_tarihi',v)}/></FormGroup>
                 </div>
                 <div style={{...grid2, marginTop:12}}>
                   <FormGroup label="HASAR TUTARI (₺)">
@@ -1328,7 +1328,7 @@ const SahaReddedilen = ({setPage, user}) => {
                       {HASAR_TIPLERI.map(t=><option key={t} value={t}>{t}</option>)}
                     </select>
                   </FormGroup>
-                  <FormGroup label="HASAR TARİHİ"><input type="date" style={S.input} value={editForm.hasar_tarihi} onChange={e=>setE('hasar_tarihi',e.target.value)}/></FormGroup>
+                  <FormGroup label="HASAR TARİHİ"><MR.DateInput value={editForm.hasar_tarihi} onChange={v=>setE('hasar_tarihi',v)}/></FormGroup>
                 </div>
                 <div style={{...grid2, marginTop:12}}>
                   <FormGroup label="HASAR TUTARI (₺)">
@@ -1610,7 +1610,7 @@ const SahaYeniKayit = ({setPage, user}) => {
               </select>
             </FormGroup>
             <FormGroup label="HASAR TARİHİ">
-              <input type="date" style={S.input} value={form.hasar_tarihi} onChange={e=>set('hasar_tarihi',e.target.value)} disabled={loading}/>
+              <MR.DateInput value={form.hasar_tarihi} onChange={v=>set('hasar_tarihi',v)} disabled={loading}/>
             </FormGroup>
           </div>
           <div style={{...grid2, marginTop:16}}>

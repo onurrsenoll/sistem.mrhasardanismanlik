@@ -523,11 +523,11 @@
               <div style={S.cardBody}>
                 <MR.FormGroup label="MAĞDUR ADI SOYADI"><input type="text" value={form.magdurAdi} onChange={e => handleChange('magdurAdi', e.target.value.toUpperCase())} placeholder="AD SOYAD" style={S.input} /></MR.FormGroup>
                 <div style={gridS}>
-                  <MR.FormGroup label="DOĞUM TARİHİ *"><input type="date" value={form.dogumTarihi} onChange={e => handleChange('dogumTarihi', e.target.value)} style={S.input} /></MR.FormGroup>
+                  <MR.FormGroup label="DOĞUM TARİHİ *"><MR.DateInput value={form.dogumTarihi} onChange={v => handleChange('dogumTarihi', v)}/></MR.FormGroup>
                   <MR.FormGroup label="CİNSİYET"><select value={form.cinsiyet} onChange={e => handleChange('cinsiyet', e.target.value)} style={S.select}><option value="ERKEK">ERKEK</option><option value="KADIN">KADIN</option></select></MR.FormGroup>
                 </div>
                 <div style={gridS}>
-                  <MR.FormGroup label="KAZA TARİHİ *"><input type="date" value={form.kazaTarihi} onChange={e => handleChange('kazaTarihi', e.target.value)} style={S.input} /></MR.FormGroup>
+                  <MR.FormGroup label="KAZA TARİHİ *"><MR.DateInput value={form.kazaTarihi} onChange={v => handleChange('kazaTarihi', v)}/></MR.FormGroup>
                   <MR.FormGroup label="MALULİYET (SAKATLIK) ORANI % *"><input type="text" value={form.maluliyetOrani} onChange={e => handleChange('maluliyetOrani', MR.fmtInput(e.target.value))} placeholder="3" style={S.input} /></MR.FormGroup>
                 </div>
                 <MR.FormGroup label="MESLEK"><input type="text" value={form.meslek} onChange={e => handleChange('meslek', e.target.value.toUpperCase())} placeholder="MESLEK" style={S.input} /></MR.FormGroup>
@@ -571,7 +571,7 @@
               <div style={S.cardHead}><MR.LIcon name="Calculator" size={20} color={C.cyan} /><span>HESAPLAMA PARAMETRELERİ</span></div>
               <div style={S.cardBody}>
                 <div style={gridS}>
-                  <MR.FormGroup label="HESAP TARİHİ"><input type="date" value={form.hesapTarihi} onChange={e => handleChange('hesapTarihi', e.target.value)} style={S.input} /></MR.FormGroup>
+                  <MR.FormGroup label="HESAP TARİHİ"><MR.DateInput value={form.hesapTarihi} onChange={v => handleChange('hesapTarihi', v)}/></MR.FormGroup>
                   <MR.FormGroup label="HAKLILIK (KUSUR) ORANI %"><input type="text" value={form.kusurOrani} onChange={e => handleChange('kusurOrani', MR.fmtInput(e.target.value))} placeholder="100" style={S.input} /></MR.FormGroup>
                 </div>
                 <div style={gridS}>
@@ -582,7 +582,7 @@
                     <option value="1.8">%1.8 (STANDART)</option><option value="0">%0 (FAİZSİZ)</option><option value="1.65">%1.65</option><option value="10">%10 (ESKİ)</option>
                   </select></MR.FormGroup>
                 </div>
-                <MR.FormGroup label="YASAL FAİZ TARİHİ"><input type="date" value={form.yasalFaizTarihi} onChange={e => handleChange('yasalFaizTarihi', e.target.value)} style={S.input} /></MR.FormGroup>
+                <MR.FormGroup label="YASAL FAİZ TARİHİ"><MR.DateInput value={form.yasalFaizTarihi} onChange={v => handleChange('yasalFaizTarihi', v)}/></MR.FormGroup>
               </div>
             </div>
 

@@ -1013,7 +1013,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             <input value={editForm.plaka||''} onChange={e => u('plaka',e.target.value)} placeholder="34 XX 0000" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="KAZA TARİHİ">
-            <input type="date" value={editForm.kaza_tarihi||''} onChange={e => u('kaza_tarihi',e.target.value)} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            <MR.DateInput value={editForm.kaza_tarihi||''} onChange={v => u('kaza_tarihi',v)} style={{padding:'8px 10px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="KAZA İLİ">
             <select value={editForm.kaza_il} onChange={e => u('kaza_il',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
@@ -1125,7 +1125,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             <input value={editForm.magdur_telefon2||''} onChange={e => u('magdur_telefon2',e.target.value)} placeholder="TELEFON 2" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="IBAN">
-            <input value={editForm.magdur_iban||''} onChange={e => u('magdur_iban',e.target.value)} placeholder="TR00 0000 ..." style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            <MR.IBANInput value={editForm.magdur_iban||''} onChange={v => u('magdur_iban',v)} style={{padding:'8px 10px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="İL">
             <select value={editForm.magdur_il} onChange={e => {u('magdur_il',e.target.value);u('magdur_ilce','');}} style={{...S.select,padding:'8px 10px',fontSize:11}}>
@@ -1140,7 +1140,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             </select>
           </FormGroup>
           <FormGroup label="DOĞUM TARİHİ">
-            <input type="date" value={editForm.magdur_dogum_tarihi||''} onChange={e => u('magdur_dogum_tarihi',e.target.value)} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            <MR.DateInput value={editForm.magdur_dogum_tarihi||''} onChange={v => u('magdur_dogum_tarihi',v)} style={{padding:'8px 10px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="MESLEK">
             <input value={editForm.magdur_meslek||''} onChange={e => u('magdur_meslek',e.target.value)} placeholder="MESLEK" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
@@ -1206,7 +1206,7 @@ MR.MasrafEkle = ({open, onClose, dosyaId, onOk}) => {
           </select>
         </FormGroup>
         <FormGroup label="TARİH">
-          <input type="date" value={f.islem_tarihi} onChange={e => sF({...f,islem_tarihi:e.target.value})} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+          <MR.DateInput value={f.islem_tarihi} onChange={v => sF({...f,islem_tarihi:v})} style={{padding:'8px 10px',fontSize:11}}/>
         </FormGroup>
         <FormGroup label="AÇIKLAMA">
           <input value={f.aciklama} onChange={e => sF({...f,aciklama:e.target.value})} placeholder="İSTEĞE BAĞLI" style={{...S.input,padding:'8px 10px',fontSize:11}}/>

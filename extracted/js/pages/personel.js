@@ -372,7 +372,7 @@ const PersonelListesi = ({setPage, user}) => {
             <input style={S.input} value={editForm.sgk_no} onChange={e => ef('sgk_no', e.target.value)} placeholder="SGK NUMARASI"/>
           </FormGroup>
           <FormGroup label="IBAN">
-            <input style={S.input} value={editForm.iban} onChange={e => ef('iban', e.target.value)} placeholder="TR XXXXXXXXXXXXXXXXXXXXXXXX"/>
+            <MR.IBANInput value={editForm.iban} onChange={v => ef('iban', v)}/>
           </FormGroup>
           <FormGroup label="İL">
             <select style={S.select} value={editForm.il} onChange={e => ef('il', e.target.value)}>
@@ -384,7 +384,7 @@ const PersonelListesi = ({setPage, user}) => {
             <input style={S.input} value={editForm.adres} onChange={e => ef('adres', e.target.value)} placeholder="ADRES"/>
           </FormGroup>
           <FormGroup label="İŞE BAŞLAMA TARİHİ">
-            <input style={S.input} type="date" value={editForm.ise_baslama} onChange={e => ef('ise_baslama', e.target.value)}/>
+            <MR.DateInput value={editForm.ise_baslama} onChange={v => ef('ise_baslama', v)}/>
           </FormGroup>
           <FormGroup label="DURUM">
             <select style={S.select} value={editForm.durum} onChange={e => ef('durum', e.target.value)}>
@@ -513,7 +513,7 @@ const YeniPersonel = ({setPage, user}) => {
             <input style={S.input} value={form.sgk_no} onChange={e => f('sgk_no', e.target.value)} placeholder="SGK NUMARASI"/>
           </FormGroup>
           <FormGroup label="IBAN">
-            <input style={S.input} value={form.iban} onChange={e => f('iban', e.target.value)} placeholder="TR XXXXXXXXXXXXXXXXXXXXXXXX"/>
+            <MR.IBANInput value={form.iban} onChange={v => f('iban', v)}/>
           </FormGroup>
           <FormGroup label="İL">
             <select style={S.select} value={form.il} onChange={e => f('il', e.target.value)}>
@@ -525,7 +525,7 @@ const YeniPersonel = ({setPage, user}) => {
             <input style={S.input} value={form.adres} onChange={e => f('adres', e.target.value)} placeholder="ADRES"/>
           </FormGroup>
           <FormGroup label="İŞE BAŞLAMA TARİHİ">
-            <input style={S.input} type="date" value={form.ise_baslama} onChange={e => f('ise_baslama', e.target.value)}/>
+            <MR.DateInput value={form.ise_baslama} onChange={v => f('ise_baslama', v)}/>
           </FormGroup>
           <FormGroup label="DURUM">
             <select style={S.select} value={form.durum} onChange={e => f('durum', e.target.value)}>

@@ -1421,7 +1421,7 @@ MR._CRMYeniInner = ({setPage}) => {
                 </select>
               </FormGroup>
               <FormGroup label="KAZA TARİHİ">
-                <input type="date" style={S.input} value={f.kaza_tarihi} onChange={e => up('kaza_tarihi', e.target.value)}/>
+                <MR.DateInput value={f.kaza_tarihi} onChange={v => up('kaza_tarihi', v)}/>
               </FormGroup>
             </div>
 

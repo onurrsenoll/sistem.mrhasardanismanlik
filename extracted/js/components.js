@@ -283,3 +283,210 @@ MR.AracModelSelect = ({marka, value, onChange, style}) => {
     </div>
   );
 };
+
+/* ═══ IBAN GİRİŞ BİLEŞENİ ═══
+   TR + 24 rakam = 26 karakter (standart TR IBAN)
+   Otomatik formatlama: TR00 0000 0000 0000 0000 0000 00
+   Validasyon: eksik/geçerli durum gösterimi
+*/
+MR.IBANInput = ({value, onChange, style: customStyle}) => {
+  const C = MR.C, S = MR.S;
+  const [focused, setFocused] = useState(false);
+
+  // Ham değerden sadece rakamları al
+  const rawDigits = (value || '').replace(/[^0-9]/g, '').substring(0, 24);
+
+  const handleChange = (e) => {
+    let val = e.target.value.replace(/[^0-9]/g, '');
+    if (val.length > 24) val = val.substring(0, 24);
+    // 4'lü gruplama ile göster
+    let formatted = '';
+    for (let i = 0; i < val.length; i++) {
+      if (i > 0 && i % 4 === 0) formatted += ' ';
+      formatted += val[i];
+    }
+    onChange(formatted);
+  };
+
+  // Formatlı gösterim
+  let displayVal = '';
+  for (let i = 0; i < rawDigits.length; i++) {
+    if (i > 0 && i % 4 === 0) displayVal += ' ';
+    displayVal += rawDigits[i];
+  }
+
+  const isComplete = rawDigits.length === 24;
+  const isEmpty = rawDigits.length === 0;
+  const hasError = !isEmpty && !isComplete;
+
+  return (
+    <div>
+      <div style={{position:'relative'}}>
+        <span style={{
+          position:'absolute', left:10, top:'50%', transform:'translateY(-50%)',
+          fontSize:12, fontWeight:800, color: isComplete ? C.success : C.accent,
+          letterSpacing:1, pointerEvents:'none', zIndex:1
+        }}>TR</span>
+        <input
+          value={displayVal}
+          onChange={handleChange}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder="0000 0000 0000 0000 0000 0000"
+          maxLength={29}
+          style={{
+            ...S.input, ...customStyle,
+            paddingLeft: 32, fontWeight:600, letterSpacing:1.5,
+            borderColor: isComplete ? C.success : hasError ? C.danger : focused ? C.accent : (S.input.border||'').includes(C.borderLight) ? C.borderLight : C.border,
+            boxShadow: focused ? `0 0 0 3px ${isComplete ? C.success+'22' : C.accent+'18'}` : 'none'
+          }}
+        />
+      </div>
+      {!isEmpty && (
+        <div style={{
+          fontSize:9, fontWeight:600, marginTop:3,
+          display:'flex', alignItems:'center', gap:3,
+          color: isComplete ? C.success : C.danger
+        }}>
+          {isComplete
+            ? <><MR.LIcon name="CheckCircle" size={10} color={C.success}/> TR{rawDigits} — GEÇERLİ FORMAT</>
+            : <><MR.LIcon name="AlertCircle" size={10} color={C.danger}/> EKSİK — {rawDigits.length}/24 RAKAM GİRİLDİ</>
+          }
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ═══ TARİH GİRİŞ BİLEŞENİ (GG/AA/YYYY) ═══
+   Manuel GG/AA/YYYY + Takvim seçici
+   value: YYYY-MM-DD (veritabanı formatı)
+   onChange: YYYY-MM-DD döndürür
+*/
+MR.DateInput = ({value, onChange, style: customStyle, disabled}) => {
+  const C = MR.C, S = MR.S;
+  const hiddenRef = useRef(null);
+
+  // YYYY-MM-DD → ayrıştır
+  const parts = (value || '').split('-');
+  const yil = parts[0] || '';
+  const ay = parts[1] || '';
+  const gun = parts[2] || '';
+
+  const [g, setG] = useState(gun);
+  const [a, setA] = useState(ay);
+  const [y, setY] = useState(yil);
+  const [err, setErr] = useState('');
+  const gunRef = useRef(null);
+  const ayRef = useRef(null);
+  const yilRef = useRef(null);
+
+  // Dışarıdan value değişince senkronla
+  useEffect(() => {
+    const p = (value || '').split('-');
+    setY(p[0] || ''); setA(p[1] || ''); setG(p[2] || '');
+  }, [value]);
+
+  const emitChange = (gun, ay, yil) => {
+    if (gun.length === 2 && ay.length === 2 && yil.length === 4) {
+      onChange(`${yil}-${ay}-${gun}`);
+    } else if (!gun && !ay && !yil) {
+      onChange('');
+    }
+  };
+
+  const handleGun = (e) => {
+    let val = e.target.value.replace(/[^0-9]/g, '').substring(0, 2);
+    setG(val); setErr('');
+    if (val.length === 2) {
+      const n = parseInt(val);
+      if (n < 1 || n > 31) { setG(''); setErr('GÜN 01-31 ARASI OLMALI'); return; }
+      ayRef.current?.focus();
+    }
+    emitChange(val, a, y);
+  };
+
+  const handleAy = (e) => {
+    let val = e.target.value.replace(/[^0-9]/g, '').substring(0, 2);
+    setA(val); setErr('');
+    if (val.length === 2) {
+      const n = parseInt(val);
+      if (n < 1 || n > 12) { setA(''); setErr('AY 01-12 ARASI OLMALI'); return; }
+      yilRef.current?.focus();
+    }
+    emitChange(g, val, y);
+  };
+
+  const handleYil = (e) => {
+    let val = e.target.value.replace(/[^0-9]/g, '').substring(0, 4);
+    setY(val); setErr('');
+    if (val.length === 4) {
+      const n = parseInt(val);
+      if (n < 1950 || n > 2035) { setErr('YIL 1950-2035 ARASI OLMALI'); return; }
+    }
+    emitChange(g, a, val);
+  };
+
+  const handleKeyDown = (e, prevRef) => {
+    if (e.key === 'Backspace' && e.target.value === '' && prevRef) {
+      prevRef.current?.focus();
+    }
+  };
+
+  const handleCalendarPick = (e) => {
+    const val = e.target.value;
+    if (!val) return;
+    const [yy, mm, dd] = val.split('-');
+    setG(dd); setA(mm); setY(yy);
+    onChange(val);
+  };
+
+  const isComplete = g.length === 2 && a.length === 2 && y.length === 4;
+  const partStyle = {
+    ...S.input, ...customStyle,
+    textAlign:'center', fontWeight:600, letterSpacing:1,
+    padding:'7px 4px', fontSize:12
+  };
+
+  return (
+    <div>
+      <div style={{display:'flex', gap:4, alignItems:'center'}}>
+        <input ref={gunRef} value={g} onChange={handleGun} onKeyDown={e=>handleKeyDown(e, null)}
+          placeholder="GG" maxLength={2} disabled={disabled}
+          style={{...partStyle, flex:1, minWidth:0}}/>
+        <span style={{fontSize:14, fontWeight:800, color:C.textMuted, userSelect:'none'}}>/</span>
+        <input ref={ayRef} value={a} onChange={handleAy} onKeyDown={e=>handleKeyDown(e, gunRef)}
+          placeholder="AA" maxLength={2} disabled={disabled}
+          style={{...partStyle, flex:1, minWidth:0}}/>
+        <span style={{fontSize:14, fontWeight:800, color:C.textMuted, userSelect:'none'}}>/</span>
+        <input ref={yilRef} value={y} onChange={handleYil} onKeyDown={e=>handleKeyDown(e, ayRef)}
+          placeholder="YYYY" maxLength={4} disabled={disabled}
+          style={{...partStyle, flex:1.5, minWidth:0}}/>
+        <div style={{position:'relative', flexShrink:0}}>
+          <div style={{
+            width:30, height:30, borderRadius:6,
+            border:`1px solid ${C.border}`, background:C.bgHover || C.bgInput,
+            display:'flex', alignItems:'center', justifyContent:'center',
+            cursor:'pointer', color:C.textMuted
+          }}>
+            <MR.LIcon name="Calendar" size={14} color={C.textMuted}/>
+          </div>
+          <input ref={hiddenRef} type="date" value={value || ''}
+            onChange={handleCalendarPick}
+            style={{position:'absolute', opacity:0, width:30, height:30, top:0, left:0, cursor:'pointer'}}
+          />
+        </div>
+      </div>
+      {err && (
+        <div style={{fontSize:9, fontWeight:600, marginTop:3, color:C.danger, display:'flex', alignItems:'center', gap:3}}>
+          <MR.LIcon name="AlertCircle" size={10} color={C.danger}/> {err}
+        </div>
+      )}
+      {isComplete && !err && (
+        <div style={{fontSize:9, fontWeight:600, marginTop:3, color:C.success, display:'flex', alignItems:'center', gap:3}}>
+          <MR.LIcon name="CheckCircle" size={10} color={C.success}/> {g}/{a}/{y}
+        </div>
+      )}
+    </div>
+  );
+};

@@ -1229,7 +1229,7 @@ const KasaBanka = ({setPage, user}) => {
                 <input style={S.input} value={kasaForm.banka_adi} onChange={e => setKasaForm(p => ({...p, banka_adi: e.target.value.toUpperCase()}))} placeholder="BANKA ADI"/>
               </FormGroup>
               <FormGroup label="IBAN">
-                <input style={S.input} value={kasaForm.iban} onChange={e => setKasaForm(p => ({...p, iban: e.target.value.toUpperCase()}))} placeholder="TR00 0000 0000 0000 0000 0000 00" maxLength={32}/>
+                <MR.IBANInput value={kasaForm.iban} onChange={v => setKasaForm(p => ({...p, iban: v}))}/>
               </FormGroup>
             </>
           )}

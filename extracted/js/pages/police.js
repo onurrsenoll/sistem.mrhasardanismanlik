@@ -590,15 +590,15 @@ const PoliceYeni = ({setPage, user, prefill}) => {
         </div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20}}>
           <FormGroup label="E-POSTA"><input style={S.input} value={form.musteri_email} onChange={e=>f('musteri_email',e.target.value)} placeholder="E-POSTA ADRESİ"/></FormGroup>
-          <FormGroup label="DOĞUM TARİHİ"><input style={S.input} type="date" value={form.dogum_tarihi} onChange={e=>f('dogum_tarihi',e.target.value)}/></FormGroup>
+          <FormGroup label="DOĞUM TARİHİ"><MR.DateInput value={form.dogum_tarihi} onChange={v=>f('dogum_tarihi',v)}/></FormGroup>
         </div>
 
         {/* TARİHLER */}
         <div style={{fontSize:11,fontWeight:700,color:C.warning,marginBottom:12,display:'flex',alignItems:'center',gap:6}}><LIcon name="Calendar" size={14} color={C.warning}/> TARİHLER</div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,marginBottom:20}}>
-          <FormGroup label="TANZİM TARİHİ"><input style={S.input} type="date" value={form.tanzim_tarihi} onChange={e=>f('tanzim_tarihi',e.target.value)}/></FormGroup>
-          <FormGroup label="BAŞLANGIÇ TARİHİ *"><input style={S.input} type="date" value={form.baslangic_tarihi} onChange={e=>f('baslangic_tarihi',e.target.value)}/></FormGroup>
-          <FormGroup label="BİTİŞ TARİHİ (YENİLEME TARİHİ) *"><input style={S.input} type="date" value={form.bitis_tarihi} onChange={e=>f('bitis_tarihi',e.target.value)}/></FormGroup>
+          <FormGroup label="TANZİM TARİHİ"><MR.DateInput value={form.tanzim_tarihi} onChange={v=>f('tanzim_tarihi',v)}/></FormGroup>
+          <FormGroup label="BAŞLANGIÇ TARİHİ *"><MR.DateInput value={form.baslangic_tarihi} onChange={v=>f('baslangic_tarihi',v)}/></FormGroup>
+          <FormGroup label="BİTİŞ TARİHİ (YENİLEME TARİHİ) *"><MR.DateInput value={form.bitis_tarihi} onChange={v=>f('bitis_tarihi',v)}/></FormGroup>
         </div>
 
         {/* FİNANSAL BİLGİLER */}

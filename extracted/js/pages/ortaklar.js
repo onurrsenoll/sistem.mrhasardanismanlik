@@ -717,7 +717,7 @@ const IsOrtaklari = ({setPage, user}) => {
             </div>
           </FormGroup>
           <FormGroup label="TARİH *">
-            <input style={S.input} type="date" value={hareketForm.tarih} onChange={e => hUp('tarih', e.target.value)}/>
+            <MR.DateInput value={hareketForm.tarih} onChange={v => hUp('tarih', v)}/>
           </FormGroup>
           <FormGroup label="DOSYA NO">
             <input style={S.input} value={hareketForm.dosya_id} onChange={e => hUp('dosya_id', e.target.value)} placeholder="DOSYA ID (OPSİYONEL)" type="number"/>
@@ -1382,7 +1382,7 @@ const IsPaydaslari = ({setPage, user}) => {
             </div>
           </FormGroup>
           <FormGroup label="TARİH *">
-            <input style={S.input} type="date" value={komisyonForm.tarih} onChange={e => kUp('tarih', e.target.value)}/>
+            <MR.DateInput value={komisyonForm.tarih} onChange={v => kUp('tarih', v)}/>
           </FormGroup>
           <FormGroup label="DURUM">
             <select style={S.select} value={komisyonForm.durum} onChange={e => kUp('durum', e.target.value)}>

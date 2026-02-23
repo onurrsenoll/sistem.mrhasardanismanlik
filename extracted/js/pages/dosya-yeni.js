@@ -2,7 +2,7 @@ const MR = window.MR || (window.MR = {});
 const {useState, useEffect} = React;
 
 MR.DosyaYeniPage = ({setPage, user}) => {
-  const {C, S, LIcon, Badge, SectionTitle, FormGroup, api, SIGORTA, ILLER, ILCELER, formatPlaka, AracMarkaSelect, AracModelSelect} = MR;
+  const {C, S, LIcon, Badge, SectionTitle, FormGroup, api, SIGORTA, ILLER, ILCELER, formatPlaka, AracMarkaSelect, AracModelSelect, IBANInput, DateInput} = MR;
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -104,7 +104,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
           <FormGroup label="ADI SOYADI *"><input style={S.input} value={form.ad_soyad} onChange={e=>u('ad_soyad',e.target.value)} placeholder="MAĞDUR ADI SOYADI"/></FormGroup>
           <FormGroup label="T.C. KİMLİK NO"><input style={S.input} value={form.tc_kimlik} onChange={e=>u('tc_kimlik',e.target.value)} maxLength={11} placeholder="11 HANELİ TC"/></FormGroup>
           <FormGroup label="TELEFON"><input style={S.input} value={form.telefon} onChange={e=>u('telefon',e.target.value)} placeholder="05XX XXX XXXX"/></FormGroup>
-          <FormGroup label="IBAN"><input style={S.input} value={form.iban} onChange={e=>u('iban',e.target.value)} placeholder="TR00 0000 ..."/></FormGroup>
+          <FormGroup label="IBAN"><IBANInput value={form.iban} onChange={v=>u('iban',v)}/></FormGroup>
           <FormGroup label="ADRES" full><input style={S.input} value={form.adres} onChange={e=>u('adres',e.target.value)} placeholder="AÇIK ADRES"/></FormGroup>
           <FormGroup label="İL"><select style={S.select} value={form.il} onChange={e=>{u('il',e.target.value);u('ilce','');}}><option value="">SEÇİNİZ</option>{ILLER.map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
           <FormGroup label="İLÇE"><select style={S.select} value={form.ilce} onChange={e=>u('ilce',e.target.value)} disabled={!form.il}><option value="">SEÇİNİZ</option>{(ILCELER[form.il]||[]).map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
@@ -118,7 +118,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
               <option value="BH">BEDENİ HASAR</option>
             </select>
           </FormGroup>
-          <FormGroup label="KAZA TARİHİ"><input type="date" style={S.input} value={form.kaza_tarihi} onChange={e=>u('kaza_tarihi',e.target.value)}/></FormGroup>
+          <FormGroup label="KAZA TARİHİ"><DateInput value={form.kaza_tarihi} onChange={v=>u('kaza_tarihi',v)}/></FormGroup>
           <FormGroup label="HAKLILIK ORANI">
             <select style={S.select} value={form.haklilik} onChange={e=>u('haklilik',e.target.value)}>
               <option value="100">%100</option><option value="75">%75</option><option value="50">%50</option><option value="25">%25</option>

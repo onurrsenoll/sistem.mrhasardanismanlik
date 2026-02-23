@@ -264,6 +264,7 @@ const KOYU_TEMA = {
   bg: '#0B1120', bgCard: '#111827', bgHover: '#1F2937', bgInput: '#1a2332',
   border: '#1F2937', borderLight: '#374151',
   accent: '#2563eb', accentLight: '#3b82f6',
+  accentGradient: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
   success: '#10b981', warning: '#f59e0b', danger: '#ef4444',
   purple: '#8b5cf6', cyan: '#06b6d4', pink: '#ec4899', gold: '#fbbf24',
   text: '#f1f5f9', textSec: '#94a3b8', textMuted: '#64748b',
@@ -271,12 +272,13 @@ const KOYU_TEMA = {
 };
 
 const ACIK_TEMA = {
-  bg: '#f1f5f9', bgCard: '#ffffff', bgHover: '#f1f5f9', bgInput: '#f8fafc',
+  bg: '#f8fafc', bgCard: '#ffffff', bgHover: '#f1f5f9', bgInput: '#f1f5f9',
   border: '#e2e8f0', borderLight: '#cbd5e1',
   accent: '#2563eb', accentLight: '#3b82f6',
-  success: '#059669', warning: '#d97706', danger: '#dc2626',
-  purple: '#7c3aed', cyan: '#0891b2', pink: '#db2777', gold: '#ca8a04',
-  text: '#0f172a', textSec: '#475569', textMuted: '#94a3b8',
+  accentGradient: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+  success: '#16a34a', warning: '#ca8a04', danger: '#dc2626',
+  purple: '#8b5cf6', cyan: '#0891b2', pink: '#db2777', gold: '#ca8a04',
+  text: '#1e293b', textSec: '#475569', textMuted: '#64748b',
   headerBg: '#ffffff', navBg: '#f8fafc'
 };
 

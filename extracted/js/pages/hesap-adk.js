@@ -419,7 +419,7 @@ MR.HesapADKPage = () => {
                   <input value={km} onChange={e => setKm(MR.fmtInput(e.target.value))} placeholder="150.000" style={S.input}/>
                 </MR.FormGroup>
                 <MR.FormGroup label="KAZA TARİHİ">
-                  <input type="date" value={kazaTarihi} onChange={e => setKazaTarihi(e.target.value)} style={S.input}/>
+                  <MR.DateInput value={kazaTarihi} onChange={v => setKazaTarihi(v)}/>
                 </MR.FormGroup>
                 <MR.FormGroup label="PLAKA">
                   <input value={plaka} onChange={e => setPlaka(e.target.value.toUpperCase())} placeholder="34 XX 000" style={S.input}/>
