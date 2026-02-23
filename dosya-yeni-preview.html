@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MR HASAR - YENİ DOSYA OLUŞTUR (ÖNİZLEME)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #0B1120;
+    color: #f1f5f9;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 30px 20px;
+  }
+
+  /* ANA KONTEYNER - EKRANIN 2/3'Ü */
+  .main-container {
+    width: 66.66%;
+    max-width: 1100px;
+    min-width: 800px;
+  }
+
+  /* BAŞLIK */
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #1F2937;
+  }
+  .page-header-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: #fff;
+    box-shadow: 0 4px 15px rgba(37,99,235,0.3);
+  }
+  .page-header h1 { font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
+  .page-header p { font-size: 11px; color: #64748b; margin-top: 2px; letter-spacing: 0.5px; }
+
+  /* DOSYA TÜRÜ SEÇIM */
+  .type-selector {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .type-btn {
+    flex: 1;
+    padding: 14px 20px;
+    border-radius: 10px;
+    border: 2px solid #1F2937;
+    background: #111827;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .type-btn:hover { border-color: #374151; }
+  .type-btn.active {
+    border-color: #2563eb;
+    background: rgba(37,99,235,0.08);
+    box-shadow: 0 0 20px rgba(37,99,235,0.15);
+  }
+  .type-btn-icon { font-size: 24px; margin-bottom: 4px; }
+  .type-btn-label { font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 1px; }
+  .type-btn.active .type-btn-label { color: #3b82f6; }
+
+  /* BÖLÜM BAŞLIKLARI */
+  .section {
+    background: #111827;
+    border-radius: 12px;
+    border: 1px solid #1F2937;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .section-head {
+    padding: 10px 18px;
+    border-bottom: 1px solid #1F2937;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(37,99,235,0.04);
+  }
+  .section-head-icon {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .section-head-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+  }
+  .section-head-sub {
+    font-size: 10px;
+    color: #64748b;
+    margin-left: auto;
+    font-weight: 500;
+  }
+  .section-body { padding: 16px 18px; }
+
+  /* FORM GRID */
+  .form-grid {
+    display: grid;
+    gap: 10px;
+  }
+  .form-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .form-grid.cols-2-1 { grid-template-columns: 2fr 1fr; }
+  .form-grid.cols-1-2 { grid-template-columns: 1fr 2fr; }
+  .full { grid-column: 1 / -1; }
+
+  /* FORM GROUP - KOMPAKT */
+  .fg {
+    display: flex;
+    flex-direction: column;
+  }
+  .fg label {
+    font-size: 9px;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 4px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  .fg label .req { color: #ef4444; }
+  .fg input, .fg select, .fg textarea {
+    width: 100%;
+    padding: 7px 10px;
+    background: #1a2332;
+    border: 1px solid #2a3548;
+    border-radius: 6px;
+    color: #f1f5f9;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .fg input:focus, .fg select:focus, .fg textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+  }
+  .fg input::placeholder { color: #475569; font-size: 11px; }
+  .fg select { cursor: pointer; }
+  .fg select option { background: #111827; color: #f1f5f9; }
+
+  /* ═══════════════════════════════════════════════ */
+  /* RUHSAT TARZI ARAÇ BİLGİLERİ - ANA YILDIZ     */
+  /* ═══════════════════════════════════════════════ */
+  .ruhsat-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #1F2937;
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  /* ORTADAKI AYIRICI - VS BADGE */
+  .ruhsat-divider {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: #0B1120;
+    border: 2px solid #374151;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 900;
+    color: #64748b;
+    letter-spacing: 1px;
+  }
+
+  .ruhsat-side {
+    background: #111827;
+    position: relative;
+  }
+  .ruhsat-side:first-child {
+    border-right: 1px solid #1F2937;
+  }
+
+  .ruhsat-header {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #1F2937;
+  }
+  .ruhsat-header-badge {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .ruhsat-header-text {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+  }
+
+  /* MAĞDUR TARAF */
+  .ruhsat-side.magdur .ruhsat-header {
+    background: linear-gradient(90deg, rgba(37,99,235,0.12), rgba(37,99,235,0.03));
+  }
+  .ruhsat-side.magdur .ruhsat-header-badge {
+    background: rgba(37,99,235,0.2);
+    color: #3b82f6;
+  }
+  .ruhsat-side.magdur .ruhsat-header-text { color: #3b82f6; }
+
+  /* KARŞI TARAF */
+  .ruhsat-side.karsi .ruhsat-header {
+    background: linear-gradient(90deg, rgba(239,68,68,0.03), rgba(239,68,68,0.12));
+  }
+  .ruhsat-side.karsi .ruhsat-header-badge {
+    background: rgba(239,68,68,0.2);
+    color: #ef4444;
+  }
+  .ruhsat-side.karsi .ruhsat-header-text { color: #ef4444; }
+  .ruhsat-side.karsi .ruhsat-header { justify-content: flex-end; }
+
+  .ruhsat-body {
+    padding: 12px 14px;
+  }
+
+  /* RUHSAT İÇİ PLAKA ALANI */
+  .plaka-field {
+    background: #0f1729;
+    border: 2px solid #2a3548;
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+  .plaka-field:focus-within {
+    border-color: #2563eb;
+  }
+  .plaka-field .plaka-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .magdur .plaka-field .plaka-icon {
+    background: rgba(37,99,235,0.15);
+    color: #3b82f6;
+  }
+  .karsi .plaka-field .plaka-icon {
+    background: rgba(239,68,68,0.15);
+    color: #ef4444;
+  }
+  .plaka-field input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #f1f5f9;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    outline: none;
+  }
+  .plaka-field input::placeholder {
+    color: #374151;
+    font-weight: 500;
+    letter-spacing: 1px;
+    font-size: 12px;
+  }
+  .plaka-field .plaka-label {
+    font-size: 8px;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.5px;
+  }
+
+  /* RUHSAT İÇİ MINI FORM */
+  .ruhsat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .ruhsat-grid .fg label { font-size: 8px; margin-bottom: 3px; }
+  .ruhsat-grid .fg input,
+  .ruhsat-grid .fg select {
+    padding: 6px 8px;
+    font-size: 11px;
+    border-radius: 5px;
+  }
+  .ruhsat-grid .full { grid-column: 1 / -1; }
+
+  /* HAK MAHRUMİYET TOGGLE */
+  .toggle-group {
+    display: flex;
+    gap: 6px;
+  }
+  .toggle-btn {
+    flex: 1;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #2a3548;
+    background: transparent;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .toggle-btn.active-green {
+    background: rgba(16,185,129,0.12);
+    border-color: rgba(16,185,129,0.4);
+    color: #10b981;
+  }
+  .toggle-btn.active-red {
+    background: rgba(239,68,68,0.12);
+    border-color: rgba(239,68,68,0.4);
+    color: #ef4444;
+  }
+
+  /* SİGORTA & ATAMA BÖLÜMÜ */
+  .atama-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .atama-card {
+    background: #111827;
+    border-radius: 10px;
+    border: 1px solid #1F2937;
+    overflow: hidden;
+  }
+  .atama-card-head {
+    padding: 10px 14px;
+    border-bottom: 1px solid #1F2937;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  /* KAYDET BUTONU */
+  .save-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #1F2937;
+  }
+  .btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(16,185,129,0.3);
+  }
+  .btn-ghost {
+    background: #1F2937;
+    color: #94a3b8;
+  }
+
+  /* SAYFA NUMARALARI */
+  .page-num {
+    position: absolute;
+    top: -10px;
+    right: 16px;
+    background: #0B1120;
+    padding: 0 8px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #374151;
+    letter-spacing: 1px;
+  }
+
+  /* SAYFA BÖLÜCÜ */
+  .page-break {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 28px 0;
+  }
+  .page-break-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #374151, transparent);
+  }
+  .page-break-text {
+    font-size: 9px;
+    font-weight: 700;
+    color: #374151;
+    letter-spacing: 2px;
+    white-space: nowrap;
+  }
+
+  /* INFO BADGE */
+  .info-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  /* NOTLAR TEXTAREA */
+  .fg textarea {
+    min-height: 50px;
+    resize: vertical;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0B1120; }
+  ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .main-container { width: 95%; min-width: auto; }
+    .ruhsat-container { grid-template-columns: 1fr; }
+    .ruhsat-divider { display: none; }
+    .ruhsat-side:first-child { border-right: none; border-bottom: 1px solid #1F2937; }
+    .atama-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="main-container">
+
+  <!-- BAŞLIK -->
+  <div class="page-header">
+    <div class="page-header-icon">+</div>
+    <div>
+      <h1>YENİ DOSYA OLUŞTUR</h1>
+      <p>TÜM BİLGİLERİ GİREREK DOSYA KAYDI OLUŞTURUN</p>
+    </div>
+    <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+      <span class="info-chip" style="background:rgba(37,99,235,0.12); color:#3b82f6; border:1px solid rgba(37,99,235,0.3);">
+        ● ADK
+      </span>
+    </div>
+  </div>
+
+  <!-- DOSYA TÜRÜ SEÇİMİ -->
+  <div class="type-selector">
+    <div class="type-btn active">
+      <div class="type-btn-icon">🚗</div>
+      <div class="type-btn-label">ARAÇ DEĞER KAYBI</div>
+    </div>
+    <div class="type-btn">
+      <div class="type-btn-icon">🏥</div>
+      <div class="type-btn-label">BEDENİ HASAR</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SAYFA 1: MAĞDUR + DOSYA BİLGİLERİ         -->
+  <!-- ═══════════════════════════════════════════ -->
+
+  <div class="section" style="position:relative;">
+    <span class="page-num">SAYFA 1/2</span>
+    <div class="section-head">
+      <div class="section-head-icon" style="background:rgba(37,99,235,0.15); color:#3b82f6;">👤</div>
+      <span class="section-head-title">MAĞDUR BİLGİLERİ</span>
+      <span class="section-head-sub">KİŞİSEL BİLGİLER & İLETİŞİM</span>
+    </div>
+    <div class="section-body">
+      <div class="form-grid cols-4">
+        <div class="fg">
+          <label>ADI SOYADI <span class="req">*</span></label>
+          <input type="text" placeholder="MAĞDUR ADI SOYADI" />
+        </div>
+        <div class="fg">
+          <label>T.C. KİMLİK NO <span class="req">*</span></label>
+          <input type="text" placeholder="11 HANELİ" maxlength="11" />
+        </div>
+        <div class="fg">
+          <label>TELEFON <span class="req">*</span></label>
+          <input type="text" placeholder="05XX XXX XXXX" />
+        </div>
+        <div class="fg">
+          <label>IBAN</label>
+          <input type="text" placeholder="TR00 0000 ..." />
+        </div>
+      </div>
+      <div style="height:10px;"></div>
+      <div class="form-grid cols-3">
+        <div class="fg">
+          <label>İL <span class="req">*</span></label>
+          <select><option>SEÇİNİZ</option><option>İSTANBUL</option><option>ANKARA</option><option>SAMSUN</option></select>
+        </div>
+        <div class="fg">
+          <label>İLÇE <span class="req">*</span></label>
+          <select><option>SEÇİNİZ</option></select>
+        </div>
+        <div class="fg">
+          <label>ADRES</label>
+          <input type="text" placeholder="AÇIK ADRES" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOSYA BİLGİSİ -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-head-icon" style="background:rgba(139,92,246,0.15); color:#8b5cf6;">📋</div>
+      <span class="section-head-title">DOSYA BİLGİSİ</span>
+      <span class="section-head-sub">TÜR, TARİH & DETAYLAR</span>
+    </div>
+    <div class="section-body">
+      <div class="form-grid cols-4">
+        <div class="fg">
+          <label>KAZA TARİHİ <span class="req">*</span></label>
+          <input type="date" />
+        </div>
+        <div class="fg">
+          <label>HAKLILIK ORANI</label>
+          <select>
+            <option>%100</option><option>%75</option><option>%50</option><option>%25</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>KOMİSYON (%)</label>
+          <input type="number" placeholder="20" />
+        </div>
+        <div class="fg">
+          <label>HAK MAHRUMİYET</label>
+          <div class="toggle-group">
+            <div class="toggle-btn active-green">VAR</div>
+            <div class="toggle-btn active-red">YOK</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SAYFA AYIRICI                               -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="page-break">
+    <div class="page-break-line"></div>
+    <div class="page-break-text">▼ SAYFA 2 — ARAÇ & SİGORTA BİLGİLERİ ▼</div>
+    <div class="page-break-line"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SAYFA 2: ARAÇ BİLGİLERİ - RUHSAT TARZI     -->
+  <!-- ═══════════════════════════════════════════ -->
+
+  <div class="ruhsat-container" style="position:relative;">
+    <span class="page-num">SAYFA 2/2</span>
+
+    <!-- VS BADGE -->
+    <div class="ruhsat-divider">VS</div>
+
+    <!-- SOL: MAĞDUR ARACI -->
+    <div class="ruhsat-side magdur">
+      <div class="ruhsat-header">
+        <div class="ruhsat-header-badge">🚗</div>
+        <div>
+          <div class="ruhsat-header-text">MAĞDUR ARACI</div>
+          <div style="font-size:8px; color:#475569; margin-top:1px; font-weight:500;">TAZMİNAT TALEP EDEN TARAF</div>
+        </div>
+      </div>
+      <div class="ruhsat-body">
+        <!-- PLAKA ALANI -->
+        <div class="plaka-field">
+          <div class="plaka-icon">🅿️</div>
+          <div style="flex:1;">
+            <div class="plaka-label">PLAKA <span style="color:#ef4444">*</span></div>
+            <input type="text" placeholder="55 MR 001" style="margin-top:2px;" />
+          </div>
+        </div>
+        <!-- ARAÇ DETAYLARI -->
+        <div class="ruhsat-grid">
+          <div class="fg full">
+            <label>MARKA</label>
+            <select><option>MARKA SEÇİNİZ</option><option>BMW</option><option>MERCEDES</option><option>AUDI</option><option>VOLKSWAGEN</option><option>TOYOTA</option></select>
+          </div>
+          <div class="fg full">
+            <label>MODEL / PAKET</label>
+            <select><option>ÖNCE MARKA SEÇİNİZ</option></select>
+          </div>
+          <div class="fg" style="grid-column: 1 / -1;">
+            <label>MODEL YILI</label>
+            <select><option>SEÇİNİZ</option><option>2026</option><option>2025</option><option>2024</option><option>2023</option><option>2022</option><option>2021</option><option>2020</option></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAĞ: KARŞI ARAÇ -->
+    <div class="ruhsat-side karsi">
+      <div class="ruhsat-header">
+        <div>
+          <div class="ruhsat-header-text" style="text-align:right;">KARŞI ARAÇ</div>
+          <div style="font-size:8px; color:#475569; margin-top:1px; font-weight:500; text-align:right;">KUSURLU TARAF</div>
+        </div>
+        <div class="ruhsat-header-badge">🚙</div>
+      </div>
+      <div class="ruhsat-body">
+        <!-- PLAKA ALANI -->
+        <div class="plaka-field">
+          <div class="plaka-icon">🅿️</div>
+          <div style="flex:1;">
+            <div class="plaka-label">PLAKA</div>
+            <input type="text" placeholder="34 XX 123" style="margin-top:2px;" />
+          </div>
+        </div>
+        <!-- ARAÇ DETAYLARI -->
+        <div class="ruhsat-grid">
+          <div class="fg full">
+            <label>MARKA</label>
+            <select><option>MARKA SEÇİNİZ</option><option>BMW</option><option>MERCEDES</option><option>AUDI</option><option>VOLKSWAGEN</option></select>
+          </div>
+          <div class="fg full">
+            <label>TRAFİK SİGORTASI</label>
+            <select><option>SEÇİNİZ</option><option>AXA SİGORTA</option><option>ALLIANZ</option><option>AKSİGORTA</option><option>HDI SİGORTA</option></select>
+          </div>
+          <div class="fg" style="grid-column: 1 / -1;">
+            <label>MODEL YILI</label>
+            <select><option>SEÇİNİZ</option><option>2026</option><option>2025</option><option>2024</option><option>2023</option><option>2022</option></select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SİGORTA & ATAMA -->
+  <div class="atama-grid">
+
+    <!-- SOL: SİGORTA BİLGİLERİ -->
+    <div class="atama-card">
+      <div class="atama-card-head" style="color:#f59e0b;">
+        <span style="font-size:14px;">🛡️</span>
+        SİGORTA & HASAR
+      </div>
+      <div style="padding:14px;">
+        <div class="form-grid cols-2" style="gap:8px;">
+          <div class="fg full">
+            <label>SİGORTA ŞİRKETİ <span class="req">*</span></label>
+            <select><option>SEÇİNİZ</option><option>AXA SİGORTA</option><option>ALLIANZ</option><option>AKSİGORTA</option></select>
+          </div>
+          <div class="fg full">
+            <label>HASAR DOSYA NO <span class="req">*</span></label>
+            <input type="text" placeholder="HASAR DOSYA NO GİRİNİZ" />
+          </div>
+          <div class="fg">
+            <label>DOSYA KAYNAĞI <span class="req">*</span></label>
+            <select><option>SEÇİNİZ</option><option>OFİS CRM</option><option>YÖNLENDİREN</option><option>SAHA PERSONEL</option></select>
+          </div>
+          <div class="fg">
+            <label>DOSYA SORUMLUSU</label>
+            <select><option>SORUMLU SEÇİNİZ</option></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAĞ: ATAMA BİLGİLERİ -->
+    <div class="atama-card">
+      <div class="atama-card-head" style="color:#8b5cf6;">
+        <span style="font-size:14px;">⚖️</span>
+        AVUKAT & NOTLAR
+      </div>
+      <div style="padding:14px;">
+        <div class="form-grid" style="gap:8px;">
+          <div class="fg full">
+            <label>AVUKAT (İŞ ORTAĞI)</label>
+            <select><option>AVUKAT SEÇİNİZ</option><option>AV. MEHMET YILMAZ - YILMAZ HUKUK (SAMSUN BAROSU) — %20</option></select>
+          </div>
+          <div class="fg full">
+            <label>NOTLAR</label>
+            <textarea placeholder="DOSYA İLE İLGİLİ NOTLAR..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- KAYDET BARI -->
+  <div class="save-bar">
+    <button class="btn btn-ghost" onclick="alert('İPTAL')">← GERİ DÖN</button>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <span style="font-size:10px; color:#475569;">TÜM ZORUNLU ALANLARI DOLDURUN</span>
+      <button class="btn btn-primary" onclick="alert('DOSYA KAYDEDİLDİ!')">💾 DOSYAYI KAYDET</button>
+    </div>
+  </div>
+
+  <!-- WATERMARK -->
+  <div style="text-align:center; margin-top:40px; padding:20px; opacity:0.3;">
+    <div style="font-size:10px; font-weight:600; letter-spacing:2px; color:#374151;">MR HASAR DANIŞMANLIK SİSTEMİ</div>
+    <div style="font-size:9px; color:#1F2937; margin-top:4px;">ÖNİZLEME — REVİZE ÖNCESİ TASARIM</div>
+  </div>
+
+</div>
+
+<script>
+  // DOSYA TÜRÜ SEÇİMİ
+  document.querySelectorAll('.type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // TOGGLE BUTONLARI
+  document.querySelectorAll('.toggle-group').forEach(group => {
+    const btns = group.querySelectorAll('.toggle-btn');
+    btns.forEach((btn, i) => {
+      btn.addEventListener('click', () => {
+        btns.forEach(b => { b.classList.remove('active-green', 'active-red'); });
+        btn.classList.add(i === 0 ? 'active-green' : 'active-red');
+      });
+    });
+  });
+
+  // PLAKA FORMAT
+  document.querySelectorAll('.plaka-field input').forEach(inp => {
+    inp.addEventListener('input', (e) => {
+      e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '');
+    });
+  });
+</script>
+
+</body>
+</html>
