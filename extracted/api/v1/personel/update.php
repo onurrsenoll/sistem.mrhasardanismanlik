@@ -8,6 +8,8 @@
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
 
+ensure_prim_columns();
+
 setup_headers();
 require_method('PUT');
 
@@ -35,7 +37,7 @@ foreach ($guncellenecek as $f) {
     }
 }
 
-$sayisallar = ['maas' => 'float', 'prim_orani' => 'float'];
+$sayisallar = ['maas' => 'float', 'prim_orani' => 'float', 'prim_adk' => 'float', 'prim_bh' => 'float'];
 foreach ($sayisallar as $f => $tip) {
     if (isset($body[$f])) {
         $fields[] = "$f = ?";

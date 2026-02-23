@@ -805,7 +805,7 @@ const IsPaydaslari = ({setPage, user}) => {
   const [totalCount, setTotalCount] = useState(0);
 
   /* ─── FORM ─── */
-  const bosForm = {ad:'', tur:'sigorta_acentesi', yetkili:'', telefon:'', email:'', adres:'', il:'', komisyon_orani:'', durum:'aktif', notlar:''};
+  const bosForm = {ad:'', tur:'sigorta_acentesi', yetkili:'', telefon:'', email:'', adres:'', il:'', prim_adk:'', prim_bh:'', durum:'aktif', notlar:''};
   const [form, setForm] = useState({...bosForm});
   const up = (k, v) => setForm(p => ({...p, [k]: v}));
 
@@ -859,7 +859,8 @@ const IsPaydaslari = ({setPage, user}) => {
       email: paydas.email || '',
       adres: paydas.adres || '',
       il: paydas.il || '',
-      komisyon_orani: paydas.komisyon_orani != null ? String(paydas.komisyon_orani) : '',
+      prim_adk: paydas.prim_adk != null ? String(paydas.prim_adk) : '',
+      prim_bh: paydas.prim_bh != null ? String(paydas.prim_bh) : '',
       durum: paydas.durum || 'aktif',
       notlar: paydas.notlar || ''
     });
@@ -875,7 +876,8 @@ const IsPaydaslari = ({setPage, user}) => {
 
     const gonder = {
       ...form,
-      komisyon_orani: form.komisyon_orani ? parseFloat(form.komisyon_orani) : 0
+      prim_adk: form.prim_adk ? parseFloat(form.prim_adk) : 0,
+      prim_bh: form.prim_bh ? parseFloat(form.prim_bh) : 0
     };
 
     let r;
@@ -1056,7 +1058,7 @@ const IsPaydaslari = ({setPage, user}) => {
                           <input type="checkbox" checked={paydaslar.length > 0 && secililerP.length === paydaslar.length} onChange={tumunuSecP} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                         </th>
                       )}
-                      {['AD','TÜR','YETKİLİ','TELEFON','İL','KOMİSYON ORANI','DURUM','İŞLEMLER'].map(h =>
+                      {['AD','TÜR','YETKİLİ','TELEFON','İL','ADK PRİM','BH PRİM','DURUM','İŞLEMLER'].map(h =>
                         <th key={h} style={{padding:'10px 10px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
                       )}
                     </tr>
@@ -1087,8 +1089,13 @@ const IsPaydaslari = ({setPage, user}) => {
                         <td style={{padding:'10px 10px',color:C.textSec}}>{paydas.telefon || '-'}</td>
                         <td style={{padding:'10px 10px',color:C.textSec}}>{paydas.il || '-'}</td>
                         <td style={{padding:'10px 10px'}}>
-                          {paydas.komisyon_orani ? (
-                            <span style={{...S.badge(C.gold),fontSize:11,fontWeight:700}}>%{paydas.komisyon_orani}</span>
+                          {paydas.prim_adk ? (
+                            <span style={{...S.badge(C.cyan),fontSize:11,fontWeight:700}}>₺{paydas.prim_adk}</span>
+                          ) : <span style={{color:C.textMuted}}>-</span>}
+                        </td>
+                        <td style={{padding:'10px 10px'}}>
+                          {paydas.prim_bh ? (
+                            <span style={{...S.badge(C.purple),fontSize:11,fontWeight:700}}>₺{paydas.prim_bh}</span>
                           ) : <span style={{color:C.textMuted}}>-</span>}
                         </td>
                         <td style={{padding:'10px 10px'}}>
@@ -1169,8 +1176,11 @@ const IsPaydaslari = ({setPage, user}) => {
               {(MR.ILLER || []).map(il => <option key={il} value={il}>{il}</option>)}
             </select>
           </FormGroup>
-          <FormGroup label="KOMİSYON ORANI (%)">
-            <input style={S.input} type="number" min="0" max="100" step="0.01" value={form.komisyon_orani} onChange={e => up('komisyon_orani', e.target.value)} placeholder="ÖRN: 10"/>
+          <FormGroup label="ADK PRİM (₺/DOSYA)">
+            <input style={S.input} type="number" min="0" step="0.01" value={form.prim_adk} onChange={e => up('prim_adk', e.target.value)} placeholder="0,00"/>
+          </FormGroup>
+          <FormGroup label="BH PRİM (₺/DOSYA)">
+            <input style={S.input} type="number" min="0" step="0.01" value={form.prim_bh} onChange={e => up('prim_bh', e.target.value)} placeholder="0,00"/>
           </FormGroup>
           <FormGroup label="DURUM">
             <select style={S.select} value={form.durum} onChange={e => up('durum', e.target.value)}>
@@ -1254,9 +1264,19 @@ const IsPaydaslari = ({setPage, user}) => {
                 {/* TÜR VE KOMİSYON ORANI GÖSTERGESI */}
                 <div style={{background:`${turRenk(seciliPaydas.tur)}11`,borderRadius:12,padding:20,border:`1px solid ${turRenk(seciliPaydas.tur)}33`,textAlign:'center',marginBottom:16}}>
                   <Badge text={turLabel(seciliPaydas.tur)} color={turRenk(seciliPaydas.tur)}/>
-                  <div style={{fontSize:11,color:C.textMuted,fontWeight:600,marginTop:12,letterSpacing:1}}>KOMİSYON ORANI</div>
-                  <div style={{fontSize:42,fontWeight:900,color:turRenk(seciliPaydas.tur),letterSpacing:-1}}>
-                    %{seciliPaydas.komisyon_orani != null ? seciliPaydas.komisyon_orani : '0'}
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginTop:12}}>
+                    <div>
+                      <div style={{fontSize:9,color:C.textMuted,fontWeight:600,letterSpacing:1}}>ADK PRİM</div>
+                      <div style={{fontSize:28,fontWeight:900,color:C.cyan,letterSpacing:-1}}>
+                        ₺{seciliPaydas.prim_adk != null ? seciliPaydas.prim_adk : '0'}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{fontSize:9,color:C.textMuted,fontWeight:600,letterSpacing:1}}>BH PRİM</div>
+                      <div style={{fontSize:28,fontWeight:900,color:C.purple,letterSpacing:-1}}>
+                        ₺{seciliPaydas.prim_bh != null ? seciliPaydas.prim_bh : '0'}
+                      </div>
+                    </div>
                   </div>
                   <div style={{marginTop:8}}>
                     <Badge text={seciliPaydas.durum === 'aktif' ? 'AKTİF' : 'PASİF'} color={seciliPaydas.durum === 'aktif' ? C.success : C.danger}/>
@@ -1348,7 +1368,7 @@ const IsPaydaslari = ({setPage, user}) => {
             <LIcon name={turIcon(seciliPaydas.tur)} size={16} color={turRenk(seciliPaydas.tur)}/>
             <div>
               <div style={{fontSize:12,fontWeight:700}}>{seciliPaydas.ad}</div>
-              <div style={{fontSize:10,color:C.textMuted}}>{turLabel(seciliPaydas.tur)} | KOMİSYON ORANI: %{seciliPaydas.komisyon_orani || 0}</div>
+              <div style={{fontSize:10,color:C.textMuted}}>{turLabel(seciliPaydas.tur)} | ADK PRİM: ₺{seciliPaydas.prim_adk || 0} | BH PRİM: ₺{seciliPaydas.prim_bh || 0}</div>
             </div>
           </div>
         )}

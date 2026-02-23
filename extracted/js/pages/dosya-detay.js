@@ -151,10 +151,19 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
   useEffect(() => { load(); }, [dosyaId]);
 
+  const [personeller, setPersoneller] = useState([]);
+  const [paydaslar, setPaydaslar] = useState([]);
+
   // İŞ ORTAKLARI (AVUKATLAR) LİSTESİNİ YÜKLE
   useEffect(() => {
     api.ortakList({durum:'aktif', limit:200}).then(r => {
       if (r?.success) setOrtaklar(r.data?.items || r.data || []);
+    });
+    api.personelList({durum:'aktif'}).then(r => {
+      if (r?.success) setPersoneller(r.data?.items || r.data || []);
+    });
+    api.paydasList({durum:'aktif', limit:200}).then(r => {
+      if (r?.success) setPaydaslar(r.data?.items || r.data || []);
     });
   }, []);
 
@@ -210,7 +219,10 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       magdur_il: magdur.il || '',
       magdur_ilce: magdur.ilce || '',
       magdur_dogum_tarihi: magdur.dogum_tarihi || '',
-      magdur_meslek: magdur.meslek || ''
+      magdur_meslek: magdur.meslek || '',
+      magdur_iban: magdur.iban || '',
+      sorumlu_id: dosya.sorumlu_id ? String(dosya.sorumlu_id) : '',
+      paydas_id: dosya.paydas_id ? String(dosya.paydas_id) : ''
     });
     setEditError('');
     setEditM(true);
@@ -240,7 +252,10 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       magdur_il: editForm.magdur_il,
       magdur_ilce: editForm.magdur_ilce,
       magdur_dogum_tarihi: editForm.magdur_dogum_tarihi || null,
-      magdur_meslek: editForm.magdur_meslek
+      magdur_meslek: editForm.magdur_meslek,
+      magdur_iban: editForm.magdur_iban,
+      sorumlu_id: editForm.sorumlu_id ? parseInt(editForm.sorumlu_id) : null,
+      paydas_id: editForm.paydas_id ? parseInt(editForm.paydas_id) : null
     });
     if (r?.success) { load(); setEditM(false); }
     else setEditError(r?.error || 'GÜNCELLEME HATASI');
@@ -1065,6 +1080,33 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           })()}
         </div>
 
+        {/* DOSYA SORUMLUSU & PAYDAŞ ATAMASI */}
+        <div style={{fontSize:10,fontWeight:700,color:C.success,marginBottom:8,marginTop:4,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
+          <LIcon name="UserCheck" size={12} color={C.success}/> DOSYA SORUMLUSU & PAYDAS
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+          <FormGroup label="DOSYA SORUMLUSU (PERSONEL)">
+            <select value={editForm.sorumlu_id || ''} onChange={e => u('sorumlu_id', e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+              <option value="">SORUMLU SEÇİNİZ</option>
+              {personeller.map(p => (
+                <option key={p.id} value={p.user_id || p.id}>
+                  {p.ad_soyad}{p.departman ? ` (${p.departman})` : ''}
+                </option>
+              ))}
+            </select>
+          </FormGroup>
+          <FormGroup label="PAYDAŞ (YÖNLENDİREN)">
+            <select value={editForm.paydas_id || ''} onChange={e => u('paydas_id', e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+              <option value="">PAYDAŞ SEÇİNİZ</option>
+              {paydaslar.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.ad}{p.yetkili ? ` - ${p.yetkili}` : ''}{p.tur ? ` (${p.tur})` : ''}
+                </option>
+              ))}
+            </select>
+          </FormGroup>
+        </div>
+
         {/* MAĞDUR BİLGİLERİ BÖLÜMÜ */}
         <div style={{fontSize:10,fontWeight:700,color:C.cyan,marginBottom:8,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
           <LIcon name="User" size={12} color={C.cyan}/> MAĞDUR BİLGİLERİ
@@ -1081,6 +1123,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           </FormGroup>
           <FormGroup label="TELEFON 2">
             <input value={editForm.magdur_telefon2||''} onChange={e => u('magdur_telefon2',e.target.value)} placeholder="TELEFON 2" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+          </FormGroup>
+          <FormGroup label="IBAN">
+            <input value={editForm.magdur_iban||''} onChange={e => u('magdur_iban',e.target.value)} placeholder="TR00 0000 ..." style={{...S.input,padding:'8px 10px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="İL">
             <select value={editForm.magdur_il} onChange={e => {u('magdur_il',e.target.value);u('magdur_ilce','');}} style={{...S.select,padding:'8px 10px',fontSize:11}}>

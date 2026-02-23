@@ -16,6 +16,8 @@
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
 
+ensure_prim_columns();
+
 setup_headers();
 require_method('POST');
 
@@ -34,6 +36,9 @@ $stmt->execute([$personelId]);
 $personel = $stmt->fetch();
 if (!$personel) json_error('PERSONEL BULUNAMADI', 404);
 
+$primAdk = (float)($personel['prim_adk'] ?? $personel['prim_orani'] ?? 0);
+$primBh = (float)($personel['prim_bh'] ?? 0);
+
 // Dönem aralığında dosya sayısını hesapla (sorumlu olduğu dosyalar)
 $donemBaslangic = $donem . '-01';
 $donemBitis = date('Y-m-t', strtotime($donemBaslangic));
@@ -45,9 +50,15 @@ $kesinti = isset($body['kesinti']) ? (float)$body['kesinti'] : 0;
 
 // Eğer dosya sayısı gönderilmediyse, o dönemde açılan dosya sayısına bak
 if ($dosyaSayisi === 0 && $personel['user_id']) {
-    $stmtDosya = $db->prepare('SELECT COUNT(*) as sayi FROM dosyalar WHERE (sorumlu_id = ? OR created_by = ?) AND acilis_tarihi BETWEEN ? AND ?');
-    $stmtDosya->execute([$personel['user_id'], $personel['user_id'], $donemBaslangic, $donemBitis]);
-    $dosyaSayisi = (int)$stmtDosya->fetch()['sayi'];
+    $stmtAdk = $db->prepare('SELECT COUNT(*) as sayi FROM dosyalar WHERE (sorumlu_id = ? OR created_by = ?) AND dosya_turu = "ADK" AND acilis_tarihi BETWEEN ? AND ?');
+    $stmtAdk->execute([$personel['user_id'], $personel['user_id'], $donemBaslangic, $donemBitis]);
+    $adkSayisi = (int)$stmtAdk->fetch()['sayi'];
+
+    $stmtBh = $db->prepare('SELECT COUNT(*) as sayi FROM dosyalar WHERE (sorumlu_id = ? OR created_by = ?) AND dosya_turu = "BH" AND acilis_tarihi BETWEEN ? AND ?');
+    $stmtBh->execute([$personel['user_id'], $personel['user_id'], $donemBaslangic, $donemBitis]);
+    $bhSayisi = (int)$stmtBh->fetch()['sayi'];
+
+    $dosyaSayisi = $adkSayisi + $bhSayisi;
 }
 
 // HAKEDİŞ HESAPLA
@@ -58,8 +69,12 @@ $primOrani = (float)$personel['prim_orani'];
 $gunlukMaas = $maas / 30;
 $maasTutar = round($gunlukMaas * $calisanGun, 2);
 
-// Prim hesaplama: dosya başına prim oranı
-$primTutar = round($dosyaSayisi * $primOrani, 2);
+// Prim hesaplama: dosya türüne göre ayrı prim oranı
+if (isset($adkSayisi) && isset($bhSayisi)) {
+    $primTutar = round($adkSayisi * $primAdk + $bhSayisi * $primBh, 2);
+} else {
+    $primTutar = round($dosyaSayisi * $primAdk, 2);
+}
 
 // Toplam hakediş
 $toplamHakedis = round($maasTutar + $primTutar + $ekPrim - $kesinti, 2);
@@ -98,9 +113,13 @@ json_success([
     'donem' => $donem,
     'calisan_gun' => $calisanGun,
     'dosya_sayisi' => $dosyaSayisi,
+    'adk_sayisi' => $adkSayisi ?? null,
+    'bh_sayisi' => $bhSayisi ?? null,
     'maas' => $maas,
     'maas_tutar' => $maasTutar,
     'prim_orani' => $primOrani,
+    'prim_adk' => $primAdk,
+    'prim_bh' => $primBh,
     'prim_tutar' => $primTutar,
     'ek_prim' => $ekPrim,
     'kesinti' => $kesinti,

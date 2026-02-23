@@ -28,7 +28,7 @@ const OFIS_ROLLERI = ['OFİS ADK CRM', 'OFİS BH CRM', 'OFİS OPERASYON'];
 /* ═══ BOŞ FORM ═══ */
 const bosForm = () => ({
   ad_soyad: '', tc_kimlik: '', telefon: '', email: '',
-  departman: '', pozisyon: '', maas: '', prim_orani: '',
+  departman: '', pozisyon: '', maas: '', prim_adk: '', prim_bh: '',
   sgk_no: '', iban: '', il: '', adres: '',
   ise_baslama: '', durum: 'aktif', notlar: ''
 });
@@ -174,7 +174,8 @@ const PersonelListesi = ({setPage, user}) => {
       departman: p.departman || '',
       pozisyon: p.pozisyon || '',
       maas: p.maas || '',
-      prim_orani: p.prim_orani || '',
+      prim_adk: p.prim_adk || '',
+      prim_bh: p.prim_bh || '',
       sgk_no: p.sgk_no || '',
       iban: p.iban || '',
       il: p.il || '',
@@ -255,7 +256,7 @@ const PersonelListesi = ({setPage, user}) => {
           <EmptyState icon="Users" title="PERSONEL BULUNAMADI" desc="FİLTRELERİ KONTROL EDİN VEYA YENİ PERSONEL EKLEYİN"/>
         ) : (
           <div style={{overflowX:'auto',maxHeight:'calc(100vh - 340px)'}}>
-            <table style={{width:'100%',borderCollapse:'collapse',minWidth:1100}}>
+            <table style={{width:'100%',borderCollapse:'collapse',minWidth:1200}}>
               <thead>
                 <tr>
                   {isAdmin && <th style={{...thS,minWidth:35,textAlign:'center',padding:'8px 4px'}}>
@@ -268,7 +269,8 @@ const PersonelListesi = ({setPage, user}) => {
                   <th style={{...thS,minWidth:100}}>DEPARTMAN</th>
                   <th style={{...thS,minWidth:100}}>POZİSYON</th>
                   <th style={{...thS,minWidth:90,textAlign:'right'}}>MAAŞ (₺)</th>
-                  <th style={{...thS,minWidth:80,textAlign:'right'}}>PRİM ORANI</th>
+                  <th style={{...thS,minWidth:80,textAlign:'right'}}>ADK PRİM</th>
+                  <th style={{...thS,minWidth:80,textAlign:'right'}}>BH PRİM</th>
                   <th style={{...thS,minWidth:85}}>İŞE BAŞLAMA</th>
                   <th style={{...thS,minWidth:65,textAlign:'center'}}>DURUM</th>
                   <th style={{...thS,minWidth:70,textAlign:'center'}}>İŞLEM</th>
@@ -296,8 +298,11 @@ const PersonelListesi = ({setPage, user}) => {
                     </td>
                     <td style={{...tdS,color:C.textSec}}>{d.pozisyon || '-'}</td>
                     <td style={{...tdS,textAlign:'right',fontWeight:700,color:C.success,fontFamily:'monospace'}}>{paraBirim(d.maas)}</td>
-                    <td style={{...tdS,textAlign:'right',fontFamily:'monospace',color:C.textSec}}>
-                      {d.prim_orani ? paraBirim(d.prim_orani) + '/DOSYA' : '-'}
+                    <td style={{...tdS,textAlign:'right',fontFamily:'monospace',color:C.cyan}}>
+                      {d.prim_adk ? paraBirim(d.prim_adk) + '/DOSYA' : '-'}
+                    </td>
+                    <td style={{...tdS,textAlign:'right',fontFamily:'monospace',color:C.purple}}>
+                      {d.prim_bh ? paraBirim(d.prim_bh) + '/DOSYA' : '-'}
                     </td>
                     <td style={{...tdS,color:C.textMuted,fontSize:10}}>{tarihFormat(d.ise_baslama)}</td>
                     <td style={{...tdS,textAlign:'center'}}>
@@ -357,8 +362,11 @@ const PersonelListesi = ({setPage, user}) => {
           <FormGroup label="MAAŞ (₺)">
             <input style={S.input} type="number" step="0.01" value={editForm.maas} onChange={e => ef('maas', e.target.value)} placeholder="0,00"/>
           </FormGroup>
-          <FormGroup label="PRİM ORANI (₺/DOSYA)">
-            <input style={S.input} type="number" step="0.01" value={editForm.prim_orani} onChange={e => ef('prim_orani', e.target.value)} placeholder="0,00"/>
+          <FormGroup label="ADK PRİM (₺/DOSYA)">
+            <input style={S.input} type="number" step="0.01" value={editForm.prim_adk} onChange={e => ef('prim_adk', e.target.value)} placeholder="0,00"/>
+          </FormGroup>
+          <FormGroup label="BH PRİM (₺/DOSYA)">
+            <input style={S.input} type="number" step="0.01" value={editForm.prim_bh} onChange={e => ef('prim_bh', e.target.value)} placeholder="0,00"/>
           </FormGroup>
           <FormGroup label="SGK NO">
             <input style={S.input} value={editForm.sgk_no} onChange={e => ef('sgk_no', e.target.value)} placeholder="SGK NUMARASI"/>
@@ -495,8 +503,11 @@ const YeniPersonel = ({setPage, user}) => {
           <FormGroup label="MAAŞ (₺)">
             <input style={S.input} type="number" step="0.01" value={form.maas} onChange={e => f('maas', e.target.value)} placeholder="0,00"/>
           </FormGroup>
-          <FormGroup label="PRİM ORANI (₺/DOSYA)">
-            <input style={S.input} type="number" step="0.01" value={form.prim_orani} onChange={e => f('prim_orani', e.target.value)} placeholder="0,00"/>
+          <FormGroup label="ADK PRİM (₺/DOSYA)">
+            <input style={S.input} type="number" step="0.01" value={form.prim_adk} onChange={e => f('prim_adk', e.target.value)} placeholder="0,00"/>
+          </FormGroup>
+          <FormGroup label="BH PRİM (₺/DOSYA)">
+            <input style={S.input} type="number" step="0.01" value={form.prim_bh} onChange={e => f('prim_bh', e.target.value)} placeholder="0,00"/>
           </FormGroup>
           <FormGroup label="SGK NO">
             <input style={S.input} value={form.sgk_no} onChange={e => f('sgk_no', e.target.value)} placeholder="SGK NUMARASI"/>
@@ -583,7 +594,9 @@ const HakedisTakibi = ({setPage, user}) => {
     const gunlukMaas = aylikMaas / 30;
     const calisanGun = parseInt(tekForm.calisan_gun) || 0;
     const dosyaSayisi = parseInt(tekForm.dosya_sayisi) || 0;
-    const primOrani = parseFloat(secilenPersonel.prim_orani) || 0;
+    const primAdk = parseFloat(secilenPersonel.prim_adk) || 0;
+    const primBh = parseFloat(secilenPersonel.prim_bh) || 0;
+    const primOrani = primAdk; // Varsayılan
     const ekPrim = parseFloat(tekForm.ek_prim) || 0;
     const kesinti = parseFloat(tekForm.kesinti) || 0;
 
@@ -873,8 +886,8 @@ const HakedisTakibi = ({setPage, user}) => {
                 <span style={{fontWeight:600,fontFamily:'monospace'}}>{paraBirim(hesapOnizleme.gunlukMaas)}</span>
               </div>
               <div style={{display:'flex',justifyContent:'space-between',padding:'6px 10px',background:C.bgCard,borderRadius:6,border:`1px solid ${C.border}`}}>
-                <span style={{color:C.textMuted,fontWeight:600}}>PRİM ORANI:</span>
-                <span style={{fontWeight:600,fontFamily:'monospace'}}>{paraBirim(secilenPersonel.prim_orani)}/DOSYA</span>
+                <span style={{color:C.textMuted,fontWeight:600}}>ADK PRİM / BH PRİM:</span>
+                <span style={{fontWeight:600,fontFamily:'monospace'}}>{paraBirim(secilenPersonel.prim_adk)}/DOSYA — {paraBirim(secilenPersonel.prim_bh)}/DOSYA</span>
               </div>
 
               <div style={{gridColumn:'span 2',borderTop:`1px solid ${C.border}`,paddingTop:8,marginTop:4}}/>

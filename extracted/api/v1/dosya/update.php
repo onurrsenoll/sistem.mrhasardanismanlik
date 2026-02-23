@@ -37,7 +37,7 @@ try {
 
     // Dosya güncelle
     $dosyaFields = ['asama', 'dosya_turu', 'talep_turu', 'sigorta_sirket', 'police_no', 'sigorta_turu',
-        'dosya_kaynagi', 'avukat_id', 'ortak_id', 'sorumlu_id', 'haklilik', 'komisyon_orani',
+        'dosya_kaynagi', 'avukat_id', 'ortak_id', 'sorumlu_id', 'paydas_id', 'haklilik', 'komisyon_orani',
         'kaza_tarihi', 'kaza_il', 'kaza_ilce', 'pozisyon', 'kusur_durumu', 'hasar_no',
         'sakatlik_aciklama', 'notlar', 'kapanma_tarihi', 'plaka', 'hak_mahrumiyet'];
 
@@ -47,7 +47,7 @@ try {
     foreach ($dosyaFields as $field) {
         if (array_key_exists($field, $body)) {
             $sets[] = "$field = ?";
-            if (in_array($field, ['avukat_id', 'ortak_id', 'sorumlu_id'])) {
+            if (in_array($field, ['avukat_id', 'ortak_id', 'sorumlu_id', 'paydas_id'])) {
                 $params[] = !empty($body[$field]) ? (int)$body[$field] : null;
             } elseif (in_array($field, ['haklilik', 'hak_mahrumiyet'])) {
                 $params[] = (int)$body[$field];

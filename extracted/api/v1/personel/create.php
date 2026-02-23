@@ -9,6 +9,8 @@
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
 
+ensure_prim_columns();
+
 setup_headers();
 require_method('POST');
 
@@ -59,7 +61,7 @@ try {
     }
 
     // PERSONEL KAYDI OLUŞTUR
-    $stmt = $db->prepare('INSERT INTO personel (ad_soyad, tc_kimlik, telefon, email, departman, pozisyon, maas, prim_orani, sgk_no, iban, adres, il, ise_baslama, durum, user_id, notlar, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt = $db->prepare('INSERT INTO personel (ad_soyad, tc_kimlik, telefon, email, departman, pozisyon, maas, prim_orani, prim_adk, prim_bh, sgk_no, iban, adres, il, ise_baslama, durum, user_id, notlar, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 
     $stmt->execute([
         $adSoyad,
@@ -70,6 +72,8 @@ try {
         clean($body['pozisyon'] ?? ''),
         isset($body['maas']) ? (float)$body['maas'] : 0,
         isset($body['prim_orani']) ? (float)$body['prim_orani'] : 0,
+        isset($body['prim_adk']) ? (float)$body['prim_adk'] : 0,
+        isset($body['prim_bh']) ? (float)$body['prim_bh'] : 0,
         clean($body['sgk_no'] ?? ''),
         clean($body['iban'] ?? ''),
         clean($body['adres'] ?? ''),

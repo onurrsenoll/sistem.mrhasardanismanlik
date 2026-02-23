@@ -249,6 +249,21 @@ MR.DosyaYeniPage = ({setPage, user}) => {
                 </div>
               </div>
             )}
+            {seciliSorumlu && !isYonlendiren && (parseFloat(form.dosya_turu === 'BH' ? seciliSorumlu.prim_bh : seciliSorumlu.prim_adk) > 0) && (
+              <div style={{gridColumn:'1 / -1',padding:12,background:`${C.success}11`,borderRadius:10,border:`1px solid ${C.success}33`,display:'flex',alignItems:'center',gap:12}}>
+                <div style={{width:36,height:36,borderRadius:8,background:`${C.success}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  <LIcon name="Banknote" size={18} color={C.success}/>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:10,color:C.textMuted,fontWeight:600}}>OTOMATİK DOSYA PRİMİ</div>
+                  <div style={{fontSize:11,color:C.textSec,marginTop:2}}>DOSYA AÇILDIĞINDA <strong>{seciliSorumlu.ad_soyad}</strong> İÇİN OTOMATİK OLARAK MASRAF VE HAKEDİŞ KAYDEDİLECEKTİR</div>
+                </div>
+                <div style={{textAlign:'center',padding:'8px 16px',background:`${C.success}22`,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>{form.dosya_turu} PRİMİ</div>
+                  <div style={{fontSize:20,fontWeight:900,color:C.success}}>₺{form.dosya_turu === 'BH' ? seciliSorumlu.prim_bh || 0 : seciliSorumlu.prim_adk || 0}</div>
+                </div>
+              </div>
+            )}
             {/* YÖNLENDİREN SEÇİMİ - İŞ PAYDAŞLARI */}
             {isYonlendiren && (
               <FormGroup label="YÖNLENDİREN (İŞ PAYDAŞI)">
@@ -275,8 +290,23 @@ MR.DosyaYeniPage = ({setPage, user}) => {
                   </div>
                 </div>
                 <div style={{textAlign:'center',padding:'8px 16px',background:`${C.gold}22`,borderRadius:8}}>
-                  <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>KOMİSYON ORANI</div>
-                  <div style={{fontSize:22,fontWeight:900,color:C.gold}}>%{seciliPaydas.komisyon_orani || 0}</div>
+                  <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>{form.dosya_turu} PRİMİ</div>
+                  <div style={{fontSize:22,fontWeight:900,color:C.gold}}>₺{form.dosya_turu === 'BH' ? seciliPaydas.prim_bh || 0 : seciliPaydas.prim_adk || 0}</div>
+                </div>
+              </div>
+            )}
+            {isYonlendiren && seciliPaydas && (parseFloat(form.dosya_turu === 'BH' ? seciliPaydas.prim_bh : seciliPaydas.prim_adk) > 0) && (
+              <div style={{gridColumn:'1 / -1',padding:12,background:`${C.success}11`,borderRadius:10,border:`1px solid ${C.success}33`,display:'flex',alignItems:'center',gap:12}}>
+                <div style={{width:36,height:36,borderRadius:8,background:`${C.success}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  <LIcon name="Banknote" size={18} color={C.success}/>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:10,color:C.textMuted,fontWeight:600}}>OTOMATİK DOSYA PRİMİ</div>
+                  <div style={{fontSize:11,color:C.textSec,marginTop:2}}>DOSYA AÇILDIĞINDA <strong>{seciliPaydas.ad}</strong> İÇİN OTOMATİK OLARAK MASRAF VE KOMİSYON KAYDEDİLECEKTİR</div>
+                </div>
+                <div style={{textAlign:'center',padding:'8px 16px',background:`${C.success}22`,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>{form.dosya_turu} PRİMİ</div>
+                  <div style={{fontSize:20,fontWeight:900,color:C.success}}>₺{form.dosya_turu === 'BH' ? seciliPaydas.prim_bh || 0 : seciliPaydas.prim_adk || 0}</div>
                 </div>
               </div>
             )}

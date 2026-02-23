@@ -34,4 +34,31 @@ function getDB() {
     }
     return $pdo;
 }
+
+/* ═══ OTOMATİK MİGRASYON: prim_adk / prim_bh KOLONLARI ═══ */
+function ensure_prim_columns() {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        $db = getDB();
+        // PERSONEL tablosuna prim_adk ve prim_bh ekle
+        $cols = $db->query("SHOW COLUMNS FROM personel LIKE 'prim_adk'")->fetchAll();
+        if (empty($cols)) {
+            $db->exec("ALTER TABLE personel ADD COLUMN prim_adk DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER prim_orani");
+            $db->exec("ALTER TABLE personel ADD COLUMN prim_bh DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER prim_adk");
+            // Mevcut prim_orani değerini prim_adk'ya aktar
+            $db->exec("UPDATE personel SET prim_adk = prim_orani WHERE prim_orani > 0");
+        }
+        // PAYDASLAR tablosuna prim_adk ve prim_bh ekle
+        $cols2 = $db->query("SHOW COLUMNS FROM paydaslar LIKE 'prim_adk'")->fetchAll();
+        if (empty($cols2)) {
+            $db->exec("ALTER TABLE paydaslar ADD COLUMN prim_adk DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER komisyon_orani");
+            $db->exec("ALTER TABLE paydaslar ADD COLUMN prim_bh DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER prim_adk");
+            // Mevcut komisyon_orani değerini TL olarak prim_adk'ya aktar (eğer varsa)
+        }
+    } catch (\Exception $e) {
+        // Migration hatası sessiz geç
+    }
+}
 ?>

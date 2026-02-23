@@ -8,6 +8,8 @@
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
 
+ensure_prim_columns();
+
 setup_headers();
 require_method('PUT');
 
@@ -23,7 +25,7 @@ $stmt->execute([$id]);
 $paydas = $stmt->fetch();
 if (!$paydas) json_error('Paydaş bulunamadı', 404);
 
-$fields = ['ad', 'tur', 'yetkili', 'telefon', 'telefon2', 'email', 'adres', 'il', 'ilce', 'vergi_no', 'iban', 'komisyon_orani', 'notlar', 'durum'];
+$fields = ['ad', 'tur', 'yetkili', 'telefon', 'telefon2', 'email', 'adres', 'il', 'ilce', 'vergi_no', 'iban', 'komisyon_orani', 'prim_adk', 'prim_bh', 'notlar', 'durum'];
 
 $sets = [];
 $params = [];
@@ -31,7 +33,7 @@ $params = [];
 foreach ($fields as $field) {
     if (array_key_exists($field, $body)) {
         $sets[] = "$field = ?";
-        if ($field === 'komisyon_orani') {
+        if (in_array($field, ['komisyon_orani', 'prim_adk', 'prim_bh'])) {
             $params[] = (float)$body[$field];
         } else {
             $params[] = clean($body[$field]);

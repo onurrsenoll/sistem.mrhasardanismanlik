@@ -8,6 +8,8 @@
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
 
+ensure_prim_columns();
+
 setup_headers();
 require_method('POST');
 
@@ -20,7 +22,7 @@ require_fields($body, ['ad']);
 $db = getDB();
 
 try {
-    $stmt = $db->prepare('INSERT INTO paydaslar (ad, tur, yetkili, telefon, telefon2, email, adres, il, ilce, vergi_no, iban, komisyon_orani, notlar, durum, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt = $db->prepare('INSERT INTO paydaslar (ad, tur, yetkili, telefon, telefon2, email, adres, il, ilce, vergi_no, iban, komisyon_orani, prim_adk, prim_bh, notlar, durum, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 
     $stmt->execute([
         clean($body['ad']),
@@ -35,6 +37,8 @@ try {
         clean($body['vergi_no'] ?? ''),
         clean($body['iban'] ?? ''),
         isset($body['komisyon_orani']) ? (float)$body['komisyon_orani'] : 0,
+        isset($body['prim_adk']) ? (float)$body['prim_adk'] : 0,
+        isset($body['prim_bh']) ? (float)$body['prim_bh'] : 0,
         clean($body['notlar'] ?? ''),
         clean($body['durum'] ?? 'aktif'),
         $user['id']
