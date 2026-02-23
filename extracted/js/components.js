@@ -141,7 +141,10 @@ MR.AracMarkaSelect = ({value, onChange, style}) => {
   const [markalar, setMarkalar] = useState(MR._aracCache.markalar || []);
   const [ara, setAra] = useState('');
   const [acik, setAcik] = useState(false);
+  const [pos, setPos] = useState({top:0,left:0,width:0});
   const ref = useRef(null);
+  const inputRef = useRef(null);
+  const dropRef = useRef(null);
   const S = MR.S, C = MR.C;
 
   useEffect(() => {
@@ -156,39 +159,50 @@ MR.AracMarkaSelect = ({value, onChange, style}) => {
   }, []);
 
   useEffect(() => {
-    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setAcik(false); };
+    const close = (e) => {
+      if (ref.current && !ref.current.contains(e.target) && dropRef.current && !dropRef.current.contains(e.target)) setAcik(false);
+    };
     document.addEventListener('mousedown', close);
     return () => document.removeEventListener('mousedown', close);
   }, []);
+
+  const updatePos = () => {
+    if (inputRef.current) {
+      const r = inputRef.current.getBoundingClientRect();
+      setPos({top: r.bottom + 2, left: r.left, width: r.width});
+    }
+  };
 
   const filtered = ara ? markalar.filter(m => m.includes(ara.toUpperCase())) : markalar;
 
   return (
     <div ref={ref} style={{position:'relative',...(style||{})}}>
-      <input
+      <input ref={inputRef}
         value={acik ? ara : (value || '')}
-        onChange={e => { setAra(e.target.value); if (!acik) setAcik(true); }}
-        onFocus={() => { setAcik(true); setAra(''); }}
+        onChange={e => { setAra(e.target.value); if (!acik) { updatePos(); setAcik(true); } }}
+        onFocus={() => { updatePos(); setAcik(true); setAra(''); }}
         placeholder={value || 'MARKA YAZIN...'}
         style={{...S.input, cursor:'pointer'}}
       />
-      {acik && (
-        <div style={{position:'absolute',top:'100%',left:0,right:0,maxHeight:220,overflowY:'auto',
-          background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:6,zIndex:999,boxShadow:'0 4px 12px rgba(0,0,0,0.15)'}}>
-          {filtered.length === 0 ? <div style={{padding:8,fontSize:11,color:C.textMuted}}>SONUÇ YOK</div> :
+      {acik && ReactDOM.createPortal(
+        <div ref={dropRef} style={{position:'fixed',top:pos.top,left:pos.left,width:pos.width,maxHeight:220,overflowY:'auto',
+          background:C.bgCard,border:`1px solid ${C.borderLight||C.border}`,borderRadius:8,zIndex:99999,
+          boxShadow:'0 8px 30px rgba(0,0,0,0.35)'}}>
+          {filtered.length === 0 ? <div style={{padding:10,fontSize:11,color:C.textMuted}}>SONUÇ YOK</div> :
             filtered.slice(0, 50).map(m => (
               <div key={m} onClick={() => { onChange(m); setAcik(false); setAra(''); }}
-                style={{padding:'6px 10px',fontSize:11,cursor:'pointer',
+                style={{padding:'8px 12px',fontSize:12,cursor:'pointer',
                   background: m===value ? `${C.accent}22` : 'transparent',
                   fontWeight: m===value ? 700 : 400,
-                  color:C.text,borderBottom:`1px solid ${C.border}22`}}
-                onMouseEnter={e=>e.target.style.background=`${C.accent}11`}
+                  color:C.text,borderBottom:`1px solid ${C.border}33`}}
+                onMouseEnter={e=>e.target.style.background=`${C.accent}18`}
                 onMouseLeave={e=>e.target.style.background=m===value?`${C.accent}22`:'transparent'}>
                 {m}
               </div>
             ))}
-          {filtered.length > 50 && <div style={{padding:6,fontSize:10,color:C.textMuted,textAlign:'center'}}>{filtered.length-50} DAHA... (YAZMAYA DEVAM EDİN)</div>}
-        </div>
+          {filtered.length > 50 && <div style={{padding:8,fontSize:10,color:C.textMuted,textAlign:'center'}}>{filtered.length-50} DAHA... (YAZMAYA DEVAM EDİN)</div>}
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -199,7 +213,10 @@ MR.AracModelSelect = ({marka, value, onChange, style}) => {
   const [ara, setAra] = useState('');
   const [acik, setAcik] = useState(false);
   const [yukleniyor, setYukleniyor] = useState(false);
+  const [pos, setPos] = useState({top:0,left:0,width:0});
   const ref = useRef(null);
+  const inputRef = useRef(null);
+  const dropRef = useRef(null);
   const S = MR.S, C = MR.C;
 
   useEffect(() => {
@@ -217,40 +234,51 @@ MR.AracModelSelect = ({marka, value, onChange, style}) => {
   }, [marka]);
 
   useEffect(() => {
-    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setAcik(false); };
+    const close = (e) => {
+      if (ref.current && !ref.current.contains(e.target) && dropRef.current && !dropRef.current.contains(e.target)) setAcik(false);
+    };
     document.addEventListener('mousedown', close);
     return () => document.removeEventListener('mousedown', close);
   }, []);
+
+  const updatePos = () => {
+    if (inputRef.current) {
+      const r = inputRef.current.getBoundingClientRect();
+      setPos({top: r.bottom + 2, left: r.left, width: r.width});
+    }
+  };
 
   const filtered = ara ? modeller.filter(m => m.includes(ara.toUpperCase())) : modeller;
 
   return (
     <div ref={ref} style={{position:'relative',...(style||{})}}>
-      <input
+      <input ref={inputRef}
         value={acik ? ara : (value || '')}
-        onChange={e => { setAra(e.target.value); if (!acik) setAcik(true); }}
-        onFocus={() => { setAcik(true); setAra(''); }}
+        onChange={e => { setAra(e.target.value); if (!acik) { updatePos(); setAcik(true); } }}
+        onFocus={() => { updatePos(); setAcik(true); setAra(''); }}
         placeholder={yukleniyor ? 'YÜKLENİYOR...' : (value || 'MODEL YAZIN...')}
         disabled={!marka || yukleniyor}
         style={{...S.input, cursor: marka ? 'pointer' : 'not-allowed', opacity: marka ? 1 : 0.5}}
       />
-      {acik && marka && !yukleniyor && (
-        <div style={{position:'absolute',top:'100%',left:0,right:0,maxHeight:250,overflowY:'auto',
-          background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:6,zIndex:999,boxShadow:'0 4px 12px rgba(0,0,0,0.15)'}}>
-          {filtered.length === 0 ? <div style={{padding:8,fontSize:11,color:C.textMuted}}>SONUÇ YOK</div> :
+      {acik && marka && !yukleniyor && ReactDOM.createPortal(
+        <div ref={dropRef} style={{position:'fixed',top:pos.top,left:pos.left,width:pos.width,maxHeight:250,overflowY:'auto',
+          background:C.bgCard,border:`1px solid ${C.borderLight||C.border}`,borderRadius:8,zIndex:99999,
+          boxShadow:'0 8px 30px rgba(0,0,0,0.35)'}}>
+          {filtered.length === 0 ? <div style={{padding:10,fontSize:11,color:C.textMuted}}>SONUÇ YOK</div> :
             filtered.slice(0, 80).map(m => (
               <div key={m} onClick={() => { onChange(m); setAcik(false); setAra(''); }}
-                style={{padding:'5px 10px',fontSize:10,cursor:'pointer',
+                style={{padding:'7px 12px',fontSize:11,cursor:'pointer',
                   background: m===value ? `${C.accent}22` : 'transparent',
                   fontWeight: m===value ? 700 : 400,
-                  color:C.text,borderBottom:`1px solid ${C.border}22`}}
-                onMouseEnter={e=>e.target.style.background=`${C.accent}11`}
+                  color:C.text,borderBottom:`1px solid ${C.border}33`}}
+                onMouseEnter={e=>e.target.style.background=`${C.accent}18`}
                 onMouseLeave={e=>e.target.style.background=m===value?`${C.accent}22`:'transparent'}>
                 {m}
               </div>
             ))}
-          {filtered.length > 80 && <div style={{padding:6,fontSize:10,color:C.textMuted,textAlign:'center'}}>{filtered.length-80} DAHA... (YAZMAYA DEVAM EDİN)</div>}
-        </div>
+          {filtered.length > 80 && <div style={{padding:8,fontSize:10,color:C.textMuted,textAlign:'center'}}>{filtered.length-80} DAHA... (YAZMAYA DEVAM EDİN)</div>}
+        </div>,
+        document.body
       )}
     </div>
   );
