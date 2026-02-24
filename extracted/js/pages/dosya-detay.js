@@ -1090,7 +1090,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <LIcon name="Copy" size={10}/> KOPYALA
               </button>
             </div>
-            <div style={{fontSize:11, color:C.accent, wordBreak:'break-all', fontFamily:'monospace', background:C.bgInput, padding:8, borderRadius:6, border:`1px solid ${C.borderLight}`}}>{portalModal.link}</div>
+            <a href={portalModal.link} target="_blank" rel="noopener noreferrer" style={{display:'block', fontSize:11, color:C.accent, wordBreak:'break-all', fontFamily:'monospace', background:C.bgInput, padding:8, borderRadius:6, border:`1px solid ${C.borderLight}`, textDecoration:'underline', cursor:'pointer'}}>{portalModal.link}</a>
           </div>
 
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10}}>
