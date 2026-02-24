@@ -1085,12 +1085,24 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
           <div style={{background:C.bgHover, borderRadius:8, padding:12, marginBottom:10, border:`1px solid ${C.border}`}}>
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
-              <span style={{fontSize:10, fontWeight:600, color:C.textMuted}}>PORTAL LİNKİ</span>
+              <span style={{fontSize:10, fontWeight:600, color:C.accent}}>MÜŞTERİ GİRİŞ SAYFASI LİNKİ</span>
+              <button onClick={() => kopyala(portalModal.link.split('#')[0])} style={{...S.btn, padding:'3px 10px', fontSize:9, ...S.btnP}}>
+                <LIcon name="Copy" size={10}/> KOPYALA
+              </button>
+            </div>
+            <div style={{fontSize:9, color:C.textMuted, marginBottom:6}}>MÜŞTERİ BU LİNKTEN TC KİMLİK VE TELEFON İLE GİRİŞ YAPAR</div>
+            <a href={portalModal.link.split('#')[0]} target="_blank" rel="noopener noreferrer" style={{display:'block', fontSize:11, color:C.accent, wordBreak:'break-all', fontFamily:'monospace', background:C.bgInput, padding:8, borderRadius:6, border:`1px solid ${C.borderLight}`, textDecoration:'underline', cursor:'pointer'}}>{portalModal.link.split('#')[0]}</a>
+          </div>
+
+          <div style={{background:C.bgHover, borderRadius:8, padding:12, marginBottom:10, border:`1px solid ${C.border}`}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
+              <span style={{fontSize:10, fontWeight:600, color:C.warning}}>ADMİN İÇİN GÖRÜNTÜLEME LİNKİ</span>
               <button onClick={() => kopyala(portalModal.link)} style={{...S.btn, padding:'3px 10px', fontSize:9, ...S.btnP}}>
                 <LIcon name="Copy" size={10}/> KOPYALA
               </button>
             </div>
-            <a href={portalModal.link} target="_blank" rel="noopener noreferrer" style={{display:'block', fontSize:11, color:C.accent, wordBreak:'break-all', fontFamily:'monospace', background:C.bgInput, padding:8, borderRadius:6, border:`1px solid ${C.borderLight}`, textDecoration:'underline', cursor:'pointer'}}>{portalModal.link}</a>
+            <div style={{fontSize:9, color:C.textMuted, marginBottom:6}}>BU LİNK DİREKT GİRİŞ SAĞLAR - SADECE ADMİN KULLANIMI İÇİN</div>
+            <a href={portalModal.link} target="_blank" rel="noopener noreferrer" style={{display:'block', fontSize:11, color:C.warning, wordBreak:'break-all', fontFamily:'monospace', background:C.bgInput, padding:8, borderRadius:6, border:`1px solid ${C.borderLight}`, textDecoration:'underline', cursor:'pointer'}}>{portalModal.link}</a>
           </div>
 
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10}}>
@@ -1118,14 +1130,14 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           <div style={{background:`${C.accent}08`, borderRadius:8, padding:12, border:`1px solid ${C.accent}22`}}>
             <div style={{fontSize:10, fontWeight:700, color:C.accent, marginBottom:6}}>MÜŞTERİ NASIL GİRİŞ YAPACAK?</div>
             <div style={{fontSize:11, color:C.textSec, lineHeight:1.6}}>
-              1. Yukarıdaki portal linkini müşteriye iletin (WhatsApp, e-posta vb.)<br/>
-              2. Müşteri linke tıklayarak doğrudan portala girebilir<br/>
-              3. Veya <b>portal.html</b> adresinden TC Kimlik + Telefon ile giriş yapabilir
+              1. <b>Giriş Sayfası Linkini</b> müşteriye iletin (WhatsApp, e-posta vb.)<br/>
+              2. Müşteri TC Kimlik ve Telefon numarası ile giriş yapar<br/>
+              3. <b>Admin Görüntüleme Linki</b> direkt giriş sağlar - sadece admin kullanımı içindir
             </div>
           </div>
 
           <div style={{marginTop:14, display:'flex', gap:8, justifyContent:'flex-end'}}>
-            <button onClick={() => kopyala(`Portal Giriş Bilgileri:\nLink: ${portalModal.link}\nTC Kimlik: ${portalModal.tc}\nTelefon: ${portalModal.telefon}`)} style={{...S.btn, ...S.btnS, fontSize:11}}>
+            <button onClick={() => kopyala(`Portal Giriş Bilgileri:\nGiriş Sayfası: ${portalModal.link.split('#')[0]}\nDirekt Link (Admin): ${portalModal.link}\nTC Kimlik: ${portalModal.tc}\nTelefon: ${portalModal.telefon}`)} style={{...S.btn, ...S.btnS, fontSize:11}}>
               <LIcon name="Copy" size={12}/> TÜM BİLGİLERİ KOPYALA
             </button>
             <button onClick={() => setPortalModal(p=>({...p,open:false}))} style={{...S.btn, ...S.btnG, fontSize:11}}>KAPAT</button>

@@ -280,12 +280,8 @@ try {
                 if ($fRow && !empty($fRow['deger'])) $firmaAdi = $fRow['deger'];
             } catch (\Exception $e) {}
 
-            if ($portalGirisYontemi === 'link') {
-                $portalLink = $siteUrl . '/portal.html#kod=' . $erisimKodu;
-                $smsMesaj = "Sayin " . clean($body['ad_soyad']) . ", {$dosyaNo} nolu dosyaniz olusturulmustur. Portal erisiminiz: {$portalLink} - {$firmaAdi}";
-            } else {
-                $smsMesaj = "Sayin " . clean($body['ad_soyad']) . ", {$dosyaNo} nolu dosyaniz olusturulmustur. Dosyanizi takip etmek icin: {$siteUrl}/portal.html adresinden telefonunuzla giris yapabilirsiniz. - {$firmaAdi}";
-            }
+            $portalLoginLink = $siteUrl . '/portal.html';
+            $smsMesaj = "Sayin " . clean($body['ad_soyad']) . ", {$dosyaNo} nolu dosyaniz olusturulmustur. Giris icin: {$portalLoginLink} adresinden TC Kimlik ve telefonunuzla giris yapabilirsiniz. - {$firmaAdi}";
 
             $portalSms = sms_gonder($telNorm ?: $musteriTelefon, $smsMesaj, $dosyaId, $user['id']);
 

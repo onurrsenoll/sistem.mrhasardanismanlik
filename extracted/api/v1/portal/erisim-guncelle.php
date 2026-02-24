@@ -77,15 +77,8 @@ if (!empty($body['sms_gonder']) && !empty($erisim['telefon'])) {
         if ($fRow && !empty($fRow['deger'])) $firmaAdi = $fRow['deger'];
     } catch (\Exception $e) {}
 
-    $portalLink = $siteUrl . '/portal.html';
-    $girisYontemi = $body['giris_yontemi'] ?? $erisim['giris_yontemi'];
-
-    if ($girisYontemi === 'link') {
-        $portalLink .= '#kod=' . $erisim['erisim_kodu'];
-        $smsMesaj = "Sayin " . ($erisim['ad_soyad'] ?: 'MUSTERIMIZ') . ", {$erisim['dosya_no']} nolu dosyaniza portal erisim linkiniz: {$portalLink} - {$firmaAdi}";
-    } else {
-        $smsMesaj = "Sayin " . ($erisim['ad_soyad'] ?: 'MUSTERIMIZ') . ", {$erisim['dosya_no']} nolu dosyaniz icin portal adresi: {$portalLink} Telefonunuzla giris yapabilirsiniz. - {$firmaAdi}";
-    }
+    $portalLoginLink = $siteUrl . '/portal.html';
+    $smsMesaj = "Sayin " . ($erisim['ad_soyad'] ?: 'MUSTERIMIZ') . ", {$erisim['dosya_no']} nolu dosyaniz icin portal adresi: {$portalLoginLink} TC Kimlik ve telefonunuzla giris yapabilirsiniz. - {$firmaAdi}";
 
     sms_gonder($erisim['telefon'], $smsMesaj, $erisim['dosya_id'], $user['id']);
 }

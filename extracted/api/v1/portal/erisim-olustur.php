@@ -82,9 +82,10 @@ if (empty($siteUrl)) {
     $siteUrl = $protokol . '://' . $host;
 }
 
-$portalLink = $siteUrl . '/portal.html#kod=' . $erisimKodu;
+$portalLoginLink = $siteUrl . '/portal.html';
+$portalDirectLink = $siteUrl . '/portal.html#kod=' . $erisimKodu;
 
-// SMS ile bilgilendirme gönder
+// SMS ile bilgilendirme gönder - müşteriye sadece giriş sayfası linki gönderilir
 $smsGonder = !isset($body['sms_gonder']) || $body['sms_gonder'] !== false;
 $smsSonuc = null;
 
@@ -96,11 +97,7 @@ if ($smsGonder && !empty($telNorm)) {
         if ($fRow && !empty($fRow['deger'])) $firmaAdi = $fRow['deger'];
     } catch (\Exception $e) {}
 
-    if ($girisYontemi === 'link') {
-        $smsMesaj = "Sayin " . ($dosya['ad_soyad'] ?: 'MUSTERIMIZ') . ", {$dosya['dosya_no']} nolu dosyaniz icin portal erisiminiz olusturulmustur. Portal linkiniz: {$portalLink} - {$firmaAdi}";
-    } else {
-        $smsMesaj = "Sayin " . ($dosya['ad_soyad'] ?: 'MUSTERIMIZ') . ", {$dosya['dosya_no']} nolu dosyaniz icin portal erisiminiz olusturulmustur. Giris icin: {$siteUrl}/portal.html adresinden telefonunuzla giris yapabilirsiniz. - {$firmaAdi}";
-    }
+    $smsMesaj = "Sayin " . ($dosya['ad_soyad'] ?: 'MUSTERIMIZ') . ", {$dosya['dosya_no']} nolu dosyaniz icin portal erisiminiz olusturulmustur. Giris icin: {$portalLoginLink} adresinden TC Kimlik ve telefonunuzla giris yapabilirsiniz. - {$firmaAdi}";
 
     $smsSonuc = sms_gonder($telNorm, $smsMesaj, $dosyaId, $user['id']);
 }
@@ -111,7 +108,8 @@ portal_logla($erisimId, $dosyaId, 'erisim_olusturuldu', 'Portal erişimi oluştu
 json_success([
     'erisim_id' => $erisimId,
     'erisim_kodu' => $erisimKodu,
-    'portal_link' => $portalLink,
+    'portal_link' => $portalDirectLink,
+    'portal_login_link' => $portalLoginLink,
     'giris_yontemi' => $girisYontemi,
     'sms_sonuc' => $smsSonuc
 ], 'PORTAL ERİŞİMİ BAŞARIYLA OLUŞTURULDU', 201);
