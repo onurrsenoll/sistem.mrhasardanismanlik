@@ -292,25 +292,41 @@ MR.api = {
 
 // ═══ TEMA SİSTEMİ ═══
 const KOYU_TEMA = {
-  bg: '#0f172a', bgCard: '#1e293b', bgHover: '#334155', bgInput: '#1e293b',
-  border: '#334155', borderLight: '#475569',
-  accent: '#2563eb', accentLight: '#3b82f6',
+  bg: '#0c1222', bgCard: '#111b2e', bgHover: '#1a2744', bgInput: '#0e1629',
+  border: 'rgba(59,130,246,0.15)', borderLight: 'rgba(100,140,220,0.2)',
+  accent: '#3b82f6', accentLight: '#60a5fa',
   accentGradient: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
   success: '#10b981', warning: '#f59e0b', danger: '#ef4444',
-  purple: '#8b5cf6', cyan: '#06b6d4', pink: '#ec4899', gold: '#fbbf24',
-  text: '#f1f5f9', textSec: '#94a3b8', textMuted: '#64748b',
-  headerBg: '#1e293b', navBg: '#1e293b'
+  purple: '#a78bfa', cyan: '#22d3ee', pink: '#f472b6', gold: '#fbbf24',
+  text: '#e2e8f0', textSec: '#94a3b8', textMuted: '#64748b',
+  headerBg: 'rgba(12,18,34,0.85)', navBg: 'rgba(17,27,46,0.9)',
+  /* glass & glow */
+  cardGlass: 'rgba(17,27,46,0.65)',
+  cardShadow: '0 8px 32px rgba(0,0,0,.35), 0 0 1px rgba(59,130,246,.2), inset 0 1px 0 rgba(255,255,255,.04)',
+  cardBlur: 'blur(16px) saturate(1.2)',
+  statShadow: '0 4px 20px rgba(0,0,0,.25), 0 0 1px rgba(59,130,246,.15)',
+  inputShadow: 'inset 0 2px 6px rgba(0,0,0,.3), 0 0 0 1px rgba(59,130,246,.08)',
+  btnShadow: '0 4px 16px rgba(59,130,246,.35), 0 1px 3px rgba(0,0,0,.2)',
+  bgGradient: 'linear-gradient(135deg, #080e1a 0%, #0f1b30 40%, #0c1528 70%, #0a1020 100%)'
 };
 
 const ACIK_TEMA = {
-  bg: '#edf1f7', bgCard: '#ffffff', bgHover: '#e2e8f0', bgInput: '#f1f5f9',
-  border: '#94a3b8', borderLight: '#94a3b8',
+  bg: '#e4e9f2', bgCard: '#ffffff', bgHover: '#dce3ed', bgInput: '#eef2f8',
+  border: 'rgba(100,116,139,0.25)', borderLight: 'rgba(100,116,139,0.2)',
   accent: '#2563eb', accentLight: '#3b82f6',
   accentGradient: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
   success: '#16a34a', warning: '#ca8a04', danger: '#dc2626',
-  purple: '#8b5cf6', cyan: '#0891b2', pink: '#db2777', gold: '#ca8a04',
-  text: '#1e293b', textSec: '#334155', textMuted: '#475569',
-  headerBg: '#f8fafc', navBg: '#f1f5f9'
+  purple: '#7c3aed', cyan: '#0891b2', pink: '#db2777', gold: '#ca8a04',
+  text: '#1e293b', textSec: '#475569', textMuted: '#64748b',
+  headerBg: 'rgba(255,255,255,0.8)', navBg: 'rgba(241,245,249,0.85)',
+  /* glass & depth */
+  cardGlass: 'rgba(255,255,255,0.65)',
+  cardShadow: '0 8px 32px rgba(15,23,42,.08), 0 2px 8px rgba(15,23,42,.05), 0 0 1px rgba(100,116,139,.2)',
+  cardBlur: 'blur(16px) saturate(1.2)',
+  statShadow: '0 4px 20px rgba(15,23,42,.06), 0 1px 4px rgba(15,23,42,.04)',
+  inputShadow: 'inset 0 2px 4px rgba(15,23,42,.06), 0 0 0 1px rgba(100,116,139,.12)',
+  btnShadow: '0 4px 16px rgba(37,99,235,.25), 0 1px 3px rgba(0,0,0,.1)',
+  bgGradient: 'linear-gradient(135deg, #d4dbe8 0%, #e4e9f2 40%, #dce3ed 70%, #d0d8e6 100%)'
 };
 
 MR.TEMALAR = { koyu: KOYU_TEMA, acik: ACIK_TEMA };
@@ -322,16 +338,17 @@ MR.C = { ...MR.TEMALAR[MR.tema] };
 // ═══ TEMA DEĞİŞTİRME ═══
 MR._stilGuncelle = () => {
   const C = MR.C;
-  MR.S.page = { minHeight: '100vh', background: C.bg, color: C.text };
-  MR.S.card = { background: C.bgCard, borderRadius: 12, border: `1px solid ${C.border}`, overflow: 'hidden' };
-  MR.S.cardHead = { padding: '14px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 10, background: MR.tema === 'koyu' ? 'rgba(37,99,235,0.05)' : 'rgba(37,99,235,0.03)' };
+  const isK = MR.tema === 'koyu';
+  MR.S.page = { minHeight: '100vh', background: C.bgGradient || C.bg, color: C.text };
+  MR.S.card = { background: C.cardGlass || C.bgCard, backdropFilter: C.cardBlur, WebkitBackdropFilter: C.cardBlur, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden', boxShadow: C.cardShadow };
+  MR.S.cardHead = { padding: '14px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 10, background: isK ? 'rgba(59,130,246,0.04)' : 'rgba(37,99,235,0.03)' };
   MR.S.cardBody = { padding: 20 };
-  MR.S.input = { width: '100%', padding: '10px 14px', background: C.bgInput, border: `1px solid ${C.borderLight}`, borderRadius: 8, color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' };
-  MR.S.select = { width: '100%', padding: '10px 14px', background: C.bgInput, border: `1px solid ${C.borderLight}`, borderRadius: 8, color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' };
+  MR.S.input = { width: '100%', padding: '10px 14px', background: C.bgInput, border: `1px solid ${C.borderLight}`, borderRadius: 10, color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box', boxShadow: C.inputShadow, transition: 'border-color .2s, box-shadow .2s' };
+  MR.S.select = { width: '100%', padding: '10px 14px', background: C.bgInput, border: `1px solid ${C.borderLight}`, borderRadius: 10, color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box', boxShadow: C.inputShadow };
   MR.S.label = { fontSize: 11, fontWeight: 600, color: C.textSec, marginBottom: 6, display: 'block', letterSpacing: 0.5 };
-  MR.S.btnG = { background: C.borderLight, color: C.textSec };
-  MR.S.stat = { background: C.bgCard, borderRadius: 12, padding: '18px 20px', border: `1px solid ${C.border}` };
-  document.body.style.background = C.bg;
+  MR.S.btnG = { background: isK ? 'rgba(100,140,220,0.12)' : 'rgba(100,116,139,0.12)', color: C.textSec, border: `1px solid ${C.borderLight}` };
+  MR.S.stat = { background: C.cardGlass || C.bgCard, backdropFilter: C.cardBlur, WebkitBackdropFilter: C.cardBlur, borderRadius: 14, padding: '18px 20px', border: `1px solid ${C.border}`, boxShadow: C.statShadow };
+  document.body.style.background = C.bgGradient || C.bg;
   document.body.style.color = C.text;
   const selStyle = document.getElementById('mr-select-style');
   if (selStyle) selStyle.textContent = `select option{background:${C.bgCard};color:${C.text}}`;
@@ -346,21 +363,21 @@ MR.setTema = (t) => {
 
 // ═══ STİLLER ═══
 MR.S = {
-  page: { minHeight: '100vh', background: MR.C.bg, color: MR.C.text },
-  card: { background: MR.C.bgCard, borderRadius: 12, border: `1px solid ${MR.C.border}`, overflow: 'hidden' },
-  cardHead: { padding: '14px 20px', borderBottom: `1px solid ${MR.C.border}`, display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(37,99,235,0.05)' },
+  page: { minHeight: '100vh', background: MR.C.bgGradient || MR.C.bg, color: MR.C.text },
+  card: { background: MR.C.cardGlass || MR.C.bgCard, backdropFilter: MR.C.cardBlur, WebkitBackdropFilter: MR.C.cardBlur, borderRadius: 14, border: `1px solid ${MR.C.border}`, overflow: 'hidden', boxShadow: MR.C.cardShadow },
+  cardHead: { padding: '14px 20px', borderBottom: `1px solid ${MR.C.border}`, display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(59,130,246,0.04)' },
   cardBody: { padding: 20 },
-  input: { width: '100%', padding: '10px 14px', background: MR.C.bgInput, border: `1px solid ${MR.C.borderLight}`, borderRadius: 8, color: MR.C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' },
-  select: { width: '100%', padding: '10px 14px', background: MR.C.bgInput, border: `1px solid ${MR.C.borderLight}`, borderRadius: 8, color: MR.C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' },
+  input: { width: '100%', padding: '10px 14px', background: MR.C.bgInput, border: `1px solid ${MR.C.borderLight}`, borderRadius: 10, color: MR.C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box', boxShadow: MR.C.inputShadow, transition: 'border-color .2s, box-shadow .2s' },
+  select: { width: '100%', padding: '10px 14px', background: MR.C.bgInput, border: `1px solid ${MR.C.borderLight}`, borderRadius: 10, color: MR.C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box', boxShadow: MR.C.inputShadow },
   label: { fontSize: 11, fontWeight: 600, color: MR.C.textSec, marginBottom: 6, display: 'block', letterSpacing: 0.5 },
-  btn: { padding: '10px 20px', borderRadius: 8, border: 'none', fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, transition: 'all .2s' },
-  btnP: { background: MR.C.accent, color: '#fff' },
-  btnS: { background: MR.C.success, color: '#fff' },
-  btnW: { background: MR.C.warning, color: '#000' },
-  btnD: { background: MR.C.danger, color: '#fff' },
-  btnG: { background: MR.C.borderLight, color: MR.C.textSec },
-  badge: c => ({ padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, background: `${c}22`, color: c, border: `1px solid ${c}33`, display: 'inline-block' }),
-  stat: { background: MR.C.bgCard, borderRadius: 12, padding: '18px 20px', border: `1px solid ${MR.C.border}` }
+  btn: { padding: '10px 20px', borderRadius: 10, border: 'none', fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, transition: 'all .25s ease' },
+  btnP: { background: MR.C.accentGradient, color: '#fff', boxShadow: MR.C.btnShadow },
+  btnS: { background: `linear-gradient(135deg, ${MR.C.success}, ${MR.C.success}dd)`, color: '#fff', boxShadow: `0 4px 16px ${MR.C.success}44` },
+  btnW: { background: `linear-gradient(135deg, ${MR.C.warning}, ${MR.C.warning}dd)`, color: '#000', boxShadow: `0 4px 16px ${MR.C.warning}33` },
+  btnD: { background: `linear-gradient(135deg, ${MR.C.danger}, ${MR.C.danger}dd)`, color: '#fff', boxShadow: `0 4px 16px ${MR.C.danger}44` },
+  btnG: { background: 'rgba(100,140,220,0.12)', color: MR.C.textSec, border: `1px solid ${MR.C.borderLight}` },
+  badge: c => ({ padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, background: `${c}18`, color: c, border: `1px solid ${c}28`, display: 'inline-block', boxShadow: `0 0 8px ${c}15` }),
+  stat: { background: MR.C.cardGlass || MR.C.bgCard, backdropFilter: MR.C.cardBlur, WebkitBackdropFilter: MR.C.cardBlur, borderRadius: 14, padding: '18px 20px', border: `1px solid ${MR.C.border}`, boxShadow: MR.C.statShadow }
 };
 
 // İLK TEMA UYGULAMASI
