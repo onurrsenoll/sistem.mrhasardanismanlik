@@ -3203,14 +3203,14 @@ const PortalTab = () => {
   /* Portal ayarları varsayılan değerler */
   const PORTAL_AYAR_KEYS = {
     portal_aktif: '1',
-    portal_giris_yontemi: 'sms_otp',
+    portal_giris_yontemi: 'tc_telefon',
     portal_oturum_suresi: '120',
     portal_evrak_goster: '1',
     portal_evrak_indir: '1',
     portal_gecmis_goster: '1',
     portal_masraf_goster: '0',
     portal_mesaj_aktif: '1',
-    portal_otomatik_olustur: '1',
+    portal_otomatik_olustur: '0',
     portal_karsilama: 'Hoş geldiniz. Dosyanızın güncel durumunu bu portal üzerinden takip edebilirsiniz.',
     portal_kvkk_metni: '6698 sayılı KVKK kapsamında kişisel verileriniz korunmaktadır.'
   };
@@ -3370,8 +3370,9 @@ const PortalTab = () => {
                   <div style={{marginTop:16}}>
                     <label style={S.label}>GİRİŞ YÖNTEMİ</label>
                     <select style={S.select} value={ayarlar.portal_giris_yontemi || 'sms_otp'} onChange={e => up('portal_giris_yontemi', e.target.value)}>
-                      <option value="sms_otp">SMS OTP (TEK KULLANIM KOD)</option>
-                      <option value="link">DOĞRUDAN LİNK (SMS İLE LİNK GÖNDERİLİR)</option>
+                      <option value="tc_telefon">TC KİMLİK + TELEFON (SMS GEREKTİRMEZ)</option>
+                      <option value="link">DOĞRUDAN LİNK (KOPYALANABİLİR LİNK)</option>
+                      <option value="sms_otp">SMS OTP (SMS ABONELİĞİ GEREKTİRİR)</option>
                     </select>
                   </div>
 
@@ -3403,11 +3404,11 @@ const PortalTab = () => {
                   <div style={{marginTop:20, padding:16, background:`${C.accent}08`, borderRadius:10, border:`1px solid ${C.accent}22`}}>
                     <div style={{fontSize:12, fontWeight:700, color:C.accent, marginBottom:8}}>PORTAL NASIL ÇALIŞIR?</div>
                     <div style={{fontSize:11, color:C.textSec, lineHeight:1.7}}>
-                      1. Dosya açıldığında müşteriye otomatik portal erişimi oluşturulur<br/>
-                      2. Müşteriye SMS ile portal linki / giriş bilgisi gönderilir<br/>
-                      3. Müşteri portala giriş yaparak dosya durumunu takip eder<br/>
+                      1. Dosya detayından PORTAL butonuna tıklayarak erişim oluşturun<br/>
+                      2. Oluşan link ve giriş bilgilerini müşteriye iletin (WhatsApp, e-posta vb.)<br/>
+                      3. Müşteri TC Kimlik + Telefon ile veya doğrudan link ile giriş yapar<br/>
                       4. Evrakları görüntüler, mesaj gönderir<br/>
-                      5. Tüm giriş/çıkışlar KVKK uyumlu loglanır
+                      5. Tüm giriş/çıkışlar KVKK uyumlu loglanır (SMS aboneliği gerekmez)
                     </div>
                   </div>
 

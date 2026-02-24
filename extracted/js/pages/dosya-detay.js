@@ -160,6 +160,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const [dosyaSilConfirm, setDosyaSilConfirm] = useState(false);
   const [ortaklar, setOrtaklar] = useState([]);
   const [portalCreating, setPortalCreating] = useState(false);
+  const [portalModal, setPortalModal] = useState({open:false, link:'', erisimKodu:'', tc:'', telefon:'', adSoyad:'', mevcut:false});
   const [previewEvrak, setPreviewEvrak] = useState(null);
 
   // DOSYA KAPAT STATE
@@ -299,13 +300,52 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
   const portalOlustur = async () => {
     setPortalCreating(true);
-    const r = await api.portalErisimOlustur({dosya_id: dosya.id, giris_yontemi: 'sms_otp', sms_gonder: true});
+    const r = await api.portalErisimOlustur({dosya_id: dosya.id, giris_yontemi: 'tc_telefon', sms_gonder: false});
     setPortalCreating(false);
     if (r?.success) {
-      MR.toast?.('PORTAL ERİŞİMİ OLUŞTURULDU VE SMS GÖNDERİLDİ', 'success');
+      const d = r.data || {};
+      const m = dosya.magdur || {};
+      setPortalModal({
+        open: true,
+        link: d.portal_link || (window.location.origin + '/portal.html#kod=' + d.erisim_kodu),
+        erisimKodu: d.erisim_kodu || '',
+        tc: m.tc_kimlik || '',
+        telefon: m.telefon || '',
+        adSoyad: m.ad_soyad || '',
+        mevcut: false
+      });
     } else {
-      MR.toast?.(r?.error || 'PORTAL OLUŞTURMA HATASI', 'error');
+      // Eğer mevcut varsa bilgiyi göster
+      if (r?.error?.includes('ZATEN AKTİF')) {
+        const rList = await api.portalErisimList({dosya_id: dosya.id, aktif: 1});
+        if (rList?.success) {
+          const items = rList.data?.items || [];
+          const e = items[0];
+          if (e) {
+            setPortalModal({
+              open: true,
+              link: window.location.origin + '/portal.html#kod=' + e.erisim_kodu,
+              erisimKodu: e.erisim_kodu || '',
+              tc: e.tc_kimlik || '',
+              telefon: e.telefon || '',
+              adSoyad: e.ad_soyad || '',
+              mevcut: true
+            });
+            return;
+          }
+        }
+        MR.toast?.(r?.error, 'warning');
+      } else {
+        MR.toast?.(r?.error || 'PORTAL OLUŞTURMA HATASI', 'error');
+      }
     }
+  };
+
+  const kopyala = (text) => {
+    navigator.clipboard.writeText(text).then(() => MR.toast?.('KOPYALANDI', 'success')).catch(() => {
+      const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      MR.toast?.('KOPYALANDI', 'success');
+    });
   };
 
   if (loading) return <Loading/>;
@@ -1034,6 +1074,64 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           if (deleteConfirm.type === 'masraf') masrafSil(deleteConfirm.id);
           else if (deleteConfirm.type === 'evrak') evrakSil(deleteConfirm.id);
         }}/>
+
+      {/* PORTAL BİLGİ MODAL */}
+      {portalModal.open && <Modal open={true} onClose={() => setPortalModal(p=>({...p,open:false}))} title={portalModal.mevcut ? 'MEVCUT PORTAL ERİŞİM BİLGİLERİ' : 'PORTAL ERİŞİMİ OLUŞTURULDU'} width="520px">
+        <div style={{padding:4}}>
+          {portalModal.mevcut && <div style={{padding:'8px 12px', background:`${C.warning}15`, border:`1px solid ${C.warning}33`, borderRadius:8, marginBottom:14, fontSize:11, color:C.warning, fontWeight:600}}>BU DOSYA İÇİN ZATEN AKTİF PORTAL ERİŞİMİ MEVCUT</div>}
+          {!portalModal.mevcut && <div style={{padding:'8px 12px', background:`${C.success}15`, border:`1px solid ${C.success}33`, borderRadius:8, marginBottom:14, fontSize:11, color:C.success, fontWeight:600}}>PORTAL ERİŞİMİ BAŞARIYLA OLUŞTURULDU</div>}
+
+          <div style={{fontSize:12, fontWeight:700, color:C.accent, marginBottom:10}}>MÜŞTERİ GİRİŞ BİLGİLERİ</div>
+
+          <div style={{background:C.bgHover, borderRadius:8, padding:12, marginBottom:10, border:`1px solid ${C.border}`}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
+              <span style={{fontSize:10, fontWeight:600, color:C.textMuted}}>PORTAL LİNKİ</span>
+              <button onClick={() => kopyala(portalModal.link)} style={{...S.btn, padding:'3px 10px', fontSize:9, ...S.btnP}}>
+                <LIcon name="Copy" size={10}/> KOPYALA
+              </button>
+            </div>
+            <div style={{fontSize:11, color:C.accent, wordBreak:'break-all', fontFamily:'monospace', background:C.bgInput, padding:8, borderRadius:6, border:`1px solid ${C.borderLight}`}}>{portalModal.link}</div>
+          </div>
+
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10}}>
+            <div style={{background:C.bgHover, borderRadius:8, padding:12, border:`1px solid ${C.border}`}}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4}}>
+                <span style={{fontSize:10, fontWeight:600, color:C.textMuted}}>TC KİMLİK</span>
+                <button onClick={() => kopyala(portalModal.tc)} style={{...S.btn, padding:'2px 8px', fontSize:9, ...S.btnG}}><LIcon name="Copy" size={9}/></button>
+              </div>
+              <div style={{fontSize:14, fontWeight:700, letterSpacing:1}}>{portalModal.tc || 'TANIMLI DEĞİL'}</div>
+            </div>
+            <div style={{background:C.bgHover, borderRadius:8, padding:12, border:`1px solid ${C.border}`}}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4}}>
+                <span style={{fontSize:10, fontWeight:600, color:C.textMuted}}>TELEFON</span>
+                <button onClick={() => kopyala(portalModal.telefon)} style={{...S.btn, padding:'2px 8px', fontSize:9, ...S.btnG}}><LIcon name="Copy" size={9}/></button>
+              </div>
+              <div style={{fontSize:14, fontWeight:700}}>{portalModal.telefon || 'TANIMLI DEĞİL'}</div>
+            </div>
+          </div>
+
+          <div style={{background:C.bgHover, borderRadius:8, padding:12, border:`1px solid ${C.border}`, marginBottom:14}}>
+            <span style={{fontSize:10, fontWeight:600, color:C.textMuted}}>MÜŞTERİ</span>
+            <div style={{fontSize:13, fontWeight:700, marginTop:2}}>{portalModal.adSoyad}</div>
+          </div>
+
+          <div style={{background:`${C.accent}08`, borderRadius:8, padding:12, border:`1px solid ${C.accent}22`}}>
+            <div style={{fontSize:10, fontWeight:700, color:C.accent, marginBottom:6}}>MÜŞTERİ NASIL GİRİŞ YAPACAK?</div>
+            <div style={{fontSize:11, color:C.textSec, lineHeight:1.6}}>
+              1. Yukarıdaki portal linkini müşteriye iletin (WhatsApp, e-posta vb.)<br/>
+              2. Müşteri linke tıklayarak doğrudan portala girebilir<br/>
+              3. Veya <b>portal.html</b> adresinden TC Kimlik + Telefon ile giriş yapabilir
+            </div>
+          </div>
+
+          <div style={{marginTop:14, display:'flex', gap:8, justifyContent:'flex-end'}}>
+            <button onClick={() => kopyala(`Portal Giriş Bilgileri:\nLink: ${portalModal.link}\nTC Kimlik: ${portalModal.tc}\nTelefon: ${portalModal.telefon}`)} style={{...S.btn, ...S.btnS, fontSize:11}}>
+              <LIcon name="Copy" size={12}/> TÜM BİLGİLERİ KOPYALA
+            </button>
+            <button onClick={() => setPortalModal(p=>({...p,open:false}))} style={{...S.btn, ...S.btnG, fontSize:11}}>KAPAT</button>
+          </div>
+        </div>
+      </Modal>}
 
       {/* DOSYA SİL */}
       <Confirm open={dosyaSilConfirm} message={`"${dosya.dosya_no}" DOSYASI TAMAMEN SİLİNSİN Mİ? BU İŞLEM GERİ ALINAMAZ!`}

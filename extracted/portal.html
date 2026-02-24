@@ -120,6 +120,7 @@ const portalApi = {
       try { return JSON.parse(txt); } catch(e) { return {success:false, error:'SUNUCU HATASI'}; }
     } catch(e) { return {success:false, error:'BAĞLANTI HATASI'}; }
   },
+  tcGiris(tc_kimlik,telefon) { return this.req('/portal/tc-giris.php',{method:'POST',body:JSON.stringify({tc_kimlik,telefon})}); },
   otpGonder(telefon) { return this.req('/portal/otp-gonder.php',{method:'POST',body:JSON.stringify({telefon})}); },
   otpDogrula(telefon,otp) { return this.req('/portal/otp-dogrula.php',{method:'POST',body:JSON.stringify({telefon,otp})}); },
   linkGiris(kod) { return this.req('/portal/link-giris.php',{method:'POST',body:JSON.stringify({erisim_kodu:kod})}); },
@@ -132,23 +133,21 @@ const portalApi = {
 
 /* ═══ LOGIN SAYFASI ═══ */
 const LoginPage = ({onLogin}) => {
-  const [step, setStep] = useState('telefon'); // telefon, otp
+  const [tcKimlik, setTcKimlik] = useState('');
   const [telefon, setTelefon] = useState('');
-  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [info, setInfo] = useState('');
-  const [sayac, setSayac] = useState(0);
+  const [linkLoading, setLinkLoading] = useState(false);
 
-  // Link ile giriş kontrolü
+  // Link ile giriş kontrolü (URL'de #kod=xxx varsa)
   useEffect(() => {
     const hash = window.location.hash;
     if(hash && hash.includes('kod=')) {
       const kod = hash.split('kod=')[1];
       if(kod) {
-        setLoading(true);
+        setLinkLoading(true);
         portalApi.linkGiris(kod).then(r => {
-          setLoading(false);
+          setLinkLoading(false);
           if(r?.success) {
             portalApi.setToken(r.data.token);
             onLogin(r.data.erisim);
@@ -160,40 +159,31 @@ const LoginPage = ({onLogin}) => {
     }
   }, []);
 
-  // Geri sayım
-  useEffect(() => {
-    if(sayac > 0) {
-      const t = setTimeout(() => setSayac(s => s-1), 1000);
-      return () => clearTimeout(t);
-    }
-  }, [sayac]);
-
-  const otpGonder = async () => {
+  const girisYap = async () => {
+    if(!tcKimlik || tcKimlik.length !== 11) { setError('GEÇERLİ BİR TC KİMLİK NUMARASI GİRİN (11 HANELİ)'); return; }
     if(!telefon || telefon.length < 10) { setError('GEÇERLİ BİR TELEFON NUMARASI GİRİN'); return; }
     setLoading(true); setError('');
-    const r = await portalApi.otpGonder(telefon);
-    setLoading(false);
-    if(r?.success) {
-      setStep('otp');
-      setInfo('DOĞRULAMA KODU ' + (r.data?.telefon_maskelenmis || '') + ' NUMARASINA GÖNDERİLDİ');
-      setSayac(120);
-    } else {
-      setError(r?.error || 'KOD GÖNDERİLEMEDİ');
-    }
-  };
-
-  const otpDogrula = async () => {
-    if(!otp || otp.length !== 6) { setError('6 HANELİ DOĞRULAMA KODUNU GİRİN'); return; }
-    setLoading(true); setError('');
-    const r = await portalApi.otpDogrula(telefon, otp);
+    const r = await portalApi.tcGiris(tcKimlik, telefon);
     setLoading(false);
     if(r?.success) {
       portalApi.setToken(r.data.token);
       onLogin(r.data.erisim);
     } else {
-      setError(r?.error || 'DOĞRULAMA BAŞARISIZ');
+      setError(r?.error || 'GİRİŞ BAŞARISIZ');
     }
   };
+
+  if(linkLoading) return (
+    <div className="login-page">
+      <div className="login-box" style={{textAlign:'center'}}>
+        <div className="logo">
+          <h1>MR HASAR DANIŞMANLIK</h1>
+          <div className="sub">MÜŞTERİ / MAĞDUR PORTALI</div>
+        </div>
+        <div style={{padding:30, color:'#64748b', fontSize:14}}>PORTAL ERİŞİMİ DOĞRULANIYOR...</div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="login-page">
@@ -203,65 +193,39 @@ const LoginPage = ({onLogin}) => {
           <div className="sub">MÜŞTERİ / MAĞDUR PORTALI</div>
         </div>
 
-        <div className="title">
-          {step === 'telefon' ? 'GİRİŞ YAP' : 'DOĞRULAMA KODU'}
-        </div>
+        <div className="title">PORTALA GİRİŞ YAP</div>
 
         {error && <div className="error">{error}</div>}
-        {info && step === 'otp' && <div className="info">{info}</div>}
 
-        {step === 'telefon' ? (
-          <>
-            <label>TELEFON NUMARANIZ</label>
-            <input
-              type="tel"
-              placeholder="05XX XXX XX XX"
-              value={telefon}
-              onChange={e => setTelefon(e.target.value.replace(/[^0-9]/g,''))}
-              maxLength={11}
-              autoFocus
-              onKeyDown={e => e.key === 'Enter' && otpGonder()}
-            />
-            <button className="btn-primary" onClick={otpGonder} disabled={loading}>
-              {loading ? 'GÖNDERİLİYOR...' : 'DOĞRULAMA KODU GÖNDER'}
-            </button>
-            <div className="step-info">
-              DOSYANIZA KAYITLI TELEFON NUMARANIZI GİRİN.<br/>
-              SMS İLE DOĞRULAMA KODU GÖNDERİLECEKTİR.
-            </div>
-          </>
-        ) : (
-          <>
-            <label>SMS DOĞRULAMA KODU</label>
-            <input
-              type="text"
-              placeholder="000000"
-              value={otp}
-              onChange={e => setOtp(e.target.value.replace(/[^0-9]/g,''))}
-              maxLength={6}
-              autoFocus
-              style={{textAlign:'center', fontSize:24, letterSpacing:8, fontWeight:700}}
-              onKeyDown={e => e.key === 'Enter' && otpDogrula()}
-            />
-            <button className="btn-primary" onClick={otpDogrula} disabled={loading}>
-              {loading ? 'DOĞRULANIYOR...' : 'GİRİŞ YAP'}
-            </button>
-            <div style={{display:'flex', justifyContent:'space-between', marginTop:12}}>
-              <button onClick={() => {setStep('telefon'); setOtp(''); setError(''); setInfo('');}}
-                style={{background:'none', border:'none', color:'#2563eb', fontSize:12, cursor:'pointer', fontWeight:600, fontFamily:'inherit'}}>
-                TELEFONU DEĞİŞTİR
-              </button>
-              {sayac > 0 ? (
-                <span style={{fontSize:11, color:'#94a3b8'}}>YENİDEN GÖNDER ({sayac}s)</span>
-              ) : (
-                <button onClick={otpGonder} disabled={loading}
-                  style={{background:'none', border:'none', color:'#2563eb', fontSize:12, cursor:'pointer', fontWeight:600, fontFamily:'inherit'}}>
-                  YENİDEN GÖNDER
-                </button>
-              )}
-            </div>
-          </>
-        )}
+        <label>TC KİMLİK NUMARANIZ</label>
+        <input
+          type="text"
+          placeholder="TC KİMLİK NO (11 HANELİ)"
+          value={tcKimlik}
+          onChange={e => setTcKimlik(e.target.value.replace(/[^0-9]/g,''))}
+          maxLength={11}
+          autoFocus
+          style={{letterSpacing:1}}
+        />
+
+        <label>TELEFON NUMARANIZ</label>
+        <input
+          type="tel"
+          placeholder="05XX XXX XX XX"
+          value={telefon}
+          onChange={e => setTelefon(e.target.value.replace(/[^0-9]/g,''))}
+          maxLength={11}
+          onKeyDown={e => e.key === 'Enter' && girisYap()}
+        />
+
+        <button className="btn-primary" onClick={girisYap} disabled={loading}>
+          {loading ? 'GİRİŞ YAPILIYOR...' : 'GİRİŞ YAP'}
+        </button>
+
+        <div className="step-info">
+          DOSYANIZA KAYITLI TC KİMLİK VE TELEFON NUMARANIZ<br/>
+          İLE GİRİŞ YAPABİLİRSİNİZ.
+        </div>
 
         <div className="kvkk-notice">
           Bu portala giriş yaparak 6698 sayılı KVKK kapsamında<br/>
