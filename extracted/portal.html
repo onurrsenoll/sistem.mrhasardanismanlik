@@ -84,7 +84,7 @@
   .tab { padding:12px 20px; cursor:pointer; font-size:12px; font-weight:600; color:#64748b; border-bottom:2px solid transparent; transition:all .2s; }
   .tab.active { color:#2563eb; border-bottom-color:#2563eb; }
   .tab:hover { color:#2563eb; }
-  .footer { text-align:center; padding:20px; font-size:11px; color:#94a3b8; }
+  .footer { text-align:center; padding:24px 20px; font-size:11px; color:#94a3b8; border-top:1px solid #e2e8f0; margin-top:20px; }
   @media(max-width:600px) {
     .stat-grid { grid-template-columns:1fr 1fr; }
     .portal-header .inner { flex-direction:column; text-align:center; gap:12px; }
@@ -528,8 +528,18 @@ const Dashboard = ({erisim}) => {
         </div>
 
         <div className="footer">
-          6698 SAYILI KVK KANUNU KAPSAMINDA KİŞİSEL VERİLERİNİZ KORUNMAKTADIR.<br/>
-          {firma.firma_adi || 'MR HASAR DANIŞMANLIK'} &copy; {new Date().getFullYear()}
+          <div style={{marginBottom:8, fontSize:13, fontWeight:600, color:'#475569'}}>
+            {firma.firma_adi || 'MR HASAR DANIŞMANLIK'}
+          </div>
+          <div style={{marginBottom:8, fontSize:12, color:'#64748b'}}>
+            İLETİŞİM: <a href="tel:03625026502" style={{color:'#2563eb', textDecoration:'none'}}>0362 502 65 02</a> - <a href="tel:05550984254" style={{color:'#2563eb', textDecoration:'none'}}>0555 098 42 54</a>
+          </div>
+          <div style={{marginBottom:6, fontSize:10, color:'#94a3b8'}}>
+            6698 SAYILI KVK KANUNU KAPSAMINDA KİŞİSEL VERİLERİNİZ KORUNMAKTADIR.
+          </div>
+          <div style={{fontSize:10, color:'#94a3b8'}}>
+            {firma.firma_adi || 'MR HASAR DANIŞMANLIK'} &copy; {new Date().getFullYear()}
+          </div>
         </div>
       </div>
     </>
