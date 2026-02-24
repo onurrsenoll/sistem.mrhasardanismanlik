@@ -49,9 +49,13 @@ MR.api = {
   masrafDelete(id) { return this.req('/masraf/delete.php?id=' + id, { method: 'DELETE' }); },
   // EVRAK
   async evrakUpload(did, tur, file) {
-    const fd = new FormData(); fd.append('dosya_id', did); fd.append('evrak_turu', tur); fd.append('file', file);
-    const h = {}; if (this.token) h['Authorization'] = 'Bearer ' + this.token;
-    return (await fetch(API_BASE + '/evrak/upload.php', { method: 'POST', headers: h, body: fd })).json();
+    try {
+      const fd = new FormData(); fd.append('dosya_id', did); fd.append('evrak_turu', tur); fd.append('file', file);
+      const h = {}; if (this.token) h['Authorization'] = 'Bearer ' + this.token;
+      const r = await fetch(API_BASE + '/evrak/upload.php', { method: 'POST', headers: h, body: fd, credentials: 'include' });
+      const txt = await r.text();
+      try { return JSON.parse(txt); } catch(e) { return { success: false, error: 'SUNUCU YANIT HATASI: ' + txt.substring(0, 200) }; }
+    } catch(e) { return { success: false, error: 'BAĞLANTI HATASI: ' + e.message }; }
   },
   evrakUrl(id) { return API_BASE + '/evrak/download.php?id=' + id; },
   evrakPreviewUrl(id) { return API_BASE + '/evrak/download.php?id=' + id + '&mode=inline'; },

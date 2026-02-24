@@ -61,4 +61,3 @@ function ensure_prim_columns() {
         // Migration hatası sessiz geç
     }
 }
-?>

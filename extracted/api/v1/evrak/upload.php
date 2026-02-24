@@ -48,18 +48,27 @@ if ($file['size'] > MAX_FILE_SIZE) {
     json_error('Dosya boyutu en fazla 20MB olabilir', 422);
 }
 
-// MIME type kontrolü (sadece PDF)
+// MIME type kontrolü (PDF, resim, DOCX)
 $finfo = new finfo(FILEINFO_MIME_TYPE);
 $mimeType = $finfo->file($file['tmp_name']);
 
 if (!in_array($mimeType, ALLOWED_TYPES)) {
-    json_error('Sadece PDF dosya yüklenebilir', 422);
+    json_error('Desteklenmeyen dosya türü. İzin verilenler: PDF, JPG, PNG, SVG, DOC, DOCX', 422);
 }
 
 // Dosya adı güvenliği
 $orijinalAd = basename($file['name']);
 $uuid = generate_uuid();
-$ext = 'pdf';
+// Uzantıyı MIME type'a göre belirle
+$extMap = [
+    'application/pdf' => 'pdf',
+    'image/jpeg' => 'jpg',
+    'image/png' => 'png',
+    'image/svg+xml' => 'svg',
+    'application/msword' => 'doc',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+];
+$ext = $extMap[$mimeType] ?? pathinfo($orijinalAd, PATHINFO_EXTENSION) ?: 'pdf';
 $sunucuAdi = $uuid . '.' . $ext;
 
 // Klasör oluştur: uploads/2025/01/

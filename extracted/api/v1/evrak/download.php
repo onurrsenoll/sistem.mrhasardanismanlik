@@ -124,37 +124,70 @@ if (!$filePath) {
     json_error('Dosya sunucuda bulunamadı' . $debug, 404);
 }
 
+// Session kilidi varsa serbest bırak (indirme sırasında diğer istekler bloklanmasın)
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+}
+
 // Ön izleme modu (inline) veya indirme (attachment)
 $mode = ($_GET['mode'] ?? 'attachment') === 'inline' ? 'inline' : 'attachment';
 
 // MIME type - veritabanından veya dosyadan tespit
-$mimeType = $evrak['mime_type'];
+$mimeType = $evrak['mime_type'] ?? '';
 if (empty($mimeType) || $mimeType === 'application/octet-stream') {
     $finfo = new finfo(FILEINFO_MIME_TYPE);
     $mimeType = $finfo->file($filePath) ?: 'application/pdf';
 }
 
-// LiteSpeed/Apache gzip sıkıştırmasını devre dışı bırak
-// (sıkıştırılmış PDF blob olarak okunamaz)
+$fileSize = filesize($filePath);
+
+// TÜM output bufferları temizle (PHP include'lardan kalan whitespace kirliliğini önle)
+while (ob_get_level() > 0) {
+    ob_end_clean();
+}
+
+// LiteSpeed/Apache/Nginx gzip sıkıştırmasını devre dışı bırak
+// (sıkıştırılmış PDF/resim blob olarak okunamaz, bozuk dosya indirilir)
 if (function_exists('apache_setenv')) {
     @apache_setenv('no-gzip', '1');
 }
 @ini_set('zlib.output_compression', 'Off');
+@ini_set('output_buffering', 'Off');
+
+// Önceki headerları temizle (varsa Content-Type: application/json gibi)
+if (function_exists('header_remove')) {
+    header_remove('Content-Encoding');
+}
+
+// Dosya adını güvenli hale getir (UTF-8 ve ASCII fallback)
+$dosyaAdi = $evrak['dosya_adi'] ?? ('evrak_' . $evrakId . '.pdf');
+$asciiAdi = preg_replace('/[^\x20-\x7E]/', '_', $dosyaAdi);
+$utf8Adi = rawurlencode($dosyaAdi);
 
 // Dosyayı gönder
 header('Content-Type: ' . $mimeType);
-header('Content-Disposition: ' . $mode . '; filename="' . basename($evrak['dosya_adi']) . '"');
-header('Content-Length: ' . filesize($filePath));
-header('Content-Encoding: identity');
+header('Content-Disposition: ' . $mode . '; filename="' . $asciiAdi . '"; filename*=UTF-8\'\'' . $utf8Adi);
+header('Content-Length: ' . $fileSize);
+header('Content-Transfer-Encoding: binary');
 header('X-Content-Type-Options: nosniff');
-header('Accept-Ranges: none');
+header('Accept-Ranges: bytes');
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
+header('Expires: 0');
 
-// Output buffer temizle (büyük dosyalar için)
-if (ob_get_level()) {
-    ob_end_clean();
+// Büyük dosyalar için chunk'lı okuma (bellek taşmasını önle)
+if ($fileSize > 5 * 1024 * 1024) {
+    $handle = fopen($filePath, 'rb');
+    if ($handle) {
+        while (!feof($handle)) {
+            echo fread($handle, 8192);
+            flush();
+        }
+        fclose($handle);
+    } else {
+        readfile($filePath);
+    }
+} else {
+    readfile($filePath);
 }
-
-readfile($filePath);
 exit;

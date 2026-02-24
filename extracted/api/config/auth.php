@@ -90,4 +90,3 @@ function log_action($userId, $islem, $detay = null, $tabloAdi = null, $kayitId =
         ));
     } catch (Exception $e) {}
 }
-?>

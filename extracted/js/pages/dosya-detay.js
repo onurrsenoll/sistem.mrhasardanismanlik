@@ -28,14 +28,15 @@ const EvrakPreviewIframe = ({evrakId}) => {
   const [blobUrl, setBlobUrl] = React.useState(null);
   const [mimeType, setMimeType] = React.useState('');
   const [hata, setHata] = React.useState('');
+  const [yukleniyor, setYukleniyor] = React.useState(true);
   const urlRef = React.useRef(null);
-  const containerRef = React.useRef(null);
 
   React.useEffect(() => {
     let iptal = false;
     setBlobUrl(null);
     setMimeType('');
     setHata('');
+    setYukleniyor(true);
 
     const yukle = async () => {
       try {
@@ -47,6 +48,7 @@ const EvrakPreviewIframe = ({evrakId}) => {
 
         const r = await fetch(fetchUrl, {
           headers: { 'Authorization': 'Bearer ' + token },
+          credentials: 'include',
           cache: 'no-cache'
         });
 
@@ -54,16 +56,29 @@ const EvrakPreviewIframe = ({evrakId}) => {
 
         if (!r.ok) {
           let hataMesaj = 'SUNUCU HATASI: ' + r.status;
-          try { const j = await r.json(); hataMesaj = j.error || hataMesaj; } catch(e) {}
+          try {
+            const txt = await r.text();
+            try { const j = JSON.parse(txt); hataMesaj = j.error || hataMesaj; } catch(e) {}
+          } catch(e) {}
           setHata(hataMesaj);
+          setYukleniyor(false);
           return;
         }
 
-        const ct = r.headers.get('content-type') || 'application/pdf';
+        const ct = (r.headers.get('content-type') || 'application/pdf').split(';')[0].trim();
         const ab = await r.arrayBuffer();
         if (iptal) return;
 
-        if (ab.byteLength === 0) { setHata('EVRAK DOSYASI BOŞ'); return; }
+        if (ab.byteLength === 0) { setHata('EVRAK DOSYASI BOŞ'); setYukleniyor(false); return; }
+
+        // Gelen verinin JSON hata yanıtı olup olmadığını kontrol et
+        if (ab.byteLength < 500 && ct.includes('json')) {
+          try {
+            const txt = new TextDecoder().decode(ab);
+            const j = JSON.parse(txt);
+            if (j.error) { setHata(j.error); setYukleniyor(false); return; }
+          } catch(e) {}
+        }
 
         const blob = new Blob([ab], { type: ct });
         const objectUrl = URL.createObjectURL(blob);
@@ -73,9 +88,13 @@ const EvrakPreviewIframe = ({evrakId}) => {
         urlRef.current = objectUrl;
         setMimeType(ct.toLowerCase());
         setBlobUrl(objectUrl);
+        setYukleniyor(false);
       } catch(e) {
         console.error('EVRAK ÖNIZLEME HATASI:', e);
-        if (!iptal) setHata('EVRAK YÜKLENİRKEN HATA: ' + (e.message || 'Bağlantı hatası'));
+        if (!iptal) {
+          setHata('EVRAK YÜKLENİRKEN HATA: ' + (e.message || 'Bağlantı hatası'));
+          setYukleniyor(false);
+        }
       }
     };
     yukle();
@@ -91,10 +110,14 @@ const EvrakPreviewIframe = ({evrakId}) => {
       <MR.LIcon name="AlertTriangle" size={28} color="#ef4444"/>
       <div style={{fontWeight:700}}>EVRAK YÜKLENEMEDİ</div>
       <div style={{fontSize:10,color:'#6b7280',maxWidth:300}}>{hata}</div>
+      <button onClick={() => { setHata(''); setYukleniyor(true); setBlobUrl(null); }}
+        style={{marginTop:8,padding:'6px 16px',fontSize:10,background:'#2563eb22',color:'#2563eb',border:'1px solid #2563eb33',borderRadius:6,cursor:'pointer',fontWeight:700}}>
+        TEKRAR DENE
+      </button>
     </div>
   );
 
-  if (!blobUrl) return (
+  if (yukleniyor || !blobUrl) return (
     <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'#6b7280',fontSize:12,flexDirection:'column',gap:8}}>
       <div style={{width:24,height:24,border:'3px solid transparent',borderTopColor:'#2563eb',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
       EVRAK YÜKLENİYOR...
@@ -108,11 +131,17 @@ const EvrakPreviewIframe = ({evrakId}) => {
     </div>;
   }
 
-  /* PDF ve diğer dosyalar için <object> + <embed> + <iframe> fallback zinciri */
-  return <div ref={containerRef} style={{width:'100%',height:'100%',background:'#f3f4f6'}}>
-    <object data={blobUrl} type={mimeType || 'application/pdf'} style={{width:'100%',height:'100%',border:'none'}}>
-      <embed src={blobUrl} type={mimeType || 'application/pdf'} style={{width:'100%',height:'100%',border:'none'}}/>
-    </object>
+  /* PDF dosyaları için <iframe> (en güvenilir yöntem, tüm tarayıcılarda çalışır) */
+  if (mimeType === 'application/pdf') {
+    return <iframe src={blobUrl + '#toolbar=1&navpanes=1&scrollbar=1'} title="PDF Önizleme"
+      style={{width:'100%',height:'100%',border:'none',background:'#f3f4f6'}}/>;
+  }
+
+  /* Diğer dosyalar için (DOCX vb.) indirme bilgisi */
+  return <div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',background:'#f3f4f6',flexDirection:'column',gap:12,padding:20}}>
+    <MR.LIcon name="FileText" size={48} color="#6b7280"/>
+    <div style={{fontSize:13,fontWeight:700,color:'#374151'}}>BU DOSYA TÜRÜ TARAYICIDA ÖNİZLENEMİYOR</div>
+    <div style={{fontSize:11,color:'#6b7280'}}>DOSYAYI İNDİREREK GÖRÜNTÜLEYEBİLİRSİNİZ</div>
   </div>;
 };
 
@@ -524,7 +553,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                     const e = dosya.evraklar[i];
                     try {
                       const r = await fetch(apiBase + '/evrak/download.php?id=' + e.id, {
-                        headers: token ? {'Authorization': 'Bearer ' + token} : {}
+                        headers: token ? {'Authorization': 'Bearer ' + token} : {},
+                        credentials: 'include',
+                        cache: 'no-cache'
                       });
                       if (!r.ok) {
                         let hataMesaj = 'HATA ' + r.status;
@@ -623,9 +654,15 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                             const token = MR.api.token;
                             const apiBase = MR.api.base || '/api/v1';
                             const r = await fetch(apiBase + '/evrak/download.php?id=' + y.id, {
-                              headers: token ? {'Authorization': 'Bearer ' + token} : {}
+                              headers: token ? {'Authorization': 'Bearer ' + token} : {},
+                              credentials: 'include',
+                              cache: 'no-cache'
                             });
-                            if (!r.ok) { alert('İNDİRME HATASI'); return; }
+                            if (!r.ok) {
+                              let msg = 'İNDİRME HATASI: ' + r.status;
+                              try { const j = await r.clone().json(); msg = j.error || msg; } catch(ex) {}
+                              alert(msg); return;
+                            }
                             const blob = await r.blob();
                             const a = document.createElement('a');
                             a.href = URL.createObjectURL(blob);
@@ -633,7 +670,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                             document.body.appendChild(a);
                             a.click();
                             document.body.removeChild(a);
-                            setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+                            setTimeout(() => URL.revokeObjectURL(a.href), 2000);
                           } catch(e) { alert('İNDİRME HATASI: ' + e.message); }
                         }}
                           style={{...S.btn,padding:'3px 6px',fontSize:8,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',gap:2}}>
@@ -646,16 +683,18 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                       </React.Fragment>
                     ))}
                     {/* YÜKLE BUTONU - her zaman göster (aynı türe birden fazla yüklenebilir) */}
-                    <label title="PDF YÜKLE" style={{...S.btn,padding:'3px 6px',fontSize:8,
+                    <label title="DOSYA YÜKLE" style={{...S.btn,padding:'3px 6px',fontSize:8,
                       background:yukluMu ? `${C.warning}18` : `${C.accent}18`,
                       color:yukluMu ? C.warning : C.accent,
                       border:`1px solid ${yukluMu ? C.warning+'33' : C.accent+'33'}`,
                       borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',gap:2}}>
                       <LIcon name="Upload" size={10} color={yukluMu ? C.warning : C.accent}/>
-                      <input type="file" accept=".pdf" style={{display:'none'}} onChange={async (ev) => {
+                      <input type="file" accept=".pdf,.jpg,.jpeg,.png,.svg,.doc,.docx" style={{display:'none'}} onChange={async (ev) => {
                         const f = ev.target.files[0];
                         if (!f) return;
-                        if (f.type !== 'application/pdf') { alert('SADECE PDF DOSYA YÜKLENEBİLİR'); return; }
+                        const izinli = ['application/pdf','image/jpeg','image/png','image/svg+xml','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                        if (!izinli.includes(f.type)) { alert('DESTEKLENMEYEN DOSYA TÜRÜ. İZİN VERİLENLER: PDF, JPG, PNG, SVG, DOC, DOCX'); return; }
+                        if (f.size > 20 * 1024 * 1024) { alert('DOSYA BOYUTU EN FAZLA 20MB OLABİLİR'); return; }
                         const r = await api.evrakUpload(dosya.id, tur, f);
                         if (r?.success) load();
                         else alert(r?.error || 'YÜKLEME HATASI');
@@ -937,9 +976,15 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                     const token = MR.api.token;
                     const apiBase = MR.api.base || '/api/v1';
                     const r = await fetch(apiBase + '/evrak/download.php?id=' + previewEvrak.id, {
-                      headers: token ? {'Authorization': 'Bearer ' + token} : {}
+                      headers: token ? {'Authorization': 'Bearer ' + token} : {},
+                      credentials: 'include',
+                      cache: 'no-cache'
                     });
-                    if (!r.ok) { alert('İNDİRME HATASI'); return; }
+                    if (!r.ok) {
+                      let msg = 'İNDİRME HATASI: ' + r.status;
+                      try { const j = await r.clone().json(); msg = j.error || msg; } catch(ex) {}
+                      alert(msg); return;
+                    }
                     const blob = await r.blob();
                     const a = document.createElement('a');
                     a.href = URL.createObjectURL(blob);
@@ -947,7 +992,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
-                    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+                    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
                   } catch(e) { alert('İNDİRME HATASI: ' + e.message); }
                 }}
                   style={{padding:'5px 12px',fontSize:9,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontWeight:700}}>
