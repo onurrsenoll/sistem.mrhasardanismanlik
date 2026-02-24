@@ -4,6 +4,25 @@
  */
 const MR = window.MR || (window.MR = {});
 
+// ═══ TOAST BİLDİRİM ═══
+MR.toast = (mesaj, tip = 'info') => {
+  const renk = tip === 'success' ? '#16a34a' : tip === 'error' ? '#dc2626' : tip === 'warning' ? '#ca8a04' : '#2563eb';
+  const bg = tip === 'success' ? '#dcfce7' : tip === 'error' ? '#fee2e2' : tip === 'warning' ? '#fef3c7' : '#dbeafe';
+  const el = document.createElement('div');
+  el.textContent = mesaj;
+  Object.assign(el.style, {
+    position:'fixed', top:'20px', right:'20px', zIndex:'99999',
+    background:bg, color:renk, border:'1px solid '+renk,
+    padding:'14px 24px', borderRadius:'10px', fontSize:'13px', fontWeight:'700',
+    fontFamily:'Manrope,sans-serif', letterSpacing:'0.3px', textTransform:'uppercase',
+    boxShadow:'0 4px 20px rgba(0,0,0,.25)', maxWidth:'400px',
+    animation:'fadeIn .3s ease', cursor:'pointer'
+  });
+  el.onclick = () => el.remove();
+  document.body.appendChild(el);
+  setTimeout(() => { if(el.parentNode) el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(), 300); }, 3000);
+};
+
 // ═══ API ═══
 const API_BASE = '/api/v1';
 MR.api = {

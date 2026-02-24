@@ -3251,12 +3251,21 @@ const PortalTab = () => {
 
   useEffect(() => { if (subTab === 'loglar') loadLoglar(); }, [subTab]);
 
+  const [kaydetMesaj, setKaydetMesaj] = useState(null);
+
   const ayarKaydet = async () => {
     setSaving(true);
+    setKaydetMesaj(null);
     const r = await api.ayarlarGuncelle(ayarlar);
     setSaving(false);
-    if (r?.success) MR.toast?.('PORTAL AYARLARI KAYDEDİLDİ', 'success');
-    else MR.toast?.('KAYIT HATASI: ' + (r?.error || ''), 'error');
+    if (r?.success) {
+      setKaydetMesaj({type:'success', text:'PORTAL AYARLARI BAŞARIYLA KAYDEDİLDİ'});
+      MR.toast?.('PORTAL AYARLARI KAYDEDİLDİ', 'success');
+      setTimeout(() => setKaydetMesaj(null), 4000);
+    } else {
+      setKaydetMesaj({type:'error', text:'KAYIT HATASI: ' + (r?.error || 'BİLİNMEYEN HATA')});
+      MR.toast?.('KAYIT HATASI: ' + (r?.error || ''), 'error');
+    }
   };
 
   const up = (k, v) => setAyarlar(p => ({...p, [k]: v}));
@@ -3425,7 +3434,17 @@ const PortalTab = () => {
                 </div>
               </div>
 
-              <div style={{marginTop:20, display:'flex', justifyContent:'flex-end'}}>
+              {kaydetMesaj && (
+                <div style={{
+                  marginTop:16, padding:'12px 16px', borderRadius:8, fontSize:12, fontWeight:600,
+                  background: kaydetMesaj.type === 'success' ? '#dcfce7' : '#fee2e2',
+                  color: kaydetMesaj.type === 'success' ? '#16a34a' : '#dc2626',
+                  border: '1px solid ' + (kaydetMesaj.type === 'success' ? '#bbf7d0' : '#fecaca')
+                }}>
+                  {kaydetMesaj.text}
+                </div>
+              )}
+              <div style={{marginTop:16, display:'flex', justifyContent:'flex-end'}}>
                 <button onClick={ayarKaydet} disabled={saving} style={{...S.btn, ...S.btnP, opacity:saving?.5:1}}>
                   <LIcon name="Save" size={14}/> {saving ? 'KAYDEDİLİYOR...' : 'AYARLARI KAYDET'}
                 </button>
