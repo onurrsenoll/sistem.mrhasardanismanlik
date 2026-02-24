@@ -425,10 +425,10 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             <button style={{...S.btn,...S.btnP,fontSize:10,padding:'6px 12px'}} onClick={openEditModal}>
               <LIcon name="Edit2" size={12} color="#fff"/> DÜZENLE
             </button>
-            <button style={{...S.btn,fontSize:10,padding:'6px 12px',background:`${C.purple}18`,color:C.purple,border:`1px solid ${C.purple}33`,borderRadius:8,cursor:'pointer',display:'flex',alignItems:'center',gap:4}} disabled={portalCreating}
-              onClick={portalOlustur} title="MÜŞTERİ PORTAL ERİŞİMİ OLUŞTUR VE SMS GÖNDER">
+            {user?.rol === 'admin' && <button style={{...S.btn,fontSize:10,padding:'6px 12px',background:`${C.purple}18`,color:C.purple,border:`1px solid ${C.purple}33`,borderRadius:8,cursor:'pointer',display:'flex',alignItems:'center',gap:4}} disabled={portalCreating}
+              onClick={portalOlustur} title="MÜŞTERİ PORTAL ERİŞİMİ OLUŞTUR">
               <LIcon name="Globe" size={12} color={C.purple}/> {portalCreating ? 'OLUŞTURULUYOR...' : 'PORTAL'}
-            </button>
+            </button>}
             <button style={{...S.btn,fontSize:10,padding:'6px 12px',background:`${C.danger}18`,color:C.danger,border:`1px solid ${C.danger}33`,borderRadius:8,cursor:'pointer',display:'flex',alignItems:'center',gap:4}}
               onClick={() => setDosyaSilConfirm(true)}>
               <LIcon name="Trash2" size={12} color={C.danger}/> SİL

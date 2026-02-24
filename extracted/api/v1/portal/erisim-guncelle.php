@@ -13,7 +13,7 @@ setup_headers();
 require_method('PUT');
 ensure_portal_tables();
 
-$user = auth_required(['admin', 'uzman', 'personel']);
+$user = auth_required(['admin']);
 $body = get_json_body();
 $erisimId = (int)($body['id'] ?? 0);
 

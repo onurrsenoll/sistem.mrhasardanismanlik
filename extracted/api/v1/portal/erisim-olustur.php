@@ -13,7 +13,7 @@ setup_headers();
 require_method('POST');
 ensure_portal_tables();
 
-$user = auth_required(['admin', 'uzman', 'personel']);
+$user = auth_required(['admin']);
 $body = get_json_body();
 $dosyaId = (int)($body['dosya_id'] ?? 0);
 

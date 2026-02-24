@@ -12,7 +12,7 @@ setup_headers();
 require_method('GET');
 ensure_portal_tables();
 
-$user = auth_required(['admin', 'uzman', 'personel']);
+$user = auth_required(['admin']);
 $db = getDB();
 
 $where = [];
