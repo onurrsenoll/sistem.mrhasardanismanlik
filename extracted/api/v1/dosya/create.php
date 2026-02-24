@@ -205,6 +205,14 @@ try {
         }
     }
 
+    // ═══ DOSYA SÜRECİ: İLK KAYIT ═══
+    try {
+        require_once __DIR__ . '/../portal/migration.php';
+        ensure_portal_tables();
+        $stmtSurec = $db->prepare("INSERT INTO dosya_surecler (dosya_id, baslik, detay, islem_tipi, created_at) VALUES (?, ?, ?, 'sistem', NOW())");
+        $stmtSurec->execute([$dosyaId, 'DOSYA SİSTEMDE AÇILDI', 'Dosya No: ' . $dosyaNo . ' | Dosya Türü: ' . clean($body['dosya_turu']) . ' | Aşama: Dosya Açık']);
+    } catch (\Exception $e) {}
+
     $db->commit();
 
     log_action($user['id'], 'dosya_olustur', "Dosya oluşturuldu: $dosyaNo", 'dosyalar', $dosyaId);

@@ -3384,7 +3384,7 @@ const PortalTab = () => {
                   <div style={{fontSize:13, fontWeight:700, marginTop:24, marginBottom:12, color:C.text}}>ERİŞİM İZİNLERİ</div>
                   <Sw checked={ayarlar.portal_evrak_goster === '1'} onChange={v => up('portal_evrak_goster', v?'1':'0')} label="EVRAKLARI GÖSTER"/>
                   <Sw checked={ayarlar.portal_evrak_indir === '1'} onChange={v => up('portal_evrak_indir', v?'1':'0')} label="EVRAK İNDİRMEYE İZİN VER"/>
-                  <Sw checked={ayarlar.portal_gecmis_goster === '1'} onChange={v => up('portal_gecmis_goster', v?'1':'0')} label="DOSYA GEÇMİŞİNİ GÖSTER"/>
+                  <Sw checked={ayarlar.portal_gecmis_goster === '1'} onChange={v => up('portal_gecmis_goster', v?'1':'0')} label="AŞAMALAR / DOSYA SÜREÇLERİNİ GÖSTER"/>
                   <Sw checked={ayarlar.portal_masraf_goster === '1'} onChange={v => up('portal_masraf_goster', v?'1':'0')} label="MASRAFLARI GÖSTER"/>
                   <Sw checked={ayarlar.portal_mesaj_aktif === '1'} onChange={v => up('portal_mesaj_aktif', v?'1':'0')} label="MESAJLAŞMA ÖZELLİĞİ"/>
                 </div>

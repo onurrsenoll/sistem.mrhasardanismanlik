@@ -79,6 +79,18 @@ function ensure_portal_tables() {
             INDEX idx_tarih (created_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
 
+        // dosya_surecler tablosu (aşama/süreç takibi - portalde görünür)
+        $db->exec("CREATE TABLE IF NOT EXISTS dosya_surecler (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            dosya_id INT NOT NULL,
+            baslik VARCHAR(255) NOT NULL,
+            detay TEXT DEFAULT NULL,
+            islem_tipi ENUM('sistem','asama_degisikligi','evrak','manuel') DEFAULT 'sistem',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_dosya_surec (dosya_id),
+            INDEX idx_tarih (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
+
     } catch (\Exception $e) {
         // Migration hatası sessiz geç
     }

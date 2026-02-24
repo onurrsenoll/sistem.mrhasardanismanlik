@@ -64,12 +64,36 @@ if (empty($portalAyarlar['portal_evrak_goster']) || $portalAyarlar['portal_evrak
     $sonuc['evraklar'] = $stmtE->fetchAll();
 }
 
-// DURUM GEÇMİŞİ (portal_gecmis_goster ayarı aktifse)
+// DOSYA SÜREÇLERİ / AŞAMALAR (portal_gecmis_goster ayarı aktifse)
 if (empty($portalAyarlar['portal_gecmis_goster']) || $portalAyarlar['portal_gecmis_goster'] !== '0') {
-    $stmtLog = $db->prepare("SELECT islem, detay, created_at FROM log_kayitlari WHERE tablo_adi = 'dosyalar' AND kayit_id = ? AND islem LIKE '%guncelle%' ORDER BY created_at DESC LIMIT 20");
-    $stmtLog->execute([$dosyaId]);
-    $sonuc['gecmis'] = $stmtLog->fetchAll();
+    try {
+        $stmtSurec = $db->prepare("SELECT baslik, detay, islem_tipi, created_at FROM dosya_surecler WHERE dosya_id = ? ORDER BY created_at ASC");
+        $stmtSurec->execute([$dosyaId]);
+        $surecler = $stmtSurec->fetchAll();
+    } catch (\Exception $e) {
+        $surecler = [];
+    }
+
+    // Eğer henüz süreç kaydı yoksa dosya açılış tarihiyle otomatik oluştur
+    if (empty($surecler)) {
+        $acilisTarihi = $dosya['acilis_tarihi'] ?: $dosya['created_at'];
+        $surecler = [[
+            'baslik' => 'DOSYA SİSTEMDE AÇILDI',
+            'detay' => 'Dosya No: ' . $dosya['dosya_no'],
+            'islem_tipi' => 'sistem',
+            'created_at' => $acilisTarihi
+        ]];
+        // Veritabanına da kaydet
+        try {
+            $stmtIns = $db->prepare("INSERT INTO dosya_surecler (dosya_id, baslik, detay, islem_tipi, created_at) VALUES (?, 'DOSYA SİSTEMDE AÇILDI', ?, 'sistem', ?)");
+            $stmtIns->execute([$dosyaId, 'Dosya No: ' . $dosya['dosya_no'], $acilisTarihi]);
+        } catch (\Exception $e) {}
+    }
+    $sonuc['surecler'] = $surecler;
 }
+
+// Evrak indirme izin durumu
+$sonuc['evrak_indir_izin'] = (empty($portalAyarlar['portal_evrak_indir']) || $portalAyarlar['portal_evrak_indir'] !== '0') ? '1' : '0';
 
 // MASRAFLAR (portal_masraf_goster ayarı aktifse)
 if (!empty($portalAyarlar['portal_masraf_goster']) && $portalAyarlar['portal_masraf_goster'] === '1') {

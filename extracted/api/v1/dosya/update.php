@@ -98,6 +98,20 @@ try {
         $stmt->execute($mParams);
     }
 
+    // ═══ AŞAMA DEĞİŞTİĞİNDE PORTAL SÜREÇ KAYDI ═══
+    if (array_key_exists('asama', $body) && $body['asama'] !== $dosya['asama']) {
+        try {
+            require_once __DIR__ . '/../portal/migration.php';
+            ensure_portal_tables();
+            $stmtSurec = $db->prepare("INSERT INTO dosya_surecler (dosya_id, baslik, detay, islem_tipi, created_at) VALUES (?, ?, ?, 'asama_degisikligi', NOW())");
+            $stmtSurec->execute([
+                $id,
+                'AŞAMA DEĞİŞTİRİLDİ: ' . $body['asama'],
+                'Önceki Aşama: ' . $dosya['asama'] . ' → Yeni Aşama: ' . $body['asama']
+            ]);
+        } catch (\Exception $e) {}
+    }
+
     $db->commit();
 
     log_action($user['id'], 'dosya_guncelle', "Dosya güncellendi: {$dosya['dosya_no']}", 'dosyalar', $id);

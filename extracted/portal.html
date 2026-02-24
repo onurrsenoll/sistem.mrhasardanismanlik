@@ -46,7 +46,7 @@
   .timeline { position:relative; padding-left:24px; }
   .timeline::before { content:''; position:absolute; left:8px; top:4px; bottom:4px; width:2px; background:#e2e8f0; }
   .timeline-item { position:relative; margin-bottom:16px; }
-  .timeline-item::before { content:''; position:absolute; left:-20px; top:4px; width:12px; height:12px; border-radius:50%; background:#2563eb; border:2px solid #fff; box-shadow:0 0 0 2px #2563eb; }
+  .timeline-item::before { content:''; position:absolute; left:-20px; top:4px; width:12px; height:12px; border-radius:50%; background:var(--dot-color, #2563eb); border:2px solid #fff; box-shadow:0 0 0 2px var(--dot-color, #2563eb); }
   .timeline-item .date { font-size:10px; color:#94a3b8; font-weight:500; }
   .timeline-item .text { font-size:13px; font-weight:500; margin-top:2px; }
   .msg-list { max-height:400px; overflow-y:auto; margin-bottom:12px; }
@@ -324,14 +324,15 @@ const Dashboard = ({erisim}) => {
   const dosya = data?.dosya;
   const magdur = data?.magdur;
   const evraklar = data?.evraklar || [];
-  const gecmis = data?.gecmis || [];
+  const surecler = data?.surecler || [];
   const firma = data?.firma || {};
+  const evrakIndirIzin = data?.evrak_indir_izin === '1';
 
   const TABS = [
     {key:'ozet', label:'DOSYA ÖZETİ', icon:'📋'},
     {key:'evrak', label:'EVRAKLAR', icon:'📄', count: evraklar.length},
     {key:'mesaj', label:'MESAJLAR', icon:'💬', count: data?.okunmamis_mesaj || 0},
-    {key:'gecmis', label:'GEÇMİŞ', icon:'📅'}
+    {key:'surecler', label:'AŞAMALAR / DOSYA SÜREÇLERİ', icon:'📅'}
   ];
 
   return (
@@ -430,30 +431,35 @@ const Dashboard = ({erisim}) => {
                     HENÜZ EVRAK YÜKLENMEMİŞ
                   </div>
                 ) : (
-                  evraklar.map(e => (
-                    <div key={e.id} className="evrak-item">
-                      <div>
-                        <div className="name">{e.evrak_turu || e.dosya_adi}</div>
-                        <div className="meta">{e.dosya_adi} - {formatTarihSaat(e.created_at)}</div>
-                      </div>
-                      <a className="btn-dl" href={portalApi.evrakDownUrl(e.id)} target="_blank" rel="noopener"
-                         onClick={() => {
-                           const a = document.createElement('a');
-                           a.href = portalApi.evrakDownUrl(e.id);
-                           a.setAttribute('download','');
-                           const h = {}; if(portalApi.getToken()) h['Authorization'] = 'Portal ' + portalApi.getToken();
-                           fetch(a.href, {headers:h}).then(r=>r.blob()).then(b=>{
-                             const url = URL.createObjectURL(b);
-                             const link = document.createElement('a');
-                             link.href = url; link.download = e.dosya_adi; link.click();
-                             URL.revokeObjectURL(url);
-                           });
-                           return false;
-                         }}>
-                        İNDİR
-                      </a>
+                  <>
+                    <div style={{fontSize:11, color:'#64748b', marginBottom:12, fontWeight:500}}>
+                      DOSYANIZA YÜKLENEN EVRAKLAR ({evraklar.length} ADET)
                     </div>
-                  ))
+                    {evraklar.map(e => (
+                      <div key={e.id} className="evrak-item">
+                        <div style={{flex:1}}>
+                          <div className="name">{e.evrak_turu || e.dosya_adi}</div>
+                          <div className="meta">{e.dosya_adi} - {formatTarihSaat(e.created_at)}</div>
+                        </div>
+                        {evrakIndirIzin ? (
+                          <a className="btn-dl" href="#" onClick={(ev) => {
+                             ev.preventDefault();
+                             const h = {}; if(portalApi.getToken()) h['Authorization'] = 'Portal ' + portalApi.getToken();
+                             fetch(portalApi.evrakDownUrl(e.id), {headers:h}).then(r=>r.blob()).then(b=>{
+                               const url = URL.createObjectURL(b);
+                               const link = document.createElement('a');
+                               link.href = url; link.download = e.dosya_adi; link.click();
+                               URL.revokeObjectURL(url);
+                             });
+                          }}>
+                            İNDİR
+                          </a>
+                        ) : (
+                          <span style={{fontSize:10, color:'#94a3b8', fontWeight:600, padding:'6px 14px'}}>GÖRÜNTÜLEME</span>
+                        )}
+                      </div>
+                    ))}
+                  </>
                 )}
               </div>
             )}
@@ -495,21 +501,25 @@ const Dashboard = ({erisim}) => {
               </div>
             )}
 
-            {/* GEÇMİŞ / TIMELINE */}
-            {tab === 'gecmis' && (
+            {/* AŞAMALAR / DOSYA SÜREÇLERİ */}
+            {tab === 'surecler' && (
               <div>
-                {gecmis.length === 0 ? (
+                {surecler.length === 0 ? (
                   <div style={{textAlign:'center', padding:40, color:'#94a3b8', fontSize:13}}>
-                    DOSYA GEÇMİŞİ BULUNAMADI
+                    DOSYA SÜRECİ BULUNAMADI
                   </div>
                 ) : (
                   <div className="timeline">
-                    {gecmis.map((g, i) => (
-                      <div key={i} className="timeline-item">
-                        <div className="date">{formatTarihSaat(g.created_at)}</div>
-                        <div className="text">{g.detay || g.islem}</div>
-                      </div>
-                    ))}
+                    {surecler.map((s, i) => {
+                      const tipRenk = s.islem_tipi === 'asama_degisikligi' ? '#2563eb' : s.islem_tipi === 'sistem' ? '#16a34a' : '#64748b';
+                      return (
+                        <div key={i} className="timeline-item" style={{'--dot-color': tipRenk}}>
+                          <div className="date">{formatTarihSaat(s.created_at)}</div>
+                          <div className="text" style={{fontWeight:600}}>{s.baslik}</div>
+                          {s.detay && <div style={{fontSize:11, color:'#64748b', marginTop:2}}>{s.detay}</div>}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
