@@ -54,6 +54,7 @@ const MENU = [
     {id:'sistem-yetki', label:'YETKİ YÖNETİMİ', icon:'KeyRound'},
     {id:'sistem-ayarlar', label:'FİRMA AYARLARI', icon:'Settings'},
     {id:'sistem-sms', label:'SMS BİLDİRİM', icon:'MessageSquare'},
+    {id:'sistem-portal', label:'PORTAL AYARLARI', icon:'Globe'},
     {id:'sistem-netsantral', label:'NETSANTRAL', icon:'Phone'},
     {id:'sistem-log', label:'LOG KAYITLARI', icon:'FileText'},
     {id:'mesajlar-sistem', label:'SİSTEM BİLDİRİMLERİ', icon:'Bell'},

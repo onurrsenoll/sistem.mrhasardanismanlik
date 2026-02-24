@@ -90,6 +90,7 @@ const MODUL_YETKILERI = [
     {key: 'sistem-yetki', label: 'YETKİ YÖNETİMİ'},
     {key: 'sistem-ayarlar', label: 'FİRMA AYARLARI'},
     {key: 'sistem-sms', label: 'SMS BİLDİRİM'},
+    {key: 'sistem-portal', label: 'PORTAL AYARLARI'},
     {key: 'sistem-netsantral', label: 'NETSANTRAL'},
     {key: 'sistem-log', label: 'LOG KAYITLARI'},
     {key: 'mesajlar-sistem', label: 'SİSTEM BİLDİRİMLERİ'},
@@ -3183,6 +3184,410 @@ const TopluAktarimTab = () => {
 };
 
 /* ════════════════════════════════════════════════════════════════
+   PORTAL AYARLARI TAB
+   MÜŞTERİ/MAĞDUR PORTAL YÖNETİMİ & AYARLARI
+   ════════════════════════════════════════════════════════════════ */
+const PortalTab = () => {
+  const {C, S, LIcon, Badge, StatCard, Loading, EmptyState, Modal, FormGroup, Confirm, api} = MR;
+  const [subTab, setSubTab] = useState('ayarlar');
+  const [ayarlar, setAyarlar] = useState({});
+  const [erisimler, setErisimler] = useState([]);
+  const [loglar, setLoglar] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [stats, setStats] = useState({toplam:0, aktif:0, pasif:0, son7gun_aktif:0});
+  const [arama, setArama] = useState('');
+  const [confirmState, setConfirmState] = useState({open:false, id:null, msg:''});
+  const [mesajModal, setMesajModal] = useState({open:false, dosyaId:null, dosyaNo:'', mesajlar:[], yeniMesaj:'', loading:false});
+
+  /* Portal ayarları varsayılan değerler */
+  const PORTAL_AYAR_KEYS = {
+    portal_aktif: '1',
+    portal_giris_yontemi: 'sms_otp',
+    portal_oturum_suresi: '120',
+    portal_evrak_goster: '1',
+    portal_evrak_indir: '1',
+    portal_gecmis_goster: '1',
+    portal_masraf_goster: '0',
+    portal_mesaj_aktif: '1',
+    portal_otomatik_olustur: '1',
+    portal_karsilama: 'Hoş geldiniz. Dosyanızın güncel durumunu bu portal üzerinden takip edebilirsiniz.',
+    portal_kvkk_metni: '6698 sayılı KVKK kapsamında kişisel verileriniz korunmaktadır.'
+  };
+
+  const loadAyarlar = async () => {
+    const r = await api.ayarlarList();
+    if (r?.success) {
+      const data = r.data || {};
+      const portalAyarlar = {};
+      Object.keys(PORTAL_AYAR_KEYS).forEach(key => {
+        portalAyarlar[key] = data[key] !== undefined ? data[key] : PORTAL_AYAR_KEYS[key];
+      });
+      setAyarlar(portalAyarlar);
+    }
+  };
+
+  const loadErisimler = async () => {
+    const params = arama ? `arama=${encodeURIComponent(arama)}&limit=50` : 'limit=50';
+    const r = await api.req('/portal/erisim-list.php?' + params);
+    if (r?.success) {
+      const d = r.data || {};
+      setErisimler(d.items || []);
+      if (d.istatistik) setStats(d.istatistik);
+    }
+  };
+
+  const loadLoglar = async () => {
+    const r = await api.req('/portal/loglar.php?limit=50');
+    if (r?.success) {
+      setLoglar(r.data?.items || []);
+    }
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([loadAyarlar(), loadErisimler()]).then(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { if (subTab === 'loglar') loadLoglar(); }, [subTab]);
+
+  const ayarKaydet = async () => {
+    setSaving(true);
+    const r = await api.ayarlarGuncelle(ayarlar);
+    setSaving(false);
+    if (r?.success) MR.toast?.('PORTAL AYARLARI KAYDEDİLDİ', 'success');
+    else MR.toast?.('KAYIT HATASI: ' + (r?.error || ''), 'error');
+  };
+
+  const up = (k, v) => setAyarlar(p => ({...p, [k]: v}));
+
+  const erisimKapat = async (id) => {
+    const r = await api.req('/portal/erisim-sil.php?id=' + id, {method: 'DELETE'});
+    if (r?.success) { MR.toast?.('ERİŞİM KAPATILDI', 'success'); loadErisimler(); }
+    else MR.toast?.(r?.error || 'HATA', 'error');
+  };
+
+  const erisimAktifPasif = async (id, aktif) => {
+    const r = await api.req('/portal/erisim-guncelle.php', {method: 'PUT', body: JSON.stringify({id, aktif: aktif ? 1 : 0})});
+    if (r?.success) { MR.toast?.(aktif ? 'ERİŞİM AKTİFLEŞTİRİLDİ' : 'ERİŞİM DURDURULDU', 'success'); loadErisimler(); }
+  };
+
+  const smsYenidenGonder = async (id) => {
+    const r = await api.req('/portal/erisim-guncelle.php', {method: 'PUT', body: JSON.stringify({id, sms_gonder: true})});
+    if (r?.success) MR.toast?.('PORTAL SMS YENİDEN GÖNDERİLDİ', 'success');
+    else MR.toast?.(r?.error || 'SMS GÖNDERİLEMEDİ', 'error');
+  };
+
+  const mesajlariAc = async (dosyaId, dosyaNo) => {
+    setMesajModal({open:true, dosyaId, dosyaNo, mesajlar:[], yeniMesaj:'', loading:true});
+    const r = await api.req('/portal/portal-mesaj-list.php?dosya_id=' + dosyaId);
+    setMesajModal(p => ({...p, mesajlar: r?.success ? (r.data || []) : [], loading:false}));
+  };
+
+  const firmaMesajGonder = async () => {
+    if (!mesajModal.yeniMesaj.trim()) return;
+    const r = await api.req('/portal/portal-mesaj-gonder.php', {method:'POST', body: JSON.stringify({dosya_id: mesajModal.dosyaId, mesaj: mesajModal.yeniMesaj})});
+    if (r?.success) {
+      setMesajModal(p => ({...p, yeniMesaj: ''}));
+      const r2 = await api.req('/portal/portal-mesaj-list.php?dosya_id=' + mesajModal.dosyaId);
+      setMesajModal(p => ({...p, mesajlar: r2?.success ? (r2.data || []) : p.mesajlar}));
+    }
+  };
+
+  const formatTarih = (t) => {
+    if(!t) return '-';
+    try { return new Date(t).toLocaleDateString('tr-TR'); } catch(e) { return t; }
+  };
+  const formatTS = (t) => {
+    if(!t) return '-';
+    try { const d = new Date(t); return d.toLocaleDateString('tr-TR') + ' ' + d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}); } catch(e) { return t; }
+  };
+
+  if (loading) return React.createElement(Loading);
+
+  const SUB_TABS = [
+    {key:'ayarlar', label:'GENEL AYARLAR', icon:'Settings'},
+    {key:'erisimler', label:'AKTİF PORTALLAR', icon:'Users'},
+    {key:'loglar', label:'PORTAL LOGLARI', icon:'Activity'}
+  ];
+
+  const Sw = ({checked, onChange, label}) => (
+    <div style={{display:'flex', alignItems:'center', gap:10, padding:'8px 0'}}>
+      <div onClick={() => onChange(!checked)} style={{width:42, height:22, borderRadius:11, background:checked ? C.success : C.borderLight, cursor:'pointer', position:'relative', transition:'all .2s'}}>
+        <div style={{width:18, height:18, borderRadius:9, background:'#fff', position:'absolute', top:2, left:checked ? 22 : 2, transition:'all .2s', boxShadow:'0 1px 3px rgba(0,0,0,.2)'}}/>
+      </div>
+      <span style={{fontSize:12, fontWeight:500, color:C.textSec}}>{label}</span>
+    </div>
+  );
+
+  return (
+    <div>
+      {/* İSTATİSTİKLER */}
+      <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))', gap:12, marginBottom:16}}>
+        <div style={{...S.stat}}>
+          <div style={{fontSize:10, fontWeight:600, color:C.textMuted, letterSpacing:.5}}>TOPLAM PORTAL</div>
+          <div style={{fontSize:22, fontWeight:800, color:C.accent, marginTop:4}}>{stats.toplam || 0}</div>
+        </div>
+        <div style={{...S.stat}}>
+          <div style={{fontSize:10, fontWeight:600, color:C.textMuted, letterSpacing:.5}}>AKTİF</div>
+          <div style={{fontSize:22, fontWeight:800, color:C.success, marginTop:4}}>{stats.aktif || 0}</div>
+        </div>
+        <div style={{...S.stat}}>
+          <div style={{fontSize:10, fontWeight:600, color:C.textMuted, letterSpacing:.5}}>PASİF</div>
+          <div style={{fontSize:22, fontWeight:800, color:C.danger, marginTop:4}}>{stats.pasif || 0}</div>
+        </div>
+        <div style={{...S.stat}}>
+          <div style={{fontSize:10, fontWeight:600, color:C.textMuted, letterSpacing:.5}}>SON 7 GÜN AKTİF</div>
+          <div style={{fontSize:22, fontWeight:800, color:C.warning, marginTop:4}}>{stats.son7gun_aktif || 0}</div>
+        </div>
+      </div>
+
+      {/* SUB TAB MENU */}
+      <div style={{...S.card, marginBottom:16}}>
+        <div style={{display:'flex', borderBottom:`1px solid ${C.border}`, padding:'0 12px'}}>
+          {SUB_TABS.map(st => {
+            const aktif = subTab === st.key;
+            return (
+              <div key={st.key} onClick={() => setSubTab(st.key)} style={{display:'flex', alignItems:'center', gap:6, padding:'12px 16px', cursor:'pointer', fontSize:11, fontWeight:aktif?700:500, color:aktif?C.accent:C.textSec, borderBottom:aktif?`2px solid ${C.accent}`:'2px solid transparent', transition:'all .2s', whiteSpace:'nowrap'}}>
+                <LIcon name={st.icon} size={14} color={aktif?C.accent:C.textMuted}/> {st.label}
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{...S.cardBody}}>
+          {/* ═══ GENEL AYARLAR ═══ */}
+          {subTab === 'ayarlar' && (
+            <div>
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:20}}>
+                {/* SOL KOLON */}
+                <div>
+                  <div style={{fontSize:13, fontWeight:700, marginBottom:12, color:C.text}}>PORTAL SİSTEMİ</div>
+
+                  <Sw checked={ayarlar.portal_aktif === '1'} onChange={v => up('portal_aktif', v?'1':'0')} label="PORTAL SİSTEMİ AKTİF"/>
+                  <Sw checked={ayarlar.portal_otomatik_olustur === '1'} onChange={v => up('portal_otomatik_olustur', v?'1':'0')} label="DOSYA AÇILIŞINDA OTOMATİK PORTAL OLUŞTUR"/>
+
+                  <div style={{marginTop:16}}>
+                    <label style={S.label}>GİRİŞ YÖNTEMİ</label>
+                    <select style={S.select} value={ayarlar.portal_giris_yontemi || 'sms_otp'} onChange={e => up('portal_giris_yontemi', e.target.value)}>
+                      <option value="sms_otp">SMS OTP (TEK KULLANIM KOD)</option>
+                      <option value="link">DOĞRUDAN LİNK (SMS İLE LİNK GÖNDERİLİR)</option>
+                    </select>
+                  </div>
+
+                  <div style={{marginTop:12}}>
+                    <label style={S.label}>OTURUM SÜRESİ (DAKİKA)</label>
+                    <input type="number" style={S.input} value={ayarlar.portal_oturum_suresi || '120'} onChange={e => up('portal_oturum_suresi', e.target.value)} min="15" max="1440"/>
+                  </div>
+
+                  <div style={{fontSize:13, fontWeight:700, marginTop:24, marginBottom:12, color:C.text}}>ERİŞİM İZİNLERİ</div>
+                  <Sw checked={ayarlar.portal_evrak_goster === '1'} onChange={v => up('portal_evrak_goster', v?'1':'0')} label="EVRAKLARI GÖSTER"/>
+                  <Sw checked={ayarlar.portal_evrak_indir === '1'} onChange={v => up('portal_evrak_indir', v?'1':'0')} label="EVRAK İNDİRMEYE İZİN VER"/>
+                  <Sw checked={ayarlar.portal_gecmis_goster === '1'} onChange={v => up('portal_gecmis_goster', v?'1':'0')} label="DOSYA GEÇMİŞİNİ GÖSTER"/>
+                  <Sw checked={ayarlar.portal_masraf_goster === '1'} onChange={v => up('portal_masraf_goster', v?'1':'0')} label="MASRAFLARI GÖSTER"/>
+                  <Sw checked={ayarlar.portal_mesaj_aktif === '1'} onChange={v => up('portal_mesaj_aktif', v?'1':'0')} label="MESAJLAŞMA ÖZELLİĞİ"/>
+                </div>
+
+                {/* SAĞ KOLON */}
+                <div>
+                  <div style={{fontSize:13, fontWeight:700, marginBottom:12, color:C.text}}>PORTAL İÇERİK</div>
+
+                  <label style={S.label}>KARŞILAMA MESAJI</label>
+                  <textarea style={{...S.input, height:80, resize:'vertical'}} value={ayarlar.portal_karsilama || ''} onChange={e => up('portal_karsilama', e.target.value)} placeholder="Müşteriye gösterilecek karşılama mesajı..."/>
+
+                  <div style={{marginTop:12}}>
+                    <label style={S.label}>KVKK BİLGİLENDİRME METNİ</label>
+                    <textarea style={{...S.input, height:80, resize:'vertical'}} value={ayarlar.portal_kvkk_metni || ''} onChange={e => up('portal_kvkk_metni', e.target.value)} placeholder="KVKK aydınlatma metni..."/>
+                  </div>
+
+                  <div style={{marginTop:20, padding:16, background:`${C.accent}08`, borderRadius:10, border:`1px solid ${C.accent}22`}}>
+                    <div style={{fontSize:12, fontWeight:700, color:C.accent, marginBottom:8}}>PORTAL NASIL ÇALIŞIR?</div>
+                    <div style={{fontSize:11, color:C.textSec, lineHeight:1.7}}>
+                      1. Dosya açıldığında müşteriye otomatik portal erişimi oluşturulur<br/>
+                      2. Müşteriye SMS ile portal linki / giriş bilgisi gönderilir<br/>
+                      3. Müşteri portala giriş yaparak dosya durumunu takip eder<br/>
+                      4. Evrakları görüntüler, mesaj gönderir<br/>
+                      5. Tüm giriş/çıkışlar KVKK uyumlu loglanır
+                    </div>
+                  </div>
+
+                  <div style={{marginTop:16, padding:16, background:`${C.warning}08`, borderRadius:10, border:`1px solid ${C.warning}22`}}>
+                    <div style={{fontSize:12, fontWeight:700, color:C.warning, marginBottom:6}}>YASAL UYUM</div>
+                    <div style={{fontSize:11, color:C.textSec, lineHeight:1.6}}>
+                      - 6698 sayılı KVKK'ya uygun veri işleme<br/>
+                      - Tüm portal erişimleri IP ve tarih bazlı loglanır<br/>
+                      - Müşteri yalnızca kendi dosyasını görür<br/>
+                      - OTP ile güvenli kimlik doğrulama<br/>
+                      - Erişim süresi ve bitiş tarihi belirleme
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{marginTop:20, display:'flex', justifyContent:'flex-end'}}>
+                <button onClick={ayarKaydet} disabled={saving} style={{...S.btn, ...S.btnP, opacity:saving?.5:1}}>
+                  <LIcon name="Save" size={14}/> {saving ? 'KAYDEDİLİYOR...' : 'AYARLARI KAYDET'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ═══ AKTİF PORTALLAR ═══ */}
+          {subTab === 'erisimler' && (
+            <div>
+              <div style={{display:'flex', gap:8, marginBottom:16}}>
+                <input style={{...S.input, maxWidth:300}} placeholder="DOSYA NO, AD SOYAD VEYA TELEFON ARA..." value={arama} onChange={e => setArama(e.target.value)} onKeyDown={e => e.key === 'Enter' && loadErisimler()}/>
+                <button onClick={loadErisimler} style={{...S.btn, ...S.btnP}}>
+                  <LIcon name="Search" size={14}/> ARA
+                </button>
+                <button onClick={() => {setArama(''); setTimeout(loadErisimler, 100);}} style={{...S.btn, ...S.btnG}}>
+                  <LIcon name="RotateCcw" size={14}/> TEMİZLE
+                </button>
+              </div>
+
+              {erisimler.length === 0 ? (
+                <div style={{textAlign:'center', padding:40, color:C.textMuted, fontSize:13}}>
+                  <LIcon name="Users" size={32} color={C.textMuted}/>
+                  <div style={{marginTop:8}}>HENÜZ PORTAL ERİŞİMİ TANIMLANMAMIŞ</div>
+                </div>
+              ) : (
+                <div style={{overflowX:'auto'}}>
+                  <table style={{width:'100%', borderCollapse:'collapse', fontSize:12}}>
+                    <thead>
+                      <tr style={{borderBottom:`2px solid ${C.border}`}}>
+                        {['DOSYA NO','MÜŞTERİ','TELEFON','GİRİŞ','DURUM','SON GİRİŞ','MESAJ','İŞLEMLER'].map(h => (
+                          <th key={h} style={{padding:'10px 8px', textAlign:'left', fontWeight:700, fontSize:10, color:C.textMuted, letterSpacing:.5}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {erisimler.map(e => (
+                        <tr key={e.id} style={{borderBottom:`1px solid ${C.border}`}}>
+                          <td style={{padding:'10px 8px', fontWeight:700, color:C.accent}}>{e.dosya_no}</td>
+                          <td style={{padding:'10px 8px', fontWeight:600}}>{e.ad_soyad}</td>
+                          <td style={{padding:'10px 8px', color:C.textSec, fontSize:11}}>{e.telefon}</td>
+                          <td style={{padding:'10px 8px'}}>
+                            <span style={{...S.badge(e.giris_yontemi === 'sms_otp' ? C.accent : C.purple)}}>
+                              {e.giris_yontemi === 'sms_otp' ? 'SMS OTP' : 'LİNK'}
+                            </span>
+                          </td>
+                          <td style={{padding:'10px 8px'}}>
+                            <span style={{...S.badge(e.aktif == 1 ? C.success : C.danger)}}>
+                              {e.aktif == 1 ? 'AKTİF' : 'PASİF'}
+                            </span>
+                          </td>
+                          <td style={{padding:'10px 8px', fontSize:11, color:C.textSec}}>{formatTS(e.son_giris)}</td>
+                          <td style={{padding:'10px 8px'}}>
+                            {e.okunmamis_mesaj > 0 && (
+                              <span onClick={() => mesajlariAc(e.dosya_id, e.dosya_no)} style={{background:C.danger, color:'#fff', padding:'2px 8px', borderRadius:10, fontSize:10, fontWeight:700, cursor:'pointer'}}>
+                                {e.okunmamis_mesaj} YENİ
+                              </span>
+                            )}
+                            {(!e.okunmamis_mesaj || e.okunmamis_mesaj == 0) && (
+                              <span onClick={() => mesajlariAc(e.dosya_id, e.dosya_no)} style={{color:C.textMuted, fontSize:10, cursor:'pointer', textDecoration:'underline'}}>MESAJLAR</span>
+                            )}
+                          </td>
+                          <td style={{padding:'10px 8px'}}>
+                            <div style={{display:'flex', gap:4}}>
+                              <button onClick={() => smsYenidenGonder(e.id)} title="SMS YENİDEN GÖNDER" style={{...S.btn, padding:'4px 8px', fontSize:10, ...S.btnP}}>
+                                <LIcon name="MessageSquare" size={12}/>
+                              </button>
+                              <button onClick={() => erisimAktifPasif(e.id, e.aktif != 1)} title={e.aktif == 1 ? 'DURDUR' : 'AKTİFLEŞTİR'} style={{...S.btn, padding:'4px 8px', fontSize:10, background:e.aktif == 1 ? C.warning : C.success, color:'#fff'}}>
+                                <LIcon name={e.aktif == 1 ? 'Pause' : 'Play'} size={12}/>
+                              </button>
+                              <button onClick={() => setConfirmState({open:true, id:e.id, msg:`${e.dosya_no} - ${e.ad_soyad} portal erişimi kapatılsın mı?`})} title="ERİŞİMİ KAPAT" style={{...S.btn, padding:'4px 8px', fontSize:10, ...S.btnD}}>
+                                <LIcon name="Trash2" size={12}/>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ═══ PORTAL LOGLARI ═══ */}
+          {subTab === 'loglar' && (
+            <div>
+              <div style={{display:'flex', justifyContent:'space-between', marginBottom:12}}>
+                <div style={{fontSize:13, fontWeight:700, color:C.text}}>PORTAL GİRİŞ / İŞLEM LOGLARI (KVKK)</div>
+                <button onClick={loadLoglar} style={{...S.btn, ...S.btnG, padding:'6px 12px', fontSize:10}}>
+                  <LIcon name="RotateCcw" size={12}/> YENİLE
+                </button>
+              </div>
+              {loglar.length === 0 ? (
+                <div style={{textAlign:'center', padding:40, color:C.textMuted, fontSize:13}}>
+                  HENÜZ LOG KAYDI YOK
+                </div>
+              ) : (
+                <div style={{overflowX:'auto'}}>
+                  <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
+                    <thead>
+                      <tr style={{borderBottom:`2px solid ${C.border}`}}>
+                        {['TARİH','MÜŞTERİ','DOSYA NO','İŞLEM','DETAY','IP ADRESİ'].map(h => (
+                          <th key={h} style={{padding:'8px 6px', textAlign:'left', fontWeight:700, fontSize:10, color:C.textMuted}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loglar.map(l => (
+                        <tr key={l.id} style={{borderBottom:`1px solid ${C.border}`}}>
+                          <td style={{padding:'8px 6px', fontSize:10, color:C.textSec}}>{formatTS(l.created_at)}</td>
+                          <td style={{padding:'8px 6px', fontWeight:600}}>{l.ad_soyad || '-'}</td>
+                          <td style={{padding:'8px 6px', color:C.accent, fontWeight:600}}>{l.dosya_no || '-'}</td>
+                          <td style={{padding:'8px 6px'}}>
+                            <span style={{...S.badge(LOG_ISLEM_RENK(l.islem))}}>{l.islem}</span>
+                          </td>
+                          <td style={{padding:'8px 6px', color:C.textSec, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{l.detay || '-'}</td>
+                          <td style={{padding:'8px 6px', fontSize:10, color:C.textMuted, fontFamily:'monospace'}}>{l.ip_adresi || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* CONFIRM DIALOG */}
+      {confirmState.open && React.createElement(Confirm, {
+        message: confirmState.msg,
+        onConfirm: () => { erisimKapat(confirmState.id); setConfirmState({open:false, id:null, msg:''}); },
+        onCancel: () => setConfirmState({open:false, id:null, msg:''})
+      })}
+
+      {/* MESAJ MODAL */}
+      {mesajModal.open && React.createElement(Modal, {
+        title: `PORTAL MESAJLARI - ${mesajModal.dosyaNo}`,
+        onClose: () => setMesajModal({open:false, dosyaId:null, dosyaNo:'', mesajlar:[], yeniMesaj:'', loading:false}),
+        width: 600
+      },
+        React.createElement('div', {style: {maxHeight:400, overflowY:'auto', marginBottom:12}},
+          mesajModal.loading ? React.createElement('div', {style:{textAlign:'center', padding:20, color:C.textMuted}}, 'YÜKLENİYOR...') :
+          mesajModal.mesajlar.length === 0 ? React.createElement('div', {style:{textAlign:'center', padding:20, color:C.textMuted, fontSize:12}}, 'HENÜZ MESAJ YOK') :
+          mesajModal.mesajlar.map(m => React.createElement('div', {key:m.id, style:{marginBottom:8, maxWidth:'80%', marginLeft:m.gonderen_tip==='musteri'?0:'auto', marginRight:m.gonderen_tip==='firma'?0:'auto'}},
+            React.createElement('div', {style:{padding:'8px 12px', borderRadius:10, fontSize:12, background:m.gonderen_tip==='musteri'?`${C.accent}11`:C.bgHover, border:`1px solid ${m.gonderen_tip==='musteri'?C.accent+'33':C.border}`}},
+              React.createElement('div', {style:{fontSize:9, fontWeight:700, color:m.gonderen_tip==='musteri'?C.accent:C.success, marginBottom:2}}, m.gonderen_tip==='musteri' ? 'MÜŞTERİ' : (m.gonderen_adi || 'FİRMA')),
+              m.mesaj
+            ),
+            React.createElement('div', {style:{fontSize:9, color:C.textMuted, marginTop:2, textAlign:m.gonderen_tip==='firma'?'right':'left'}}, formatTS(m.created_at))
+          ))
+        ),
+        React.createElement('div', {style:{display:'flex', gap:8}},
+          React.createElement('input', {style:{...S.input, flex:1}, placeholder:'Müşteriye mesaj yazın...', value:mesajModal.yeniMesaj, onChange:e => setMesajModal(p=>({...p, yeniMesaj:e.target.value})), onKeyDown:e => e.key==='Enter' && firmaMesajGonder()}),
+          React.createElement('button', {style:{...S.btn, ...S.btnP}, onClick:firmaMesajGonder, disabled:!mesajModal.yeniMesaj.trim()}, React.createElement(LIcon, {name:'Send', size:14}), ' GÖNDER')
+        )
+      )}
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════════════════════════
    ANA SAYFA BİLEŞENİ - MR.SistemPage
    ════════════════════════════════════════════════════════════════ */
 MR.SistemPage = ({setPage, user, subPage}) => {
@@ -3195,6 +3600,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
     {key: 'ayarlar',   label: 'FİRMA AYARLARI',      icon: 'Settings',  desc: 'LOGO, ÜNVAN, SLOGAN, BİLGİLER'},
     {key: 'netsantral',label: 'NETSANTRAL',           icon: 'Phone',     desc: 'NETSANTRAL ENTEGRASYON AYARLARI'},
     {key: 'sms',       label: 'SMS BİLDİRİM',         icon: 'MessageSquare', desc: 'DURUM DEĞİŞİKLİĞİ SMS BİLDİRİM AYARLARI'},
+    {key: 'portal',    label: 'PORTAL AYARLARI',       icon: 'Globe',     desc: 'MÜŞTERİ/MAĞDUR PORTAL YÖNETİMİ'},
     {key: 'aktarim',   label: 'TOPLU AKTARIM',         icon: 'FileSpreadsheet', desc: 'EXCEL/CSV İLE TOPLU DOSYA AKTARIMI'},
     {key: 'log',       label: 'LOG KAYITLARI',        icon: 'Activity',  desc: 'SİSTEM OLAY GEÇMİŞİ'}
   ];
@@ -3272,6 +3678,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
         {aktifTab === 'ayarlar' && isAdmin && <AyarlarTab/>}
         {aktifTab === 'netsantral' && isAdmin && <NetsantralTab/>}
         {aktifTab === 'sms' && isAdmin && <SmsTab/>}
+        {aktifTab === 'portal' && isAdmin && <PortalTab/>}
         {aktifTab === 'aktarim' && isAdmin && <TopluAktarimTab/>}
         {aktifTab === 'log' && <LogTab/>}
       </div>

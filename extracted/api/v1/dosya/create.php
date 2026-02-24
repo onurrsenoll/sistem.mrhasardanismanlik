@@ -209,6 +209,94 @@ try {
 
     log_action($user['id'], 'dosya_olustur', "Dosya oluşturuldu: $dosyaNo", 'dosyalar', $dosyaId);
 
+    // ═══ 6. OTOMATİK PORTAL ERİŞİMİ OLUŞTUR ═══
+    $portalBilgi = null;
+    try {
+        // Portal ayarı aktif mi kontrol et
+        $portalAktif = false;
+        $portalOtomatik = false;
+        $portalGirisYontemi = 'sms_otp';
+        try {
+            $stmtPA = $db->query("SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('portal_aktif','portal_otomatik_olustur','portal_giris_yontemi')");
+            while ($pa = $stmtPA->fetch()) {
+                if ($pa['anahtar'] === 'portal_aktif' && $pa['deger'] === '1') $portalAktif = true;
+                if ($pa['anahtar'] === 'portal_otomatik_olustur' && $pa['deger'] === '1') $portalOtomatik = true;
+                if ($pa['anahtar'] === 'portal_giris_yontemi') $portalGirisYontemi = $pa['deger'];
+            }
+        } catch (\Exception $e) {}
+
+        $musteriTelefon = clean($body['telefon'] ?? '');
+
+        if ($portalAktif && $portalOtomatik && !empty($musteriTelefon)) {
+            // Portal migration
+            require_once __DIR__ . '/../portal/migration.php';
+            ensure_portal_tables();
+
+            // Telefon normalize
+            require_once __DIR__ . '/../../config/sms_helper.php';
+            $telNorm = sms_telefon_normalize($musteriTelefon);
+
+            // Benzersiz erişim kodu
+            $erisimKodu = generate_uuid();
+
+            $stmtPortal = $db->prepare("INSERT INTO portal_erisim (dosya_id, erisim_kodu, tc_kimlik, telefon, ad_soyad, giris_yontemi, olusturan_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmtPortal->execute([
+                $dosyaId,
+                $erisimKodu,
+                clean($body['tc_kimlik'] ?? ''),
+                $telNorm ?: $musteriTelefon,
+                clean($body['ad_soyad']),
+                $portalGirisYontemi,
+                $user['id']
+            ]);
+
+            $portalErisimId = (int)$db->lastInsertId();
+
+            // SMS ile bilgilendir
+            $siteUrl = '';
+            try {
+                $stmtUrl = $db->query("SELECT deger FROM ayarlar WHERE anahtar = 'site_url' LIMIT 1");
+                $urlRow = $stmtUrl->fetch();
+                if ($urlRow && !empty($urlRow['deger'])) $siteUrl = rtrim($urlRow['deger'], '/');
+            } catch (\Exception $e) {}
+            if (empty($siteUrl)) {
+                $protokol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                $host = $_SERVER['HTTP_HOST'] ?? 'sistem.mrhasardanismanlik.com';
+                $siteUrl = $protokol . '://' . $host;
+            }
+
+            $firmaAdi = 'MR HASAR DANISMANLIK';
+            try {
+                $stmtFirma2 = $db->query("SELECT deger FROM ayarlar WHERE anahtar = 'firma_adi' LIMIT 1");
+                $fRow = $stmtFirma2->fetch();
+                if ($fRow && !empty($fRow['deger'])) $firmaAdi = $fRow['deger'];
+            } catch (\Exception $e) {}
+
+            if ($portalGirisYontemi === 'link') {
+                $portalLink = $siteUrl . '/portal.html#kod=' . $erisimKodu;
+                $smsMesaj = "Sayin " . clean($body['ad_soyad']) . ", {$dosyaNo} nolu dosyaniz olusturulmustur. Portal erisiminiz: {$portalLink} - {$firmaAdi}";
+            } else {
+                $smsMesaj = "Sayin " . clean($body['ad_soyad']) . ", {$dosyaNo} nolu dosyaniz olusturulmustur. Dosyanizi takip etmek icin: {$siteUrl}/portal.html adresinden telefonunuzla giris yapabilirsiniz. - {$firmaAdi}";
+            }
+
+            $portalSms = sms_gonder($telNorm ?: $musteriTelefon, $smsMesaj, $dosyaId, $user['id']);
+
+            $portalBilgi = [
+                'erisim_id' => $portalErisimId,
+                'erisim_kodu' => $erisimKodu,
+                'sms_gonderildi' => $portalSms['basarili'] ?? false
+            ];
+
+            // Log
+            try {
+                $stmtPLog = $db->prepare("INSERT INTO portal_loglar (portal_erisim_id, dosya_id, islem, detay, ip_adresi) VALUES (?, ?, 'erisim_olusturuldu', ?, ?)");
+                $stmtPLog->execute([$portalErisimId, $dosyaId, 'Dosya açılışında otomatik portal erişimi oluşturuldu', $_SERVER['REMOTE_ADDR'] ?? null]);
+            } catch (\Exception $e) {}
+        }
+    } catch (\Exception $e) {
+        // Portal hatası dosya oluşturmayı engellemez
+    }
+
     $mesaj = 'Dosya başarıyla oluşturuldu';
     if (!empty($otoPrimBilgi['personel_prim'])) {
         $mesaj .= ' | PERSONEL PRİMİ: ₺' . number_format($otoPrimBilgi['personel_prim'], 2, ',', '.') . ' OTOMATİK EKLENDİ';
@@ -216,12 +304,16 @@ try {
     if (!empty($otoPrimBilgi['paydas_prim'])) {
         $mesaj .= ' | PAYDAŞ PRİMİ: ₺' . number_format($otoPrimBilgi['paydas_prim'], 2, ',', '.') . ' OTOMATİK EKLENDİ';
     }
+    if ($portalBilgi) {
+        $mesaj .= ' | PORTAL ERİŞİMİ OTOMATİK OLUŞTURULDU';
+    }
 
     json_success([
         'dosya_id' => $dosyaId,
         'dosya_no' => $dosyaNo,
         'hasar_no' => $hasar_no,
-        'oto_prim' => $otoPrimBilgi
+        'oto_prim' => $otoPrimBilgi,
+        'portal' => $portalBilgi
     ], $mesaj, 201);
     
 } catch (\Exception $e) {

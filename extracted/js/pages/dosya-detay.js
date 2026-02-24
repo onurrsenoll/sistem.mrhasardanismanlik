@@ -159,6 +159,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const [editError, setEditError] = useState('');
   const [dosyaSilConfirm, setDosyaSilConfirm] = useState(false);
   const [ortaklar, setOrtaklar] = useState([]);
+  const [portalCreating, setPortalCreating] = useState(false);
   const [previewEvrak, setPreviewEvrak] = useState(null);
 
   // DOSYA KAPAT STATE
@@ -296,6 +297,17 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
     if (r?.success) { setDosyaSilConfirm(false); setPage('dosya-liste'); }
   };
 
+  const portalOlustur = async () => {
+    setPortalCreating(true);
+    const r = await api.portalErisimOlustur({dosya_id: dosya.id, giris_yontemi: 'sms_otp', sms_gonder: true});
+    setPortalCreating(false);
+    if (r?.success) {
+      MR.toast?.('PORTAL ERİŞİMİ OLUŞTURULDU VE SMS GÖNDERİLDİ', 'success');
+    } else {
+      MR.toast?.(r?.error || 'PORTAL OLUŞTURMA HATASI', 'error');
+    }
+  };
+
   if (loading) return <Loading/>;
   if (!dosya) return <EmptyState icon="AlertCircle" title="DOSYA BULUNAMADI" desc=""/>;
 
@@ -372,6 +384,10 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             </select>
             <button style={{...S.btn,...S.btnP,fontSize:10,padding:'6px 12px'}} onClick={openEditModal}>
               <LIcon name="Edit2" size={12} color="#fff"/> DÜZENLE
+            </button>
+            <button style={{...S.btn,fontSize:10,padding:'6px 12px',background:`${C.purple}18`,color:C.purple,border:`1px solid ${C.purple}33`,borderRadius:8,cursor:'pointer',display:'flex',alignItems:'center',gap:4}} disabled={portalCreating}
+              onClick={portalOlustur} title="MÜŞTERİ PORTAL ERİŞİMİ OLUŞTUR VE SMS GÖNDER">
+              <LIcon name="Globe" size={12} color={C.purple}/> {portalCreating ? 'OLUŞTURULUYOR...' : 'PORTAL'}
             </button>
             <button style={{...S.btn,fontSize:10,padding:'6px 12px',background:`${C.danger}18`,color:C.danger,border:`1px solid ${C.danger}33`,borderRadius:8,cursor:'pointer',display:'flex',alignItems:'center',gap:4}}
               onClick={() => setDosyaSilConfirm(true)}>
