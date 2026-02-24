@@ -73,7 +73,13 @@ $stmtStats = $db->query("SELECT
     FROM portal_erisim");
 $stats = $stmtStats->fetch();
 
-paginated_response([
+json_success([
     'items' => $items,
-    'istatistik' => $stats
-], $toplam, $pagination);
+    'istatistik' => $stats,
+    'pagination' => [
+        'page' => $pagination['page'],
+        'limit' => $pagination['limit'],
+        'total' => $toplam,
+        'totalPages' => ceil($toplam / $pagination['limit'])
+    ]
+]);
