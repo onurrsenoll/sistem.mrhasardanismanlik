@@ -292,25 +292,25 @@ MR.api = {
 
 // ═══ TEMA SİSTEMİ ═══
 const KOYU_TEMA = {
-  bg: '#0B1120', bgCard: '#111827', bgHover: '#1F2937', bgInput: '#1a2332',
-  border: '#1F2937', borderLight: '#374151',
+  bg: '#0f172a', bgCard: '#1e293b', bgHover: '#334155', bgInput: '#1e293b',
+  border: '#334155', borderLight: '#475569',
   accent: '#2563eb', accentLight: '#3b82f6',
   accentGradient: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
   success: '#10b981', warning: '#f59e0b', danger: '#ef4444',
   purple: '#8b5cf6', cyan: '#06b6d4', pink: '#ec4899', gold: '#fbbf24',
   text: '#f1f5f9', textSec: '#94a3b8', textMuted: '#64748b',
-  headerBg: '#0f1729', navBg: '#111d33'
+  headerBg: '#1e293b', navBg: '#1e293b'
 };
 
 const ACIK_TEMA = {
-  bg: '#f8fafc', bgCard: '#ffffff', bgHover: '#f1f5f9', bgInput: '#f1f5f9',
-  border: '#e2e8f0', borderLight: '#cbd5e1',
+  bg: '#edf1f7', bgCard: '#ffffff', bgHover: '#e2e8f0', bgInput: '#f1f5f9',
+  border: '#94a3b8', borderLight: '#94a3b8',
   accent: '#2563eb', accentLight: '#3b82f6',
   accentGradient: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
   success: '#16a34a', warning: '#ca8a04', danger: '#dc2626',
   purple: '#8b5cf6', cyan: '#0891b2', pink: '#db2777', gold: '#ca8a04',
-  text: '#1e293b', textSec: '#475569', textMuted: '#64748b',
-  headerBg: '#ffffff', navBg: '#f8fafc'
+  text: '#1e293b', textSec: '#334155', textMuted: '#475569',
+  headerBg: '#f8fafc', navBg: '#f1f5f9'
 };
 
 MR.TEMALAR = { koyu: KOYU_TEMA, acik: ACIK_TEMA };

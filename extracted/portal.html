@@ -9,82 +9,82 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Manrope',system-ui,sans-serif; background:#f0f4f8; color:#1e293b; min-height:100vh; }
-  .portal-header { background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%); color:#fff; padding:20px 0; box-shadow:0 2px 12px rgba(0,0,0,.15); }
+  body { font-family:'Manrope',system-ui,sans-serif; background:#0f172a; color:#f1f5f9; min-height:100vh; }
+  .portal-header { background:#1e293b; color:#fff; padding:20px 0; box-shadow:0 2px 12px rgba(0,0,0,.3); border-bottom:1px solid #334155; }
   .portal-header .inner { max-width:900px; margin:0 auto; padding:0 20px; display:flex; align-items:center; justify-content:space-between; }
   .portal-header h1 { font-size:18px; font-weight:800; letter-spacing:.5px; }
-  .portal-header .sub { font-size:11px; opacity:.8; margin-top:2px; }
+  .portal-header .sub { font-size:11px; opacity:.7; margin-top:2px; }
   .portal-header .user-info { text-align:right; font-size:12px; }
   .portal-header .user-info .name { font-weight:700; font-size:14px; }
-  .portal-header .logout-btn { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); color:#fff; padding:6px 14px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:600; margin-top:6px; }
-  .portal-header .logout-btn:hover { background:rgba(255,255,255,.25); }
+  .portal-header .logout-btn { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); color:#fff; padding:6px 14px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:600; margin-top:6px; }
+  .portal-header .logout-btn:hover { background:rgba(255,255,255,.2); }
   .container { max-width:900px; margin:0 auto; padding:20px; }
-  .card { background:#fff; border-radius:12px; box-shadow:0 1px 4px rgba(0,0,0,.08); margin-bottom:16px; overflow:hidden; border:1px solid #e2e8f0; }
-  .card-head { padding:14px 20px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; gap:10px; background:rgba(37,99,235,.03); }
+  .card { background:#1e293b; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.2); margin-bottom:16px; overflow:hidden; border:1px solid #334155; }
+  .card-head { padding:14px 20px; border-bottom:1px solid #334155; display:flex; align-items:center; gap:10px; background:rgba(37,99,235,.05); }
   .card-head .icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; }
   .card-head h2 { font-size:14px; font-weight:700; }
-  .card-head .desc { font-size:11px; color:#64748b; }
+  .card-head .desc { font-size:11px; color:#94a3b8; }
   .card-body { padding:20px; }
   .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:20px; }
-  .stat-card { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px; text-align:center; }
-  .stat-card .label { font-size:10px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.5px; }
-  .stat-card .value { font-size:20px; font-weight:800; margin-top:4px; }
+  .stat-card { background:#1e293b; border:1px solid #334155; border-radius:10px; padding:16px; text-align:center; }
+  .stat-card .label { font-size:10px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; }
+  .stat-card .value { font-size:20px; font-weight:800; margin-top:4px; color:#f1f5f9; }
   .badge { display:inline-block; padding:4px 12px; border-radius:20px; font-size:10px; font-weight:700; }
-  .badge-blue { background:#dbeafe; color:#2563eb; border:1px solid #bfdbfe; }
-  .badge-green { background:#dcfce7; color:#16a34a; border:1px solid #bbf7d0; }
-  .badge-amber { background:#fef3c7; color:#ca8a04; border:1px solid #fde68a; }
-  .badge-red { background:#fee2e2; color:#dc2626; border:1px solid #fecaca; }
-  .info-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f1f5f9; font-size:13px; }
+  .badge-blue { background:rgba(37,99,235,.15); color:#60a5fa; border:1px solid rgba(37,99,235,.3); }
+  .badge-green { background:rgba(16,185,129,.15); color:#34d399; border:1px solid rgba(16,185,129,.3); }
+  .badge-amber { background:rgba(245,158,11,.15); color:#fbbf24; border:1px solid rgba(245,158,11,.3); }
+  .badge-red { background:rgba(239,68,68,.15); color:#f87171; border:1px solid rgba(239,68,68,.3); }
+  .info-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #334155; font-size:13px; }
   .info-row:last-child { border-bottom:none; }
-  .info-row .lbl { color:#64748b; font-weight:500; }
-  .info-row .val { font-weight:600; text-align:right; }
-  .evrak-item { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:#f8fafc; border-radius:8px; margin-bottom:8px; border:1px solid #e2e8f0; }
-  .evrak-item .name { font-size:13px; font-weight:600; }
-  .evrak-item .meta { font-size:10px; color:#64748b; margin-top:2px; }
+  .info-row .lbl { color:#94a3b8; font-weight:500; }
+  .info-row .val { font-weight:600; text-align:right; color:#f1f5f9; }
+  .evrak-item { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:#0f172a; border-radius:8px; margin-bottom:8px; border:1px solid #334155; }
+  .evrak-item .name { font-size:13px; font-weight:600; color:#f1f5f9; }
+  .evrak-item .meta { font-size:10px; color:#94a3b8; margin-top:2px; }
   .evrak-item .btn-dl { background:#2563eb; color:#fff; padding:6px 14px; border-radius:6px; font-size:11px; cursor:pointer; border:none; font-weight:600; text-decoration:none; }
-  .evrak-item .btn-dl:hover { background:#1d4ed8; }
+  .evrak-item .btn-dl:hover { background:#3b82f6; }
   .timeline { position:relative; padding-left:24px; }
-  .timeline::before { content:''; position:absolute; left:8px; top:4px; bottom:4px; width:2px; background:#e2e8f0; }
+  .timeline::before { content:''; position:absolute; left:8px; top:4px; bottom:4px; width:2px; background:#334155; }
   .timeline-item { position:relative; margin-bottom:16px; }
-  .timeline-item::before { content:''; position:absolute; left:-20px; top:4px; width:12px; height:12px; border-radius:50%; background:var(--dot-color, #2563eb); border:2px solid #fff; box-shadow:0 0 0 2px var(--dot-color, #2563eb); }
-  .timeline-item .date { font-size:10px; color:#94a3b8; font-weight:500; }
-  .timeline-item .text { font-size:13px; font-weight:500; margin-top:2px; }
+  .timeline-item::before { content:''; position:absolute; left:-20px; top:4px; width:12px; height:12px; border-radius:50%; background:var(--dot-color, #2563eb); border:2px solid #1e293b; box-shadow:0 0 0 2px var(--dot-color, #2563eb); }
+  .timeline-item .date { font-size:10px; color:#64748b; font-weight:500; }
+  .timeline-item .text { font-size:13px; font-weight:500; margin-top:2px; color:#f1f5f9; }
   .msg-list { max-height:400px; overflow-y:auto; margin-bottom:12px; }
   .msg-item { margin-bottom:8px; max-width:80%; }
   .msg-item.musteri { margin-left:auto; }
   .msg-item .bubble { padding:10px 14px; border-radius:12px; font-size:13px; line-height:1.5; }
-  .msg-item.firma .bubble { background:#f1f5f9; border:1px solid #e2e8f0; border-bottom-left-radius:2px; }
+  .msg-item.firma .bubble { background:#0f172a; border:1px solid #334155; color:#e2e8f0; border-bottom-left-radius:2px; }
   .msg-item.musteri .bubble { background:#2563eb; color:#fff; border-bottom-right-radius:2px; }
-  .msg-item .time { font-size:10px; color:#94a3b8; margin-top:2px; }
+  .msg-item .time { font-size:10px; color:#64748b; margin-top:2px; }
   .msg-item.musteri .time { text-align:right; }
   .msg-input { display:flex; gap:8px; }
-  .msg-input input { flex:1; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; outline:none; font-family:inherit; }
-  .msg-input input:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+  .msg-input input { flex:1; padding:10px 14px; border:1px solid #334155; border-radius:8px; font-size:13px; outline:none; font-family:inherit; background:#0f172a; color:#f1f5f9; }
+  .msg-input input:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.2); }
   .msg-input button { background:#2563eb; color:#fff; border:none; padding:10px 20px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
-  .msg-input button:hover { background:#1d4ed8; }
+  .msg-input button:hover { background:#3b82f6; }
   .msg-input button:disabled { opacity:.5; cursor:not-allowed; }
   /* LOGIN */
-  .login-page { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#1e40af 100%); padding:20px; }
-  .login-box { background:#fff; border-radius:16px; padding:40px 32px; width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,.3); }
+  .login-page { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#1e3a5f 100%); padding:20px; }
+  .login-box { background:#1e293b; border-radius:16px; padding:40px 32px; width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,.4); border:1px solid #334155; }
   .login-box .logo { text-align:center; margin-bottom:24px; }
-  .login-box .logo h1 { font-size:20px; font-weight:800; color:#1e3a5f; }
-  .login-box .logo .sub { font-size:12px; color:#64748b; margin-top:4px; }
-  .login-box .title { font-size:15px; font-weight:700; text-align:center; margin-bottom:20px; color:#334155; }
-  .login-box label { display:block; font-size:11px; font-weight:600; color:#475569; margin-bottom:6px; letter-spacing:.5px; }
-  .login-box input { width:100%; padding:12px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; outline:none; margin-bottom:16px; font-family:inherit; }
-  .login-box input:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+  .login-box .logo h1 { font-size:20px; font-weight:800; color:#f1f5f9; }
+  .login-box .logo .sub { font-size:12px; color:#94a3b8; margin-top:4px; }
+  .login-box .title { font-size:15px; font-weight:700; text-align:center; margin-bottom:20px; color:#e2e8f0; }
+  .login-box label { display:block; font-size:11px; font-weight:600; color:#94a3b8; margin-bottom:6px; letter-spacing:.5px; }
+  .login-box input { width:100%; padding:12px 14px; border:1px solid #334155; border-radius:8px; font-size:14px; outline:none; margin-bottom:16px; font-family:inherit; background:#0f172a; color:#f1f5f9; }
+  .login-box input:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.2); }
   .login-box .btn-primary { width:100%; background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; border:none; padding:14px; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; letter-spacing:.3px; }
   .login-box .btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(37,99,235,.4); }
   .login-box .btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; box-shadow:none; }
-  .login-box .error { background:#fee2e2; color:#dc2626; padding:10px 14px; border-radius:8px; font-size:12px; font-weight:500; margin-bottom:12px; border:1px solid #fecaca; }
-  .login-box .info { background:#dbeafe; color:#1e40af; padding:10px 14px; border-radius:8px; font-size:12px; font-weight:500; margin-bottom:12px; border:1px solid #bfdbfe; }
-  .login-box .step-info { text-align:center; font-size:11px; color:#94a3b8; margin-top:12px; }
-  .kvkk-notice { text-align:center; font-size:10px; color:#94a3b8; margin-top:16px; line-height:1.5; }
-  .tabs { display:flex; border-bottom:1px solid #e2e8f0; margin-bottom:0; }
-  .tab { padding:12px 20px; cursor:pointer; font-size:12px; font-weight:600; color:#64748b; border-bottom:2px solid transparent; transition:all .2s; }
-  .tab.active { color:#2563eb; border-bottom-color:#2563eb; }
-  .tab:hover { color:#2563eb; }
-  .footer { text-align:center; padding:24px 20px; font-size:11px; color:#94a3b8; border-top:1px solid #e2e8f0; margin-top:20px; }
+  .login-box .error { background:rgba(239,68,68,.15); color:#f87171; padding:10px 14px; border-radius:8px; font-size:12px; font-weight:500; margin-bottom:12px; border:1px solid rgba(239,68,68,.3); }
+  .login-box .info { background:rgba(37,99,235,.15); color:#60a5fa; padding:10px 14px; border-radius:8px; font-size:12px; font-weight:500; margin-bottom:12px; border:1px solid rgba(37,99,235,.3); }
+  .login-box .step-info { text-align:center; font-size:11px; color:#64748b; margin-top:12px; }
+  .kvkk-notice { text-align:center; font-size:10px; color:#64748b; margin-top:16px; line-height:1.5; }
+  .tabs { display:flex; border-bottom:1px solid #334155; margin-bottom:0; }
+  .tab { padding:12px 20px; cursor:pointer; font-size:12px; font-weight:600; color:#94a3b8; border-bottom:2px solid transparent; transition:all .2s; }
+  .tab.active { color:#60a5fa; border-bottom-color:#2563eb; }
+  .tab:hover { color:#60a5fa; }
+  .footer { text-align:center; padding:24px 20px; font-size:11px; color:#64748b; border-top:1px solid #334155; margin-top:20px; }
   @media(max-width:600px) {
     .stat-grid { grid-template-columns:1fr 1fr; }
     .portal-header .inner { flex-direction:column; text-align:center; gap:12px; }
@@ -180,7 +180,7 @@ const LoginPage = ({onLogin}) => {
           <h1>MR HASAR DANIŞMANLIK</h1>
           <div className="sub">MÜŞTERİ / MAĞDUR PORTALI</div>
         </div>
-        <div style={{padding:30, color:'#64748b', fontSize:14}}>PORTAL ERİŞİMİ DOĞRULANIYOR...</div>
+        <div style={{padding:30, color:'#94a3b8', fontSize:14}}>PORTAL ERİŞİMİ DOĞRULANIYOR...</div>
       </div>
     </div>
   );
@@ -321,7 +321,7 @@ const Dashboard = ({erisim}) => {
         </div>
       </header>
       <div className="container" style={{textAlign:'center', padding:60}}>
-        <div style={{fontSize:14, color:'#64748b'}}>YÜKLENİYOR...</div>
+        <div style={{fontSize:14, color:'#94a3b8'}}>YÜKLENİYOR...</div>
       </div>
     </>
   );
@@ -360,7 +360,7 @@ const Dashboard = ({erisim}) => {
         {/* KARŞILAMA */}
         {firma.portal_karsilama && (
           <div className="card" style={{marginBottom:16}}>
-            <div className="card-body" style={{fontSize:13, color:'#475569', lineHeight:1.6}}>
+            <div className="card-body" style={{fontSize:13, color:'#94a3b8', lineHeight:1.6}}>
               {firma.portal_karsilama}
             </div>
           </div>
@@ -370,7 +370,7 @@ const Dashboard = ({erisim}) => {
         <div className="stat-grid">
           <div className="stat-card">
             <div className="label">DOSYA NO</div>
-            <div className="value" style={{color:'#2563eb', fontSize:16}}>{dosya?.dosya_no}</div>
+            <div className="value" style={{color:'#60a5fa', fontSize:16}}>{dosya?.dosya_no}</div>
           </div>
           <div className="stat-card">
             <div className="label">DOSYA TÜRÜ</div>
@@ -402,7 +402,7 @@ const Dashboard = ({erisim}) => {
             {/* DOSYA ÖZETİ */}
             {tab === 'ozet' && (
               <div>
-                <h3 style={{fontSize:13, fontWeight:700, marginBottom:12, color:'#334155'}}>DOSYA BİLGİLERİ</h3>
+                <h3 style={{fontSize:13, fontWeight:700, marginBottom:12, color:'#e2e8f0'}}>DOSYA BİLGİLERİ</h3>
                 <div className="info-row"><span className="lbl">DOSYA NO</span><span className="val">{dosya?.dosya_no}</span></div>
                 <div className="info-row"><span className="lbl">DOSYA TÜRÜ</span><span className="val">{dosya?.dosya_turu}</span></div>
                 <div className="info-row"><span className="lbl">TALEP TÜRÜ</span><span className="val">{dosya?.talep_turu || '-'}</span></div>
@@ -414,14 +414,14 @@ const Dashboard = ({erisim}) => {
 
                 {magdur && (
                   <>
-                    <h3 style={{fontSize:13, fontWeight:700, marginTop:20, marginBottom:12, color:'#334155'}}>MÜŞTERİ BİLGİLERİ</h3>
+                    <h3 style={{fontSize:13, fontWeight:700, marginTop:20, marginBottom:12, color:'#e2e8f0'}}>MÜŞTERİ BİLGİLERİ</h3>
                     <div className="info-row"><span className="lbl">AD SOYAD</span><span className="val">{magdur.ad_soyad}</span></div>
                     <div className="info-row"><span className="lbl">İL / İLÇE</span><span className="val">{[magdur.il, magdur.ilce].filter(Boolean).join(' / ') || '-'}</span></div>
                   </>
                 )}
 
                 {/* FİRMA İLETİŞİM */}
-                <h3 style={{fontSize:13, fontWeight:700, marginTop:20, marginBottom:12, color:'#334155'}}>FİRMA İLETİŞİM</h3>
+                <h3 style={{fontSize:13, fontWeight:700, marginTop:20, marginBottom:12, color:'#e2e8f0'}}>FİRMA İLETİŞİM</h3>
                 {firma.firma_telefon && <div className="info-row"><span className="lbl">TELEFON</span><span className="val">{firma.firma_telefon}</span></div>}
                 {firma.firma_email && <div className="info-row"><span className="lbl">E-POSTA</span><span className="val">{firma.firma_email}</span></div>}
                 {firma.firma_adres && <div className="info-row"><span className="lbl">ADRES</span><span className="val" style={{maxWidth:'60%', fontSize:12}}>{firma.firma_adres}</span></div>}
@@ -534,11 +534,11 @@ const Dashboard = ({erisim}) => {
         </div>
 
         <div className="footer">
-          <div style={{marginBottom:8, fontSize:13, fontWeight:600, color:'#475569'}}>
+          <div style={{marginBottom:8, fontSize:13, fontWeight:600, color:'#94a3b8'}}>
             {firma.firma_adi || 'MR HASAR DANIŞMANLIK'}
           </div>
           <div style={{marginBottom:8, fontSize:12, color:'#64748b'}}>
-            İLETİŞİM: <a href="tel:03625026502" style={{color:'#2563eb', textDecoration:'none'}}>0362 502 65 02</a> - <a href="tel:05550984254" style={{color:'#2563eb', textDecoration:'none'}}>0555 098 42 54</a>
+            İLETİŞİM: <a href="tel:03625026502" style={{color:'#60a5fa', textDecoration:'none'}}>0362 502 65 02</a> - <a href="tel:05550984254" style={{color:'#60a5fa', textDecoration:'none'}}>0555 098 42 54</a>
           </div>
           <div style={{marginBottom:6, fontSize:10, color:'#94a3b8'}}>
             6698 SAYILI KVK KANUNU KAPSAMINDA KİŞİSEL VERİLERİNİZ KORUNMAKTADIR.
