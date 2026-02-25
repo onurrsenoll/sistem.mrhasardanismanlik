@@ -126,7 +126,7 @@ function getPageFromHash() {
 }
 
 /* ═══ ÜST NAVİGASYON ═══ */
-const TopNav = ({user, page, setPage, onLogout}) => {
+const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
   const {C, LIcon, api} = MR;
   const [menuOpen, setMenuOpen] = useState(null);
   const [bildirimSayisi, setBildirimSayisi] = useState(0);
@@ -171,6 +171,33 @@ const TopNav = ({user, page, setPage, onLogout}) => {
       display: 'flex', alignItems: 'center', padding: '0 12px', height: 48,
       position: 'sticky', top: 0, zIndex: 1000, gap: 0
     }}>
+      {/* SOL ÜST LOGO - ANASAYFAYA YÖNLENDİRİR */}
+      <div
+        onClick={() => { setPage('home'); setMenuOpen(null); }}
+        style={{
+          height: 38, minWidth: 38, maxWidth: 140, flexShrink: 0,
+          borderRadius: 8, cursor: 'pointer', marginRight: 8,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          overflow: 'hidden', transition: 'all .2s',
+          background: sidebarLogoUrl ? 'transparent' : `${C.accent}15`,
+          border: sidebarLogoUrl ? 'none' : `1px solid ${C.accent}22`
+        }}
+        title="ANASAYFA"
+        onMouseEnter={e => { e.currentTarget.style.opacity = '0.8'; e.currentTarget.style.transform = 'scale(0.97)'; }}
+        onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1)'; }}
+      >
+        {sidebarLogoUrl ? (
+          <img src={sidebarLogoUrl} alt="LOGO" style={{
+            height: 34, maxWidth: 130, objectFit: 'contain'
+          }}/>
+        ) : (
+          <div style={{
+            fontSize: 14, fontWeight: 800, color: C.accent, letterSpacing: '-0.5px',
+            padding: '0 10px', whiteSpace: 'nowrap'
+          }}>MR</div>
+        )}
+      </div>
+
       {/* MENÜ - ESNEK ALAN, TEK SATIR */}
       <div style={{
         display: 'flex', flex: 1, alignItems: 'center',
@@ -1415,6 +1442,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [, forceUpdate] = useState(0);
   const [bgLogoUrl, setBgLogoUrl] = useState(MR.logoUrl || '');
+  const [sidebarLogoUrl, setSidebarLogoUrl] = useState(MR.sidebarLogoUrl || '');
   const [gelenCagri, setGelenCagri] = useState(null);
   const [motivasyonSoz, setMotivasyonSoz] = useState('');
   const [sozFade, setSozFade] = useState(true);
@@ -1571,20 +1599,41 @@ const App = () => {
     return () => window.removeEventListener('mr-arama-crm-ac', handler);
   }, [user, netsippIzinVar, setPage]);
 
-  /* ARKA PLAN LOGO URL - SADECE GİRİŞ YAPILDIKTAN SONRA */
+  /* ARKA PLAN LOGO URL + SIDEBAR LOGO - SADECE GİRİŞ YAPILDIKTAN SONRA */
   useEffect(() => {
     if (!user) return;
-    if (MR.logoUrl) { setBgLogoUrl(MR.logoUrl); return; }
+    if (MR.logoUrl && MR.sidebarLogoUrl !== undefined) {
+      setBgLogoUrl(MR.logoUrl);
+      setSidebarLogoUrl(MR.sidebarLogoUrl || '');
+      return;
+    }
     (async () => {
       try {
         const r = await api.ayarlarList();
-        if (r?.success && r.data?.logo_url) {
-          setBgLogoUrl(r.data.logo_url);
-          MR.logoUrl = r.data.logo_url;
+        if (r?.success && r.data) {
+          if (r.data.logo_url) {
+            setBgLogoUrl(r.data.logo_url);
+            MR.logoUrl = r.data.logo_url;
+          }
+          if (r.data.sidebar_logo_url) {
+            setSidebarLogoUrl(r.data.sidebar_logo_url);
+            MR.sidebarLogoUrl = r.data.sidebar_logo_url;
+          } else {
+            MR.sidebarLogoUrl = '';
+          }
         }
       } catch(e) {}
     })();
   }, [user]);
+
+  /* SIDEBAR LOGO DEĞİŞİM DİNLEYİCİ (AYARLARDAN YÜKLEME SONRASI) */
+  useEffect(() => {
+    const handler = () => {
+      setSidebarLogoUrl(MR.sidebarLogoUrl || '');
+    };
+    window.addEventListener('mr-sidebar-logo-degisti', handler);
+    return () => window.removeEventListener('mr-sidebar-logo-degisti', handler);
+  }, []);
 
   /* KULLANICI DEĞİŞTİĞİNDE GLOBAL REFERANSI GÜNCELLE (YETKİ KONTROLÜ İÇİN) */
   useEffect(() => {
@@ -1766,7 +1815,7 @@ const App = () => {
 
   return (
     <div style={{minHeight: '100vh', background: C.bg, color: C.text, position: 'relative', overflow: 'hidden'}}>
-      <TopNav user={user} page={page} setPage={setPage} onLogout={logout}/>
+      <TopNav user={user} page={page} setPage={setPage} onLogout={logout} sidebarLogoUrl={sidebarLogoUrl}/>
 
       {/* ARKA PLAN WATERMARK LOGO - TÜM SAYFALARDA */}
       {bgLogoUrl && (

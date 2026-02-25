@@ -220,6 +220,13 @@ MR.api = {
       method: 'POST', headers: h, body: fd
     }).then(r => r.json()).catch(() => ({success: false, error: 'BAĞLANTI HATASI'}));
   },
+  sidebarLogoYukle(file) {
+    const fd = new FormData(); fd.append('sidebar_logo', file);
+    const h = {}; if (this.token) h['Authorization'] = 'Bearer ' + this.token;
+    return fetch(API_BASE + '/sistem/sidebar-logo-yukle.php', {
+      method: 'POST', headers: h, body: fd
+    }).then(r => r.json()).catch(() => ({success: false, error: 'BAĞLANTI HATASI'}));
+  },
   // YÖNLENDİRME / ARAMA LİSTESİ
   yonlendirmeList(p = {}) { return this.req('/yonlendirme/list.php?' + new URLSearchParams(p)); },
   yonlendirmeGet(id) { return this.req('/yonlendirme/get.php?id=' + id); },

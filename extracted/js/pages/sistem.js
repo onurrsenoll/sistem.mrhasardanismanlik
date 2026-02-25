@@ -710,6 +710,10 @@ const AyarlarTab = () => {
   const [logoPreview, setLogoPreview] = useState('');
   const [logoUploading, setLogoUploading] = useState(false);
   const fileInputRef = useRef(null);
+  const [sidebarLogoFile, setSidebarLogoFile] = useState(null);
+  const [sidebarLogoPreview, setSidebarLogoPreview] = useState('');
+  const [sidebarLogoUploading, setSidebarLogoUploading] = useState(false);
+  const sidebarFileInputRef = useRef(null);
   const [apiTest, setApiTest] = useState({testing: false, sonuc: null});
 
   /* AYARLAR YÜKLE */
@@ -721,6 +725,7 @@ const AyarlarTab = () => {
         const data = r.data || {};
         setAyarlar(data);
         if (data.logo_url) setLogoPreview(data.logo_url);
+        if (data.sidebar_logo_url) setSidebarLogoPreview(data.sidebar_logo_url);
       }
       setLoading(false);
     })();
@@ -811,6 +816,59 @@ const AyarlarTab = () => {
     setLogoFile(null);
     up('logo_url', '');
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  /* SIDEBAR LOGO DOSYA SEÇ */
+  const handleSidebarLogoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];
+    if (!validTypes.includes(file.type)) {
+      setMesaj({type: 'error', text: 'GEÇERSİZ DOSYA TİPİ. SADECE PNG, JPG VEYA SVG KABUL EDİLİR'});
+      setTimeout(() => setMesaj({type: '', text: ''}), 4000);
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setMesaj({type: 'error', text: 'DOSYA BOYUTU ÇOK BÜYÜK. MAKSİMUM 2MB KABUL EDİLİR'});
+      setTimeout(() => setMesaj({type: '', text: ''}), 4000);
+      return;
+    }
+    setSidebarLogoFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setSidebarLogoPreview(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  /* SIDEBAR LOGO YÜKLE */
+  const sidebarLogoYukle = async () => {
+    if (!sidebarLogoFile) return;
+    setSidebarLogoUploading(true);
+    setMesaj({type: '', text: ''});
+    const r = await api.sidebarLogoYukle(sidebarLogoFile);
+    if (r?.success) {
+      setMesaj({type: 'success', text: 'MENÜ LOGOSU BAŞARIYLA YÜKLENDİ'});
+      setSidebarLogoFile(null);
+      if (r.data?.sidebar_logo_url) {
+        setSidebarLogoPreview(r.data.sidebar_logo_url);
+        up('sidebar_logo_url', r.data.sidebar_logo_url);
+        MR.sidebarLogoUrl = r.data.sidebar_logo_url;
+        window.dispatchEvent(new Event('mr-sidebar-logo-degisti'));
+      }
+    } else {
+      setMesaj({type: 'error', text: r?.error || 'MENÜ LOGOSU YÜKLENİRKEN HATA OLUŞTU'});
+    }
+    setSidebarLogoUploading(false);
+    setTimeout(() => setMesaj({type: '', text: ''}), 4000);
+  };
+
+  /* SIDEBAR LOGO KALDIR */
+  const sidebarLogoKaldir = () => {
+    setSidebarLogoPreview('');
+    setSidebarLogoFile(null);
+    up('sidebar_logo_url', '');
+    MR.sidebarLogoUrl = '';
+    window.dispatchEvent(new Event('mr-sidebar-logo-degisti'));
+    if (sidebarFileInputRef.current) sidebarFileInputRef.current.value = '';
   };
 
   if (loading) return <Loading/>;
@@ -942,6 +1000,64 @@ const AyarlarTab = () => {
                 <button style={{...S.btn, ...S.btnG, fontSize: 11, padding: '8px 16px',
                   color: C.danger, borderColor: C.danger + '33'}}
                   onClick={logoKaldir}>
+                  <LIcon name="Trash2" size={14} color={C.danger}/> KALDIR
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ─── BÖLÜM 2B: MENÜ LOGOSU YÖNETİMİ ─── */}
+        <div style={S.card}>
+          <div style={{...S.cardHead, padding: '12px 16px'}}>
+            <LIcon name="Layout" size={14} color={C.accent}/>
+            <span style={{fontSize: 12, fontWeight: 700}}>MENÜ LOGOSU</span>
+          </div>
+          <div style={{padding: 16}}>
+            <div style={{fontSize: 10, color: C.textMuted, marginBottom: 12}}>
+              ÜST MENÜ ÇUBUĞUNUN SOL TARAFINDA GÖRÜNECEK LOGO. TIKLANDIĞINDA ANASAYFAYA YÖNLENDİRİR.
+            </div>
+            {/* ÖNİZLEME */}
+            <div style={{
+              width: '100%', minHeight: 100, borderRadius: 8,
+              border: `2px dashed ${C.borderLight}`, background: C.bgHover,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginBottom: 16, overflow: 'hidden'
+            }}>
+              {sidebarLogoPreview ? (
+                <img src={sidebarLogoPreview} alt="MENÜ LOGO" style={{maxWidth: '100%', maxHeight: 100, objectFit: 'contain', padding: 8}}/>
+              ) : (
+                <div style={{textAlign: 'center', padding: 20}}>
+                  <LIcon name="Layout" size={28} color={C.textMuted}/>
+                  <div style={{fontSize: 11, color: C.textMuted, marginTop: 8}}>MENÜ LOGOSU YÜKLENMEMİŞ</div>
+                </div>
+              )}
+            </div>
+
+            <div style={{fontSize: 10, color: C.textMuted, marginBottom: 12}}>
+              KABUL EDİLEN FORMATLAR: PNG, JPG, SVG &middot; MAKSİMUM 2MB &middot; ÖNERİLEN: YATAY LOGO
+            </div>
+
+            <input type="file" ref={sidebarFileInputRef} accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+              style={{display: 'none'}} onChange={handleSidebarLogoSelect}/>
+
+            <div style={{display: 'flex', gap: 8}}>
+              <button style={{...S.btn, ...S.btnP, fontSize: 11, padding: '8px 16px', flex: 1}}
+                onClick={() => sidebarFileInputRef.current?.click()}>
+                <LIcon name="Upload" size={14} color="#fff"/> LOGO SEÇ
+              </button>
+              {sidebarLogoFile && (
+                <button style={{...S.btn, ...S.btnS, fontSize: 11, padding: '8px 16px', flex: 1,
+                  opacity: sidebarLogoUploading ? 0.7 : 1}}
+                  onClick={sidebarLogoYukle} disabled={sidebarLogoUploading}>
+                  <LIcon name="Save" size={14} color="#fff"/>
+                  {sidebarLogoUploading ? 'YÜKLENİYOR...' : 'LOGOYU YÜKLE'}
+                </button>
+              )}
+              {sidebarLogoPreview && (
+                <button style={{...S.btn, ...S.btnG, fontSize: 11, padding: '8px 16px',
+                  color: C.danger, borderColor: C.danger + '33'}}
+                  onClick={sidebarLogoKaldir}>
                   <LIcon name="Trash2" size={14} color={C.danger}/> KALDIR
                 </button>
               )}
