@@ -7,9 +7,9 @@ const MR = window.MR || (window.MR = {});
 // ═══ TOAST BİLDİRİM ═══
 MR.toast = (mesaj, tip = 'info') => {
   const isK = MR.tema === 'koyu';
-  const renk = tip === 'success' ? '#34d399' : tip === 'error' ? '#f87171' : tip === 'warning' ? '#fbbf24' : (MR.C?.accent || '#3b82f6');
+  const renk = tip === 'success' ? '#34d399' : tip === 'error' ? '#f87171' : tip === 'warning' ? '#fbbf24' : (MR.C?.accent || '#60a5fa');
   const bg = isK
-    ? (tip === 'success' ? 'rgba(59,130,246,.15)' : tip === 'error' ? 'rgba(248,113,113,.15)' : tip === 'warning' ? 'rgba(251,191,36,.15)' : 'rgba(59,130,246,.15)')
+    ? (tip === 'success' ? 'rgba(96,165,250,.15)' : tip === 'error' ? 'rgba(248,113,113,.15)' : tip === 'warning' ? 'rgba(251,191,36,.15)' : 'rgba(96,165,250,.15)')
     : (tip === 'success' ? 'rgba(37,99,235,.1)' : tip === 'error' ? 'rgba(220,38,38,.1)' : tip === 'warning' ? 'rgba(202,138,4,.1)' : 'rgba(37,99,235,.1)');
   const el = document.createElement('div');
   el.textContent = mesaj;
@@ -20,7 +20,7 @@ MR.toast = (mesaj, tip = 'info') => {
     padding:'14px 24px', borderRadius:'16px', fontSize:'13px', fontWeight:'700',
     fontFamily:'Manrope,sans-serif', letterSpacing:'0.3px', textTransform:'uppercase',
     boxShadow: isK
-      ? '8px 8px 24px rgba(0,0,0,.6), -4px -4px 16px rgba(59,130,246,.08), 0 0 12px '+renk+'20'
+      ? '8px 8px 24px rgba(10,20,60,.5), -4px -4px 16px rgba(96,165,250,.10), 0 0 12px '+renk+'20'
       : '6px 6px 20px rgba(0,0,0,.08), -4px -4px 12px rgba(255,255,255,.9), 0 0 8px '+renk+'15',
     maxWidth:'400px',
     backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)',
@@ -309,30 +309,30 @@ MR.api = {
 
 // ═══ TEMA SİSTEMİ - ROYAL BLUE + NEUMORPHİC 3D ═══
 
-/* ─── KOYU TEMA: DERİN LACİVERT 3D NEUMORPHİC ─── */
+/* ─── KOYU TEMA: CANLI KRALİYET MAVİSİ 3D NEUMORPHİC ─── */
 const KOYU_TEMA = {
-  /* Zemin renkleri — derin lacivert mavi */
-  bg: '#0d1526', bgCard: '#131f36', bgHover: '#1b2d4d', bgInput: '#101b30',
+  /* Zemin renkleri — canlı koyu mavi */
+  bg: '#1e3a7a', bgCard: '#24428a', bgHover: '#2d4e96', bgInput: '#1a3570',
   /* Kenar renkleri */
-  border: 'rgba(59,130,246,0.18)', borderLight: 'rgba(96,165,250,0.12)',
+  border: 'rgba(96,165,250,0.22)', borderLight: 'rgba(147,197,253,0.15)',
   /* Vurgu (Mavi) */
-  accent: '#3b82f6', accentLight: '#60a5fa',
-  accentGradient: 'linear-gradient(145deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%)',
+  accent: '#60a5fa', accentLight: '#93c5fd',
+  accentGradient: 'linear-gradient(145deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%)',
   /* Durum renkleri */
   success: '#34d399', warning: '#fbbf24', danger: '#f87171',
   purple: '#a78bfa', cyan: '#22d3ee', pink: '#f472b6', gold: '#fbbf24',
   /* Metin — beyaz / açık */
-  text: '#f0f4ff', textSec: '#c8d6e8', textMuted: '#7e93b5',
+  text: '#f0f4ff', textSec: '#d0ddf0', textMuted: '#94aed4',
   /* Header / Nav */
-  headerBg: 'rgba(13,21,38,0.94)', navBg: 'rgba(19,31,54,0.95)',
+  headerBg: 'rgba(30,58,122,0.95)', navBg: 'rgba(36,66,138,0.96)',
   /* 3D NEUMORPHIC GÖLGE SİSTEMİ - KOYU */
-  cardGlass: 'rgba(19,31,54,0.78)',
-  cardShadow: '8px 8px 20px rgba(0,0,0,.55), -6px -6px 16px rgba(59,130,246,.06), inset 0 1px 0 rgba(96,165,250,.08), inset 0 -1px 0 rgba(0,0,0,.2)',
+  cardGlass: 'rgba(36,66,138,0.80)',
+  cardShadow: '8px 8px 20px rgba(10,20,60,.45), -6px -6px 16px rgba(96,165,250,.08), inset 0 1px 0 rgba(147,197,253,.10), inset 0 -1px 0 rgba(10,20,60,.15)',
   cardBlur: 'blur(12px) saturate(1.4)',
-  statShadow: '6px 6px 16px rgba(0,0,0,.5), -4px -4px 12px rgba(59,130,246,.05), inset 0 1px 0 rgba(96,165,250,.06)',
-  inputShadow: 'inset 4px 4px 8px rgba(0,0,0,.5), inset -3px -3px 6px rgba(59,130,246,.04), 0 0 0 1px rgba(59,130,246,.06)',
-  btnShadow: '6px 6px 16px rgba(0,0,0,.5), -4px -4px 10px rgba(59,130,246,.12), 0 0 20px rgba(59,130,246,.15)',
-  bgGradient: 'linear-gradient(145deg, #091220 0%, #0d1526 30%, #101b30 60%, #0a1222 100%)'
+  statShadow: '6px 6px 16px rgba(10,20,60,.40), -4px -4px 12px rgba(96,165,250,.07), inset 0 1px 0 rgba(147,197,253,.08)',
+  inputShadow: 'inset 4px 4px 8px rgba(10,20,60,.40), inset -3px -3px 6px rgba(96,165,250,.06), 0 0 0 1px rgba(96,165,250,.08)',
+  btnShadow: '6px 6px 16px rgba(10,20,60,.40), -4px -4px 10px rgba(96,165,250,.15), 0 0 20px rgba(96,165,250,.18)',
+  bgGradient: 'linear-gradient(145deg, #162e6a 0%, #1e3a7a 30%, #1a3570 60%, #18306e 100%)'
 };
 
 /* ─── AÇIK TEMA: BEYAZ + MAVİ METİN NEUMORPHİC ─── */
@@ -422,7 +422,7 @@ MR._stilGuncelle = () => {
     background: isK ? `${C.accent}14` : `${C.accent}0a`,
     color: C.textSec, border: `1px solid ${C.borderLight}`,
     boxShadow: isK
-      ? `4px 4px 10px rgba(0,0,0,.35), -3px -3px 8px ${C.accent}08`
+      ? `4px 4px 10px rgba(10,20,60,.30), -3px -3px 8px ${C.accent}10`
       : `4px 4px 10px rgba(0,15,40,.06), -3px -3px 8px rgba(255,255,255,.6)`
   };
 
@@ -528,7 +528,7 @@ MR.S = {
   btnG: {
     background: `${MR.C.accent}14`, color: MR.C.textSec,
     border: `1px solid ${MR.C.borderLight}`,
-    boxShadow: `4px 4px 10px rgba(0,0,0,.3), -3px -3px 8px ${MR.C.accent}08`
+    boxShadow: `4px 4px 10px rgba(10,20,60,.25), -3px -3px 8px ${MR.C.accent}10`
   },
 
   /* BADGE */

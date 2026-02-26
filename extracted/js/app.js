@@ -175,7 +175,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
       position: 'sticky', top: 0, zIndex: 1000, gap: 0,
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
       boxShadow: isK
-        ? '0 4px 20px rgba(0,0,0,.4), 0 1px 0 rgba(59,130,246,.06)'
+        ? '0 4px 20px rgba(10,20,60,.35), 0 1px 0 rgba(96,165,250,.08)'
         : '0 4px 20px rgba(0,15,40,.06), 0 1px 0 rgba(255,255,255,.5)'
     }}>
       {/* SOL ÜST LOGO - ANASAYFAYA YÖNLENDİRİR */}
@@ -189,7 +189,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
           background: sidebarLogoUrl ? 'transparent' : `linear-gradient(145deg, ${C.accent}22, ${C.accent}0a)`,
           border: sidebarLogoUrl ? 'none' : `1px solid ${C.accent}22`,
           boxShadow: sidebarLogoUrl ? 'none' : (isK
-            ? '4px 4px 10px rgba(0,0,0,.3), -3px -3px 8px rgba(59,130,246,.06)'
+            ? '4px 4px 10px rgba(10,20,60,.25), -3px -3px 8px rgba(96,165,250,.08)'
             : '4px 4px 10px rgba(0,15,40,.06), -3px -3px 8px rgba(255,255,255,.5)')
         }}
         title="ANASAYFA"
@@ -229,7 +229,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                 background: isActive(m) ? `${C.accent}15` : 'transparent',
                 transition: 'all .2s', position: 'relative',
                 boxShadow: isActive(m)
-                  ? (isK ? 'inset 3px 3px 6px rgba(0,0,0,.3), inset -2px -2px 4px rgba(59,130,246,.06)' : 'inset 3px 3px 6px rgba(0,15,40,.06), inset -2px -2px 4px rgba(255,255,255,.5)')
+                  ? (isK ? 'inset 3px 3px 6px rgba(10,20,60,.25), inset -2px -2px 4px rgba(96,165,250,.08)' : 'inset 3px 3px 6px rgba(0,15,40,.06), inset -2px -2px 4px rgba(255,255,255,.5)')
                   : 'none'
               }}
               onMouseEnter={e => { if (!isActive(m)) { e.currentTarget.style.background = `${C.accent}08`; } }}
@@ -256,7 +256,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                 border: `1px solid ${C.border}`,
                 borderRadius: 16, padding: 8, minWidth: 220,
                 boxShadow: isK
-                  ? '10px 10px 30px rgba(0,0,0,.55), -6px -6px 18px rgba(59,130,246,.04)'
+                  ? '10px 10px 30px rgba(10,20,60,.40), -6px -6px 18px rgba(96,165,250,.06)'
                   : '10px 10px 30px rgba(0,15,40,.1), -6px -6px 18px rgba(255,255,255,.7)',
                 zIndex: 1001,
                 backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
@@ -272,7 +272,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                       background: page === s.id ? `${C.accent}12` : 'transparent',
                       transition: 'all .15s',
                       boxShadow: page === s.id
-                        ? (isK ? 'inset 3px 3px 6px rgba(0,0,0,.25), inset -2px -2px 4px rgba(59,130,246,.04)' : 'inset 3px 3px 6px rgba(0,15,40,.05), inset -2px -2px 4px rgba(255,255,255,.4)')
+                        ? (isK ? 'inset 3px 3px 6px rgba(10,20,60,.20), inset -2px -2px 4px rgba(96,165,250,.06)' : 'inset 3px 3px 6px rgba(0,15,40,.05), inset -2px -2px 4px rgba(255,255,255,.4)')
                         : 'none'
                     }}
                     onMouseEnter={e => e.currentTarget.style.background = `${C.accent}0c`}
@@ -303,7 +303,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
           border: `1px solid ${isK ? C.warning + '33' : C.purple + '33'}`,
           transition: 'all .2s',
           boxShadow: isK
-            ? '4px 4px 10px rgba(0,0,0,.35), -3px -3px 8px rgba(251,191,36,.04)'
+            ? '4px 4px 10px rgba(10,20,60,.30), -3px -3px 8px rgba(251,191,36,.06)'
             : '4px 4px 10px rgba(0,15,40,.06), -3px -3px 8px rgba(255,255,255,.5)'
         }} title={isK ? 'AÇIK TEMA' : 'KOYU TEMA'}>
           <LIcon name={isK ? 'Sun' : 'Moon'} size={19} color={isK ? C.warning : C.purple}/>
@@ -317,7 +317,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
             alignItems: 'center', justifyContent: 'center',
             background: `${C.accent}18`, overflow: 'hidden',
             boxShadow: isK
-              ? '4px 4px 10px rgba(0,0,0,.35), -3px -3px 8px rgba(59,130,246,.05)'
+              ? '4px 4px 10px rgba(10,20,60,.30), -3px -3px 8px rgba(96,165,250,.07)'
               : '4px 4px 10px rgba(0,15,40,.06), -3px -3px 8px rgba(255,255,255,.5)'
           }} title={user?.ad_soyad || 'PROFİL'}>
             {user?.avatar ? (
@@ -338,7 +338,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
               border: `1px solid ${C.border}`,
               borderRadius: 16, padding: 8, minWidth: 210,
               boxShadow: isK
-                ? '10px 10px 30px rgba(0,0,0,.55), -6px -6px 18px rgba(59,130,246,.04)'
+                ? '10px 10px 30px rgba(10,20,60,.40), -6px -6px 18px rgba(96,165,250,.06)'
                 : '10px 10px 30px rgba(0,15,40,.1), -6px -6px 18px rgba(255,255,255,.7)',
               zIndex: 1001,
               backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
@@ -347,7 +347,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                 {user?.avatar ? (
                   <img src={user.avatar} alt="" style={{width: 34, height: 34, borderRadius: 10, objectFit: 'cover', flexShrink: 0}}/>
                 ) : (
-                  <div style={{width: 34, height: 34, borderRadius: 10, background: `${C.accent}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: C.accent, flexShrink: 0, boxShadow: isK ? 'inset 2px 2px 4px rgba(0,0,0,.2)' : 'inset 2px 2px 4px rgba(0,0,0,.04)'}}>{(user?.ad_soyad || 'U')[0]}</div>
+                  <div style={{width: 34, height: 34, borderRadius: 10, background: `${C.accent}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: C.accent, flexShrink: 0, boxShadow: isK ? 'inset 2px 2px 4px rgba(10,20,60,.15)' : 'inset 2px 2px 4px rgba(0,0,0,.04)'}}>{(user?.ad_soyad || 'U')[0]}</div>
                 )}
                 <div>
                   <div style={{fontSize: 12, fontWeight: 600}}>{user?.ad_soyad}</div>

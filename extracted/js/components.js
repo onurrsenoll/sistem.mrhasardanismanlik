@@ -40,9 +40,9 @@ MR.Modal = ({open, onClose, title, width='66vw', children}) => {
   if (!open) return null;
   const isK = MR.tema === 'koyu';
   return (
-    <div style={{position:'fixed',inset:0,zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',background: isK ? 'rgba(0,0,0,.7)' : 'rgba(0,10,30,.25)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(8px)'}} onClick={onClose}>
-      <div style={{width,maxWidth:1000,maxHeight:'90vh',background: isK ? MR.C.bgCard : 'rgba(237,241,247,0.9)',borderRadius:22,border:`1px solid ${MR.C.border}`,overflow:'hidden',display:'flex',flexDirection:'column',boxShadow: isK ? '12px 12px 30px rgba(0,0,0,.6), -8px -8px 20px rgba(59,130,246,.06)' : '12px 12px 30px rgba(0,15,40,.12), -8px -8px 20px rgba(255,255,255,.8)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)'}} onClick={e=>e.stopPropagation()}>
-        <div style={{padding:'16px 20px',borderBottom:`1px solid ${MR.C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',background: isK ? 'rgba(59,130,246,0.04)' : 'rgba(37,99,235,0.03)'}}>
+    <div style={{position:'fixed',inset:0,zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',background: isK ? 'rgba(10,20,60,.65)' : 'rgba(0,10,30,.25)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(8px)'}} onClick={onClose}>
+      <div style={{width,maxWidth:1000,maxHeight:'90vh',background: isK ? MR.C.bgCard : 'rgba(237,241,247,0.9)',borderRadius:22,border:`1px solid ${MR.C.border}`,overflow:'hidden',display:'flex',flexDirection:'column',boxShadow: isK ? '12px 12px 30px rgba(10,20,60,.45), -8px -8px 20px rgba(96,165,250,.08)' : '12px 12px 30px rgba(0,15,40,.12), -8px -8px 20px rgba(255,255,255,.8)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)'}} onClick={e=>e.stopPropagation()}>
+        <div style={{padding:'16px 20px',borderBottom:`1px solid ${MR.C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',background: isK ? 'rgba(96,165,250,0.06)' : 'rgba(37,99,235,0.03)'}}>
           <span style={{fontSize:14,fontWeight:700}}>{title}</span>
           <MR.LIcon name="X" size={18} color={MR.C.textMuted} style={{cursor:'pointer'}} onClick={onClose}/>
         </div>
@@ -78,8 +78,8 @@ MR.Confirm = ({open, message, onConfirm, onCancel}) => {
   if (!open) return null;
   const isK = MR.tema === 'koyu';
   return (
-    <div style={{position:'fixed',inset:0,zIndex:10000,display:'flex',alignItems:'center',justifyContent:'center',background: isK ? 'rgba(0,0,0,.7)' : 'rgba(0,10,30,.25)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(8px)'}} onClick={onCancel}>
-      <div style={{width:420,background: isK ? MR.C.bgCard : 'rgba(237,241,247,0.92)',borderRadius:22,border:`1px solid ${MR.C.border}`,padding:32,boxShadow: isK ? '12px 12px 30px rgba(0,0,0,.6), -8px -8px 20px rgba(59,130,246,.06)' : '12px 12px 30px rgba(0,15,40,.12), -8px -8px 20px rgba(255,255,255,.8)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)'}} onClick={e=>e.stopPropagation()}>
+    <div style={{position:'fixed',inset:0,zIndex:10000,display:'flex',alignItems:'center',justifyContent:'center',background: isK ? 'rgba(10,20,60,.65)' : 'rgba(0,10,30,.25)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(8px)'}} onClick={onCancel}>
+      <div style={{width:420,background: isK ? MR.C.bgCard : 'rgba(237,241,247,0.92)',borderRadius:22,border:`1px solid ${MR.C.border}`,padding:32,boxShadow: isK ? '12px 12px 30px rgba(10,20,60,.45), -8px -8px 20px rgba(96,165,250,.08)' : '12px 12px 30px rgba(0,15,40,.12), -8px -8px 20px rgba(255,255,255,.8)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)'}} onClick={e=>e.stopPropagation()}>
         <div style={{fontSize:14,fontWeight:600,marginBottom:22,textAlign:'center'}}>{message}</div>
         <div style={{display:'flex',gap:12,justifyContent:'center'}}>
           <button style={{...MR.S.btn,...MR.S.btnG}} onClick={onCancel}>İPTAL</button>
@@ -117,7 +117,7 @@ MR.LoginScreen = ({onLogin}) => {
         borderRadius:26,
         border:`1px solid ${MR.C.border}`,
         boxShadow: isK
-          ? '16px 16px 40px rgba(0,0,0,.6), -10px -10px 30px rgba(59,130,246,.06), inset 0 1px 0 rgba(96,165,250,.08)'
+          ? '16px 16px 40px rgba(10,20,60,.45), -10px -10px 30px rgba(96,165,250,.08), inset 0 1px 0 rgba(147,197,253,.10)'
           : '16px 16px 40px rgba(0,15,40,.12), -10px -10px 30px rgba(255,255,255,.85), inset 0 1px 0 rgba(255,255,255,.6)',
         backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'
       }}>
@@ -128,7 +128,7 @@ MR.LoginScreen = ({onLogin}) => {
             display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 18px',
             fontSize:26,fontWeight:900,color:MR.C.accent,
             boxShadow: isK
-              ? '8px 8px 20px rgba(0,0,0,.4), -6px -6px 16px rgba(59,130,246,.08), 0 0 30px rgba(59,130,246,.15)'
+              ? '8px 8px 20px rgba(10,20,60,.30), -6px -6px 16px rgba(96,165,250,.10), 0 0 30px rgba(96,165,250,.18)'
               : '8px 8px 20px rgba(0,15,40,.08), -6px -6px 16px rgba(255,255,255,.7), 0 0 20px rgba(37,99,235,.08)',
             border: `1px solid ${MR.C.accent}22`
           }}>MR</div>
@@ -136,7 +136,7 @@ MR.LoginScreen = ({onLogin}) => {
           <div style={{fontSize:10,color:MR.C.textMuted,letterSpacing:4,marginTop:6}}>DOSYA TAKİP SİSTEMİ</div>
         </div>
         <form onSubmit={go}>
-          {error && <div style={{padding:'12px 16px',background:`${MR.C.danger}18`,border:`1px solid ${MR.C.danger}33`,borderRadius:14,marginBottom:18,fontSize:12,color:MR.C.danger,boxShadow: isK ? 'inset 3px 3px 6px rgba(0,0,0,.3)' : 'inset 3px 3px 6px rgba(0,0,0,.04)'}}>{error}</div>}
+          {error && <div style={{padding:'12px 16px',background:`${MR.C.danger}18`,border:`1px solid ${MR.C.danger}33`,borderRadius:14,marginBottom:18,fontSize:12,color:MR.C.danger,boxShadow: isK ? 'inset 3px 3px 6px rgba(10,20,60,.25)' : 'inset 3px 3px 6px rgba(0,0,0,.04)'}}>{error}</div>}
           <div style={{marginBottom:18}}>
             <label style={MR.S.label}>E-POSTA</label>
             <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="ADMIN@MRHASAR.COM" style={MR.S.input} autoFocus/>
