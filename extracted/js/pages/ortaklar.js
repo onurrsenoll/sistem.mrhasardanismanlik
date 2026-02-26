@@ -793,6 +793,13 @@ const IsPaydaslari = ({setPage, user}) => {
   /* CONFIRM */
   const [confirm, setConfirm] = useState({open:false, msg:'', cb:null});
 
+  /* KOMİSYON ÖDEME MODAL STATE */
+  const [komisyonOdeModal, setKomisyonOdeModal] = useState(false);
+  const [komisyonOdeItem, setKomisyonOdeItem] = useState(null);
+  const [komisyonOdeKasa, setKomisyonOdeKasa] = useState('');
+  const [komisyonOdeLoading, setKomisyonOdeLoading] = useState(false);
+  const [kasalarP, setKasalarP] = useState([]);
+
   /* TOPLU SİLME STATE */
   const [secililerP, setSecililerP] = useState([]);
   const [topluSilConfirmP, setTopluSilConfirmP] = useState(false);
@@ -830,6 +837,10 @@ const IsPaydaslari = ({setPage, user}) => {
   }, [offset, arama, durumF, turF]);
 
   useEffect(() => { yukle(); }, [yukle]);
+
+  useEffect(() => {
+    api.kasaList().then(r => { if (r?.success) setKasalarP((r.data || []).filter(k => k.aktif !== false && k.aktif !== 0)); });
+  }, []);
 
   /* ─── İSTATİSTİKLER ─── */
   const istatistik = useMemo(() => {
@@ -1323,7 +1334,7 @@ const IsPaydaslari = ({setPage, user}) => {
                   <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                     <thead>
                       <tr style={{background:`${C.gold}08`}}>
-                        {['TARİH','TUTAR','DURUM','DOSYA NO','AÇIKLAMA'].map(h =>
+                        {['TARİH','TUTAR','DURUM','DOSYA NO','AÇIKLAMA','İŞLEM'].map(h =>
                           <th key={h} style={{padding:'8px 12px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:10,borderBottom:`1px solid ${C.border}`}}>{h}</th>
                         )}
                       </tr>
@@ -1331,17 +1342,28 @@ const IsPaydaslari = ({setPage, user}) => {
                     <tbody>
                       {komisyonlar.map((k, i) => {
                         const tutar = parseFloat(k.tutar) || 0;
+                        const bekliyor = k.durum !== 'odendi';
                         return (
-                          <tr key={k.id || i} style={{borderBottom:`1px solid ${C.border}`}}
-                            onMouseEnter={e => e.currentTarget.style.background = `${C.bgCard}`}
-                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                          <tr key={k.id || i} style={{borderBottom:`1px solid ${C.border}`,background: bekliyor ? `${C.warning}06` : 'transparent'}}
+                            onMouseEnter={e => e.currentTarget.style.background = bekliyor ? `${C.warning}0a` : C.bgCard}
+                            onMouseLeave={e => e.currentTarget.style.background = bekliyor ? `${C.warning}06` : 'transparent'}>
                             <td style={{padding:'8px 12px',color:C.textSec}}>{k.tarih || k.created_at?.split(' ')[0] || '-'}</td>
                             <td style={{padding:'8px 12px',fontWeight:700,color:C.gold}}>{fmt(tutar)}</td>
                             <td style={{padding:'8px 12px'}}>
                               <Badge text={k.durum === 'odendi' ? 'ÖDENDİ' : 'BEKLİYOR'} color={k.durum === 'odendi' ? C.success : C.warning}/>
                             </td>
                             <td style={{padding:'8px 12px',color:C.accent,fontWeight:600}}>{k.dosya_id ? `#${k.dosya_id}` : '-'}</td>
-                            <td style={{padding:'8px 12px',color:C.textSec,maxWidth:250,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{k.aciklama || '-'}</td>
+                            <td style={{padding:'8px 12px',color:C.textSec,maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{k.aciklama || '-'}</td>
+                            <td style={{padding:'8px 12px'}}>
+                              {bekliyor ? (
+                                <span style={{cursor:'pointer',display:'inline-flex',padding:'4px 10px',borderRadius:6,background:`${C.success}18`,alignItems:'center',gap:4}}
+                                  onClick={() => { setKomisyonOdeItem(k); setKomisyonOdeKasa(''); setKomisyonOdeModal(true); }}>
+                                  <LIcon name="Wallet" size={11} color={C.success}/><span style={{fontSize:9,fontWeight:700,color:C.success}}>ÖDE</span>
+                                </span>
+                              ) : (
+                                <span style={{fontSize:9,color:C.textMuted}}>{k.odeme_tarihi || '-'}</span>
+                              )}
+                            </td>
                           </tr>
                         );
                       })}
@@ -1404,6 +1426,56 @@ const IsPaydaslari = ({setPage, user}) => {
             <LIcon name="Plus" size={14} color="#000"/> {komisyonKayitLoading ? 'KAYDEDİLİYOR...' : 'KOMİSYON EKLE'}
           </button>
         </div>
+      </Modal>
+
+      {/* KOMİSYON ÖDEME MODAL */}
+      <Modal open={komisyonOdeModal} onClose={() => setKomisyonOdeModal(false)} title="KOMİSYON ÖDEMESİ" width="420px">
+        {komisyonOdeItem && (
+          <div style={{display:'grid',gap:12}}>
+            <div style={{padding:12,background:`${C.gold}11`,borderRadius:8,border:`1px solid ${C.gold}33`}}>
+              <div style={{fontSize:10,color:C.textMuted,marginBottom:4}}>PAYDAŞ</div>
+              <div style={{fontSize:13,fontWeight:700,color:C.text}}>{seciliPaydas?.ad || ''}</div>
+              <div style={{fontSize:10,color:C.textSec,marginTop:4}}>{komisyonOdeItem.aciklama || ''}</div>
+            </div>
+            <div style={{padding:12,background:`${C.danger}11`,borderRadius:8,textAlign:'center'}}>
+              <div style={{fontSize:9,color:C.textMuted}}>ÖDENECEK TUTAR</div>
+              <div style={{fontSize:24,fontWeight:900,color:C.danger}}>{fmt(komisyonOdeItem.tutar)}</div>
+            </div>
+            <FormGroup label="KASA SEÇİNİZ *">
+              <select value={komisyonOdeKasa} onChange={e => setKomisyonOdeKasa(e.target.value)}
+                style={{...S.select,padding:'10px 12px',fontSize:12}}>
+                <option value="">KASA SEÇİNİZ</option>
+                {kasalarP.map(k =>
+                  <option key={k.id} value={k.id}>{k.ad} ({fmt(k.bakiye)})</option>
+                )}
+              </select>
+            </FormGroup>
+            <div style={{padding:8,background:`${C.warning}11`,borderRadius:6,fontSize:10,color:C.warning}}>
+              ÖDEME YAPILDIĞINDA TUTAR SEÇİLEN KASADAN DÜŞÜLECEK.
+              {komisyonOdeItem.masraf_id && ' DOSYA MASRAFINDA DA OTOMATİK ÖDENDİ OLARAK GÜNCELLENECEKTİR.'}
+            </div>
+            <button onClick={async () => {
+              if (!komisyonOdeKasa) return;
+              setKomisyonOdeLoading(true);
+              const r = await api.paydasKomisyonOde({id: komisyonOdeItem.id, kasa_id: parseInt(komisyonOdeKasa)});
+              setKomisyonOdeLoading(false);
+              if (r?.success) {
+                setKomisyonOdeModal(false);
+                setKomisyonOdeItem(null);
+                // KOMİSYONLARI YENİDEN YÜKLE
+                if (seciliPaydas) {
+                  const r2 = await api.paydasKomisyonList({paydas_id: seciliPaydas.id});
+                  if (r2?.success) setKomisyonlar(r2.data?.items || r2.data || []);
+                }
+                yukle();
+              }
+            }} disabled={komisyonOdeLoading || !komisyonOdeKasa}
+              style={{...S.btn,...S.btnS,justifyContent:'center',padding:12,width:'100%',fontSize:12}}>
+              <LIcon name="Wallet" size={14} color="#fff"/>
+              {komisyonOdeLoading ? 'ÖDENİYOR...' : 'ÖDEMEYİ ONAYLA'}
+            </button>
+          </div>
+        )}
       </Modal>
 
       {/* TOPLU SİL ONAY DİALOG */}

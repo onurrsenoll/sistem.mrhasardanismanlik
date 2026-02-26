@@ -2,7 +2,7 @@ const MR = window.MR || (window.MR = {});
 const {useState, useEffect} = React;
 
 const ASAMALAR = MR.ASAMALAR || [];
-const KAYNAKLAR = ['OFİS CRM','YÖNLENDİREN','SAHA PERSONEL'];
+const KAYNAKLAR = ['OFİS CRM','PAYDAŞ/YÖNLENDİREN'];
 
 const asamaRenk = (a) => {
   if (!a) return '#6b7280';
@@ -163,6 +163,12 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const [portalModal, setPortalModal] = useState({open:false, link:'', erisimKodu:'', tc:'', telefon:'', adSoyad:'', mevcut:false});
   const [previewEvrak, setPreviewEvrak] = useState(null);
 
+  // MASRAF ÖDEME MODAL STATE
+  const [masrafOdeModal, setMasrafOdeModal] = useState(false);
+  const [masrafOdeItem, setMasrafOdeItem] = useState(null);
+  const [masrafOdeKasa, setMasrafOdeKasa] = useState('');
+  const [masrafOdeLoading, setMasrafOdeLoading] = useState(false);
+
   // DOSYA KAPAT STATE
   const [kapatModal, setKapatModal] = useState(false);
   const [kapatForm, setKapatForm] = useState({
@@ -195,6 +201,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
     });
     api.paydasList({durum:'aktif', limit:200}).then(r => {
       if (r?.success) setPaydaslar(r.data?.items || r.data || []);
+    });
+    api.kasaList().then(r => {
+      if (r?.success) setKasalar((r.data || []).filter(k => k.aktif !== false && k.aktif !== 0));
     });
   }, []);
 
@@ -555,32 +564,57 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                 <thead>
                   <tr style={{background:C.bgHover}}>
-                    {['#','MASRAF KALEMİ','TUTAR','KASA','TARİH','KULLANICI','İŞLEM'].map(h =>
+                    {['#','MASRAF KALEMİ','TUTAR','DURUM','KASA','TARİH','KULLANICI','İŞLEM'].map(h =>
                       <th key={h} style={{padding:'8px 10px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
                     )}
                   </tr>
                 </thead>
                 <tbody>
-                  {dosya.masraflar.map((m, i) => (
-                    <tr key={i} style={{borderBottom:`1px solid ${C.border}22`}}>
-                      <td style={{padding:'8px 10px',color:C.textMuted,fontSize:10}}>{i+1}</td>
-                      <td style={{padding:'8px 10px',fontWeight:600,fontSize:11}}>{m.masraf_kalemi}</td>
-                      <td style={{padding:'8px 10px',fontWeight:700,color:C.danger,fontSize:11}}>{fmt(m.tutar)}</td>
-                      <td style={{padding:'8px 10px'}}><Badge text={m.kasa_adi || '-'} color={C.cyan}/></td>
-                      <td style={{padding:'8px 10px',color:C.textMuted,fontSize:10}}>{m.islem_tarihi}</td>
-                      <td style={{padding:'8px 10px',color:C.textSec,fontSize:10}}>{m.kullanici_adi || '-'}</td>
-                      <td style={{padding:'8px 10px'}}>
-                        <span style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.danger}11`,width:'fit-content'}}
-                          onClick={() => setDeleteConfirm({type:'masraf', id:m.id, text:m.masraf_kalemi})}>
-                          <LIcon name="Trash2" size={12} color={C.danger}/>
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {dosya.masraflar.map((m, i) => {
+                    const odenmedi = (m.odeme_durumu || 'odendi') === 'odenmedi';
+                    return (
+                      <tr key={i} style={{borderBottom:`1px solid ${C.border}22`, background: odenmedi ? `${C.warning}06` : 'transparent'}}>
+                        <td style={{padding:'8px 10px',color:C.textMuted,fontSize:10}}>{i+1}</td>
+                        <td style={{padding:'8px 10px',fontWeight:600,fontSize:11}}>{m.masraf_kalemi}</td>
+                        <td style={{padding:'8px 10px',fontWeight:700,color:C.danger,fontSize:11}}>{fmt(m.tutar)}</td>
+                        <td style={{padding:'8px 10px'}}>
+                          {odenmedi ? (
+                            <span style={{display:'inline-flex',alignItems:'center',gap:4,padding:'3px 10px',borderRadius:6,fontSize:9,fontWeight:700,
+                              background:`${C.warning}22`,color:C.warning,border:`1px solid ${C.warning}44`,cursor:'pointer'}}
+                              onClick={() => { setMasrafOdeItem(m); setMasrafOdeKasa(''); setMasrafOdeModal(true); }}>
+                              <LIcon name="Clock" size={10} color={C.warning}/> ÖDENMEDİ
+                            </span>
+                          ) : (
+                            <span style={{display:'inline-flex',alignItems:'center',gap:4,padding:'3px 10px',borderRadius:6,fontSize:9,fontWeight:700,
+                              background:`${C.success}22`,color:C.success,border:`1px solid ${C.success}44`}}>
+                              <LIcon name="Check" size={10} color={C.success}/> ÖDENDİ
+                            </span>
+                          )}
+                        </td>
+                        <td style={{padding:'8px 10px'}}><Badge text={m.kasa_adi || (odenmedi ? 'BEKLİYOR' : '-')} color={odenmedi ? C.warning : C.cyan}/></td>
+                        <td style={{padding:'8px 10px',color:C.textMuted,fontSize:10}}>{m.islem_tarihi}</td>
+                        <td style={{padding:'8px 10px',color:C.textSec,fontSize:10}}>{m.kullanici_adi || '-'}</td>
+                        <td style={{padding:'8px 10px'}}>
+                          <div style={{display:'flex',gap:4}}>
+                            {odenmedi && (
+                              <span style={{cursor:'pointer',display:'flex',padding:'3px 8px',borderRadius:4,background:`${C.success}18`,alignItems:'center',gap:3}}
+                                onClick={() => { setMasrafOdeItem(m); setMasrafOdeKasa(''); setMasrafOdeModal(true); }}>
+                                <LIcon name="Wallet" size={11} color={C.success}/><span style={{fontSize:9,fontWeight:700,color:C.success}}>ÖDE</span>
+                              </span>
+                            )}
+                            <span style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.danger}11`,width:'fit-content'}}
+                              onClick={() => setDeleteConfirm({type:'masraf', id:m.id, text:m.masraf_kalemi})}>
+                              <LIcon name="Trash2" size={12} color={C.danger}/>
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                   <tr style={{background:`${C.accent}06`}}>
                     <td colSpan={2} style={{padding:'10px 12px',fontWeight:800,textAlign:'right',fontSize:11}}>TOPLAM:</td>
                     <td style={{padding:'10px 12px',fontWeight:800,fontSize:13,color:C.danger}}>{fmt(dosya.toplam_masraf || 0)}</td>
-                    <td colSpan={4}/>
+                    <td colSpan={5}/>
                   </tr>
                 </tbody>
               </table>
@@ -1010,6 +1044,51 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
       {/* MODALLER */}
       <MR.MasrafEkle open={masrafM} onClose={() => setMasrafM(false)} dosyaId={dosya.id} onOk={load}/>
+
+      {/* MASRAF ÖDEME MODAL */}
+      <Modal open={masrafOdeModal} onClose={() => setMasrafOdeModal(false)} title="MASRAF ÖDEMESİ" width="420px">
+        {masrafOdeItem && (
+          <div style={{display:'grid',gap:12}}>
+            <div style={{padding:12,background:`${C.accent}11`,borderRadius:8,border:`1px solid ${C.accent}33`}}>
+              <div style={{fontSize:10,color:C.textMuted,marginBottom:4}}>MASRAF KALEMİ</div>
+              <div style={{fontSize:13,fontWeight:700,color:C.text}}>{masrafOdeItem.masraf_kalemi}</div>
+              <div style={{fontSize:10,color:C.textSec,marginTop:4}}>{masrafOdeItem.aciklama || ''}</div>
+            </div>
+            <div style={{padding:12,background:`${C.danger}11`,borderRadius:8,textAlign:'center'}}>
+              <div style={{fontSize:9,color:C.textMuted}}>ÖDENECEK TUTAR</div>
+              <div style={{fontSize:24,fontWeight:900,color:C.danger}}>{fmt(masrafOdeItem.tutar)}</div>
+            </div>
+            <FormGroup label="KASA SEÇİNİZ *">
+              <select value={masrafOdeKasa} onChange={e => setMasrafOdeKasa(e.target.value)}
+                style={{...S.select,padding:'10px 12px',fontSize:12}}>
+                <option value="">KASA SEÇİNİZ</option>
+                {kasalar.filter(k => k.aktif !== false && k.aktif !== 0).map(k =>
+                  <option key={k.id} value={k.id}>{k.ad} ({fmt(k.bakiye)})</option>
+                )}
+              </select>
+            </FormGroup>
+            <div style={{padding:8,background:`${C.warning}11`,borderRadius:6,fontSize:10,color:C.warning}}>
+              ÖDEME YAPILDIĞINDA TUTAR SEÇİLEN KASADAN DÜŞÜLECEK.
+              {masrafOdeItem.paydas_komisyon_id && ' PAYDAŞ CARİSİNDE DE OTOMATİK ÖDENDİ OLARAK GÜNCELLENECEKTİR.'}
+            </div>
+            <button onClick={async () => {
+              if (!masrafOdeKasa) return;
+              setMasrafOdeLoading(true);
+              const r = await api.masrafOde({id: masrafOdeItem.id, kasa_id: parseInt(masrafOdeKasa)});
+              setMasrafOdeLoading(false);
+              if (r?.success) {
+                setMasrafOdeModal(false);
+                setMasrafOdeItem(null);
+                load();
+              }
+            }} disabled={masrafOdeLoading || !masrafOdeKasa}
+              style={{...S.btn,...S.btnS,justifyContent:'center',padding:12,width:'100%',fontSize:12}}>
+              <LIcon name="Wallet" size={14} color="#fff"/>
+              {masrafOdeLoading ? 'ÖDENİYOR...' : 'ÖDEMEYİ ONAYLA'}
+            </button>
+          </div>
+        )}
+      </Modal>
 
       {/* EVRAK ÖNİZLEME MODAL (3:2 ORAN - ORTALI) */}
       {previewEvrak && (

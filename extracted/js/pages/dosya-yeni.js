@@ -39,7 +39,9 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     if (stepNum === sonAdim) {
       if (!form.sigorta_sirket) return 'SİGORTA ŞİRKETİ SEÇİMİ GEREKLİ';
       if (!form.hasar_no.trim()) return 'HASAR DOSYA NO GEREKLİ';
+      if (!form.sorumlu_id) return 'DOSYA SORUMLUSU SEÇİMİ GEREKLİ';
       if (!form.dosya_kaynak) return 'DOSYA KAYNAĞI SEÇİMİ GEREKLİ';
+      if (form.dosya_kaynak === 'PAYDAŞ/YÖNLENDİREN' && !form.paydas_id) return 'YÖNLENDİREN PAYDAŞ SEÇİMİ GEREKLİ';
     }
     return null;
   };
@@ -190,16 +192,10 @@ MR.DosyaYeniPage = ({setPage, user}) => {
         // BH falls through to default
       default: {
         const seciliOrtak = ortaklar.find(o => String(o.id) === String(form.ortak_id));
-        /* DOSYA KAYNAĞI'NA GÖRE PERSONEL FİLTRELE */
-        const isYonlendiren = form.dosya_kaynak === 'YÖNLENDİREN';
-        const filtreliPersonel = personeller.filter(p => {
-          if (!form.dosya_kaynak || isYonlendiren) return false;
-          if (form.dosya_kaynak === 'OFİS CRM') return (p.departman || '').toUpperCase() === 'OFİS';
-          if (form.dosya_kaynak === 'SAHA PERSONEL') return (p.departman || '').toUpperCase() === 'SAHA';
-          return false;
-        });
         const seciliSorumlu = personeller.find(p => String(p.id) === String(form.sorumlu_id));
+        const isPaydas = form.dosya_kaynak === 'PAYDAŞ/YÖNLENDİREN';
         const seciliPaydas = paydaslar.find(p => String(p.id) === String(form.paydas_id));
+        const paydasPrimTutar = seciliPaydas ? parseFloat(form.dosya_turu === 'BH' ? seciliPaydas.prim_bh : seciliPaydas.prim_adk) || 0 : 0;
         return (
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
             <FormGroup label="SİGORTA ŞİRKETİ">
@@ -210,29 +206,30 @@ MR.DosyaYeniPage = ({setPage, user}) => {
             <FormGroup label="HASAR DOSYA NO">
               <input style={S.input} value={form.hasar_no} onChange={e=>u('hasar_no',e.target.value)} placeholder="HASAR DOSYA NO GİRİNİZ"/>
             </FormGroup>
-            <FormGroup label="DOSYA KAYNAĞI">
-              <select style={S.select} value={form.dosya_kaynak} onChange={e=>{u('dosya_kaynak',e.target.value);u('sorumlu_id','');u('paydas_id','');}}>
-                <option value="">SEÇİNİZ</option>
-                <option value="OFİS CRM">OFİS CRM</option>
-                <option value="YÖNLENDİREN">YÖNLENDİREN</option>
-                <option value="SAHA PERSONEL">SAHA PERSONEL</option>
+
+            {/* 1. DOSYA SORUMLUSU - TÜM PERSONEL LİSTESİ */}
+            <FormGroup label="DOSYA SORUMLUSU *">
+              <select style={{...S.select,fontWeight:600}} value={form.sorumlu_id} onChange={e=>u('sorumlu_id',e.target.value)}>
+                <option value="">SORUMLU SEÇİNİZ</option>
+                {personeller.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.ad_soyad}{p.pozisyon ? ` - ${p.pozisyon}` : ''}{p.departman ? ` (${p.departman})` : ''}
+                  </option>
+                ))}
               </select>
             </FormGroup>
-            {/* DOSYA SORUMLUSU - OFİS CRM / SAHA PERSONEL İÇİN */}
-            {form.dosya_kaynak && !isYonlendiren && (
-              <FormGroup label="DOSYA SORUMLUSU">
-                <select style={{...S.select,fontWeight:600}} value={form.sorumlu_id} onChange={e=>u('sorumlu_id',e.target.value)}>
-                  <option value="">SORUMLU SEÇİNİZ</option>
-                  {filtreliPersonel.map(p => (
-                    <option key={p.id} value={p.id}>
-                      {p.ad_soyad}{p.pozisyon ? ` - ${p.pozisyon}` : ''}{p.departman ? ` (${p.departman})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </FormGroup>
-            )}
+
+            {/* 2. DOSYA KAYNAĞI */}
+            <FormGroup label="DOSYA KAYNAĞI *">
+              <select style={S.select} value={form.dosya_kaynak} onChange={e=>{u('dosya_kaynak',e.target.value);u('paydas_id','');}}>
+                <option value="">SEÇİNİZ</option>
+                <option value="OFİS CRM">OFİS CRM</option>
+                <option value="PAYDAŞ/YÖNLENDİREN">PAYDAŞ / YÖNLENDİREN</option>
+              </select>
+            </FormGroup>
+
             {/* SEÇİLİ SORUMLU BİLGİ KARTI */}
-            {seciliSorumlu && !isYonlendiren && (
+            {seciliSorumlu && (
               <div style={{gridColumn:'1 / -1',padding:14,background:`${C.accent}11`,borderRadius:10,border:`1px solid ${C.accent}33`,display:'flex',alignItems:'center',gap:16}}>
                 <div style={{width:44,height:44,borderRadius:10,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                   <LIcon name="UserCheck" size={20} color={C.accent}/>
@@ -243,30 +240,18 @@ MR.DosyaYeniPage = ({setPage, user}) => {
                     {seciliSorumlu.departman ? `${seciliSorumlu.departman}` : ''}{seciliSorumlu.pozisyon ? ` • ${seciliSorumlu.pozisyon}` : ''}
                   </div>
                 </div>
-                <div style={{textAlign:'center',padding:'8px 16px',background:`${C.accent}22`,borderRadius:8}}>
-                  <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>KAYNAK</div>
-                  <div style={{fontSize:12,fontWeight:800,color:C.accent}}>{form.dosya_kaynak}</div>
-                </div>
+                {(parseFloat(form.dosya_turu === 'BH' ? seciliSorumlu.prim_bh : seciliSorumlu.prim_adk) > 0) && (
+                  <div style={{textAlign:'center',padding:'8px 16px',background:`${C.success}22`,borderRadius:8}}>
+                    <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>{form.dosya_turu} PRİMİ (HAKEDİŞ)</div>
+                    <div style={{fontSize:18,fontWeight:900,color:C.success}}>₺{form.dosya_turu === 'BH' ? seciliSorumlu.prim_bh || 0 : seciliSorumlu.prim_adk || 0}</div>
+                  </div>
+                )}
               </div>
             )}
-            {seciliSorumlu && !isYonlendiren && (parseFloat(form.dosya_turu === 'BH' ? seciliSorumlu.prim_bh : seciliSorumlu.prim_adk) > 0) && (
-              <div style={{gridColumn:'1 / -1',padding:12,background:`${C.success}11`,borderRadius:10,border:`1px solid ${C.success}33`,display:'flex',alignItems:'center',gap:12}}>
-                <div style={{width:36,height:36,borderRadius:8,background:`${C.success}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                  <LIcon name="Banknote" size={18} color={C.success}/>
-                </div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:10,color:C.textMuted,fontWeight:600}}>OTOMATİK DOSYA PRİMİ</div>
-                  <div style={{fontSize:11,color:C.textSec,marginTop:2}}>DOSYA AÇILDIĞINDA <strong>{seciliSorumlu.ad_soyad}</strong> İÇİN OTOMATİK OLARAK MASRAF VE HAKEDİŞ KAYDEDİLECEKTİR</div>
-                </div>
-                <div style={{textAlign:'center',padding:'8px 16px',background:`${C.success}22`,borderRadius:8}}>
-                  <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>{form.dosya_turu} PRİMİ</div>
-                  <div style={{fontSize:20,fontWeight:900,color:C.success}}>₺{form.dosya_turu === 'BH' ? seciliSorumlu.prim_bh || 0 : seciliSorumlu.prim_adk || 0}</div>
-                </div>
-              </div>
-            )}
-            {/* YÖNLENDİREN SEÇİMİ - İŞ PAYDAŞLARI */}
-            {isYonlendiren && (
-              <FormGroup label="YÖNLENDİREN (İŞ PAYDAŞI)">
+
+            {/* 3. PAYDAŞ/YÖNLENDİREN SEÇİMİ */}
+            {isPaydas && (
+              <FormGroup label="YÖNLENDİREN (İŞ PAYDAŞI) *" full>
                 <select style={{...S.select,fontWeight:600}} value={form.paydas_id} onChange={e=>u('paydas_id',e.target.value)}>
                   <option value="">PAYDAŞ SEÇİNİZ</option>
                   {paydaslar.map(p => (
@@ -278,10 +263,10 @@ MR.DosyaYeniPage = ({setPage, user}) => {
               </FormGroup>
             )}
             {/* SEÇİLİ PAYDAŞ BİLGİ KARTI */}
-            {isYonlendiren && seciliPaydas && (
-              <div style={{gridColumn:'1 / -1',padding:14,background:`${C.gold}11`,borderRadius:10,border:`1px solid ${C.gold}33`,display:'flex',alignItems:'center',gap:16}}>
-                <div style={{width:44,height:44,borderRadius:10,background:`${C.gold}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                  <LIcon name="Users" size={20} color={C.gold}/>
+            {isPaydas && seciliPaydas && (
+              <div style={{gridColumn:'1 / -1',padding:14,background:`${C.gold || C.warning}11`,borderRadius:10,border:`1px solid ${C.gold || C.warning}33`,display:'flex',alignItems:'center',gap:16}}>
+                <div style={{width:44,height:44,borderRadius:10,background:`${C.gold || C.warning}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  <LIcon name="Users" size={20} color={C.gold || C.warning}/>
                 </div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:13,fontWeight:800,color:C.text}}>{seciliPaydas.ad}</div>
@@ -289,27 +274,29 @@ MR.DosyaYeniPage = ({setPage, user}) => {
                     {seciliPaydas.yetkili ? `${seciliPaydas.yetkili}` : ''}{seciliPaydas.telefon ? ` • ${seciliPaydas.telefon}` : ''}{seciliPaydas.tur ? ` • ${seciliPaydas.tur}` : ''}
                   </div>
                 </div>
-                <div style={{textAlign:'center',padding:'8px 16px',background:`${C.gold}22`,borderRadius:8}}>
-                  <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>{form.dosya_turu} PRİMİ</div>
-                  <div style={{fontSize:22,fontWeight:900,color:C.gold}}>₺{form.dosya_turu === 'BH' ? seciliPaydas.prim_bh || 0 : seciliPaydas.prim_adk || 0}</div>
+                <div style={{textAlign:'center',padding:'8px 16px',background:`${C.gold || C.warning}22`,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>{form.dosya_turu} DOSYA BAŞI ÜCRETİ</div>
+                  <div style={{fontSize:22,fontWeight:900,color:C.gold || C.warning}}>₺{paydasPrimTutar}</div>
                 </div>
               </div>
             )}
-            {isYonlendiren && seciliPaydas && (parseFloat(form.dosya_turu === 'BH' ? seciliPaydas.prim_bh : seciliPaydas.prim_adk) > 0) && (
+            {/* OTOMATİK İŞLEM BİLGİ KARTI */}
+            {isPaydas && seciliPaydas && paydasPrimTutar > 0 && (
               <div style={{gridColumn:'1 / -1',padding:12,background:`${C.success}11`,borderRadius:10,border:`1px solid ${C.success}33`,display:'flex',alignItems:'center',gap:12}}>
                 <div style={{width:36,height:36,borderRadius:8,background:`${C.success}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                   <LIcon name="Banknote" size={18} color={C.success}/>
                 </div>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:10,color:C.textMuted,fontWeight:600}}>OTOMATİK DOSYA PRİMİ</div>
-                  <div style={{fontSize:11,color:C.textSec,marginTop:2}}>DOSYA AÇILDIĞINDA <strong>{seciliPaydas.ad}</strong> İÇİN OTOMATİK OLARAK MASRAF VE KOMİSYON KAYDEDİLECEKTİR</div>
-                </div>
-                <div style={{textAlign:'center',padding:'8px 16px',background:`${C.success}22`,borderRadius:8}}>
-                  <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>{form.dosya_turu} PRİMİ</div>
-                  <div style={{fontSize:20,fontWeight:900,color:C.success}}>₺{form.dosya_turu === 'BH' ? seciliPaydas.prim_bh || 0 : seciliPaydas.prim_adk || 0}</div>
+                  <div style={{fontSize:10,color:C.textMuted,fontWeight:600}}>OTOMATİK İŞLEMLER</div>
+                  <div style={{fontSize:11,color:C.textSec,marginTop:2}}>
+                    DOSYA AÇILDIĞINDA <strong>{seciliPaydas.ad}</strong> İÇİN:<br/>
+                    • CARİSİNE <strong>₺{paydasPrimTutar}</strong> ALACAK OLARAK YAZILACAK (ÖDENMEDİ)<br/>
+                    • DOSYA MASRAFLARINA <strong>YÖNLENDİREN ÜCRETİ</strong> OLARAK EKLENECEK (ÖDENMEDİ)
+                  </div>
                 </div>
               </div>
             )}
+
             {/* AVUKAT SEÇİMİ */}
             <FormGroup label="AVUKAT (İŞ ORTAĞI)" full>
               <select style={{...S.select,fontWeight:600}} value={form.ortak_id} onChange={e=>u('ortak_id',e.target.value)}>

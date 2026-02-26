@@ -74,6 +74,7 @@ MR.api = {
   masrafCreate(d) { return this.req('/masraf/create.php', { method: 'POST', body: JSON.stringify(d) }); },
   masrafList(p = {}) { return this.req('/masraf/list.php?' + new URLSearchParams(p)); },
   masrafDelete(id) { return this.req('/masraf/delete.php?id=' + id, { method: 'DELETE' }); },
+  masrafOde(d) { return this.req('/masraf/ode.php', { method: 'PUT', body: JSON.stringify(d) }); },
   // EVRAK
   async evrakUpload(did, tur, file) {
     try {
@@ -183,6 +184,7 @@ MR.api = {
   paydasBulkDelete(ids) { return this.req('/paydas/bulk-delete.php', { method: 'POST', body: JSON.stringify({ids}) }); },
   paydasKomisyonList(p = {}) { return this.req('/paydas/komisyon-list.php?' + new URLSearchParams(p)); },
   paydasKomisyonEkle(d) { return this.req('/paydas/komisyon-ekle.php', { method: 'POST', body: JSON.stringify(d) }); },
+  paydasKomisyonOde(d) { return this.req('/paydas/komisyon-ode.php', { method: 'PUT', body: JSON.stringify(d) }); },
   // MUHASEBE (YENİ)
   gelirList(p = {}) { return this.req('/muhasebe/gelir-list.php?' + new URLSearchParams(p)); },
   gelirCreate(d) { return this.req('/muhasebe/gelir-create.php', { method: 'POST', body: JSON.stringify(d) }); },

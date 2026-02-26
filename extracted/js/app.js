@@ -25,6 +25,9 @@ const MENU = [
   {id:'paydaslar', label:'PAYDAŞLAR', icon:'Handshake', sub:[
     {id:'ortaklar-ortaklar', label:'İŞ ORTAKLARI', icon:'Briefcase'},
     {id:'ortaklar-paydaslar', label:'İŞ PAYDAŞLARI', icon:'Network'},
+    {id:'personel-liste', label:'PERSONEL LİSTESİ', icon:'Users'},
+    {id:'personel-yeni', label:'YENİ PERSONEL', icon:'UserPlus'},
+    {id:'personel-hakedis', label:'HAKEDİŞ TAKİBİ', icon:'Calculator'},
     {id:'servis-liste', label:'SERVİS LİSTESİ', icon:'Wrench'},
     {id:'servis-yeni', label:'YENİ SERVİS', icon:'Plus'},
     {id:'servis-rapor', label:'SERVİS RAPORLARI', icon:'BarChart3'}
@@ -43,10 +46,7 @@ const MENU = [
     {id:'muhasebe-komisyon', label:'KOMİSYON / PRİM', icon:'Percent'},
     {id:'muhasebe-kasa', label:'KASA / BANKA', icon:'Wallet'},
     {id:'muhasebe-maliyet', label:'MALİYET ANALİZİ', icon:'PieChart'},
-    {id:'muhasebe-rapor', label:'FİNANSAL RAPORLAR', icon:'BarChart3'},
-    {id:'personel-liste', label:'PERSONEL LİSTESİ', icon:'Users'},
-    {id:'personel-yeni', label:'YENİ PERSONEL', icon:'UserPlus'},
-    {id:'personel-hakedis', label:'HAKEDİŞ TAKİBİ', icon:'Calculator'}
+    {id:'muhasebe-rapor', label:'FİNANSAL RAPORLAR', icon:'BarChart3'}
   ]},
   {id:'ajanda', label:'AJANDA', icon:'CalendarDays'},
   {id:'sistem', label:'SİSTEM', icon:'Shield', sub:[

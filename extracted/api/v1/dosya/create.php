@@ -125,46 +125,41 @@ try {
     $primField = ($dosyaTuru === 'BH') ? 'prim_bh' : 'prim_adk';
     $otoPrimBilgi = [];
 
-    // 5a. PERSONEL (SORUMLU) PRİMİ - OFİS CRM veya SAHA PERSONEL kaynağında
+    // masraflar tablosunda odeme_durumu sütunu yoksa ekle
+    try {
+        $db->exec("ALTER TABLE masraflar ADD COLUMN IF NOT EXISTS odeme_durumu VARCHAR(20) DEFAULT 'odendi'");
+        $db->exec("ALTER TABLE masraflar ADD COLUMN IF NOT EXISTS paydas_komisyon_id INT DEFAULT NULL");
+    } catch (\Exception $e) {}
+
+    // paydas_komisyonlari tablosunda masraf_id sütunu yoksa ekle
+    try {
+        $db->exec("ALTER TABLE paydas_komisyonlari ADD COLUMN IF NOT EXISTS masraf_id INT DEFAULT NULL");
+    } catch (\Exception $e) {}
+
+    // 5a. PERSONEL (SORUMLU) PRİMİ — SADECE HAKEDİŞ İÇİN SAYILIR, MASRAF YAZILMAZ
+    // Personel primi aylık hak ediş hesaplamasında otomatik olarak
+    // dosya_sayisi × prim_adk/prim_bh şeklinde hesaplanır.
     $sorumluId = !empty($body['sorumlu_id']) ? (int)$body['sorumlu_id'] : null;
     if ($sorumluId) {
-        $stmtP = $db->prepare('SELECT id, ad_soyad, prim_adk, prim_bh, user_id FROM personel WHERE user_id = ? OR id = ?');
+        $stmtP = $db->prepare('SELECT id, ad_soyad, prim_adk, prim_bh FROM personel WHERE user_id = ? OR id = ?');
         $stmtP->execute([$sorumluId, $sorumluId]);
         $sorumluPersonel = $stmtP->fetch();
         if (!$sorumluPersonel) {
-            // user_id ile dene
-            $stmtP2 = $db->prepare('SELECT id, ad_soyad, prim_adk, prim_bh, user_id FROM personel WHERE user_id = ?');
+            $stmtP2 = $db->prepare('SELECT id, ad_soyad, prim_adk, prim_bh FROM personel WHERE user_id = ?');
             $stmtP2->execute([$sorumluId]);
             $sorumluPersonel = $stmtP2->fetch();
         }
         if ($sorumluPersonel) {
             $primTutar = (float)($sorumluPersonel[$primField] ?? 0);
             if ($primTutar > 0) {
-                // Varsayılan kasa (id=1)
-                $kasaId = 1;
-                // Kasa bakiye kontrolü
-                $stmtKasa = $db->prepare('SELECT id, bakiye FROM kasalar WHERE id = ? AND aktif = 1');
-                $stmtKasa->execute([$kasaId]);
-                $kasa = $stmtKasa->fetch();
-                if ($kasa && $kasa['bakiye'] >= $primTutar) {
-                    // MASRAF OLARAK DOSYAYA EKLE
-                    $stmtMasraf = $db->prepare('INSERT INTO masraflar (dosya_id, masraf_kalemi, tutar, kasa_id, aciklama, islem_tarihi, kullanici_id) VALUES (?, ?, ?, ?, ?, CURDATE(), ?)');
-                    $stmtMasraf->execute([
-                        $dosyaId,
-                        'DOSYA PRİM ÖDEMESİ',
-                        $primTutar,
-                        $kasaId,
-                        'PERSONEL PRİMİ: ' . $sorumluPersonel['ad_soyad'] . ' (' . $dosyaTuru . ' - OTOMATİK)',
-                        $user['id']
-                    ]);
-                    $otoPrimBilgi['personel_prim'] = $primTutar;
-                    $otoPrimBilgi['personel_adi'] = $sorumluPersonel['ad_soyad'];
-                }
+                $otoPrimBilgi['personel_prim'] = $primTutar;
+                $otoPrimBilgi['personel_adi'] = $sorumluPersonel['ad_soyad'];
+                $otoPrimBilgi['personel_bilgi'] = 'HAKEDİŞE YAZILACAK (AYLIK HESAPLAMA)';
             }
         }
     }
 
-    // 5b. PAYDAŞ (YÖNLENDİREN) PRİMİ
+    // 5b. PAYDAŞ (YÖNLENDİREN) PRİMİ — MASRAF + CARİ OTOMATİK (ÖDENMEDİ)
     $paydasId = !empty($body['paydas_id']) ? (int)$body['paydas_id'] : null;
     if ($paydasId) {
         $stmtPd = $db->prepare('SELECT id, ad, prim_adk, prim_bh FROM paydaslar WHERE id = ?');
@@ -173,34 +168,40 @@ try {
         if ($paydas) {
             $primTutarP = (float)($paydas[$primField] ?? 0);
             if ($primTutarP > 0) {
-                $kasaId = 1;
-                $stmtKasa2 = $db->prepare('SELECT id, bakiye FROM kasalar WHERE id = ? AND aktif = 1');
-                $stmtKasa2->execute([$kasaId]);
-                $kasa2 = $stmtKasa2->fetch();
-                if ($kasa2 && $kasa2['bakiye'] >= $primTutarP) {
-                    // MASRAF OLARAK DOSYAYA EKLE
-                    $stmtMasraf2 = $db->prepare('INSERT INTO masraflar (dosya_id, masraf_kalemi, tutar, kasa_id, aciklama, islem_tarihi, kullanici_id) VALUES (?, ?, ?, ?, ?, CURDATE(), ?)');
-                    $stmtMasraf2->execute([
-                        $dosyaId,
-                        'YÖNLENDİREN ÜCRETİ',
-                        $primTutarP,
-                        $kasaId,
-                        'PAYDAŞ PRİMİ: ' . $paydas['ad'] . ' (' . $dosyaTuru . ' - OTOMATİK)',
-                        $user['id']
-                    ]);
-                    // KOMİSYON OLARAK PAYDAŞ HESABINA İŞLE
-                    $stmtKom = $db->prepare('INSERT INTO paydas_komisyonlar (paydas_id, tutar, dosya_id, durum, tarih, aciklama, created_by) VALUES (?, ?, ?, ?, CURDATE(), ?, ?)');
-                    $stmtKom->execute([
-                        $paydasId,
-                        $primTutarP,
-                        $dosyaId,
-                        'bekliyor',
-                        'OTOMATİK DOSYA PRİMİ: ' . $dosyaNo . ' (' . $dosyaTuru . ')',
-                        $user['id']
-                    ]);
-                    $otoPrimBilgi['paydas_prim'] = $primTutarP;
-                    $otoPrimBilgi['paydas_adi'] = $paydas['ad'];
-                }
+                // MASRAF OLARAK DOSYAYA EKLE — ÖDENMEDİ DURUMUNDA (KASADAN DÜŞMEZ)
+                $stmtMasraf2 = $db->prepare('INSERT INTO masraflar (dosya_id, masraf_kalemi, tutar, kasa_id, aciklama, islem_tarihi, kullanici_id, odeme_durumu) VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?)');
+                $stmtMasraf2->execute([
+                    $dosyaId,
+                    'YÖNLENDİREN ÜCRETİ',
+                    $primTutarP,
+                    null, // kasa_id null — henüz ödenmedi
+                    'PAYDAŞ PRİMİ: ' . $paydas['ad'] . ' (' . $dosyaTuru . ' - OTOMATİK)',
+                    $user['id'],
+                    'odenmedi'
+                ]);
+                $masrafId = (int)$db->lastInsertId();
+
+                // KOMİSYON OLARAK PAYDAŞ CARİSİNE İŞLE (BEKLİYOR)
+                $stmtKom = $db->prepare('INSERT INTO paydas_komisyonlari (paydas_id, tutar, dosya_id, durum, tarih, aciklama, created_by, masraf_id) VALUES (?, ?, ?, ?, CURDATE(), ?, ?, ?)');
+                $stmtKom->execute([
+                    $paydasId,
+                    $primTutarP,
+                    $dosyaId,
+                    'bekliyor',
+                    'OTOMATİK DOSYA PRİMİ: ' . $dosyaNo . ' (' . $dosyaTuru . ')',
+                    $user['id'],
+                    $masrafId
+                ]);
+                $komisyonId = (int)$db->lastInsertId();
+
+                // MASRAFA KOMİSYON ID'Sİ YAZILIR (ÇİFT YÖNLÜ BAĞLANTI)
+                $db->prepare('UPDATE masraflar SET paydas_komisyon_id = ? WHERE id = ?')->execute([$komisyonId, $masrafId]);
+
+                $otoPrimBilgi['paydas_prim'] = $primTutarP;
+                $otoPrimBilgi['paydas_adi'] = $paydas['ad'];
+                $otoPrimBilgi['masraf_id'] = $masrafId;
+                $otoPrimBilgi['komisyon_id'] = $komisyonId;
+                $otoPrimBilgi['durum'] = 'ÖDENMEDİ';
             }
         }
     }
@@ -303,10 +304,10 @@ try {
 
     $mesaj = 'Dosya başarıyla oluşturuldu';
     if (!empty($otoPrimBilgi['personel_prim'])) {
-        $mesaj .= ' | PERSONEL PRİMİ: ₺' . number_format($otoPrimBilgi['personel_prim'], 2, ',', '.') . ' OTOMATİK EKLENDİ';
+        $mesaj .= ' | PERSONEL PRİMİ: ₺' . number_format($otoPrimBilgi['personel_prim'], 2, ',', '.') . ' HAKEDİŞE YAZILDI';
     }
     if (!empty($otoPrimBilgi['paydas_prim'])) {
-        $mesaj .= ' | PAYDAŞ PRİMİ: ₺' . number_format($otoPrimBilgi['paydas_prim'], 2, ',', '.') . ' OTOMATİK EKLENDİ';
+        $mesaj .= ' | PAYDAŞ PRİMİ: ₺' . number_format($otoPrimBilgi['paydas_prim'], 2, ',', '.') . ' OTOMATİK EKLENDİ (ÖDENMEDİ)';
     }
     if ($portalBilgi) {
         $mesaj .= ' | PORTAL ERİŞİMİ OTOMATİK OLUŞTURULDU';

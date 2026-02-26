@@ -22,15 +22,28 @@ $masraf = $stmt->fetch();
 if (!$masraf) json_error('Masraf bulunamadı', 404);
 
 try {
+    $db->beginTransaction();
+
+    // Bağlı paydaş komisyonu varsa onu da sil
+    $paydasKomisyonId = $masraf['paydas_komisyon_id'] ?? null;
+    if ($paydasKomisyonId) {
+        try {
+            $db->prepare('DELETE FROM paydas_komisyonlari WHERE id = ?')->execute([$paydasKomisyonId]);
+        } catch (\Exception $e) {}
+    }
+
     $db->exec("SET FOREIGN_KEY_CHECKS = 0");
     $stmt = $db->prepare('DELETE FROM masraflar WHERE id = ?');
     $stmt->execute([$id]);
     $db->exec("SET FOREIGN_KEY_CHECKS = 1");
+
+    $db->commit();
 } catch (Exception $e) {
+    $db->rollBack();
     $db->exec("SET FOREIGN_KEY_CHECKS = 1");
     json_error('Silme hatası: ' . $e->getMessage(), 500);
 }
 
 log_action($user['id'], 'masraf_sil', "{$masraf['dosya_no']} - {$masraf['masraf_kalemi']}: " . number_format($masraf['tutar'], 2) . " ₺", 'masraflar', $id);
 
-json_success(null, 'Masraf silindi, kasa bakiyesi güncellendi');
+json_success(null, 'Masraf silindi');
