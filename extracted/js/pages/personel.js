@@ -206,8 +206,8 @@ const PersonelListesi = ({setPage, user}) => {
 
   const ef = (key, val) => setEditForm(p => ({...p, [key]: val}));
 
-  const thS = {padding:'8px 6px',textAlign:'left',fontWeight:600,fontSize:9,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color:C.textMuted,position:'sticky',top:0,background:C.bgCard,zIndex:1};
-  const tdS = {padding:'6px 6px',fontSize:10,whiteSpace:'nowrap',borderBottom:`1px solid ${C.border}22`};
+  const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:11,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted,position:'sticky',top:0,background:C.bgCard,zIndex:1,letterSpacing:0.3};
+  const tdS = {padding:'8px 8px',fontSize:12,fontWeight:600,whiteSpace:'nowrap',borderBottom:`1px solid ${C.border}`,color: MR.tema==='koyu' ? '#e0e7ff' : C.text};
 
   return (
     <div>
@@ -700,8 +700,8 @@ const HakedisTakibi = ({setPage, user}) => {
     return d;
   };
 
-  const thS = {padding:'8px 6px',textAlign:'left',fontWeight:600,fontSize:9,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color:C.textMuted,position:'sticky',top:0,background:C.bgCard,zIndex:1};
-  const tdS = {padding:'6px 6px',fontSize:10,whiteSpace:'nowrap',borderBottom:`1px solid ${C.border}22`};
+  const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:11,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted,position:'sticky',top:0,background:C.bgCard,zIndex:1,letterSpacing:0.3};
+  const tdS = {padding:'8px 8px',fontSize:12,fontWeight:600,whiteSpace:'nowrap',borderBottom:`1px solid ${C.border}`,color: MR.tema==='koyu' ? '#e0e7ff' : C.text};
 
   return (
     <div>

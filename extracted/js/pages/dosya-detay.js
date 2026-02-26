@@ -368,7 +368,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
   // Bilgi satır bileşeni
   const InfoRow = ({label, value, mono, bold, color}) => (
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderBottom:`1px solid ${C.border}22`}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderBottom:`1px solid ${C.border}`}}>
       <span style={{fontSize:10,color:C.textMuted,fontWeight:500,minWidth:90}}>{label}</span>
       <span style={{fontSize:11,fontWeight:bold?700:500,color:color||C.text,fontFamily:mono?'monospace':'inherit',textAlign:'right',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{value || '-'}</span>
     </div>
@@ -896,7 +896,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
           const hesapRow = (label, val, opts={}) => (
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',
-              borderBottom:opts.border?`2px solid ${C.border}`:`1px solid ${C.border}22`}}>
+              borderBottom:opts.border?`2px solid ${C.border}`:`1px solid ${C.border}`}}>
               <span style={{fontSize:11,fontWeight:opts.bold?800:500,color:opts.color||C.text}}>{label}</span>
               <span style={{fontSize:opts.big?16:12,fontWeight:opts.bold?800:600,color:opts.color||C.text,fontFamily:'monospace'}}>
                 {fmt(val)}

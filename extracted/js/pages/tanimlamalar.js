@@ -63,8 +63,8 @@ const ORNEK_VERILER = {
 };
 
 /* ─── ORTAK STİLLER ─── */
-const TH_STYLE = {padding:'10px 14px', fontSize:11, fontWeight:700, color:MR.C.textMuted, textAlign:'left', borderBottom:`1px solid ${MR.C.border}`, letterSpacing:0.5, background:'rgba(37,99,235,0.03)'};
-const TD_STYLE = {padding:'10px 14px', fontSize:12, color:MR.C.text, borderBottom:`1px solid ${MR.C.border}22`};
+const TH_STYLE = {padding:'12px 14px', fontSize:13, fontWeight:800, color: MR.tema==='koyu' ? '#e0e7ff' : MR.C.textMuted, textAlign:'left', borderBottom:`2px solid ${MR.C.border}`, letterSpacing:0.5, background: MR.tema==='koyu' ? 'rgba(99,102,241,0.08)' : 'rgba(79,70,229,0.04)'};
+const TD_STYLE = {padding:'12px 14px', fontSize:13, fontWeight:600, color: MR.tema==='koyu' ? '#e0e7ff' : MR.C.text, borderBottom:`1px solid ${MR.C.border}`};
 const BTN_KUCUK = {padding:'5px 8px', borderRadius:6, border:'none', cursor:'pointer', display:'inline-flex', alignItems:'center', gap:4, transition:'all .2s'};
 
 
@@ -333,7 +333,7 @@ const TanimGrubu = ({kategoriler, user}) => {
         />
 
         {/* ── ARAMA BARI ── */}
-        <div style={{padding:'12px 20px', borderBottom:`1px solid ${C.border}22`}}>
+        <div style={{padding:'12px 20px', borderBottom:`1px solid ${C.border}`}}>
           <div style={{position:'relative'}}>
             <LIcon name="Search" size={14} color={C.textMuted} style={{position:'absolute', left:12, top:11}}/>
             <input value={arama} onChange={e => setArama(e.target.value)}
@@ -800,7 +800,7 @@ const SablonYonetimi = ({user}) => {
         />
 
         {/* ARAMA */}
-        <div style={{padding:'12px 20px', borderBottom:`1px solid ${C.border}22`}}>
+        <div style={{padding:'12px 20px', borderBottom:`1px solid ${C.border}`}}>
           <div style={{position:'relative'}}>
             <LIcon name="Search" size={14} color={C.textMuted} style={{position:'absolute', left:12, top:11}}/>
             <input value={arama} onChange={e => setArama(e.target.value)}

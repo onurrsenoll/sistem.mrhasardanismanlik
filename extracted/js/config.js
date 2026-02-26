@@ -7,20 +7,20 @@ const MR = window.MR || (window.MR = {});
 // ═══ TOAST BİLDİRİM ═══
 MR.toast = (mesaj, tip = 'info') => {
   const isK = MR.tema === 'koyu';
-  const renk = tip === 'success' ? '#34d399' : tip === 'error' ? '#f87171' : tip === 'warning' ? '#fbbf24' : (MR.C?.accent || '#60a5fa');
+  const renk = tip === 'success' ? '#34d399' : tip === 'error' ? '#f87171' : tip === 'warning' ? '#fbbf24' : (MR.C?.accent || '#818cf8');
   const bg = isK
-    ? (tip === 'success' ? 'rgba(96,165,250,.15)' : tip === 'error' ? 'rgba(248,113,113,.15)' : tip === 'warning' ? 'rgba(251,191,36,.15)' : 'rgba(96,165,250,.15)')
-    : (tip === 'success' ? 'rgba(37,99,235,.1)' : tip === 'error' ? 'rgba(220,38,38,.1)' : tip === 'warning' ? 'rgba(202,138,4,.1)' : 'rgba(37,99,235,.1)');
+    ? (tip === 'success' ? 'rgba(165,180,252,.15)' : tip === 'error' ? 'rgba(248,113,113,.15)' : tip === 'warning' ? 'rgba(251,191,36,.15)' : 'rgba(165,180,252,.15)')
+    : (tip === 'success' ? 'rgba(79,70,229,.08)' : tip === 'error' ? 'rgba(220,38,38,.08)' : tip === 'warning' ? 'rgba(202,138,4,.08)' : 'rgba(79,70,229,.08)');
   const el = document.createElement('div');
   el.textContent = mesaj;
   Object.assign(el.style, {
     position:'fixed', top:'20px', right:'20px', zIndex:'99999',
     background: isK ? bg : 'rgba(255,255,255,0.85)',
-    color:renk, border:'1px solid '+renk+'44',
-    padding:'14px 24px', borderRadius:'16px', fontSize:'13px', fontWeight:'700',
+    color:renk, border:'1.5px solid '+renk+'55',
+    padding:'14px 24px', borderRadius:'16px', fontSize:'13px', fontWeight:'800',
     fontFamily:'Manrope,sans-serif', letterSpacing:'0.3px', textTransform:'uppercase',
     boxShadow: isK
-      ? '8px 8px 24px rgba(10,20,60,.5), -4px -4px 16px rgba(96,165,250,.10), 0 0 12px '+renk+'20'
+      ? '8px 8px 24px rgba(10,18,50,.50), -4px -4px 16px rgba(165,180,252,.12), 0 0 12px '+renk+'25'
       : '6px 6px 20px rgba(0,0,0,.08), -4px -4px 12px rgba(255,255,255,.9), 0 0 8px '+renk+'15',
     maxWidth:'400px',
     backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)',
@@ -309,55 +309,55 @@ MR.api = {
 
 // ═══ TEMA SİSTEMİ - ROYAL BLUE + NEUMORPHİC 3D ═══
 
-/* ─── KOYU TEMA: CANLI KRALİYET MAVİSİ 3D NEUMORPHİC ─── */
+/* ─── KOYU TEMA: DİJİTAL KRALİYET MAVİSİ → İNDİGO 3D NEUMORPHİC ─── */
 const KOYU_TEMA = {
-  /* Zemin renkleri — canlı koyu mavi */
-  bg: '#1e3a7a', bgCard: '#24428a', bgHover: '#2d4e96', bgInput: '#1a3570',
-  /* Kenar renkleri */
-  border: 'rgba(96,165,250,0.22)', borderLight: 'rgba(147,197,253,0.15)',
-  /* Vurgu (Mavi) */
-  accent: '#60a5fa', accentLight: '#93c5fd',
-  accentGradient: 'linear-gradient(145deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%)',
-  /* Durum renkleri */
+  /* Zemin renkleri — #1E3A7A → #4F46E5 gradient */
+  bg: '#1e3a7a', bgCard: '#243f8c', bgHover: '#2d4e9e', bgInput: '#1a3570',
+  /* Kenar renkleri — GÜÇLÜ, BELİRGİN */
+  border: 'rgba(165,180,252,0.32)', borderLight: 'rgba(199,210,254,0.22)',
+  /* Vurgu (İndigo-Violet) */
+  accent: '#818cf8', accentLight: '#a5b4fc',
+  accentGradient: 'linear-gradient(145deg, #6366f1 0%, #4f46e5 50%, #4338ca 100%)',
+  /* Durum renkleri — parlak */
   success: '#34d399', warning: '#fbbf24', danger: '#f87171',
-  purple: '#a78bfa', cyan: '#22d3ee', pink: '#f472b6', gold: '#fbbf24',
-  /* Metin — beyaz / açık */
-  text: '#f0f4ff', textSec: '#d0ddf0', textMuted: '#94aed4',
+  purple: '#c084fc', cyan: '#22d3ee', pink: '#f472b6', gold: '#fbbf24',
+  /* Metin — SAF BEYAZ / PARLAK */
+  text: '#ffffff', textSec: '#e0e7ff', textMuted: '#a5b4fc',
   /* Header / Nav */
-  headerBg: 'rgba(30,58,122,0.95)', navBg: 'rgba(36,66,138,0.96)',
-  /* 3D NEUMORPHIC GÖLGE SİSTEMİ - KOYU */
-  cardGlass: 'rgba(36,66,138,0.80)',
-  cardShadow: '8px 8px 20px rgba(10,20,60,.45), -6px -6px 16px rgba(96,165,250,.08), inset 0 1px 0 rgba(147,197,253,.10), inset 0 -1px 0 rgba(10,20,60,.15)',
-  cardBlur: 'blur(12px) saturate(1.4)',
-  statShadow: '6px 6px 16px rgba(10,20,60,.40), -4px -4px 12px rgba(96,165,250,.07), inset 0 1px 0 rgba(147,197,253,.08)',
-  inputShadow: 'inset 4px 4px 8px rgba(10,20,60,.40), inset -3px -3px 6px rgba(96,165,250,.06), 0 0 0 1px rgba(96,165,250,.08)',
-  btnShadow: '6px 6px 16px rgba(10,20,60,.40), -4px -4px 10px rgba(96,165,250,.15), 0 0 20px rgba(96,165,250,.18)',
-  bgGradient: 'linear-gradient(145deg, #162e6a 0%, #1e3a7a 30%, #1a3570 60%, #18306e 100%)'
+  headerBg: 'rgba(30,58,122,0.96)', navBg: 'rgba(36,63,140,0.97)',
+  /* 3D NEUMORPHIC GÖLGE SİSTEMİ - DİJİTAL BEYAZ YANSIMAYLA */
+  cardGlass: 'rgba(36,63,140,0.82)',
+  cardShadow: '10px 10px 24px rgba(10,18,50,.55), -8px -8px 20px rgba(165,180,252,.12), inset 0 1px 0 rgba(255,255,255,.12), inset 0 -1px 0 rgba(10,18,50,.18)',
+  cardBlur: 'blur(14px) saturate(1.5)',
+  statShadow: '8px 8px 20px rgba(10,18,50,.50), -6px -6px 16px rgba(165,180,252,.10), inset 0 1px 0 rgba(255,255,255,.10)',
+  inputShadow: 'inset 4px 4px 10px rgba(10,18,50,.50), inset -3px -3px 8px rgba(165,180,252,.08), 0 0 0 1px rgba(165,180,252,.12)',
+  btnShadow: '8px 8px 20px rgba(10,18,50,.50), -6px -6px 14px rgba(99,102,241,.25), 0 0 24px rgba(99,102,241,.30)',
+  bgGradient: 'linear-gradient(145deg, #162e6a 0%, #1e3a7a 30%, #2a3f8c 60%, #1e2f75 100%)'
 };
 
-/* ─── AÇIK TEMA: BEYAZ + MAVİ METİN NEUMORPHİC ─── */
+/* ─── AÇIK TEMA: MODERN DİJİTAL BEYAZ + KOYU MAVİ 3D KABARTMA ─── */
 const ACIK_TEMA = {
-  /* Zemin renkleri — beyaz / açık mavi-gri */
+  /* Zemin renkleri — ferah beyaz */
   bg: '#edf1f7', bgCard: '#f4f7fb', bgHover: '#dfe5f0', bgInput: '#e8ecf5',
-  /* Kenar renkleri */
-  border: 'rgba(26,39,68,0.12)', borderLight: 'rgba(26,39,68,0.08)',
-  /* Vurgu (Mavi) */
-  accent: '#2563eb', accentLight: '#3b82f6',
-  accentGradient: 'linear-gradient(145deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%)',
+  /* Kenar renkleri — KOYU MAVİ TONU İLE BELİRGİN */
+  border: 'rgba(30,58,122,0.18)', borderLight: 'rgba(30,58,122,0.12)',
+  /* Vurgu (İndigo) */
+  accent: '#4f46e5', accentLight: '#6366f1',
+  accentGradient: 'linear-gradient(145deg, #6366f1 0%, #4f46e5 50%, #4338ca 100%)',
   /* Durum renkleri */
   success: '#059669', warning: '#ca8a04', danger: '#dc2626',
   purple: '#7c3aed', cyan: '#0891b2', pink: '#db2777', gold: '#ca8a04',
-  /* Metin — koyu lacivert mavi */
+  /* Metin — koyu lacivert */
   text: '#1a2744', textSec: '#2c4266', textMuted: '#4a6489',
   /* Header / Nav */
-  headerBg: 'rgba(244,247,251,0.88)', navBg: 'rgba(244,247,251,0.90)',
-  /* 3D NEUMORPHIC GÖLGE SİSTEMİ - AÇIK */
-  cardGlass: 'rgba(244,247,251,0.70)',
-  cardShadow: '8px 8px 20px rgba(0,15,40,.08), -8px -8px 20px rgba(255,255,255,.85), inset 0 1px 0 rgba(255,255,255,.6), inset 0 -1px 0 rgba(0,15,40,.03)',
-  cardBlur: 'blur(14px) saturate(1.2)',
-  statShadow: '6px 6px 16px rgba(0,15,40,.07), -6px -6px 16px rgba(255,255,255,.8), inset 0 1px 0 rgba(255,255,255,.5)',
-  inputShadow: 'inset 4px 4px 8px rgba(0,15,40,.06), inset -3px -3px 6px rgba(255,255,255,.7), 0 0 0 1px rgba(26,39,68,.06)',
-  btnShadow: '6px 6px 14px rgba(0,15,40,.1), -4px -4px 10px rgba(255,255,255,.8), 0 0 16px rgba(37,99,235,.08)',
+  headerBg: 'rgba(244,247,251,0.92)', navBg: 'rgba(244,247,251,0.94)',
+  /* 3D NEUMORPHIC GÖLGE SİSTEMİ - KOYU MAVİ KABARTMA */
+  cardGlass: 'rgba(244,247,251,0.75)',
+  cardShadow: '10px 10px 24px rgba(30,58,122,.12), -8px -8px 20px rgba(255,255,255,.90), inset 0 1px 0 rgba(255,255,255,.7), inset 0 -1px 0 rgba(30,58,122,.04)',
+  cardBlur: 'blur(14px) saturate(1.3)',
+  statShadow: '8px 8px 20px rgba(30,58,122,.10), -6px -6px 16px rgba(255,255,255,.85), inset 0 1px 0 rgba(255,255,255,.6)',
+  inputShadow: 'inset 4px 4px 10px rgba(30,58,122,.08), inset -3px -3px 8px rgba(255,255,255,.75), 0 0 0 1px rgba(30,58,122,.08)',
+  btnShadow: '8px 8px 18px rgba(30,58,122,.14), -6px -6px 14px rgba(255,255,255,.85), 0 0 20px rgba(79,70,229,.10)',
   bgGradient: 'linear-gradient(145deg, #e8ecf4 0%, #edf1f7 30%, #f0f4fa 60%, #eaeff5 100%)'
 };
 
@@ -379,26 +379,27 @@ MR._stilGuncelle = () => {
   MR.S.card = {
     background: C.cardGlass || C.bgCard,
     backdropFilter: C.cardBlur, WebkitBackdropFilter: C.cardBlur,
-    borderRadius: 18, border: `1px solid ${C.border}`,
+    borderRadius: 18, border: isK ? `1.5px solid ${C.border}` : `1.5px solid ${C.border}`,
     overflow: 'hidden', boxShadow: C.cardShadow,
     transition: 'box-shadow .3s ease, transform .3s ease'
   };
 
   /* KART BAŞLIK */
   MR.S.cardHead = {
-    padding: '14px 20px', borderBottom: `1px solid ${C.border}`,
+    padding: '16px 22px', borderBottom: isK ? `1.5px solid ${C.border}` : `1.5px solid ${C.border}`,
     display: 'flex', alignItems: 'center', gap: 10,
-    background: isK ? `${C.accent}0a` : `${C.accent}06`
+    background: isK ? `${C.accent}10` : `${C.accent}08`,
+    fontSize: 15, fontWeight: 800
   };
 
-  MR.S.cardBody = { padding: 20 };
+  MR.S.cardBody = { padding: 22 };
 
   /* INPUT - ÇÖKÜNTÜ 3D */
   MR.S.input = {
-    width: '100%', padding: '11px 15px',
+    width: '100%', padding: '12px 16px',
     background: C.bgInput,
-    border: `1px solid ${C.borderLight}`,
-    borderRadius: 12, color: C.text, fontSize: 14,
+    border: `1.5px solid ${C.borderLight}`,
+    borderRadius: 12, color: C.text, fontSize: 14, fontWeight: 600,
     outline: 'none', boxSizing: 'border-box',
     boxShadow: C.inputShadow,
     transition: 'border-color .2s, box-shadow .2s'
@@ -406,24 +407,25 @@ MR._stilGuncelle = () => {
 
   /* SELECT */
   MR.S.select = {
-    width: '100%', padding: '11px 15px',
+    width: '100%', padding: '12px 16px',
     background: C.bgInput,
-    border: `1px solid ${C.borderLight}`,
-    borderRadius: 12, color: C.text, fontSize: 14,
+    border: `1.5px solid ${C.borderLight}`,
+    borderRadius: 12, color: C.text, fontSize: 14, fontWeight: 600,
     outline: 'none', boxSizing: 'border-box',
     boxShadow: C.inputShadow
   };
 
   /* LABEL */
-  MR.S.label = { fontSize: 12, fontWeight: 700, color: C.textSec, marginBottom: 6, display: 'block', letterSpacing: 0.5 };
+  MR.S.label = { fontSize: 13, fontWeight: 800, color: isK ? '#e0e7ff' : C.textSec, marginBottom: 7, display: 'block', letterSpacing: 0.5 };
 
-  /* GHOST BUTON */
+  /* GHOST BUTON - BELİRGİN 3D */
   MR.S.btnG = {
-    background: isK ? `${C.accent}14` : `${C.accent}0a`,
-    color: C.textSec, border: `1px solid ${C.borderLight}`,
+    background: isK ? `${C.accent}18` : `${C.accent}0c`,
+    color: isK ? '#e0e7ff' : C.textSec,
+    border: isK ? `1.5px solid ${C.border}` : `1.5px solid ${C.border}`,
     boxShadow: isK
-      ? `4px 4px 10px rgba(10,20,60,.30), -3px -3px 8px ${C.accent}10`
-      : `4px 4px 10px rgba(0,15,40,.06), -3px -3px 8px rgba(255,255,255,.6)`
+      ? `6px 6px 14px rgba(10,18,50,.40), -4px -4px 10px rgba(165,180,252,.12), 0 0 8px ${C.accent}18`
+      : `6px 6px 14px rgba(30,58,122,.10), -4px -4px 10px rgba(255,255,255,.75), 0 0 8px rgba(79,70,229,.06)`
   };
 
   /* STAT KART */
@@ -431,18 +433,30 @@ MR._stilGuncelle = () => {
     background: C.cardGlass || C.bgCard,
     backdropFilter: C.cardBlur, WebkitBackdropFilter: C.cardBlur,
     borderRadius: 16, padding: '18px 20px',
-    border: `1px solid ${C.border}`,
+    border: isK ? `1.5px solid ${C.border}` : `1.5px solid ${C.border}`,
     boxShadow: C.statShadow,
     transition: 'box-shadow .3s ease, transform .3s ease'
   };
 
-  /* BUTON STİLLERİ GÜNCELLEMESİ */
+  /* BUTON STİLLERİ - GÜÇLÜ 3D DİJİTAL GLOW */
   MR.S.btn.fontWeight = 800;
   MR.S.btn.fontSize = 14;
-  MR.S.btnP = { background: C.accentGradient, color: '#fff', boxShadow: C.btnShadow };
-  MR.S.btnS = { background: `linear-gradient(145deg, ${C.success}, ${C.success}cc)`, color: '#fff', boxShadow: `6px 6px 14px rgba(0,0,0,.25), -3px -3px 8px ${C.success}12, 0 0 12px ${C.success}30` };
-  MR.S.btnW = { background: `linear-gradient(145deg, ${C.warning}, ${C.warning}cc)`, color: '#000', boxShadow: `6px 6px 14px rgba(0,0,0,.2), -3px -3px 8px ${C.warning}12, 0 0 12px ${C.warning}25` };
-  MR.S.btnD = { background: `linear-gradient(145deg, ${C.danger}, ${C.danger}cc)`, color: '#fff', boxShadow: `6px 6px 14px rgba(0,0,0,.25), -3px -3px 8px ${C.danger}0c, 0 0 12px ${C.danger}30` };
+  MR.S.btn.borderRadius = 14;
+  MR.S.btn.border = isK ? '1.5px solid rgba(255,255,255,.15)' : '1.5px solid rgba(30,58,122,.12)';
+  MR.S.btnP = { background: C.accentGradient, color: '#fff', fontWeight: 800, boxShadow: C.btnShadow, border: isK ? '1.5px solid rgba(255,255,255,.18)' : '1.5px solid rgba(79,70,229,.25)' };
+  MR.S.btnS = { background: `linear-gradient(145deg, ${C.success}, ${C.success}cc)`, color: '#fff', fontWeight: 800, border: isK ? '1.5px solid rgba(255,255,255,.15)' : '1.5px solid rgba(5,150,105,.20)', boxShadow: isK ? `8px 8px 18px rgba(10,18,50,.40), -4px -4px 10px rgba(52,211,153,.15), 0 0 16px ${C.success}35` : `8px 8px 18px rgba(30,58,122,.10), -4px -4px 10px rgba(255,255,255,.75), 0 0 16px ${C.success}20` };
+  MR.S.btnW = { background: `linear-gradient(145deg, ${C.warning}, ${C.warning}cc)`, color: '#000', fontWeight: 800, border: isK ? '1.5px solid rgba(255,255,255,.15)' : '1.5px solid rgba(202,138,4,.20)', boxShadow: isK ? `8px 8px 18px rgba(10,18,50,.40), -4px -4px 10px rgba(251,191,36,.15), 0 0 16px ${C.warning}35` : `8px 8px 18px rgba(30,58,122,.10), -4px -4px 10px rgba(255,255,255,.75), 0 0 16px ${C.warning}15` };
+  MR.S.btnD = { background: `linear-gradient(145deg, ${C.danger}, ${C.danger}cc)`, color: '#fff', fontWeight: 800, border: isK ? '1.5px solid rgba(255,255,255,.12)' : '1.5px solid rgba(220,38,38,.20)', boxShadow: isK ? `8px 8px 18px rgba(10,18,50,.40), -4px -4px 10px rgba(248,113,113,.12), 0 0 16px ${C.danger}30` : `8px 8px 18px rgba(30,58,122,.10), -4px -4px 10px rgba(255,255,255,.75), 0 0 16px ${C.danger}15` };
+
+  /* BADGE GÜNCELLEMESİ */
+  MR.S.badge = c => ({
+    padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 800,
+    background: `${c}18`, color: c, border: `1.5px solid ${c}30`,
+    display: 'inline-block',
+    boxShadow: isK
+      ? `4px 4px 10px rgba(10,18,50,.25), -2px -2px 6px rgba(165,180,252,.08), 0 0 12px ${c}20`
+      : `4px 4px 10px rgba(30,58,122,.06), -2px -2px 6px rgba(255,255,255,.60), 0 0 10px ${c}12`
+  });
 
   /* DOM GÜNCELLEMELERİ */
   document.body.style.background = C.bgGradient || C.bg;
@@ -466,77 +480,81 @@ MR.S = {
   card: {
     background: MR.C.cardGlass || MR.C.bgCard,
     backdropFilter: MR.C.cardBlur, WebkitBackdropFilter: MR.C.cardBlur,
-    borderRadius: 18, border: `1px solid ${MR.C.border}`,
+    borderRadius: 18, border: `1.5px solid ${MR.C.border}`,
     overflow: 'hidden', boxShadow: MR.C.cardShadow,
     transition: 'box-shadow .3s ease, transform .3s ease'
   },
 
   cardHead: {
-    padding: '14px 20px', borderBottom: `1px solid ${MR.C.border}`,
+    padding: '16px 22px', borderBottom: `1.5px solid ${MR.C.border}`,
     display: 'flex', alignItems: 'center', gap: 10,
-    background: `${MR.C.accent}0a`
+    background: `${MR.C.accent}10`, fontSize: 15, fontWeight: 800
   },
 
-  cardBody: { padding: 20 },
+  cardBody: { padding: 22 },
 
   /* INPUT - ÇÖKÜNTÜ 3D */
   input: {
-    width: '100%', padding: '11px 15px',
+    width: '100%', padding: '12px 16px',
     background: MR.C.bgInput,
-    border: `1px solid ${MR.C.borderLight}`,
-    borderRadius: 12, color: MR.C.text, fontSize: 14,
+    border: `1.5px solid ${MR.C.borderLight}`,
+    borderRadius: 12, color: MR.C.text, fontSize: 14, fontWeight: 600,
     outline: 'none', boxSizing: 'border-box',
     boxShadow: MR.C.inputShadow,
     transition: 'border-color .2s, box-shadow .2s'
   },
 
   select: {
-    width: '100%', padding: '11px 15px',
+    width: '100%', padding: '12px 16px',
     background: MR.C.bgInput,
-    border: `1px solid ${MR.C.borderLight}`,
-    borderRadius: 12, color: MR.C.text, fontSize: 14,
+    border: `1.5px solid ${MR.C.borderLight}`,
+    borderRadius: 12, color: MR.C.text, fontSize: 14, fontWeight: 600,
     outline: 'none', boxSizing: 'border-box',
     boxShadow: MR.C.inputShadow
   },
 
-  label: { fontSize: 12, fontWeight: 700, color: MR.C.textSec, marginBottom: 6, display: 'block', letterSpacing: 0.5 },
+  label: { fontSize: 13, fontWeight: 800, color: MR.C.textSec, marginBottom: 7, display: 'block', letterSpacing: 0.5 },
 
-  /* BUTONLAR - 3D RAISED */
+  /* BUTONLAR - 3D RAISED DİJİTAL */
   btn: {
-    padding: '11px 22px', borderRadius: 14, border: 'none',
+    padding: '12px 24px', borderRadius: 14, border: '1.5px solid rgba(255,255,255,.15)',
     fontWeight: 800, fontSize: 14, cursor: 'pointer',
     display: 'inline-flex', alignItems: 'center', gap: 8,
     transition: 'all .25s ease, transform .15s ease',
     position: 'relative'
   },
   btnP: {
-    background: MR.C.accentGradient, color: '#fff',
+    background: MR.C.accentGradient, color: '#fff', fontWeight: 800,
+    border: '1.5px solid rgba(255,255,255,.18)',
     boxShadow: MR.C.btnShadow
   },
   btnS: {
-    background: `linear-gradient(145deg, ${MR.C.success}, ${MR.C.success}cc)`, color: '#fff',
-    boxShadow: `6px 6px 14px rgba(0,0,0,.25), -3px -3px 8px ${MR.C.success}12, 0 0 12px ${MR.C.success}30`
+    background: `linear-gradient(145deg, ${MR.C.success}, ${MR.C.success}cc)`, color: '#fff', fontWeight: 800,
+    border: '1.5px solid rgba(255,255,255,.15)',
+    boxShadow: `8px 8px 18px rgba(10,18,50,.40), -4px -4px 10px rgba(52,211,153,.15), 0 0 16px ${MR.C.success}35`
   },
   btnW: {
-    background: `linear-gradient(145deg, ${MR.C.warning}, ${MR.C.warning}cc)`, color: '#000',
-    boxShadow: `6px 6px 14px rgba(0,0,0,.2), -3px -3px 8px ${MR.C.warning}12, 0 0 12px ${MR.C.warning}25`
+    background: `linear-gradient(145deg, ${MR.C.warning}, ${MR.C.warning}cc)`, color: '#000', fontWeight: 800,
+    border: '1.5px solid rgba(255,255,255,.15)',
+    boxShadow: `8px 8px 18px rgba(10,18,50,.40), -4px -4px 10px rgba(251,191,36,.15), 0 0 16px ${MR.C.warning}35`
   },
   btnD: {
-    background: `linear-gradient(145deg, ${MR.C.danger}, ${MR.C.danger}cc)`, color: '#fff',
-    boxShadow: `6px 6px 14px rgba(0,0,0,.25), -3px -3px 8px ${MR.C.danger}0c, 0 0 12px ${MR.C.danger}30`
+    background: `linear-gradient(145deg, ${MR.C.danger}, ${MR.C.danger}cc)`, color: '#fff', fontWeight: 800,
+    border: '1.5px solid rgba(255,255,255,.12)',
+    boxShadow: `8px 8px 18px rgba(10,18,50,.40), -4px -4px 10px rgba(248,113,113,.12), 0 0 16px ${MR.C.danger}30`
   },
   btnG: {
-    background: `${MR.C.accent}14`, color: MR.C.textSec,
-    border: `1px solid ${MR.C.borderLight}`,
-    boxShadow: `4px 4px 10px rgba(10,20,60,.25), -3px -3px 8px ${MR.C.accent}10`
+    background: `${MR.C.accent}18`, color: MR.C.textSec,
+    border: `1.5px solid ${MR.C.border}`,
+    boxShadow: `6px 6px 14px rgba(10,18,50,.40), -4px -4px 10px rgba(165,180,252,.12), 0 0 8px ${MR.C.accent}18`
   },
 
   /* BADGE */
   badge: c => ({
-    padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-    background: `${c}15`, color: c, border: `1px solid ${c}22`,
+    padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 800,
+    background: `${c}18`, color: c, border: `1.5px solid ${c}30`,
     display: 'inline-block',
-    boxShadow: `3px 3px 8px rgba(0,0,0,.15), -2px -2px 6px rgba(255,255,255,.03), 0 0 10px ${c}12`
+    boxShadow: `4px 4px 10px rgba(10,18,50,.20), -2px -2px 6px rgba(255,255,255,.05), 0 0 12px ${c}18`
   }),
 
   /* STAT KARTI */
@@ -544,7 +562,7 @@ MR.S = {
     background: MR.C.cardGlass || MR.C.bgCard,
     backdropFilter: MR.C.cardBlur, WebkitBackdropFilter: MR.C.cardBlur,
     borderRadius: 16, padding: '18px 20px',
-    border: `1px solid ${MR.C.border}`,
+    border: `1.5px solid ${MR.C.border}`,
     boxShadow: MR.C.statShadow,
     transition: 'box-shadow .3s ease, transform .3s ease'
   }

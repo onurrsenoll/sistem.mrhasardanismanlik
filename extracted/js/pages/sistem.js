@@ -1941,7 +1941,7 @@ const SmsTab = () => {
                     </thead>
                     <tbody>
                       {loglar.map((log, i) => (
-                        <tr key={i} style={{borderBottom:`1px solid ${C.border}22`}}>
+                        <tr key={i} style={{borderBottom:`1px solid ${C.border}`}}>
                           <td style={{padding:'8px 10px', fontSize:10, color:C.textMuted, whiteSpace:'nowrap'}}>
                             {log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-'}
                           </td>
@@ -2240,8 +2240,8 @@ const NetsantralCagriGecmisi = () => {
     return d.toUpperCase();
   };
 
-  const thSt = {padding:'8px 10px', textAlign:'left', color:C.textMuted, fontWeight:600, fontSize:10, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:C.bgCard, zIndex:1};
-  const tdSt = {padding:'8px 10px', fontSize:11, borderBottom:`1px solid ${C.border}22`, whiteSpace:'nowrap'};
+  const thSt = {padding:'10px 12px', textAlign:'left', color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted, fontWeight:800, fontSize:12, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:C.bgCard, zIndex:1, letterSpacing:0.3};
+  const tdSt = {padding:'10px 12px', fontSize:12, fontWeight:600, borderBottom:`1px solid ${C.border}`, whiteSpace:'nowrap', color: MR.tema==='koyu' ? '#e0e7ff' : C.text};
 
   return (
     <div style={S.card}>
@@ -3264,7 +3264,7 @@ const TopluAktarimTab = () => {
                     </thead>
                     <tbody>
                       {sonuc.olusturulan.map((d,i) => (
-                        <tr key={i} style={{borderTop:`1px solid ${C.border}22`}}>
+                        <tr key={i} style={{borderTop:`1px solid ${C.border}`}}>
                           <td style={{padding:'6px 10px',fontSize:10,color:C.textMuted}}>{d.satir}</td>
                           <td style={{padding:'6px 10px',fontSize:11,fontWeight:700,color:C.accent}}>{d.dosya_no}</td>
                           <td style={{padding:'6px 10px',fontSize:11,color:C.text}}>{d.ad_soyad}</td>

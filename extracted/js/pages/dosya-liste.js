@@ -388,8 +388,8 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
     }
   }, [data, turF, asamaF, search, adkDosya, bhDosya, acikDosya]);
 
-  const thS = {padding:'8px 6px',textAlign:'left',fontWeight:600,fontSize:9,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color:C.textMuted,position:'sticky',top:0,background:C.bgCard,zIndex:1};
-  const tdS = {padding:'6px 6px',fontSize:10,whiteSpace:'nowrap',borderBottom:`1px solid ${C.border}22`};
+  const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:11,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted,position:'sticky',top:0,background:C.bgCard,zIndex:1,letterSpacing:0.4};
+  const tdS = {padding:'8px 8px',fontSize:12,fontWeight:600,whiteSpace:'nowrap',borderBottom:`1px solid ${C.border}`,color: MR.tema==='koyu' ? '#e0e7ff' : C.text};
 
   return (
     <div className="fade-in">
@@ -459,7 +459,7 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
 
         {/* RAPOR YÜKLEME GÖSTERGESİ */}
         {raporLoading && (
-          <div style={{padding:'10px 14px', background:`${C.accent}08`, borderBottom:`1px solid ${C.border}22`,
+          <div style={{padding:'10px 14px', background:`${C.accent}08`, borderBottom:`1px solid ${C.border}`,
             display:'flex', alignItems:'center', gap:8}}>
             <div style={{width:14,height:14,border:'2px solid transparent',borderTopColor:C.accent,borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
             <span style={{fontSize:11, color:C.accent, fontWeight:600}}>RAPOR OLUŞTURULUYOR...</span>

@@ -243,7 +243,7 @@ const GelirYonetimi = ({setPage, user}) => {
                 <thead>
                   <tr style={{background:C.bgHover}}>
                     {['TARİH','KASA','DOSYA NO','TÜR','TUTAR','AÇIKLAMA'].map(h =>
-                      <th key={h} style={{padding:'10px 12px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:10,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted,fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                     )}
                   </tr>
                 </thead>
@@ -482,7 +482,7 @@ const GiderYonetimi = ({setPage, user}) => {
                 <thead>
                   <tr style={{background:C.bgHover}}>
                     {['TARİH','KASA','DOSYA NO','KATEGORİ','TUTAR','AÇIKLAMA'].map(h =>
-                      <th key={h} style={{padding:'10px 12px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:10,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted,fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                     )}
                   </tr>
                 </thead>
@@ -754,7 +754,7 @@ const KomisyonPrim = ({setPage, user}) => {
               <thead>
                 <tr style={{background:C.bgHover}}>
                   {['İLGİLİ','TİP','DOSYA NO','TUTAR','ORAN','DURUM','ÖDEME TARİHİ','İŞLEM'].map(h =>
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:10,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'12px 14px',textAlign:'left',color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted,fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                   )}
                 </tr>
               </thead>
@@ -1175,7 +1175,7 @@ const KasaBanka = ({setPage, user}) => {
               <thead>
                 <tr style={{background:C.bgHover}}>
                   {['TARİH','KASA','TÜR','TUTAR','AÇIKLAMA','DOSYA NO'].map(h =>
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:10,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'12px 14px',textAlign:'left',color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted,fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                   )}
                 </tr>
               </thead>
@@ -1468,7 +1468,7 @@ const MaliyetAnalizi = ({setPage, user}) => {
                 <thead>
                   <tr style={{background:C.bgHover}}>
                     {['DOSYA NO','MÜŞTERİ','GELİR','GİDER','KOMİSYON','NET KAR','KAR MARJI %'].map(h =>
-                      <th key={h} style={{padding:'10px 12px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:10,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted,fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                     )}
                   </tr>
                 </thead>
@@ -1776,7 +1776,7 @@ const FinansalRaporlar = ({setPage, user}) => {
                   <thead>
                     <tr style={{background:C.bgHover}}>
                       {['DÖNEM','GELİR','GİDER','KOMİSYON','NET','DOSYA SAYISI'].map(h =>
-                        <th key={h} style={{padding:'10px 12px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:10,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                        <th key={h} style={{padding:'12px 14px',textAlign:'left',color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted,fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                       )}
                     </tr>
                   </thead>

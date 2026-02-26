@@ -289,8 +289,8 @@ MR.CrmAramaPage = ({setPage, user}) => {
   };
 
   /* ── STİLLER ── */
-  const thSt = {padding:'8px 6px', textAlign:'left', color:C.textMuted, fontWeight:600, fontSize:9, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:C.bgCard, zIndex:1};
-  const tdSt = {padding:'7px 6px', fontSize:10, borderBottom:`1px solid ${C.border}22`, whiteSpace:'nowrap'};
+  const thSt = {padding:'10px 8px', textAlign:'left', color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted, fontWeight:800, fontSize:11, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:C.bgCard, zIndex:1, letterSpacing:0.3};
+  const tdSt = {padding:'8px 8px', fontSize:12, fontWeight:600, borderBottom:`1px solid ${C.border}`, whiteSpace:'nowrap', color: MR.tema==='koyu' ? '#e0e7ff' : C.text};
   const iconBtn = (bg) => ({
     width:26, height:26, borderRadius:6, border:'none', cursor:'pointer',
     display:'inline-flex', alignItems:'center', justifyContent:'center',
