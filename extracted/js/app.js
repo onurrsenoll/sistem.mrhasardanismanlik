@@ -165,35 +165,46 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
 
   const isActive = (m) => page === m.id || page.startsWith(m.id + '-');
 
+  const isK = MR.tema === 'koyu';
+
   return (
     <div ref={navRef} style={{
-      background: C.headerBg, borderBottom: `1px solid ${C.border}`,
-      display: 'flex', alignItems: 'center', padding: '0 12px', height: 48,
-      position: 'sticky', top: 0, zIndex: 1000, gap: 0
+      background: C.headerBg,
+      borderBottom: `1px solid ${C.border}`,
+      display: 'flex', alignItems: 'center', padding: '0 14px', height: 52,
+      position: 'sticky', top: 0, zIndex: 1000, gap: 0,
+      backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+      boxShadow: isK
+        ? '0 4px 20px rgba(0,0,0,.4), 0 1px 0 rgba(16,185,129,.06)'
+        : '0 4px 20px rgba(0,30,15,.06), 0 1px 0 rgba(255,255,255,.5)'
     }}>
       {/* SOL ÜST LOGO - ANASAYFAYA YÖNLENDİRİR */}
       <div
         onClick={() => { setPage('home'); setMenuOpen(null); }}
         style={{
-          height: 38, minWidth: 38, maxWidth: 140, flexShrink: 0,
-          borderRadius: 8, cursor: 'pointer', marginRight: 8,
+          height: 40, minWidth: 40, maxWidth: 150, flexShrink: 0,
+          borderRadius: 12, cursor: 'pointer', marginRight: 10,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           overflow: 'hidden', transition: 'all .2s',
-          background: sidebarLogoUrl ? 'transparent' : `${C.accent}15`,
-          border: sidebarLogoUrl ? 'none' : `1px solid ${C.accent}22`
+          background: sidebarLogoUrl ? 'transparent' : `linear-gradient(145deg, ${C.accent}22, ${C.accent}0a)`,
+          border: sidebarLogoUrl ? 'none' : `1px solid ${C.accent}22`,
+          boxShadow: sidebarLogoUrl ? 'none' : (isK
+            ? '4px 4px 10px rgba(0,0,0,.3), -3px -3px 8px rgba(16,185,129,.06)'
+            : '4px 4px 10px rgba(0,30,15,.06), -3px -3px 8px rgba(255,255,255,.5)')
         }}
         title="ANASAYFA"
-        onMouseEnter={e => { e.currentTarget.style.opacity = '0.8'; e.currentTarget.style.transform = 'scale(0.97)'; }}
+        onMouseEnter={e => { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.transform = 'scale(0.97)'; }}
         onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1)'; }}
       >
         {sidebarLogoUrl ? (
           <img src={sidebarLogoUrl} alt="LOGO" style={{
-            height: 34, maxWidth: 130, objectFit: 'contain'
+            height: 36, maxWidth: 140, objectFit: 'contain'
           }}/>
         ) : (
           <div style={{
-            fontSize: 14, fontWeight: 800, color: C.accent, letterSpacing: '-0.5px',
-            padding: '0 10px', whiteSpace: 'nowrap'
+            fontSize: 15, fontWeight: 900, color: C.accent, letterSpacing: '-0.5px',
+            padding: '0 10px', whiteSpace: 'nowrap',
+            textShadow: isK ? `0 0 20px ${C.accent}40` : 'none'
           }}>MR</div>
         )}
       </div>
@@ -212,14 +223,17 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
               }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 4,
-                padding: '6px 8px', borderRadius: 6, cursor: 'pointer',
+                padding: '6px 10px', borderRadius: 10, cursor: 'pointer',
                 fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap',
                 color: isActive(m) ? C.accent : C.text,
                 background: isActive(m) ? `${C.accent}15` : 'transparent',
-                transition: 'all .2s', position: 'relative'
+                transition: 'all .2s', position: 'relative',
+                boxShadow: isActive(m)
+                  ? (isK ? 'inset 3px 3px 6px rgba(0,0,0,.3), inset -2px -2px 4px rgba(16,185,129,.06)' : 'inset 3px 3px 6px rgba(0,30,15,.06), inset -2px -2px 4px rgba(255,255,255,.5)')
+                  : 'none'
               }}
-              onMouseEnter={e => { if (!isActive(m)) e.currentTarget.style.background = `${C.accent}08`; }}
-              onMouseLeave={e => { if (!isActive(m)) e.currentTarget.style.background = 'transparent'; }}
+              onMouseEnter={e => { if (!isActive(m)) { e.currentTarget.style.background = `${C.accent}08`; } }}
+              onMouseLeave={e => { if (!isActive(m)) { e.currentTarget.style.background = 'transparent'; } }}
             >
               <LIcon name={m.icon} size={13} color={isActive(m) ? C.accent : C.textSec}/>
               <span>{m.label}</span>
@@ -237,24 +251,32 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
             {/* DROPDOWN */}
             {m.sub && menuOpen === m.id && (
               <div style={{
-                position: 'absolute', top: '100%', left: 0, marginTop: 4,
-                background: C.bgCard, border: `1px solid ${C.border}`,
-                borderRadius: 10, padding: 6, minWidth: 210,
-                boxShadow: '0 10px 40px rgba(0,0,0,.5)', zIndex: 1001
+                position: 'absolute', top: '100%', left: 0, marginTop: 6,
+                background: isK ? C.bgCard : 'rgba(232,240,236,0.92)',
+                border: `1px solid ${C.border}`,
+                borderRadius: 16, padding: 8, minWidth: 220,
+                boxShadow: isK
+                  ? '10px 10px 30px rgba(0,0,0,.55), -6px -6px 18px rgba(16,185,129,.04)'
+                  : '10px 10px 30px rgba(0,30,15,.1), -6px -6px 18px rgba(255,255,255,.7)',
+                zIndex: 1001,
+                backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
               }}>
                 {m.sub.map(s => (
                   <div key={s.id}
                     onClick={() => { setPage(s.id); setMenuOpen(null); }}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '10px 14px', borderRadius: 8, cursor: 'pointer',
-                      fontSize: 12, fontWeight: 500,
+                      padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
+                      fontSize: 12, fontWeight: 600,
                       color: page === s.id ? C.accent : C.textSec,
-                      background: page === s.id ? `${C.accent}15` : 'transparent',
-                      transition: 'all .15s'
+                      background: page === s.id ? `${C.accent}12` : 'transparent',
+                      transition: 'all .15s',
+                      boxShadow: page === s.id
+                        ? (isK ? 'inset 3px 3px 6px rgba(0,0,0,.25), inset -2px -2px 4px rgba(16,185,129,.04)' : 'inset 3px 3px 6px rgba(0,30,15,.05), inset -2px -2px 4px rgba(255,255,255,.4)')
+                        : 'none'
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = `${C.accent}10`}
-                    onMouseLeave={e => e.currentTarget.style.background = page === s.id ? `${C.accent}15` : 'transparent'}
+                    onMouseEnter={e => e.currentTarget.style.background = `${C.accent}0c`}
+                    onMouseLeave={e => e.currentTarget.style.background = page === s.id ? `${C.accent}12` : 'transparent'}
                   >
                     <LIcon name={s.icon} size={14} color={page === s.id ? C.accent : C.textMuted}/>
                     {s.label}
@@ -267,38 +289,44 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
       </div>
 
       {/* SAĞ TARAF - SABİT ALAN */}
-      <div style={{display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 8}}>
-        {/* TEMA TOGGLE */}
+      <div style={{display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 10}}>
+        {/* TEMA TOGGLE - 3D */}
         <div onClick={() => {
           const yeniTema = MR.tema === 'koyu' ? 'acik' : 'koyu';
           MR.setTema(yeniTema);
           setMenuOpen(null);
           window.dispatchEvent(new Event('mr-tema-degisti'));
         }} style={{
-          width: 40, height: 40, minWidth: 40, borderRadius: 10, cursor: 'pointer',
+          width: 42, height: 42, minWidth: 42, borderRadius: 13, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: MR.tema === 'koyu' ? `${C.warning}22` : `${C.purple}22`,
-          border: `1px solid ${MR.tema === 'koyu' ? C.warning + '44' : C.purple + '44'}`,
-          transition: 'all .2s'
-        }} title={MR.tema === 'koyu' ? 'AÇIK TEMA' : 'KOYU TEMA'}>
-          <LIcon name={MR.tema === 'koyu' ? 'Sun' : 'Moon'} size={19} color={MR.tema === 'koyu' ? C.warning : C.purple}/>
+          background: isK ? `${C.warning}18` : `${C.purple}12`,
+          border: `1px solid ${isK ? C.warning + '33' : C.purple + '33'}`,
+          transition: 'all .2s',
+          boxShadow: isK
+            ? '4px 4px 10px rgba(0,0,0,.35), -3px -3px 8px rgba(251,191,36,.04)'
+            : '4px 4px 10px rgba(0,30,15,.06), -3px -3px 8px rgba(255,255,255,.5)'
+        }} title={isK ? 'AÇIK TEMA' : 'KOYU TEMA'}>
+          <LIcon name={isK ? 'Sun' : 'Moon'} size={19} color={isK ? C.warning : C.purple}/>
         </div>
 
-        {/* PROFİL */}
+        {/* PROFİL - 3D */}
         <div style={{position: 'relative'}}>
           <div onClick={() => setProfilOpen(!profilOpen)} style={{
-            width: 40, height: 40, minWidth: 40, borderRadius: 10, cursor: 'pointer',
+            width: 42, height: 42, minWidth: 42, borderRadius: 13, cursor: 'pointer',
             border: `1px solid ${C.border}`, display: 'flex',
             alignItems: 'center', justifyContent: 'center',
-            background: `${C.accent}22`, overflow: 'hidden'
+            background: `${C.accent}18`, overflow: 'hidden',
+            boxShadow: isK
+              ? '4px 4px 10px rgba(0,0,0,.35), -3px -3px 8px rgba(16,185,129,.05)'
+              : '4px 4px 10px rgba(0,30,15,.06), -3px -3px 8px rgba(255,255,255,.5)'
           }} title={user?.ad_soyad || 'PROFİL'}>
             {user?.avatar ? (
               <img src={user.avatar} alt="" style={{
-                width: 40, height: 40, objectFit: 'cover'
+                width: 42, height: 42, objectFit: 'cover'
               }}/>
             ) : (
               <div style={{
-                fontSize: 15, fontWeight: 700, color: C.accent
+                fontSize: 16, fontWeight: 700, color: C.accent
               }}>{(user?.ad_soyad || 'U')[0]}</div>
             )}
           </div>
@@ -306,15 +334,20 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
           {profilOpen && (
             <div style={{
               position: 'absolute', top: '100%', right: 0, marginTop: 8,
-              background: C.bgCard, border: `1px solid ${C.border}`,
-              borderRadius: 10, padding: 6, minWidth: 200,
-              boxShadow: '0 10px 40px rgba(0,0,0,.5)', zIndex: 1001
+              background: isK ? C.bgCard : 'rgba(232,240,236,0.92)',
+              border: `1px solid ${C.border}`,
+              borderRadius: 16, padding: 8, minWidth: 210,
+              boxShadow: isK
+                ? '10px 10px 30px rgba(0,0,0,.55), -6px -6px 18px rgba(16,185,129,.04)'
+                : '10px 10px 30px rgba(0,30,15,.1), -6px -6px 18px rgba(255,255,255,.7)',
+              zIndex: 1001,
+              backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
             }}>
               <div style={{padding: '10px 14px', borderBottom: `1px solid ${C.border}`, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10}}>
                 {user?.avatar ? (
-                  <img src={user.avatar} alt="" style={{width: 32, height: 32, borderRadius: 8, objectFit: 'cover', flexShrink: 0}}/>
+                  <img src={user.avatar} alt="" style={{width: 34, height: 34, borderRadius: 10, objectFit: 'cover', flexShrink: 0}}/>
                 ) : (
-                  <div style={{width: 32, height: 32, borderRadius: 8, background: `${C.accent}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: C.accent, flexShrink: 0}}>{(user?.ad_soyad || 'U')[0]}</div>
+                  <div style={{width: 34, height: 34, borderRadius: 10, background: `${C.accent}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: C.accent, flexShrink: 0, boxShadow: isK ? 'inset 2px 2px 4px rgba(0,0,0,.2)' : 'inset 2px 2px 4px rgba(0,0,0,.04)'}}>{(user?.ad_soyad || 'U')[0]}</div>
                 )}
                 <div>
                   <div style={{fontSize: 12, fontWeight: 600}}>{user?.ad_soyad}</div>
@@ -322,14 +355,14 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                 </div>
               </div>
               <div onClick={() => { setPage('profil'); setProfilOpen(false); }}
-                style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12, color: C.textSec}}
-                onMouseEnter={e => e.currentTarget.style.background = `${C.accent}10`}
+                style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 600, color: C.textSec}}
+                onMouseEnter={e => e.currentTarget.style.background = `${C.accent}0c`}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                 <LIcon name="User" size={14} color={C.textMuted}/> PROFİL
               </div>
               <div onClick={onLogout}
-                style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12, color: C.danger}}
-                onMouseEnter={e => e.currentTarget.style.background = `${C.danger}10`}
+                style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 600, color: C.danger}}
+                onMouseEnter={e => e.currentTarget.style.background = `${C.danger}0c`}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                 <LIcon name="LogOut" size={14} color={C.danger}/> ÇIKIŞ YAP
               </div>
@@ -427,12 +460,12 @@ const Breadcrumb = ({page, setPage}) => {
 
 /* ═══ PROFİL SAYFASI ═══ */
 const ROL_ACIKLAMALAR = {
-  admin: {label: 'SİSTEM YÖNETİCİSİ', renk: '#ef4444', gorev: 'TÜM SİSTEM YÖNETİMİ, KULLANICI YÖNETİMİ, YETKİ ATAMA, FİRMA AYARLARI VE TÜM MODÜLLERE ERİŞİM'},
+  admin: {label: 'SİSTEM YÖNETİCİSİ', renk: '#10b981', gorev: 'TÜM SİSTEM YÖNETİMİ, KULLANICI YÖNETİMİ, YETKİ ATAMA, FİRMA AYARLARI VE TÜM MODÜLLERE ERİŞİM'},
   avukat: {label: 'AVUKAT', renk: '#8b5cf6', gorev: 'DOSYA TAKİBİ, CRM YÖNETİMİ, HESAPLAMA MODÜLLERI, SERVİS TAKİBİ, ORTAK YÖNETİMİ VE AJANDA'},
-  uzman: {label: 'UZMAN', renk: '#2563eb', gorev: 'DOSYA TAKİBİ, HESAPLAMA MODÜLLERI, SERVİS TAKİBİ VE AJANDA'},
-  personel: {label: 'PERSONEL', renk: '#10b981', gorev: 'DOSYA TAKİBİ VE AJANDA YÖNETİMİ'},
-  muhasebe: {label: 'MUHASEBE', renk: '#f59e0b', gorev: 'DOSYA TAKİBİ, MUHASEBE İŞLEMLERİ, ORTAK YÖNETİMİ, TANIMLAMALAR VE AJANDA'},
-  portal: {label: 'PORTAL KULLANICISI', renk: '#06b6d4', gorev: 'DOSYA GÖRÜNTÜLEME VE MESAJLAŞMA'}
+  uzman: {label: 'UZMAN', renk: '#059669', gorev: 'DOSYA TAKİBİ, HESAPLAMA MODÜLLERI, SERVİS TAKİBİ VE AJANDA'},
+  personel: {label: 'PERSONEL', renk: '#34d399', gorev: 'DOSYA TAKİBİ VE AJANDA YÖNETİMİ'},
+  muhasebe: {label: 'MUHASEBE', renk: '#fbbf24', gorev: 'DOSYA TAKİBİ, MUHASEBE İŞLEMLERİ, ORTAK YÖNETİMİ, TANIMLAMALAR VE AJANDA'},
+  portal: {label: 'PORTAL KULLANICISI', renk: '#22d3ee', gorev: 'DOSYA GÖRÜNTÜLEME VE MESAJLAŞMA'}
 };
 
 const ProfilPage = ({user, setUser}) => {
@@ -1802,10 +1835,10 @@ const App = () => {
 
   if (loading) {
     return (
-      <div style={{minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+      <div style={{minHeight: '100vh', background: C.bgGradient || C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
         <div style={{textAlign: 'center'}}>
-          <div style={{width: 48, height: 48, border: `3px solid ${C.border}`, borderTop: `3px solid ${C.accent}`, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px'}}/>
-          <div style={{fontSize: 12, color: C.textMuted}}>YÜKLENİYOR...</div>
+          <div style={{width: 52, height: 52, border: `3px solid ${C.border}`, borderTop: `3px solid ${C.accent}`, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px', boxShadow: `0 0 20px ${C.accent}30`}}/>
+          <div style={{fontSize: 12, color: C.textMuted, fontWeight: 600}}>YÜKLENİYOR...</div>
         </div>
       </div>
     );

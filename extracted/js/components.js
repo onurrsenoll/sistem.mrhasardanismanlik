@@ -38,10 +38,11 @@ MR.EmptyState = ({icon, title, desc}) => (
 
 MR.Modal = ({open, onClose, title, width='66vw', children}) => {
   if (!open) return null;
+  const isK = MR.tema === 'koyu';
   return (
-    <div style={{position:'fixed',inset:0,zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.7)'}} onClick={onClose}>
-      <div style={{width,maxWidth:1000,maxHeight:'90vh',background:MR.C.bgCard,borderRadius:16,border:`1px solid ${MR.C.border}`,overflow:'hidden',display:'flex',flexDirection:'column'}} onClick={e=>e.stopPropagation()}>
-        <div style={{padding:'16px 20px',borderBottom:`1px solid ${MR.C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+    <div style={{position:'fixed',inset:0,zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',background: isK ? 'rgba(0,0,0,.7)' : 'rgba(0,20,10,.25)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(8px)'}} onClick={onClose}>
+      <div style={{width,maxWidth:1000,maxHeight:'90vh',background: isK ? MR.C.bgCard : 'rgba(232,240,236,0.9)',borderRadius:22,border:`1px solid ${MR.C.border}`,overflow:'hidden',display:'flex',flexDirection:'column',boxShadow: isK ? '12px 12px 30px rgba(0,0,0,.6), -8px -8px 20px rgba(16,185,129,.06)' : '12px 12px 30px rgba(0,30,15,.12), -8px -8px 20px rgba(255,255,255,.8)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)'}} onClick={e=>e.stopPropagation()}>
+        <div style={{padding:'16px 20px',borderBottom:`1px solid ${MR.C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',background: isK ? 'rgba(16,185,129,0.04)' : 'rgba(5,150,105,0.03)'}}>
           <span style={{fontSize:14,fontWeight:700}}>{title}</span>
           <MR.LIcon name="X" size={18} color={MR.C.textMuted} style={{cursor:'pointer'}} onClick={onClose}/>
         </div>
@@ -75,11 +76,12 @@ MR.SkeletonPage = ({title, icon, desc, children}) => (
 
 MR.Confirm = ({open, message, onConfirm, onCancel}) => {
   if (!open) return null;
+  const isK = MR.tema === 'koyu';
   return (
-    <div style={{position:'fixed',inset:0,zIndex:10000,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.7)'}} onClick={onCancel}>
-      <div style={{width:400,background:MR.C.bgCard,borderRadius:16,border:`1px solid ${MR.C.border}`,padding:30}} onClick={e=>e.stopPropagation()}>
-        <div style={{fontSize:14,fontWeight:600,marginBottom:20,textAlign:'center'}}>{message}</div>
-        <div style={{display:'flex',gap:10,justifyContent:'center'}}>
+    <div style={{position:'fixed',inset:0,zIndex:10000,display:'flex',alignItems:'center',justifyContent:'center',background: isK ? 'rgba(0,0,0,.7)' : 'rgba(0,20,10,.25)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(8px)'}} onClick={onCancel}>
+      <div style={{width:420,background: isK ? MR.C.bgCard : 'rgba(232,240,236,0.92)',borderRadius:22,border:`1px solid ${MR.C.border}`,padding:32,boxShadow: isK ? '12px 12px 30px rgba(0,0,0,.6), -8px -8px 20px rgba(16,185,129,.06)' : '12px 12px 30px rgba(0,30,15,.12), -8px -8px 20px rgba(255,255,255,.8)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)'}} onClick={e=>e.stopPropagation()}>
+        <div style={{fontSize:14,fontWeight:600,marginBottom:22,textAlign:'center'}}>{message}</div>
+        <div style={{display:'flex',gap:12,justifyContent:'center'}}>
           <button style={{...MR.S.btn,...MR.S.btnG}} onClick={onCancel}>İPTAL</button>
           <button style={{...MR.S.btn,...MR.S.btnD}} onClick={onConfirm}>ONAYLA</button>
         </div>
@@ -106,29 +108,53 @@ MR.LoginScreen = ({onLogin}) => {
     setLoading(false);
   };
 
+  const isK = MR.tema === 'koyu';
   return (
-    <div style={{minHeight:'100vh',background:MR.C.bg,display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <div style={{width:420,padding:40,background:MR.C.bgCard,borderRadius:20,border:`1px solid ${MR.C.border}`,boxShadow:'0 20px 60px rgba(0,0,0,.5)'}}>
-        <div style={{textAlign:'center',marginBottom:32}}>
-          <div style={{width:64,height:64,borderRadius:16,background:`${MR.C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px',fontSize:24,fontWeight:900,color:MR.C.accent}}>MR</div>
+    <div style={{minHeight:'100vh',background: MR.C.bgGradient || MR.C.bg,display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <div style={{
+        width:440,padding:44,
+        background: isK ? MR.C.bgCard : 'rgba(232,240,236,0.85)',
+        borderRadius:26,
+        border:`1px solid ${MR.C.border}`,
+        boxShadow: isK
+          ? '16px 16px 40px rgba(0,0,0,.6), -10px -10px 30px rgba(16,185,129,.06), inset 0 1px 0 rgba(52,211,153,.08)'
+          : '16px 16px 40px rgba(0,30,15,.12), -10px -10px 30px rgba(255,255,255,.85), inset 0 1px 0 rgba(255,255,255,.6)',
+        backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'
+      }}>
+        <div style={{textAlign:'center',marginBottom:36}}>
+          <div style={{
+            width:72,height:72,borderRadius:20,
+            background: `linear-gradient(145deg, ${MR.C.accent}33, ${MR.C.accent}11)`,
+            display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 18px',
+            fontSize:26,fontWeight:900,color:MR.C.accent,
+            boxShadow: isK
+              ? '8px 8px 20px rgba(0,0,0,.4), -6px -6px 16px rgba(16,185,129,.08), 0 0 30px rgba(16,185,129,.15)'
+              : '8px 8px 20px rgba(0,30,15,.08), -6px -6px 16px rgba(255,255,255,.7), 0 0 20px rgba(5,150,105,.08)',
+            border: `1px solid ${MR.C.accent}22`
+          }}>MR</div>
           <div style={{fontSize:20,fontWeight:800,color:MR.C.accent,letterSpacing:2}}>MR HASAR DANIŞMANLIK</div>
-          <div style={{fontSize:10,color:MR.C.textMuted,letterSpacing:4,marginTop:4}}>DOSYA TAKİP SİSTEMİ</div>
+          <div style={{fontSize:10,color:MR.C.textMuted,letterSpacing:4,marginTop:6}}>DOSYA TAKİP SİSTEMİ</div>
         </div>
         <form onSubmit={go}>
-          {error && <div style={{padding:'10px 14px',background:`${MR.C.danger}22`,border:`1px solid ${MR.C.danger}44`,borderRadius:8,marginBottom:16,fontSize:12,color:MR.C.danger}}>{error}</div>}
-          <div style={{marginBottom:16}}>
+          {error && <div style={{padding:'12px 16px',background:`${MR.C.danger}18`,border:`1px solid ${MR.C.danger}33`,borderRadius:14,marginBottom:18,fontSize:12,color:MR.C.danger,boxShadow: isK ? 'inset 3px 3px 6px rgba(0,0,0,.3)' : 'inset 3px 3px 6px rgba(0,0,0,.04)'}}>{error}</div>}
+          <div style={{marginBottom:18}}>
             <label style={MR.S.label}>E-POSTA</label>
             <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="ADMIN@MRHASAR.COM" style={MR.S.input} autoFocus/>
           </div>
-          <div style={{marginBottom:24}}>
+          <div style={{marginBottom:28}}>
             <label style={MR.S.label}>ŞİFRE</label>
             <input type="password" value={sifre} onChange={e=>setSifre(e.target.value)} placeholder="••••••••" style={MR.S.input}/>
           </div>
-          <button type="submit" disabled={loading} style={{...MR.S.btn,...MR.S.btnP,width:'100%',justifyContent:'center',padding:'14px',fontSize:14,opacity:loading?0.7:1}}>
+          <button type="submit" disabled={loading} style={{
+            ...MR.S.btn,...MR.S.btnP,
+            width:'100%',justifyContent:'center',padding:'15px',fontSize:14,
+            borderRadius:16,
+            opacity:loading?0.7:1
+          }}>
             {loading ? 'GİRİŞ YAPILIYOR...' : (<><MR.LIcon name="Lock" size={16} color="#fff"/> GİRİŞ YAP</>)}
           </button>
         </form>
-        <div style={{textAlign:'center',marginTop:24,fontSize:13,fontWeight:700,color:MR.C.accent,letterSpacing:4}}>HER ZAMAN FARK EDER</div>
+        <div style={{textAlign:'center',marginTop:28,fontSize:13,fontWeight:700,color:MR.C.accent,letterSpacing:4}}>HER ZAMAN FARK EDER</div>
       </div>
     </div>
   );

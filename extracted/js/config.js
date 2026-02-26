@@ -6,17 +6,24 @@ const MR = window.MR || (window.MR = {});
 
 // ═══ TOAST BİLDİRİM ═══
 MR.toast = (mesaj, tip = 'info') => {
-  const renk = tip === 'success' ? '#60a5fa' : tip === 'error' ? '#f87171' : tip === 'warning' ? '#fbbf24' : '#60a5fa';
-  const bg = tip === 'success' ? 'rgba(37,99,235,.12)' : tip === 'error' ? 'rgba(248,113,113,.12)' : tip === 'warning' ? 'rgba(251,191,36,.12)' : 'rgba(37,99,235,.12)';
+  const isK = MR.tema === 'koyu';
+  const renk = tip === 'success' ? '#34d399' : tip === 'error' ? '#f87171' : tip === 'warning' ? '#fbbf24' : '#34d399';
+  const bg = isK
+    ? (tip === 'success' ? 'rgba(16,185,129,.15)' : tip === 'error' ? 'rgba(248,113,113,.15)' : tip === 'warning' ? 'rgba(251,191,36,.15)' : 'rgba(16,185,129,.15)')
+    : (tip === 'success' ? 'rgba(5,150,105,.1)' : tip === 'error' ? 'rgba(220,38,38,.1)' : tip === 'warning' ? 'rgba(202,138,4,.1)' : 'rgba(5,150,105,.1)');
   const el = document.createElement('div');
   el.textContent = mesaj;
   Object.assign(el.style, {
     position:'fixed', top:'20px', right:'20px', zIndex:'99999',
-    background:bg, color:renk, border:'1px solid '+renk+'44',
-    padding:'14px 24px', borderRadius:'12px', fontSize:'13px', fontWeight:'700',
+    background: isK ? bg : 'rgba(255,255,255,0.85)',
+    color:renk, border:'1px solid '+renk+'44',
+    padding:'14px 24px', borderRadius:'16px', fontSize:'13px', fontWeight:'700',
     fontFamily:'Manrope,sans-serif', letterSpacing:'0.3px', textTransform:'uppercase',
-    boxShadow:'0 8px 32px rgba(0,0,0,.35), 0 0 12px '+renk+'25', maxWidth:'400px',
-    backdropFilter:'blur(16px)', WebkitBackdropFilter:'blur(16px)',
+    boxShadow: isK
+      ? '8px 8px 24px rgba(0,0,0,.6), -4px -4px 16px rgba(16,185,129,.08), 0 0 12px '+renk+'20'
+      : '6px 6px 20px rgba(0,0,0,.08), -4px -4px 12px rgba(255,255,255,.9), 0 0 8px '+renk+'15',
+    maxWidth:'400px',
+    backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)',
     animation:'fadeIn .3s ease', cursor:'pointer'
   });
   el.onclick = () => el.remove();
@@ -298,43 +305,58 @@ MR.api = {
   portalLoglar(p = {}) { return this.req('/portal/loglar.php?' + new URLSearchParams(p)); },
 };
 
-// ═══ TEMA SİSTEMİ ═══
+// ═══ TEMA SİSTEMİ - EMERALD GREEN + NEUMORPHİC 3D ═══
+
+/* ─── KOYU TEMA: DERİN 3D NEUMORPHİC ─── */
 const KOYU_TEMA = {
-  bg: '#0a1228', bgCard: '#0f1a30', bgHover: '#162a48', bgInput: '#0b1428',
-  border: 'rgba(37,99,235,0.18)', borderLight: 'rgba(96,165,250,0.15)',
-  accent: '#2563eb', accentLight: '#60a5fa',
-  accentGradient: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
-  success: '#10b981', warning: '#fbbf24', danger: '#f87171',
+  /* Zemin renkleri */
+  bg: '#0c1a14', bgCard: '#112420', bgHover: '#163830', bgInput: '#0e1f18',
+  /* Kenar renkleri */
+  border: 'rgba(16,185,129,0.18)', borderLight: 'rgba(52,211,153,0.12)',
+  /* Vurgu (Emerald) */
+  accent: '#10b981', accentLight: '#34d399',
+  accentGradient: 'linear-gradient(145deg, #10b981 0%, #059669 50%, #047857 100%)',
+  /* Durum renkleri */
+  success: '#34d399', warning: '#fbbf24', danger: '#f87171',
   purple: '#a78bfa', cyan: '#22d3ee', pink: '#f472b6', gold: '#fbbf24',
-  text: '#dbeafe', textSec: '#93c5fd', textMuted: '#60a5fa',
-  headerBg: 'rgba(10,16,30,0.9)', navBg: 'rgba(15,26,48,0.92)',
-  /* glass & neon */
-  cardGlass: 'rgba(15,26,48,0.6)',
-  cardShadow: '0 8px 32px rgba(0,0,0,.4), 0 0 2px rgba(37,99,235,.25), inset 0 1px 0 rgba(96,165,250,.06)',
-  cardBlur: 'blur(16px) saturate(1.3)',
-  statShadow: '0 4px 24px rgba(0,0,0,.3), 0 0 8px rgba(37,99,235,.12)',
-  inputShadow: 'inset 0 2px 6px rgba(0,0,0,.35), 0 0 0 1px rgba(37,99,235,.08)',
-  btnShadow: '0 4px 20px rgba(37,99,235,.4), 0 0 8px rgba(37,99,235,.2)',
-  bgGradient: 'linear-gradient(135deg, #050a18 0%, #0a1428 35%, #081222 65%, #040916 100%)'
+  /* Metin */
+  text: '#d1fae5', textSec: '#6ee7b7', textMuted: '#34d399',
+  /* Header / Nav */
+  headerBg: 'rgba(12,26,20,0.92)', navBg: 'rgba(17,36,32,0.95)',
+  /* 3D NEUMORPHIC GÖLGE SİSTEMİ - KOYU */
+  cardGlass: 'rgba(17,36,32,0.75)',
+  cardShadow: '8px 8px 20px rgba(0,0,0,.55), -6px -6px 16px rgba(16,185,129,.06), inset 0 1px 0 rgba(52,211,153,.08), inset 0 -1px 0 rgba(0,0,0,.2)',
+  cardBlur: 'blur(12px) saturate(1.4)',
+  statShadow: '6px 6px 16px rgba(0,0,0,.5), -4px -4px 12px rgba(16,185,129,.05), inset 0 1px 0 rgba(52,211,153,.06)',
+  inputShadow: 'inset 4px 4px 8px rgba(0,0,0,.5), inset -3px -3px 6px rgba(16,185,129,.04), 0 0 0 1px rgba(16,185,129,.06)',
+  btnShadow: '6px 6px 16px rgba(0,0,0,.5), -4px -4px 10px rgba(16,185,129,.12), 0 0 20px rgba(16,185,129,.15)',
+  bgGradient: 'linear-gradient(145deg, #071510 0%, #0c1a14 30%, #0e1f18 60%, #081612 100%)'
 };
 
+/* ─── AÇIK TEMA: SOFT NEUMORPHİC + GLASSMORPHISM ─── */
 const ACIK_TEMA = {
-  bg: '#e8edf5', bgCard: '#f0f4fc', bgHover: '#dce2f0', bgInput: '#edf0fa',
-  border: 'rgba(37,99,235,0.2)', borderLight: 'rgba(37,99,235,0.15)',
-  accent: '#1d4ed8', accentLight: '#2563eb',
-  accentGradient: 'linear-gradient(135deg, #1d4ed8 0%, #6d28d9 100%)',
+  /* Zemin renkleri - yumuşak gri-yeşil */
+  bg: '#e0e8e4', bgCard: '#e8f0ec', bgHover: '#d4dfd8', bgInput: '#dce6e0',
+  /* Kenar renkleri */
+  border: 'rgba(5,150,105,0.12)', borderLight: 'rgba(5,150,105,0.08)',
+  /* Vurgu (Koyu Emerald) */
+  accent: '#059669', accentLight: '#10b981',
+  accentGradient: 'linear-gradient(145deg, #10b981 0%, #059669 50%, #047857 100%)',
+  /* Durum renkleri */
   success: '#059669', warning: '#ca8a04', danger: '#dc2626',
   purple: '#7c3aed', cyan: '#0891b2', pink: '#db2777', gold: '#ca8a04',
-  text: '#1a2340', textSec: '#374560', textMuted: '#4b6090',
-  headerBg: 'rgba(240,244,252,0.85)', navBg: 'rgba(237,240,250,0.9)',
-  /* glass & depth */
-  cardGlass: 'rgba(240,244,252,0.7)',
-  cardShadow: '0 8px 32px rgba(0,15,45,.07), 0 2px 8px rgba(0,15,45,.04), 0 0 1px rgba(37,99,235,.18)',
-  cardBlur: 'blur(16px) saturate(1.2)',
-  statShadow: '0 4px 24px rgba(0,15,45,.06), 0 1px 4px rgba(0,15,45,.03), 0 0 8px rgba(37,99,235,.06)',
-  inputShadow: 'inset 0 2px 4px rgba(0,15,45,.06), 0 0 0 1px rgba(37,99,235,.1)',
-  btnShadow: '0 4px 20px rgba(29,78,216,.3), 0 0 8px rgba(29,78,216,.15)',
-  bgGradient: 'linear-gradient(135deg, #dce2f0 0%, #e8edf5 35%, #e0e4f2 65%, #d5daf0 100%)'
+  /* Metin */
+  text: '#0f2e22', textSec: '#1a5c3a', textMuted: '#2d7a50',
+  /* Header / Nav */
+  headerBg: 'rgba(228,236,232,0.8)', navBg: 'rgba(232,240,236,0.85)',
+  /* 3D NEUMORPHIC GÖLGE SİSTEMİ - AÇIK */
+  cardGlass: 'rgba(232,240,236,0.65)',
+  cardShadow: '8px 8px 20px rgba(0,30,15,.1), -8px -8px 20px rgba(255,255,255,.85), inset 0 1px 0 rgba(255,255,255,.6), inset 0 -1px 0 rgba(0,30,15,.03)',
+  cardBlur: 'blur(14px) saturate(1.2)',
+  statShadow: '6px 6px 16px rgba(0,30,15,.09), -6px -6px 16px rgba(255,255,255,.8), inset 0 1px 0 rgba(255,255,255,.5)',
+  inputShadow: 'inset 4px 4px 8px rgba(0,30,15,.07), inset -3px -3px 6px rgba(255,255,255,.7), 0 0 0 1px rgba(5,150,105,.06)',
+  btnShadow: '6px 6px 14px rgba(0,30,15,.12), -4px -4px 10px rgba(255,255,255,.8), 0 0 16px rgba(5,150,105,.1)',
+  bgGradient: 'linear-gradient(145deg, #d8e2dc 0%, #e0e8e4 30%, #e4ece8 60%, #dce4e0 100%)'
 };
 
 MR.TEMALAR = { koyu: KOYU_TEMA, acik: ACIK_TEMA };
@@ -347,15 +369,72 @@ MR.C = { ...MR.TEMALAR[MR.tema] };
 MR._stilGuncelle = () => {
   const C = MR.C;
   const isK = MR.tema === 'koyu';
+
+  /* SAYFA */
   MR.S.page = { minHeight: '100vh', background: C.bgGradient || C.bg, color: C.text };
-  MR.S.card = { background: C.cardGlass || C.bgCard, backdropFilter: C.cardBlur, WebkitBackdropFilter: C.cardBlur, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden', boxShadow: C.cardShadow };
-  MR.S.cardHead = { padding: '14px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 10, background: isK ? 'rgba(37,99,235,0.04)' : 'rgba(29,78,216,0.03)' };
+
+  /* KART - 3D KABARTMA */
+  MR.S.card = {
+    background: C.cardGlass || C.bgCard,
+    backdropFilter: C.cardBlur, WebkitBackdropFilter: C.cardBlur,
+    borderRadius: 18, border: `1px solid ${C.border}`,
+    overflow: 'hidden', boxShadow: C.cardShadow,
+    transition: 'box-shadow .3s ease, transform .3s ease'
+  };
+
+  /* KART BAŞLIK */
+  MR.S.cardHead = {
+    padding: '14px 20px', borderBottom: `1px solid ${C.border}`,
+    display: 'flex', alignItems: 'center', gap: 10,
+    background: isK ? 'rgba(16,185,129,0.04)' : 'rgba(5,150,105,0.03)'
+  };
+
   MR.S.cardBody = { padding: 20 };
-  MR.S.input = { width: '100%', padding: '10px 14px', background: C.bgInput, border: `1px solid ${C.borderLight}`, borderRadius: 10, color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box', boxShadow: C.inputShadow, transition: 'border-color .2s, box-shadow .2s' };
-  MR.S.select = { width: '100%', padding: '10px 14px', background: C.bgInput, border: `1px solid ${C.borderLight}`, borderRadius: 10, color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box', boxShadow: C.inputShadow };
-  MR.S.label = { fontSize: 11, fontWeight: 600, color: C.textSec, marginBottom: 6, display: 'block', letterSpacing: 0.5 };
-  MR.S.btnG = { background: isK ? 'rgba(37,99,235,0.08)' : 'rgba(29,78,216,0.08)', color: C.textSec, border: `1px solid ${C.borderLight}` };
-  MR.S.stat = { background: C.cardGlass || C.bgCard, backdropFilter: C.cardBlur, WebkitBackdropFilter: C.cardBlur, borderRadius: 14, padding: '18px 20px', border: `1px solid ${C.border}`, boxShadow: C.statShadow };
+
+  /* INPUT - ÇÖKÜNTÜ 3D */
+  MR.S.input = {
+    width: '100%', padding: '11px 15px',
+    background: C.bgInput,
+    border: `1px solid ${C.borderLight}`,
+    borderRadius: 12, color: C.text, fontSize: 13,
+    outline: 'none', boxSizing: 'border-box',
+    boxShadow: C.inputShadow,
+    transition: 'border-color .2s, box-shadow .2s'
+  };
+
+  /* SELECT */
+  MR.S.select = {
+    width: '100%', padding: '11px 15px',
+    background: C.bgInput,
+    border: `1px solid ${C.borderLight}`,
+    borderRadius: 12, color: C.text, fontSize: 13,
+    outline: 'none', boxSizing: 'border-box',
+    boxShadow: C.inputShadow
+  };
+
+  /* LABEL */
+  MR.S.label = { fontSize: 11, fontWeight: 700, color: C.textSec, marginBottom: 6, display: 'block', letterSpacing: 0.5 };
+
+  /* GHOST BUTON */
+  MR.S.btnG = {
+    background: isK ? 'rgba(16,185,129,0.08)' : 'rgba(5,150,105,0.06)',
+    color: C.textSec, border: `1px solid ${C.borderLight}`,
+    boxShadow: isK
+      ? '4px 4px 10px rgba(0,0,0,.35), -3px -3px 8px rgba(16,185,129,.04)'
+      : '4px 4px 10px rgba(0,30,15,.06), -3px -3px 8px rgba(255,255,255,.6)'
+  };
+
+  /* STAT KART */
+  MR.S.stat = {
+    background: C.cardGlass || C.bgCard,
+    backdropFilter: C.cardBlur, WebkitBackdropFilter: C.cardBlur,
+    borderRadius: 16, padding: '18px 20px',
+    border: `1px solid ${C.border}`,
+    boxShadow: C.statShadow,
+    transition: 'box-shadow .3s ease, transform .3s ease'
+  };
+
+  /* DOM GÜNCELLEMELERİ */
   document.body.style.background = C.bgGradient || C.bg;
   document.body.style.color = C.text;
   const selStyle = document.getElementById('mr-select-style');
@@ -372,20 +451,93 @@ MR.setTema = (t) => {
 // ═══ STİLLER ═══
 MR.S = {
   page: { minHeight: '100vh', background: MR.C.bgGradient || MR.C.bg, color: MR.C.text },
-  card: { background: MR.C.cardGlass || MR.C.bgCard, backdropFilter: MR.C.cardBlur, WebkitBackdropFilter: MR.C.cardBlur, borderRadius: 14, border: `1px solid ${MR.C.border}`, overflow: 'hidden', boxShadow: MR.C.cardShadow },
-  cardHead: { padding: '14px 20px', borderBottom: `1px solid ${MR.C.border}`, display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(37,99,235,0.04)' },
+
+  /* KART - 3D KABARTMA */
+  card: {
+    background: MR.C.cardGlass || MR.C.bgCard,
+    backdropFilter: MR.C.cardBlur, WebkitBackdropFilter: MR.C.cardBlur,
+    borderRadius: 18, border: `1px solid ${MR.C.border}`,
+    overflow: 'hidden', boxShadow: MR.C.cardShadow,
+    transition: 'box-shadow .3s ease, transform .3s ease'
+  },
+
+  cardHead: {
+    padding: '14px 20px', borderBottom: `1px solid ${MR.C.border}`,
+    display: 'flex', alignItems: 'center', gap: 10,
+    background: 'rgba(16,185,129,0.04)'
+  },
+
   cardBody: { padding: 20 },
-  input: { width: '100%', padding: '10px 14px', background: MR.C.bgInput, border: `1px solid ${MR.C.borderLight}`, borderRadius: 10, color: MR.C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box', boxShadow: MR.C.inputShadow, transition: 'border-color .2s, box-shadow .2s' },
-  select: { width: '100%', padding: '10px 14px', background: MR.C.bgInput, border: `1px solid ${MR.C.borderLight}`, borderRadius: 10, color: MR.C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box', boxShadow: MR.C.inputShadow },
-  label: { fontSize: 11, fontWeight: 600, color: MR.C.textSec, marginBottom: 6, display: 'block', letterSpacing: 0.5 },
-  btn: { padding: '10px 20px', borderRadius: 10, border: 'none', fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, transition: 'all .25s ease' },
-  btnP: { background: MR.C.accentGradient, color: '#fff', boxShadow: MR.C.btnShadow },
-  btnS: { background: `linear-gradient(135deg, ${MR.C.success}, ${MR.C.success}dd)`, color: '#fff', boxShadow: `0 4px 16px ${MR.C.success}44` },
-  btnW: { background: `linear-gradient(135deg, ${MR.C.warning}, ${MR.C.warning}dd)`, color: '#000', boxShadow: `0 4px 16px ${MR.C.warning}33` },
-  btnD: { background: `linear-gradient(135deg, ${MR.C.danger}, ${MR.C.danger}dd)`, color: '#fff', boxShadow: `0 4px 16px ${MR.C.danger}44` },
-  btnG: { background: 'rgba(37,99,235,0.08)', color: MR.C.textSec, border: `1px solid ${MR.C.borderLight}` },
-  badge: c => ({ padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, background: `${c}18`, color: c, border: `1px solid ${c}28`, display: 'inline-block', boxShadow: `0 0 8px ${c}15` }),
-  stat: { background: MR.C.cardGlass || MR.C.bgCard, backdropFilter: MR.C.cardBlur, WebkitBackdropFilter: MR.C.cardBlur, borderRadius: 14, padding: '18px 20px', border: `1px solid ${MR.C.border}`, boxShadow: MR.C.statShadow }
+
+  /* INPUT - ÇÖKÜNTÜ 3D */
+  input: {
+    width: '100%', padding: '11px 15px',
+    background: MR.C.bgInput,
+    border: `1px solid ${MR.C.borderLight}`,
+    borderRadius: 12, color: MR.C.text, fontSize: 13,
+    outline: 'none', boxSizing: 'border-box',
+    boxShadow: MR.C.inputShadow,
+    transition: 'border-color .2s, box-shadow .2s'
+  },
+
+  select: {
+    width: '100%', padding: '11px 15px',
+    background: MR.C.bgInput,
+    border: `1px solid ${MR.C.borderLight}`,
+    borderRadius: 12, color: MR.C.text, fontSize: 13,
+    outline: 'none', boxSizing: 'border-box',
+    boxShadow: MR.C.inputShadow
+  },
+
+  label: { fontSize: 11, fontWeight: 700, color: MR.C.textSec, marginBottom: 6, display: 'block', letterSpacing: 0.5 },
+
+  /* BUTONLAR - 3D RAISED */
+  btn: {
+    padding: '11px 22px', borderRadius: 14, border: 'none',
+    fontWeight: 700, fontSize: 13, cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', gap: 8,
+    transition: 'all .25s ease, transform .15s ease',
+    position: 'relative'
+  },
+  btnP: {
+    background: MR.C.accentGradient, color: '#fff',
+    boxShadow: MR.C.btnShadow
+  },
+  btnS: {
+    background: `linear-gradient(145deg, ${MR.C.success}, ${MR.C.success}cc)`, color: '#fff',
+    boxShadow: `6px 6px 14px rgba(0,0,0,.25), -3px -3px 8px rgba(52,211,153,.08), 0 0 12px ${MR.C.success}30`
+  },
+  btnW: {
+    background: `linear-gradient(145deg, ${MR.C.warning}, ${MR.C.warning}cc)`, color: '#000',
+    boxShadow: `6px 6px 14px rgba(0,0,0,.2), -3px -3px 8px rgba(251,191,36,.08), 0 0 12px ${MR.C.warning}25`
+  },
+  btnD: {
+    background: `linear-gradient(145deg, ${MR.C.danger}, ${MR.C.danger}cc)`, color: '#fff',
+    boxShadow: `6px 6px 14px rgba(0,0,0,.25), -3px -3px 8px rgba(248,113,113,.06), 0 0 12px ${MR.C.danger}30`
+  },
+  btnG: {
+    background: 'rgba(16,185,129,0.08)', color: MR.C.textSec,
+    border: `1px solid ${MR.C.borderLight}`,
+    boxShadow: '4px 4px 10px rgba(0,0,0,.3), -3px -3px 8px rgba(16,185,129,.04)'
+  },
+
+  /* BADGE */
+  badge: c => ({
+    padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700,
+    background: `${c}15`, color: c, border: `1px solid ${c}22`,
+    display: 'inline-block',
+    boxShadow: `3px 3px 8px rgba(0,0,0,.15), -2px -2px 6px rgba(255,255,255,.03), 0 0 10px ${c}12`
+  }),
+
+  /* STAT KARTI */
+  stat: {
+    background: MR.C.cardGlass || MR.C.bgCard,
+    backdropFilter: MR.C.cardBlur, WebkitBackdropFilter: MR.C.cardBlur,
+    borderRadius: 16, padding: '18px 20px',
+    border: `1px solid ${MR.C.border}`,
+    boxShadow: MR.C.statShadow,
+    transition: 'box-shadow .3s ease, transform .3s ease'
+  }
 };
 
 // İLK TEMA UYGULAMASI
