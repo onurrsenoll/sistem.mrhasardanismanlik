@@ -990,7 +990,7 @@ const SablonYonetimi = ({user}) => {
             </div>
 
             {/* KULLANILAN DEĞİŞKENLER ÖZET */}
-            <div style={{padding:'10px 12px', borderTop:`1px solid ${C.border}`, background:'rgba(16,185,129,0.05)'}}>
+            <div style={{padding:'10px 12px', borderTop:`1px solid ${C.border}`, background:'rgba(59,130,246,0.05)'}}>
               <div style={{fontSize:10, fontWeight:700, color:C.success, marginBottom:6, display:'flex', alignItems:'center', gap:4}}>
                 <LIcon name="CheckCircle" size={10} color={C.success}/> KULLANILAN DEĞİŞKENLER
               </div>

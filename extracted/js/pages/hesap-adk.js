@@ -216,13 +216,13 @@ MR.HesapADKPage = () => {
     // ═══ İLAN SATIRLARI ═══
     let ilanRows = '';
     ilanlar.forEach((il, i) => {
-      ilanRows += '<tr style="background:'+(i%2===0?'#f8fafc':'#fff')+';"><td style="padding:2px 4px;font-size:6.5px;color:#94a3b8;">'+(i+1)+'</td><td style="padding:2px 4px;font-size:6.5px;">'+((il.kaynak||'').replace('.com','').replace('sahibinden','sahib.').replace('araban','araban'))+'</td><td style="padding:2px 4px;font-size:6.5px;max-width:120px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">'+((il.baslik||'').substring(0,40))+'</td><td style="padding:2px 4px;font-size:6.5px;font-weight:700;color:#059669;text-align:right;">'+fmtM(il.fiyat)+'</td><td style="padding:2px 4px;font-size:6.5px;text-align:right;color:#64748b;">'+((il.km||0)/1000).toFixed(0)+'K</td><td style="padding:2px 4px;font-size:6.5px;color:#64748b;">'+((il.sehir||'').substring(0,8))+'</td></tr>';
+      ilanRows += '<tr style="background:'+(i%2===0?'#f8fafc':'#fff')+';"><td style="padding:2px 4px;font-size:6.5px;color:#94a3b8;">'+(i+1)+'</td><td style="padding:2px 4px;font-size:6.5px;">'+((il.kaynak||'').replace('.com','').replace('sahibinden','sahib.').replace('araban','araban'))+'</td><td style="padding:2px 4px;font-size:6.5px;max-width:120px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">'+((il.baslik||'').substring(0,40))+'</td><td style="padding:2px 4px;font-size:6.5px;font-weight:700;color:#2563eb;text-align:right;">'+fmtM(il.fiyat)+'</td><td style="padding:2px 4px;font-size:6.5px;text-align:right;color:#64748b;">'+((il.km||0)/1000).toFixed(0)+'K</td><td style="padding:2px 4px;font-size:6.5px;color:#64748b;">'+((il.sehir||'').substring(0,8))+'</td></tr>';
     });
 
     // ═══ EMSAL SATIRLARI ═══
     let emsalRows = '';
     kararlar.forEach((k, i) => {
-      emsalRows += '<tr style="background:'+(i%2===0?'#fffbeb':'#fff')+';"><td style="padding:2px 4px;font-size:6.5px;font-weight:600;color:#b45309;">'+(k.dosya_no||'-')+'</td><td style="padding:2px 4px;font-size:6.5px;">'+((k.marka||'')+' '+(k.model||'')+' ('+(k.yil||'')+')').substring(0,25)+'</td><td style="padding:2px 4px;font-size:6.5px;text-align:right;">'+fmtM(k.rayic)+'</td><td style="padding:2px 4px;font-size:6.5px;font-weight:700;color:#059669;text-align:right;">'+fmtM(k.deger_kaybi)+'</td></tr>';
+      emsalRows += '<tr style="background:'+(i%2===0?'#fffbeb':'#fff')+';"><td style="padding:2px 4px;font-size:6.5px;font-weight:600;color:#b45309;">'+(k.dosya_no||'-')+'</td><td style="padding:2px 4px;font-size:6.5px;">'+((k.marka||'')+' '+(k.model||'')+' ('+(k.yil||'')+')').substring(0,25)+'</td><td style="padding:2px 4px;font-size:6.5px;text-align:right;">'+fmtM(k.rayic)+'</td><td style="padding:2px 4px;font-size:6.5px;font-weight:700;color:#2563eb;text-align:right;">'+fmtM(k.deger_kaybi)+'</td></tr>';
     });
 
     // html2pdf flex desteklemez, TABLE kullan
@@ -266,8 +266,8 @@ MR.HesapADKPage = () => {
       + '</tr></table>'
 
       // ═══ 3 YÖNTEM KARŞILAŞTIRMA ═══
-      + '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:5px;padding:6px 8px;margin-bottom:6px;">'
-      + '<div style="font-size:7.5px;font-weight:800;color:#059669;margin-bottom:5px;padding-bottom:2px;border-bottom:1px solid #86efac;">HESAPLAMA SONUCLARI - '+yontemler.length+' YONTEM KARSILASTIRMASI</div>'
+      + '<div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:5px;padding:6px 8px;margin-bottom:6px;">'
+      + '<div style="font-size:7.5px;font-weight:800;color:#2563eb;margin-bottom:5px;padding-bottom:2px;border-bottom:1px solid #93c5fd;">HESAPLAMA SONUCLARI - '+yontemler.length+' YONTEM KARSILASTIRMASI</div>'
       + '<table style="width:100%;border-collapse:separate;border-spacing:5px 0;"><tr>'
       + yontemler.map((s,i) => '<td style="background:'+bgY[i]+';border:2px solid '+renkY[i]+'44;border-radius:5px;padding:6px 4px;text-align:center;width:'+Math.round(100/yontemler.length)+'%;">'
         + '<div style="font-size:6.5px;font-weight:700;color:'+renkY[i]+';letter-spacing:0.3px;margin-bottom:3px;">'+s.ad+'</div>'

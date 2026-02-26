@@ -393,7 +393,7 @@
           <h1 style="margin:0;font-size:32px;">${fmtPara(sonuc.toplamNet)} TL</h1>
         </div>
 
-        ${aiAnaliz ? '<div style="margin-bottom:20px;padding:15px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;"><h3 style="font-size:13px;color:#059669;margin:0 0 10px;">YAPAY ZEKA ANALİZİ</h3><div style="font-size:11px;line-height:1.7;white-space:pre-wrap;">' + (aiAnaliz.analiz || aiAnaliz.metin || '') + '</div></div>' : ''}
+        ${aiAnaliz ? '<div style="margin-bottom:20px;padding:15px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;"><h3 style="font-size:13px;color:#2563eb;margin:0 0 10px;">YAPAY ZEKA ANALİZİ</h3><div style="font-size:11px;line-height:1.7;white-space:pre-wrap;">' + (aiAnaliz.analiz || aiAnaliz.metin || '') + '</div></div>' : ''}
 
         <div style="margin-top:40px;padding-top:15px;border-top:2px solid #ddd;text-align:center;font-size:9px;color:#888;">
           <p><b>UYARI:</b> Bu rapor ön çalışma niteliğindedir. Kesin tazminat miktarı mahkeme kararı ile belirlenir.</p>

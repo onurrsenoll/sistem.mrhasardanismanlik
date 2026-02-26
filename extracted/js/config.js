@@ -7,10 +7,10 @@ const MR = window.MR || (window.MR = {});
 // ═══ TOAST BİLDİRİM ═══
 MR.toast = (mesaj, tip = 'info') => {
   const isK = MR.tema === 'koyu';
-  const renk = tip === 'success' ? '#34d399' : tip === 'error' ? '#f87171' : tip === 'warning' ? '#fbbf24' : '#34d399';
+  const renk = tip === 'success' ? '#34d399' : tip === 'error' ? '#f87171' : tip === 'warning' ? '#fbbf24' : (MR.C?.accent || '#3b82f6');
   const bg = isK
-    ? (tip === 'success' ? 'rgba(16,185,129,.15)' : tip === 'error' ? 'rgba(248,113,113,.15)' : tip === 'warning' ? 'rgba(251,191,36,.15)' : 'rgba(16,185,129,.15)')
-    : (tip === 'success' ? 'rgba(5,150,105,.1)' : tip === 'error' ? 'rgba(220,38,38,.1)' : tip === 'warning' ? 'rgba(202,138,4,.1)' : 'rgba(5,150,105,.1)');
+    ? (tip === 'success' ? 'rgba(59,130,246,.15)' : tip === 'error' ? 'rgba(248,113,113,.15)' : tip === 'warning' ? 'rgba(251,191,36,.15)' : 'rgba(59,130,246,.15)')
+    : (tip === 'success' ? 'rgba(37,99,235,.1)' : tip === 'error' ? 'rgba(220,38,38,.1)' : tip === 'warning' ? 'rgba(202,138,4,.1)' : 'rgba(37,99,235,.1)');
   const el = document.createElement('div');
   el.textContent = mesaj;
   Object.assign(el.style, {
@@ -20,7 +20,7 @@ MR.toast = (mesaj, tip = 'info') => {
     padding:'14px 24px', borderRadius:'16px', fontSize:'13px', fontWeight:'700',
     fontFamily:'Manrope,sans-serif', letterSpacing:'0.3px', textTransform:'uppercase',
     boxShadow: isK
-      ? '8px 8px 24px rgba(0,0,0,.6), -4px -4px 16px rgba(16,185,129,.08), 0 0 12px '+renk+'20'
+      ? '8px 8px 24px rgba(0,0,0,.6), -4px -4px 16px rgba(59,130,246,.08), 0 0 12px '+renk+'20'
       : '6px 6px 20px rgba(0,0,0,.08), -4px -4px 12px rgba(255,255,255,.9), 0 0 8px '+renk+'15',
     maxWidth:'400px',
     backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)',
@@ -307,58 +307,58 @@ MR.api = {
   portalLoglar(p = {}) { return this.req('/portal/loglar.php?' + new URLSearchParams(p)); },
 };
 
-// ═══ TEMA SİSTEMİ - EMERALD GREEN + NEUMORPHİC 3D ═══
+// ═══ TEMA SİSTEMİ - ROYAL BLUE + NEUMORPHİC 3D ═══
 
-/* ─── KOYU TEMA: DERİN 3D NEUMORPHİC ─── */
+/* ─── KOYU TEMA: DERİN LACİVERT 3D NEUMORPHİC ─── */
 const KOYU_TEMA = {
-  /* Zemin renkleri */
-  bg: '#0c1a14', bgCard: '#112420', bgHover: '#163830', bgInput: '#0e1f18',
+  /* Zemin renkleri — derin lacivert mavi */
+  bg: '#0d1526', bgCard: '#131f36', bgHover: '#1b2d4d', bgInput: '#101b30',
   /* Kenar renkleri */
-  border: 'rgba(16,185,129,0.18)', borderLight: 'rgba(52,211,153,0.12)',
-  /* Vurgu (Emerald) */
-  accent: '#10b981', accentLight: '#34d399',
-  accentGradient: 'linear-gradient(145deg, #10b981 0%, #059669 50%, #047857 100%)',
+  border: 'rgba(59,130,246,0.18)', borderLight: 'rgba(96,165,250,0.12)',
+  /* Vurgu (Mavi) */
+  accent: '#3b82f6', accentLight: '#60a5fa',
+  accentGradient: 'linear-gradient(145deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%)',
   /* Durum renkleri */
   success: '#34d399', warning: '#fbbf24', danger: '#f87171',
   purple: '#a78bfa', cyan: '#22d3ee', pink: '#f472b6', gold: '#fbbf24',
-  /* Metin */
-  text: '#d1fae5', textSec: '#6ee7b7', textMuted: '#34d399',
+  /* Metin — beyaz / açık */
+  text: '#f0f4ff', textSec: '#c8d6e8', textMuted: '#7e93b5',
   /* Header / Nav */
-  headerBg: 'rgba(12,26,20,0.92)', navBg: 'rgba(17,36,32,0.95)',
+  headerBg: 'rgba(13,21,38,0.94)', navBg: 'rgba(19,31,54,0.95)',
   /* 3D NEUMORPHIC GÖLGE SİSTEMİ - KOYU */
-  cardGlass: 'rgba(17,36,32,0.75)',
-  cardShadow: '8px 8px 20px rgba(0,0,0,.55), -6px -6px 16px rgba(16,185,129,.06), inset 0 1px 0 rgba(52,211,153,.08), inset 0 -1px 0 rgba(0,0,0,.2)',
+  cardGlass: 'rgba(19,31,54,0.78)',
+  cardShadow: '8px 8px 20px rgba(0,0,0,.55), -6px -6px 16px rgba(59,130,246,.06), inset 0 1px 0 rgba(96,165,250,.08), inset 0 -1px 0 rgba(0,0,0,.2)',
   cardBlur: 'blur(12px) saturate(1.4)',
-  statShadow: '6px 6px 16px rgba(0,0,0,.5), -4px -4px 12px rgba(16,185,129,.05), inset 0 1px 0 rgba(52,211,153,.06)',
-  inputShadow: 'inset 4px 4px 8px rgba(0,0,0,.5), inset -3px -3px 6px rgba(16,185,129,.04), 0 0 0 1px rgba(16,185,129,.06)',
-  btnShadow: '6px 6px 16px rgba(0,0,0,.5), -4px -4px 10px rgba(16,185,129,.12), 0 0 20px rgba(16,185,129,.15)',
-  bgGradient: 'linear-gradient(145deg, #071510 0%, #0c1a14 30%, #0e1f18 60%, #081612 100%)'
+  statShadow: '6px 6px 16px rgba(0,0,0,.5), -4px -4px 12px rgba(59,130,246,.05), inset 0 1px 0 rgba(96,165,250,.06)',
+  inputShadow: 'inset 4px 4px 8px rgba(0,0,0,.5), inset -3px -3px 6px rgba(59,130,246,.04), 0 0 0 1px rgba(59,130,246,.06)',
+  btnShadow: '6px 6px 16px rgba(0,0,0,.5), -4px -4px 10px rgba(59,130,246,.12), 0 0 20px rgba(59,130,246,.15)',
+  bgGradient: 'linear-gradient(145deg, #091220 0%, #0d1526 30%, #101b30 60%, #0a1222 100%)'
 };
 
-/* ─── AÇIK TEMA: SOFT NEUMORPHİC + GLASSMORPHISM ─── */
+/* ─── AÇIK TEMA: BEYAZ + MAVİ METİN NEUMORPHİC ─── */
 const ACIK_TEMA = {
-  /* Zemin renkleri - yumuşak gri-yeşil */
-  bg: '#e0e8e4', bgCard: '#e8f0ec', bgHover: '#d4dfd8', bgInput: '#dce6e0',
+  /* Zemin renkleri — beyaz / açık mavi-gri */
+  bg: '#edf1f7', bgCard: '#f4f7fb', bgHover: '#dfe5f0', bgInput: '#e8ecf5',
   /* Kenar renkleri */
-  border: 'rgba(5,150,105,0.12)', borderLight: 'rgba(5,150,105,0.08)',
-  /* Vurgu (Koyu Emerald) */
-  accent: '#059669', accentLight: '#10b981',
-  accentGradient: 'linear-gradient(145deg, #10b981 0%, #059669 50%, #047857 100%)',
+  border: 'rgba(26,39,68,0.12)', borderLight: 'rgba(26,39,68,0.08)',
+  /* Vurgu (Mavi) */
+  accent: '#2563eb', accentLight: '#3b82f6',
+  accentGradient: 'linear-gradient(145deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%)',
   /* Durum renkleri */
   success: '#059669', warning: '#ca8a04', danger: '#dc2626',
   purple: '#7c3aed', cyan: '#0891b2', pink: '#db2777', gold: '#ca8a04',
-  /* Metin */
-  text: '#0f2e22', textSec: '#1a5c3a', textMuted: '#2d7a50',
+  /* Metin — koyu lacivert mavi */
+  text: '#1a2744', textSec: '#2c4266', textMuted: '#4a6489',
   /* Header / Nav */
-  headerBg: 'rgba(228,236,232,0.8)', navBg: 'rgba(232,240,236,0.85)',
+  headerBg: 'rgba(244,247,251,0.88)', navBg: 'rgba(244,247,251,0.90)',
   /* 3D NEUMORPHIC GÖLGE SİSTEMİ - AÇIK */
-  cardGlass: 'rgba(232,240,236,0.65)',
-  cardShadow: '8px 8px 20px rgba(0,30,15,.1), -8px -8px 20px rgba(255,255,255,.85), inset 0 1px 0 rgba(255,255,255,.6), inset 0 -1px 0 rgba(0,30,15,.03)',
+  cardGlass: 'rgba(244,247,251,0.70)',
+  cardShadow: '8px 8px 20px rgba(0,15,40,.08), -8px -8px 20px rgba(255,255,255,.85), inset 0 1px 0 rgba(255,255,255,.6), inset 0 -1px 0 rgba(0,15,40,.03)',
   cardBlur: 'blur(14px) saturate(1.2)',
-  statShadow: '6px 6px 16px rgba(0,30,15,.09), -6px -6px 16px rgba(255,255,255,.8), inset 0 1px 0 rgba(255,255,255,.5)',
-  inputShadow: 'inset 4px 4px 8px rgba(0,30,15,.07), inset -3px -3px 6px rgba(255,255,255,.7), 0 0 0 1px rgba(5,150,105,.06)',
-  btnShadow: '6px 6px 14px rgba(0,30,15,.12), -4px -4px 10px rgba(255,255,255,.8), 0 0 16px rgba(5,150,105,.1)',
-  bgGradient: 'linear-gradient(145deg, #d8e2dc 0%, #e0e8e4 30%, #e4ece8 60%, #dce4e0 100%)'
+  statShadow: '6px 6px 16px rgba(0,15,40,.07), -6px -6px 16px rgba(255,255,255,.8), inset 0 1px 0 rgba(255,255,255,.5)',
+  inputShadow: 'inset 4px 4px 8px rgba(0,15,40,.06), inset -3px -3px 6px rgba(255,255,255,.7), 0 0 0 1px rgba(26,39,68,.06)',
+  btnShadow: '6px 6px 14px rgba(0,15,40,.1), -4px -4px 10px rgba(255,255,255,.8), 0 0 16px rgba(37,99,235,.08)',
+  bgGradient: 'linear-gradient(145deg, #e8ecf4 0%, #edf1f7 30%, #f0f4fa 60%, #eaeff5 100%)'
 };
 
 MR.TEMALAR = { koyu: KOYU_TEMA, acik: ACIK_TEMA };
@@ -388,7 +388,7 @@ MR._stilGuncelle = () => {
   MR.S.cardHead = {
     padding: '14px 20px', borderBottom: `1px solid ${C.border}`,
     display: 'flex', alignItems: 'center', gap: 10,
-    background: isK ? 'rgba(16,185,129,0.04)' : 'rgba(5,150,105,0.03)'
+    background: isK ? `${C.accent}0a` : `${C.accent}06`
   };
 
   MR.S.cardBody = { padding: 20 };
@@ -398,7 +398,7 @@ MR._stilGuncelle = () => {
     width: '100%', padding: '11px 15px',
     background: C.bgInput,
     border: `1px solid ${C.borderLight}`,
-    borderRadius: 12, color: C.text, fontSize: 13,
+    borderRadius: 12, color: C.text, fontSize: 14,
     outline: 'none', boxSizing: 'border-box',
     boxShadow: C.inputShadow,
     transition: 'border-color .2s, box-shadow .2s'
@@ -409,21 +409,21 @@ MR._stilGuncelle = () => {
     width: '100%', padding: '11px 15px',
     background: C.bgInput,
     border: `1px solid ${C.borderLight}`,
-    borderRadius: 12, color: C.text, fontSize: 13,
+    borderRadius: 12, color: C.text, fontSize: 14,
     outline: 'none', boxSizing: 'border-box',
     boxShadow: C.inputShadow
   };
 
   /* LABEL */
-  MR.S.label = { fontSize: 11, fontWeight: 700, color: C.textSec, marginBottom: 6, display: 'block', letterSpacing: 0.5 };
+  MR.S.label = { fontSize: 12, fontWeight: 700, color: C.textSec, marginBottom: 6, display: 'block', letterSpacing: 0.5 };
 
   /* GHOST BUTON */
   MR.S.btnG = {
-    background: isK ? 'rgba(16,185,129,0.08)' : 'rgba(5,150,105,0.06)',
+    background: isK ? `${C.accent}14` : `${C.accent}0a`,
     color: C.textSec, border: `1px solid ${C.borderLight}`,
     boxShadow: isK
-      ? '4px 4px 10px rgba(0,0,0,.35), -3px -3px 8px rgba(16,185,129,.04)'
-      : '4px 4px 10px rgba(0,30,15,.06), -3px -3px 8px rgba(255,255,255,.6)'
+      ? `4px 4px 10px rgba(0,0,0,.35), -3px -3px 8px ${C.accent}08`
+      : `4px 4px 10px rgba(0,15,40,.06), -3px -3px 8px rgba(255,255,255,.6)`
   };
 
   /* STAT KART */
@@ -435,6 +435,14 @@ MR._stilGuncelle = () => {
     boxShadow: C.statShadow,
     transition: 'box-shadow .3s ease, transform .3s ease'
   };
+
+  /* BUTON STİLLERİ GÜNCELLEMESİ */
+  MR.S.btn.fontWeight = 800;
+  MR.S.btn.fontSize = 14;
+  MR.S.btnP = { background: C.accentGradient, color: '#fff', boxShadow: C.btnShadow };
+  MR.S.btnS = { background: `linear-gradient(145deg, ${C.success}, ${C.success}cc)`, color: '#fff', boxShadow: `6px 6px 14px rgba(0,0,0,.25), -3px -3px 8px ${C.success}12, 0 0 12px ${C.success}30` };
+  MR.S.btnW = { background: `linear-gradient(145deg, ${C.warning}, ${C.warning}cc)`, color: '#000', boxShadow: `6px 6px 14px rgba(0,0,0,.2), -3px -3px 8px ${C.warning}12, 0 0 12px ${C.warning}25` };
+  MR.S.btnD = { background: `linear-gradient(145deg, ${C.danger}, ${C.danger}cc)`, color: '#fff', boxShadow: `6px 6px 14px rgba(0,0,0,.25), -3px -3px 8px ${C.danger}0c, 0 0 12px ${C.danger}30` };
 
   /* DOM GÜNCELLEMELERİ */
   document.body.style.background = C.bgGradient || C.bg;
@@ -466,7 +474,7 @@ MR.S = {
   cardHead: {
     padding: '14px 20px', borderBottom: `1px solid ${MR.C.border}`,
     display: 'flex', alignItems: 'center', gap: 10,
-    background: 'rgba(16,185,129,0.04)'
+    background: `${MR.C.accent}0a`
   },
 
   cardBody: { padding: 20 },
@@ -476,7 +484,7 @@ MR.S = {
     width: '100%', padding: '11px 15px',
     background: MR.C.bgInput,
     border: `1px solid ${MR.C.borderLight}`,
-    borderRadius: 12, color: MR.C.text, fontSize: 13,
+    borderRadius: 12, color: MR.C.text, fontSize: 14,
     outline: 'none', boxSizing: 'border-box',
     boxShadow: MR.C.inputShadow,
     transition: 'border-color .2s, box-shadow .2s'
@@ -486,17 +494,17 @@ MR.S = {
     width: '100%', padding: '11px 15px',
     background: MR.C.bgInput,
     border: `1px solid ${MR.C.borderLight}`,
-    borderRadius: 12, color: MR.C.text, fontSize: 13,
+    borderRadius: 12, color: MR.C.text, fontSize: 14,
     outline: 'none', boxSizing: 'border-box',
     boxShadow: MR.C.inputShadow
   },
 
-  label: { fontSize: 11, fontWeight: 700, color: MR.C.textSec, marginBottom: 6, display: 'block', letterSpacing: 0.5 },
+  label: { fontSize: 12, fontWeight: 700, color: MR.C.textSec, marginBottom: 6, display: 'block', letterSpacing: 0.5 },
 
   /* BUTONLAR - 3D RAISED */
   btn: {
     padding: '11px 22px', borderRadius: 14, border: 'none',
-    fontWeight: 700, fontSize: 13, cursor: 'pointer',
+    fontWeight: 800, fontSize: 14, cursor: 'pointer',
     display: 'inline-flex', alignItems: 'center', gap: 8,
     transition: 'all .25s ease, transform .15s ease',
     position: 'relative'
@@ -507,25 +515,25 @@ MR.S = {
   },
   btnS: {
     background: `linear-gradient(145deg, ${MR.C.success}, ${MR.C.success}cc)`, color: '#fff',
-    boxShadow: `6px 6px 14px rgba(0,0,0,.25), -3px -3px 8px rgba(52,211,153,.08), 0 0 12px ${MR.C.success}30`
+    boxShadow: `6px 6px 14px rgba(0,0,0,.25), -3px -3px 8px ${MR.C.success}12, 0 0 12px ${MR.C.success}30`
   },
   btnW: {
     background: `linear-gradient(145deg, ${MR.C.warning}, ${MR.C.warning}cc)`, color: '#000',
-    boxShadow: `6px 6px 14px rgba(0,0,0,.2), -3px -3px 8px rgba(251,191,36,.08), 0 0 12px ${MR.C.warning}25`
+    boxShadow: `6px 6px 14px rgba(0,0,0,.2), -3px -3px 8px ${MR.C.warning}12, 0 0 12px ${MR.C.warning}25`
   },
   btnD: {
     background: `linear-gradient(145deg, ${MR.C.danger}, ${MR.C.danger}cc)`, color: '#fff',
-    boxShadow: `6px 6px 14px rgba(0,0,0,.25), -3px -3px 8px rgba(248,113,113,.06), 0 0 12px ${MR.C.danger}30`
+    boxShadow: `6px 6px 14px rgba(0,0,0,.25), -3px -3px 8px ${MR.C.danger}0c, 0 0 12px ${MR.C.danger}30`
   },
   btnG: {
-    background: 'rgba(16,185,129,0.08)', color: MR.C.textSec,
+    background: `${MR.C.accent}14`, color: MR.C.textSec,
     border: `1px solid ${MR.C.borderLight}`,
-    boxShadow: '4px 4px 10px rgba(0,0,0,.3), -3px -3px 8px rgba(16,185,129,.04)'
+    boxShadow: `4px 4px 10px rgba(0,0,0,.3), -3px -3px 8px ${MR.C.accent}08`
   },
 
   /* BADGE */
   badge: c => ({
-    padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700,
+    padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
     background: `${c}15`, color: c, border: `1px solid ${c}22`,
     display: 'inline-block',
     boxShadow: `3px 3px 8px rgba(0,0,0,.15), -2px -2px 6px rgba(255,255,255,.03), 0 0 10px ${c}12`

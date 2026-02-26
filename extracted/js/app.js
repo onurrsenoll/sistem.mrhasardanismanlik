@@ -175,8 +175,8 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
       position: 'sticky', top: 0, zIndex: 1000, gap: 0,
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
       boxShadow: isK
-        ? '0 4px 20px rgba(0,0,0,.4), 0 1px 0 rgba(16,185,129,.06)'
-        : '0 4px 20px rgba(0,30,15,.06), 0 1px 0 rgba(255,255,255,.5)'
+        ? '0 4px 20px rgba(0,0,0,.4), 0 1px 0 rgba(59,130,246,.06)'
+        : '0 4px 20px rgba(0,15,40,.06), 0 1px 0 rgba(255,255,255,.5)'
     }}>
       {/* SOL ÜST LOGO - ANASAYFAYA YÖNLENDİRİR */}
       <div
@@ -189,8 +189,8 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
           background: sidebarLogoUrl ? 'transparent' : `linear-gradient(145deg, ${C.accent}22, ${C.accent}0a)`,
           border: sidebarLogoUrl ? 'none' : `1px solid ${C.accent}22`,
           boxShadow: sidebarLogoUrl ? 'none' : (isK
-            ? '4px 4px 10px rgba(0,0,0,.3), -3px -3px 8px rgba(16,185,129,.06)'
-            : '4px 4px 10px rgba(0,30,15,.06), -3px -3px 8px rgba(255,255,255,.5)')
+            ? '4px 4px 10px rgba(0,0,0,.3), -3px -3px 8px rgba(59,130,246,.06)'
+            : '4px 4px 10px rgba(0,15,40,.06), -3px -3px 8px rgba(255,255,255,.5)')
         }}
         title="ANASAYFA"
         onMouseEnter={e => { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.transform = 'scale(0.97)'; }}
@@ -224,12 +224,12 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
               style={{
                 display: 'flex', alignItems: 'center', gap: 4,
                 padding: '6px 10px', borderRadius: 10, cursor: 'pointer',
-                fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap',
+                fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap',
                 color: isActive(m) ? C.accent : C.text,
                 background: isActive(m) ? `${C.accent}15` : 'transparent',
                 transition: 'all .2s', position: 'relative',
                 boxShadow: isActive(m)
-                  ? (isK ? 'inset 3px 3px 6px rgba(0,0,0,.3), inset -2px -2px 4px rgba(16,185,129,.06)' : 'inset 3px 3px 6px rgba(0,30,15,.06), inset -2px -2px 4px rgba(255,255,255,.5)')
+                  ? (isK ? 'inset 3px 3px 6px rgba(0,0,0,.3), inset -2px -2px 4px rgba(59,130,246,.06)' : 'inset 3px 3px 6px rgba(0,15,40,.06), inset -2px -2px 4px rgba(255,255,255,.5)')
                   : 'none'
               }}
               onMouseEnter={e => { if (!isActive(m)) { e.currentTarget.style.background = `${C.accent}08`; } }}
@@ -252,12 +252,12 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
             {m.sub && menuOpen === m.id && (
               <div style={{
                 position: 'absolute', top: '100%', left: 0, marginTop: 6,
-                background: isK ? C.bgCard : 'rgba(232,240,236,0.92)',
+                background: isK ? C.bgCard : 'rgba(237,241,247,0.92)',
                 border: `1px solid ${C.border}`,
                 borderRadius: 16, padding: 8, minWidth: 220,
                 boxShadow: isK
-                  ? '10px 10px 30px rgba(0,0,0,.55), -6px -6px 18px rgba(16,185,129,.04)'
-                  : '10px 10px 30px rgba(0,30,15,.1), -6px -6px 18px rgba(255,255,255,.7)',
+                  ? '10px 10px 30px rgba(0,0,0,.55), -6px -6px 18px rgba(59,130,246,.04)'
+                  : '10px 10px 30px rgba(0,15,40,.1), -6px -6px 18px rgba(255,255,255,.7)',
                 zIndex: 1001,
                 backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
               }}>
@@ -267,12 +267,12 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10,
                       padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
-                      fontSize: 12, fontWeight: 600,
+                      fontSize: 13, fontWeight: 700,
                       color: page === s.id ? C.accent : C.textSec,
                       background: page === s.id ? `${C.accent}12` : 'transparent',
                       transition: 'all .15s',
                       boxShadow: page === s.id
-                        ? (isK ? 'inset 3px 3px 6px rgba(0,0,0,.25), inset -2px -2px 4px rgba(16,185,129,.04)' : 'inset 3px 3px 6px rgba(0,30,15,.05), inset -2px -2px 4px rgba(255,255,255,.4)')
+                        ? (isK ? 'inset 3px 3px 6px rgba(0,0,0,.25), inset -2px -2px 4px rgba(59,130,246,.04)' : 'inset 3px 3px 6px rgba(0,15,40,.05), inset -2px -2px 4px rgba(255,255,255,.4)')
                         : 'none'
                     }}
                     onMouseEnter={e => e.currentTarget.style.background = `${C.accent}0c`}
@@ -304,7 +304,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
           transition: 'all .2s',
           boxShadow: isK
             ? '4px 4px 10px rgba(0,0,0,.35), -3px -3px 8px rgba(251,191,36,.04)'
-            : '4px 4px 10px rgba(0,30,15,.06), -3px -3px 8px rgba(255,255,255,.5)'
+            : '4px 4px 10px rgba(0,15,40,.06), -3px -3px 8px rgba(255,255,255,.5)'
         }} title={isK ? 'AÇIK TEMA' : 'KOYU TEMA'}>
           <LIcon name={isK ? 'Sun' : 'Moon'} size={19} color={isK ? C.warning : C.purple}/>
         </div>
@@ -317,8 +317,8 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
             alignItems: 'center', justifyContent: 'center',
             background: `${C.accent}18`, overflow: 'hidden',
             boxShadow: isK
-              ? '4px 4px 10px rgba(0,0,0,.35), -3px -3px 8px rgba(16,185,129,.05)'
-              : '4px 4px 10px rgba(0,30,15,.06), -3px -3px 8px rgba(255,255,255,.5)'
+              ? '4px 4px 10px rgba(0,0,0,.35), -3px -3px 8px rgba(59,130,246,.05)'
+              : '4px 4px 10px rgba(0,15,40,.06), -3px -3px 8px rgba(255,255,255,.5)'
           }} title={user?.ad_soyad || 'PROFİL'}>
             {user?.avatar ? (
               <img src={user.avatar} alt="" style={{
@@ -334,12 +334,12 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
           {profilOpen && (
             <div style={{
               position: 'absolute', top: '100%', right: 0, marginTop: 8,
-              background: isK ? C.bgCard : 'rgba(232,240,236,0.92)',
+              background: isK ? C.bgCard : 'rgba(237,241,247,0.92)',
               border: `1px solid ${C.border}`,
               borderRadius: 16, padding: 8, minWidth: 210,
               boxShadow: isK
-                ? '10px 10px 30px rgba(0,0,0,.55), -6px -6px 18px rgba(16,185,129,.04)'
-                : '10px 10px 30px rgba(0,30,15,.1), -6px -6px 18px rgba(255,255,255,.7)',
+                ? '10px 10px 30px rgba(0,0,0,.55), -6px -6px 18px rgba(59,130,246,.04)'
+                : '10px 10px 30px rgba(0,15,40,.1), -6px -6px 18px rgba(255,255,255,.7)',
               zIndex: 1001,
               backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
             }}>
@@ -460,10 +460,10 @@ const Breadcrumb = ({page, setPage}) => {
 
 /* ═══ PROFİL SAYFASI ═══ */
 const ROL_ACIKLAMALAR = {
-  admin: {label: 'SİSTEM YÖNETİCİSİ', renk: '#10b981', gorev: 'TÜM SİSTEM YÖNETİMİ, KULLANICI YÖNETİMİ, YETKİ ATAMA, FİRMA AYARLARI VE TÜM MODÜLLERE ERİŞİM'},
+  admin: {label: 'SİSTEM YÖNETİCİSİ', renk: '#3b82f6', gorev: 'TÜM SİSTEM YÖNETİMİ, KULLANICI YÖNETİMİ, YETKİ ATAMA, FİRMA AYARLARI VE TÜM MODÜLLERE ERİŞİM'},
   avukat: {label: 'AVUKAT', renk: '#8b5cf6', gorev: 'DOSYA TAKİBİ, CRM YÖNETİMİ, HESAPLAMA MODÜLLERI, SERVİS TAKİBİ, ORTAK YÖNETİMİ VE AJANDA'},
-  uzman: {label: 'UZMAN', renk: '#059669', gorev: 'DOSYA TAKİBİ, HESAPLAMA MODÜLLERI, SERVİS TAKİBİ VE AJANDA'},
-  personel: {label: 'PERSONEL', renk: '#34d399', gorev: 'DOSYA TAKİBİ VE AJANDA YÖNETİMİ'},
+  uzman: {label: 'UZMAN', renk: '#2563eb', gorev: 'DOSYA TAKİBİ, HESAPLAMA MODÜLLERI, SERVİS TAKİBİ VE AJANDA'},
+  personel: {label: 'PERSONEL', renk: '#60a5fa', gorev: 'DOSYA TAKİBİ VE AJANDA YÖNETİMİ'},
   muhasebe: {label: 'MUHASEBE', renk: '#fbbf24', gorev: 'DOSYA TAKİBİ, MUHASEBE İŞLEMLERİ, ORTAK YÖNETİMİ, TANIMLAMALAR VE AJANDA'},
   portal: {label: 'PORTAL KULLANICISI', renk: '#22d3ee', gorev: 'DOSYA GÖRÜNTÜLEME VE MESAJLAŞMA'}
 };
