@@ -101,7 +101,7 @@ try {
                 clean($body['ma_kasko_police'] ?? '')
             ]);
         }
-        
+
         // Karşı araç
         if (!empty($body['ka_plaka'])) {
             $stmt = $db->prepare('INSERT INTO araclar (dosya_id, taraf, plaka, ruhsat_sahibi, tc_kimlik, marka, model, model_yili, trafik_sirket, trafik_police) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
@@ -116,6 +116,40 @@ try {
                 !empty($body['ka_yil']) ? (int)$body['ka_yil'] : null,
                 clean($body['ka_trafik'] ?? ''),
                 clean($body['ka_trafik_police'] ?? '')
+            ]);
+        }
+    }
+
+    // 4b. BH ek alanları (sürücü, araç, sorumlu sigorta, sakatlık)
+    if ($body['dosya_turu'] === 'BH') {
+        // dosyalar tablosuna BH ek sütunlar
+        try {
+            $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS sorumlu_sigorta VARCHAR(255) DEFAULT NULL");
+            $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS sakatlik_aciklama TEXT DEFAULT NULL");
+            $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS surucu_ad VARCHAR(255) DEFAULT NULL");
+            $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS surucu_ehliyet VARCHAR(100) DEFAULT NULL");
+            $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS surucu_kusur INT DEFAULT NULL");
+        } catch (\Exception $e) {}
+
+        $stmtBH = $db->prepare('UPDATE dosyalar SET sorumlu_sigorta=?, sakatlik_aciklama=?, surucu_ad=?, surucu_ehliyet=?, surucu_kusur=? WHERE id=?');
+        $stmtBH->execute([
+            clean($body['sorumlu_sigorta'] ?? ''),
+            clean($body['sakatlik_aciklama'] ?? ''),
+            clean($body['surucu_ad'] ?? ''),
+            clean($body['surucu_ehliyet'] ?? ''),
+            !empty($body['surucu_kusur']) ? (int)$body['surucu_kusur'] : null,
+            $dosyaId
+        ]);
+
+        // BH aracı
+        if (!empty($body['bh_arac_plaka'])) {
+            $stmt = $db->prepare('INSERT INTO araclar (dosya_id, taraf, plaka, marka, model_yili) VALUES (?, ?, ?, ?, ?)');
+            $stmt->execute([
+                $dosyaId,
+                'magdur',
+                format_plaka($body['bh_arac_plaka']),
+                clean($body['bh_arac_marka'] ?? ''),
+                !empty($body['bh_arac_yil']) ? (int)$body['bh_arac_yil'] : null
             ]);
         }
     }
