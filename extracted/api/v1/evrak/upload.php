@@ -84,10 +84,20 @@ $fullPath = $uploadPath . $sunucuAdi;
 
 // Dosyayı taşı
 if (!move_uploaded_file($file['tmp_name'], $fullPath)) {
-    json_error('Dosya kaydedilemedi', 500);
+    json_error('Dosya kaydedilemedi (move_uploaded_file başarısız). Hedef: ' . $uploadPath, 500);
 }
 
-// Veritabanına kaydet
+// DOĞRULAMA: Dosya gerçekten disk'e yazıldı mı?
+if (!file_exists($fullPath)) {
+    json_error('Dosya taşındı ama disk\'te bulunamadı! Yol: ' . $fullPath, 500);
+}
+$gercekBoyut = filesize($fullPath);
+if ($gercekBoyut === 0) {
+    @unlink($fullPath);
+    json_error('Dosya 0 byte olarak kaydedildi, silindi. Tekrar deneyin.', 500);
+}
+
+// Veritabanına kaydet — DİSKTEKİ GERÇEK DOSYA ADIYLA
 $stmt = $db->prepare('INSERT INTO evraklar (dosya_id, evrak_turu, dosya_adi, sunucu_adi, dosya_yolu, dosya_boyutu, mime_type, kullanici_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
 $stmt->execute([
     $dosyaId,
@@ -95,12 +105,31 @@ $stmt->execute([
     $orijinalAd,
     $sunucuAdi,
     "$yil/$ay/$sunucuAdi",
-    $file['size'],
+    $gercekBoyut,  // disk'teki gerçek boyut
     $mimeType,
     $user['id']
 ]);
 
 $evrakId = (int)$db->lastInsertId();
+
+// İKİNCİ DOĞRULAMA: DB'ye yazılan sunucu_adi ile diskteki dosya eşleşiyor mu?
+$stmtVerify = $db->prepare('SELECT sunucu_adi, dosya_yolu FROM evraklar WHERE id = ?');
+$stmtVerify->execute([$evrakId]);
+$kayit = $stmtVerify->fetch();
+$beklenenYol = $uploadPath . ($kayit['sunucu_adi'] ?? '');
+if (!file_exists($beklenenYol)) {
+    // DB-disk uyumsuzluğu oluşmuş, düzelt
+    $gercekDosyalar = array_diff(scandir($uploadPath), ['.', '..']);
+    foreach ($gercekDosyalar as $gd) {
+        $gdPath = $uploadPath . $gd;
+        if (is_file($gdPath) && filesize($gdPath) === $gercekBoyut) {
+            $db->prepare('UPDATE evraklar SET sunucu_adi = ?, dosya_yolu = ? WHERE id = ?')
+               ->execute([$gd, "$yil/$ay/$gd", $evrakId]);
+            $sunucuAdi = $gd;
+            break;
+        }
+    }
+}
 
 log_action($user['id'], 'evrak_yukle', "{$dosya['dosya_no']} - $orijinalAd ($evrakTuru)", 'evraklar', $evrakId);
 
