@@ -3726,97 +3726,206 @@ const PortalTab = () => {
 /* ════════════════════════════════════════════════════════════════
    ANA SAYFA BİLEŞENİ - MR.SistemPage
    ════════════════════════════════════════════════════════════════ */
-MR.SistemPage = ({setPage, user, subPage}) => {
-  const {C, S, LIcon, SectionTitle} = MR;
+/* ═══ LAUNCHER GRİD — TELEFON UYGULAMA EKRANI GİBİ ═══ */
+const SistemLauncher = ({setPage, user}) => {
+  const {C, S, LIcon} = MR;
+  const isK = MR.tema === 'koyu';
+  const isAdmin = user?.rol === 'admin';
 
-  /* ─── TAB TANIMLAMALARI ─── */
-  const tabs = [
-    {key: 'kullanici', label: 'KULLANICI YÖNETİMİ', icon: 'Users',     desc: 'KULLANICI OLUŞTUR, DÜZENLE, YÖNETİMİ'},
-    {key: 'yetki',     label: 'YETKİ YÖNETİMİ',     icon: 'KeyRound',  desc: 'MODÜL BAZLI İZİN YÖNETİMİ'},
-    {key: 'ayarlar',   label: 'FİRMA AYARLARI',      icon: 'Settings',  desc: 'LOGO, ÜNVAN, SLOGAN, BİLGİLER'},
-    {key: 'netsantral',label: 'NETSANTRAL',           icon: 'Phone',     desc: 'NETSANTRAL ENTEGRASYON AYARLARI'},
-    {key: 'sms',       label: 'SMS BİLDİRİM',         icon: 'MessageSquare', desc: 'DURUM DEĞİŞİKLİĞİ SMS BİLDİRİM AYARLARI'},
-    {key: 'portal',    label: 'PORTAL AYARLARI',       icon: 'Globe',     desc: 'MÜŞTERİ/MAĞDUR PORTAL YÖNETİMİ'},
-    {key: 'aktarim',   label: 'TOPLU AKTARIM',         icon: 'FileSpreadsheet', desc: 'EXCEL/CSV İLE TOPLU DOSYA AKTARIMI'},
-    {key: 'log',       label: 'LOG KAYITLARI',        icon: 'Activity',  desc: 'SİSTEM OLAY GEÇMİŞİ'}
+  /* TÜM SİSTEM MODÜLLERİ — KART OLARAK GÖRÜNTÜLENİR */
+  const moduller = [
+    {id: 'sistem-kullanici', label: 'KULLANICI YÖNETİMİ', icon: 'UserCog',         renk: '#3b82f6', desc: 'KULLANICI OLUŞTUR, DÜZENLE'},
+    {id: 'sistem-yetki',     label: 'YETKİ YÖNETİMİ',     icon: 'KeyRound',        renk: '#8b5cf6', desc: 'MODÜL BAZLI İZİN YÖNETİMİ'},
+    {id: 'sistem-ayarlar',   label: 'FİRMA AYARLARI',      icon: 'Settings',        renk: '#06b6d4', desc: 'LOGO, ÜNVAN, SLOGAN'},
+    {id: 'sistem-sms',       label: 'SMS BİLDİRİM',       icon: 'MessageSquare',   renk: '#10b981', desc: 'SMS BİLDİRİM AYARLARI'},
+    {id: 'sistem-portal',    label: 'PORTAL AYARLARI',     icon: 'Globe',           renk: '#f59e0b', desc: 'MÜŞTERİ / MAĞDUR PORTAL'},
+    {id: 'sistem-netsantral',label: 'NETSANTRAL',          icon: 'Phone',           renk: '#ec4899', desc: 'NETSANTRAL ENTEGRASYON'},
+    {id: 'sistem-log',       label: 'LOG KAYITLARI',       icon: 'Activity',        renk: '#64748b', desc: 'SİSTEM OLAY GEÇMİŞİ'},
+    {id: 'sistem-aktarim',   label: 'TOPLU AKTARIM',       icon: 'FileSpreadsheet', renk: '#14b8a6', desc: 'EXCEL / CSV AKTARIM'},
+    {id: 'mesajlar-sistem',  label: 'SİSTEM BİLDİRİMLERİ',icon: 'Bell',            renk: '#ef4444', desc: 'BİLDİRİM MERKEZİ'},
+    {id: 'tanimlamalar-dosya',    label: 'DOSYA TANIMLAMALARI',    icon: 'Folder',          renk: '#3b82f6', desc: 'DOSYA DURUM / TÜR'},
+    {id: 'tanimlamalar-evrak',    label: 'EVRAK TANIMLAMALARI',    icon: 'FileText',        renk: '#8b5cf6', desc: 'EVRAK TÜR / KATEGORİ'},
+    {id: 'tanimlamalar-finansal', label: 'FİNANSAL TANIMLAMALAR',  icon: 'Wallet',          renk: '#10b981', desc: 'GELİR / GİDER KATEGORİ'},
+    {id: 'tanimlamalar-sablon',   label: 'MATBU EVRAK / SÖZLEŞME', icon: 'FileSignature',   renk: '#f59e0b', desc: 'ŞABLON / SÖZLEŞME'},
+    {id: 'tanimlamalar-genel',    label: 'GENEL TANIMLAMALAR',     icon: 'Settings',        renk: '#06b6d4', desc: 'İL / İLÇE / ARAÇ'},
+    {id: 'sistem-konum',         label: 'KONUM TAKİBİ',           icon: 'MapPin',          renk: '#ef4444', desc: 'PERSONEL GPS TAKİP'}
   ];
 
-  /* ADMİN DEĞİLSE SADECE LOG TAB'INI GÖSTER */
-  const isAdmin = user?.rol === 'admin';
-  const gorunenTabs = isAdmin ? tabs : tabs.filter(t => t.key === 'log');
-
-  /* AKTİF TAB */
-  const [aktifTab, setAktifTab] = useState(() => {
-    if (subPage && gorunenTabs.some(t => t.key === subPage)) return subPage;
-    return gorunenTabs[0]?.key || 'kullanici';
-  });
-
-  /* subPage DEĞİŞTİĞİNDE TAB GÜNCELLE */
-  useEffect(() => {
-    if (subPage && gorunenTabs.some(t => t.key === subPage)) {
-      setAktifTab(subPage);
-    }
-  }, [subPage]);
-
-  const aktifTabInfo = tabs.find(t => t.key === aktifTab);
+  /* ADMİN DEĞİLSE SADECE LOG GÖRÜNSİN */
+  const gorunenModuller = isAdmin ? moduller : moduller.filter(m => m.id === 'sistem-log');
 
   return (
     <div className="fade-in">
       {/* BAŞLIK */}
-      <div style={{...S.card, marginBottom:20}}>
-        <div style={{...S.cardHead, justifyContent:'space-between'}}>
-          <div style={{display:'flex', alignItems:'center', gap:12}}>
-            <div style={{width:40, height:40, borderRadius:10, background:`${C.accent}22`,
-              display:'flex', alignItems:'center', justifyContent:'center'}}>
-              <LIcon name="Settings" size={20} color={C.accent}/>
+      <div style={{...S.card, marginBottom: 24}}>
+        <div style={{...S.cardHead, justifyContent: 'space-between'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
+            <div style={{
+              width: 44, height: 44, borderRadius: 12,
+              background: C.accentGradient,
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <LIcon name="Shield" size={22} color="#fff"/>
             </div>
             <div>
-              <div style={{fontSize:16, fontWeight:800}}>SİSTEM YÖNETİMİ</div>
-              <div style={{fontSize:11, color:C.textMuted}}>KULLANICILAR, YETKİLER, AYARLAR VE SİSTEM LOGLARI</div>
+              <div style={{fontSize: 18, fontWeight: 800}}>SİSTEM YÖNETİMİ</div>
+              <div style={{fontSize: 11, color: C.textMuted}}>TÜM SİSTEM MODÜLLERİ — {gorunenModuller.length} MODÜL</div>
             </div>
           </div>
           {user && (
-            <div style={{display:'flex', alignItems:'center', gap:8}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
               <LIcon name="User" size={14} color={C.textMuted}/>
-              <span style={{fontSize:11, color:C.textSec}}>{user.ad_soyad}</span>
+              <span style={{fontSize: 11, color: C.textSec}}>{user.ad_soyad}</span>
               <span style={{...S.badge(ROL_RENK[user.rol] || C.accent)}}>{ROL_LABEL[user.rol] || (user.rol || '').toUpperCase()}</span>
             </div>
           )}
         </div>
+      </div>
 
-        {/* TAB MENÜSÜ */}
-        <div style={{display:'flex', borderBottom:`1px solid ${C.border}`, padding:'0 16px', overflowX:'auto'}}>
-          {gorunenTabs.map(tab => {
-            const aktif = aktifTab === tab.key;
-            return (
-              <div key={tab.key} onClick={() => setAktifTab(tab.key)}
-                style={{
-                  display:'flex', alignItems:'center', gap:8, padding:'14px 20px',
-                  cursor:'pointer', position:'relative', transition:'all .2s',
-                  color: aktif ? C.accent : C.textSec,
-                  fontWeight: aktif ? 700 : 500, fontSize:12, whiteSpace:'nowrap',
-                  borderBottom: aktif ? `2px solid ${C.accent}` : '2px solid transparent'
-                }}
-                onMouseEnter={e => { if (!aktif) e.currentTarget.style.color = C.text; }}
-                onMouseLeave={e => { if (!aktif) e.currentTarget.style.color = C.textSec; }}>
-                <LIcon name={tab.icon} size={15} color={aktif ? C.accent : C.textMuted}/>
-                {tab.label}
-              </div>
-            );
-          })}
+      {/* KART GRİD — 4'LÜ SIRA, KARE */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: 16
+      }}>
+        {gorunenModuller.map(m => (
+          <div key={m.id}
+            onClick={() => setPage(m.id)}
+            style={{
+              background: C.bgCard,
+              border: `1px solid ${C.border}`,
+              borderRadius: 16,
+              padding: 0,
+              cursor: 'pointer',
+              transition: 'all .2s ease',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              aspectRatio: '1 / 1',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
+              e.currentTarget.style.boxShadow = `0 12px 28px ${m.renk}25, 0 4px 10px rgba(0,0,0,0.15)`;
+              e.currentTarget.style.borderColor = m.renk + '55';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              e.currentTarget.style.boxShadow = 'none';
+              e.currentTarget.style.borderColor = C.border;
+            }}
+          >
+            {/* ARKA PLAN GLOW */}
+            <div style={{
+              position: 'absolute', top: -30, right: -30,
+              width: 100, height: 100, borderRadius: '50%',
+              background: `${m.renk}08`,
+              pointerEvents: 'none'
+            }}/>
+
+            {/* İKON */}
+            <div style={{
+              width: 56, height: 56, borderRadius: 16,
+              background: `${m.renk}15`,
+              border: `1px solid ${m.renk}25`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginBottom: 12, transition: 'all .2s'
+            }}>
+              <LIcon name={m.icon} size={26} color={m.renk}/>
+            </div>
+
+            {/* LABEL */}
+            <div style={{
+              fontSize: 11, fontWeight: 800, color: C.text,
+              textAlign: 'center', lineHeight: 1.3,
+              padding: '0 12px', maxWidth: '100%'
+            }}>{m.label}</div>
+
+            {/* AÇIKLAMA */}
+            <div style={{
+              fontSize: 9, fontWeight: 600, color: C.textMuted,
+              textAlign: 'center', marginTop: 4,
+              padding: '0 10px', lineHeight: 1.3
+            }}>{m.desc}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+MR.SistemPage = ({setPage, user, subPage}) => {
+  const {C, S, LIcon, SectionTitle} = MR;
+
+  /* LAUNCHER — ANA SAYFA (SİSTEM'E TIKLANDIĞINDA) */
+  if (subPage === 'launcher') {
+    return <SistemLauncher setPage={setPage} user={user}/>;
+  }
+
+  const isAdmin = user?.rol === 'admin';
+
+  /* ALT MODÜL BAŞLIĞI */
+  const modulBasliklar = {
+    kullanici: {label: 'KULLANICI YÖNETİMİ', icon: 'UserCog'},
+    yetki: {label: 'YETKİ YÖNETİMİ', icon: 'KeyRound'},
+    ayarlar: {label: 'FİRMA AYARLARI', icon: 'Settings'},
+    netsantral: {label: 'NETSANTRAL', icon: 'Phone'},
+    sms: {label: 'SMS BİLDİRİM', icon: 'MessageSquare'},
+    portal: {label: 'PORTAL AYARLARI', icon: 'Globe'},
+    aktarim: {label: 'TOPLU AKTARIM', icon: 'FileSpreadsheet'},
+    log: {label: 'LOG KAYITLARI', icon: 'Activity'}
+  };
+  const baslik = modulBasliklar[subPage] || {label: 'SİSTEM', icon: 'Settings'};
+
+  return (
+    <div className="fade-in">
+      {/* BAŞLIK + GERİ BUTONU */}
+      <div style={{...S.card, marginBottom: 20}}>
+        <div style={{...S.cardHead, justifyContent: 'space-between'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
+            <div onClick={() => setPage('sistem')} style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: `${C.textMuted}15`, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all .15s'
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = `${C.accent}22`}
+              onMouseLeave={e => e.currentTarget.style.background = `${C.textMuted}15`}
+              title="SİSTEM ANA SAYFASINA DÖN"
+            >
+              <LIcon name="ArrowLeft" size={18} color={C.textSec}/>
+            </div>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10, background: `${C.accent}22`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <LIcon name={baslik.icon} size={20} color={C.accent}/>
+            </div>
+            <div>
+              <div style={{fontSize: 16, fontWeight: 800}}>{baslik.label}</div>
+              <div style={{fontSize: 11, color: C.textMuted}}>SİSTEM YÖNETİMİ</div>
+            </div>
+          </div>
+          {user && (
+            <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
+              <LIcon name="User" size={14} color={C.textMuted}/>
+              <span style={{fontSize: 11, color: C.textSec}}>{user.ad_soyad}</span>
+              <span style={{...S.badge(ROL_RENK[user.rol] || C.accent)}}>{ROL_LABEL[user.rol] || (user.rol || '').toUpperCase()}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* TAB İÇERİĞİ */}
-      <div key={aktifTab} className="fade-in">
-        {aktifTab === 'kullanici' && isAdmin && <KullaniciTab/>}
-        {aktifTab === 'yetki' && isAdmin && <YetkiTab/>}
-        {aktifTab === 'ayarlar' && isAdmin && <AyarlarTab/>}
-        {aktifTab === 'netsantral' && isAdmin && <NetsantralTab/>}
-        {aktifTab === 'sms' && isAdmin && <SmsTab/>}
-        {aktifTab === 'portal' && isAdmin && <PortalTab/>}
-        {aktifTab === 'aktarim' && isAdmin && <TopluAktarimTab/>}
-        {aktifTab === 'log' && <LogTab/>}
+      {/* İÇERİK */}
+      <div className="fade-in">
+        {subPage === 'kullanici' && isAdmin && <KullaniciTab/>}
+        {subPage === 'yetki' && isAdmin && <YetkiTab/>}
+        {subPage === 'ayarlar' && isAdmin && <AyarlarTab/>}
+        {subPage === 'netsantral' && isAdmin && <NetsantralTab/>}
+        {subPage === 'sms' && isAdmin && <SmsTab/>}
+        {subPage === 'portal' && isAdmin && <PortalTab/>}
+        {subPage === 'aktarim' && isAdmin && <TopluAktarimTab/>}
+        {subPage === 'log' && <LogTab/>}
       </div>
     </div>
   );

@@ -44,11 +44,10 @@ const EvrakPreviewIframe = ({evrakId}) => {
         if (!token) { if (!iptal) setHata('OTURUM BULUNAMADI. LÜTFEN YENİDEN GİRİŞ YAPIN.'); return; }
 
         const apiBase = MR.api.base || '/api/v1';
-        const fetchUrl = apiBase + '/evrak/download.php?id=' + evrakId + '&mode=inline';
+        const fetchUrl = apiBase + '/evrak/download.php?id=' + evrakId + '&mode=inline&auth=' + encodeURIComponent(token);
 
         const r = await fetch(fetchUrl, {
           headers: { 'Authorization': 'Bearer ' + token },
-          credentials: 'include',
           cache: 'no-cache'
         });
 
@@ -642,14 +641,14 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                   for (let i = 0; i < dosya.evraklar.length; i++) {
                     const e = dosya.evraklar[i];
                     try {
-                      const r = await fetch(apiBase + '/evrak/download.php?id=' + e.id, {
+                      const dlUrl = apiBase + '/evrak/download.php?id=' + e.id + (token ? '&auth=' + encodeURIComponent(token) : '');
+                      const r = await fetch(dlUrl, {
                         headers: token ? {'Authorization': 'Bearer ' + token} : {},
-                        credentials: 'include',
                         cache: 'no-cache'
                       });
                       if (!r.ok) {
                         let hataMesaj = 'HATA ' + r.status;
-                        try { const j = await r.json(); hataMesaj = j.error || hataMesaj; } catch(ex){}
+                        try { const j = await r.clone().json(); hataMesaj = j.error || hataMesaj; } catch(ex){}
                         console.warn('EVRAK İNDİRİLEMEDİ (' + e.dosya_adi + '):', hataMesaj);
                         continue;
                       }
@@ -743,15 +742,15 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                           try {
                             const token = MR.api.token;
                             const apiBase = MR.api.base || '/api/v1';
-                            const r = await fetch(apiBase + '/evrak/download.php?id=' + y.id, {
+                            const dlUrl = apiBase + '/evrak/download.php?id=' + y.id + (token ? '&auth=' + encodeURIComponent(token) : '');
+                            const r = await fetch(dlUrl, {
                               headers: token ? {'Authorization': 'Bearer ' + token} : {},
-                              credentials: 'include',
                               cache: 'no-cache'
                             });
                             if (!r.ok) {
                               let msg = 'İNDİRME HATASI: ' + r.status;
                               try { const j = await r.clone().json(); msg = j.error || msg; } catch(ex) {}
-                              alert(msg); return;
+                              MR.toast(msg, 'error'); return;
                             }
                             const blob = await r.blob();
                             const a = document.createElement('a');
@@ -1110,15 +1109,15 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                   try {
                     const token = MR.api.token;
                     const apiBase = MR.api.base || '/api/v1';
-                    const r = await fetch(apiBase + '/evrak/download.php?id=' + previewEvrak.id, {
+                    const dlUrl = apiBase + '/evrak/download.php?id=' + previewEvrak.id + (token ? '&auth=' + encodeURIComponent(token) : '');
+                    const r = await fetch(dlUrl, {
                       headers: token ? {'Authorization': 'Bearer ' + token} : {},
-                      credentials: 'include',
                       cache: 'no-cache'
                     });
                     if (!r.ok) {
                       let msg = 'İNDİRME HATASI: ' + r.status;
                       try { const j = await r.clone().json(); msg = j.error || msg; } catch(ex) {}
-                      alert(msg); return;
+                      MR.toast(msg, 'error'); return;
                     }
                     const blob = await r.blob();
                     const a = document.createElement('a');
@@ -1128,7 +1127,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                     a.click();
                     document.body.removeChild(a);
                     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-                  } catch(e) { alert('İNDİRME HATASI: ' + e.message); }
+                  } catch(e) { MR.toast('İNDİRME HATASI: ' + e.message, 'error'); }
                 }}
                   style={{padding:'5px 12px',fontSize:9,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontWeight:700}}>
                   <LIcon name="Download" size={11} color={C.success}/> İNDİR

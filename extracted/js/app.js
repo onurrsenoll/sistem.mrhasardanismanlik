@@ -49,22 +49,7 @@ const MENU = [
     {id:'muhasebe-rapor', label:'FİNANSAL RAPORLAR', icon:'BarChart3'}
   ]},
   {id:'ajanda', label:'AJANDA', icon:'CalendarDays'},
-  {id:'sistem', label:'SİSTEM', icon:'Shield', sub:[
-    {id:'sistem-kullanici', label:'KULLANICI YÖNETİMİ', icon:'UserCog'},
-    {id:'sistem-yetki', label:'YETKİ YÖNETİMİ', icon:'KeyRound'},
-    {id:'sistem-ayarlar', label:'FİRMA AYARLARI', icon:'Settings'},
-    {id:'sistem-sms', label:'SMS BİLDİRİM', icon:'MessageSquare'},
-    {id:'sistem-portal', label:'PORTAL AYARLARI', icon:'Globe'},
-    {id:'sistem-netsantral', label:'NETSANTRAL', icon:'Phone'},
-    {id:'sistem-log', label:'LOG KAYITLARI', icon:'FileText'},
-    {id:'mesajlar-sistem', label:'SİSTEM BİLDİRİMLERİ', icon:'Bell'},
-    {id:'tanimlamalar-dosya', label:'DOSYA TANIMLAMALARI', icon:'Folder'},
-    {id:'tanimlamalar-evrak', label:'EVRAK TANIMLAMALARI', icon:'FileText'},
-    {id:'tanimlamalar-finansal', label:'FİNANSAL TANIMLAMALAR', icon:'Wallet'},
-    {id:'tanimlamalar-sablon', label:'MATBU EVRAK / SÖZLEŞME', icon:'FileSignature'},
-    {id:'tanimlamalar-genel', label:'GENEL TANIMLAMALAR', icon:'Settings'},
-    {id:'sistem-konum', label:'KONUM TAKİBİ', icon:'MapPin'}
-  ]}
+  {id:'sistem', label:'SİSTEM', icon:'Shield'}
 ];
 
 /* ═══ ROL BAZLI ERİŞİM ═══ */
@@ -430,6 +415,32 @@ const Breadcrumb = ({page, setPage}) => {
     }
   }
 
+  /* SİSTEM ALT MODÜLLER İÇİN BREADCRUMB */
+  if (page.startsWith('sistem-') && parts.length <= 1) {
+    const sistemLabels = {
+      'sistem-kullanici': 'KULLANICI YÖNETİMİ', 'sistem-yetki': 'YETKİ YÖNETİMİ',
+      'sistem-ayarlar': 'FİRMA AYARLARI', 'sistem-sms': 'SMS BİLDİRİM',
+      'sistem-portal': 'PORTAL AYARLARI', 'sistem-netsantral': 'NETSANTRAL',
+      'sistem-log': 'LOG KAYITLARI', 'sistem-aktarim': 'TOPLU AKTARIM',
+      'sistem-konum': 'KONUM TAKİBİ'
+    };
+    parts.push({label: 'SİSTEM', id: 'sistem'});
+    parts.push({label: sistemLabels[page] || page.replace('sistem-','').toUpperCase(), id: page});
+  }
+  if (page.startsWith('tanimlamalar-') && parts.length <= 1) {
+    const tanimLabels = {
+      'tanimlamalar-dosya': 'DOSYA TANIMLAMALARI', 'tanimlamalar-evrak': 'EVRAK TANIMLAMALARI',
+      'tanimlamalar-finansal': 'FİNANSAL TANIMLAMALAR', 'tanimlamalar-sablon': 'MATBU EVRAK / SÖZLEŞME',
+      'tanimlamalar-genel': 'GENEL TANIMLAMALAR'
+    };
+    parts.push({label: 'SİSTEM', id: 'sistem'});
+    parts.push({label: tanimLabels[page] || 'TANIMLAMALAR', id: page});
+  }
+  if (page === 'mesajlar-sistem' && parts.length <= 1) {
+    parts.push({label: 'SİSTEM', id: 'sistem'});
+    parts.push({label: 'SİSTEM BİLDİRİMLERİ', id: page});
+  }
+
   if (page === 'profil') {
     parts.push({label: 'PROFİL', id: 'profil'});
   }
@@ -792,10 +803,15 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     return <MR.KonumTakipPage setPage={setPage} user={user}/>;
   }
 
-  /* SİSTEM */
-  if (page.startsWith('sistem')) {
-    const sub = page.replace('sistem-', '') || 'kullanici';
-    return <MR.SistemPage setPage={setPage} user={user} subPage={sub === 'sistem' ? 'kullanici' : sub}/>;
+  /* SİSTEM — ANA SAYFA (LAUNCHER GRİD) */
+  if (page === 'sistem') {
+    return <MR.SistemPage setPage={setPage} user={user} subPage="launcher"/>;
+  }
+
+  /* SİSTEM — ALT MODÜLLER */
+  if (page.startsWith('sistem-')) {
+    const sub = page.replace('sistem-', '');
+    return <MR.SistemPage setPage={setPage} user={user} subPage={sub}/>;
   }
 
   if (page === 'profil') return <ProfilPage user={user} setUser={setUser}/>;
