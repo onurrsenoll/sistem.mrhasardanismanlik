@@ -1685,30 +1685,36 @@ const App = () => {
     if (!user) return;
     if (!navigator.geolocation) return;
 
-    let watchId = null;
     let intervalId = null;
     let lastSent = 0;
     const ARALIK = 120000; /* 2 dakika */
+
+    const konumOlustur = (pos) => ({
+      enlem: pos.coords.latitude,
+      boylam: pos.coords.longitude,
+      dogruluk: Math.round(pos.coords.accuracy),
+      hiz: pos.coords.speed || 0,
+      yon: pos.coords.heading || 0,
+      cihaz_tipi: /Mobi|Android/i.test(navigator.userAgent) ? 'mobil' : 'pc',
+      zaman: new Date().toISOString()
+    });
 
     const konumGonder = (pos) => {
       const now = Date.now();
       if (now - lastSent < ARALIK) return;
       lastSent = now;
-      const d = {
-        enlem: pos.coords.latitude,
-        boylam: pos.coords.longitude,
-        dogruluk: Math.round(pos.coords.accuracy),
-        hiz: pos.coords.speed || 0,
-        yon: pos.coords.heading || 0,
-        cihaz_tipi: /Mobi|Android/i.test(navigator.userAgent) ? 'mobil' : 'pc',
-        zaman: new Date().toISOString()
-      };
+      const d = konumOlustur(pos);
       api.konumGuncelle(d).catch(() => {});
-      /* localStorage yedek */
+      /* localStorage yedek — SW de kullanır */
       try { localStorage.setItem('mr_son_konum', JSON.stringify(d)); } catch(e) {}
+      /* SW'ye de bildir (arka plan iletimi) */
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'KONUM_GUNCELLE', konum: d, token: api.token
+        });
+      }
     };
 
-    /* İlk konum al + periyodik tekrar */
     const konumAl = () => {
       navigator.geolocation.getCurrentPosition(konumGonder, () => {}, {
         enableHighAccuracy: true, timeout: 10000, maximumAge: 60000
@@ -1719,9 +1725,81 @@ const App = () => {
     konumAl();
     intervalId = setInterval(konumAl, ARALIK);
 
+    /* ═══ SERVICE WORKER KAYDI + ARKA PLAN SYNC ═══ */
+    const swKayit = async () => {
+      if (!('serviceWorker' in navigator)) return;
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        console.log('[KONUM] SERVICE WORKER KAYITLI');
+
+        /* Periodic Background Sync — tarayıcı destekliyorsa */
+        if ('periodicSync' in reg) {
+          try {
+            await reg.periodicSync.register('mr-konum-sync', { minInterval: 2 * 60 * 1000 });
+            console.log('[KONUM] PERIODIC SYNC AKTİF (2dk)');
+          } catch(e) {
+            console.log('[KONUM] PERIODIC SYNC KAPALI:', e.message);
+          }
+        }
+
+        /* Normal Background Sync */
+        if ('sync' in reg) {
+          try {
+            await reg.sync.register('mr-konum-sync-once');
+          } catch(e) {}
+        }
+      } catch(e) {
+        console.log('[KONUM] SW KAYIT HATASI:', e.message);
+      }
+    };
+    swKayit();
+
+    /* SW'den gelen konum isteğine cevap ver */
+    const swMesajHandler = (e) => {
+      if (!e.data) return;
+      if (e.data.type === 'KONUM_ISTE') {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => { e.ports[0]?.postMessage(konumOlustur(pos)); },
+          () => {
+            try {
+              const son = JSON.parse(localStorage.getItem('mr_son_konum'));
+              e.ports[0]?.postMessage(son);
+            } catch(err) { e.ports[0]?.postMessage(null); }
+          },
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 120000 }
+        );
+      }
+      if (e.data.type === 'TOKEN_ISTE') {
+        e.ports[0]?.postMessage({ token: api.token });
+      }
+    };
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener('message', swMesajHandler);
+    }
+
+    /* ═══ KEEP-ALIVE: SW'yi uyanık tut (her 20sn) ═══ */
+    const keepAliveId = setInterval(() => {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'KEEP_ALIVE' });
+      }
+    }, 20000);
+
+    /* ═══ VISIBILITY CHANGE: Sayfa tekrar görünür olunca hemen konum al ═══ */
+    const visHandler = () => {
+      if (document.visibilityState === 'visible') {
+        lastSent = 0; /* throttle'ı sıfırla */
+        konumAl();
+      }
+    };
+    document.addEventListener('visibilitychange', visHandler);
+
     return () => {
-      if (watchId) navigator.geolocation.clearWatch(watchId);
       if (intervalId) clearInterval(intervalId);
+      clearInterval(keepAliveId);
+      document.removeEventListener('visibilitychange', visHandler);
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker.removeEventListener('message', swMesajHandler);
+      }
     };
   }, [user]);
 
