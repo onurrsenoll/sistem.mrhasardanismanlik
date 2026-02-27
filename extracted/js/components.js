@@ -40,8 +40,8 @@ MR.Modal = ({open, onClose, title, width='66vw', children}) => {
   if (!open) return null;
   const isK = MR.tema === 'koyu';
   return (
-    <div style={{position:'fixed',inset:0,zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',background: isK ? 'rgba(0,0,0,.65)' : 'rgba(0,0,0,.20)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}} onClick={onClose}>
-      <div style={{width,maxWidth:1000,maxHeight:'90vh',background: isK ? MR.C.bgCard : '#fff',borderRadius:16,border:`1px solid ${MR.C.border}`,overflow:'hidden',display:'flex',flexDirection:'column',boxShadow: isK ? '14px 14px 40px rgba(0,0,0,.60), -10px -10px 24px rgba(255,255,255,.03)' : '8px 8px 30px rgba(0,0,0,.12)',backdropFilter:'blur(18px)',WebkitBackdropFilter:'blur(18px)'}} onClick={e=>e.stopPropagation()}>
+    <div style={{position:'fixed',inset:0,zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',background: isK ? 'rgba(0,0,0,.50)' : 'rgba(0,0,0,.30)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}} onClick={onClose}>
+      <div style={{width,maxWidth:1000,maxHeight:'90vh',background: isK ? MR.C.bgCard : '#fff',borderRadius:16,border:`1px solid ${MR.C.border}`,overflow:'hidden',display:'flex',flexDirection:'column',boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',backdropFilter:'blur(18px)',WebkitBackdropFilter:'blur(18px)'}} onClick={e=>e.stopPropagation()}>
         <div style={{padding:'18px 22px',borderBottom:`1px solid ${MR.C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',background: isK ? `${MR.C.accent}0a` : `${MR.C.accent}06`}}>
           <span style={{fontSize:15,fontWeight:800}}>{title}</span>
           <MR.LIcon name="X" size={18} color={MR.C.textMuted} style={{cursor:'pointer'}} onClick={onClose}/>
@@ -78,8 +78,8 @@ MR.Confirm = ({open, message, onConfirm, onCancel}) => {
   if (!open) return null;
   const isK = MR.tema === 'koyu';
   return (
-    <div style={{position:'fixed',inset:0,zIndex:10000,display:'flex',alignItems:'center',justifyContent:'center',background: isK ? 'rgba(0,0,0,.65)' : 'rgba(0,0,0,.20)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}} onClick={onCancel}>
-      <div style={{width:420,background: isK ? MR.C.bgCard : '#fff',borderRadius:16,border:`1px solid ${MR.C.border}`,padding:32,boxShadow: isK ? '14px 14px 40px rgba(0,0,0,.60), -10px -10px 24px rgba(255,255,255,.03)' : '8px 8px 30px rgba(0,0,0,.12)',backdropFilter:'blur(18px)',WebkitBackdropFilter:'blur(18px)'}} onClick={e=>e.stopPropagation()}>
+    <div style={{position:'fixed',inset:0,zIndex:10000,display:'flex',alignItems:'center',justifyContent:'center',background: isK ? 'rgba(0,0,0,.50)' : 'rgba(0,0,0,.30)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}} onClick={onCancel}>
+      <div style={{width:420,background: isK ? MR.C.bgCard : '#fff',borderRadius:16,border:`1px solid ${MR.C.border}`,padding:32,boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',backdropFilter:'blur(18px)',WebkitBackdropFilter:'blur(18px)'}} onClick={e=>e.stopPropagation()}>
         <div style={{fontSize:15,fontWeight:700,marginBottom:22,textAlign:'center'}}>{message}</div>
         <div style={{display:'flex',gap:12,justifyContent:'center'}}>
           <button style={{...MR.S.btn,...MR.S.btnG}} onClick={onCancel}>İPTAL</button>
@@ -117,8 +117,8 @@ MR.LoginScreen = ({onLogin}) => {
         borderRadius:26,
         border: `1px solid ${MR.C.border}`,
         boxShadow: isK
-          ? '20px 20px 48px rgba(0,0,0,.60), -14px -14px 36px rgba(255,255,255,.04), inset 0 1px 0 rgba(255,255,255,.06)'
-          : '10px 10px 36px rgba(0,0,0,.10), inset 0 1px 0 rgba(255,255,255,.5)',
+          ? '0 25px 50px -12px rgba(0,0,0,0.25)'
+          : '0 25px 50px -12px rgba(0,0,0,0.1)',
         backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'
       }}>
         <div style={{textAlign:'center',marginBottom:36}}>
@@ -128,15 +128,15 @@ MR.LoginScreen = ({onLogin}) => {
             display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 18px',
             fontSize:26,fontWeight:900,color:MR.C.accent,
             boxShadow: isK
-              ? '10px 10px 24px rgba(0,0,0,.50), -8px -8px 20px rgba(245,158,11,.08), 0 0 30px rgba(245,158,11,.20)'
-              : '8px 8px 20px rgba(0,0,0,.08), 0 0 20px rgba(217,119,6,.06)',
+              ? '0 10px 15px -3px rgba(0,0,0,0.2)'
+              : '0 10px 15px -3px rgba(0,0,0,0.08)',
             border: `1px solid ${MR.C.accent}30`
           }}>MR</div>
           <div style={{fontSize:20,fontWeight:900,color:MR.C.accent,letterSpacing:2,textShadow: isK ? `0 0 30px ${MR.C.accent}60` : 'none'}}>MR HASAR DANIŞMANLIK</div>
           <div style={{fontSize:11,fontWeight:700,color:MR.C.textMuted,letterSpacing:4,marginTop:6}}>DOSYA TAKİP SİSTEMİ</div>
         </div>
         <form onSubmit={go}>
-          {error && <div style={{padding:'12px 16px',background:`${MR.C.danger}18`,border:`1px solid ${MR.C.danger}33`,borderRadius:14,marginBottom:18,fontSize:12,color:MR.C.danger,boxShadow: isK ? 'inset 3px 3px 6px rgba(0,0,0,.30)' : 'inset 3px 3px 6px rgba(0,0,0,.04)'}}>{error}</div>}
+          {error && <div style={{padding:'12px 16px',background:`${MR.C.danger}18`,border:`1px solid ${MR.C.danger}33`,borderRadius:14,marginBottom:18,fontSize:12,color:MR.C.danger,boxShadow: isK ? 'none' : 'none'}}>{error}</div>}
           <div style={{marginBottom:18}}>
             <label style={MR.S.label}>E-POSTA</label>
             <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="ADMIN@MRHASAR.COM" style={MR.S.input} autoFocus/>

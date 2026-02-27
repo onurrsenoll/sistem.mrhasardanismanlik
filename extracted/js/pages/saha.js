@@ -687,7 +687,7 @@ const SahaBekleyen = ({setPage, user}) => {
               <thead>
                 <tr style={{background:`${C.accent}08`}}>
                   {['PERSONEL','PLAKA','MARKA','MODEL','YILI','KM','KUSUR','KAZA TARİHİ','HASAR TUTARI','İŞLEM'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color: MR.tema==='koyu' ? '#d4d4d8' : C.textMuted,borderBottom:`2px solid ${C.border}`,whiteSpace:'nowrap'}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,borderBottom:`2px solid ${C.border}`,whiteSpace:'nowrap'}}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -897,7 +897,7 @@ const SahaOnaylanan = ({setPage, user}) => {
               <thead>
                 <tr style={{background:`${C.accent}08`}}>
                   {['PERSONEL','MÜŞTERİ','TELEFON','PLAKA','ONAY TARİHİ','KALAN SÜRE','İŞLEM'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color: MR.tema==='koyu' ? '#d4d4d8' : C.textMuted,borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,borderBottom:`2px solid ${C.border}`}}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -964,7 +964,7 @@ const SahaOnaylanan = ({setPage, user}) => {
               <thead>
                 <tr style={{background:`${C.accent}08`}}>
                   {['PERSONEL','MÜŞTERİ','PLAKA','ONAY TARİHİ','DURUM','İŞLEM'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color: MR.tema==='koyu' ? '#d4d4d8' : C.textMuted,borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,borderBottom:`2px solid ${C.border}`}}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1258,7 +1258,7 @@ const SahaReddedilen = ({setPage, user}) => {
               <thead>
                 <tr style={{background:`${C.accent}08`}}>
                   {['PERSONEL','MÜŞTERİ','PLAKA','RED TARİHİ','RED NEDENİ','İŞLEM'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color: MR.tema==='koyu' ? '#d4d4d8' : C.textMuted,borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,borderBottom:`2px solid ${C.border}`}}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1444,7 +1444,7 @@ const SahaDosyayaDonusen = ({setPage, user}) => {
               <thead>
                 <tr style={{background:`${C.accent}08`}}>
                   {['PERSONEL','MÜŞTERİ','PLAKA','DOSYA NO','DÖNÜŞME TARİHİ','İŞLEM'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color: MR.tema==='koyu' ? '#d4d4d8' : C.textMuted,borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,borderBottom:`2px solid ${C.border}`}}>{h}</th>
                   ))}
                 </tr>
               </thead>
