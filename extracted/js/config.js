@@ -329,7 +329,7 @@ const KOYU_TEMA = {
   statShadow: '8px 8px 20px rgba(0,0,0,.55), -6px -6px 16px rgba(255,255,255,.03), inset 0 1px 0 rgba(255,255,255,.05)',
   inputShadow: 'inset 5px 5px 10px rgba(0,0,0,.55), inset -3px -3px 8px rgba(255,255,255,.03)',
   btnShadow: '8px 8px 20px rgba(0,0,0,.50), -6px -6px 14px rgba(245,158,11,.12), 0 0 20px rgba(245,158,11,.20)',
-  bgGradient: 'linear-gradient(145deg, #13141c 0%, #16171f 30%, #1a1b25 60%, #14151d 100%)'
+  bgGradient: 'linear-gradient(135deg, #13141c 0%, #16171f 30%, #1a1b25 60%, #14151d 100%)'
 };
 
 /* ─── AÇIK TEMA: LIGHT ELEVATION — SICAK KREM + TEK YÖNLÜ DÜŞME GÖLGESİ ─── */
@@ -355,7 +355,7 @@ const ACIK_TEMA = {
   statShadow: '4px 4px 14px rgba(0,0,0,.06), 0 1px 0 rgba(255,255,255,.4)',
   inputShadow: 'inset 3px 3px 6px rgba(0,0,0,.05), inset -2px -2px 4px rgba(255,255,255,.7), 0 0 0 1px rgba(0,0,0,.06)',
   btnShadow: '6px 6px 18px rgba(0,0,0,.10), 0 0 16px rgba(217,119,6,.08)',
-  bgGradient: 'linear-gradient(145deg, #f0ebe4 0%, #f5f0eb 30%, #f8f4ef 60%, #f2ede6 100%)'
+  bgGradient: 'linear-gradient(135deg, #f0ebe4 0%, #f5f0eb 30%, #f8f4ef 60%, #f2ede6 100%)'
 };
 
 MR.TEMALAR = { koyu: KOYU_TEMA, acik: ACIK_TEMA };
@@ -488,6 +488,9 @@ MR.setTema = (t) => {
   MR.tema = t;
   localStorage.setItem('mr_tema', t);
   Object.assign(MR.C, MR.TEMALAR[t] || MR.TEMALAR.koyu);
+  /* Body tema sınıfı — CSS hover kuralları için */
+  document.body.classList.remove('tema-koyu', 'tema-acik');
+  document.body.classList.add(t === 'koyu' ? 'tema-koyu' : 'tema-acik');
   MR._stilGuncelle();
 };
 
@@ -539,7 +542,7 @@ MR.S = {
     padding: '12px 24px', borderRadius: 12, border: 'none',
     fontWeight: 800, fontSize: 14, cursor: 'pointer',
     display: 'inline-flex', alignItems: 'center', gap: 8,
-    transition: 'all .2s ease, transform .15s ease',
+    transition: 'all .2s ease',
     position: 'relative'
   },
   btnP: {
@@ -587,3 +590,5 @@ MR.S = {
 
 // İLK TEMA UYGULAMASI
 MR._stilGuncelle();
+/* Body tema sınıfı — CSS hover kuralları için */
+document.body.classList.add(MR.tema === 'koyu' ? 'tema-koyu' : 'tema-acik');

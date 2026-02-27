@@ -460,12 +460,12 @@ const Breadcrumb = ({page, setPage}) => {
 
 /* ═══ PROFİL SAYFASI ═══ */
 const ROL_ACIKLAMALAR = {
-  admin: {label: 'SİSTEM YÖNETİCİSİ', renk: '#3b82f6', gorev: 'TÜM SİSTEM YÖNETİMİ, KULLANICI YÖNETİMİ, YETKİ ATAMA, FİRMA AYARLARI VE TÜM MODÜLLERE ERİŞİM'},
-  avukat: {label: 'AVUKAT', renk: '#8b5cf6', gorev: 'DOSYA TAKİBİ, CRM YÖNETİMİ, HESAPLAMA MODÜLLERI, SERVİS TAKİBİ, ORTAK YÖNETİMİ VE AJANDA'},
-  uzman: {label: 'UZMAN', renk: '#2563eb', gorev: 'DOSYA TAKİBİ, HESAPLAMA MODÜLLERI, SERVİS TAKİBİ VE AJANDA'},
-  personel: {label: 'PERSONEL', renk: '#60a5fa', gorev: 'DOSYA TAKİBİ VE AJANDA YÖNETİMİ'},
-  muhasebe: {label: 'MUHASEBE', renk: '#fbbf24', gorev: 'DOSYA TAKİBİ, MUHASEBE İŞLEMLERİ, ORTAK YÖNETİMİ, TANIMLAMALAR VE AJANDA'},
-  portal: {label: 'PORTAL KULLANICISI', renk: '#22d3ee', gorev: 'DOSYA GÖRÜNTÜLEME VE MESAJLAŞMA'}
+  admin: {label: 'SİSTEM YÖNETİCİSİ', renk: '#f59e0b', gorev: 'TÜM SİSTEM YÖNETİMİ, KULLANICI YÖNETİMİ, YETKİ ATAMA, FİRMA AYARLARI VE TÜM MODÜLLERE ERİŞİM'},
+  avukat: {label: 'AVUKAT', renk: '#d97706', gorev: 'DOSYA TAKİBİ, CRM YÖNETİMİ, HESAPLAMA MODÜLLERI, SERVİS TAKİBİ, ORTAK YÖNETİMİ VE AJANDA'},
+  uzman: {label: 'UZMAN', renk: '#b45309', gorev: 'DOSYA TAKİBİ, HESAPLAMA MODÜLLERI, SERVİS TAKİBİ VE AJANDA'},
+  personel: {label: 'PERSONEL', renk: '#fbbf24', gorev: 'DOSYA TAKİBİ VE AJANDA YÖNETİMİ'},
+  muhasebe: {label: 'MUHASEBE', renk: '#92400e', gorev: 'DOSYA TAKİBİ, MUHASEBE İŞLEMLERİ, ORTAK YÖNETİMİ, TANIMLAMALAR VE AJANDA'},
+  portal: {label: 'PORTAL KULLANICISI', renk: '#fcd34d', gorev: 'DOSYA GÖRÜNTÜLEME VE MESAJLAŞMA'}
 };
 
 const ProfilPage = ({user, setUser}) => {

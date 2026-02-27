@@ -111,7 +111,7 @@ const EvrakPreviewIframe = ({evrakId}) => {
       <div style={{fontWeight:700}}>EVRAK YÜKLENEMEDİ</div>
       <div style={{fontSize:10,color:'#6b7280',maxWidth:300}}>{hata}</div>
       <button onClick={() => { setHata(''); setYukleniyor(true); setBlobUrl(null); }}
-        style={{marginTop:8,padding:'6px 16px',fontSize:10,background:'#2563eb22',color:'#2563eb',border:'1px solid #2563eb33',borderRadius:6,cursor:'pointer',fontWeight:700}}>
+        style={{marginTop:8,padding:'6px 16px',fontSize:10,background:`${C.accent}22`,color:C.accent,border:`1px solid ${C.accent}33`,borderRadius:6,cursor:'pointer',fontWeight:700}}>
         TEKRAR DENE
       </button>
     </div>
@@ -119,7 +119,7 @@ const EvrakPreviewIframe = ({evrakId}) => {
 
   if (yukleniyor || !blobUrl) return (
     <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'#6b7280',fontSize:12,flexDirection:'column',gap:8}}>
-      <div style={{width:24,height:24,border:'3px solid transparent',borderTopColor:'#2563eb',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
+      <div style={{width:24,height:24,border:'3px solid transparent',borderTopColor:C.accent,borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
       EVRAK YÜKLENİYOR...
     </div>
   );

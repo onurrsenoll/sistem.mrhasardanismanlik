@@ -15,7 +15,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Manrope','Segoe UI','Roboto',sans-serif;background:linear-gradient(145deg,#13141c 0%,#16171f 30%,#1a1b25 60%,#14151d 100%);color:#fff;overflow-x:hidden;text-transform:uppercase;-webkit-font-smoothing:antialiased;letter-spacing:-0.01em;background-attachment:fixed}
+body{font-family:'Manrope','Segoe UI','Roboto',sans-serif;background:linear-gradient(135deg,#13141c 0%,#16171f 30%,#1a1b25 60%,#14151d 100%);color:#fff;overflow-x:hidden;text-transform:uppercase;-webkit-font-smoothing:antialiased;letter-spacing:-0.01em;background-attachment:fixed}
 input,select,textarea{text-transform:uppercase;font-family:inherit}
 input[type="password"]{text-transform:none}
 select option{background:#1e1f2a;color:#fff}
@@ -30,13 +30,40 @@ select option{background:#1e1f2a;color:#fff}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .fade-in{animation:fadeIn .3s ease}
 
-/* NEUMORPHIC 3D HOVER EFEKTLERİ */
-button:active:not(:disabled){transform:scale(0.97)!important;filter:brightness(0.95)}
+/* ═══ NEUMORPHIC 3D — 3 AŞAMALI ETKİLEŞİM ═══ */
+
+/* BUTON: Normal → Hover (yükselir) → Active (çöker) */
+button{transition:all 0.2s ease,transform 0.15s ease}
+button:hover:not(:disabled){transform:translateY(-2px)!important;filter:brightness(1.1)}
+button:active:not(:disabled){transform:translateY(1px) scale(0.97)!important;filter:brightness(0.88);box-shadow:inset 0 3px 8px rgba(0,0,0,.35)!important}
+
+/* TABLO SATIRI: Bağımsız kabarık kart + hover'da amber sol border + glow */
+tbody tr{transition:all 0.2s ease;position:relative}
+
+/* KOYU TEMA — tablo satır hover */
+.tema-koyu tbody tr:hover{background:rgba(245,158,11,0.05)!important}
+.tema-koyu tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 #f59e0b}
+.tema-koyu tbody tr:hover td{box-shadow:0 4px 16px rgba(0,0,0,.25),-2px -2px 8px rgba(255,255,255,.02)}
+.tema-koyu thead th{background:rgba(245,158,11,0.06)!important}
+
+/* AÇIK TEMA — tablo satır hover */
+.tema-acik tbody tr:hover{background:rgba(217,119,6,0.04)!important}
+.tema-acik tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 #d97706}
+.tema-acik tbody tr:hover td{box-shadow:0 3px 12px rgba(0,0,0,.06)}
+.tema-acik thead th{background:rgba(217,119,6,0.04)!important}
+
+/* KART: hover'da yükselme */
+.tema-koyu [data-card]:hover{transform:translateY(-2px);box-shadow:12px 12px 28px rgba(0,0,0,.65),-10px -10px 22px rgba(255,255,255,.05)!important}
+.tema-acik [data-card]:hover{transform:translateY(-2px);box-shadow:8px 8px 22px rgba(0,0,0,.10)!important}
+
+/* INPUT: Focus'ta amber glow */
+.tema-koyu input:focus,.tema-koyu select:focus,.tema-koyu textarea:focus{border-color:#f59e0b!important;box-shadow:inset 5px 5px 10px rgba(0,0,0,.55),inset -3px -3px 8px rgba(255,255,255,.03),0 0 12px rgba(245,158,11,.15)!important}
+.tema-acik input:focus,.tema-acik select:focus,.tema-acik textarea:focus{border-color:#d97706!important;box-shadow:inset 3px 3px 6px rgba(0,0,0,.05),inset -2px -2px 4px rgba(255,255,255,.7),0 0 8px rgba(217,119,6,.10)!important}
 
 @media print{body{background:#fff!important;color:#000!important;text-transform:none!important}.no-print{display:none!important}}
 </style>
 </head>
-<body>
+<body class="tema-koyu">
 <div id="root"></div>
 
 <script>
