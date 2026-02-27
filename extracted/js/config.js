@@ -291,6 +291,10 @@ MR.api = {
   sahaMedyaList(sahaId) { return this.req('/saha/medya-list.php?saha_dosya_id=' + sahaId); },
   sahaDosyaSil(id) { return this.req('/saha/dosya-sil.php?id=' + id, { method: 'DELETE' }); },
   sahaSil(id) { return this.req('/saha/sil.php?id=' + id, { method: 'DELETE' }); },
+  // KONUM TAKİBİ
+  konumGuncelle(d) { return this.req('/konum/guncelle.php', { method: 'POST', body: JSON.stringify(d) }); },
+  konumListele() { return this.req('/konum/listele.php'); },
+  konumGecmisi(p = {}) { return this.req('/konum/gecmisi.php?' + new URLSearchParams(p)); },
   // PORTAL
   portalErisimList(p = {}) { return this.req('/portal/erisim-list.php?' + new URLSearchParams(p)); },
   portalErisimOlustur(d) { return this.req('/portal/erisim-olustur.php', { method: 'POST', body: JSON.stringify(d) }); },

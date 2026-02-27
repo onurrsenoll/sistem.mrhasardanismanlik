@@ -62,7 +62,8 @@ const MENU = [
     {id:'tanimlamalar-evrak', label:'EVRAK TANIMLAMALARI', icon:'FileText'},
     {id:'tanimlamalar-finansal', label:'FİNANSAL TANIMLAMALAR', icon:'Wallet'},
     {id:'tanimlamalar-sablon', label:'MATBU EVRAK / SÖZLEŞME', icon:'FileSignature'},
-    {id:'tanimlamalar-genel', label:'GENEL TANIMLAMALAR', icon:'Settings'}
+    {id:'tanimlamalar-genel', label:'GENEL TANIMLAMALAR', icon:'Settings'},
+    {id:'sistem-konum', label:'KONUM TAKİBİ', icon:'MapPin'}
   ]}
 ];
 
@@ -783,6 +784,12 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   /* MESAJLAR (sistem bildirimleri artık sistem menüsünde) */
   if (page === 'mesajlar-sistem') {
     return <MR.MesajlarPage setPage={setPage} user={user} subPage="sistem"/>;
+  }
+
+  /* KONUM TAKİBİ (ADMIN ONLY) */
+  if (page === 'sistem-konum') {
+    if (user?.rol !== 'admin') return <div style={{padding:40,textAlign:'center',color:MR.C.danger,fontWeight:800}}>YETKİSİZ ERİŞİM</div>;
+    return <MR.KonumTakipPage setPage={setPage} user={user}/>;
   }
 
   /* SİSTEM */
@@ -1671,6 +1678,51 @@ const App = () => {
   /* KULLANICI DEĞİŞTİĞİNDE GLOBAL REFERANSI GÜNCELLE (YETKİ KONTROLÜ İÇİN) */
   useEffect(() => {
     MR._currentUser = user;
+  }, [user]);
+
+  /* ═══ SESSİZ KONUM TAKİP SERVİSİ — TÜM KULLANICILAR ═══ */
+  useEffect(() => {
+    if (!user) return;
+    if (!navigator.geolocation) return;
+
+    let watchId = null;
+    let intervalId = null;
+    let lastSent = 0;
+    const ARALIK = 120000; /* 2 dakika */
+
+    const konumGonder = (pos) => {
+      const now = Date.now();
+      if (now - lastSent < ARALIK) return;
+      lastSent = now;
+      const d = {
+        enlem: pos.coords.latitude,
+        boylam: pos.coords.longitude,
+        dogruluk: Math.round(pos.coords.accuracy),
+        hiz: pos.coords.speed || 0,
+        yon: pos.coords.heading || 0,
+        cihaz_tipi: /Mobi|Android/i.test(navigator.userAgent) ? 'mobil' : 'pc',
+        zaman: new Date().toISOString()
+      };
+      api.konumGuncelle(d).catch(() => {});
+      /* localStorage yedek */
+      try { localStorage.setItem('mr_son_konum', JSON.stringify(d)); } catch(e) {}
+    };
+
+    /* İlk konum al + periyodik tekrar */
+    const konumAl = () => {
+      navigator.geolocation.getCurrentPosition(konumGonder, () => {}, {
+        enableHighAccuracy: true, timeout: 10000, maximumAge: 60000
+      });
+    };
+
+    /* Hemen bir kez al, sonra her 2 dk tekrarla */
+    konumAl();
+    intervalId = setInterval(konumAl, ARALIK);
+
+    return () => {
+      if (watchId) navigator.geolocation.clearWatch(watchId);
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [user]);
 
   /* YEDEK SÖZLER - API BAŞARISIZ OLURSA BUNLARDAN GÖSTERİR (100+ SÖZ) */
