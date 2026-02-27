@@ -82,8 +82,6 @@ MR.api = {
   evrakUrl(id) { return API_BASE + '/evrak/download.php?id=' + id; },
   evrakPreviewUrl(id) { return API_BASE + '/evrak/download.php?id=' + id + '&mode=inline'; },
   evrakDelete(id) { return this.req('/evrak/delete.php?id=' + id, { method: 'DELETE' }); },
-  evrakTani(dosyaId) { return this.req('/evrak/tani.php?dosya_id=' + dosyaId); },
-  evrakOnar(dosyaId) { return this.req('/evrak/tani.php', { method: 'POST', body: JSON.stringify({dosya_id: dosyaId, onar: true}) }); },
   // CRM
   crmList(p = {}) { return this.req('/crm/list.php?' + new URLSearchParams(p)); },
   crmGet(id) { return this.req('/crm/get.php?id=' + id); },

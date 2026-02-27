@@ -44,10 +44,11 @@ const EvrakPreviewIframe = ({evrakId}) => {
         if (!token) { if (!iptal) setHata('OTURUM BULUNAMADI. LÜTFEN YENİDEN GİRİŞ YAPIN.'); return; }
 
         const apiBase = MR.api.base || '/api/v1';
-        const fetchUrl = apiBase + '/evrak/download.php?id=' + evrakId + '&mode=inline&auth=' + encodeURIComponent(token);
+        const fetchUrl = apiBase + '/evrak/download.php?id=' + evrakId + '&mode=inline';
 
         const r = await fetch(fetchUrl, {
           headers: { 'Authorization': 'Bearer ' + token },
+          credentials: 'include',
           cache: 'no-cache'
         });
 
@@ -105,41 +106,20 @@ const EvrakPreviewIframe = ({evrakId}) => {
   }, [evrakId]);
 
   if (hata) return (
-    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'#ef4444',fontSize:13,flexDirection:'column',gap:10,padding:20,textAlign:'center'}}>
-      <MR.LIcon name="AlertTriangle" size={32} color="#ef4444"/>
-      <div style={{fontWeight:800,fontSize:14}}>EVRAK YÜKLENEMEDİ</div>
-      <div style={{fontSize:11,color:'#6b7280',maxWidth:450,lineHeight:1.6,wordBreak:'break-all'}}>{hata}</div>
-      <div style={{display:'flex',gap:8,marginTop:4}}>
-        <button onClick={() => { setHata(''); setYukleniyor(true); setBlobUrl(null); }}
-          style={{padding:'8px 20px',fontSize:11,background:`${C.accent}22`,color:C.accent,border:`1px solid ${C.accent}33`,borderRadius:8,cursor:'pointer',fontWeight:700}}>
-          TEKRAR DENE
-        </button>
-        {MR._currentUser?.rol === 'admin' && (
-          <button onClick={async () => {
-            setHata(''); setYukleniyor(true);
-            try {
-              /* Evrak ID'sinden dosya_id bul ve onar */
-              const apiBase = MR.api.base || '/api/v1';
-              const token = MR.api.token;
-              /* Önce evrak bilgisini çek */
-              const eRes = await fetch(apiBase + '/evrak/tani.php?dosya_id=0&evrak_id=' + evrakId, {
-                headers: token ? {'Authorization': 'Bearer ' + token} : {}
-              }).then(r => r.json()).catch(() => null);
-              /* Sayfayı yenile */
-              window.location.reload();
-            } catch(e) { setHata('ONARIM DENENDİ - SAYFA YENİLENİYOR...'); setTimeout(() => window.location.reload(), 1500); }
-          }}
-            style={{padding:'8px 20px',fontSize:11,background:`${C.warning}22`,color:C.warning,border:`1px solid ${C.warning}33`,borderRadius:8,cursor:'pointer',fontWeight:700}}>
-            ONAR VE YENİLE
-          </button>
-        )}
-      </div>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'#ef4444',fontSize:13,flexDirection:'column',gap:8,padding:20,textAlign:'center'}}>
+      <MR.LIcon name="AlertTriangle" size={28} color="#ef4444"/>
+      <div style={{fontWeight:700}}>EVRAK YÜKLENEMEDİ</div>
+      <div style={{fontSize:10,color:'#6b7280',maxWidth:300}}>{hata}</div>
+      <button onClick={() => { setHata(''); setYukleniyor(true); setBlobUrl(null); }}
+        style={{marginTop:8,padding:'6px 16px',fontSize:10,background:'#2563eb22',color:'#2563eb',border:'1px solid #2563eb33',borderRadius:6,cursor:'pointer',fontWeight:700}}>
+        TEKRAR DENE
+      </button>
     </div>
   );
 
   if (yukleniyor || !blobUrl) return (
     <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'#6b7280',fontSize:12,flexDirection:'column',gap:8}}>
-      <div style={{width:24,height:24,border:'3px solid transparent',borderTopColor:C.accent,borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
+      <div style={{width:24,height:24,border:'3px solid transparent',borderTopColor:'#2563eb',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
       EVRAK YÜKLENİYOR...
     </div>
   );
@@ -654,81 +634,45 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 ({dosya.evraklar?.length || 0} / {(MR.EVRAK_T||[]).length} YÜKLÜ)
               </span>
             </div>
-            <div style={{display:'flex',gap:6,alignItems:'center'}}>
-              {/* EVRAK ONARIM BUTONU (ADMIN) */}
-              {user?.rol === 'admin' && dosya.evraklar?.length > 0 && (
-                <button style={{...S.btn,fontSize:10,padding:'5px 12px',background:`${C.warning}18`,color:C.warning,border:`1px solid ${C.warning}33`}}
-                  onClick={async () => {
-                    MR.toast('EVRAK DOSYA EŞLEŞTİRMESİ ONARILIYOR...', 'info');
+            {dosya.evraklar?.length > 0 && (
+              <button style={{...S.btn,...S.btnP,fontSize:10,padding:'5px 12px'}}
+                onClick={async () => {
+                  const token = MR.api.token;
+                  const apiBase = MR.api.base || '/api/v1';
+                  for (let i = 0; i < dosya.evraklar.length; i++) {
+                    const e = dosya.evraklar[i];
                     try {
-                      const r = await api.evrakOnar(dosya.id);
-                      if (r?.success) {
-                        const d = r.data || {};
-                        if (d.onarilan > 0) {
-                          MR.toast(d.onarilan + ' EVRAK ONARILDI! SAYFA YENİLENİYOR...', 'success');
-                          setTimeout(() => window.location.reload(), 1500);
-                        } else if (d.sorunlar?.length > 0) {
-                          MR.toast('ONARILACAK EVRAK BULUNAMADI. SORUN: ' + d.sorunlar[0], 'warning');
-                        } else {
-                          MR.toast('TÜM EVRAKLAR ZATEN SAĞLAM', 'success');
-                        }
-                      } else {
-                        MR.toast('ONARIM HATASI: ' + (r?.error || 'Bilinmeyen'), 'error');
+                      const r = await fetch(apiBase + '/evrak/download.php?id=' + e.id, {
+                        headers: token ? {'Authorization': 'Bearer ' + token} : {},
+                        credentials: 'include',
+                        cache: 'no-cache'
+                      });
+                      if (!r.ok) {
+                        let hataMesaj = 'HATA ' + r.status;
+                        try { const j = await r.json(); hataMesaj = j.error || hataMesaj; } catch(ex){}
+                        console.warn('EVRAK İNDİRİLEMEDİ (' + e.dosya_adi + '):', hataMesaj);
+                        continue;
                       }
-                    } catch(e) { MR.toast('ONARIM HATASI: ' + e.message, 'error'); }
-                  }}>
-                  <LIcon name="Wrench" size={12} color={C.warning}/> ONAR
-                </button>
-              )}
-              {/* TOPLU İNDİR */}
-              {dosya.evraklar?.length > 0 && (
-                <button style={{...S.btn,...S.btnP,fontSize:10,padding:'5px 12px'}}
-                  onClick={async () => {
-                    const token = MR.api.token;
-                    const apiBase = MR.api.base || '/api/v1';
-                    let basarili = 0, basarisiz = 0;
-                    for (let i = 0; i < dosya.evraklar.length; i++) {
-                      const e = dosya.evraklar[i];
-                      try {
-                        const dlUrl = apiBase + '/evrak/download.php?id=' + e.id + (token ? '&auth=' + encodeURIComponent(token) : '');
-                        const r = await fetch(dlUrl, {
-                          headers: token ? {'Authorization': 'Bearer ' + token} : {},
-                          cache: 'no-cache'
-                        });
-                        if (!r.ok) {
-                          basarisiz++;
-                          let hataMesaj = 'HATA ' + r.status;
-                          try { const j = await r.clone().json(); hataMesaj = j.error || hataMesaj; } catch(ex){}
-                          console.warn('EVRAK İNDİRİLEMEDİ (' + e.dosya_adi + '):', hataMesaj);
-                          continue;
-                        }
-                        const blob = await r.blob();
-                        const a = document.createElement('a');
-                        a.href = URL.createObjectURL(blob);
-                        a.download = e.dosya_adi || ('evrak_' + e.id + '.pdf');
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-                        basarili++;
-                        if (i < dosya.evraklar.length - 1) {
-                          await new Promise(resolve => setTimeout(resolve, 800));
-                        }
-                      } catch(err) {
-                        basarisiz++;
-                        console.error('EVRAK İNDİRME HATASI:', err);
+                      const blob = await r.blob();
+                      const a = document.createElement('a');
+                      a.href = URL.createObjectURL(blob);
+                      a.download = e.dosya_adi || ('evrak_' + e.id + '.pdf');
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+                      /* Tarayıcı indirme arasında kısa bekleme */
+                      if (i < dosya.evraklar.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 800));
                       }
+                    } catch(err) {
+                      console.error('EVRAK İNDİRME HATASI:', err);
                     }
-                    if (basarisiz > 0) {
-                      MR.toast(basarili + ' İNDİRİLDİ, ' + basarisiz + ' BAŞARISIZ. ONAR BUTONUNU DENEYİN.', basarili > 0 ? 'warning' : 'error');
-                    } else {
-                      MR.toast(basarili + ' EVRAK BAŞARIYLA İNDİRİLDİ', 'success');
-                    }
-                  }}>
-                  <LIcon name="Download" size={12} color="#fff"/> TOPLU İNDİR ({dosya.evraklar?.length})
-                </button>
-              )}
-            </div>
+                  }
+                }}>
+                <LIcon name="Download" size={12} color="#fff"/> TOPLU İNDİR ({dosya.evraklar?.length})
+              </button>
+            )}
           </div>
           <div style={{maxHeight:600,overflowY:'auto'}}>
             {(() => {
@@ -799,15 +743,15 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                           try {
                             const token = MR.api.token;
                             const apiBase = MR.api.base || '/api/v1';
-                            const dlUrl = apiBase + '/evrak/download.php?id=' + y.id + (token ? '&auth=' + encodeURIComponent(token) : '');
-                            const r = await fetch(dlUrl, {
+                            const r = await fetch(apiBase + '/evrak/download.php?id=' + y.id, {
                               headers: token ? {'Authorization': 'Bearer ' + token} : {},
+                              credentials: 'include',
                               cache: 'no-cache'
                             });
                             if (!r.ok) {
                               let msg = 'İNDİRME HATASI: ' + r.status;
                               try { const j = await r.clone().json(); msg = j.error || msg; } catch(ex) {}
-                              MR.toast(msg, 'error'); return;
+                              alert(msg); return;
                             }
                             const blob = await r.blob();
                             const a = document.createElement('a');
@@ -1166,15 +1110,15 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                   try {
                     const token = MR.api.token;
                     const apiBase = MR.api.base || '/api/v1';
-                    const dlUrl = apiBase + '/evrak/download.php?id=' + previewEvrak.id + (token ? '&auth=' + encodeURIComponent(token) : '');
-                    const r = await fetch(dlUrl, {
+                    const r = await fetch(apiBase + '/evrak/download.php?id=' + previewEvrak.id, {
                       headers: token ? {'Authorization': 'Bearer ' + token} : {},
+                      credentials: 'include',
                       cache: 'no-cache'
                     });
                     if (!r.ok) {
                       let msg = 'İNDİRME HATASI: ' + r.status;
                       try { const j = await r.clone().json(); msg = j.error || msg; } catch(ex) {}
-                      MR.toast(msg, 'error'); return;
+                      alert(msg); return;
                     }
                     const blob = await r.blob();
                     const a = document.createElement('a');
@@ -1184,7 +1128,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                     a.click();
                     document.body.removeChild(a);
                     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-                  } catch(e) { MR.toast('İNDİRME HATASI: ' + e.message, 'error'); }
+                  } catch(e) { alert('İNDİRME HATASI: ' + e.message); }
                 }}
                   style={{padding:'5px 12px',fontSize:9,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontWeight:700}}>
                   <LIcon name="Download" size={11} color={C.success}/> İNDİR
