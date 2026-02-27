@@ -199,7 +199,7 @@ MR._CRMListesiInner = ({setPage, user}) => {
   };
 
   const cellSt = {padding: '10px 8px'};
-  const thSt = {padding: '12px 10px', textAlign: 'left', color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted, fontWeight: 800, fontSize: 11, borderBottom: `2px solid ${C.border}`, letterSpacing: 0.3};
+  const thSt = {padding: '12px 10px', textAlign: 'left', color: MR.tema==='koyu' ? '#d4d4d8' : C.textMuted, fontWeight: 800, fontSize: 11, borderBottom: `2px solid ${C.border}`, letterSpacing: 0.3};
   const iconBtn = (bg) => ({
     width: 28, height: 28, borderRadius: 6, border: 'none', cursor: 'pointer',
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',

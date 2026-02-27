@@ -250,7 +250,7 @@ const PoliceListe = ({setPage, user}) => {
                     <input type="checkbox" checked={policeler.length > 0 && secililer.length === policeler.length} onChange={tumunuSec} style={{cursor:'pointer',width:15,height:15,accentColor:C.accent}}/>
                   </th>}
                   {['POLİÇE NO','MÜŞTERİ','SİGORTA ŞİRKETİ','BRANŞ','BRÜT PRİM','KOMİSYON','BAŞLANGIÇ','BİTİŞ','TAHSİLAT','DURUM','İŞLEM'].map(h=>
-                    <th key={h} style={{padding:'12px 10px',textAlign:'left',color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted,fontWeight:800,fontSize:11,borderBottom:`2px solid ${C.border}`,letterSpacing:.4}}>{h}</th>
+                    <th key={h} style={{padding:'12px 10px',textAlign:'left',color: MR.tema==='koyu' ? '#d4d4d8' : C.textMuted,fontWeight:800,fontSize:11,borderBottom:`2px solid ${C.border}`,letterSpacing:.4}}>{h}</th>
                   )}
                 </tr>
               </thead>

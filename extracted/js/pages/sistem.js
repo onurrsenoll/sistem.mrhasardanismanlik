@@ -2240,8 +2240,8 @@ const NetsantralCagriGecmisi = () => {
     return d.toUpperCase();
   };
 
-  const thSt = {padding:'10px 12px', textAlign:'left', color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted, fontWeight:800, fontSize:12, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:C.bgCard, zIndex:1, letterSpacing:0.3};
-  const tdSt = {padding:'10px 12px', fontSize:12, fontWeight:600, borderBottom:`1px solid ${C.border}`, whiteSpace:'nowrap', color: MR.tema==='koyu' ? '#e0e7ff' : C.text};
+  const thSt = {padding:'10px 12px', textAlign:'left', color: MR.tema==='koyu' ? '#d4d4d8' : C.textMuted, fontWeight:800, fontSize:12, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:C.bgCard, zIndex:1, letterSpacing:0.3};
+  const tdSt = {padding:'10px 12px', fontSize:12, fontWeight:600, borderBottom:`1px solid ${C.border}`, whiteSpace:'nowrap', color: MR.tema==='koyu' ? '#d4d4d8' : C.text};
 
   return (
     <div style={S.card}>

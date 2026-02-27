@@ -63,8 +63,8 @@ const ORNEK_VERILER = {
 };
 
 /* ─── ORTAK STİLLER ─── */
-const TH_STYLE = {padding:'12px 14px', fontSize:13, fontWeight:800, color: MR.tema==='koyu' ? '#e0e7ff' : MR.C.textMuted, textAlign:'left', borderBottom:`2px solid ${MR.C.border}`, letterSpacing:0.5, background: MR.tema==='koyu' ? 'rgba(99,102,241,0.08)' : 'rgba(79,70,229,0.04)'};
-const TD_STYLE = {padding:'12px 14px', fontSize:13, fontWeight:600, color: MR.tema==='koyu' ? '#e0e7ff' : MR.C.text, borderBottom:`1px solid ${MR.C.border}`};
+const TH_STYLE = {padding:'12px 14px', fontSize:13, fontWeight:800, color: MR.tema==='koyu' ? '#d4d4d8' : MR.C.textMuted, textAlign:'left', borderBottom:`2px solid ${MR.C.border}`, letterSpacing:0.5, background: MR.tema==='koyu' ? 'rgba(245,158,11,0.08)' : 'rgba(217,119,6,0.04)'};
+const TD_STYLE = {padding:'12px 14px', fontSize:13, fontWeight:600, color: MR.tema==='koyu' ? '#d4d4d8' : MR.C.text, borderBottom:`1px solid ${MR.C.border}`};
 const BTN_KUCUK = {padding:'5px 8px', borderRadius:6, border:'none', cursor:'pointer', display:'inline-flex', alignItems:'center', gap:4, transition:'all .2s'};
 
 

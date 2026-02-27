@@ -522,7 +522,7 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
                       </th>
                     )}
                     {['','GÖNDEREN','KONU','ÖNCELİK','TARİH','DURUM'].map(h =>
-                      <th key={h||'dot'} style={{padding:'10px 12px',textAlign:'left',color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted,fontWeight:800,fontSize:11,borderBottom:`2px solid ${C.border}`,letterSpacing:0.4}}>{h}</th>
+                      <th key={h||'dot'} style={{padding:'10px 12px',textAlign:'left',color: MR.tema==='koyu' ? '#d4d4d8' : C.textMuted,fontWeight:800,fontSize:11,borderBottom:`2px solid ${C.border}`,letterSpacing:0.4}}>{h}</th>
                     )}
                   </tr>
                 </thead>
@@ -673,7 +673,7 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
                       </th>
                     )}
                     {['ALICI','KONU','ÖNCELİK','TARİH','OKUNDU','İŞLEM'].map(h =>
-                      <th key={h} style={{padding:'10px 12px',textAlign:'left',color: MR.tema==='koyu' ? '#e0e7ff' : C.textMuted,fontWeight:800,fontSize:11,borderBottom:`2px solid ${C.border}`,letterSpacing:0.4}}>{h}</th>
+                      <th key={h} style={{padding:'10px 12px',textAlign:'left',color: MR.tema==='koyu' ? '#d4d4d8' : C.textMuted,fontWeight:800,fontSize:11,borderBottom:`2px solid ${C.border}`,letterSpacing:0.4}}>{h}</th>
                     )}
                   </tr>
                 </thead>
