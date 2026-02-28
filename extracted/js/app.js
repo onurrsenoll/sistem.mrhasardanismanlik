@@ -49,7 +49,22 @@ const MENU = [
     {id:'muhasebe-rapor', label:'FİNANSAL RAPORLAR', icon:'BarChart3'}
   ]},
   {id:'ajanda', label:'AJANDA', icon:'CalendarDays'},
-  {id:'sistem', label:'SİSTEM', icon:'Shield'}
+  {id:'sistem', label:'SİSTEM', icon:'Shield', sub:[
+    {id:'sistem-kullanici', label:'KULLANICI YÖNETİMİ', icon:'UserCog'},
+    {id:'sistem-yetki', label:'YETKİ YÖNETİMİ', icon:'KeyRound'},
+    {id:'sistem-ayarlar', label:'FİRMA AYARLARI', icon:'Settings'},
+    {id:'sistem-sms', label:'SMS BİLDİRİM', icon:'MessageSquare'},
+    {id:'sistem-portal', label:'PORTAL AYARLARI', icon:'Globe'},
+    {id:'sistem-netsantral', label:'NETSANTRAL', icon:'Phone'},
+    {id:'sistem-log', label:'LOG KAYITLARI', icon:'FileText'},
+    {id:'mesajlar-sistem', label:'SİSTEM BİLDİRİMLERİ', icon:'Bell'},
+    {id:'tanimlamalar-dosya', label:'DOSYA TANIMLAMALARI', icon:'Folder'},
+    {id:'tanimlamalar-evrak', label:'EVRAK TANIMLAMALARI', icon:'FileText'},
+    {id:'tanimlamalar-finansal', label:'FİNANSAL TANIMLAMALAR', icon:'Wallet'},
+    {id:'tanimlamalar-sablon', label:'MATBU EVRAK / SÖZLEŞME', icon:'FileSignature'},
+    {id:'tanimlamalar-genel', label:'GENEL TANIMLAMALAR', icon:'Settings'},
+    {id:'sistem-konum', label:'KONUM TAKİBİ', icon:'MapPin'}
+  ]}
 ];
 
 /* ═══ ROL BAZLI ERİŞİM ═══ */
@@ -803,15 +818,10 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     return <MR.KonumTakipPage setPage={setPage} user={user}/>;
   }
 
-  /* SİSTEM — ANA SAYFA (LAUNCHER GRİD) */
-  if (page === 'sistem') {
-    return <MR.SistemPage setPage={setPage} user={user} subPage="launcher"/>;
-  }
-
-  /* SİSTEM — ALT MODÜLLER */
-  if (page.startsWith('sistem-')) {
-    const sub = page.replace('sistem-', '');
-    return <MR.SistemPage setPage={setPage} user={user} subPage={sub}/>;
+  /* SİSTEM */
+  if (page.startsWith('sistem')) {
+    const sub = page.replace('sistem-', '') || 'kullanici';
+    return <MR.SistemPage setPage={setPage} user={user} subPage={sub === 'sistem' ? 'kullanici' : sub}/>;
   }
 
   if (page === 'profil') return <ProfilPage user={user} setUser={setUser}/>;
