@@ -58,10 +58,7 @@ const MODUL_YETKILERI = [
   ]},
   {modul: 'paydaslar', label: 'PAYDAŞLAR', icon: 'Handshake', islemler: [
     {key: 'ortaklar-ortaklar', label: 'İŞ ORTAKLARI'},
-    {key: 'ortaklar-paydaslar', label: 'İŞ PAYDAŞLARI'},
-    {key: 'servis-liste', label: 'SERVİS LİSTESİ'},
-    {key: 'servis-yeni', label: 'YENİ SERVİS'},
-    {key: 'servis-rapor', label: 'SERVİS RAPORLARI'}
+    {key: 'ortaklar-paydaslar', label: 'İŞ PAYDAŞLARI'}
   ]},
   {modul: 'police', label: 'POLİÇE', icon: 'FileCheck', islemler: [
     {key: 'police-liste', label: 'POLİÇE LİSTESİ'},

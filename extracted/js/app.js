@@ -27,10 +27,7 @@ const MENU = [
     {id:'ortaklar-paydaslar', label:'İŞ PAYDAŞLARI', icon:'Network'},
     {id:'personel-liste', label:'PERSONEL LİSTESİ', icon:'Users'},
     {id:'personel-yeni', label:'YENİ PERSONEL', icon:'UserPlus'},
-    {id:'personel-hakedis', label:'HAKEDİŞ TAKİBİ', icon:'Calculator'},
-    {id:'servis-liste', label:'SERVİS LİSTESİ', icon:'Wrench'},
-    {id:'servis-yeni', label:'YENİ SERVİS', icon:'Plus'},
-    {id:'servis-rapor', label:'SERVİS RAPORLARI', icon:'BarChart3'}
+    {id:'personel-hakedis', label:'HAKEDİŞ TAKİBİ', icon:'Calculator'}
   ]},
   {id:'police', label:'POLİÇE', icon:'FileCheck', sub:[
     {id:'police-liste', label:'POLİÇE LİSTESİ', icon:'List'},
@@ -767,12 +764,6 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   /* HESAPLAMALAR */
   if (page === 'hesap-adk') return <MR.HesapADKPage setPage={setPage} user={user}/>;
   if (page === 'hesap-bh') return <MR.HesapBHPage setPage={setPage} user={user}/>;
-
-  /* SERVİSLER */
-  if (page.startsWith('servis')) {
-    const sub = page.replace('servis-', '') || 'liste';
-    return <MR.ServisPage setPage={setPage} user={user} subPage={sub === 'servis' ? 'liste' : sub}/>;
-  }
 
   /* ORTAKLAR */
   if (page.startsWith('ortaklar')) {

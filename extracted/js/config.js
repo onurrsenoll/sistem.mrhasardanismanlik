@@ -149,17 +149,6 @@ MR.api = {
   tanimUpdate(d) { return this.req('/tanim/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
   tanimDelete(id) { return this.req('/tanim/delete.php?id=' + id, { method: 'DELETE' }); },
   tanimBulkCreate(d) { return this.req('/tanim/bulk-create.php', { method: 'POST', body: JSON.stringify(d) }); },
-  // SERVİS
-  servisList(p = {}) { return this.req('/servis/list.php?' + new URLSearchParams(p)); },
-  servisGet(id) { return this.req('/servis/get.php?id=' + id); },
-  servisCreate(d) { return this.req('/servis/create.php', { method: 'POST', body: JSON.stringify(d) }); },
-  servisUpdate(d) { return this.req('/servis/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
-  servisDelete(id) { return this.req('/servis/delete.php?id=' + id, { method: 'DELETE' }); },
-  servisBulkDelete(ids) { return this.req('/servis/bulk-delete.php', { method: 'POST', body: JSON.stringify({ids}) }); },
-  servisIhbarList(p = {}) { return this.req('/servis/ihbar-list.php?' + new URLSearchParams(p)); },
-  servisIhbarCreate(d) { return this.req('/servis/ihbar-create.php', { method: 'POST', body: JSON.stringify(d) }); },
-  servisIhbarUpdate(d) { return this.req('/servis/ihbar-update.php', { method: 'PUT', body: JSON.stringify(d) }); },
-  servisRapor(p = {}) { return this.req('/servis/rapor.php?' + new URLSearchParams(p)); },
   // ORTAK
   ortakList(p = {}) { return this.req('/ortak/list.php?' + new URLSearchParams(p)); },
   ortakGet(id) { return this.req('/ortak/get.php?id=' + id); },
