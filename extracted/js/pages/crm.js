@@ -637,11 +637,9 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
                 <span>{crm.telefon || '-'}</span>
                 {crm.telefon && (
                   <button onClick={() => MR.aramaBaslat(crm.telefon, crm.ad_soyad, true)} style={{
-                    padding:'4px 10px', borderRadius:6, border:'none', cursor:'pointer',
-                    background:`${C.success}22`, color:C.success, fontSize:11, fontWeight:700,
-                    display:'inline-flex', alignItems:'center', gap:4, transition:'all .2s'
+                    ...S.btnMini,...S.btnMiniS, padding:'5px 12px', fontSize:11
                   }}>
-                    <LIcon name="Phone" size={13} color={C.success}/> ARA
+                    <LIcon name="Phone" size={13} color="#fff"/> ARA
                   </button>
                 )}
                 <span style={{color: C.textMuted}}>|</span>
@@ -682,11 +680,9 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
               <div style={{display:'flex', alignItems:'center', gap:8}}>
                 <span>{crm.telefon}</span>
                 <button onClick={() => MR.aramaBaslat(crm.telefon, crm.ad_soyad, true)} style={{
-                  padding:'3px 8px', borderRadius:5, border:'none', cursor:'pointer',
-                  background:`${C.success}22`, color:C.success, fontSize:10, fontWeight:700,
-                  display:'inline-flex', alignItems:'center', gap:3
+                  ...S.btnMini,...S.btnMiniS, padding:'4px 10px'
                 }}>
-                  <LIcon name="Phone" size={11} color={C.success}/> ARA
+                  <LIcon name="Phone" size={11} color="#fff"/> ARA
                 </button>
               </div>
             ) : '-')}

@@ -231,11 +231,11 @@ const SahaMedyaPreview = ({medya, onClose}) => {
             {medya.dosya_boyutu && <span style={{fontSize:9,color:C.textMuted,flexShrink:0}}>({(medya.dosya_boyutu/1024).toFixed(0)}KB)</span>}
           </div>
           <div style={{display:'flex',gap:6,flexShrink:0}}>
-            <button onClick={indir} style={{padding:'5px 12px',fontSize:9,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontWeight:700}}>
-              <LIcon name="Download" size={11} color={C.success}/> İNDİR
+            <button onClick={indir} style={{...S.btn,...S.btnS,padding:'6px 14px',fontSize:10}}>
+              <LIcon name="Download" size={11} color="#fff"/> İNDİR
             </button>
-            <button onClick={onClose} style={{padding:'5px 12px',fontSize:9,background:`${C.danger}18`,color:C.danger,border:`1px solid ${C.danger}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontWeight:700}}>
-              <LIcon name="X" size={11} color={C.danger}/> KAPAT
+            <button onClick={onClose} style={{...S.btn,...S.btnD,padding:'6px 14px',fontSize:10}}>
+              <LIcon name="X" size={11} color="#fff"/> KAPAT
             </button>
           </div>
         </div>

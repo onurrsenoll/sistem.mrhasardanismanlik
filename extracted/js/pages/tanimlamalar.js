@@ -65,7 +65,7 @@ const ORNEK_VERILER = {
 /* ─── ORTAK STİLLER ─── */
 const TH_STYLE = {padding:'12px 14px', fontSize:13, fontWeight:800, color: MR.tema==='koyu' ? '#cbd5e1' : MR.C.textMuted, textAlign:'left', borderBottom:`2px solid ${MR.C.border}`, letterSpacing:0.5, background: MR.tema==='koyu' ? 'rgba(26,86,219,0.08)' : 'rgba(26,86,219,0.04)'};
 const TD_STYLE = {padding:'12px 14px', fontSize:13, fontWeight:600, color: MR.tema==='koyu' ? '#cbd5e1' : MR.C.text, borderBottom:`1px solid ${MR.C.border}`};
-const BTN_KUCUK = {padding:'5px 8px', borderRadius:6, border:'none', cursor:'pointer', display:'inline-flex', alignItems:'center', gap:4, transition:'all .2s'};
+const BTN_KUCUK = {padding:'5px 8px', borderRadius:7, border:'none', cursor:'pointer', display:'inline-flex', alignItems:'center', gap:4, transition:'all .15s', position:'relative', textShadow:'0 1px 1px rgba(0,0,0,0.12)'};
 
 
 /* ════════════════════════════════════════════════════════════════
@@ -379,13 +379,13 @@ const TanimGrubu = ({kategoriler, user}) => {
                       <td style={{...TD_STYLE, textAlign:'center'}}>
                         <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:2}}>
                           <div onClick={() => siraDegistir(d, -1)}
-                            style={{...BTN_KUCUK, background:`${C.accent}22`}} title="YUKARI TAŞI">
-                            <LIcon name="ChevronUp" size={12} color={C.accent}/>
+                            style={{...BTN_KUCUK, background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)', boxShadow:'0 2px 8px -1px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #1d4ed8'}} title="YUKARI TAŞI">
+                            <LIcon name="ChevronUp" size={12} color="#fff"/>
                           </div>
                           <span style={{fontSize:11, fontWeight:600, minWidth:22, textAlign:'center'}}>{d.sira || 0}</span>
                           <div onClick={() => siraDegistir(d, 1)}
-                            style={{...BTN_KUCUK, background:`${C.accent}22`}} title="AŞAĞI TAŞI">
-                            <LIcon name="ChevronDown" size={12} color={C.accent}/>
+                            style={{...BTN_KUCUK, background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)', boxShadow:'0 2px 8px -1px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #1d4ed8'}} title="AŞAĞI TAŞI">
+                            <LIcon name="ChevronDown" size={12} color="#fff"/>
                           </div>
                         </div>
                       </td>
@@ -396,11 +396,11 @@ const TanimGrubu = ({kategoriler, user}) => {
                       </td>
                       <td style={{...TD_STYLE, textAlign:'center'}}>
                         <div style={{display:'flex', justifyContent:'center', gap:6}}>
-                          <div onClick={() => duzenleAc(d)} style={{...BTN_KUCUK, background:`${C.accent}22`}} title="DÜZENLE">
-                            <LIcon name="Pencil" size={12} color={C.accent}/>
+                          <div onClick={() => duzenleAc(d)} style={{...BTN_KUCUK, background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)', boxShadow:'0 2px 8px -1px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #1d4ed8'}} title="DÜZENLE">
+                            <LIcon name="Pencil" size={12} color="#fff"/>
                           </div>
-                          <div onClick={() => setConfirm({open:true, id:d.id})} style={{...BTN_KUCUK, background:`${C.danger}22`}} title="SİL">
-                            <LIcon name="Trash2" size={12} color={C.danger}/>
+                          <div onClick={() => setConfirm({open:true, id:d.id})} style={{...BTN_KUCUK, background:'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)', boxShadow:'0 2px 8px -1px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #b91c1c'}} title="SİL">
+                            <LIcon name="Trash2" size={12} color="#fff"/>
                           </div>
                         </div>
                       </td>
@@ -497,8 +497,8 @@ const TanimGrubu = ({kategoriler, user}) => {
                     <td style={{...TD_STYLE, fontWeight:600, fontSize:12}}>{d}</td>
                     <td style={{...TD_STYLE, textAlign:'center'}}>
                       <div onClick={() => setBulkData(prev => prev.filter((_, idx) => idx !== i))}
-                        style={{...BTN_KUCUK, background:`${C.danger}22`, cursor:'pointer', display:'inline-flex'}} title="KALDIR">
-                        <LIcon name="X" size={11} color={C.danger}/>
+                        style={{...BTN_KUCUK, background:'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)', boxShadow:'0 2px 8px -1px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #b91c1c', cursor:'pointer', display:'inline-flex'}} title="KALDIR">
+                        <LIcon name="X" size={11} color="#fff"/>
                       </div>
                     </td>
                   </tr>
@@ -873,14 +873,14 @@ const SablonYonetimi = ({user}) => {
                         </td>
                         <td style={{...TD_STYLE, textAlign:'center'}}>
                           <div style={{display:'flex', justifyContent:'center', gap:6}}>
-                            <div onClick={() => onizlemeGoster(s)} style={{...BTN_KUCUK, background:`${C.cyan}22`}} title="ÖNİZLEME">
-                              <LIcon name="Eye" size={12} color={C.cyan}/>
+                            <div onClick={() => onizlemeGoster(s)} style={{...BTN_KUCUK, background:'linear-gradient(180deg, #22d3ee 0%, #06b6d4 40%, #0891b2 100%)', boxShadow:'0 2px 8px -1px rgba(6,182,212,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #0e7490'}} title="ÖNİZLEME">
+                              <LIcon name="Eye" size={12} color="#fff"/>
                             </div>
-                            <div onClick={() => duzenleAc(s)} style={{...BTN_KUCUK, background:`${C.accent}22`}} title="DÜZENLE">
-                              <LIcon name="Pencil" size={12} color={C.accent}/>
+                            <div onClick={() => duzenleAc(s)} style={{...BTN_KUCUK, background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)', boxShadow:'0 2px 8px -1px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #1d4ed8'}} title="DÜZENLE">
+                              <LIcon name="Pencil" size={12} color="#fff"/>
                             </div>
-                            <div onClick={() => setConfirm({open:true, id:s.id})} style={{...BTN_KUCUK, background:`${C.danger}22`}} title="SİL">
-                              <LIcon name="Trash2" size={12} color={C.danger}/>
+                            <div onClick={() => setConfirm({open:true, id:s.id})} style={{...BTN_KUCUK, background:'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)', boxShadow:'0 2px 8px -1px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #b91c1c'}} title="SİL">
+                              <LIcon name="Trash2" size={12} color="#fff"/>
                             </div>
                           </div>
                         </td>

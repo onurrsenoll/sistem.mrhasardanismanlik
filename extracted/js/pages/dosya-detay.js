@@ -431,28 +431,39 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               style={{...S.select,minWidth:180,maxWidth:500,fontSize:10,padding:'6px 10px',background:`${ac}11`,border:`1px solid ${ac}33`,color:ac,fontWeight:600}}>
               {ASAMALAR.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
-            <button style={{...S.btn,...S.btnP,fontSize:10,padding:'6px 12px'}} onClick={openEditModal}>
+            <button style={{...S.btn,...S.btnP,fontSize:10,padding:'7px 14px'}} onClick={openEditModal}>
               <LIcon name="Edit2" size={12} color="#fff"/> DÜZENLE
             </button>
-            {user?.rol === 'admin' && <button style={{...S.btn,fontSize:10,padding:'6px 12px',background:`${C.purple}18`,color:C.purple,border:`1px solid ${C.purple}33`,borderRadius:8,cursor:'pointer',display:'flex',alignItems:'center',gap:4}} disabled={portalCreating}
+            {user?.rol === 'admin' && <button style={{...S.btn,...S.btnS,fontSize:10,padding:'7px 14px'}} disabled={portalCreating}
               onClick={portalOlustur} title="MÜŞTERİ PORTAL ERİŞİMİ OLUŞTUR">
-              <LIcon name="Globe" size={12} color={C.purple}/> {portalCreating ? 'OLUŞTURULUYOR...' : 'PORTAL'}
+              <LIcon name="Globe" size={12} color="#fff"/> {portalCreating ? 'OLUŞTURULUYOR...' : 'PORTAL'}
             </button>}
-            <button style={{...S.btn,fontSize:10,padding:'6px 12px',background:`${C.danger}18`,color:C.danger,border:`1px solid ${C.danger}33`,borderRadius:8,cursor:'pointer',display:'flex',alignItems:'center',gap:4}}
+            <button style={{...S.btn,...S.btnD,fontSize:10,padding:'7px 14px'}}
               onClick={() => setDosyaSilConfirm(true)}>
-              <LIcon name="Trash2" size={12} color={C.danger}/> SİL
+              <LIcon name="Trash2" size={12} color="#fff"/> SİL
             </button>
           </div>
         </div>
       </div>
 
-      {/* TABS */}
-      <div style={{display:'flex',gap:4,marginBottom:12}}>
+      {/* TABS — 3D MAVİ */}
+      <div style={{display:'flex',gap:6,marginBottom:12}}>
         {tabs.map(t => (
           <div key={t.id} onClick={() => setTab(t.id)}
-            style={{display:'flex',alignItems:'center',gap:5,padding:'8px 16px',borderRadius:8,fontSize:11,fontWeight:tab===t.id?700:400,cursor:'pointer',
-              background:tab===t.id?`${C.accent}18`:'transparent',color:tab===t.id?C.accent:C.textSec,border:`1px solid ${tab===t.id?C.accent+'33':C.border}`,transition:'all .2s'}}>
-            <LIcon name={t.ic} size={13} color={tab===t.id?C.accent:C.textSec}/>{t.l}
+            style={{display:'flex',alignItems:'center',gap:5,padding:'9px 18px',borderRadius:10,fontSize:11,fontWeight:800,cursor:'pointer',
+              transition:'all .15s ease', letterSpacing:0.3,
+              ...(tab===t.id ? {
+                background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',
+                color:'#fff', border:'none', borderBottom:'2px solid #1d4ed8',
+                boxShadow:'0 4px 14px -2px rgba(37,99,235,0.5), 0 2px 4px -1px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.25)',
+                textShadow:'0 1px 2px rgba(0,0,0,0.15)'
+              } : {
+                background:'linear-gradient(180deg, rgba(100,116,139,0.12) 0%, rgba(100,116,139,0.05) 100%)',
+                color:C.textSec, border:`1px solid ${C.border}`,
+                boxShadow:'0 2px 6px -1px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.04)',
+                textShadow:'none'
+              })}}>
+            <LIcon name={t.ic} size={13} color={tab===t.id?'#fff':C.textSec}/>{t.l}
           </div>
         ))}
       </div>
@@ -579,10 +590,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                         <td style={{padding:'8px 10px',fontWeight:700,color:C.danger,fontSize:11}}>{fmt(m.tutar)}</td>
                         <td style={{padding:'8px 10px'}}>
                           {odenmedi ? (
-                            <span style={{display:'inline-flex',alignItems:'center',gap:4,padding:'3px 10px',borderRadius:6,fontSize:9,fontWeight:700,
-                              background:`${C.warning}22`,color:C.warning,border:`1px solid ${C.warning}44`,cursor:'pointer'}}
+                            <span style={{...S.btnMini,...S.btnMiniW, padding:'4px 12px', fontSize:9, cursor:'pointer'}}
                               onClick={() => { setMasrafOdeItem(m); setMasrafOdeKasa(''); setMasrafOdeModal(true); }}>
-                              <LIcon name="Clock" size={10} color={C.warning}/> ÖDENMEDİ
+                              <LIcon name="Clock" size={10} color="#000"/> ÖDENMEDİ
                             </span>
                           ) : (
                             <span style={{display:'inline-flex',alignItems:'center',gap:4,padding:'3px 10px',borderRadius:6,fontSize:9,fontWeight:700,
@@ -731,13 +741,13 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                       BEKLİYOR
                     </span>
                   )}
-                  {/* BUTONLAR */}
-                  <div style={{display:'flex',gap:3,flexShrink:0}}>
+                  {/* BUTONLAR — 3D MİNİ */}
+                  <div style={{display:'flex',gap:4,flexShrink:0}}>
                     {yukluMu && yuklenen.map(y => (
                       <React.Fragment key={y.id}>
                         <button title="ÖN İZLEME" onClick={() => setPreviewEvrak(y)}
-                          style={{...S.btn,padding:'3px 6px',fontSize:8,background:`${C.accent}18`,color:C.accent,border:`1px solid ${C.accent}33`,borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',gap:2}}>
-                          <LIcon name="Eye" size={10} color={C.accent}/>
+                          style={{...S.btnMini,...S.btnMiniP}}>
+                          <LIcon name="Eye" size={10} color="#fff"/>
                         </button>
                         <button title="İNDİR" onClick={async () => {
                           try {
@@ -763,22 +773,18 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                             setTimeout(() => URL.revokeObjectURL(a.href), 2000);
                           } catch(e) { alert('İNDİRME HATASI: ' + e.message); }
                         }}
-                          style={{...S.btn,padding:'3px 6px',fontSize:8,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',gap:2}}>
-                          <LIcon name="Download" size={10} color={C.success}/>
+                          style={{...S.btnMini,...S.btnMiniS}}>
+                          <LIcon name="Download" size={10} color="#fff"/>
                         </button>
                         <button title="SİL" onClick={() => setDeleteConfirm({type:'evrak', id:y.id, text:y.dosya_adi})}
-                          style={{...S.btn,padding:'3px 6px',fontSize:8,background:`${C.danger}18`,color:C.danger,border:`1px solid ${C.danger}33`,borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',gap:2}}>
-                          <LIcon name="Trash2" size={10} color={C.danger}/>
+                          style={{...S.btnMini,...S.btnMiniD}}>
+                          <LIcon name="Trash2" size={10} color="#fff"/>
                         </button>
                       </React.Fragment>
                     ))}
                     {/* YÜKLE BUTONU - her zaman göster (aynı türe birden fazla yüklenebilir) */}
-                    <label title="DOSYA YÜKLE" style={{...S.btn,padding:'3px 6px',fontSize:8,
-                      background:yukluMu ? `${C.warning}18` : `${C.accent}18`,
-                      color:yukluMu ? C.warning : C.accent,
-                      border:`1px solid ${yukluMu ? C.warning+'33' : C.accent+'33'}`,
-                      borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',gap:2}}>
-                      <LIcon name="Upload" size={10} color={yukluMu ? C.warning : C.accent}/>
+                    <label title="DOSYA YÜKLE" style={{...S.btnMini,...(yukluMu ? S.btnMiniW : S.btnMiniP)}}>
+                      <LIcon name="Upload" size={10} color={yukluMu ? '#000' : '#fff'}/>
                       <input type="file" accept=".pdf,.jpg,.jpeg,.png,.svg,.doc,.docx" style={{display:'none'}} onChange={async (ev) => {
                         const f = ev.target.files[0];
                         if (!f) return;
@@ -1130,12 +1136,12 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
                   } catch(e) { alert('İNDİRME HATASI: ' + e.message); }
                 }}
-                  style={{padding:'5px 12px',fontSize:9,background:`${C.success}18`,color:C.success,border:`1px solid ${C.success}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontWeight:700}}>
-                  <LIcon name="Download" size={11} color={C.success}/> İNDİR
+                  style={{...S.btn,...S.btnS,padding:'6px 14px',fontSize:10}}>
+                  <LIcon name="Download" size={11} color="#fff"/> İNDİR
                 </button>
                 <button onClick={() => setPreviewEvrak(null)}
-                  style={{padding:'5px 12px',fontSize:9,background:`${C.danger}18`,color:C.danger,border:`1px solid ${C.danger}33`,borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontWeight:700}}>
-                  <LIcon name="X" size={11} color={C.danger}/> KAPAT
+                  style={{...S.btn,...S.btnD,padding:'6px 14px',fontSize:10}}>
+                  <LIcon name="X" size={11} color="#fff"/> KAPAT
                 </button>
               </div>
             </div>

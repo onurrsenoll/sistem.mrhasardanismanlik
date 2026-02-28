@@ -396,12 +396,12 @@ MR._stilGuncelle = () => {
   /* LABEL */
   MR.S.label = { fontSize: 13, fontWeight: 800, color: C.textSec, marginBottom: 7, display: 'block', letterSpacing: 0.5 };
 
-  /* OUTLINE BUTON */
+  /* OUTLINE BUTON — 3D hafif */
   MR.S.btnG = {
-    background: 'transparent',
-    color: C.textSec,
+    background: 'linear-gradient(180deg, rgba(100,116,139,0.15) 0%, rgba(100,116,139,0.08) 100%)',
+    color: C.textSec, fontWeight: 700,
     border: `1px solid ${C.border}`,
-    boxShadow: 'none'
+    boxShadow: '0 2px 6px -1px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)'
   };
 
   /* STAT KART */
@@ -413,30 +413,75 @@ MR._stilGuncelle = () => {
     transition: 'box-shadow .2s ease, transform .2s ease'
   };
 
-  /* ═══ BUTON SİSTEMİ ═══ */
+  /* ═══ BUTON SİSTEMİ — 3D MAVİ ═══ */
   MR.S.btn.fontWeight = 800;
   MR.S.btn.fontSize = 14;
-  MR.S.btn.borderRadius = 8;
+  MR.S.btn.borderRadius = 10;
   MR.S.btn.border = 'none';
-  /* Primary — mavi gradient */
+  MR.S.btn.textShadow = '0 1px 2px rgba(0,0,0,0.15)';
+  MR.S.btn.letterSpacing = 0.3;
+  /* Primary — 3D mavi */
   MR.S.btnP = {
-    background: C.accentGradient, color: '#fff', fontWeight: 800,
-    border: 'none', boxShadow: C.btnShadow
+    background: 'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',
+    color: '#fff', fontWeight: 800, border: 'none',
+    boxShadow: '0 4px 14px -2px rgba(37,99,235,0.55), 0 2px 4px -1px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)',
+    borderBottom: '2px solid #1d4ed8'
   };
-  /* Secondary — açık mavi */
+  /* Secondary — 3D mavi */
   MR.S.btnS = {
-    background: 'linear-gradient(135deg, #3b82f6, #1a56db)', color: '#fff', fontWeight: 800,
-    border: 'none', boxShadow: C.btnShadow
+    background: 'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',
+    color: '#fff', fontWeight: 800, border: 'none',
+    boxShadow: '0 4px 14px -2px rgba(37,99,235,0.55), 0 2px 4px -1px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)',
+    borderBottom: '2px solid #1d4ed8'
   };
-  /* Warning — amber */
+  /* Warning — 3D amber */
   MR.S.btnW = {
-    background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', color: '#000', fontWeight: 800,
-    border: 'none', boxShadow: C.btnShadow
+    background: 'linear-gradient(180deg, #fcd34d 0%, #f59e0b 40%, #d97706 100%)',
+    color: '#000', fontWeight: 800, border: 'none',
+    boxShadow: '0 4px 14px -2px rgba(245,158,11,0.5), 0 2px 4px -1px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.3)',
+    borderBottom: '2px solid #b45309'
   };
-  /* Danger — kırmızı */
+  /* Danger — 3D kırmızı */
   MR.S.btnD = {
-    background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: '#fff', fontWeight: 800,
-    border: 'none', boxShadow: C.btnShadow
+    background: 'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)',
+    color: '#fff', fontWeight: 800, border: 'none',
+    boxShadow: '0 4px 14px -2px rgba(239,68,68,0.5), 0 2px 4px -1px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.2)',
+    borderBottom: '2px solid #b91c1c'
+  };
+  /* Ghost — 3D hafif */
+  MR.S.btnG = {
+    background: 'linear-gradient(180deg, rgba(100,116,139,0.15) 0%, rgba(100,116,139,0.08) 100%)',
+    color: C.textSec, fontWeight: 700,
+    border: `1px solid ${C.border}`,
+    boxShadow: '0 2px 6px -1px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)'
+  };
+  /* Mini butonlar */
+  MR.S.btnMini = {
+    padding: '5px 10px', borderRadius: 7, border: 'none',
+    fontWeight: 700, fontSize: 9, cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', gap: 3,
+    transition: 'all .15s ease', position: 'relative',
+    textShadow: '0 1px 1px rgba(0,0,0,0.12)'
+  };
+  MR.S.btnMiniP = {
+    background: 'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',
+    color: '#fff', boxShadow: '0 2px 8px -1px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',
+    borderBottom: '1px solid #1d4ed8'
+  };
+  MR.S.btnMiniS = {
+    background: 'linear-gradient(180deg, #34d399 0%, #10b981 40%, #059669 100%)',
+    color: '#fff', boxShadow: '0 2px 8px -1px rgba(16,185,129,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',
+    borderBottom: '1px solid #047857'
+  };
+  MR.S.btnMiniD = {
+    background: 'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)',
+    color: '#fff', boxShadow: '0 2px 8px -1px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',
+    borderBottom: '1px solid #b91c1c'
+  };
+  MR.S.btnMiniW = {
+    background: 'linear-gradient(180deg, #fcd34d 0%, #f59e0b 40%, #d97706 100%)',
+    color: '#000', boxShadow: '0 2px 8px -1px rgba(245,158,11,0.4), inset 0 1px 0 rgba(255,255,255,0.25)',
+    borderBottom: '1px solid #b45309'
   };
 
   /* BADGE */
@@ -505,34 +550,78 @@ MR.S = {
 
   label: { fontSize: 13, fontWeight: 800, color: MR.C.textSec, marginBottom: 7, display: 'block', letterSpacing: 0.5 },
 
-  /* BUTON */
+  /* BUTON — 3D MAVİ SİSTEM */
   btn: {
-    padding: '12px 24px', borderRadius: 8, border: 'none',
+    padding: '12px 24px', borderRadius: 10, border: 'none',
     fontWeight: 800, fontSize: 14, cursor: 'pointer',
     display: 'inline-flex', alignItems: 'center', gap: 8,
-    transition: 'all .2s ease',
-    position: 'relative'
+    transition: 'all .15s ease',
+    position: 'relative',
+    letterSpacing: 0.3,
+    textShadow: '0 1px 2px rgba(0,0,0,0.15)'
   },
   btnP: {
-    background: MR.C.accentGradient, color: '#fff', fontWeight: 800,
-    border: 'none', boxShadow: MR.C.btnShadow
+    background: 'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',
+    color: '#fff', fontWeight: 800, border: 'none',
+    boxShadow: '0 4px 14px -2px rgba(37,99,235,0.55), 0 2px 4px -1px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)',
+    borderBottom: '2px solid #1d4ed8'
   },
   btnS: {
-    background: 'linear-gradient(135deg, #3b82f6, #1a56db)', color: '#fff', fontWeight: 800,
-    border: 'none', boxShadow: MR.C.btnShadow
+    background: 'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',
+    color: '#fff', fontWeight: 800, border: 'none',
+    boxShadow: '0 4px 14px -2px rgba(37,99,235,0.55), 0 2px 4px -1px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)',
+    borderBottom: '2px solid #1d4ed8'
   },
   btnW: {
-    background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', color: '#000', fontWeight: 800,
-    border: 'none', boxShadow: MR.C.btnShadow
+    background: 'linear-gradient(180deg, #fcd34d 0%, #f59e0b 40%, #d97706 100%)',
+    color: '#000', fontWeight: 800, border: 'none',
+    boxShadow: '0 4px 14px -2px rgba(245,158,11,0.5), 0 2px 4px -1px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.3)',
+    borderBottom: '2px solid #b45309'
   },
   btnD: {
-    background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: '#fff', fontWeight: 800,
-    border: 'none', boxShadow: MR.C.btnShadow
+    background: 'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)',
+    color: '#fff', fontWeight: 800, border: 'none',
+    boxShadow: '0 4px 14px -2px rgba(239,68,68,0.5), 0 2px 4px -1px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.2)',
+    borderBottom: '2px solid #b91c1c'
   },
   btnG: {
-    background: 'transparent', color: MR.C.textSec,
+    background: 'linear-gradient(180deg, rgba(100,116,139,0.15) 0%, rgba(100,116,139,0.08) 100%)',
+    color: MR.C.textSec, fontWeight: 700,
     border: `1px solid ${MR.C.border}`,
-    boxShadow: 'none'
+    boxShadow: '0 2px 6px -1px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)'
+  },
+  /* Mini buton (evrak listesi, tablo içi) */
+  btnMini: {
+    padding: '5px 10px', borderRadius: 7, border: 'none',
+    fontWeight: 700, fontSize: 9, cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', gap: 3,
+    transition: 'all .15s ease', position: 'relative',
+    textShadow: '0 1px 1px rgba(0,0,0,0.12)'
+  },
+  btnMiniP: {
+    background: 'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',
+    color: '#fff', boxShadow: '0 2px 8px -1px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',
+    borderBottom: '1px solid #1d4ed8'
+  },
+  btnMiniS: {
+    background: 'linear-gradient(180deg, #34d399 0%, #10b981 40%, #059669 100%)',
+    color: '#fff', boxShadow: '0 2px 8px -1px rgba(16,185,129,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',
+    borderBottom: '1px solid #047857'
+  },
+  btnMiniD: {
+    background: 'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)',
+    color: '#fff', boxShadow: '0 2px 8px -1px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',
+    borderBottom: '1px solid #b91c1c'
+  },
+  btnMiniW: {
+    background: 'linear-gradient(180deg, #fcd34d 0%, #f59e0b 40%, #d97706 100%)',
+    color: '#000', boxShadow: '0 2px 8px -1px rgba(245,158,11,0.4), inset 0 1px 0 rgba(255,255,255,0.25)',
+    borderBottom: '1px solid #b45309'
+  },
+  btnMiniG: {
+    background: 'linear-gradient(180deg, rgba(100,116,139,0.18) 0%, rgba(100,116,139,0.08) 100%)',
+    color: MR.C.textSec, border: `1px solid ${MR.C.border}`,
+    boxShadow: '0 1px 4px -1px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.04)'
   },
 
   /* BADGE */

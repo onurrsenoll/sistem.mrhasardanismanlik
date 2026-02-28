@@ -417,14 +417,14 @@ const IsOrtaklari = ({setPage, user}) => {
                         </td>
                         <td style={{padding:'10px 10px'}}>
                           <div style={{display:'flex',gap:4}}>
-                            <div onClick={() => detayAc(ortak)} style={{width:28,height:28,borderRadius:6,background:`${C.cyan}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title="DETAY VE HAREKETLER">
-                              <LIcon name="Eye" size={13} color={C.cyan}/>
+                            <div onClick={() => detayAc(ortak)} style={{width:28,height:28,borderRadius:7,background:'linear-gradient(180deg, #22d3ee 0%, #06b6d4 40%, #0891b2 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(6,182,212,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom:'1px solid #0e7490'}} title="DETAY VE HAREKETLER">
+                              <LIcon name="Eye" size={13} color="#fff"/>
                             </div>
-                            <div onClick={() => duzenleAc(ortak)} style={{width:28,height:28,borderRadius:6,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title="DÜZENLE">
-                              <LIcon name="Pencil" size={13} color={C.accent}/>
+                            <div onClick={() => duzenleAc(ortak)} style={{width:28,height:28,borderRadius:7,background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom:'1px solid #1d4ed8'}} title="DÜZENLE">
+                              <LIcon name="Pencil" size={13} color="#fff"/>
                             </div>
-                            <div onClick={() => silOnay(ortak)} style={{width:28,height:28,borderRadius:6,background:`${C.danger}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title="SİL">
-                              <LIcon name="Trash2" size={13} color={C.danger}/>
+                            <div onClick={() => silOnay(ortak)} style={{width:28,height:28,borderRadius:7,background:'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom:'1px solid #b91c1c'}} title="SİL">
+                              <LIcon name="Trash2" size={13} color="#fff"/>
                             </div>
                           </div>
                         </td>
@@ -1114,14 +1114,14 @@ const IsPaydaslari = ({setPage, user}) => {
                         </td>
                         <td style={{padding:'10px 10px'}}>
                           <div style={{display:'flex',gap:4}}>
-                            <div onClick={() => komisyonAc(paydas)} style={{width:28,height:28,borderRadius:6,background:`${C.gold}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title="KOMİSYON TAKİP">
-                              <LIcon name="Banknote" size={13} color={C.gold}/>
+                            <div onClick={() => komisyonAc(paydas)} style={{width:28,height:28,borderRadius:7,background:'linear-gradient(180deg, #fcd34d 0%, #f59e0b 40%, #d97706 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(245,158,11,0.4), inset 0 1px 0 rgba(255,255,255,0.25)',borderBottom:'1px solid #b45309'}} title="KOMİSYON TAKİP">
+                              <LIcon name="Banknote" size={13} color="#000"/>
                             </div>
-                            <div onClick={() => duzenleAc(paydas)} style={{width:28,height:28,borderRadius:6,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title="DÜZENLE">
-                              <LIcon name="Pencil" size={13} color={C.accent}/>
+                            <div onClick={() => duzenleAc(paydas)} style={{width:28,height:28,borderRadius:7,background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom:'1px solid #1d4ed8'}} title="DÜZENLE">
+                              <LIcon name="Pencil" size={13} color="#fff"/>
                             </div>
-                            <div onClick={() => silOnay(paydas)} style={{width:28,height:28,borderRadius:6,background:`${C.danger}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title="SİL">
-                              <LIcon name="Trash2" size={13} color={C.danger}/>
+                            <div onClick={() => silOnay(paydas)} style={{width:28,height:28,borderRadius:7,background:'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom:'1px solid #b91c1c'}} title="SİL">
+                              <LIcon name="Trash2" size={13} color="#fff"/>
                             </div>
                           </div>
                         </td>

@@ -2254,8 +2254,8 @@ const NetsantralCagriGecmisi = () => {
         <div style={{display:'flex', gap:6, alignItems:'center'}}>
           <input placeholder="NUMARA VEYA İSİM ARA..." value={search} onChange={e => {setSearch(e.target.value); setSayfa(1);}}
             style={{...S.input, width:180, fontSize:10, padding:'6px 10px'}}/>
-          <button onClick={load} style={{...S.btn, padding:'6px 10px', background:`${C.accent}22`, border:'none'}}>
-            <LIcon name="RefreshCw" size={14} color={C.accent}/>
+          <button onClick={load} style={{...S.btn,...S.btnP, padding:'6px 10px'}}>
+            <LIcon name="RefreshCw" size={14} color="#fff"/>
           </button>
         </div>
       </div>
@@ -3178,8 +3178,7 @@ const TopluAktarimTab = () => {
           <div style={{display:'flex',gap:12,alignItems:'flex-start',flexWrap:'wrap'}}>
             {/* ŞABLON İNDİR */}
             <button onClick={sablonIndir} disabled={sablonIndiriliyor}
-              style={{...S.btn,padding:'12px 24px',fontSize:12,fontWeight:700,borderRadius:10,cursor:'pointer',
-                background:`${C.accent}`,color:'#fff',border:'none',display:'flex',alignItems:'center',gap:8,
+              style={{...S.btn,...S.btnP,padding:'12px 24px',fontSize:12,
                 opacity:sablonIndiriliyor?0.6:1}}>
               <LIcon name="Download" size={16} color="#fff"/>
               {sablonIndiriliyor ? 'İNDİRİLİYOR...' : 'ŞABLON İNDİR (CSV)'}
@@ -3188,7 +3187,8 @@ const TopluAktarimTab = () => {
             {/* DOSYA SEÇ + YÜKLE */}
             <div style={{display:'flex',gap:8,alignItems:'center',flex:1,minWidth:280}}>
               <label style={{...S.btn,padding:'12px 24px',fontSize:12,fontWeight:700,borderRadius:10,cursor:'pointer',
-                background:`${C.success}`,color:'#fff',border:'none',display:'flex',alignItems:'center',gap:8}}>
+                background:'linear-gradient(180deg, #34d399 0%, #10b981 40%, #059669 100%)',color:'#fff',border:'none',display:'flex',alignItems:'center',gap:8,
+                boxShadow:'0 4px 14px -2px rgba(16,185,129,0.5), 0 2px 4px -1px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)',borderBottom:'2px solid #047857'}}>
                 <LIcon name="Upload" size={16} color="#fff"/>
                 DOSYA SEÇ
                 <input ref={fileRef} type="file" accept=".csv,.txt" style={{display:'none'}}

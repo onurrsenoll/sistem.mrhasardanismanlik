@@ -781,13 +781,13 @@ const KomisyonPrim = ({setPage, user}) => {
                     <td style={{padding:'10px 12px'}}>
                       <div style={{display:'flex',gap:6}}>
                         {k.durum === 'bekliyor' && (
-                          <div onClick={() => onayla(k)} style={{width:28,height:28,borderRadius:6,background:`${C.cyan}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title="ONAYLA">
-                            <LIcon name="CheckCircle" size={13} color={C.cyan}/>
+                          <div onClick={() => onayla(k)} style={{width:28,height:28,borderRadius:7,background:'linear-gradient(180deg, #22d3ee 0%, #06b6d4 40%, #0891b2 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(6,182,212,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom:'1px solid #0e7490'}} title="ONAYLA">
+                            <LIcon name="CheckCircle" size={13} color="#fff"/>
                           </div>
                         )}
                         {(k.durum === 'bekliyor' || k.durum === 'onaylandi') && (
-                          <div onClick={() => odeAc(k)} style={{width:28,height:28,borderRadius:6,background:`${C.success}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title="ÖDE">
-                            <LIcon name="Banknote" size={13} color={C.success}/>
+                          <div onClick={() => odeAc(k)} style={{width:28,height:28,borderRadius:7,background:'linear-gradient(180deg, #34d399 0%, #10b981 40%, #059669 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(16,185,129,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom:'1px solid #047857'}} title="ÖDE">
+                            <LIcon name="Banknote" size={13} color="#fff"/>
                           </div>
                         )}
                       </div>
@@ -1089,14 +1089,14 @@ const KasaBanka = ({setPage, user}) => {
                       </div>
                       {isAdmin && (
                         <div style={{display:'flex',gap:6}}>
-                          <div onClick={() => duzenleAc(kasa)} style={{width:30,height:30,borderRadius:8,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title="DÜZENLE">
-                            <LIcon name="Pencil" size={13} color={C.accent}/>
+                          <div onClick={() => duzenleAc(kasa)} style={{width:30,height:30,borderRadius:7,background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom:'1px solid #1d4ed8'}} title="DÜZENLE">
+                            <LIcon name="Pencil" size={13} color="#fff"/>
                           </div>
-                          <div onClick={() => {setDuzeltmeModal(kasa);setDuzeltmeForm({yeni_bakiye:String(Math.round(parseFloat(kasa.bakiye)||0)),aciklama:''});}} style={{width:30,height:30,borderRadius:8,background:`${C.warning}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title="BAKİYE DÜZELT">
-                            <LIcon name="Calculator" size={13} color={C.warning}/>
+                          <div onClick={() => {setDuzeltmeModal(kasa);setDuzeltmeForm({yeni_bakiye:String(Math.round(parseFloat(kasa.bakiye)||0)),aciklama:''});}} style={{width:30,height:30,borderRadius:7,background:'linear-gradient(180deg, #fcd34d 0%, #f59e0b 40%, #d97706 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(245,158,11,0.4), inset 0 1px 0 rgba(255,255,255,0.25)',borderBottom:'1px solid #b45309'}} title="BAKİYE DÜZELT">
+                            <LIcon name="Calculator" size={13} color="#000"/>
                           </div>
-                          <div onClick={() => toggleAktif(kasa)} style={{width:30,height:30,borderRadius:8,background: pasif ? `${C.success}22` : `${C.danger}22`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}} title={pasif ? 'AKTİF ET' : 'PASİF YAP'}>
-                            <LIcon name={pasif ? 'ToggleRight' : 'ToggleLeft'} size={13} color={pasif ? C.success : C.danger}/>
+                          <div onClick={() => toggleAktif(kasa)} style={{width:30,height:30,borderRadius:7,background: pasif ? 'linear-gradient(180deg, #34d399 0%, #10b981 40%, #059669 100%)' : 'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow: pasif ? '0 2px 8px -1px rgba(16,185,129,0.45), inset 0 1px 0 rgba(255,255,255,0.2)' : '0 2px 8px -1px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom: pasif ? '1px solid #047857' : '1px solid #b91c1c'}} title={pasif ? 'AKTİF ET' : 'PASİF YAP'}>
+                            <LIcon name={pasif ? 'ToggleRight' : 'ToggleLeft'} size={13} color="#fff"/>
                           </div>
                         </div>
                       )}
