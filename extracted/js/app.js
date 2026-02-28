@@ -25,9 +25,7 @@ const MENU = [
   {id:'paydaslar', label:'PAYDAŞLAR', icon:'Handshake', sub:[
     {id:'ortaklar-ortaklar', label:'İŞ ORTAKLARI', icon:'Briefcase'},
     {id:'ortaklar-paydaslar', label:'İŞ PAYDAŞLARI', icon:'Network'},
-    {id:'personel-liste', label:'PERSONEL LİSTESİ', icon:'Users'},
-    {id:'personel-yeni', label:'YENİ PERSONEL', icon:'UserPlus'},
-    {id:'personel-hakedis', label:'HAKEDİŞ TAKİBİ', icon:'Calculator'}
+    {id:'personel-liste', label:'PERSONEL', icon:'Users'}
   ]},
   {id:'police', label:'POLİÇE', icon:'FileCheck', sub:[
     {id:'police-liste', label:'POLİÇE LİSTESİ', icon:'List'},
