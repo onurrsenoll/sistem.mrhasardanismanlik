@@ -12,7 +12,7 @@ require_once __DIR__ . '/../../config/auth.php';
 setup_headers();
 require_method('POST');
 
-$user = auth_required(['admin', 'uzman', 'personel']);
+$user = auth_required(['admin', 'uzman', 'personel', 'avukat']);
 
 // Form data kontrolü
 $dosyaId  = (int)($_POST['dosya_id'] ?? 0);

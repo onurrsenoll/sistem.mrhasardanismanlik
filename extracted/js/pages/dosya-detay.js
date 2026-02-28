@@ -379,7 +379,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
     {id:'bilgi', l:'DOSYA BİLGİLERİ', ic:'FileText'},
     {id:'masraf', l:`MASRAFLAR (${dosya.masraflar?.length || 0})`, ic:'Receipt'},
     {id:'evrak', l:`EVRAKLAR (${dosya.evraklar?.length || 0})`, ic:'Folder'},
-    ...(!isAvukat ? [{id:'hesap', l:'DOSYA HESABI', ic:'Calculator'}] : [])
+    {id:'hesap', l:'DOSYA HESABI', ic:'Calculator'}
   ];
 
   return (
@@ -780,8 +780,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                         </button>}
                       </React.Fragment>
                     ))}
-                    {/* YÜKLE BUTONU - avukat göremez */}
-                    {!isAvukat && <label title="DOSYA YÜKLE" style={{...S.btnMini,...(yukluMu ? S.btnMiniW : S.btnMiniP)}}>
+                    {/* YÜKLE BUTONU */}
+                    <label title="DOSYA YÜKLE" style={{...S.btnMini,...(yukluMu ? S.btnMiniW : S.btnMiniP)}}>
                       <LIcon name="Upload" size={10} color={yukluMu ? '#000' : '#fff'}/>
                       <input type="file" accept=".pdf,.jpg,.jpeg,.png,.svg,.doc,.docx" style={{display:'none'}} onChange={async (ev) => {
                         const f = ev.target.files[0];
@@ -794,7 +794,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                         else alert(r?.error || 'YÜKLEME HATASI');
                         ev.target.value = '';
                       }}/>
-                    </label>}
+                    </label>
                   </div>
                 </div>
               );
@@ -958,16 +958,16 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <FormGroup label="DİĞER MASRAF">
                   <input type="number" value={kapatForm.diger_masraf} onChange={e=>kF('diger_masraf',e.target.value)} placeholder="0" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
                 </FormGroup>
-                <FormGroup label="DOSYA BAŞI ÖDENEN">
+                {!isAvukat && <FormGroup label="DOSYA BAŞI ÖDENEN">
                   <input type="number" value={kapatForm.dosya_basi_odenen} onChange={e=>kF('dosya_basi_odenen',e.target.value)} placeholder="0" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
-                </FormGroup>
-                <FormGroup label={`AVUKAT PAY ORANI (%${avukatPayYuzde})`}>
+                </FormGroup>}
+                {!isAvukat && <FormGroup label={`AVUKAT PAY ORANI (%${avukatPayYuzde})`}>
                   <input type="number" min="0" max="100" value={kapatForm.avukat_pay_orani} onChange={e=>kF('avukat_pay_orani',e.target.value)} placeholder="50" style={{...S.input,padding:'8px 10px',fontSize:12,fontWeight:700,color:C.purple}}/>
-                </FormGroup>
+                </FormGroup>}
               </div>
 
               {/* AVUKAT BİLGİ BANNER */}
-              {dosya.avukat_adi && (
+              {!isAvukat && dosya.avukat_adi && (
                 <div style={{padding:10,background:`${C.purple}11`,borderRadius:8,marginBottom:16,display:'flex',alignItems:'center',gap:12,border:`1px solid ${C.purple}33`}}>
                   <LIcon name="Scale" size={16} color={C.purple}/>
                   <div style={{flex:1}}>
@@ -1008,8 +1008,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
                 <div style={{marginTop:10,paddingTop:10,borderTop:`2px solid ${C.warning}44`}}/>
                 {hesapRow('DOSYA MASRAFLARI (SİSTEMDEN)', dosyaMasraflari, {color:C.danger})}
-                {hesapRow('DOSYA BAŞI ÖDENEN (MR HASAR\'A)', dosyaBasi, {color:C.warning})}
+                {!isAvukat && hesapRow('DOSYA BAŞI ÖDENEN (MR HASAR\'A)', dosyaBasi, {color:C.warning})}
 
+                {!isAvukat && <>
                 <div style={{marginTop:10,paddingTop:10,borderTop:`2px solid ${C.purple}44`}}/>
                 <div style={{fontSize:10,fontWeight:700,color:C.purple,marginBottom:6,display:'flex',alignItems:'center',gap:4}}>
                   PAY BÖLÜŞÜMÜ (MR HASAR %{mrPayYuzde} / AVUKAT %{avukatPayYuzde})
@@ -1018,10 +1019,11 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 {hesapRow(`MR HASAR BRÜT PAY (%${mrPayYuzde})`, mrBrutPay, {color:C.textSec})}
                 {hesapRow('DOSYA BAŞI ÖDENEN (DÜŞÜLEN)', dosyaBasi, {color:C.danger})}
                 {hesapRow('MR HASAR HAKEDİŞİ', mrHakedis, {bold:true,color:C.success,big:true,border:true})}
+                </>}
               </div>
 
               {/* KASA SEÇİMİ */}
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
+              {!isAvukat && <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
                 <FormGroup label="KAZANÇ AKTARILACAK KASA">
                   <select value={kapatForm.kasa_id} onChange={e=>kF('kasa_id',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:12}}>
                     {kasalar.map(k => <option key={k.id} value={k.id}>{k.ad} ({fmt(k.bakiye)})</option>)}
@@ -1033,13 +1035,13 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                     <div style={{fontSize:16,fontWeight:800,color:C.success}}>{fmt(kasayaAktarilacak)}</div>
                   </div>
                 </div>
-              </div>
+              </div>}
 
               {/* ONAYLA */}
               <button onClick={dosyaKapat} disabled={kapatLoading || !t}
                 style={{...S.btn,...S.btnS,justifyContent:'center',padding:14,width:'100%',fontSize:13,fontWeight:800}}>
                 <LIcon name="CheckCircle" size={16} color="#fff"/>
-                {kapatLoading ? 'KAPATILIYOR...' : 'DOSYAYI KAPAT VE KAZANCI KASAYA AKTAR'}
+                {kapatLoading ? 'KAPATILIYOR...' : (isAvukat ? 'DOSYAYI KAPAT' : 'DOSYAYI KAPAT VE KAZANCI KASAYA AKTAR')}
               </button>
             </div>
           );
