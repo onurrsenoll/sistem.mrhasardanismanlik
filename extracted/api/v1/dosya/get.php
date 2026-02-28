@@ -26,6 +26,17 @@ $dosya = $stmt->fetch();
 
 if (!$dosya) json_error('Dosya bulunamadı', 404);
 
+// Avukat rolü sadece kendi dosyalarını görebilir
+if ($user['rol'] === 'avukat') {
+    $yetkili = false;
+    if (!empty($dosya['avukat_id']) && (int)$dosya['avukat_id'] === (int)$user['id']) $yetkili = true;
+    if (!empty($dosya['ortak_id'])) {
+        // ortak_id ile eşleşen ortağın user'a bağlı olup olmadığını kontrol et
+        // Basit yaklaşım: avukat_id eşleşmesi yeterli
+    }
+    if (!$yetkili) json_error('Bu dosyaya erişim yetkiniz yok', 403);
+}
+
 // Mağdur
 $stmt = $db->prepare('SELECT * FROM magdurlar WHERE dosya_id = ?');
 $stmt->execute([$dosya['id']]);
@@ -86,5 +97,44 @@ if (!empty($dosya['paydas_id'])) {
 
 // Toplam masraf
 $dosya['toplam_masraf'] = array_sum(array_column($dosya['masraflar'], 'tutar'));
+
+// Avukat rolü için hassas verileri gizle
+if ($user['rol'] === 'avukat') {
+    // İç personel/ortak bilgileri
+    unset($dosya['sorumlu_id']);
+    unset($dosya['sorumlu_adi']);
+    unset($dosya['avukat_adi']);
+    unset($dosya['avukat_firma']);
+    unset($dosya['avukat_baro']);
+    unset($dosya['avukat_sicil_no']);
+    unset($dosya['avukat_odeme_orani']);
+    unset($dosya['avukat_telefon']);
+    unset($dosya['ortak_id']);
+    unset($dosya['avukat_id']);
+    // Paydaş kişi bilgileri (sadece kaynak türü görünsün)
+    unset($dosya['paydas_id']);
+    unset($dosya['paydas_adi']);
+    unset($dosya['paydas_yetkili']);
+    unset($dosya['paydas_telefon']);
+    unset($dosya['paydas_komisyon_orani']);
+    // Masraflarda kullanıcı ve kasa bilgilerini gizle
+    if (!empty($dosya['masraflar'])) {
+        foreach ($dosya['masraflar'] as &$m) {
+            unset($m['kullanici_id']);
+            unset($m['kullanici_adi']);
+            unset($m['kasa_id']);
+            unset($m['kasa_adi']);
+        }
+        unset($m);
+    }
+    // Evraklarda kullanıcı bilgisini gizle
+    if (!empty($dosya['evraklar'])) {
+        foreach ($dosya['evraklar'] as &$e) {
+            unset($e['kullanici_id']);
+            unset($e['kullanici_adi']);
+        }
+        unset($e);
+    }
+}
 
 json_success($dosya);

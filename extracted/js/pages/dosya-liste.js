@@ -65,6 +65,7 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
   const [topluSilConfirm, setTopluSilConfirm] = useState(false);
   const [topluSilLoading, setTopluSilLoading] = useState(false);
   const isAdmin = user?.rol === 'admin';
+  const isAvukat = user?.rol === 'avukat';
   const [page, setPage2] = useState(1);
   const [limit, setLimit] = useState(25);
   const [pgInfo, setPgInfo] = useState({total:0, totalPages:0});
@@ -451,9 +452,9 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
               </>
             )}
 
-            <button style={{...S.btn,...S.btnP,fontSize:10,padding:'6px 14px'}} onClick={() => setPage('dosya-yeni')}>
+            {!isAvukat && <button style={{...S.btn,...S.btnP,fontSize:10,padding:'6px 14px'}} onClick={() => setPage('dosya-yeni')}>
               <LIcon name="Plus" size={12} color="#fff"/> YENİ
-            </button>
+            </button>}
           </div>
         </div>
 
@@ -481,8 +482,8 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                   <th style={{...thS,minWidth:80}}>DOSYA NO</th>
                   <th style={{...thS,minWidth:85}}>T.C. NO</th>
                   <th style={{...thS,minWidth:110}}>ADI SOYADI</th>
-                  <th style={{...thS,minWidth:85}}>DOSYA KAYNAĞI</th>
-                  <th style={{...thS,minWidth:90}}>AVUKATI</th>
+                  {!isAvukat && <th style={{...thS,minWidth:85}}>DOSYA KAYNAĞI</th>}
+                  {!isAvukat && <th style={{...thS,minWidth:90}}>AVUKATI</th>}
                   <th style={{...thS,minWidth:55,textAlign:'center'}}>DOSYA TÜRÜ</th>
                   <th style={{...thS,minWidth:100}}>DAVALI ŞİRKET</th>
                   <th style={{...thS,minWidth:100}}>SİGORTA HASAR NO</th>
@@ -512,9 +513,9 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                       {/* ADI SOYADI */}
                       <td style={{...tdS,fontWeight:600,maxWidth:130,overflow:'hidden',textOverflow:'ellipsis'}}>{d.magdur_adi || '-'}</td>
                       {/* DOSYA KAYNAĞI */}
-                      <td style={{...tdS,color:C.textSec,fontSize:9}}>{d.dosya_kaynagi || '-'}</td>
+                      {!isAvukat && <td style={{...tdS,color:C.textSec,fontSize:9}}>{d.dosya_kaynagi || '-'}</td>}
                       {/* AVUKATI */}
-                      <td style={{...tdS,color:C.textSec,maxWidth:100,overflow:'hidden',textOverflow:'ellipsis'}}>{d.avukat_adi || '-'}</td>
+                      {!isAvukat && <td style={{...tdS,color:C.textSec,maxWidth:100,overflow:'hidden',textOverflow:'ellipsis'}}>{d.avukat_adi || '-'}</td>}
                       {/* DOSYA TÜRÜ */}
                       <td style={{...tdS,textAlign:'center'}}>
                         <span style={{display:'inline-block',padding:'2px 8px',borderRadius:4,fontSize:9,fontWeight:700,
@@ -544,10 +545,10 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                           <span title="GÖRÜNTÜLE" style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.accent}11`}}>
                             <LIcon name="Eye" size={12} color={C.accent}/>
                           </span>
-                          <span title="SİL" onClick={(e) => { e.stopPropagation(); setDeleteConfirm({id: d.id, text: d.dosya_no}); }}
+                          {!isAvukat && <span title="SİL" onClick={(e) => { e.stopPropagation(); setDeleteConfirm({id: d.id, text: d.dosya_no}); }}
                             style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.danger}11`}}>
                             <LIcon name="Trash2" size={12} color={C.danger}/>
-                          </span>
+                          </span>}
                         </div>
                       </td>
                     </tr>

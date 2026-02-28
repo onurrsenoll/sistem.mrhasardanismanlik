@@ -93,6 +93,16 @@ $stmtStats = $db->prepare($statsSQL);
 $stmtStats->execute(array_slice($params, 0, count($params) - 2));
 $stats = $stmtStats->fetch();
 
+// Avukat rolü için hassas verileri gizle
+if ($user['rol'] === 'avukat') {
+    foreach ($items as &$item) {
+        unset($item['avukat_adi']);
+        unset($item['dosya_kaynagi']);
+        unset($item['sorumlu_adi']);
+    }
+    unset($item);
+}
+
 json_success(array(
     'items' => $items,
     'pagination' => array(

@@ -365,6 +365,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const karsiArac = dosya.araclar?.find(a=>a.taraf==='karsi') || {};
   const ac = asamaRenk(dosya.asama);
   const u = (k, v) => setEditForm(p => ({...p, [k]: v}));
+  const isAvukat = user?.rol === 'avukat';
 
   // Bilgi satır bileşeni
   const InfoRow = ({label, value, mono, bold, color}) => (
@@ -378,7 +379,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
     {id:'bilgi', l:'DOSYA BİLGİLERİ', ic:'FileText'},
     {id:'masraf', l:`MASRAFLAR (${dosya.masraflar?.length || 0})`, ic:'Receipt'},
     {id:'evrak', l:`EVRAKLAR (${dosya.evraklar?.length || 0})`, ic:'Folder'},
-    {id:'hesap', l:'DOSYA HESABI', ic:'Calculator'}
+    ...(!isAvukat ? [{id:'hesap', l:'DOSYA HESABI', ic:'Calculator'}] : [])
   ];
 
   return (
@@ -426,7 +427,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               </div>
             </div>
           </div>
-          <div style={{display:'flex',alignItems:'center',gap:8}}>
+          {!isAvukat && <div style={{display:'flex',alignItems:'center',gap:8}}>
             <select value={dosya.asama} onChange={e => asamaDegistir(e.target.value)}
               style={{...S.select,minWidth:180,maxWidth:500,fontSize:10,padding:'6px 10px',background:`${ac}11`,border:`1px solid ${ac}33`,color:ac,fontWeight:600}}>
               {ASAMALAR.map(a => <option key={a} value={a}>{a}</option>)}
@@ -442,7 +443,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               onClick={() => setDosyaSilConfirm(true)}>
               <LIcon name="Trash2" size={12} color="#fff"/> SİL
             </button>
-          </div>
+          </div>}
         </div>
       </div>
 
@@ -482,12 +483,12 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <InfoRow label="DOSYA TÜRÜ" value={dosya.dosya_turu} bold/>
               <InfoRow label="SİGORTA ŞİRKETİ" value={dosya.sigorta_sirket}/>
               <InfoRow label="HASAR DOSYA NO" value={dosya.hasar_no} mono/>
-              <InfoRow label="DOSYA KAYNAĞI" value={dosya.dosya_kaynagi}/>
-              <InfoRow label="AVUKAT" value={dosya.avukat_adi} bold color={C.purple}/>
-              {dosya.avukat_firma && <InfoRow label="AVUKAT FİRMA" value={dosya.avukat_firma}/>}
-              {dosya.avukat_baro && <InfoRow label="BARO" value={dosya.avukat_baro}/>}
-              {dosya.avukat_odeme_orani != null && dosya.avukat_odeme_orani > 0 && <InfoRow label="AVUKAT ÖDEME ORANI" value={`%${dosya.avukat_odeme_orani}`} bold color={C.purple}/>}
-              <InfoRow label="SORUMLU" value={dosya.sorumlu_adi}/>
+              <InfoRow label="DOSYA KAYNAĞI" value={isAvukat ? (dosya.dosya_kaynagi === 'PAYDAŞ/YÖNLENDİREN' ? 'YÖNLENDİRME' : 'CRM') : dosya.dosya_kaynagi}/>
+              {!isAvukat && <InfoRow label="AVUKAT" value={dosya.avukat_adi} bold color={C.purple}/>}
+              {!isAvukat && dosya.avukat_firma && <InfoRow label="AVUKAT FİRMA" value={dosya.avukat_firma}/>}
+              {!isAvukat && dosya.avukat_baro && <InfoRow label="BARO" value={dosya.avukat_baro}/>}
+              {!isAvukat && dosya.avukat_odeme_orani != null && dosya.avukat_odeme_orani > 0 && <InfoRow label="AVUKAT ÖDEME ORANI" value={`%${dosya.avukat_odeme_orani}`} bold color={C.purple}/>}
+              {!isAvukat && <InfoRow label="SORUMLU" value={dosya.sorumlu_adi}/>}
               <InfoRow label="AÇILIŞ TARİHİ" value={dosya.acilis_tarihi}/>
               <InfoRow label="KAZA TARİHİ" value={dosya.kaza_tarihi}/>
               <InfoRow label="KAZA İLİ" value={dosya.kaza_il}/>
@@ -542,7 +543,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             )}
 
             {/* FİNANSAL ÖZET */}
-            <div style={S.card}>
+            {!isAvukat && <div style={S.card}>
               <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`${C.danger}06`}}>
                 <LIcon name="DollarSign" size={14} color={C.danger}/>
                 <span style={{fontSize:12,fontWeight:700}}>FİNANSAL ÖZET</span>
@@ -552,7 +553,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <InfoRow label="MASRAF SAYISI" value={dosya.masraflar?.length || 0}/>
                 <InfoRow label="EVRAK SAYISI" value={dosya.evraklar?.length || 0}/>
               </div>
-            </div>
+            </div>}
           </div>
         </div>
       )}
@@ -566,16 +567,16 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <span style={{fontSize:12,fontWeight:700}}>MASRAFLAR</span>
               <span style={{fontSize:10,color:C.textMuted}}>TOPLAM: {fmt(dosya.toplam_masraf || 0)}</span>
             </div>
-            <button style={{...S.btn,...S.btnP,fontSize:10,padding:'5px 12px'}} onClick={() => setMasrafM(true)}>
+            {!isAvukat && <button style={{...S.btn,...S.btnP,fontSize:10,padding:'5px 12px'}} onClick={() => setMasrafM(true)}>
               <LIcon name="Plus" size={12} color="#fff"/> YENİ MASRAF
-            </button>
+            </button>}
           </div>
           <div>
             {dosya.masraflar?.length > 0 ? (
               <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                 <thead>
                   <tr style={{background:C.bgHover}}>
-                    {['#','MASRAF KALEMİ','TUTAR','DURUM','KASA','TARİH','KULLANICI','İŞLEM'].map(h =>
+                    {(isAvukat ? ['#','MASRAF KALEMİ','TUTAR','DURUM','TARİH'] : ['#','MASRAF KALEMİ','TUTAR','DURUM','KASA','TARİH','KULLANICI','İŞLEM']).map(h =>
                       <th key={h} style={{padding:'8px 10px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
                     )}
                   </tr>
@@ -590,8 +591,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                         <td style={{padding:'8px 10px',fontWeight:700,color:C.danger,fontSize:11}}>{fmt(m.tutar)}</td>
                         <td style={{padding:'8px 10px'}}>
                           {odenmedi ? (
-                            <span style={{...S.btnMini,...S.btnMiniW, padding:'4px 12px', fontSize:9, cursor:'pointer'}}
-                              onClick={() => { setMasrafOdeItem(m); setMasrafOdeKasa(''); setMasrafOdeModal(true); }}>
+                            <span style={{...S.btnMini,...S.btnMiniW, padding:'4px 12px', fontSize:9, cursor:isAvukat?'default':'pointer'}}
+                              onClick={isAvukat ? undefined : () => { setMasrafOdeItem(m); setMasrafOdeKasa(''); setMasrafOdeModal(true); }}>
                               <LIcon name="Clock" size={10} color="#000"/> ÖDENMEDİ
                             </span>
                           ) : (
@@ -601,10 +602,10 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                             </span>
                           )}
                         </td>
-                        <td style={{padding:'8px 10px'}}><Badge text={m.kasa_adi || (odenmedi ? 'BEKLİYOR' : '-')} color={odenmedi ? C.warning : C.cyan}/></td>
+                        {!isAvukat && <td style={{padding:'8px 10px'}}><Badge text={m.kasa_adi || (odenmedi ? 'BEKLİYOR' : '-')} color={odenmedi ? C.warning : C.cyan}/></td>}
                         <td style={{padding:'8px 10px',color:C.textMuted,fontSize:10}}>{m.islem_tarihi}</td>
-                        <td style={{padding:'8px 10px',color:C.textSec,fontSize:10}}>{m.kullanici_adi || '-'}</td>
-                        <td style={{padding:'8px 10px'}}>
+                        {!isAvukat && <td style={{padding:'8px 10px',color:C.textSec,fontSize:10}}>{m.kullanici_adi || '-'}</td>}
+                        {!isAvukat && <td style={{padding:'8px 10px'}}>
                           <div style={{display:'flex',gap:4}}>
                             {odenmedi && (
                               <span style={{cursor:'pointer',display:'flex',padding:'3px 8px',borderRadius:4,background:`${C.success}18`,alignItems:'center',gap:3}}
@@ -617,14 +618,11 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                               <LIcon name="Trash2" size={12} color={C.danger}/>
                             </span>
                           </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                        </td>}
                   <tr style={{background:`${C.accent}06`}}>
                     <td colSpan={2} style={{padding:'10px 12px',fontWeight:800,textAlign:'right',fontSize:11}}>TOPLAM:</td>
                     <td style={{padding:'10px 12px',fontWeight:800,fontSize:13,color:C.danger}}>{fmt(dosya.toplam_masraf || 0)}</td>
-                    <td colSpan={5}/>
+                    <td colSpan={isAvukat ? 2 : 5}/>
                   </tr>
                 </tbody>
               </table>
@@ -726,7 +724,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                     {yukluMu && (
                       <div style={{fontSize:8,color:C.textMuted,marginTop:1}}>
                         {yuklenen.map(y => `${y.dosya_adi} (${(y.dosya_boyutu/1024).toFixed(0)}KB)`).join(', ')}
-                        {yuklenen[0]?.kullanici_adi ? ` • ${yuklenen[0].kullanici_adi}` : ''}
+                        {!isAvukat && yuklenen[0]?.kullanici_adi ? ` • ${yuklenen[0].kullanici_adi}` : ''}
                         {yuklenen[0]?.created_at ? ` • ${yuklenen[0].created_at.split(' ')[0]}` : ''}
                       </div>
                     )}
@@ -776,14 +774,14 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                           style={{...S.btnMini,...S.btnMiniS}}>
                           <LIcon name="Download" size={10} color="#fff"/>
                         </button>
-                        <button title="SİL" onClick={() => setDeleteConfirm({type:'evrak', id:y.id, text:y.dosya_adi})}
+                        {!isAvukat && <button title="SİL" onClick={() => setDeleteConfirm({type:'evrak', id:y.id, text:y.dosya_adi})}
                           style={{...S.btnMini,...S.btnMiniD}}>
                           <LIcon name="Trash2" size={10} color="#fff"/>
-                        </button>
+                        </button>}
                       </React.Fragment>
                     ))}
-                    {/* YÜKLE BUTONU - her zaman göster (aynı türe birden fazla yüklenebilir) */}
-                    <label title="DOSYA YÜKLE" style={{...S.btnMini,...(yukluMu ? S.btnMiniW : S.btnMiniP)}}>
+                    {/* YÜKLE BUTONU - avukat göremez */}
+                    {!isAvukat && <label title="DOSYA YÜKLE" style={{...S.btnMini,...(yukluMu ? S.btnMiniW : S.btnMiniP)}}>
                       <LIcon name="Upload" size={10} color={yukluMu ? '#000' : '#fff'}/>
                       <input type="file" accept=".pdf,.jpg,.jpeg,.png,.svg,.doc,.docx" style={{display:'none'}} onChange={async (ev) => {
                         const f = ev.target.files[0];
@@ -796,7 +794,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                         else alert(r?.error || 'YÜKLEME HATASI');
                         ev.target.value = '';
                       }}/>
-                    </label>
+                    </label>}
                   </div>
                 </div>
               );
