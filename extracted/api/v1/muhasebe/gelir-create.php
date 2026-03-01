@@ -12,7 +12,7 @@ require_once __DIR__ . '/../../config/auth.php';
 setup_headers();
 require_method('POST');
 
-$user = auth_required(['admin', 'muhasebe']);
+$user = auth_required(['admin', 'muhasebe', 'avukat']);
 $body = get_json_body();
 
 // Frontend 'tur' gönderir, backend 'gelir_turu' bekler

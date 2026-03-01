@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../config/auth.php';
 setup_headers();
 require_method('GET');
 
-$user = auth_required(['admin', 'muhasebe']);
+$user = auth_required(['admin', 'muhasebe', 'avukat']);
 $db = getDB();
 
 $aktif = isset($_GET['aktif']) ? (int)$_GET['aktif'] : -1;

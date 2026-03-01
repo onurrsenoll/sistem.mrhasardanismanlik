@@ -619,6 +619,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                             </span>
                           </div>
                         </td>}
+                      </tr>
+                    );
+                  })}
                   <tr style={{background:`${C.accent}06`}}>
                     <td colSpan={2} style={{padding:'10px 12px',fontWeight:800,textAlign:'right',fontSize:11}}>TOPLAM:</td>
                     <td style={{padding:'10px 12px',fontWeight:800,fontSize:13,color:C.danger}}>{fmt(dosya.toplam_masraf || 0)}</td>

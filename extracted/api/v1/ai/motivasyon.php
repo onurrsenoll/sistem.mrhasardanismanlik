@@ -152,7 +152,7 @@ if (empty($soz) && ini_get('allow_url_fopen')) {
 
 // SÖZ TEMİZLEME
 if (!empty($soz)) {
-    $soz = trim($soz, "\"'""''«»*#");
+    $soz = trim($soz, "\"'" . "\xc2\xab\xc2\xbb*#");
     $soz = str_replace(["\n", "\r", "\t"], ' ', $soz);
     $soz = preg_replace('/\s+/', ' ', $soz);
     $soz = trim($soz);

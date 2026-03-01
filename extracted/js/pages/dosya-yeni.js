@@ -49,6 +49,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     if (!form.ilce) return 'İLÇE SEÇİMİ GEREKLİ';
     if (!form.dosya_turu) return 'DOSYA TÜRÜ SEÇİMİ GEREKLİ';
     if (!form.kaza_tarihi) return 'KAZA TARİHİ GEREKLİ';
+    if (!form.komisyon) return 'KOMİSYON ORANI GEREKLİ';
     if (!form.sorumlu_id) return 'DOSYA SORUMLUSU SEÇİMİ GEREKLİ';
     if (!form.dosya_kaynak) return 'DOSYA KAYNAĞI SEÇİMİ GEREKLİ';
     if (form.dosya_kaynak === 'PAYDAŞ/YÖNLENDİREN' && !form.paydas_id) return 'YÖNLENDİREN PAYDAŞ SEÇİMİ GEREKLİ';

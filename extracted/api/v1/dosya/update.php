@@ -12,7 +12,7 @@ require_once __DIR__ . '/../../config/sms_helper.php';
 setup_headers();
 require_method('PUT');
 
-$user = auth_required(['admin', 'uzman', 'personel']);
+$user = auth_required(['admin', 'uzman', 'personel', 'avukat']);
 $body = get_json_body();
 require_fields($body, ['id']);
 
