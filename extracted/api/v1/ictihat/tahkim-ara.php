@@ -81,7 +81,7 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER:
 $systemPrompt = "Sen bir Türk sigorta hukuku uzmanısın ve Sigorta Tahkim Komisyonu kararları konusunda derin bilgi birikimine sahipsin. Görevin tahkim kararlarını araştırıp özellikle KABUL edilen emsal kararları sunmaktır. Gerçekçi ve tutarlı tahkim karar numaraları, tarihler ve tutarlar kullan. Yanıtını SADECE JSON formatında ver.";
 
 // Gemini API
-$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . urlencode($apiKey);
+$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
 
 $fullPrompt = $systemPrompt . "\n\n" . $prompt;
 $payload = [

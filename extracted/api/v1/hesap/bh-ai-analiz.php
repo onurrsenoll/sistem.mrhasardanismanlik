@@ -67,7 +67,7 @@ if ($result !== null) {
    GOOGLE GEMİNİ API
    ═══════════════════════════════════════════ */
 function callGeminiBH($apiKey, $systemPrompt, $userPrompt) {
-    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . urlencode($apiKey);
+    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
 
     $fullPrompt = $systemPrompt . "\n\n" . $userPrompt;
     $payload = [

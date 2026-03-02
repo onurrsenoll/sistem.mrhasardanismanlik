@@ -83,7 +83,7 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER:
 $systemPrompt = "Sen bir Türk trafik hukuku uzmanısın ve bilirkişisin. Trafik kazalarında kusur oranı tespiti, Karayolları Trafik Kanunu, Yargıtay ve Sigorta Tahkim Komisyonu kararları konusunda derin bilgi birikimine sahipsin. Kusur oranı değerlendirmesinde bilirkişi raporu hazırlama deneyimin var. Gerçekçi ve tutarlı karar numaraları, tarihler ve kusur oranları kullan. Yanıtını SADECE JSON formatında ver.";
 
 // Gemini API
-$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . urlencode($apiKey);
+$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
 
 $fullPrompt = $systemPrompt . "\n\n" . $prompt;
 $payload = [

@@ -81,7 +81,7 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER:
 $systemPrompt = "Sen bir Türk sigorta uzmanısın. Türkiye'deki tüm sigorta branşlarının poliçe limitleri, teminat tutarları ve yıllara göre değişimleri konusunda derin bilgiye sahipsin. Hazine ve Maliye Bakanlığı, SEDDK (Sigortacılık ve Özel Emeklilik Düzenleme ve Denetleme Kurumu) tarafından belirlenen resmi limitleri biliyorsun. Yanıtını SADECE JSON formatında ver. Tutarları TL cinsinden, sayı olarak (string değil) ver.";
 
 // Gemini API
-$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . urlencode($apiKey);
+$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
 
 $fullPrompt = $systemPrompt . "\n\n" . $prompt;
 $payload = [

@@ -72,7 +72,7 @@ if ($result !== null) {
    GOOGLE GEMİNİ API
    ═══════════════════════════════════════════ */
 function callGemini($apiKey, $systemPrompt, $userPrompt) {
-    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . urlencode($apiKey);
+    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
 
     $fullPrompt = $systemPrompt . "\n\n" . $userPrompt;
     $payload = [
@@ -104,7 +104,6 @@ function callGemini($apiKey, $systemPrompt, $userPrompt) {
 
     if ($httpCode === 200 && $response) {
         $data = json_decode($response, true);
-        // Gemini 2.5 Flash thinking model - son metin parçasını al
         $text = '';
         $allParts = $data['candidates'][0]['content']['parts'] ?? [];
         foreach ($allParts as $part) {
@@ -113,6 +112,14 @@ function callGemini($apiKey, $systemPrompt, $userPrompt) {
         return !empty($text) ? $text : null;
     }
 
+    // Hata detayını logla
+    $errDetail = '';
+    if ($response) {
+        $errData = json_decode($response, true);
+        $errDetail = $errData['error']['message'] ?? '';
+    }
+    $curlErr = curl_error($ch) ?: '';
+    error_log("GEMINI API HATA: HTTP {$httpCode} - {$errDetail} {$curlErr}");
     return null;
 }
 
