@@ -292,6 +292,11 @@ MR.api = {
   portalMesajList(dosyaId) { return this.req('/portal/portal-mesaj-list.php?dosya_id=' + dosyaId); },
   portalMesajGonder(d) { return this.req('/portal/portal-mesaj-gonder.php', { method: 'POST', body: JSON.stringify(d) }); },
   portalLoglar(p = {}) { return this.req('/portal/loglar.php?' + new URLSearchParams(p)); },
+  // İÇTİHAT
+  ictihatYargitayAra(d) { return this.req('/ictihat/yargitay-ara.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
+  ictihatTahkimAra(d) { return this.req('/ictihat/tahkim-ara.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
+  ictihatPoliceLimitAra(d) { return this.req('/ictihat/police-limit.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
+  ictihatKusurEmsalAra(d) { return this.req('/ictihat/kusur-emsal-ara.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
 };
 
 // ═══ TEMA SİSTEMİ — MR FİNANS BLUE ═══

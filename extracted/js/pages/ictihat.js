@@ -369,7 +369,7 @@ const YargitayKararlariPage = ({user, setPage}) => {
 
   return (
     <div style={{padding: '0 4px'}}>
-      <MR.SectionTitle icon="Scale" title="YARGITAY KARARLARI" subtitle="KONU BAŞLIĞINA GÖRE YARGITAY KARAR ARAMA" color={C.accent}/>
+      <MR.SectionTitle icon="Scale" title="YARGITAY KARARLARI" sub="KONU BAŞLIĞINA GÖRE YARGITAY KARAR ARAMA"/>
 
       <AramaFormu onAra={ara} yukleniyor={yukleniyor} tip="yargitay" placeholder="Örn: Araç değer kaybı, trafik kazası tazminat, sigorta rücu...">
         <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14}}>
@@ -410,7 +410,7 @@ const YargitayKararlariPage = ({user, setPage}) => {
         <MR.EmptyState
           icon="Scale"
           title="YARGITAY KARAR ARAMA"
-          subtitle="YUKARIDAKI FORMDAN KONU BAŞLIĞI GİREREK YARGITAY KARARLARINI ARAYABİLİRSİNİZ. AI DESTEKLİ GERÇEK ZAMANLI ARAMA."
+          desc="YUKARIDAKI FORMDAN KONU BAŞLIĞI GİREREK YARGITAY KARARLARINI ARAYABİLİRSİNİZ. AI DESTEKLİ GERÇEK ZAMANLI ARAMA."
         />
       )}
     </div>
@@ -465,7 +465,7 @@ const TahkimKararlariPage = ({user, setPage}) => {
 
   return (
     <div style={{padding: '0 4px'}}>
-      <MR.SectionTitle icon="Gavel" title="TAHKİM KABUL ÖRNEKLERİ" subtitle="SİGORTA TAHKİM KOMİSYONU KABUL KARAR ARAMA" color={C.purple}/>
+      <MR.SectionTitle icon="Gavel" title="TAHKİM KABUL ÖRNEKLERİ" sub="SİGORTA TAHKİM KOMİSYONU KABUL KARAR ARAMA"/>
 
       <AramaFormu onAra={ara} yukleniyor={yukleniyor} tip="tahkim" placeholder="Örn: Araç değer kaybı, bedensel hasar tazminat, destekten yoksun kalma...">
         <div>
@@ -497,7 +497,7 @@ const TahkimKararlariPage = ({user, setPage}) => {
         <MR.EmptyState
           icon="Gavel"
           title="TAHKİM KARAR ARAMA"
-          subtitle="KONU BAŞLIĞI GİREREK SİGORTA TAHKİM KOMİSYONU KABUL KARARLARINI ARAYABİLİRSİNİZ. AI DESTEKLİ GERÇEK ZAMANLI ARAMA."
+          desc="KONU BAŞLIĞI GİREREK SİGORTA TAHKİM KOMİSYONU KABUL KARARLARINI ARAYABİLİRSİNİZ. AI DESTEKLİ GERÇEK ZAMANLI ARAMA."
         />
       )}
     </div>
@@ -554,7 +554,7 @@ const PoliceLimitPage = ({user, setPage}) => {
 
   return (
     <div style={{padding: '0 4px'}}>
-      <MR.SectionTitle icon="FileCheck" title="POLİÇE LİMİT TABLOLARI" subtitle="YILLARA GÖRE SİGORTA POLİÇE LİMİTLERİ VE TEMİNAT TUTARLARI" color={C.success}/>
+      <MR.SectionTitle icon="FileCheck" title="POLİÇE LİMİT TABLOLARI" sub="YILLARA GÖRE SİGORTA POLİÇE LİMİTLERİ VE TEMİNAT TUTARLARI"/>
 
       <AramaFormu onAra={ara} yukleniyor={yukleniyor} tip="police" placeholder="Örn: Trafik sigortası limit, kasko teminat, zorunlu mali sorumluluk...">
         <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14}}>
@@ -688,7 +688,7 @@ const PoliceLimitPage = ({user, setPage}) => {
         <MR.EmptyState
           icon="FileCheck"
           title="POLİÇE LİMİT TABLOLARI"
-          subtitle="YIL VE POLİÇE TÜRÜ SEÇEREK SİGORTA LİMİTLERİNİ GÖRÜNTÜLEYEBİLİRSİNİZ."
+          desc="YIL VE POLİÇE TÜRÜ SEÇEREK SİGORTA LİMİTLERİNİ GÖRÜNTÜLEYEBİLİRSİNİZ."
         />
       )}
     </div>
@@ -751,7 +751,7 @@ const KusurEmsalPage = ({user, setPage}) => {
 
   return (
     <div style={{padding: '0 4px'}}>
-      <MR.SectionTitle icon="Search" title="KUSUR EMSAL DOSYALARI" subtitle="KAZA TÜRLERİNE GÖRE KUSUR ORANI EMSAL KARAR ARAMA" color={C.warning}/>
+      <MR.SectionTitle icon="Search" title="KUSUR EMSAL DOSYALARI" sub="KAZA TÜRLERİNE GÖRE KUSUR ORANI EMSAL KARAR ARAMA"/>
 
       <AramaFormu onAra={ara} yukleniyor={yukleniyor} tip="kusur" placeholder="Örn: Kavşakta geçiş önceliği, kırmızı ışık, şerit ihlali, yaya önceliği...">
         <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14}}>
@@ -792,7 +792,7 @@ const KusurEmsalPage = ({user, setPage}) => {
         <MR.EmptyState
           icon="Search"
           title="KUSUR EMSAL ARAMA"
-          subtitle="KAZA TÜRÜ VE KUSUR KRİTERLERİNE GÖRE EMSAL KARARLAR ARAYABİLİRSİNİZ. AI DESTEKLİ GERÇEK ZAMANLI ARAMA."
+          desc="KAZA TÜRÜ VE KUSUR KRİTERLERİNE GÖRE EMSAL KARARLAR ARAYABİLİRSİNİZ. AI DESTEKLİ GERÇEK ZAMANLI ARAMA."
         />
       )}
     </div>

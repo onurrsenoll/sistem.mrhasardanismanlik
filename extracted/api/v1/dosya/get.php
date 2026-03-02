@@ -26,15 +26,21 @@ $dosya = $stmt->fetch();
 
 if (!$dosya) json_error('Dosya bulunamadı', 404);
 
-// Avukat rolü sadece kendi dosyalarını görebilir
+// Avukat rolü: yetki verilmişse tüm dosyaları görebilir, verilmemişse sadece kendi dosyalarını
 if ($user['rol'] === 'avukat') {
-    $yetkili = false;
-    if (!empty($dosya['avukat_id']) && (int)$dosya['avukat_id'] === (int)$user['id']) $yetkili = true;
-    if (!empty($dosya['ortak_id'])) {
-        // ortak_id ile eşleşen ortağın user'a bağlı olup olmadığını kontrol et
-        // Basit yaklaşım: avukat_id eşleşmesi yeterli
+    $dosyaYetkisi = false;
+    try {
+        $yStmt = $db->prepare("SELECT izin FROM yetkiler WHERE kullanici_id = ? AND modul = 'dosya' AND islem = 'goruntule' LIMIT 1");
+        $yStmt->execute([$user['id']]);
+        $yRow = $yStmt->fetch();
+        if ($yRow && (int)$yRow['izin'] === 1) $dosyaYetkisi = true;
+    } catch (Exception $e) {}
+
+    if (!$dosyaYetkisi) {
+        $yetkili = false;
+        if (!empty($dosya['avukat_id']) && (int)$dosya['avukat_id'] === (int)$user['id']) $yetkili = true;
+        if (!$yetkili) json_error('Bu dosyaya erişim yetkiniz yok', 403);
     }
-    if (!$yetkili) json_error('Bu dosyaya erişim yetkiniz yok', 403);
 }
 
 // Mağdur

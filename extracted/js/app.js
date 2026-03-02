@@ -43,6 +43,12 @@ const MENU = [
     {id:'muhasebe-maliyet', label:'MALİYET ANALİZİ', icon:'PieChart'},
     {id:'muhasebe-rapor', label:'FİNANSAL RAPORLAR', icon:'BarChart3'}
   ]},
+  {id:'ictihat', label:'İÇTİHAT', icon:'Scale', sub:[
+    {id:'ictihat-yargitay', label:'YARGITAY KARARLARI', icon:'Scale'},
+    {id:'ictihat-tahkim', label:'TAHKİM KABUL ÖRNEKLERİ', icon:'Gavel'},
+    {id:'ictihat-police-limit', label:'POLİÇE LİMİT TABLOLARI', icon:'FileCheck'},
+    {id:'ictihat-kusur-emsal', label:'KUSUR EMSAL DOSYALARI', icon:'Search'}
+  ]},
   {id:'ajanda', label:'AJANDA', icon:'CalendarDays'},
   {id:'sistem', label:'SİSTEM', icon:'Shield', sub:[
     {id:'sistem-kullanici', label:'KULLANICI YÖNETİMİ', icon:'UserCog'},
@@ -65,10 +71,10 @@ const MENU = [
 /* ═══ ROL BAZLI ERİŞİM ═══ */
 const ROL_ERISIM = {
   admin: null,
-  avukat: ['home','dosya','crm','hesap','paydaslar','ajanda'],
-  uzman: ['home','dosya','hesap','paydaslar','ajanda'],
-  personel: ['home','dosya','crm','ajanda'],
-  muhasebe: ['home','dosya','police','muhasebe','paydaslar','ajanda','sistem'],
+  avukat: ['home','dosya','crm','hesap','ictihat','paydaslar','ajanda'],
+  uzman: ['home','dosya','hesap','ictihat','paydaslar','ajanda'],
+  personel: ['home','dosya','crm','ictihat','ajanda'],
+  muhasebe: ['home','dosya','police','muhasebe','paydaslar','ictihat','ajanda','sistem'],
   portal: ['home','dosya']
 };
 
@@ -79,6 +85,7 @@ const MENU_MODUL = {
   hesap: 'hesaplamalar',
   paydaslar: 'paydaslar',
   muhasebe: 'muhasebe',
+  ictihat: 'ictihat',
   ajanda: 'ajanda',
   police: 'police',
   sistem: 'sistem'
@@ -791,6 +798,12 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   if (page.startsWith('tanimlamalar')) {
     const sub = page.replace('tanimlamalar-', '') || 'dosya';
     return <MR.TanimlamalarPage setPage={setPage} user={user} subPage={sub === 'tanimlamalar' ? 'dosya' : sub}/>;
+  }
+
+  /* İÇTİHAT */
+  if (page.startsWith('ictihat')) {
+    const sub = page.replace('ictihat-', '') || 'yargitay';
+    return <MR.IctihatPage setPage={setPage} user={user} subPage={sub === 'ictihat' ? 'yargitay' : sub}/>;
   }
 
   /* AJANDA */

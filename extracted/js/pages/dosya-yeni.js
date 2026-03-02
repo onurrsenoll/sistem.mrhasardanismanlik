@@ -9,6 +9,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
   const [ortaklar, setOrtaklar] = useState([]);
   const [personeller, setPersoneller] = useState([]);
   const [paydaslar, setPaydaslar] = useState([]);
+  const [kullanicilar, setKullanicilar] = useState([]);
   const [form, setForm] = useState({
     // Mağdur bilgileri
     ad_soyad:'', tc_kimlik:'', telefon:'', iban:'', adres:'', il:'', ilce:'',
@@ -38,6 +39,9 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     });
     api.paydasList({durum:'aktif', limit:200}).then(r => {
       if (r?.success) setPaydaslar(r.data?.items || r.data || []);
+    });
+    api.kullaniciList({limit:200}).then(r => {
+      if (r?.success) setKullanicilar((r.data?.items || r.data || []).filter(k => k.aktif));
     });
   }, []);
 
@@ -163,9 +167,14 @@ MR.DosyaYeniPage = ({setPage, user}) => {
             <FormGroup label="DOSYA SORUMLUSU *">
               <select style={{...S.select,fontWeight:600}} value={form.sorumlu_id} onChange={e=>u('sorumlu_id',e.target.value)}>
                 <option value="">SORUMLU SEÇİNİZ</option>
-                {personeller.map(p => (
-                  <option key={p.id} value={p.id}>
+                {personeller.length > 0 && personeller.map(p => (
+                  <option key={'p-'+p.id} value={p.id}>
                     {p.ad_soyad}{p.pozisyon ? ` - ${p.pozisyon}` : ''}{p.departman ? ` (${p.departman})` : ''}
+                  </option>
+                ))}
+                {personeller.length === 0 && kullanicilar.map(k => (
+                  <option key={'k-'+k.id} value={k.id}>
+                    {k.ad_soyad}{k.rol ? ` (${k.rol.toUpperCase()})` : ''}
                   </option>
                 ))}
               </select>
