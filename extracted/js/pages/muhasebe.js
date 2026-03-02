@@ -16,6 +16,7 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
     {key:'gider',    label:'GİDER YÖNETİMİ',      icon:'TrendingDown'},
     {key:'komisyon', label:'KOMİSYON / PRİM',      icon:'Percent'},
     {key:'kasa',     label:'KASA / BANKA',          icon:'Wallet'},
+    {key:'ortakkasa',label:'ORTAK KASA',             icon:'Users'},
     {key:'maliyet',  label:'MALİYET ANALİZİ',      icon:'PieChart'},
     {key:'rapor',    label:'FİNANSAL RAPORLAR',     icon:'BarChart3'},
     {key:'kapanis',  label:'KAPANIŞ RAPORU',         icon:'FileCheck'},
@@ -65,6 +66,7 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
       {aktifSekme === 'gider'    && <GiderYonetimi setPage={setPage} user={user}/>}
       {aktifSekme === 'komisyon' && <KomisyonPrim  setPage={setPage} user={user}/>}
       {aktifSekme === 'kasa'     && <KasaBanka     setPage={setPage} user={user}/>}
+      {aktifSekme === 'ortakkasa' && <OrtakKasa    setPage={setPage} user={user}/>}
       {aktifSekme === 'maliyet'  && <MaliyetAnalizi setPage={setPage} user={user}/>}
       {aktifSekme === 'rapor'    && <FinansalRaporlar setPage={setPage} user={user}/>}
       {aktifSekme === 'kapanis'  && <KapanisRaporu setPage={setPage} user={user}/>}
@@ -2127,7 +2129,335 @@ const KapanisRaporu = ({setPage, user}) => {
 };
 
 /* ═══════════════════════════════════════════════════════════
-   SEKME 8 – AY SONU RAPORU (KAPSAMLI)
+   SEKME 5b – İŞ ORTAĞI ORTAK KASA
+   İki iş ortağının tek kasadan ortak işlem yaptığı paylaşımlı kasa
+   ═══════════════════════════════════════════════════════════ */
+const OrtakKasa = ({setPage, user}) => {
+  const {C, S, LIcon, StatCard, Badge, SectionTitle, Loading, EmptyState, Modal, FormGroup, api, fmt, fmtInput, parseNum} = MR;
+  const [kasalar, setKasalar] = useState([]);
+  const [ortaklar, setOrtaklar] = useState([]);
+  const [hareketler, setHareketler] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modalAcik, setModalAcik] = useState(false);
+  const [hareketModal, setHareketModal] = useState(false);
+  const [seciliKasa, setSeciliKasa] = useState(null);
+  const [hata, setHata] = useState('');
+  const [basari, setBasari] = useState('');
+  const [kayitLoading, setKayitLoading] = useState(false);
+
+  /* KASA FORMU */
+  const [kasaForm, setKasaForm] = useState({ad:'', tip:'Nakit', banka_adi:'', hesap_no:'', iban:'', ortak1_id:'', ortak2_id:''});
+  const kUp = (k,v) => setKasaForm(p=>({...p,[k]:v}));
+
+  /* HAREKET FORMU */
+  const [hForm, setHForm] = useState({islem_turu:'gelir', tutar:'', aciklama:'', tarih:''});
+  const hUp = (k,v) => setHForm(p=>({...p,[k]:v}));
+
+  const yukle = async () => {
+    setLoading(true);
+    const [kR, oR] = await Promise.all([api.kasaList(), api.ortakList({durum:'aktif',limit:200})]);
+    if (kR?.success) {
+      const tumKasalar = kR.data || [];
+      setKasalar(tumKasalar.filter(k => k.ortak_kasa_tipi === 'ortak'));
+    }
+    if (oR?.success) setOrtaklar(oR.data?.items || oR.data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { yukle(); }, []);
+
+  const ortakAdi = (id) => { const o = ortaklar.find(o => o.id == id); return o ? o.ad_soyad : '-'; };
+
+  /* ORTAK KASA OLUŞTUR */
+  const kasaOlustur = async () => {
+    if (!kasaForm.ad.trim()) { setHata('KASA ADI GEREKLİ'); return; }
+    if (!kasaForm.ortak1_id || !kasaForm.ortak2_id) { setHata('İKİ İŞ ORTAĞI SEÇİMİ ZORUNLUDUR'); return; }
+    if (kasaForm.ortak1_id === kasaForm.ortak2_id) { setHata('İKİ FARKLI İŞ ORTAĞI SEÇİNİZ'); return; }
+    setKayitLoading(true); setHata('');
+    const r = await api.kasaCreate({
+      ad: kasaForm.ad,
+      tip: kasaForm.tip,
+      banka_adi: kasaForm.banka_adi,
+      hesap_no: kasaForm.hesap_no,
+      iban: kasaForm.iban,
+      ortak_kasa_tipi: 'ortak',
+      ortak_ids: kasaForm.ortak1_id + ',' + kasaForm.ortak2_id
+    });
+    if (r?.success) {
+      setModalAcik(false);
+      setBasari('ORTAK KASA BAŞARIYLA OLUŞTURULDU');
+      yukle();
+      setTimeout(() => setBasari(''), 3000);
+    } else {
+      setHata(r?.error || 'KAYIT HATASI');
+    }
+    setKayitLoading(false);
+  };
+
+  /* HAREKET EKLE */
+  const hareketEkle = async () => {
+    if (!seciliKasa) return;
+    const tutarNum = parseNum(hForm.tutar);
+    if (tutarNum <= 0) { setHata('TUTAR 0\'DAN BÜYÜK OLMALIDIR'); return; }
+    setKayitLoading(true); setHata('');
+    const isGelir = hForm.islem_turu === 'gelir';
+    if (isGelir) {
+      const r = await api.gelirCreate({kasa_id:seciliKasa.id, tur:'ORTAK KASA GİRİŞ', tutar:tutarNum, aciklama:hForm.aciklama || 'ORTAK KASA GİRİŞ', tarih:hForm.tarih || undefined});
+      if (r?.success) { setHareketModal(false); setBasari('GİRİŞ BAŞARIYLA KAYDEDİLDİ'); yukle(); setTimeout(()=>setBasari(''),3000); }
+      else setHata(r?.error || 'KAYIT HATASI');
+    } else {
+      const r = await api.giderCreate({kasa_id:seciliKasa.id, kategori:'ORTAK KASA ÇIKIŞ', tutar:tutarNum, aciklama:hForm.aciklama || 'ORTAK KASA ÇIKIŞ', tarih:hForm.tarih || undefined});
+      if (r?.success) { setHareketModal(false); setBasari('ÇIKIŞ BAŞARIYLA KAYDEDİLDİ'); yukle(); setTimeout(()=>setBasari(''),3000); }
+      else setHata(r?.error || 'KAYIT HATASI');
+    }
+    setKayitLoading(false);
+  };
+
+  /* HAREKET LİSTESİ */
+  const hareketYukle = async (kasaId) => {
+    const r = await api.kasaHareketler({kasa_id:kasaId, limit:100});
+    if (r?.success) setHareketler(r.data?.items || r.data || []);
+  };
+
+  const kasaDetayAc = (kasa) => {
+    setSeciliKasa(kasa);
+    hareketYukle(kasa.id);
+  };
+
+  const yeniKasaAc = () => {
+    setKasaForm({ad:'İŞ ORTAĞI ORTAK KASA', tip:'Nakit', banka_adi:'', hesap_no:'', iban:'', ortak1_id:'', ortak2_id:''});
+    setHata(''); setModalAcik(true);
+  };
+
+  const yeniHareketAc = () => {
+    setHForm({islem_turu:'gelir', tutar:'', aciklama:'', tarih: new Date().toISOString().slice(0,10)});
+    setHata(''); setHareketModal(true);
+  };
+
+  /* İSTATİSTİKLER */
+  const toplamBakiye = useMemo(() => kasalar.reduce((t,k) => t + (parseFloat(k.bakiye)||0), 0), [kasalar]);
+
+  return (
+    <div className="fade-in">
+      <SectionTitle icon="Users" title="İŞ ORTAĞI ORTAK KASA" sub="İKİ İŞ ORTAĞININ PAYLAŞIMLI KASASI"/>
+      <BasariMesaji mesaj={basari}/>
+
+      {/* ÜST İSTATİSTİKLER */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:24}}>
+        <StatCard icon="Wallet" label="ORTAK KASA SAYISI" value={kasalar.length} color={C.accent}/>
+        <StatCard icon="TrendingUp" label="TOPLAM BAKİYE" value={fmt(toplamBakiye)} color={C.success}/>
+        <StatCard icon="Users" label="İŞ ORTAĞI SAYISI" value={ortaklar.length} color={C.purple}/>
+      </div>
+
+      {/* YENİ ORTAK KASA BUTONU */}
+      <div style={{marginBottom:20}}>
+        <button style={{...S.btn,...S.btnP}} onClick={yeniKasaAc}>
+          <LIcon name="Plus" size={14} color="#fff"/> YENİ ORTAK KASA OLUŞTUR
+        </button>
+      </div>
+
+      {loading ? <Loading/> : kasalar.length === 0 ? (
+        <EmptyState icon="Users" title="ORTAK KASA BULUNAMADI" subtitle="YENİ ORTAK KASA OLUŞTURMAK İÇİN BUTONA TIKLAYIN"/>
+      ) : (
+        <div style={{display:'grid',gap:16}}>
+          {kasalar.map(kasa => {
+            const ortakIds = (kasa.ortak_ids || '').split(',').map(Number);
+            const secili = seciliKasa?.id === kasa.id;
+            return (
+              <div key={kasa.id} style={{...S.card, border: secili ? `2px solid ${C.accent}` : `1px solid ${C.border}`}}>
+                <div style={{...S.cardHead, cursor:'pointer'}} onClick={() => secili ? setSeciliKasa(null) : kasaDetayAc(kasa)}>
+                  <div style={{width:36,height:36,borderRadius:10,background:'linear-gradient(135deg, '+C.accent+'22, '+C.accent+'44)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <LIcon name="Users" size={18} color={C.accent}/>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:14,fontWeight:800,color:C.text}}>{kasa.ad}</div>
+                    <div style={{fontSize:11,color:C.textMuted,marginTop:2}}>
+                      {ortakIds.map(id => ortakAdi(id)).join(' & ')} — {kasa.tip === 'Banka' ? 'BANKA' : 'NAKİT'}
+                    </div>
+                  </div>
+                  <div style={{textAlign:'right'}}>
+                    <div style={{fontSize:10,color:C.textMuted,fontWeight:600}}>BAKİYE</div>
+                    <div style={{fontSize:22,fontWeight:900,color: (parseFloat(kasa.bakiye)||0) >= 0 ? C.success : C.danger}}>{fmt(kasa.bakiye)}</div>
+                  </div>
+                  <LIcon name={secili ? 'ChevronDown' : 'ChevronRight'} size={18} color={C.textMuted}/>
+                </div>
+
+                {/* DETAY BÖLÜMÜ */}
+                {secili && (
+                  <div style={{padding:20}}>
+                    {/* ORTAKLAR */}
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20}}>
+                      {ortakIds.map(id => {
+                        const ortak = ortaklar.find(o => o.id === id);
+                        return ortak ? (
+                          <div key={id} style={{padding:16,background:`${C.accent}08`,borderRadius:12,border:`1px solid ${C.accent}22`}}>
+                            <div style={{display:'flex',alignItems:'center',gap:10}}>
+                              <div style={{width:40,height:40,borderRadius:10,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                                <LIcon name="User" size={18} color={C.accent}/>
+                              </div>
+                              <div>
+                                <div style={{fontSize:13,fontWeight:700,color:C.text}}>{ortak.ad_soyad}</div>
+                                <div style={{fontSize:10,color:C.textMuted}}>{ortak.firma || '-'} | %{ortak.odeme_orani || 0}</div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : null;
+                      })}
+                    </div>
+
+                    {/* İŞLEM BUTONLARI */}
+                    <div style={{display:'flex',gap:8,marginBottom:20}}>
+                      <button style={{...S.btn,...S.btnP,fontSize:11,padding:'8px 16px'}} onClick={yeniHareketAc}>
+                        <LIcon name="Plus" size={13} color="#fff"/> GİRİŞ / ÇIKIŞ
+                      </button>
+                    </div>
+
+                    {/* HAREKET TABLOSU */}
+                    <div style={{background:C.bgHover,borderRadius:12,border:`1px solid ${C.border}`,overflow:'hidden'}}>
+                      <div style={{padding:'12px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8}}>
+                        <LIcon name="ArrowLeftRight" size={14} color={C.accent}/>
+                        <span style={{fontSize:13,fontWeight:700}}>ORTAK KASA HAREKETLERİ</span>
+                        <Badge text={hareketler.length + ' KAYIT'} color={C.accent}/>
+                      </div>
+                      {hareketler.length === 0 ? (
+                        <div style={{padding:30,textAlign:'center',color:C.textMuted,fontSize:12}}>
+                          <LIcon name="ArrowLeftRight" size={28} color={C.textMuted} style={{opacity:0.3,marginBottom:8}}/>
+                          <div>HENÜZ HAREKET KAYDI BULUNMAMAKTADIR</div>
+                        </div>
+                      ) : (
+                        <div style={{overflowX:'auto'}}>
+                          <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                            <thead>
+                              <tr style={{background:C.accent+'08'}}>
+                                {['TARİH','İŞLEM TÜRÜ','TUTAR','BAKİYE SONRASI','AÇIKLAMA'].map(h =>
+                                  <th key={h} style={{padding:'8px 12px',textAlign:'left',color:C.textMuted,fontWeight:800,fontSize:10,borderBottom:'2px solid '+C.border}}>{h}</th>
+                                )}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {hareketler.map((h,i) => {
+                                const tutar = parseFloat(h.tutar)||0;
+                                const isGelir = h.islem_turu === 'gelir' || h.islem_turu === 'transfer_giris';
+                                return (
+                                  <tr key={h.id||i} style={{borderBottom:'1px solid '+C.border}}
+                                    onMouseEnter={e => e.currentTarget.style.background=C.bgCard}
+                                    onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+                                    <td style={{padding:'8px 12px',color:C.textSec}}>{h.created_at?.split(' ')[0] || '-'}</td>
+                                    <td style={{padding:'8px 12px'}}>
+                                      <Badge text={(h.islem_turu||'').toUpperCase()} color={isGelir ? C.success : C.danger}/>
+                                    </td>
+                                    <td style={{padding:'8px 12px',fontWeight:700,color:isGelir?C.success:C.danger}}>
+                                      {isGelir?'+':'-'}{fmt(tutar)}
+                                    </td>
+                                    <td style={{padding:'8px 12px',fontWeight:600,color:C.accent}}>{fmt(h.bakiye_sonrasi)}</td>
+                                    <td style={{padding:'8px 12px',color:C.textSec,maxWidth:250,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{h.aciklama||'-'}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* YENİ ORTAK KASA MODAL */}
+      <Modal open={modalAcik} onClose={() => setModalAcik(false)} title="YENİ ORTAK KASA OLUŞTUR" width="600px">
+        <HataMesaji mesaj={hata}/>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+          <FormGroup label="KASA ADI *" full>
+            <input style={S.input} value={kasaForm.ad} onChange={e => kUp('ad', e.target.value.toUpperCase())} placeholder="ORTAK KASA ADI"/>
+          </FormGroup>
+          <FormGroup label="1. İŞ ORTAĞI *">
+            <select style={S.select} value={kasaForm.ortak1_id} onChange={e => kUp('ortak1_id', e.target.value)}>
+              <option value="">ORTAK SEÇİNİZ</option>
+              {ortaklar.map(o => <option key={o.id} value={o.id}>{o.ad_soyad}{o.firma ? ' - '+o.firma : ''}</option>)}
+            </select>
+          </FormGroup>
+          <FormGroup label="2. İŞ ORTAĞI *">
+            <select style={S.select} value={kasaForm.ortak2_id} onChange={e => kUp('ortak2_id', e.target.value)}>
+              <option value="">ORTAK SEÇİNİZ</option>
+              {ortaklar.filter(o => String(o.id) !== String(kasaForm.ortak1_id)).map(o => <option key={o.id} value={o.id}>{o.ad_soyad}{o.firma ? ' - '+o.firma : ''}</option>)}
+            </select>
+          </FormGroup>
+          <FormGroup label="TÜR">
+            <select style={S.select} value={kasaForm.tip} onChange={e => kUp('tip', e.target.value)}>
+              <option value="Nakit">NAKİT</option>
+              <option value="Banka">BANKA</option>
+            </select>
+          </FormGroup>
+          {kasaForm.tip === 'Banka' && (
+            <>
+              <FormGroup label="BANKA ADI">
+                <input style={S.input} value={kasaForm.banka_adi} onChange={e => kUp('banka_adi', e.target.value.toUpperCase())} placeholder="BANKA ADI"/>
+              </FormGroup>
+              <FormGroup label="HESAP NO">
+                <input style={S.input} value={kasaForm.hesap_no} onChange={e => kUp('hesap_no', e.target.value)} placeholder="HESAP NO"/>
+              </FormGroup>
+              <FormGroup label="IBAN" full>
+                <input style={S.input} value={kasaForm.iban} onChange={e => kUp('iban', e.target.value.toUpperCase())} placeholder="TR..." maxLength={34}/>
+              </FormGroup>
+            </>
+          )}
+        </div>
+        <div style={{marginTop:24,display:'flex',gap:8,justifyContent:'flex-end'}}>
+          <button style={{...S.btn,...S.btnG}} onClick={() => setModalAcik(false)}>İPTAL</button>
+          <button style={{...S.btn,...S.btnP}} onClick={kasaOlustur} disabled={kayitLoading}>
+            <LIcon name="Save" size={14} color="#fff"/> {kayitLoading ? 'KAYDEDİLİYOR...' : 'OLUŞTUR'}
+          </button>
+        </div>
+      </Modal>
+
+      {/* HAREKET EKLEME MODAL */}
+      <Modal open={hareketModal} onClose={() => setHareketModal(false)} title={'ORTAK KASA İŞLEM — ' + (seciliKasa?.ad || '')} width="500px">
+        <HataMesaji mesaj={hata}/>
+        {seciliKasa && (
+          <div style={{padding:12,background:C.accent+'11',borderRadius:8,marginBottom:16,border:'1px solid '+C.accent+'22'}}>
+            <div style={{fontSize:12,fontWeight:700}}>BAKİYE: <span style={{color:C.success}}>{fmt(seciliKasa.bakiye)}</span></div>
+          </div>
+        )}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+          <FormGroup label="İŞLEM TÜRÜ *">
+            <select style={S.select} value={hForm.islem_turu} onChange={e => hUp('islem_turu', e.target.value)}>
+              <option value="gelir">GİRİŞ (+)</option>
+              <option value="gider">ÇIKIŞ (-)</option>
+            </select>
+          </FormGroup>
+          <FormGroup label="TUTAR *">
+            <div style={{position:'relative'}}>
+              <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',color:C.textMuted,fontSize:13,fontWeight:700}}>&#8378;</span>
+              <input style={{...S.input,paddingLeft:26,fontWeight:700}} value={hForm.tutar}
+                onChange={e => hUp('tutar', fmtInput(e.target.value))} placeholder="0,00"/>
+            </div>
+          </FormGroup>
+          <FormGroup label="TARİH">
+            <MR.DateInput value={hForm.tarih} onChange={v => hUp('tarih', v)}/>
+          </FormGroup>
+          <FormGroup label="AÇIKLAMA" full>
+            <textarea style={{...S.input,minHeight:60,resize:'vertical'}} value={hForm.aciklama}
+              onChange={e => hUp('aciklama', e.target.value.toUpperCase())} placeholder="İŞLEM AÇIKLAMASI"/>
+          </FormGroup>
+        </div>
+        <div style={{marginTop:20,display:'flex',gap:8,justifyContent:'flex-end'}}>
+          <button style={{...S.btn,...S.btnG}} onClick={() => setHareketModal(false)}>İPTAL</button>
+          <button style={{...S.btn,...(hForm.islem_turu==='gelir' ? S.btnP : S.btnD)}} onClick={hareketEkle} disabled={kayitLoading}>
+            <LIcon name={hForm.islem_turu==='gelir'?'TrendingUp':'TrendingDown'} size={14} color="#fff"/>
+            {kayitLoading ? 'KAYDEDİLİYOR...' : (hForm.islem_turu==='gelir' ? 'GİRİŞ KAYDET' : 'ÇIKIŞ KAYDET')}
+          </button>
+        </div>
+      </Modal>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   SEKME 9 – AY SONU RAPORU (KAPSAMLI)
    PDF formatında: Ortak hesabı + MR net kazanç + Final özet
    ═══════════════════════════════════════════════════════════ */
 const AySonuRaporu = ({setPage, user}) => {
@@ -2175,7 +2505,7 @@ const AySonuRaporu = ({setPage, user}) => {
 
   return (
     React.createElement('div', {className:'fade-in'},
-      React.createElement(SectionTitle, {icon:'CalendarCheck', title:'AY SONU RAPORU', subtitle:'Kapsamlı aylık finansal rapor'}),
+      React.createElement(SectionTitle, {icon:'CalendarCheck', title:'AY SONU RAPORU', sub:'Kapsamlı aylık finansal rapor'}),
 
       /* FİLTRELER */
       React.createElement('div', {style:{display:'flex',gap:12,marginBottom:20,flexWrap:'wrap',alignItems:'flex-end'}},
@@ -2190,11 +2520,11 @@ const AySonuRaporu = ({setPage, user}) => {
             ortaklar.map(function(o){ return React.createElement('option', {key:o.id, value:o.id}, o.ad_soyad + (o.firma ? ' (' + o.firma + ')' : '')); })
           )
         ),
-        React.createElement('button', {onClick:yukle, style:Object.assign({},S.btnSm,{background:C.accent,color:'#fff'})},
-          React.createElement(LIcon, {name:'RefreshCw', size:14}), ' YENİLE'
+        React.createElement('button', {onClick:yukle, style:Object.assign({},S.btn,S.btnP,{fontSize:12,padding:'10px 18px'})},
+          React.createElement(LIcon, {name:'RefreshCw', size:14, color:'#fff'}), ' YENİLE'
         ),
-        data && React.createElement('button', {onClick:yazdir, style:Object.assign({},S.btnSm,{background:C.success,color:'#fff'})},
-          React.createElement(LIcon, {name:'Printer', size:14}), ' YAZDIR / PDF'
+        data && React.createElement('button', {onClick:yazdir, style:Object.assign({},S.btn,{fontSize:12,padding:'10px 18px',background:'linear-gradient(180deg, #34d399 0%, #10b981 40%, #059669 100%)',color:'#fff',fontWeight:800,border:'none',boxShadow:'0 4px 14px -2px rgba(16,185,129,0.55), 0 2px 4px -1px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)',borderBottom:'2px solid #047857'})},
+          React.createElement(LIcon, {name:'Printer', size:14, color:'#fff'}), ' YAZDIR / PDF'
         )
       ),
 
@@ -2440,6 +2770,62 @@ const AySonuRaporu = ({setPage, user}) => {
               )
             )
           )
+        ),
+
+        /* ═══ ORTAK KASA BÖLÜMÜ ═══ */
+        data.ortak_kasalar && data.ortak_kasalar.length > 0 && React.createElement('div', {style:{marginBottom:24}},
+          React.createElement('div', {style:{padding:14,background:(C.purple||C.accent)+'11',borderRadius:12,border:'1px solid '+(C.purple||C.accent)+'33',marginBottom:16}},
+            React.createElement('div', {style:{fontSize:14,fontWeight:800,color:C.text}}, 'İŞ ORTAĞI ORTAK KASA DURUMU')
+          ),
+          data.ortak_kasalar.map(function(ok, idx) {
+            return React.createElement('div', {key:idx, style:{background:C.bgCard,borderRadius:12,border:'1px solid '+C.border,padding:16,marginBottom:12}},
+              React.createElement('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}},
+                React.createElement('div', null,
+                  React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text}}, ok.ad),
+                  React.createElement('div', {style:{fontSize:11,color:C.textMuted,marginTop:2}}, (ok.ortak_adlari||[]).join(' & '))
+                ),
+                React.createElement('div', {style:{textAlign:'right'}},
+                  React.createElement('div', {style:{fontSize:10,color:C.textMuted,fontWeight:600}}, 'GÜNCEL BAKİYE'),
+                  React.createElement('div', {style:{fontSize:22,fontWeight:900,color: ok.bakiye>=0?C.success:C.danger}}, fmt(ok.bakiye))
+                )
+              ),
+              React.createElement('div', {style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:12}},
+                React.createElement('div', {style:{background:C.success+'11',borderRadius:8,padding:10,textAlign:'center'}},
+                  React.createElement('div', {style:{fontSize:9,color:C.textMuted,fontWeight:600}}, 'AY İÇİ GİRİŞ'),
+                  React.createElement('div', {style:{fontSize:14,fontWeight:800,color:C.success,marginTop:2}}, fmt(ok.ay_giris))
+                ),
+                React.createElement('div', {style:{background:C.danger+'11',borderRadius:8,padding:10,textAlign:'center'}},
+                  React.createElement('div', {style:{fontSize:9,color:C.textMuted,fontWeight:600}}, 'AY İÇİ ÇIKIŞ'),
+                  React.createElement('div', {style:{fontSize:14,fontWeight:800,color:C.danger,marginTop:2}}, fmt(ok.ay_cikis))
+                ),
+                React.createElement('div', {style:{background:C.accent+'11',borderRadius:8,padding:10,textAlign:'center'}},
+                  React.createElement('div', {style:{fontSize:9,color:C.textMuted,fontWeight:600}}, 'AY NET'),
+                  React.createElement('div', {style:{fontSize:14,fontWeight:800,color:ok.ay_net>=0?C.success:C.danger,marginTop:2}}, (ok.ay_net>=0?'+':'')+fmt(ok.ay_net))
+                )
+              ),
+              ok.hareketler && ok.hareketler.length > 0 && React.createElement('table', {style:{width:'100%',borderCollapse:'collapse'}},
+                React.createElement('thead', null,
+                  React.createElement('tr', {style:{background:C.bgHover}},
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:9,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'TARİH'),
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:9,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'TÜR'),
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'right',fontSize:9,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'TUTAR'),
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:9,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA')
+                  )
+                ),
+                React.createElement('tbody', null,
+                  ok.hareketler.map(function(h,i){
+                    var isGelir = h.islem_turu==='gelir'||h.islem_turu==='transfer_giris';
+                    return React.createElement('tr', {key:i},
+                      React.createElement('td', {style:{padding:'5px 10px',fontSize:10,borderBottom:'1px solid '+C.border+'22'}}, (h.created_at||'').split(' ')[0]||'-'),
+                      React.createElement('td', {style:{padding:'5px 10px',fontSize:10,borderBottom:'1px solid '+C.border+'22',color:isGelir?C.success:C.danger,fontWeight:600}}, (h.islem_turu||'').toUpperCase()),
+                      React.createElement('td', {style:{padding:'5px 10px',fontSize:11,fontWeight:700,textAlign:'right',borderBottom:'1px solid '+C.border+'22',color:isGelir?C.success:C.danger}}, (isGelir?'+':'-')+fmt(h.tutar)),
+                      React.createElement('td', {style:{padding:'5px 10px',fontSize:10,borderBottom:'1px solid '+C.border+'22',color:C.textSec}}, h.aciklama||'-')
+                    );
+                  })
+                )
+              )
+            );
+          })
         ),
 
         /* ═══ FİNAL ÖZET ═══ */

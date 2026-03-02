@@ -25,14 +25,26 @@ if (!in_array($tip, ['Nakit', 'Banka'])) {
     json_error('Geçersiz kasa tipi. Nakit veya Banka olmalı', 422);
 }
 
-$stmt = $db->prepare('INSERT INTO kasalar (ad, tip, banka_adi, hesap_no, iban, bakiye, aktif) VALUES (?, ?, ?, ?, ?, ?, 1)');
+// Ortak kasa desteği
+$ortakKasaTipi = clean($body['ortak_kasa_tipi'] ?? '');
+$ortakIds = clean($body['ortak_ids'] ?? '');
+
+// DDL: ortak kasa sütunları
+try {
+    $db->exec("ALTER TABLE kasalar ADD COLUMN IF NOT EXISTS ortak_kasa_tipi VARCHAR(20) DEFAULT NULL");
+    $db->exec("ALTER TABLE kasalar ADD COLUMN IF NOT EXISTS ortak_ids TEXT DEFAULT NULL");
+} catch (\Exception $e) {}
+
+$stmt = $db->prepare('INSERT INTO kasalar (ad, tip, banka_adi, hesap_no, iban, bakiye, aktif, ortak_kasa_tipi, ortak_ids) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)');
 $stmt->execute([
     clean($body['ad']),
     $tip,
     clean($body['banka_adi'] ?? ''),
     clean($body['hesap_no'] ?? ''),
     clean($body['iban'] ?? ''),
-    (float)($body['bakiye'] ?? 0)
+    (float)($body['bakiye'] ?? 0),
+    $ortakKasaTipi ?: null,
+    $ortakIds ?: null
 ]);
 
 $id = (int)$db->lastInsertId();

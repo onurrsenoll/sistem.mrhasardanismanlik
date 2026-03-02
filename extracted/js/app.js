@@ -40,9 +40,11 @@ const MENU = [
     {id:'muhasebe-gider', label:'GİDER YÖNETİMİ', icon:'TrendingDown'},
     {id:'muhasebe-komisyon', label:'KOMİSYON / PRİM', icon:'Percent'},
     {id:'muhasebe-kasa', label:'KASA / BANKA', icon:'Wallet'},
+    {id:'muhasebe-ortakkasa', label:'ORTAK KASA', icon:'Users'},
     {id:'muhasebe-maliyet', label:'MALİYET ANALİZİ', icon:'PieChart'},
     {id:'muhasebe-rapor', label:'FİNANSAL RAPORLAR', icon:'BarChart3'},
-    {id:'muhasebe-kapanis', label:'KAPANIŞ RAPORU', icon:'FileCheck'}
+    {id:'muhasebe-kapanis', label:'KAPANIŞ RAPORU', icon:'FileCheck'},
+    {id:'muhasebe-aysonu', label:'AY SONU RAPORU', icon:'CalendarCheck'}
   ]},
   {id:'ictihat', label:'İÇTİHAT', icon:'Scale', sub:[
     {id:'ictihat-yargitay', label:'YARGITAY KARARLARI', icon:'Scale'},

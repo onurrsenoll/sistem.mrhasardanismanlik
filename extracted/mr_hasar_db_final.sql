@@ -157,6 +157,8 @@ CREATE TABLE IF NOT EXISTS kasalar (
     iban VARCHAR(34) DEFAULT NULL,
     bakiye DECIMAL(14,2) NOT NULL DEFAULT 0.00,
     aktif TINYINT(1) NOT NULL DEFAULT 1,
+    ortak_kasa_tipi VARCHAR(20) DEFAULT NULL COMMENT 'ortak = iş ortağı paylaşımlı kasa',
+    ortak_ids TEXT DEFAULT NULL COMMENT 'virgülle ayrılmış ortak idleri (ör: 1,2)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;

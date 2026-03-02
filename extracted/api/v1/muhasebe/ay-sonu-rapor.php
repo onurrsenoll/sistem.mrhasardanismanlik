@@ -197,6 +197,58 @@ $stmt = $db->query("SELECT id, ad_soyad, firma FROM ortaklar WHERE durum = 'akti
 $ortaklarListesi = $stmt->fetchAll();
 
 // ═══════════════════════════════════════════
+// ORTAK KASA BİLGİLERİ
+// ═══════════════════════════════════════════
+$ortakKasalar = [];
+try {
+    // DDL
+    $db->exec("ALTER TABLE kasalar ADD COLUMN IF NOT EXISTS ortak_kasa_tipi VARCHAR(20) DEFAULT NULL");
+    $db->exec("ALTER TABLE kasalar ADD COLUMN IF NOT EXISTS ortak_ids TEXT DEFAULT NULL");
+
+    $stmtOK = $db->query("SELECT k.id, k.ad, k.tip, k.bakiye, k.ortak_ids FROM kasalar k WHERE k.aktif = 1 AND k.ortak_kasa_tipi = 'ortak'");
+    $ortakKasalarRaw = $stmtOK->fetchAll();
+
+    foreach ($ortakKasalarRaw as $ok) {
+        // Ay içi hareketler
+        $stmtH = $db->prepare("SELECT islem_turu, tutar, aciklama, created_at
+            FROM kasa_hareketleri
+            WHERE kasa_id = ? AND DATE(created_at) BETWEEN ? AND ?
+            ORDER BY created_at ASC");
+        $stmtH->execute([$ok['id'], $baslangic, $bitis]);
+        $kasaHareketleri = $stmtH->fetchAll();
+
+        $giris = 0; $cikis = 0;
+        foreach ($kasaHareketleri as $kh) {
+            $t = (float)$kh['tutar'];
+            if (in_array($kh['islem_turu'], ['gelir','transfer_giris'])) $giris += $t;
+            else $cikis += $t;
+        }
+
+        // Ortak isimlerini çöz
+        $ortakIdsArr = array_map('intval', explode(',', $ok['ortak_ids'] ?? ''));
+        $ortakAdlari = [];
+        foreach ($ortakIdsArr as $oid) {
+            foreach ($ortaklarListesi as $ol) {
+                if ((int)$ol['id'] === $oid) { $ortakAdlari[] = $ol['ad_soyad']; break; }
+            }
+        }
+
+        $ortakKasalar[] = [
+            'id' => (int)$ok['id'],
+            'ad' => $ok['ad'],
+            'tip' => $ok['tip'],
+            'bakiye' => (float)$ok['bakiye'],
+            'ortak_ids' => $ok['ortak_ids'],
+            'ortak_adlari' => $ortakAdlari,
+            'ay_giris' => $giris,
+            'ay_cikis' => $cikis,
+            'ay_net' => $giris - $cikis,
+            'hareketler' => $kasaHareketleri
+        ];
+    }
+} catch (\Exception $e) {}
+
+// ═══════════════════════════════════════════
 // SONUÇ
 // ═══════════════════════════════════════════
 json_success([
@@ -232,6 +284,9 @@ json_success([
         'diger_masraf_yarisi' => $digerMasrafYarisi,
         'mr_net_kazanc' => $mrNetKazanc
     ],
+
+    // ORTAK KASALAR
+    'ortak_kasalar' => $ortakKasalar,
 
     // FİNAL ÖZET
     'final' => [

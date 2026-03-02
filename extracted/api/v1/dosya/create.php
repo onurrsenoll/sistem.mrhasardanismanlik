@@ -51,6 +51,8 @@ try {
     // masraflar ek sütunları
     $db->exec("ALTER TABLE masraflar ADD COLUMN IF NOT EXISTS odeme_durumu VARCHAR(20) DEFAULT 'odendi'");
     $db->exec("ALTER TABLE masraflar ADD COLUMN IF NOT EXISTS paydas_komisyon_id INT DEFAULT NULL");
+    // kasa_id NULL olabilmeli — ödenmemiş masraflar kasasız kaydedilir
+    $db->exec("ALTER TABLE masraflar MODIFY COLUMN kasa_id INT DEFAULT NULL");
 } catch (\Exception $e) {}
 
 try {
@@ -271,6 +273,19 @@ try {
 
                 // MASRAFA KOMİSYON ID'Sİ YAZILIR (ÇİFT YÖNLÜ BAĞLANTI)
                 $db->prepare('UPDATE masraflar SET paydas_komisyon_id = ? WHERE id = ?')->execute([$komisyonId, $masrafId]);
+
+                // MUHASEBE KOMİSYON TABLOSUNA DA PARALEL KAYIT (PAYDAŞ CARİSİ ENTEGRASYONU)
+                try {
+                    $stmtMuhKom = $db->prepare('INSERT INTO komisyonlar (dosya_id, paydas_id, komisyon_turu, tutar, odendi, aciklama, kullanici_id) VALUES (?, ?, ?, ?, 0, ?, ?)');
+                    $stmtMuhKom->execute([
+                        $dosyaId,
+                        $paydasId,
+                        'paydas_prim',
+                        $primTutarP,
+                        'PAYDAŞ PRİMİ: ' . $paydas['ad'] . ' - DOSYA: ' . $dosyaNo . ' (' . $dosyaTuru . ')',
+                        $user['id']
+                    ]);
+                } catch (\Exception $e) {}
 
                 $otoPrimBilgi['paydas_prim'] = $primTutarP;
                 $otoPrimBilgi['paydas_adi'] = $paydas['ad'];

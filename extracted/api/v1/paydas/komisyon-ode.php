@@ -97,6 +97,12 @@ try {
         }
     }
 
+    // 5. Muhasebe komisyonlar tablosunu da güncelle (paralel entegrasyon)
+    try {
+        $db->prepare('UPDATE komisyonlar SET odendi = 1, odeme_tarihi = ?, kasa_id = ? WHERE paydas_id = ? AND dosya_id = ? AND odendi = 0')
+           ->execute([$bugun, $kasaId, $komisyon['paydas_id'], $komisyon['dosya_id']]);
+    } catch (\Exception $e) {}
+
     $db->commit();
 
     log_action($user['id'], 'paydas_komisyon_ode', "Paydaş komisyon #$komisyonId ödendi: " . number_format($tutar, 2) . " ₺, Kasa: {$kasa['ad']}", 'paydas_komisyonlari', $komisyonId);

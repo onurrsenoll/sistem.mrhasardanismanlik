@@ -23,6 +23,12 @@ if ($aktif >= 0) {
     $params[] = $aktif;
 }
 
+// DDL: ortak kasa sütunları
+try {
+    $db->exec("ALTER TABLE kasalar ADD COLUMN IF NOT EXISTS ortak_kasa_tipi VARCHAR(20) DEFAULT NULL");
+    $db->exec("ALTER TABLE kasalar ADD COLUMN IF NOT EXISTS ortak_ids TEXT DEFAULT NULL");
+} catch (\Exception $e) {}
+
 $stmt = $db->prepare("SELECT k.*,
     (SELECT COUNT(*) FROM kasa_hareketleri kh WHERE kh.kasa_id = k.id) as hareket_sayisi,
     (SELECT kh.created_at FROM kasa_hareketleri kh WHERE kh.kasa_id = k.id ORDER BY kh.id DESC LIMIT 1) as son_hareket

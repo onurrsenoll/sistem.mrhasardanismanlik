@@ -55,8 +55,12 @@ function ensure_prim_columns() {
         if (empty($cols2)) {
             $db->exec("ALTER TABLE paydaslar ADD COLUMN prim_adk DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER komisyon_orani");
             $db->exec("ALTER TABLE paydaslar ADD COLUMN prim_bh DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER prim_adk");
-            // Mevcut komisyon_orani değerini TL olarak prim_adk'ya aktar (eğer varsa)
         }
+        // MASRAFLAR: kasa_id NULL olabilmeli (ödenmemiş masraflar kasasız kaydedilir)
+        $db->exec("ALTER TABLE masraflar MODIFY COLUMN kasa_id INT DEFAULT NULL");
+        // KASALAR: ortak_kasa_tipi sütunu (ortak kasa desteği)
+        $db->exec("ALTER TABLE kasalar ADD COLUMN IF NOT EXISTS ortak_kasa_tipi VARCHAR(20) DEFAULT NULL");
+        $db->exec("ALTER TABLE kasalar ADD COLUMN IF NOT EXISTS ortak_ids TEXT DEFAULT NULL");
     } catch (\Exception $e) {
         // Migration hatası sessiz geç
     }

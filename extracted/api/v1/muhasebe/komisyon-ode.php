@@ -97,6 +97,17 @@ try {
         $user['id']
     ]);
 
+    // Paydaş komisyonlar tablosunu da güncelle (paralel entegrasyon)
+    if (!empty($komisyon['paydas_id'])) {
+        try {
+            $db->prepare('UPDATE paydas_komisyonlari SET durum = ?, odeme_tarihi = ?, kasa_id = ? WHERE paydas_id = ? AND dosya_id = ? AND durum != ?')
+               ->execute(['odendi', $bugun, $kasaId, $komisyon['paydas_id'], $komisyon['dosya_id'], 'odendi']);
+            // Bağlı masrafı da ödendi yap
+            $db->prepare("UPDATE masraflar SET odeme_durumu = 'odendi', kasa_id = ? WHERE dosya_id = ? AND masraf_kalemi = 'YÖNLENDİREN ÜCRETİ' AND odeme_durumu = 'odenmedi'")
+               ->execute([$kasaId, $komisyon['dosya_id']]);
+        } catch (\Exception $e) {}
+    }
+
     $db->commit();
 
     log_action($user['id'], 'komisyon_ode', "Komisyon #$komisyonId ödendi: $tutar ₺, Kasa: {$kasa['ad']}", 'komisyonlar', $komisyonId);
