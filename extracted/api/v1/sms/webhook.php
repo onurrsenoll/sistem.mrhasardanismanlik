@@ -186,14 +186,14 @@ try {
     }
 } catch (Exception $e) {}
 
-// Dosyalar tablosunda ara (magdur_telefon)
+// Dosyalar tablosunda ara (magdurlar tablosu üzerinden)
 if (empty($gonderenAdi)) {
     try {
-        $stmt = $db->prepare('SELECT id, magdur_ad, magdur_telefon FROM dosyalar WHERE magdur_telefon LIKE ? LIMIT 1');
-        $stmt->execute([$searchPattern]);
+        $stmt = $db->prepare('SELECT d.id, m.ad_soyad FROM dosyalar d INNER JOIN magdurlar m ON m.dosya_id = d.id WHERE m.telefon LIKE ? OR m.telefon2 LIKE ? LIMIT 1');
+        $stmt->execute([$searchPattern, $searchPattern]);
         $dosyaKayit = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($dosyaKayit) {
-            $gonderenAdi = $dosyaKayit['magdur_ad'] ?? '';
+            $gonderenAdi = $dosyaKayit['ad_soyad'] ?? '';
             $dosyaId = $dosyaKayit['id'];
         }
     } catch (Exception $e) {}
@@ -255,12 +255,12 @@ try {
     $users = $stmtUsers->fetchAll(PDO::FETCH_COLUMN);
 
     foreach ($users as $userId) {
-        $db->prepare("INSERT INTO bildirimler (kullanici_id, baslik, mesaj, tip, link, okundu) VALUES (?, ?, ?, 'sms', ?, 0)")
+        $db->prepare("INSERT INTO bildirimler (alici_id, baslik, icerik, tip, ilgili_dosya_id, okundu) VALUES (?, ?, ?, 'sms', ?, 0)")
            ->execute([
                $userId,
                $bildirimBaslik,
                $bildirimMesaj,
-               $dosyaId ? '#/dosya/' . $dosyaId : '#/sms'
+               $dosyaId ?: null
            ]);
     }
 } catch (Exception $e) {}

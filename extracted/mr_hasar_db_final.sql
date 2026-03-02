@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS dosyalar (
     id INT AUTO_INCREMENT PRIMARY KEY,
     dosya_no VARCHAR(20) NOT NULL UNIQUE,
-    dosya_turu ENUM('ADK','BH') NOT NULL,
+    dosya_turu ENUM('ADK','BH','MDK') NOT NULL,
     talep_turu VARCHAR(100) DEFAULT NULL,
     asama VARCHAR(50) NOT NULL DEFAULT 'Dosya Açık',
     hasar_no VARCHAR(30) DEFAULT NULL,
@@ -64,6 +64,11 @@ CREATE TABLE IF NOT EXISTS dosyalar (
     pozisyon VARCHAR(20) DEFAULT NULL,
     kusur_durumu VARCHAR(20) DEFAULT NULL,
     sakatlik_aciklama TEXT DEFAULT NULL,
+    -- BH sürücü ve sigorta alanları
+    sorumlu_sigorta VARCHAR(255) DEFAULT NULL,
+    surucu_ad VARCHAR(255) DEFAULT NULL,
+    surucu_ehliyet VARCHAR(100) DEFAULT NULL,
+    surucu_kusur INT DEFAULT NULL,
     -- Tarihler
     acilis_tarihi DATE DEFAULT NULL,
     kapanma_tarihi DATE DEFAULT NULL,
@@ -77,6 +82,7 @@ CREATE TABLE IF NOT EXISTS dosyalar (
     INDEX idx_avukat (avukat_id),
     INDEX idx_ortak (ortak_id),
     INDEX idx_paydas (paydas_id),
+    INDEX idx_sorumlu (sorumlu_id),
     INDEX idx_kaza_tarihi (kaza_tarihi),
     INDEX idx_created (created_at),
     FOREIGN KEY (avukat_id) REFERENCES users(id) ON DELETE SET NULL,
@@ -163,16 +169,19 @@ CREATE TABLE IF NOT EXISTS masraflar (
     dosya_id INT NOT NULL,
     masraf_kalemi VARCHAR(100) NOT NULL,
     tutar DECIMAL(12,2) NOT NULL,
-    kasa_id INT NOT NULL,
+    kasa_id INT DEFAULT NULL,
     aciklama TEXT DEFAULT NULL,
     islem_tarihi DATE NOT NULL,
     kullanici_id INT NOT NULL,
+    odeme_durumu VARCHAR(20) DEFAULT 'odendi',
+    paydas_komisyon_id INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_dosya (dosya_id),
     INDEX idx_kasa (kasa_id),
     INDEX idx_tarih (islem_tarihi),
+    INDEX idx_odeme_durumu (odeme_durumu),
     FOREIGN KEY (dosya_id) REFERENCES dosyalar(id) ON DELETE CASCADE,
-    FOREIGN KEY (kasa_id) REFERENCES kasalar(id) ON DELETE RESTRICT,
+    FOREIGN KEY (kasa_id) REFERENCES kasalar(id) ON DELETE SET NULL,
     FOREIGN KEY (kullanici_id) REFERENCES users(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
@@ -340,7 +349,7 @@ CREATE TABLE IF NOT EXISTS bildirimler (
     baslik VARCHAR(200) NOT NULL,
     icerik TEXT DEFAULT NULL,
     okundu TINYINT(1) NOT NULL DEFAULT 0,
-    tip ENUM('bildirim','mesaj','uyari','sistem') NOT NULL DEFAULT 'bildirim',
+    tip ENUM('bildirim','mesaj','uyari','sistem','sms','bilgi') NOT NULL DEFAULT 'bildirim',
     ilgili_dosya_id INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_alici (alici_id),
@@ -482,6 +491,8 @@ CREATE TABLE IF NOT EXISTS paydaslar (
     vergi_no VARCHAR(30) DEFAULT NULL,
     iban VARCHAR(34) DEFAULT NULL,
     komisyon_orani DECIMAL(5,2) DEFAULT 0.00,
+    prim_adk DECIMAL(10,2) NOT NULL DEFAULT 0,
+    prim_bh DECIMAL(10,2) NOT NULL DEFAULT 0,
     notlar TEXT DEFAULT NULL,
     durum ENUM('aktif','pasif') NOT NULL DEFAULT 'aktif',
     created_by INT DEFAULT NULL,
@@ -507,6 +518,7 @@ CREATE TABLE IF NOT EXISTS paydas_komisyonlari (
     kasa_id INT DEFAULT NULL,
     aciklama VARCHAR(500) DEFAULT '',
     created_by INT DEFAULT NULL,
+    masraf_id INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_paydas (paydas_id),
     INDEX idx_dosya (dosya_id),
@@ -858,28 +870,32 @@ CREATE TABLE IF NOT EXISTS yonlendirme_notlar (
 
 DELIMITER //
 
--- Masraf eklendiğinde kasa bakiyesi düşür
+-- Masraf eklendiğinde kasa bakiyesi düşür (kasa_id NULL ise işlem yapma)
 CREATE TRIGGER trg_masraf_after_insert
 AFTER INSERT ON masraflar
 FOR EACH ROW
 BEGIN
-    UPDATE kasalar SET bakiye = bakiye - NEW.tutar WHERE id = NEW.kasa_id;
-    INSERT INTO kasa_hareketleri (kasa_id, dosya_id, islem_turu, tutar, bakiye_sonrasi, aciklama, kullanici_id)
-    SELECT NEW.kasa_id, NEW.dosya_id, 'masraf', NEW.tutar, k.bakiye,
-           CONCAT('Masraf: ', NEW.masraf_kalemi), NEW.kullanici_id
-    FROM kasalar k WHERE k.id = NEW.kasa_id;
+    IF NEW.kasa_id IS NOT NULL THEN
+        UPDATE kasalar SET bakiye = bakiye - NEW.tutar WHERE id = NEW.kasa_id;
+        INSERT INTO kasa_hareketleri (kasa_id, dosya_id, islem_turu, tutar, bakiye_sonrasi, aciklama, kullanici_id)
+        SELECT NEW.kasa_id, NEW.dosya_id, 'masraf', NEW.tutar, k.bakiye,
+               CONCAT('Masraf: ', NEW.masraf_kalemi), NEW.kullanici_id
+        FROM kasalar k WHERE k.id = NEW.kasa_id;
+    END IF;
 END //
 
--- Masraf silindiğinde kasa bakiyesi geri yükle
+-- Masraf silindiğinde kasa bakiyesi geri yükle (kasa_id NULL ise işlem yapma)
 CREATE TRIGGER trg_masraf_after_delete
 AFTER DELETE ON masraflar
 FOR EACH ROW
 BEGIN
-    UPDATE kasalar SET bakiye = bakiye + OLD.tutar WHERE id = OLD.kasa_id;
-    INSERT INTO kasa_hareketleri (kasa_id, dosya_id, islem_turu, tutar, bakiye_sonrasi, aciklama, kullanici_id)
-    SELECT OLD.kasa_id, OLD.dosya_id, 'duzeltme', OLD.tutar, k.bakiye,
-           CONCAT('Masraf İade: ', OLD.masraf_kalemi), OLD.kullanici_id
-    FROM kasalar k WHERE k.id = OLD.kasa_id;
+    IF OLD.kasa_id IS NOT NULL THEN
+        UPDATE kasalar SET bakiye = bakiye + OLD.tutar WHERE id = OLD.kasa_id;
+        INSERT INTO kasa_hareketleri (kasa_id, dosya_id, islem_turu, tutar, bakiye_sonrasi, aciklama, kullanici_id)
+        SELECT OLD.kasa_id, OLD.dosya_id, 'duzeltme', OLD.tutar, k.bakiye,
+               CONCAT('Masraf İade: ', OLD.masraf_kalemi), OLD.kullanici_id
+        FROM kasalar k WHERE k.id = OLD.kasa_id;
+    END IF;
 END //
 
 -- Gelir eklendiğinde kasa bakiyesi artır
@@ -961,6 +977,8 @@ CREATE TABLE IF NOT EXISTS personel (
     pozisyon VARCHAR(100) DEFAULT NULL,
     maas DECIMAL(12,2) DEFAULT 0.00,
     prim_orani DECIMAL(12,2) DEFAULT 0.00,
+    prim_adk DECIMAL(10,2) NOT NULL DEFAULT 0,
+    prim_bh DECIMAL(10,2) NOT NULL DEFAULT 0,
     sgk_no VARCHAR(50) DEFAULT NULL,
     iban VARCHAR(34) DEFAULT NULL,
     adres TEXT DEFAULT NULL,
@@ -1086,10 +1104,10 @@ INSERT IGNORE INTO users (ad_soyad, email, sifre_hash, rol, telefon) VALUES
 -- Kasalar
 -- NOT: INSERT IGNORE - mevcut kasa kayıtları ve bakiyeleri KORUNUR!
 INSERT IGNORE INTO kasalar (ad, tip, banka_adi, bakiye) VALUES
-('Ana Kasa', 'Nakit', NULL, 125000.00),
-('Ziraat Bankası', 'Banka', 'Ziraat Bankası', 340000.00),
-('İş Bankası', 'Banka', 'İş Bankası', 215000.00),
-('Avukat Kasa', 'Nakit', NULL, 45000.00);
+('Ana Kasa', 'Nakit', NULL, 0.00),
+('Ziraat Bankası', 'Banka', 'Ziraat Bankası', 0.00),
+('İş Bankası', 'Banka', 'İş Bankası', 0.00),
+('Avukat Kasa', 'Nakit', NULL, 0.00);
 
 -- Tanımlamalar: Sigorta Şirketleri
 -- NOT: INSERT IGNORE - mevcut tanımlamalar KORUNUR!
@@ -1363,6 +1381,103 @@ CREATE TABLE IF NOT EXISTS saha_dosya_medya (
   INDEX idx_saha_dosya (saha_dosya_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
+-- ═══════════════════════════════════════════
+-- 39. DOSYA SÜREÇLERİ (ZAMAN ÇİZELGESİ)
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS dosya_surecler (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    dosya_id INT NOT NULL,
+    baslik VARCHAR(200) NOT NULL,
+    detay TEXT DEFAULT NULL,
+    islem_tipi VARCHAR(50) DEFAULT 'sistem',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_dosya (dosya_id),
+    FOREIGN KEY (dosya_id) REFERENCES dosyalar(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 40. PORTAL ERİŞİM
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS portal_erisim (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    dosya_id INT NOT NULL,
+    erisim_kodu VARCHAR(100) NOT NULL UNIQUE,
+    tc_kimlik VARCHAR(11) DEFAULT NULL,
+    telefon VARCHAR(20) DEFAULT NULL,
+    ad_soyad VARCHAR(100) DEFAULT NULL,
+    giris_yontemi ENUM('sms_otp','sifre','tc_telefon') DEFAULT 'sms_otp',
+    sifre_hash VARCHAR(255) DEFAULT NULL,
+    aktif TINYINT(1) DEFAULT 1,
+    son_giris DATETIME DEFAULT NULL,
+    olusturan_id INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_dosya (dosya_id),
+    INDEX idx_tc (tc_kimlik),
+    INDEX idx_telefon (telefon),
+    FOREIGN KEY (dosya_id) REFERENCES dosyalar(id) ON DELETE CASCADE,
+    FOREIGN KEY (olusturan_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 41. PORTAL OTP
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS portal_otp (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    portal_erisim_id INT NOT NULL,
+    otp_kodu VARCHAR(10) NOT NULL,
+    kullanildi TINYINT(1) DEFAULT 0,
+    son_kullanim DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (portal_erisim_id) REFERENCES portal_erisim(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 42. PORTAL MESAJLAR
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS portal_mesajlar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    dosya_id INT NOT NULL,
+    portal_erisim_id INT DEFAULT NULL,
+    gonderen ENUM('musteri','ofis') NOT NULL,
+    mesaj TEXT NOT NULL,
+    okundu TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_dosya (dosya_id),
+    FOREIGN KEY (dosya_id) REFERENCES dosyalar(id) ON DELETE CASCADE,
+    FOREIGN KEY (portal_erisim_id) REFERENCES portal_erisim(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 43. PORTAL LOGLARI
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS portal_loglar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    portal_erisim_id INT DEFAULT NULL,
+    dosya_id INT DEFAULT NULL,
+    islem VARCHAR(100) NOT NULL,
+    detay TEXT DEFAULT NULL,
+    ip_adresi VARCHAR(45) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (portal_erisim_id) REFERENCES portal_erisim(id) ON DELETE SET NULL,
+    FOREIGN KEY (dosya_id) REFERENCES dosyalar(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+-- ═══════════════════════════════════════════
+-- 44. KONUM KAYITLARI
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS konum_kayitlari (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    kullanici_id INT NOT NULL,
+    enlem DECIMAL(10,7) NOT NULL,
+    boylam DECIMAL(10,7) NOT NULL,
+    dogruluk DECIMAL(10,2) DEFAULT NULL,
+    adres TEXT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_kullanici (kullanici_id),
+    INDEX idx_created (created_at),
+    FOREIGN KEY (kullanici_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ═══════════════════════════════════════════════════════════════
@@ -1379,7 +1494,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- KURULUM TAMAMLANDI!
 -- ═══════════════════════════════════════════════════════════════
 -- Kontrol komutları:
--- SHOW TABLES;                          → 34 tablo olmalı
+-- SHOW TABLES;                          → 44 tablo olmalı
 -- SELECT COUNT(*) FROM users;           → 5 kayıt
 -- SELECT COUNT(*) FROM kasalar;         → 4 kayıt
 -- SELECT COUNT(*) FROM tanimlamalar;    → ~100 kayıt

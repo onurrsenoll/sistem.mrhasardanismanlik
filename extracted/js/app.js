@@ -41,7 +41,8 @@ const MENU = [
     {id:'muhasebe-komisyon', label:'KOMİSYON / PRİM', icon:'Percent'},
     {id:'muhasebe-kasa', label:'KASA / BANKA', icon:'Wallet'},
     {id:'muhasebe-maliyet', label:'MALİYET ANALİZİ', icon:'PieChart'},
-    {id:'muhasebe-rapor', label:'FİNANSAL RAPORLAR', icon:'BarChart3'}
+    {id:'muhasebe-rapor', label:'FİNANSAL RAPORLAR', icon:'BarChart3'},
+    {id:'muhasebe-kapanis', label:'KAPANIŞ RAPORU', icon:'FileCheck'}
   ]},
   {id:'ictihat', label:'İÇTİHAT', icon:'Scale', sub:[
     {id:'ictihat-yargitay', label:'YARGITAY KARARLARI', icon:'Scale'},

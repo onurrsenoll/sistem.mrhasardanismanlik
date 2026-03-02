@@ -229,14 +229,14 @@ if (empty($arayanAdi)) {
     } catch (Exception $e) {}
 }
 
-// DOSYALAR TABLOSUNDA DA ARA (magdur_telefon)
+// DOSYALAR TABLOSUNDA DA ARA (magdurlar tablosu üzerinden)
 if (empty($arayanAdi)) {
     try {
-        $stmt = $db->prepare('SELECT id, magdur_ad, magdur_telefon FROM dosyalar WHERE magdur_telefon LIKE ? LIMIT 1');
-        $stmt->execute([$searchPattern]);
+        $stmt = $db->prepare('SELECT d.id, m.ad_soyad FROM dosyalar d INNER JOIN magdurlar m ON m.dosya_id = d.id WHERE m.telefon LIKE ? OR m.telefon2 LIKE ? LIMIT 1');
+        $stmt->execute([$searchPattern, $searchPattern]);
         $dosyaKayit = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($dosyaKayit) {
-            $arayanAdi = $dosyaKayit['magdur_ad'] ?? '';
+            $arayanAdi = $dosyaKayit['ad_soyad'] ?? '';
         }
     } catch (Exception $e) {}
 }

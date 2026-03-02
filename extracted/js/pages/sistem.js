@@ -4065,7 +4065,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
         {subPage === 'portal' && isAdmin && <PortalTab/>}
         {subPage === 'aktarim' && isAdmin && <TopluAktarimTab/>}
         {subPage === 'veri' && isAdmin && <VeriYonetimiTab/>}
-        {subPage === 'log' && <LogTab/>}
+        {subPage === 'log' && isAdmin && <LogTab/>}
       </div>
     </div>
   );

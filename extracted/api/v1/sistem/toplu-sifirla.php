@@ -94,13 +94,13 @@ try {
         case 'crm':
             try {
                 // CRM dosyalarını sunucudan sil
-                $stmt = $db->query("SELECT dosya_yolu FROM crm_dosyalar");
+                $stmt = $db->query("SELECT dosya_yolu FROM crm_ekler");
                 foreach ($stmt->fetchAll() as $d) {
                     $filePath = UPLOAD_DIR . $d['dosya_yolu'];
                     if (file_exists($filePath)) @unlink($filePath);
                 }
             } catch (\Exception $e) {}
-            $tables = ['crm_notlar', 'crm_dosyalar', 'crm_kayitlar'];
+            $tables = ['crm_notlari', 'crm_ekler', 'crm'];
             foreach ($tables as $t) {
                 try {
                     $c = $db->exec("DELETE FROM $t");
@@ -149,7 +149,7 @@ try {
             break;
 
         case 'ortaklar':
-            $tables = ['ortak_hareketler', 'ortaklar'];
+            $tables = ['ortak_hareketleri', 'ortaklar'];
             foreach ($tables as $t) {
                 try {
                     $c = $db->exec("DELETE FROM $t");
@@ -180,7 +180,7 @@ try {
 
         case 'loglar':
             try {
-                $c = $db->exec("DELETE FROM loglar");
+                $c = $db->exec("DELETE FROM log_kayitlari");
                 $silinen += $c;
             } catch (\Exception $e) {}
             $detay = "TÜM LOG KAYITLARI SİLİNDİ";

@@ -35,9 +35,8 @@ const parseExcelDate = (v) => {
    ═══════════════════════════════════════════════════════════ */
 MR.PolicePage = ({setPage, user, subPage}) => {
   const {C, S, LIcon, StatCard, Badge, SectionTitle, EmptyState, Loading, Modal, FormGroup, Confirm, api} = MR;
-  const aktifSekme = subPage || 'liste';
 
-  const sekmeler = [
+  const tumSekmeler = [
     {key:'liste',    label:'POLİÇE LİSTESİ',   icon:'List'},
     {key:'yeni',     label:'YENİ POLİÇE',       icon:'Plus'},
     {key:'yenileme', label:'YENİLEME TAKİBİ',   icon:'RefreshCw'},
@@ -45,6 +44,20 @@ MR.PolicePage = ({setPage, user, subPage}) => {
     {key:'rapor',    label:'RAPORLAR',           icon:'BarChart3'},
     {key:'kazanc',   label:'KAZANÇ',             icon:'TrendingUp'}
   ];
+
+  /* YETKİ BAZLI SEKME FİLTRELEME */
+  const sekmeler = useMemo(() => {
+    if (user?.rol === 'admin') return tumSekmeler;
+    const yetkiler = user?.yetkiler;
+    if (!yetkiler || Object.keys(yetkiler).length === 0) return tumSekmeler;
+    return tumSekmeler.filter(s => yetkiler['police_police-' + s.key] === 1);
+  }, [user?.rol, user?.yetkiler]);
+
+  const aktifSekme = useMemo(() => {
+    const hedef = subPage || 'liste';
+    if (sekmeler.some(s => s.key === hedef)) return hedef;
+    return sekmeler.length > 0 ? sekmeler[0].key : 'liste';
+  }, [subPage, sekmeler]);
 
   return (
     <div className="fade-in">
