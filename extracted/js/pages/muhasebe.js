@@ -18,7 +18,8 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
     {key:'kasa',     label:'KASA / BANKA',          icon:'Wallet'},
     {key:'maliyet',  label:'MALİYET ANALİZİ',      icon:'PieChart'},
     {key:'rapor',    label:'FİNANSAL RAPORLAR',     icon:'BarChart3'},
-    {key:'kapanis',  label:'KAPANIŞ RAPORU',         icon:'FileCheck'}
+    {key:'kapanis',  label:'KAPANIŞ RAPORU',         icon:'FileCheck'},
+    {key:'aysonu',   label:'AY SONU RAPORU',          icon:'CalendarCheck'}
   ];
 
   /* YETKİ BAZLI SEKME FİLTRELEME */
@@ -67,6 +68,7 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
       {aktifSekme === 'maliyet'  && <MaliyetAnalizi setPage={setPage} user={user}/>}
       {aktifSekme === 'rapor'    && <FinansalRaporlar setPage={setPage} user={user}/>}
       {aktifSekme === 'kapanis'  && <KapanisRaporu setPage={setPage} user={user}/>}
+      {aktifSekme === 'aysonu'   && <AySonuRaporu setPage={setPage} user={user}/>}
     </div>
   );
 };
@@ -2121,5 +2123,368 @@ const KapanisRaporu = ({setPage, user}) => {
         </>
       )}
     </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   SEKME 8 – AY SONU RAPORU (KAPSAMLI)
+   PDF formatında: Ortak hesabı + MR net kazanç + Final özet
+   ═══════════════════════════════════════════════════════════ */
+const AySonuRaporu = ({setPage, user}) => {
+  const {C, S, LIcon, StatCard, Badge, SectionTitle, Loading, EmptyState, api, fmt} = MR;
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [ay, setAy] = useState(new Date().toISOString().slice(0,7));
+  const [ortakId, setOrtakId] = useState('');
+  const [ortaklar, setOrtaklar] = useState([]);
+
+  const yukle = async () => {
+    setLoading(true);
+    const p = {ay};
+    if (ortakId) p.ortak_id = ortakId;
+    const r = await api.aySonuRapor(p);
+    if (r?.success) {
+      setData(r.data);
+      if (r.data?.ortaklar_listesi) setOrtaklar(r.data.ortaklar_listesi);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { yukle(); }, [ay, ortakId]);
+
+  const b1 = data?.bolum1;
+  const b2 = data?.bolum2;
+  const fin = data?.final;
+
+  /* PDF yazdırma */
+  const yazdir = () => {
+    const el = document.getElementById('aysonu-rapor-icerik');
+    if (!el) return;
+    const w = window.open('', '_blank');
+    w.document.write('<html><head><title>AY SONU RAPORU - ' + (data?.donem?.ay_adi || ay) + '</title>' +
+      '<style>' +
+        'body{font-family:"Segoe UI",sans-serif;padding:20px;color:#1a1a2e;font-size:12px}' +
+        'table{width:100%;border-collapse:collapse;margin:10px 0}' +
+        'th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:11px}' +
+        'th{background:#f4f4f8;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}' +
+        '@media print{body{padding:10px}}' +
+      '</style></head><body>' + el.innerHTML + '</body></html>');
+    w.document.close();
+    setTimeout(function(){ w.print(); }, 300);
+  };
+
+  return (
+    React.createElement('div', {className:'fade-in'},
+      React.createElement(SectionTitle, {icon:'CalendarCheck', title:'AY SONU RAPORU', subtitle:'Kapsamlı aylık finansal rapor'}),
+
+      /* FİLTRELER */
+      React.createElement('div', {style:{display:'flex',gap:12,marginBottom:20,flexWrap:'wrap',alignItems:'flex-end'}},
+        React.createElement('div', null,
+          React.createElement('label', {style:{fontSize:10,color:C.textMuted,fontWeight:600,display:'block',marginBottom:4}}, 'DÖNEM'),
+          React.createElement('input', {type:'month', value:ay, onChange:function(e){setAy(e.target.value)}, style:Object.assign({},S.input,{width:180})})
+        ),
+        React.createElement('div', null,
+          React.createElement('label', {style:{fontSize:10,color:C.textMuted,fontWeight:600,display:'block',marginBottom:4}}, 'ORTAK / YATIRIMCI'),
+          React.createElement('select', {value:ortakId, onChange:function(e){setOrtakId(e.target.value)}, style:Object.assign({},S.input,{width:220})},
+            React.createElement('option', {value:''}, '— TÜM DOSYALAR —'),
+            ortaklar.map(function(o){ return React.createElement('option', {key:o.id, value:o.id}, o.ad_soyad + (o.firma ? ' (' + o.firma + ')' : '')); })
+          )
+        ),
+        React.createElement('button', {onClick:yukle, style:Object.assign({},S.btnSm,{background:C.accent,color:'#fff'})},
+          React.createElement(LIcon, {name:'RefreshCw', size:14}), ' YENİLE'
+        ),
+        data && React.createElement('button', {onClick:yazdir, style:Object.assign({},S.btnSm,{background:C.success,color:'#fff'})},
+          React.createElement(LIcon, {name:'Printer', size:14}), ' YAZDIR / PDF'
+        )
+      ),
+
+      loading && React.createElement(Loading, null),
+      !loading && !data && React.createElement(EmptyState, {icon:'FileText', title:'VERİ BULUNAMADI', subtitle:'Dönem seçimi yapın'}),
+
+      !loading && data && React.createElement('div', {id:'aysonu-rapor-icerik'},
+
+        /* BAŞLIK */
+        React.createElement('div', {style:{textAlign:'center',marginBottom:24,padding:20,background:'linear-gradient(135deg, '+C.accent+'11, '+C.accent+'22)',borderRadius:16,border:'1px solid '+C.accent+'33'}},
+          React.createElement('div', {style:{fontSize:13,color:C.textMuted,fontWeight:600,letterSpacing:1}}, 'MR HASAR DANIŞMANLIK'),
+          React.createElement('div', {style:{fontSize:22,fontWeight:900,color:C.text,marginTop:4}}, 'KAPSAMLI AY SONU RAPORU'),
+          React.createElement('div', {style:{fontSize:32,fontWeight:900,color:C.accent,marginTop:4}}, data.donem?.ay_adi || ay),
+          data.ortak && React.createElement('div', {style:{marginTop:8}}, React.createElement(Badge, {text:data.ortak.ad_soyad, color:C.accent}))
+        ),
+
+        /* ═══ BÖLÜM 1 ═══ */
+        b1 && b1.dosya_sayisi > 0 && React.createElement('div', {style:{marginBottom:24}},
+          React.createElement('div', {style:{padding:14,background:(C.info||C.accent)+'11',borderRadius:12,border:'1px solid '+(C.info||C.accent)+'33',marginBottom:16}},
+            React.createElement('div', {style:{fontSize:14,fontWeight:800,color:C.text}},
+              'BÖLÜM 1: ' + (data.ortak ? data.ortak.ad_soyad + ' — DOSYA MASRAFLARI HESABI' : 'AYLIK DOSYA MASRAFLARI')
+            )
+          ),
+
+          /* Ortaktan alınan ödeme */
+          data.ortak && b1.ortak_toplam_odeme > 0 && React.createElement('div', {style:{background:C.bgCard,borderRadius:12,border:'1px solid '+C.border,padding:16,marginBottom:16}},
+            React.createElement('div', {style:{fontSize:11,color:C.textSec,fontWeight:600,marginBottom:8}}, 'AY İÇİNDE ' + data.ortak.ad_soyad + '\'DAN ALINAN ÖDEME'),
+            React.createElement('table', {style:{width:'100%',borderCollapse:'collapse'}},
+              React.createElement('thead', null,
+                React.createElement('tr', {style:{background:C.bgHover}},
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA'),
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'TUTAR')
+                )
+              ),
+              React.createElement('tbody', null,
+                b1.ortak_odemeleri.map(function(o,i){
+                  return React.createElement('tr', {key:i},
+                    React.createElement('td', {style:{padding:'8px 12px',fontSize:11,borderBottom:'1px solid '+C.border+'22'}}, o.aciklama || (data.ortak.ad_soyad + ' - ' + (o.tur||'').toUpperCase())),
+                    React.createElement('td', {style:{padding:'8px 12px',fontSize:12,fontWeight:700,textAlign:'right',color:C.success,borderBottom:'1px solid '+C.border+'22'}}, fmt(o.tutar))
+                  );
+                }),
+                React.createElement('tr', {style:{background:C.bgHover}},
+                  React.createElement('td', {style:{padding:'10px 12px',fontSize:12,fontWeight:800}}, 'TOPLAM ALINAN'),
+                  React.createElement('td', {style:{padding:'10px 12px',fontSize:14,fontWeight:900,textAlign:'right',color:C.success}}, fmt(b1.ortak_toplam_odeme))
+                )
+              )
+            )
+          ),
+
+          /* Dosya masrafları tablosu */
+          React.createElement('div', {style:{background:C.bgCard,borderRadius:12,border:'1px solid '+C.border,padding:16,marginBottom:16}},
+            React.createElement('div', {style:{fontSize:11,color:C.textSec,fontWeight:600,marginBottom:8}},
+              (data.donem?.ay_adi||'') + ' DOSYA MASRAFLARI (' + b1.dosya_sayisi + ' DOSYA)'
+            ),
+            React.createElement('div', {style:{overflowX:'auto'}},
+              React.createElement('table', {style:{width:'100%',borderCollapse:'collapse',minWidth:600}},
+                React.createElement('thead', null,
+                  React.createElement('tr', {style:{background:C.bgHover}},
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'TARİH'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'MAĞDUR ADI SOYADI'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'center',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'DOSYA TÜRÜ'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'center',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'KAYNAK'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'MASRAF')
+                  )
+                ),
+                React.createElement('tbody', null,
+                  (b1.dosyalar||[]).map(function(d,i){
+                    return React.createElement('tr', {key:i, style:{background: i%2===0 ? 'transparent' : C.bgHover+'44'}},
+                      React.createElement('td', {style:{padding:'6px 10px',fontSize:11,borderBottom:'1px solid '+C.border+'22'}},
+                        d.acilis_tarihi ? new Date(d.acilis_tarihi).toLocaleDateString('tr-TR') : '-'
+                      ),
+                      React.createElement('td', {style:{padding:'6px 10px',fontSize:11,fontWeight:600,borderBottom:'1px solid '+C.border+'22'}}, d.magdur_adi || '-'),
+                      React.createElement('td', {style:{padding:'6px 10px',fontSize:11,textAlign:'center',borderBottom:'1px solid '+C.border+'22'}},
+                        React.createElement(Badge, {text:d.dosya_turu, color:d.dosya_turu==='ADK' ? (C.info||C.accent) : d.dosya_turu==='BH' ? C.warning : C.success})
+                      ),
+                      React.createElement('td', {style:{padding:'6px 10px',fontSize:10,textAlign:'center',borderBottom:'1px solid '+C.border+'22'}},
+                        React.createElement(Badge, {text:d.kaynak_kisa, color:d.kaynak_kisa==='OFİS CRM' ? C.accent : C.warning})
+                      ),
+                      React.createElement('td', {style:{padding:'6px 10px',fontSize:12,fontWeight:700,textAlign:'right',borderBottom:'1px solid '+C.border+'22',color:C.danger}}, fmt(d.toplam_masraf))
+                    );
+                  }),
+                  React.createElement('tr', {style:{background:C.bgHover}},
+                    React.createElement('td', {colSpan:4, style:{padding:'10px 12px',fontSize:12,fontWeight:800}}, 'TOPLAM DOSYA MASRAFLARI'),
+                    React.createElement('td', {style:{padding:'10px 12px',fontSize:14,fontWeight:900,textAlign:'right',color:C.danger}}, fmt(b1.toplam_dosya_masraf))
+                  )
+                )
+              )
+            )
+          ),
+
+          /* Dosya türü dağılımı */
+          b1.tur_dagilimi && Object.keys(b1.tur_dagilimi).length > 0 && React.createElement('div', {style:{background:C.bgCard,borderRadius:12,border:'1px solid '+C.border,padding:16,marginBottom:16}},
+            React.createElement('div', {style:{fontSize:11,color:C.textSec,fontWeight:600,marginBottom:8}}, 'DOSYA TÜRÜ DAĞILIMI'),
+            React.createElement('table', {style:{width:'100%',borderCollapse:'collapse',maxWidth:400}},
+              React.createElement('thead', null,
+                React.createElement('tr', {style:{background:C.bgHover}},
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'DOSYA TÜRÜ'),
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'ADET')
+                )
+              ),
+              React.createElement('tbody', null,
+                Object.entries(b1.tur_dagilimi).map(function(e){
+                  var tur=e[0], adet=e[1];
+                  var turAdi = tur==='ADK' ? 'Araç Değer Kaybı (ADK)' : tur==='BH' ? 'Bedeni Hasar (BH)' : tur==='MDK' ? 'Maddi Hasar (MDK)' : tur;
+                  return React.createElement('tr', {key:tur},
+                    React.createElement('td', {style:{padding:'6px 12px',fontSize:11,borderBottom:'1px solid '+C.border+'22'}}, turAdi),
+                    React.createElement('td', {style:{padding:'6px 12px',fontSize:12,fontWeight:700,textAlign:'right',borderBottom:'1px solid '+C.border+'22'}}, adet)
+                  );
+                }),
+                React.createElement('tr', {style:{background:C.bgHover}},
+                  React.createElement('td', {style:{padding:'8px 12px',fontSize:12,fontWeight:800}}, 'TOPLAM DOSYA'),
+                  React.createElement('td', {style:{padding:'8px 12px',fontSize:14,fontWeight:900,textAlign:'right'}}, b1.dosya_sayisi)
+                )
+              )
+            )
+          ),
+
+          /* Bölüm 1 Özet */
+          data.ortak && React.createElement('div', {style:{background:C.warning+'11',borderRadius:12,border:'1px solid '+C.warning+'33',padding:20,marginBottom:16}},
+            React.createElement('div', {style:{fontSize:12,fontWeight:800,color:C.text,marginBottom:12}}, 'BÖLÜM 1 ÖZET — ' + data.ortak.ad_soyad + ' HESABI'),
+            React.createElement('table', {style:{width:'100%',borderCollapse:'collapse'}},
+              React.createElement('tbody', null,
+                b1.ortak_toplam_odeme > 0 && React.createElement('tr', null,
+                  React.createElement('td', {style:{padding:'8px 0',fontSize:12}}, data.ortak.ad_soyad + '\'dan Alınan'),
+                  React.createElement('td', {style:{padding:'8px 0',fontSize:14,fontWeight:700,textAlign:'right',color:C.success}}, fmt(b1.ortak_toplam_odeme))
+                ),
+                React.createElement('tr', null,
+                  React.createElement('td', {style:{padding:'8px 0',fontSize:12}}, 'Dosya Masrafları (' + b1.dosya_sayisi + ' Dosya)'),
+                  React.createElement('td', {style:{padding:'8px 0',fontSize:14,fontWeight:700,textAlign:'right',color:C.danger}}, fmt(b1.toplam_dosya_masraf))
+                ),
+                b1.diger_masraf_yarisi > 0 && React.createElement('tr', null,
+                  React.createElement('td', {style:{padding:'8px 0',fontSize:12}}, 'Diğer Masraflar (Yarısı - ' + data.ortak.ad_soyad + ' Payı)'),
+                  React.createElement('td', {style:{padding:'8px 0',fontSize:14,fontWeight:700,textAlign:'right',color:C.danger}}, fmt(b1.diger_masraf_yarisi))
+                ),
+                React.createElement('tr', {style:{borderTop:'2px solid '+C.border}},
+                  React.createElement('td', {style:{padding:'12px 0',fontSize:13,fontWeight:800}}, b1.ortak_alacak >= 0 ? 'KALAN ALACAK (Tahsil Edilecek)' : 'KALAN BAKİYE (Ortak Lehine)'),
+                  React.createElement('td', {style:{padding:'12px 0',fontSize:20,fontWeight:900,textAlign:'right',color: b1.ortak_alacak >= 0 ? C.danger : C.success}}, fmt(Math.abs(b1.ortak_alacak)))
+                )
+              )
+            )
+          )
+        ),
+
+        /* ═══ BÖLÜM 2: MR NET KAZANÇ ═══ */
+        React.createElement('div', {style:{marginBottom:24}},
+          React.createElement('div', {style:{padding:14,background:C.success+'11',borderRadius:12,border:'1px solid '+C.success+'33',marginBottom:16}},
+            React.createElement('div', {style:{fontSize:14,fontWeight:800,color:C.text}}, 'BÖLÜM 2: MR HASAR NET KAZANÇ')
+          ),
+
+          /* Diğer masraflar */
+          b2 && b2.diger_masraflar && b2.diger_masraflar.length > 0 && React.createElement('div', {style:{background:C.bgCard,borderRadius:12,border:'1px solid '+C.border,padding:16,marginBottom:16}},
+            React.createElement('div', {style:{fontSize:11,color:C.textSec,fontWeight:600,marginBottom:8}}, 'DİĞER MASRAFLAR'),
+            React.createElement('table', {style:{width:'100%',borderCollapse:'collapse'}},
+              React.createElement('thead', null,
+                React.createElement('tr', {style:{background:C.bgHover}},
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA'),
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'TUTAR')
+                )
+              ),
+              React.createElement('tbody', null,
+                b2.diger_masraflar.map(function(m,i){
+                  return React.createElement('tr', {key:i},
+                    React.createElement('td', {style:{padding:'6px 12px',fontSize:11,borderBottom:'1px solid '+C.border+'22'}}, m.aciklama || m.gider_turu),
+                    React.createElement('td', {style:{padding:'6px 12px',fontSize:12,fontWeight:700,textAlign:'right',color:C.danger,borderBottom:'1px solid '+C.border+'22'}}, fmt(m.tutar))
+                  );
+                }),
+                React.createElement('tr', {style:{background:C.bgHover}},
+                  React.createElement('td', {style:{padding:'10px 12px',fontSize:12,fontWeight:800}}, 'DİĞER MASRAFLAR TOPLAMI'),
+                  React.createElement('td', {style:{padding:'10px 12px',fontSize:14,fontWeight:900,textAlign:'right',color:C.danger}}, fmt(b2.toplam_diger_masraf))
+                )
+              )
+            )
+          ),
+
+          /* Kapanan dosyalar kazancı */
+          b2 && React.createElement('div', {style:{background:C.bgCard,borderRadius:12,border:'1px solid '+C.border,padding:16,marginBottom:16}},
+            React.createElement('div', {style:{fontSize:11,color:C.textSec,fontWeight:600,marginBottom:8}},
+              (data.donem?.ay_adi||'') + ' KAPANAN DOSYALAR KAZANCI'
+            ),
+            b2.kapanan_dosyalar && b2.kapanan_dosyalar.length > 0
+              ? React.createElement(React.Fragment, null,
+                  React.createElement('div', {style:{overflowX:'auto'}},
+                    React.createElement('table', {style:{width:'100%',borderCollapse:'collapse',minWidth:500}},
+                      React.createElement('thead', null,
+                        React.createElement('tr', {style:{background:C.bgHover}},
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'DOSYA NO'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'MAĞDUR'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'GELİR'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'MASRAF'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:10,color:C.textMuted,fontWeight:700,borderBottom:'1px solid '+C.border}}, 'NET')
+                        )
+                      ),
+                      React.createElement('tbody', null,
+                        b2.kapanan_dosyalar.map(function(kd,i){
+                          return React.createElement('tr', {key:i},
+                            React.createElement('td', {style:{padding:'6px 10px',fontSize:11,fontWeight:600,borderBottom:'1px solid '+C.border+'22'}}, kd.dosya_no),
+                            React.createElement('td', {style:{padding:'6px 10px',fontSize:11,borderBottom:'1px solid '+C.border+'22'}}, kd.magdur_adi || '-'),
+                            React.createElement('td', {style:{padding:'6px 10px',fontSize:11,fontWeight:700,textAlign:'right',color:C.success,borderBottom:'1px solid '+C.border+'22'}}, fmt(kd.toplam_gelir)),
+                            React.createElement('td', {style:{padding:'6px 10px',fontSize:11,fontWeight:700,textAlign:'right',color:C.danger,borderBottom:'1px solid '+C.border+'22'}}, fmt(kd.toplam_masraf)),
+                            React.createElement('td', {style:{padding:'6px 10px',fontSize:12,fontWeight:800,textAlign:'right',color:kd.net_kar>=0?C.success:C.danger,borderBottom:'1px solid '+C.border+'22'}}, fmt(kd.net_kar))
+                          );
+                        })
+                      )
+                    )
+                  ),
+                  React.createElement('div', {style:{marginTop:12,display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}},
+                    React.createElement('div', {style:{background:C.success+'11',borderRadius:8,padding:12,textAlign:'center'}},
+                      React.createElement('div', {style:{fontSize:10,color:C.textMuted,fontWeight:600}}, 'POZİTİF TOPLAM'),
+                      React.createElement('div', {style:{fontSize:16,fontWeight:900,color:C.success,marginTop:4}}, fmt(b2.pozitif_toplam))
+                    ),
+                    React.createElement('div', {style:{background:C.danger+'11',borderRadius:8,padding:12,textAlign:'center'}},
+                      React.createElement('div', {style:{fontSize:10,color:C.textMuted,fontWeight:600}}, 'MAHSUPLAR'),
+                      React.createElement('div', {style:{fontSize:16,fontWeight:900,color:C.danger,marginTop:4}}, fmt(b2.mahsup_toplam))
+                    ),
+                    React.createElement('div', {style:{background:C.accent+'11',borderRadius:8,padding:12,textAlign:'center'}},
+                      React.createElement('div', {style:{fontSize:10,color:C.textMuted,fontWeight:600}}, 'NET KAZANÇ'),
+                      React.createElement('div', {style:{fontSize:16,fontWeight:900,color:C.accent,marginTop:4}}, fmt(b2.kapanan_net_kazanc))
+                    )
+                  )
+                )
+              : React.createElement('div', {style:{textAlign:'center',padding:20,color:C.textMuted,fontSize:12}}, 'Bu dönemde kapanan dosya bulunmamaktadır.')
+          ),
+
+          /* Bölüm 2 Özet */
+          b2 && React.createElement('div', {style:{background:C.success+'11',borderRadius:12,border:'1px solid '+C.success+'33',padding:20,marginBottom:16}},
+            React.createElement('div', {style:{fontSize:12,fontWeight:800,color:C.text,marginBottom:12}}, 'BÖLÜM 2 ÖZET'),
+            React.createElement('table', {style:{width:'100%',borderCollapse:'collapse'}},
+              React.createElement('tbody', null,
+                React.createElement('tr', null,
+                  React.createElement('td', {style:{padding:'8px 0',fontSize:12}}, 'Kapanan Dosyalar Net Kazancı'),
+                  React.createElement('td', {style:{padding:'8px 0',fontSize:14,fontWeight:700,textAlign:'right',color:C.success}}, fmt(b2.kapanan_net_kazanc))
+                ),
+                b2.diger_masraf_yarisi > 0 && React.createElement('tr', null,
+                  React.createElement('td', {style:{padding:'8px 0',fontSize:12}}, 'Diğer Masraflar (Yarısı - MR Payı)'),
+                  React.createElement('td', {style:{padding:'8px 0',fontSize:14,fontWeight:700,textAlign:'right',color:C.danger}}, fmt(b2.diger_masraf_yarisi))
+                ),
+                React.createElement('tr', {style:{borderTop:'2px solid '+C.border}},
+                  React.createElement('td', {style:{padding:'12px 0',fontSize:13,fontWeight:800}}, 'BÖLÜM 2 NET (MR KASASINA GİREN)'),
+                  React.createElement('td', {style:{padding:'12px 0',fontSize:20,fontWeight:900,textAlign:'right',color: b2.mr_net_kazanc>=0?C.success:C.danger}},
+                    (b2.mr_net_kazanc>=0?'+':'')+fmt(b2.mr_net_kazanc)
+                  )
+                )
+              )
+            )
+          )
+        ),
+
+        /* ═══ FİNAL ÖZET ═══ */
+        fin && React.createElement('div', {style:{padding:24,background:'linear-gradient(135deg, '+C.accent+'11, '+C.accent+'22)',borderRadius:16,border:'1px solid '+C.accent+'33',marginBottom:20}},
+          React.createElement('div', {style:{textAlign:'center',fontSize:16,fontWeight:900,color:C.text,marginBottom:16}},
+            'FİNAL ÖZET — ' + (data.donem?.ay_adi||'') + ' DURUM RAPORU'
+          ),
+          React.createElement('div', {style:{display:'grid',gridTemplateColumns: data.ortak ? '1fr 1fr' : '1fr',gap:16}},
+            data.ortak && React.createElement('div', {style:{background:C.bgCard,borderRadius:12,padding:20,textAlign:'center',border:'1px solid '+C.border}},
+              React.createElement('div', {style:{fontSize:10,color:C.textMuted,fontWeight:600,marginBottom:4}}, data.ortak.ad_soyad + '\'DAN ALINACAK ALACAK'),
+              React.createElement('div', {style:{fontSize:28,fontWeight:900,color: fin.ortak_alacak>=0?C.danger:C.success}}, fmt(Math.abs(fin.ortak_alacak)))
+            ),
+            React.createElement('div', {style:{background:C.bgCard,borderRadius:12,padding:20,textAlign:'center',border:'1px solid '+C.border}},
+              React.createElement('div', {style:{fontSize:10,color:C.textMuted,fontWeight:600,marginBottom:4}}, 'MR KASASINA GİREN NET KAZANÇ'),
+              React.createElement('div', {style:{fontSize:28,fontWeight:900,color: fin.mr_net_kazanc>=0?C.success:C.danger}}, (fin.mr_net_kazanc>=0?'+':'')+fmt(fin.mr_net_kazanc))
+            )
+          ),
+          fin.toplam_diger_masraf > 0 && data.ortak && React.createElement('div', {style:{marginTop:16,display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+            React.createElement('div', {style:{background:C.warning+'11',borderRadius:10,padding:14,border:'1px solid '+C.warning+'33'}},
+              React.createElement('div', {style:{fontSize:10,color:C.textMuted,fontWeight:600,marginBottom:2}}, data.ortak.ad_soyad + ' PAYI'),
+              React.createElement('div', {style:{fontSize:11,color:C.text}}, 'Diğer Masraflar (Yarısı): ', React.createElement('strong', null, fmt(fin.ortak_diger_masraf_payi)))
+            ),
+            React.createElement('div', {style:{background:C.accent+'11',borderRadius:10,padding:14,border:'1px solid '+C.accent+'33'}},
+              React.createElement('div', {style:{fontSize:10,color:C.textMuted,fontWeight:600,marginBottom:2}}, 'MR PAYI'),
+              React.createElement('div', {style:{fontSize:11,color:C.text}}, 'Diğer Masraflar (Yarısı): ', React.createElement('strong', null, fmt(fin.mr_diger_masraf_payi)))
+            )
+          ),
+          fin.toplam_diger_masraf > 0 && data.ortak && React.createElement('div', {style:{marginTop:10,fontSize:10,color:C.textMuted,textAlign:'center',fontStyle:'italic'}},
+            'Not: Diğer masraflar (' + fmt(fin.toplam_diger_masraf) + ') her zaman yarı yarıya ' + data.ortak.ad_soyad + ' ve MR arasında paylaştırılır.'
+          )
+        ),
+
+        /* MR KASA NET KAZANCI - BÜYÜK BANNER */
+        fin && React.createElement('div', {style:{padding:24,background:(fin.mr_net_kazanc>=0?C.success:C.danger)+'15',borderRadius:16,border:'2px solid '+(fin.mr_net_kazanc>=0?C.success+'44':C.danger+'44'),textAlign:'center'}},
+          React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.textSec,letterSpacing:1,marginBottom:8}},
+            (data.donem?.ay_adi||'') + ' MR KASA NET KAZANCI'
+          ),
+          React.createElement('div', {style:{fontSize:40,fontWeight:900,color:fin.mr_net_kazanc>=0?C.success:C.danger}},
+            (fin.mr_net_kazanc>=0?'+':'')+fmt(fin.mr_net_kazanc)
+          ),
+          React.createElement('div', {style:{fontSize:11,color:C.textMuted,marginTop:6}},
+            'MR Kasasına giren net tutar (Kapanan dosyalar - diğer masrafların yarısı)'
+          )
+        )
+      )
+    )
   );
 };

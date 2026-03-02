@@ -179,6 +179,7 @@ MR.api = {
   maliyetAnaliz(p = {}) { return this.req('/muhasebe/maliyet-analiz.php?' + new URLSearchParams(p)); },
   finansalRapor(p = {}) { return this.req('/muhasebe/finansal-rapor.php?' + new URLSearchParams(p)); },
   kapanisRapor(p = {}) { return this.req('/muhasebe/kapanis-rapor.php?' + new URLSearchParams(p)); },
+  aySonuRapor(p = {}) { return this.req('/muhasebe/ay-sonu-rapor.php?' + new URLSearchParams(p)); },
   bakiyeSifirla() { return this.req('/muhasebe/bakiye-sifirla.php', { method: 'POST', body: '{}' }); },
   topluSifirla(modul) { return this.req('/sistem/toplu-sifirla.php', { method: 'POST', body: JSON.stringify({modul}) }); },
   bakiyeDuzelt(d) { return this.req('/muhasebe/bakiye-duzelt.php', { method: 'PUT', body: JSON.stringify(d) }); },
