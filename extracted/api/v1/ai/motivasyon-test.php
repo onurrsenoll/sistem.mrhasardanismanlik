@@ -60,6 +60,7 @@ $sonuc = [
     'key_on_ek' => substr($testKey, 0, 10) . '...' . substr($testKey, -4),
     'curl_destegi' => function_exists('curl_init'),
     'file_get_contents_destegi' => (bool)ini_get('allow_url_fopen'),
+    'socket_destegi' => extension_loaded('openssl'),
     'yontem' => '',
     'http_kodu' => 0,
     'api_yanit' => '',
@@ -68,124 +69,53 @@ $sonuc = [
     'soz' => ''
 ];
 
-// YÖNTEM 1: cURL
-if (function_exists('curl_init')) {
-    $sonuc['yontem'] = 'cURL';
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-        CURLOPT_POSTFIELDS => $requestBody,
-        CURLOPT_TIMEOUT => 15,
-        CURLOPT_CONNECTTIMEOUT => 10,
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_SSL_VERIFYHOST => 0,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
-        CURLOPT_USERAGENT => 'MRHasar/1.0'
-    ]);
+// Evrensel HTTP POST (curl → file_get_contents → socket fallback)
+$res = http_post($url, $requestBody, ['Content-Type: application/json'], 15);
 
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch);
-    $curlErrno = curl_errno($ch);
-    curl_close($ch);
+$sonuc['yontem'] = strtoupper($res['method'] ?: 'YOK');
+$sonuc['http_kodu'] = $res['http_code'];
 
-    $sonuc['http_kodu'] = $httpCode;
-
-    if ($curlErrno !== 0) {
-        // cURL bağlantı hatası
-        $curlHatalar = [
-            6 => 'DNS ÇÖZÜMLENEMEDI - SUNUCU GOOGLE API ADRESINE ULAŞAMIYOR',
-            7 => 'BAĞLANTI KURULAMADI - SUNUCU GOOGLE API SUNUCUSUNA BAĞLANAMIYOR (FIREWALL/PORT ENGELI OLABİLİR)',
-            28 => 'ZAMAN AŞIMI - GOOGLE API SUNUCUSU YANIT VERMEDİ (AĞIR YÜK VEYA AĞ SORUNU)',
-            35 => 'SSL HATASI - SSL/TLS BAĞLANTISI KURULAMADI',
-            56 => 'AĞ VERİSİ ALINAMADI - BAĞLANTI KOPTU',
-            60 => 'SSL SERTİFİKA HATASI - SUNUCU SERTİFİKASI DOĞRULANAMADI'
-        ];
-        $sonuc['hata_detay'] = isset($curlHatalar[$curlErrno])
-            ? $curlHatalar[$curlErrno]
-            : "cURL HATA #{$curlErrno}: {$curlError}";
-    } elseif ($httpCode === 200 && $response) {
-        $data = json_decode($response, true);
-        if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-            $sonuc['basarili'] = true;
-            $sonuc['soz'] = trim($data['candidates'][0]['content']['parts'][0]['text']);
-            $sonuc['api_yanit'] = 'API BAŞARIYLA YANIT VERDİ';
-        } else {
-            $sonuc['hata_detay'] = 'API YANIT VERDİ AMA BEKLENMEDİK FORMAT: ' . substr($response, 0, 300);
-        }
-    } elseif ($response) {
-        // HTTP hata kodu ile yanıt geldi
-        $data = json_decode($response, true);
-        $apiHataMsg = $data['error']['message'] ?? '';
-        $apiHataStatus = $data['error']['status'] ?? '';
-
-        $httpHatalar = [
-            400 => 'GEÇERSİZ İSTEK - API ANAHTARI FORMATI YANLIŞ OLABİLİR',
-            401 => 'YETKİLENDİRME HATASI - API ANAHTARI GEÇERSİZ VEYA İPTAL EDİLMİŞ',
-            403 => 'ERİŞİM ENGELLENDİ - API ANAHTARI BU SERVISE ERİŞİM YETKİSİNE SAHİP DEĞİL. GOOGLE AI STUDIO\'DA GEMİNİ API ETKİNLEŞTİRİLMELİ',
-            404 => 'API BULUNAMADI - MODEL ADI YANLIŞ VEYA KULLANILAMIYOR OLABİLİR',
-            429 => 'KOTA AŞILDI - API ANAHTARI GÜNLÜK/DAKİKALIK LİMİTE ULAŞTI. YENİ ANAHTAR GİRMENİZ VEYA BEKLEMENİZ GEREKİYOR',
-            500 => 'GOOGLE SUNUCU HATASI - GOOGLE TARAFINDA GEÇİCİ SORUN. BİRAZ SONRA TEKRAR DENEYİN',
-            503 => 'GOOGLE SERVİSİ GEÇİCİ OLARAK KULLANILAMIYOR - BİRAZ SONRA TEKRAR DENEYİN'
-        ];
-
-        $sonuc['hata_detay'] = isset($httpHatalar[$httpCode])
-            ? $httpHatalar[$httpCode]
-            : "HTTP {$httpCode} HATASI";
-
-        if ($apiHataMsg) {
-            $sonuc['hata_detay'] .= " | GOOGLE MESAJI: " . mb_strtoupper($apiHataMsg, 'UTF-8');
-        }
+if ($res['http_code'] === 200 && $res['body']) {
+    $data = json_decode($res['body'], true);
+    if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+        $sonuc['basarili'] = true;
+        $sonuc['soz'] = trim($data['candidates'][0]['content']['parts'][0]['text']);
+        $sonuc['api_yanit'] = 'API BAŞARIYLA YANIT VERDİ (' . $res['method'] . ')';
     } else {
-        $sonuc['hata_detay'] = 'BOŞ YANIT ALINDI - BAĞLANTI SORUNLU OLABİLİR';
+        $sonuc['hata_detay'] = 'API YANIT VERDİ AMA BEKLENMEDİK FORMAT: ' . substr($res['body'], 0, 300);
     }
-}
+} elseif ($res['body']) {
+    $data = json_decode($res['body'], true);
+    $apiHataMsg = $data['error']['message'] ?? '';
 
-// YÖNTEM 2: file_get_contents (cURL başarısızsa)
-if (!$sonuc['basarili'] && !function_exists('curl_init') && ini_get('allow_url_fopen')) {
-    $sonuc['yontem'] = 'file_get_contents';
-    $opts = [
-        'http' => [
-            'method' => 'POST',
-            'header' => "Content-Type: application/json\r\nUser-Agent: MRHasar/1.0\r\n",
-            'content' => $requestBody,
-            'timeout' => 15,
-            'ignore_errors' => true
-        ],
-        'ssl' => [
-            'verify_peer' => false,
-            'verify_peer_name' => false
-        ]
+    $httpHatalar = [
+        400 => 'GEÇERSİZ İSTEK - API ANAHTARI FORMATI YANLIŞ OLABİLİR',
+        401 => 'YETKİLENDİRME HATASI - API ANAHTARI GEÇERSİZ VEYA İPTAL EDİLMİŞ',
+        403 => 'ERİŞİM ENGELLENDİ - API ANAHTARI BU SERVISE ERİŞİM YETKİSİNE SAHİP DEĞİL. GOOGLE AI STUDIO\'DA GEMİNİ API ETKİNLEŞTİRİLMELİ',
+        404 => 'API BULUNAMADI - MODEL ADI YANLIŞ VEYA KULLANILAMIYOR OLABİLİR',
+        429 => 'KOTA AŞILDI - API ANAHTARI GÜNLÜK/DAKİKALIK LİMİTE ULAŞTI. YENİ ANAHTAR GİRMENİZ VEYA BEKLEMENİZ GEREKİYOR',
+        500 => 'GOOGLE SUNUCU HATASI - GOOGLE TARAFINDA GEÇİCİ SORUN. BİRAZ SONRA TEKRAR DENEYİN',
+        503 => 'GOOGLE SERVİSİ GEÇİCİ OLARAK KULLANILAMIYOR - BİRAZ SONRA TEKRAR DENEYİN'
     ];
-    $context = stream_context_create($opts);
-    $response = @file_get_contents($url, false, $context);
 
-    if ($response) {
-        $data = json_decode($response, true);
-        if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-            $sonuc['basarili'] = true;
-            $sonuc['soz'] = trim($data['candidates'][0]['content']['parts'][0]['text']);
-            $sonuc['api_yanit'] = 'API BAŞARIYLA YANIT VERDİ (file_get_contents)';
-        } else {
-            $sonuc['hata_detay'] .= ' | file_get_contents: BEKLENMEDİK YANIT FORMATI';
-        }
-    } else {
-        $sonuc['hata_detay'] .= ' | file_get_contents DA BAŞARISIZ OLDU';
+    $sonuc['hata_detay'] = isset($httpHatalar[$res['http_code']])
+        ? $httpHatalar[$res['http_code']]
+        : "HTTP {$res['http_code']} HATASI";
+
+    if ($apiHataMsg) {
+        $sonuc['hata_detay'] .= " | GOOGLE MESAJI: " . mb_strtoupper($apiHataMsg, 'UTF-8');
     }
-}
-
-// İki yöntem de yoksa
-if (!function_exists('curl_init') && !ini_get('allow_url_fopen')) {
-    $sonuc['hata_detay'] = 'SUNUCUDA NE cURL NE DE file_get_contents AKTİF. HOSTING FİRMANIZLA İLETİŞİME GEÇİN';
+} else {
+    if (!empty($res['error'])) {
+        $sonuc['hata_detay'] = 'BAĞLANTI HATASI: ' . mb_strtoupper($res['error'], 'UTF-8');
+    } else {
+        $sonuc['hata_detay'] = 'HİÇBİR HTTP YÖNTEMİ ÇALIŞMIYOR (cURL/file_get_contents/socket)';
+    }
 }
 
 // Özet mesaj oluştur
 if ($sonuc['basarili']) {
-    $sonuc['ozet'] = 'GEMİNİ API BAŞARIYLA ÇALIŞIYOR! KULLANILAN: ' . $keyKaynak;
+    $sonuc['ozet'] = 'GEMİNİ API BAŞARIYLA ÇALIŞIYOR! YÖNTEM: ' . $sonuc['yontem'] . ' | ANAHTAR: ' . $keyKaynak;
 } else {
     $sonuc['ozet'] = 'GEMİNİ API ÇALIŞMIYOR! SEBEP: ' . $sonuc['hata_detay'];
 }

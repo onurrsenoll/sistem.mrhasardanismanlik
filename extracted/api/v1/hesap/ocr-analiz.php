@@ -159,30 +159,17 @@ if ($jsonPayload === false) {
     exit;
 }
 
-$ch = curl_init($url);
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_POST => true,
-    CURLOPT_TIMEOUT => 60,
-    CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-    CURLOPT_POSTFIELDS => $jsonPayload,
-    CURLOPT_SSL_VERIFYPEER => false
-]);
+$res = http_post($url, $jsonPayload, ['Content-Type: application/json'], 60);
 
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlError = curl_error($ch);
-curl_close($ch);
-
-if ($httpCode !== 200 || !$response) {
+if ($res['http_code'] !== 200 || !$res['body']) {
     echo json_encode([
         'success' => false,
-        'error' => 'GEMİNİ API HATASI: HTTP ' . $httpCode . ($curlError ? ' - ' . $curlError : '')
+        'error' => 'GEMİNİ API HATASI: HTTP ' . $res['http_code'] . ($res['error'] ? ' - ' . $res['error'] : '') . ' (yontem: ' . $res['method'] . ')'
     ]);
     exit;
 }
 
-$data = json_decode($response, true);
+$data = json_decode($res['body'], true);
 // Gemini 2.5 Flash - TÜM parçaları topla
 $allTexts = [];
 $allParts = isset($data['candidates'][0]['content']['parts']) ? $data['candidates'][0]['content']['parts'] : [];

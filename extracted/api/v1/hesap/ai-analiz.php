@@ -89,22 +89,10 @@ function callGemini($apiKey, $systemPrompt, $userPrompt) {
         ]
     ];
 
-    $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-        CURLOPT_POSTFIELDS => json_encode($payload)
-    ]);
+    $res = http_post($url, json_encode($payload), ['Content-Type: application/json'], 30);
 
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlErr = curl_error($ch);
-    curl_close($ch);
-
-    if ($httpCode === 200 && $response) {
-        $data = json_decode($response, true);
+    if ($res['http_code'] === 200 && $res['body']) {
+        $data = json_decode($res['body'], true);
         $text = '';
         $allParts = $data['candidates'][0]['content']['parts'] ?? [];
         foreach ($allParts as $part) {
@@ -115,11 +103,11 @@ function callGemini($apiKey, $systemPrompt, $userPrompt) {
 
     // Hata detayını logla
     $errDetail = '';
-    if ($response) {
-        $errData = json_decode($response, true);
+    if ($res['body']) {
+        $errData = json_decode($res['body'], true);
         $errDetail = $errData['error']['message'] ?? '';
     }
-    error_log("GEMINI API HATA: HTTP {$httpCode} - {$errDetail} {$curlErr}");
+    error_log("GEMINI API HATA: HTTP {$res['http_code']} - {$errDetail} {$res['error']} (yontem: {$res['method']})");
     return null;
 }
 
@@ -127,32 +115,21 @@ function callGemini($apiKey, $systemPrompt, $userPrompt) {
    OPENAI API
    ═══════════════════════════════════════════ */
 function callOpenAI($apiKey, $systemPrompt, $userPrompt) {
-    $ch = curl_init('https://api.openai.com/v1/chat/completions');
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_HTTPHEADER => [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $apiKey
+    $res = http_post('https://api.openai.com/v1/chat/completions', json_encode([
+        'model' => 'gpt-4o-mini',
+        'messages' => [
+            ['role' => 'system', 'content' => $systemPrompt],
+            ['role' => 'user', 'content' => $userPrompt]
         ],
-        CURLOPT_POSTFIELDS => json_encode([
-            'model' => 'gpt-4o-mini',
-            'messages' => [
-                ['role' => 'system', 'content' => $systemPrompt],
-                ['role' => 'user', 'content' => $userPrompt]
-            ],
-            'max_tokens' => 800,
-            'temperature' => 0.3
-        ])
-    ]);
+        'max_tokens' => 800,
+        'temperature' => 0.3
+    ]), [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $apiKey
+    ], 30);
 
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($httpCode === 200 && $response) {
-        $data = json_decode($response, true);
+    if ($res['http_code'] === 200 && $res['body']) {
+        $data = json_decode($res['body'], true);
         $text = $data['choices'][0]['message']['content'] ?? '';
         return !empty($text) ? $text : null;
     }

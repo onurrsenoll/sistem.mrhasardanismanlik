@@ -94,59 +94,13 @@ $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash
 
 $soz = '';
 
-// YÖNTEM 1: cURL
-if (function_exists('curl_init')) {
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-        CURLOPT_POSTFIELDS => $requestBody,
-        CURLOPT_TIMEOUT => 10,
-        CURLOPT_CONNECTTIMEOUT => 5,
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_SSL_VERIFYHOST => 0,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
-        CURLOPT_USERAGENT => 'MRHasar/1.0'
-    ]);
+// Evrensel HTTP POST (curl → file_get_contents → socket fallback)
+$res = http_post($url, $requestBody, ['Content-Type: application/json'], 10);
 
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($httpCode === 200 && $response) {
-        $data = json_decode($response, true);
-        if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-            $soz = trim($data['candidates'][0]['content']['parts'][0]['text']);
-        }
-    }
-}
-
-// YÖNTEM 2: file_get_contents (cURL başarısızsa)
-if (empty($soz) && ini_get('allow_url_fopen')) {
-    $opts = [
-        'http' => [
-            'method' => 'POST',
-            'header' => "Content-Type: application/json\r\nUser-Agent: MRHasar/1.0\r\n",
-            'content' => $requestBody,
-            'timeout' => 10,
-            'ignore_errors' => true
-        ],
-        'ssl' => [
-            'verify_peer' => false,
-            'verify_peer_name' => false
-        ]
-    ];
-    $context = stream_context_create($opts);
-    $response = @file_get_contents($url, false, $context);
-
-    if ($response) {
-        $data = json_decode($response, true);
-        if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-            $soz = trim($data['candidates'][0]['content']['parts'][0]['text']);
-        }
+if ($res['http_code'] === 200 && $res['body']) {
+    $data = json_decode($res['body'], true);
+    if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+        $soz = trim($data['candidates'][0]['content']['parts'][0]['text']);
     }
 }
 

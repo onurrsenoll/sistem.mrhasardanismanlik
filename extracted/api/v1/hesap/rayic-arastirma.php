@@ -85,33 +85,19 @@ $payload = [
     ]
 ];
 
-$ch = curl_init($url);
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_POST => true,
-    CURLOPT_TIMEOUT => 60,
-    CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-    CURLOPT_POSTFIELDS => json_encode($payload)
-]);
+$res = http_post($url, json_encode($payload), ['Content-Type: application/json'], 60);
 
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlError = curl_error($ch);
-curl_close($ch);
-
-if ($httpCode !== 200 || !$response) {
-    // Hata detayını Gemini yanıtından al
+if ($res['http_code'] !== 200 || !$res['body']) {
     $errDetail = '';
-    if ($response) {
-        $errData = json_decode($response, true);
-        $errDetail = $errData['error']['message'] ?? $errData['error']['status'] ?? substr($response, 0, 300);
+    if ($res['body']) {
+        $errData = json_decode($res['body'], true);
+        $errDetail = $errData['error']['message'] ?? $errData['error']['status'] ?? substr($res['body'], 0, 300);
     }
-    echo json_encode(['success' => false, 'error' => 'AI HATA (HTTP ' . $httpCode . '): ' . ($errDetail ?: $curlError ?: 'YANIT YOK')]);
+    echo json_encode(['success' => false, 'error' => 'AI HATA (HTTP ' . $res['http_code'] . '): ' . ($errDetail ?: $res['error'] ?: 'YANIT YOK')]);
     exit;
 }
 
-$data = json_decode($response, true);
-// Gemini 2.5 Flash thinking model - TÜM parçaları birleştir veya son metin parçasını al
+$data = json_decode($res['body'], true);
 $allParts = $data['candidates'][0]['content']['parts'] ?? [];
 $text = '';
 $allTexts = [];

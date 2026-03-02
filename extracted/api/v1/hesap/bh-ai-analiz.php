@@ -81,22 +81,10 @@ function callGeminiBH($apiKey, $systemPrompt, $userPrompt) {
         ]
     ];
 
-    $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-        CURLOPT_POSTFIELDS => json_encode($payload)
-    ]);
+    $res = http_post($url, json_encode($payload), ['Content-Type: application/json'], 30);
 
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($httpCode === 200 && $response) {
-        $data = json_decode($response, true);
-        // Gemini 2.5 Flash thinking model - son metin parçasını al
+    if ($res['http_code'] === 200 && $res['body']) {
+        $data = json_decode($res['body'], true);
         $text = '';
         $allParts = $data['candidates'][0]['content']['parts'] ?? [];
         foreach ($allParts as $part) {
@@ -111,32 +99,21 @@ function callGeminiBH($apiKey, $systemPrompt, $userPrompt) {
    OPENAI API
    ═══════════════════════════════════════════ */
 function callOpenAIBH($apiKey, $systemPrompt, $userPrompt) {
-    $ch = curl_init('https://api.openai.com/v1/chat/completions');
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_HTTPHEADER => [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $apiKey
+    $res = http_post('https://api.openai.com/v1/chat/completions', json_encode([
+        'model' => 'gpt-4o-mini',
+        'messages' => [
+            ['role' => 'system', 'content' => $systemPrompt],
+            ['role' => 'user', 'content' => $userPrompt]
         ],
-        CURLOPT_POSTFIELDS => json_encode([
-            'model' => 'gpt-4o-mini',
-            'messages' => [
-                ['role' => 'system', 'content' => $systemPrompt],
-                ['role' => 'user', 'content' => $userPrompt]
-            ],
-            'max_tokens' => 1000,
-            'temperature' => 0.3
-        ])
-    ]);
+        'max_tokens' => 1000,
+        'temperature' => 0.3
+    ]), [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $apiKey
+    ], 30);
 
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($httpCode === 200 && $response) {
-        $data = json_decode($response, true);
+    if ($res['http_code'] === 200 && $res['body']) {
+        $data = json_decode($res['body'], true);
         return $data['choices'][0]['message']['content'] ?? null;
     }
     return null;
