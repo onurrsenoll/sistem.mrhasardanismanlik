@@ -424,6 +424,7 @@ MR._CRMListesiInner = ({setPage, user}) => {
                 <select style={S.select} value={editData.dosya_turu} onChange={e => editUp('dosya_turu', e.target.value)}>
                   <option value="ADK">ADK</option>
                   <option value="BH">BEDENİ HASAR</option>
+                  <option value="MDK">MOTOR DEĞER KAYBI</option>
                 </select>
               </FormGroup>
               <FormGroup label="KAYNAK">
@@ -827,6 +828,7 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
                 <select style={S.select} value={editData.dosya_turu} onChange={e => editUp('dosya_turu', e.target.value)}>
                   <option value="ADK">ADK</option>
                   <option value="BH">BEDENİ HASAR</option>
+                  <option value="MDK">MOTOR DEĞER KAYBI</option>
                 </select>
               </FormGroup>
               <FormGroup label="KAYNAK">
@@ -1414,6 +1416,7 @@ MR._CRMYeniInner = ({setPage}) => {
                 <select style={S.select} value={f.dosya_turu} onChange={e => up('dosya_turu', e.target.value)}>
                   <option value="ADK">ADK</option>
                   <option value="BH">BEDENİ HASAR</option>
+                  <option value="MDK">MOTOR DEĞER KAYBI</option>
                 </select>
               </FormGroup>
               <FormGroup label="KAZA TARİHİ">

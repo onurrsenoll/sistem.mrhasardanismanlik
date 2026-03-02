@@ -414,8 +414,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <div style={{display:'flex',alignItems:'center',gap:8}}>
                 <span style={{fontSize:18,fontWeight:800}}>{dosya.dosya_no}</span>
                 <span style={{padding:'2px 8px',borderRadius:4,fontSize:9,fontWeight:700,
-                  background:dosya.dosya_turu==='ADK'?`${C.accent}18`:`${C.purple}18`,
-                  color:dosya.dosya_turu==='ADK'?C.accent:C.purple}}>
+                  background:dosya.dosya_turu==='ADK'?`${C.accent}18`:dosya.dosya_turu==='MDK'?`${C.gold||'#f59e0b'}18`:`${C.purple}18`,
+                  color:dosya.dosya_turu==='ADK'?C.accent:dosya.dosya_turu==='MDK'?(C.gold||'#f59e0b'):C.purple}}>
                   {dosya.dosya_turu}
                 </span>
                 <span style={{padding:'2px 8px',borderRadius:4,fontSize:8,fontWeight:600,background:ac+'18',color:ac,border:`1px solid ${ac}33`}}>
@@ -549,7 +549,17 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <span style={{fontSize:12,fontWeight:700}}>FİNANSAL ÖZET</span>
               </div>
               <div style={{padding:'10px 14px'}}>
+                <InfoRow label="TOPLAM TAHSİLAT" value={fmt(dosya.tahsil_edilen || 0)} bold color={C.success}/>
+                <InfoRow label="TOPLAM GELİR (BEKLENENLERle)" value={fmt(dosya.toplam_gelir || 0)} color={C.textSec}/>
                 <InfoRow label="TOPLAM MASRAF" value={fmt(dosya.toplam_masraf || 0)} bold color={C.danger}/>
+                <div style={{margin:'8px 0',borderTop:`1px dashed ${C.border}`}}/>
+                <InfoRow label="NET KAR" value={fmt(dosya.net_kar || 0)} bold color={(dosya.net_kar || 0) >= 0 ? C.success : C.danger}/>
+                <div style={{margin:'8px 0',padding:10,background:`${C.accent}08`,borderRadius:8,border:`1px solid ${C.accent}22`}}>
+                  <div style={{fontSize:10,color:C.textMuted,fontWeight:600,marginBottom:6,letterSpacing:0.5}}>%50 - %50 PAYLAŞIM</div>
+                  <InfoRow label="BENİM PAYIM (%50)" value={fmt(dosya.benim_payim || 0)} bold color={C.accent}/>
+                  <InfoRow label="AVUKAT PAYI (%50)" value={fmt(dosya.avukat_payi || 0)} bold color={C.purple || '#8b5cf6'}/>
+                </div>
+                <div style={{margin:'8px 0',borderTop:`1px dashed ${C.border}`}}/>
                 <InfoRow label="MASRAF SAYISI" value={dosya.masraflar?.length || 0}/>
                 <InfoRow label="EVRAK SAYISI" value={dosya.evraklar?.length || 0}/>
               </div>
@@ -1251,6 +1261,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             <select value={editForm.dosya_turu} onChange={e => u('dosya_turu',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
               <option value="ADK">ADK</option>
               <option value="BH">BH</option>
+              <option value="MDK">MDK</option>
             </select>
           </FormGroup>
           <FormGroup label="SİGORTA ŞİRKETİ">

@@ -59,7 +59,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     if (form.dosya_kaynak === 'PAYDAŞ/YÖNLENDİREN' && !form.paydas_id) return 'YÖNLENDİREN PAYDAŞ SEÇİMİ GEREKLİ';
     if (!form.sigorta_sirket) return 'SİGORTA ŞİRKETİ SEÇİMİ GEREKLİ';
     if (!form.hasar_no.trim()) return 'HASAR DOSYA NO GEREKLİ';
-    if (form.dosya_turu === 'ADK' && !form.ma_plaka.trim()) return 'MAĞDUR ARACI PLAKASI GEREKLİ';
+    if ((form.dosya_turu === 'ADK' || form.dosya_turu === 'MDK') && !form.ma_plaka.trim()) return 'MAĞDUR ARACI PLAKASI GEREKLİ';
     return null;
   };
 
@@ -91,7 +91,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
   );
 
   // Computed values
-  const isADK = form.dosya_turu === 'ADK';
+  const isADK = form.dosya_turu === 'ADK' || form.dosya_turu === 'MDK';
   const isBH = form.dosya_turu === 'BH';
   const isPaydas = form.dosya_kaynak === 'PAYDAŞ/YÖNLENDİREN';
   const seciliOrtak = ortaklar.find(o => String(o.id) === String(form.ortak_id));
@@ -112,6 +112,11 @@ MR.DosyaYeniPage = ({setPage, user}) => {
           {result.oto_prim?.paydas_prim > 0 && (
             <div style={{marginTop:16,padding:12,background:`${C.gold || C.warning}11`,borderRadius:10,border:`1px solid ${C.gold || C.warning}33`,fontSize:12,color:C.textSec}}>
               PAYDAŞ PRİMİ: <strong>₺{result.oto_prim.paydas_prim}</strong> — MASRAF VE CARİYE OTOMATİK EKLENDİ (ÖDENMEDİ)
+            </div>
+          )}
+          {result.oto_prim?.yonlendiren_ucret > 0 && (
+            <div style={{marginTop:8,padding:12,background:`${C.accent}11`,borderRadius:10,border:`1px solid ${C.accent}33`,fontSize:12,color:C.textSec}}>
+              YÖNLENDİREN ÜCRETİ: <strong>₺{Number(result.oto_prim.yonlendiren_ucret).toLocaleString('tr-TR')}</strong> — {result.oto_prim.yonlendiren_tur} MASRAFA OTOMATİK EKLENDİ
             </div>
           )}
           <div style={{display:'flex',gap:12,justifyContent:'center',marginTop:24}}>
@@ -153,6 +158,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
               <select style={S.select} value={form.dosya_turu} onChange={e=>u('dosya_turu',e.target.value)}>
                 <option value="ADK">ARAÇ DEĞER KAYBI (ADK)</option>
                 <option value="BH">BEDENİ HASAR (BH)</option>
+                <option value="MDK">MOTOR DEĞER KAYBI (MDK)</option>
               </select>
             </FormGroup>
             <FormGroup label="KAZA TARİHİ *"><DateInput value={form.kaza_tarihi} onChange={v=>u('kaza_tarihi',v)}/></FormGroup>

@@ -519,8 +519,8 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                       {/* DOSYA TÜRÜ */}
                       <td style={{...tdS,textAlign:'center'}}>
                         <span style={{display:'inline-block',padding:'2px 8px',borderRadius:4,fontSize:9,fontWeight:700,
-                          background:d.dosya_turu==='ADK'?`${C.accent}18`:d.dosya_turu==='BH'?`${C.purple}18`:'#6b728018',
-                          color:d.dosya_turu==='ADK'?C.accent:d.dosya_turu==='BH'?C.purple:'#6b7280'}}>
+                          background:d.dosya_turu==='ADK'?`${C.accent}18`:d.dosya_turu==='BH'?`${C.purple}18`:d.dosya_turu==='MDK'?`${C.gold||'#f59e0b'}18`:'#6b728018',
+                          color:d.dosya_turu==='ADK'?C.accent:d.dosya_turu==='BH'?C.purple:d.dosya_turu==='MDK'?(C.gold||'#f59e0b'):'#6b7280'}}>
                           {d.dosya_turu || '-'}
                         </span>
                       </td>

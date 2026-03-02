@@ -18,7 +18,8 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
     {key:'komisyon', label:'KOMİSYON / PRİM',      icon:'Percent'},
     {key:'kasa',     label:'KASA / BANKA',          icon:'Wallet'},
     {key:'maliyet',  label:'MALİYET ANALİZİ',      icon:'PieChart'},
-    {key:'rapor',    label:'FİNANSAL RAPORLAR',     icon:'BarChart3'}
+    {key:'rapor',    label:'FİNANSAL RAPORLAR',     icon:'BarChart3'},
+    {key:'kapanis',  label:'KAPANIŞ RAPORU',         icon:'FileCheck'}
   ];
 
   return (
@@ -51,6 +52,7 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
       {aktifSekme === 'kasa'     && <KasaBanka     setPage={setPage} user={user}/>}
       {aktifSekme === 'maliyet'  && <MaliyetAnalizi setPage={setPage} user={user}/>}
       {aktifSekme === 'rapor'    && <FinansalRaporlar setPage={setPage} user={user}/>}
+      {aktifSekme === 'kapanis'  && <KapanisRaporu setPage={setPage} user={user}/>}
     </div>
   );
 };
@@ -1825,6 +1827,281 @@ const FinansalRaporlar = ({setPage, user}) => {
             </div>
             <div style={{marginTop:8}}>
               <Badge text={netKar >= 0 ? 'KAR' : 'ZARAR'} color={netKar >= 0 ? C.success : C.danger}/>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   SEKME 7 – KAPANIŞ RAPORU (AVUKAT BAZLI + GENEL)
+   ═══════════════════════════════════════════════════════════ */
+const KapanisRaporu = ({setPage, user}) => {
+  const {C, S, LIcon, StatCard, SectionTitle, Badge, Loading, EmptyState, api, fmt} = MR;
+  const [loading, setLoading] = useState(false);
+  const [rapor, setRapor] = useState(null);
+  const [baslangic, setBaslangic] = useState(new Date().toISOString().slice(0,7) + '-01');
+  const [bitis, setBitis] = useState(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().slice(0,10));
+  const [gorunum, setGorunum] = useState('avukat'); // 'avukat' veya 'genel'
+  const [seciliAvukat, setSeciliAvukat] = useState(null);
+
+  const raporGetir = async () => {
+    setLoading(true);
+    const r = await api.kapanisRapor({baslangic, bitis});
+    if (r?.success) setRapor(r.data);
+    setLoading(false);
+  };
+
+  const donemAyarla = (ay) => {
+    const d = new Date(ay + '-01');
+    setBaslangic(d.toISOString().slice(0,10));
+    const son = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    setBitis(son.toISOString().slice(0,10));
+  };
+
+  const genelToplam = rapor?.genel_toplam || {};
+  const avukatGruplari = rapor?.avukat_gruplari || [];
+  const devir = rapor?.onceki_donem_devir || 0;
+
+  // Tüm dosyalar düz liste
+  const tumDosyalar = useMemo(() => {
+    const list = [];
+    avukatGruplari.forEach(g => { (g.dosyalar || []).forEach(d => list.push({...d, avukat_adi: g.avukat_adi})); });
+    return list;
+  }, [avukatGruplari]);
+
+  return (
+    <div>
+      {/* DÖNEM SEÇİCİ */}
+      <div style={{...S.card, marginBottom:20}}>
+        <div style={{padding:16,display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+          <LIcon name="Calendar" size={16} color={C.accent}/>
+          <span style={{fontSize:12,fontWeight:700}}>DÖNEM:</span>
+          <input type="month" value={baslangic.slice(0,7)}
+            onChange={e => donemAyarla(e.target.value)}
+            style={{...S.input,width:180,fontSize:12}}/>
+          <button onClick={raporGetir} disabled={loading}
+            style={{...S.btn,...S.btnP,fontSize:11,padding:'8px 20px'}}>
+            <LIcon name="Search" size={14} color="#fff"/> {loading ? 'YÜKLENİYOR...' : 'RAPOR GETİR'}
+          </button>
+          <div style={{flex:1}}/>
+          <div style={{display:'flex',gap:4}}>
+            <button onClick={() => setGorunum('avukat')}
+              style={{...S.btn,fontSize:10,padding:'6px 14px',
+                background: gorunum==='avukat' ? `${C.accent}22` : 'transparent',
+                border:`1px solid ${gorunum==='avukat' ? C.accent+'44' : C.border}`,
+                color: gorunum==='avukat' ? C.accent : C.textSec}}>
+              <LIcon name="Users" size={12}/> AVUKAT BAZLI
+            </button>
+            <button onClick={() => setGorunum('genel')}
+              style={{...S.btn,fontSize:10,padding:'6px 14px',
+                background: gorunum==='genel' ? `${C.accent}22` : 'transparent',
+                border:`1px solid ${gorunum==='genel' ? C.accent+'44' : C.border}`,
+                color: gorunum==='genel' ? C.accent : C.textSec}}>
+              <LIcon name="List" size={12}/> GENEL
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {!rapor && !loading && (
+        <EmptyState icon="FileCheck" title="KAPANIŞ RAPORU" desc="DÖNEM SEÇİP 'RAPOR GETİR' BUTONUNA BASIN"/>
+      )}
+
+      {loading && <Loading/>}
+
+      {rapor && !loading && (
+        <>
+          {/* GENEL ÖZET KARTLARI */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:20}}>
+            <StatCard icon="FileCheck" label="KAPANAN DOSYA" value={genelToplam.dosya_sayisi || 0} color={C.accent}/>
+            <StatCard icon="TrendingUp" label="TOPLAM TAHSİLAT" value={fmt(genelToplam.toplam_tahsilat || 0)} color={C.success}/>
+            <StatCard icon="TrendingDown" label="TOPLAM MASRAF" value={fmt(genelToplam.toplam_masraf || 0)} color={C.danger}/>
+            <StatCard icon="DollarSign" label="NET KAR" value={fmt(genelToplam.toplam_net_kar || 0)} color={(genelToplam.toplam_net_kar||0) >= 0 ? C.success : C.danger}/>
+          </div>
+
+          {/* %50-%50 PAYLAŞIM BANNER */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14,marginBottom:20}}>
+            <div style={{...S.card,padding:16,textAlign:'center',background:`${C.accent}08`,border:`1px solid ${C.accent}22`}}>
+              <div style={{fontSize:10,color:C.textMuted,fontWeight:600,marginBottom:4}}>BENİM PAYIM (%50)</div>
+              <div style={{fontSize:22,fontWeight:900,color:C.accent}}>{fmt(genelToplam.toplam_benim_payim || 0)}</div>
+            </div>
+            <div style={{...S.card,padding:16,textAlign:'center',background:`${C.purple || '#8b5cf6'}08`,border:`1px solid ${C.purple || '#8b5cf6'}22`}}>
+              <div style={{fontSize:10,color:C.textMuted,fontWeight:600,marginBottom:4}}>AVUKAT PAYI (%50)</div>
+              <div style={{fontSize:22,fontWeight:900,color:C.purple || '#8b5cf6'}}>{fmt(genelToplam.toplam_avukat_payi || 0)}</div>
+            </div>
+            <div style={{...S.card,padding:16,textAlign:'center',background:`${C.warning}08`,border:`1px solid ${C.warning}22`}}>
+              <div style={{fontSize:10,color:C.textMuted,fontWeight:600,marginBottom:4}}>YÖNLENDİREN ÜCRETLERİ</div>
+              <div style={{fontSize:22,fontWeight:900,color:C.warning}}>{fmt(genelToplam.toplam_yonlendiren || 0)}</div>
+            </div>
+          </div>
+
+          {/* ÖNCEKİ DÖNEM DEVİR */}
+          {devir > 0 && (
+            <div style={{...S.card,padding:14,marginBottom:20,background:`${C.warning}08`,border:`1px solid ${C.warning}22`,display:'flex',alignItems:'center',gap:10}}>
+              <LIcon name="ArrowRight" size={16} color={C.warning}/>
+              <span style={{fontSize:12,fontWeight:600}}>ÖNCEKİ DÖNEMDEN DEVİR (ÖDENMEMİŞ MASRAFLAR):</span>
+              <span style={{fontSize:14,fontWeight:800,color:C.warning}}>{fmt(devir)}</span>
+            </div>
+          )}
+
+          {/* AVUKAT BAZLI GÖRÜNÜM */}
+          {gorunum === 'avukat' && (
+            <div>
+              {avukatGruplari.length === 0 ? (
+                <EmptyState icon="Users" title="KAPANAN DOSYA YOK" desc="SEÇİLEN DÖNEMDE KAPANAN DOSYA BULUNMAMAKTADIR"/>
+              ) : (
+                avukatGruplari.map((g, gi) => (
+                  <div key={gi} style={{...S.card, marginBottom:16}}>
+                    {/* AVUKAT BAŞLIK */}
+                    <div style={{padding:'12px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',background:`${C.accent}06`,cursor:'pointer'}}
+                      onClick={() => setSeciliAvukat(seciliAvukat === gi ? null : gi)}>
+                      <div style={{display:'flex',alignItems:'center',gap:10}}>
+                        <LIcon name="User" size={16} color={C.accent}/>
+                        <span style={{fontSize:13,fontWeight:700}}>{g.avukat_adi}</span>
+                        <Badge text={g.dosya_sayisi + ' DOSYA'} color={C.accent}/>
+                      </div>
+                      <div style={{display:'flex',alignItems:'center',gap:16}}>
+                        <div style={{textAlign:'right'}}>
+                          <div style={{fontSize:9,color:C.textMuted}}>TAHSİLAT</div>
+                          <div style={{fontSize:13,fontWeight:700,color:C.success}}>{fmt(g.toplam_tahsilat)}</div>
+                        </div>
+                        <div style={{textAlign:'right'}}>
+                          <div style={{fontSize:9,color:C.textMuted}}>MASRAF</div>
+                          <div style={{fontSize:13,fontWeight:700,color:C.danger}}>{fmt(g.toplam_masraf)}</div>
+                        </div>
+                        <div style={{textAlign:'right'}}>
+                          <div style={{fontSize:9,color:C.textMuted}}>NET KAR</div>
+                          <div style={{fontSize:13,fontWeight:700,color:g.toplam_net_kar >= 0 ? C.success : C.danger}}>{fmt(g.toplam_net_kar)}</div>
+                        </div>
+                        <div style={{textAlign:'right'}}>
+                          <div style={{fontSize:9,color:C.textMuted}}>BENİM PAYIM</div>
+                          <div style={{fontSize:13,fontWeight:700,color:C.accent}}>{fmt(g.toplam_benim_payim)}</div>
+                        </div>
+                        <LIcon name={seciliAvukat === gi ? 'ChevronUp' : 'ChevronDown'} size={16} color={C.textMuted}/>
+                      </div>
+                    </div>
+
+                    {/* DOSYA DETAYLARI TABLOSU */}
+                    {seciliAvukat === gi && (
+                      <div style={{overflowX:'auto'}}>
+                        <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                          <thead>
+                            <tr style={{background:C.bgHover}}>
+                              {['DOSYA NO','MÜVEKKİL','TÜR','TAHSİLAT','MASRAF','YÖN. ÜCRET','NET KAR','PAY (%50)'].map(h =>
+                                <th key={h} style={{padding:'10px 12px',textAlign:'left',color:C.textMuted,fontWeight:700,fontSize:10,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                              )}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(g.dosyalar || []).map((d, di) => (
+                              <tr key={di} style={{borderBottom:`1px solid ${C.border}`}}
+                                onMouseEnter={e=>e.currentTarget.style.background=C.bgHover}
+                                onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                                <td style={{padding:'8px 12px',fontWeight:600,color:C.accent}}>{d.dosya_no}</td>
+                                <td style={{padding:'8px 12px'}}>{d.muvekkil}</td>
+                                <td style={{padding:'8px 12px'}}><Badge text={d.dosya_turu} color={d.dosya_turu==='ADK'?C.accent:d.dosya_turu==='BH'?C.danger:d.dosya_turu==='MDK'?'#f59e0b':C.textMuted}/></td>
+                                <td style={{padding:'8px 12px',fontWeight:600,color:C.success}}>{fmt(d.tahsilat)}</td>
+                                <td style={{padding:'8px 12px',fontWeight:600,color:C.danger}}>{fmt(d.masraf)}</td>
+                                <td style={{padding:'8px 12px',fontWeight:600,color:C.warning}}>{fmt(d.yonlendiren_ucret)}</td>
+                                <td style={{padding:'8px 12px',fontWeight:700,color:d.net_kar >= 0 ? C.success : C.danger}}>{fmt(d.net_kar)}</td>
+                                <td style={{padding:'8px 12px',fontWeight:700,color:C.accent}}>{fmt(d.benim_payim)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr style={{background:`${C.accent}08`,borderTop:`2px solid ${C.border}`}}>
+                              <td colSpan={3} style={{padding:'10px 12px',fontWeight:800,fontSize:11}}>TOPLAM ({g.dosya_sayisi} DOSYA)</td>
+                              <td style={{padding:'10px 12px',fontWeight:800,color:C.success}}>{fmt(g.toplam_tahsilat)}</td>
+                              <td style={{padding:'10px 12px',fontWeight:800,color:C.danger}}>{fmt(g.toplam_masraf)}</td>
+                              <td style={{padding:'10px 12px',fontWeight:800,color:C.warning}}>{fmt(g.toplam_yonlendiren)}</td>
+                              <td style={{padding:'10px 12px',fontWeight:800,color:g.toplam_net_kar >= 0 ? C.success : C.danger}}>{fmt(g.toplam_net_kar)}</td>
+                              <td style={{padding:'10px 12px',fontWeight:800,color:C.accent}}>{fmt(g.toplam_benim_payim)}</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* GENEL GÖRÜNÜM - TÜM DOSYALAR TEK TABLODA */}
+          {gorunum === 'genel' && (
+            <div style={S.card}>
+              <SectionTitle icon="FileCheck" title="TÜM KAPANAN DOSYALAR" sub={`${baslangic} — ${bitis} DÖNEMİ`}/>
+              {tumDosyalar.length === 0 ? (
+                <div style={S.cardBody}>
+                  <EmptyState icon="FileCheck" title="KAPANAN DOSYA YOK" desc="SEÇİLEN DÖNEMDE KAPANAN DOSYA BULUNMAMAKTADIR"/>
+                </div>
+              ) : (
+                <div style={{overflowX:'auto'}}>
+                  <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                    <thead>
+                      <tr style={{background:C.bgHover}}>
+                        {['#','DOSYA NO','MÜVEKKİL','TÜR','AVUKAT','TAHSİLAT','MASRAF','YÖN. ÜCRET','NET KAR','PAY (%50)'].map(h =>
+                          <th key={h} style={{padding:'10px 12px',textAlign:'left',color:C.textMuted,fontWeight:700,fontSize:10,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tumDosyalar.map((d, i) => (
+                        <tr key={i} style={{borderBottom:`1px solid ${C.border}`}}
+                          onMouseEnter={e=>e.currentTarget.style.background=C.bgHover}
+                          onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                          <td style={{padding:'8px 12px',color:C.textMuted}}>{i+1}</td>
+                          <td style={{padding:'8px 12px',fontWeight:600,color:C.accent}}>{d.dosya_no}</td>
+                          <td style={{padding:'8px 12px'}}>{d.muvekkil}</td>
+                          <td style={{padding:'8px 12px'}}><Badge text={d.dosya_turu} color={d.dosya_turu==='ADK'?C.accent:d.dosya_turu==='BH'?C.danger:d.dosya_turu==='MDK'?'#f59e0b':C.textMuted}/></td>
+                          <td style={{padding:'8px 12px',fontSize:10}}>{d.avukat_adi}</td>
+                          <td style={{padding:'8px 12px',fontWeight:600,color:C.success}}>{fmt(d.tahsilat)}</td>
+                          <td style={{padding:'8px 12px',fontWeight:600,color:C.danger}}>{fmt(d.masraf)}</td>
+                          <td style={{padding:'8px 12px',fontWeight:600,color:C.warning}}>{fmt(d.yonlendiren_ucret)}</td>
+                          <td style={{padding:'8px 12px',fontWeight:700,color:d.net_kar >= 0 ? C.success : C.danger}}>{fmt(d.net_kar)}</td>
+                          <td style={{padding:'8px 12px',fontWeight:700,color:C.accent}}>{fmt(d.benim_payim)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr style={{background:`${C.accent}08`,borderTop:`2px solid ${C.border}`}}>
+                        <td colSpan={5} style={{padding:'10px 12px',fontWeight:800,fontSize:11}}>GENEL TOPLAM ({genelToplam.dosya_sayisi} DOSYA)</td>
+                        <td style={{padding:'10px 12px',fontWeight:800,color:C.success}}>{fmt(genelToplam.toplam_tahsilat)}</td>
+                        <td style={{padding:'10px 12px',fontWeight:800,color:C.danger}}>{fmt(genelToplam.toplam_masraf)}</td>
+                        <td style={{padding:'10px 12px',fontWeight:800,color:C.warning}}>{fmt(genelToplam.toplam_yonlendiren)}</td>
+                        <td style={{padding:'10px 12px',fontWeight:800,color:(genelToplam.toplam_net_kar||0) >= 0 ? C.success : C.danger}}>{fmt(genelToplam.toplam_net_kar)}</td>
+                        <td style={{padding:'10px 12px',fontWeight:800,color:C.accent}}>{fmt(genelToplam.toplam_benim_payim)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* GENEL SONUÇ BANNER */}
+          <div style={{marginTop:20,display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+            <div style={{background:`${C.success}11`,borderRadius:12,border:`1px solid ${C.success}33`,padding:20,textAlign:'center'}}>
+              <div style={{fontSize:11,color:C.textSec,fontWeight:600,marginBottom:6,letterSpacing:0.5}}>GELEN ÖDEME (TAHSİLAT)</div>
+              <div style={{fontSize:28,fontWeight:900,color:C.success}}>{fmt(genelToplam.toplam_tahsilat || 0)}</div>
+            </div>
+            <div style={{background:`${C.danger}11`,borderRadius:12,border:`1px solid ${C.danger}33`,padding:20,textAlign:'center'}}>
+              <div style={{fontSize:11,color:C.textSec,fontWeight:600,marginBottom:6,letterSpacing:0.5}}>TOPLAM MASRAFLAR</div>
+              <div style={{fontSize:28,fontWeight:900,color:C.danger}}>{fmt(genelToplam.toplam_masraf || 0)}</div>
+            </div>
+          </div>
+          <div style={{marginTop:14,background:(genelToplam.toplam_net_kar||0) >= 0 ? `${C.success}11` : `${C.danger}11`,borderRadius:12,border:`1px solid ${(genelToplam.toplam_net_kar||0) >= 0 ? C.success+'33' : C.danger+'33'}`,padding:24,textAlign:'center'}}>
+            <div style={{fontSize:12,color:C.textSec,fontWeight:600,marginBottom:8,letterSpacing:1}}>
+              KALAN (NET KAR) — {baslangic.slice(0,7).replace('-','/')} DÖNEMİ
+            </div>
+            <div style={{fontSize:36,fontWeight:900,color:(genelToplam.toplam_net_kar||0) >= 0 ? C.success : C.danger,letterSpacing:-1}}>
+              {fmt(genelToplam.toplam_net_kar || 0)}
+            </div>
+            <div style={{marginTop:8}}>
+              <Badge text={(genelToplam.toplam_net_kar||0) >= 0 ? 'KAR' : 'ZARAR'} color={(genelToplam.toplam_net_kar||0) >= 0 ? C.success : C.danger}/>
             </div>
           </div>
         </>

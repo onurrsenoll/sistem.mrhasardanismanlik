@@ -104,6 +104,24 @@ if (!empty($dosya['paydas_id'])) {
 // Toplam masraf
 $dosya['toplam_masraf'] = array_sum(array_column($dosya['masraflar'], 'tutar'));
 
+// Gelirler (tahsilat) - 50/50 paylaşım hesabı için
+try {
+    $stmtG = $db->prepare("SELECT COALESCE(SUM(tutar), 0) as toplam_gelir, COALESCE(SUM(CASE WHEN tahsilat_durumu = 'tahsil_edildi' THEN tutar ELSE 0 END), 0) as tahsil_edilen FROM gelirler WHERE dosya_id = ?");
+    $stmtG->execute([$dosya['id']]);
+    $gelirBilgi = $stmtG->fetch();
+    $dosya['toplam_gelir'] = (float)($gelirBilgi['toplam_gelir'] ?? 0);
+    $dosya['tahsil_edilen'] = (float)($gelirBilgi['tahsil_edilen'] ?? 0);
+} catch (\Exception $e) {
+    $dosya['toplam_gelir'] = 0;
+    $dosya['tahsil_edilen'] = 0;
+}
+
+// Net kar ve %50 paylaşım hesabı
+$dosya['net_kar'] = $dosya['tahsil_edilen'] - $dosya['toplam_masraf'];
+$dosya['pay_yuzde'] = 50;
+$dosya['benim_payim'] = round($dosya['net_kar'] * 0.5, 2);
+$dosya['avukat_payi'] = round($dosya['net_kar'] * 0.5, 2);
+
 // Avukat rolü için hassas verileri gizle
 if ($user['rol'] === 'avukat') {
     // İç personel/ortak bilgileri

@@ -1315,6 +1315,47 @@ const AyarlarTab = () => {
         </div>
       </div>
 
+      {/* YÖNLENDİREN ÜCRETLERİ AYARLARI */}
+      <div style={S.card}>
+        <div style={{...S.cardHead, background: `linear-gradient(135deg, ${C.gold || '#f59e0b'}15, transparent)`}}>
+          <LIcon name="Receipt" size={18} color={C.gold || '#f59e0b'}/>
+          <span style={{fontWeight:700, fontSize:14}}>YÖNLENDİREN ÜCRETLERİ (DOSYA BAŞI OTOMATİK MASRAF)</span>
+        </div>
+        <div style={{padding: '16px 20px'}}>
+          <div style={{
+            padding: '10px 14px', background: `${C.gold || '#f59e0b'}10`, borderRadius: 8,
+            border: `1px solid ${C.gold || '#f59e0b'}20`, marginBottom: 16, fontSize: 11, color: C.textSec, lineHeight: 1.6
+          }}>
+            <LIcon name="Info" size={13} color={C.gold || '#f59e0b'} style={{verticalAlign: 'middle'}}/>{' '}
+            HER DOSYA AÇILIŞINDA, SEÇİLEN DOSYA TÜRÜNE GÖRE BU TUTARLAR OTOMATİK OLARAK DOSYANIN MASRAF KISMINA "YÖNLENDİREN ÜCRETİ" OLARAK EKLENİR.
+            0 GİRERSENİZ O TÜR İÇİN OTOMATİK MASRAF EKLENMEZz.
+          </div>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16}}>
+            <div>
+              <label style={S.label}>ADK (ARAÇ DEĞER KAYBI) ₺</label>
+              <input type="number" style={{...S.input, fontSize: 14, fontWeight: 700, textAlign: 'center'}}
+                value={ayarlar.yonlendiren_ucret_adk || ''}
+                onChange={e => up('yonlendiren_ucret_adk', e.target.value)}
+                placeholder="0"/>
+            </div>
+            <div>
+              <label style={S.label}>BH (BEDENİ HASAR) ₺</label>
+              <input type="number" style={{...S.input, fontSize: 14, fontWeight: 700, textAlign: 'center'}}
+                value={ayarlar.yonlendiren_ucret_bh || ''}
+                onChange={e => up('yonlendiren_ucret_bh', e.target.value)}
+                placeholder="0"/>
+            </div>
+            <div>
+              <label style={S.label}>MDK (MOTOR DEĞER KAYBI) ₺</label>
+              <input type="number" style={{...S.input, fontSize: 14, fontWeight: 700, textAlign: 'center'}}
+                value={ayarlar.yonlendiren_ucret_mdk || ''}
+                onChange={e => up('yonlendiren_ucret_mdk', e.target.value)}
+                placeholder="0"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* KAYDET BUTONU */}
       <div style={{
         ...S.card, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'

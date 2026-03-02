@@ -84,8 +84,8 @@ try {
         clean($body['gelir_durumu'] ?? '')
     ]);
     
-    // 4. Araç kayıtları (ADK ise)
-    if ($body['dosya_turu'] === 'ADK') {
+    // 4. Araç kayıtları (ADK veya MDK ise)
+    if ($body['dosya_turu'] === 'ADK' || $body['dosya_turu'] === 'MDK') {
         // Mağdur aracı
         if (!empty($body['ma_plaka'])) {
             $stmt = $db->prepare('INSERT INTO araclar (dosya_id, taraf, plaka, marka, model, model_yili, kasko, kasko_sirket, kasko_police) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
@@ -240,6 +240,34 @@ try {
         }
     }
 
+    // ═══ 5c. AVUKAT YÖNLENDİREN ÜCRETİ — DOSYA TÜRÜNE GÖRE OTOMATİK MASRAF ═══
+    // Sistem Ayarları'ndan dosya türüne göre yönlendiren ücretini oku
+    $yonlendirmAnahtari = 'yonlendiren_ucret_' . strtolower($dosyaTuru);
+    $yonlendirmeUcret = 0;
+    try {
+        $stmtYU = $db->prepare("SELECT deger FROM ayarlar WHERE anahtar = ? AND deger != '' AND deger != '0'");
+        $stmtYU->execute([$yonlendirmAnahtari]);
+        $yuRow = $stmtYU->fetch();
+        if ($yuRow) {
+            $yonlendirmeUcret = (float)$yuRow['deger'];
+        }
+    } catch (\Exception $e) {}
+
+    if ($yonlendirmeUcret > 0) {
+        $stmtYUM = $db->prepare('INSERT INTO masraflar (dosya_id, masraf_kalemi, tutar, kasa_id, aciklama, islem_tarihi, kullanici_id, odeme_durumu) VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?)');
+        $stmtYUM->execute([
+            $dosyaId,
+            'YÖNLENDİREN ÜCRETİ',
+            $yonlendirmeUcret,
+            null,
+            'OTOMATİK - ' . $dosyaTuru . ' DOSYA BAŞI YÖNLENDİREN ÜCRETİ',
+            $user['id'],
+            'odenmedi'
+        ]);
+        $otoPrimBilgi['yonlendiren_ucret'] = $yonlendirmeUcret;
+        $otoPrimBilgi['yonlendiren_tur'] = $dosyaTuru;
+    }
+
     // ═══ DOSYA SÜRECİ: İLK KAYIT ═══
     try {
         require_once __DIR__ . '/../portal/migration.php';
@@ -342,6 +370,9 @@ try {
     }
     if (!empty($otoPrimBilgi['paydas_prim'])) {
         $mesaj .= ' | PAYDAŞ PRİMİ: ₺' . number_format($otoPrimBilgi['paydas_prim'], 2, ',', '.') . ' OTOMATİK EKLENDİ (ÖDENMEDİ)';
+    }
+    if (!empty($otoPrimBilgi['yonlendiren_ucret'])) {
+        $mesaj .= ' | YÖNLENDİREN ÜCRETİ: ₺' . number_format($otoPrimBilgi['yonlendiren_ucret'], 2, ',', '.') . ' MASRAFA EKLENDİ';
     }
     if ($portalBilgi) {
         $mesaj .= ' | PORTAL ERİŞİMİ OTOMATİK OLUŞTURULDU';
