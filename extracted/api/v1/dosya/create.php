@@ -298,6 +298,7 @@ try {
 
     // ═══ 5c. DOSYA KAYNAĞI BAZLI ÜCRETLENDİRME — DOSYA TÜRÜNE VE KAYNAĞINA GÖRE OTOMATİK MASRAF ═══
     // Dosya kaynağına göre ücret anahtarını belirle (Ofis CRM veya Yönlendiren)
+    // NOT: Paydaş primi (5b) zaten YÖNLENDİREN ÜCRETİ masrafı eklediyse tekrar eklenmez
     $dosyaKaynagi = clean($body['dosya_kaynagi'] ?? '');
     $kaynakUcretPrefix = 'yonlendiren_ucret_'; // varsayılan
     $kaynakMasrafKalemi = 'YÖNLENDİREN ÜCRETİ';
@@ -309,31 +310,36 @@ try {
         $kaynakAciklama = 'DOSYA BAŞI OFİS CRM ÜCRETİ';
     }
 
-    $ucretAnahtari = $kaynakUcretPrefix . strtolower($dosyaTuru);
-    $kaynakUcret = 0;
-    try {
-        $stmtYU = $db->prepare("SELECT deger FROM ayarlar WHERE anahtar = ? AND deger != '' AND deger != '0'");
-        $stmtYU->execute([$ucretAnahtari]);
-        $yuRow = $stmtYU->fetch();
-        if ($yuRow) {
-            $kaynakUcret = (float)$yuRow['deger'];
-        }
-    } catch (\Exception $e) {}
+    // Paydaş primi (5b) zaten yönlendiren ücreti masrafı eklediyse, bu bölümde tekrar eklenmesini engelle
+    $yonlendirenZatenEklendi = !empty($otoPrimBilgi['paydas_prim']) && $kaynakMasrafKalemi === 'YÖNLENDİREN ÜCRETİ';
 
-    if ($kaynakUcret > 0) {
-        $stmtYUM = $db->prepare('INSERT INTO masraflar (dosya_id, masraf_kalemi, tutar, kasa_id, aciklama, islem_tarihi, kullanici_id, odeme_durumu) VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?)');
-        $stmtYUM->execute([
-            $dosyaId,
-            $kaynakMasrafKalemi,
-            $kaynakUcret,
-            null,
-            'OTOMATİK - ' . $dosyaTuru . ' ' . $kaynakAciklama,
-            $user['id'],
-            'odenmedi'
-        ]);
-        $otoPrimBilgi['yonlendiren_ucret'] = $kaynakUcret;
-        $otoPrimBilgi['yonlendiren_tur'] = $dosyaTuru;
-        $otoPrimBilgi['kaynak_tipi'] = $kaynakMasrafKalemi;
+    if (!$yonlendirenZatenEklendi) {
+        $ucretAnahtari = $kaynakUcretPrefix . strtolower($dosyaTuru);
+        $kaynakUcret = 0;
+        try {
+            $stmtYU = $db->prepare("SELECT deger FROM ayarlar WHERE anahtar = ? AND deger != '' AND deger != '0'");
+            $stmtYU->execute([$ucretAnahtari]);
+            $yuRow = $stmtYU->fetch();
+            if ($yuRow) {
+                $kaynakUcret = (float)$yuRow['deger'];
+            }
+        } catch (\Exception $e) {}
+
+        if ($kaynakUcret > 0) {
+            $stmtYUM = $db->prepare('INSERT INTO masraflar (dosya_id, masraf_kalemi, tutar, kasa_id, aciklama, islem_tarihi, kullanici_id, odeme_durumu) VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?)');
+            $stmtYUM->execute([
+                $dosyaId,
+                $kaynakMasrafKalemi,
+                $kaynakUcret,
+                null,
+                'OTOMATİK - ' . $dosyaTuru . ' ' . $kaynakAciklama,
+                $user['id'],
+                'odenmedi'
+            ]);
+            $otoPrimBilgi['yonlendiren_ucret'] = $kaynakUcret;
+            $otoPrimBilgi['yonlendiren_tur'] = $dosyaTuru;
+            $otoPrimBilgi['kaynak_tipi'] = $kaynakMasrafKalemi;
+        }
     }
 
     // ═══ DOSYA SÜRECİ: İLK KAYIT ═══
