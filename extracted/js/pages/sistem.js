@@ -43,11 +43,17 @@ const LOG_ISLEM_RENK = (islem) => {
 const MODUL_YETKILERI = [
   {modul: 'dosya', label: 'DOSYA İŞLEMLERİ', icon: 'FolderOpen', islemler: [
     {key: 'dosya-liste', label: 'DOSYA LİSTESİ'},
-    {key: 'dosya-yeni', label: 'YENİ DOSYA'}
+    {key: 'dosya-yeni', label: 'YENİ DOSYA'},
+    {key: 'dosya-detay', label: 'DOSYA DETAY'},
+    {key: 'dosya-duzenle', label: 'DOSYA DÜZENLE'},
+    {key: 'dosya-sil', label: 'DOSYA SİL'},
+    {key: 'dosya-toplu-sil', label: 'TOPLU SİLME'}
   ]},
   {modul: 'crm', label: 'CRM / SAHA', icon: 'Users', islemler: [
     {key: 'crm-liste', label: 'CRM LİSTESİ'},
     {key: 'crm-yeni', label: 'YENİ KAYIT'},
+    {key: 'crm-duzenle', label: 'KAYIT DÜZENLE'},
+    {key: 'crm-sil', label: 'KAYIT SİL'},
     {key: 'crm-arama', label: 'ARAMA LİSTESİ'},
     {key: 'saha-liste', label: 'SAHA DOSYALARI'},
     {key: 'saha-yeni', label: 'YENİ SAHA KAYDI'}
@@ -56,14 +62,19 @@ const MODUL_YETKILERI = [
     {key: 'hesap-adk', label: 'ARAÇ DEĞER KAYBI'},
     {key: 'hesap-bh', label: 'BEDENİ HASAR'}
   ]},
-  {modul: 'paydaslar', label: 'PAYDAŞLAR', icon: 'Handshake', islemler: [
+  {modul: 'paydaslar', label: 'PAYDAŞLAR / ORTAKLAR', icon: 'Handshake', islemler: [
     {key: 'ortaklar-ortaklar', label: 'İŞ ORTAKLARI'},
     {key: 'ortaklar-paydaslar', label: 'İŞ PAYDAŞLARI'},
+    {key: 'ortaklar-yeni', label: 'YENİ ORTAK/PAYDAŞ'},
+    {key: 'ortaklar-duzenle', label: 'DÜZENLE'},
+    {key: 'ortaklar-sil', label: 'SİL'},
     {key: 'personel-liste', label: 'PERSONEL'}
   ]},
   {modul: 'police', label: 'POLİÇE', icon: 'FileCheck', islemler: [
     {key: 'police-liste', label: 'POLİÇE LİSTESİ'},
     {key: 'police-yeni', label: 'YENİ POLİÇE'},
+    {key: 'police-duzenle', label: 'POLİÇE DÜZENLE'},
+    {key: 'police-sil', label: 'POLİÇE SİL'},
     {key: 'police-yenileme', label: 'YENİLEME TAKİBİ'},
     {key: 'police-tahsilat', label: 'TAHSİLAT / CARİ'},
     {key: 'police-rapor', label: 'RAPORLAR'},
@@ -76,12 +87,37 @@ const MODUL_YETKILERI = [
     {key: 'muhasebe-kasa', label: 'KASA / BANKA'},
     {key: 'muhasebe-maliyet', label: 'MALİYET ANALİZİ'},
     {key: 'muhasebe-rapor', label: 'FİNANSAL RAPORLAR'},
+    {key: 'muhasebe-kapanis', label: 'KAPANIŞ RAPORU'},
     {key: 'personel-liste', label: 'PERSONEL LİSTESİ'},
     {key: 'personel-yeni', label: 'YENİ PERSONEL'},
+    {key: 'personel-duzenle', label: 'PERSONEL DÜZENLE'},
+    {key: 'personel-sil', label: 'PERSONEL SİL'},
     {key: 'personel-hakedis', label: 'HAKEDİŞ TAKİBİ'}
   ]},
+  {modul: 'masraf', label: 'MASRAF YÖNETİMİ', icon: 'Receipt', islemler: [
+    {key: 'masraf-goruntule', label: 'MASRAFLARI GÖRÜNTÜLE'},
+    {key: 'masraf-ekle', label: 'MASRAF EKLE'},
+    {key: 'masraf-sil', label: 'MASRAF SİL'},
+    {key: 'masraf-ode', label: 'MASRAF ÖDE'}
+  ]},
+  {modul: 'evrak', label: 'EVRAK YÖNETİMİ', icon: 'FileUp', islemler: [
+    {key: 'evrak-goruntule', label: 'EVRAK GÖRÜNTÜLE'},
+    {key: 'evrak-yukle', label: 'EVRAK YÜKLE'},
+    {key: 'evrak-sil', label: 'EVRAK SİL'}
+  ]},
   {modul: 'ajanda', label: 'AJANDA', icon: 'Calendar', islemler: [
-    {key: 'goruntule', label: 'AJANDA GÖRÜNTÜLE'}
+    {key: 'goruntule', label: 'AJANDA GÖRÜNTÜLE'},
+    {key: 'ajanda-ekle', label: 'ETKİNLİK EKLE'},
+    {key: 'ajanda-sil', label: 'ETKİNLİK SİL'}
+  ]},
+  {modul: 'mesajlar', label: 'MESAJLAR', icon: 'MessageSquare', islemler: [
+    {key: 'mesaj-goruntule', label: 'MESAJLARI GÖRÜNTÜLE'},
+    {key: 'mesaj-gonder', label: 'MESAJ GÖNDER'},
+    {key: 'mesaj-sil', label: 'MESAJ SİL'}
+  ]},
+  {modul: 'bildirim', label: 'BİLDİRİMLER', icon: 'Bell', islemler: [
+    {key: 'bildirim-goruntule', label: 'BİLDİRİMLERİ GÖRÜNTÜLE'},
+    {key: 'bildirim-sil', label: 'BİLDİRİM SİL'}
   ]},
   {modul: 'ictihat', label: 'İÇTİHAT', icon: 'Scale', islemler: [
     {key: 'ictihat-yargitay', label: 'YARGITAY KARARLARI'},
@@ -96,6 +132,7 @@ const MODUL_YETKILERI = [
     {key: 'sistem-sms', label: 'SMS BİLDİRİM'},
     {key: 'sistem-portal', label: 'PORTAL AYARLARI'},
     {key: 'sistem-netsantral', label: 'NETSANTRAL'},
+    {key: 'sistem-veri', label: 'VERİ YÖNETİMİ'},
     {key: 'sistem-log', label: 'LOG KAYITLARI'},
     {key: 'mesajlar-sistem', label: 'SİSTEM BİLDİRİMLERİ'},
     {key: 'tanimlamalar-dosya', label: 'DOSYA TANIMLAMALARI'},
@@ -103,7 +140,8 @@ const MODUL_YETKILERI = [
     {key: 'tanimlamalar-finansal', label: 'FİNANSAL TANIMLAMALAR'},
     {key: 'tanimlamalar-sablon', label: 'MATBU EVRAK / SÖZLEŞME'},
     {key: 'tanimlamalar-genel', label: 'GENEL TANIMLAMALAR'},
-    {key: 'sistem-konum', label: 'KONUM TAKİBİ'}
+    {key: 'sistem-konum', label: 'KONUM TAKİBİ'},
+    {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'}
   ]},
   {modul: 'netsantral', label: 'NETSANTRAL (GİDEN ARAMA)', icon: 'Phone', islemler: [
     {key: 'goruntule', label: 'ARAMA PANELİ GÖRÜNTÜLE'},
@@ -1315,11 +1353,11 @@ const AyarlarTab = () => {
         </div>
       </div>
 
-      {/* YÖNLENDİREN ÜCRETLERİ AYARLARI */}
+      {/* DOSYA KAYNAĞI BAZLI ÜCRETLENDİRME AYARLARI */}
       <div style={S.card}>
         <div style={{...S.cardHead, background: `linear-gradient(135deg, ${C.gold || '#f59e0b'}15, transparent)`}}>
           <LIcon name="Receipt" size={18} color={C.gold || '#f59e0b'}/>
-          <span style={{fontWeight:700, fontSize:14}}>YÖNLENDİREN ÜCRETLERİ (DOSYA BAŞI OTOMATİK MASRAF)</span>
+          <span style={{fontWeight:700, fontSize:14}}>DOSYA KAYNAĞI BAZLI ÜCRETLENDİRME (OTOMATİK MASRAF)</span>
         </div>
         <div style={{padding: '16px 20px'}}>
           <div style={{
@@ -1327,30 +1365,79 @@ const AyarlarTab = () => {
             border: `1px solid ${C.gold || '#f59e0b'}20`, marginBottom: 16, fontSize: 11, color: C.textSec, lineHeight: 1.6
           }}>
             <LIcon name="Info" size={13} color={C.gold || '#f59e0b'} style={{verticalAlign: 'middle'}}/>{' '}
-            HER DOSYA AÇILIŞINDA, SEÇİLEN DOSYA TÜRÜNE GÖRE BU TUTARLAR OTOMATİK OLARAK DOSYANIN MASRAF KISMINA "YÖNLENDİREN ÜCRETİ" OLARAK EKLENİR.
-            0 GİRERSENİZ O TÜR İÇİN OTOMATİK MASRAF EKLENMEZz.
+            HER DOSYA AÇILIŞINDA, DOSYA KAYNAĞI VE DOSYA TÜRÜNE GÖRE İLGİLİ TUTARLAR OTOMATİK OLARAK MASRAFA EKLENİR.
+            0 GİRERSENİZ O TÜR İÇİN OTOMATİK MASRAF EKLENMEZ.
           </div>
-          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16}}>
-            <div>
-              <label style={S.label}>ADK (ARAÇ DEĞER KAYBI) ₺</label>
-              <input type="number" style={{...S.input, fontSize: 14, fontWeight: 700, textAlign: 'center'}}
-                value={ayarlar.yonlendiren_ucret_adk || ''}
-                onChange={e => up('yonlendiren_ucret_adk', e.target.value)}
-                placeholder="0"/>
+
+          {/* YÖNLENDİREN ÜCRETLERİ */}
+          <div style={{marginBottom: 20}}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12,
+              padding: '8px 14px', background: `${C.warning || '#f59e0b'}08`, borderRadius: 8,
+              border: `1px solid ${C.warning || '#f59e0b'}15`
+            }}>
+              <LIcon name="Users" size={15} color={C.warning || '#f59e0b'}/>
+              <span style={{fontWeight: 700, fontSize: 13, color: C.text}}>PAYDAŞ / YÖNLENDİREN DOSYALARI</span>
+              <span style={{fontSize: 10, color: C.textMuted, marginLeft: 'auto'}}>PAYDAŞ/YÖNLENDİREN KAYNAKLI DOSYALAR İÇİN</span>
             </div>
-            <div>
-              <label style={S.label}>BH (BEDENİ HASAR) ₺</label>
-              <input type="number" style={{...S.input, fontSize: 14, fontWeight: 700, textAlign: 'center'}}
-                value={ayarlar.yonlendiren_ucret_bh || ''}
-                onChange={e => up('yonlendiren_ucret_bh', e.target.value)}
-                placeholder="0"/>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16}}>
+              <div>
+                <label style={S.label}>ADK (ARAÇ DEĞER KAYBI) ₺</label>
+                <input type="number" style={{...S.input, fontSize: 14, fontWeight: 700, textAlign: 'center'}}
+                  value={ayarlar.yonlendiren_ucret_adk || ''}
+                  onChange={e => up('yonlendiren_ucret_adk', e.target.value)}
+                  placeholder="0"/>
+              </div>
+              <div>
+                <label style={S.label}>BH (BEDENİ HASAR) ₺</label>
+                <input type="number" style={{...S.input, fontSize: 14, fontWeight: 700, textAlign: 'center'}}
+                  value={ayarlar.yonlendiren_ucret_bh || ''}
+                  onChange={e => up('yonlendiren_ucret_bh', e.target.value)}
+                  placeholder="0"/>
+              </div>
+              <div>
+                <label style={S.label}>MDK (MOTOR DEĞER KAYBI) ₺</label>
+                <input type="number" style={{...S.input, fontSize: 14, fontWeight: 700, textAlign: 'center'}}
+                  value={ayarlar.yonlendiren_ucret_mdk || ''}
+                  onChange={e => up('yonlendiren_ucret_mdk', e.target.value)}
+                  placeholder="0"/>
+              </div>
             </div>
-            <div>
-              <label style={S.label}>MDK (MOTOR DEĞER KAYBI) ₺</label>
-              <input type="number" style={{...S.input, fontSize: 14, fontWeight: 700, textAlign: 'center'}}
-                value={ayarlar.yonlendiren_ucret_mdk || ''}
-                onChange={e => up('yonlendiren_ucret_mdk', e.target.value)}
-                placeholder="0"/>
+          </div>
+
+          {/* OFİS CRM ÜCRETLERİ */}
+          <div>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12,
+              padding: '8px 14px', background: `${C.accent}08`, borderRadius: 8,
+              border: `1px solid ${C.accent}15`
+            }}>
+              <LIcon name="Monitor" size={15} color={C.accent}/>
+              <span style={{fontWeight: 700, fontSize: 13, color: C.text}}>OFİS CRM DOSYALARI</span>
+              <span style={{fontSize: 10, color: C.textMuted, marginLeft: 'auto'}}>OFİS CRM KAYNAKLI DOSYALAR İÇİN</span>
+            </div>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16}}>
+              <div>
+                <label style={S.label}>ADK (ARAÇ DEĞER KAYBI) ₺</label>
+                <input type="number" style={{...S.input, fontSize: 14, fontWeight: 700, textAlign: 'center'}}
+                  value={ayarlar.ofis_crm_ucret_adk || ''}
+                  onChange={e => up('ofis_crm_ucret_adk', e.target.value)}
+                  placeholder="0"/>
+              </div>
+              <div>
+                <label style={S.label}>BH (BEDENİ HASAR) ₺</label>
+                <input type="number" style={{...S.input, fontSize: 14, fontWeight: 700, textAlign: 'center'}}
+                  value={ayarlar.ofis_crm_ucret_bh || ''}
+                  onChange={e => up('ofis_crm_ucret_bh', e.target.value)}
+                  placeholder="0"/>
+              </div>
+              <div>
+                <label style={S.label}>MDK (MOTOR DEĞER KAYBI) ₺</label>
+                <input type="number" style={{...S.input, fontSize: 14, fontWeight: 700, textAlign: 'center'}}
+                  value={ayarlar.ofis_crm_ucret_mdk || ''}
+                  onChange={e => up('ofis_crm_ucret_mdk', e.target.value)}
+                  placeholder="0"/>
+              </div>
             </div>
           </div>
         </div>
@@ -3770,6 +3857,144 @@ const PortalTab = () => {
 };
 
 /* ════════════════════════════════════════════════════════════════
+   VERİ YÖNETİMİ TAB — ADMİN TOPLU SİLME / SIFIRLAMA
+   ════════════════════════════════════════════════════════════════ */
+const VeriYonetimiTab = () => {
+  const {C, S, LIcon, Confirm, api} = MR;
+  const [confirm, setConfirm] = useState({open: false, msg: '', modul: ''});
+  const [loading, setLoading] = useState('');
+  const [sonuc, setSonuc] = useState('');
+  const [hata, setHata] = useState('');
+
+  const sifirla = async (modul) => {
+    setConfirm({open: false, msg: '', modul: ''});
+    setLoading(modul);
+    setSonuc('');
+    setHata('');
+    try {
+      const r = await api.topluSifirla(modul);
+      if (r?.success) {
+        setSonuc(r.detay || r.message || 'İŞLEM BAŞARILI');
+        setTimeout(() => setSonuc(''), 6000);
+      } else {
+        setHata(r?.error || 'İŞLEM HATASI');
+        setTimeout(() => setHata(''), 6000);
+      }
+    } catch (e) {
+      setHata('BAĞLANTI HATASI: ' + e.message);
+      setTimeout(() => setHata(''), 6000);
+    }
+    setLoading('');
+  };
+
+  const moduller = [
+    {key: 'dosyalar', label: 'TÜM DOSYALAR', icon: 'FolderOpen', color: '#ef4444', desc: 'Tüm dosyalar ve ilişkili kayıtlar (evrak, masraf, mağdur, araç) kalıcı olarak silinir.'},
+    {key: 'muhasebe', label: 'MUHASEBE (GELİR/GİDER/HAREKET)', icon: 'Landmark', color: '#f59e0b', desc: 'Tüm gelir/gider kayıtları, kasa hareketleri silinir ve bakiyeler sıfırlanır.'},
+    {key: 'kasa', label: 'KASA HAREKETLERİ', icon: 'Wallet', color: '#3b82f6', desc: 'Tüm kasa hareketleri silinir ve bakiyeler sıfırlanır. Kasa tanımları korunur.'},
+    {key: 'cari', label: 'CARİ / KOMİSYON', icon: 'Receipt', color: '#8b5cf6', desc: 'Tüm paydaş komisyon ve cari hareket kayıtları silinir.'},
+    {key: 'crm', label: 'CRM KAYITLARI', icon: 'Users', color: '#06b6d4', desc: 'Tüm CRM kayıtları, notlar ve yüklenen dosyalar silinir.'},
+    {key: 'police', label: 'POLİÇE KAYITLARI', icon: 'FileCheck', color: '#10b981', desc: 'Tüm poliçe ve tahsilat kayıtları silinir.'},
+    {key: 'personel', label: 'PERSONEL KAYITLARI', icon: 'UserCog', color: '#ec4899', desc: 'Tüm personel ve hakediş kayıtları silinir.'},
+    {key: 'ortaklar', label: 'İŞ ORTAKLARI', icon: 'Handshake', color: '#14b8a6', desc: 'Tüm iş ortağı ve hareket kayıtları silinir.'},
+    {key: 'paydaslar', label: 'İŞ PAYDAŞLARI', icon: 'Link', color: '#a855f7', desc: 'Tüm iş paydaşı ve komisyon kayıtları silinir.'},
+    {key: 'ajanda', label: 'AJANDA KAYITLARI', icon: 'Calendar', color: '#f97316', desc: 'Tüm ajanda ve hatırlatma kayıtları silinir.'},
+    {key: 'mesajlar', label: 'MESAJLAR', icon: 'MessageSquare', color: '#6366f1', desc: 'Tüm sistem mesajları silinir.'},
+    {key: 'bildirimler', label: 'BİLDİRİMLER', icon: 'Bell', color: '#64748b', desc: 'Tüm bildirim kayıtları silinir.'},
+    {key: 'loglar', label: 'LOG KAYITLARI', icon: 'Activity', color: '#78716c', desc: 'Tüm sistem log kayıtları silinir.'}
+  ];
+
+  return (
+    <div className="fade-in">
+      {/* UYARI BANNERI */}
+      <div style={{
+        ...S.card, padding: '16px 20px', marginBottom: 20,
+        background: `linear-gradient(135deg, ${C.danger}08, ${C.danger}03)`,
+        border: `1px solid ${C.danger}30`
+      }}>
+        <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 12, background: `${C.danger}15`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+          }}>
+            <LIcon name="AlertTriangle" size={22} color={C.danger}/>
+          </div>
+          <div>
+            <div style={{fontSize: 14, fontWeight: 800, color: C.danger, marginBottom: 2}}>DİKKAT — VERİ SİLME İŞLEMLERİ</div>
+            <div style={{fontSize: 11, color: C.textSec, lineHeight: 1.5}}>
+              BU SAYFADA YAPILAN TÜM İŞLEMLER KALICI VE GERİ ALINAMAZ. HER İŞLEM LOG KAYITLARINA YAZILIR.
+              SİLMEDEN ÖNCE VERİLERİNİZİ YEDEKLEMENİZ ÖNERİLİR.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SONUÇ / HATA */}
+      {sonuc && (
+        <div style={{...S.card, padding: '12px 20px', marginBottom: 16, background: `${C.success}11`, border: `1px solid ${C.success}33`}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 8, color: C.success, fontWeight: 700, fontSize: 12}}>
+            <LIcon name="CheckCircle" size={16}/> {sonuc}
+          </div>
+        </div>
+      )}
+      {hata && (
+        <div style={{...S.card, padding: '12px 20px', marginBottom: 16, background: `${C.danger}11`, border: `1px solid ${C.danger}33`}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 8, color: C.danger, fontWeight: 700, fontSize: 12}}>
+            <LIcon name="AlertCircle" size={16}/> {hata}
+          </div>
+        </div>
+      )}
+
+      {/* MODÜL KARTLARI */}
+      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14}}>
+        {moduller.map(m => (
+          <div key={m.key} style={{
+            ...S.card, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14,
+            opacity: loading === m.key ? 0.6 : 1, transition: 'all .2s'
+          }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10, background: `${m.color}15`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+            }}>
+              <LIcon name={m.icon} size={20} color={m.color}/>
+            </div>
+            <div style={{flex: 1, minWidth: 0}}>
+              <div style={{fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 2}}>{m.label}</div>
+              <div style={{fontSize: 10, color: C.textMuted, lineHeight: 1.4}}>{m.desc}</div>
+            </div>
+            <button
+              style={{
+                ...S.btn, ...S.btnD, fontSize: 10, padding: '8px 14px', flexShrink: 0,
+                display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap'
+              }}
+              disabled={!!loading}
+              onClick={() => setConfirm({
+                open: true,
+                msg: `"${m.label}" MODÜLÜNE AİT TÜM VERİLER KALICI OLARAK SİLİNECEK!\n\nBU İŞLEM GERİ ALINAMAZ!\n\nDEVAM EDİLSİN Mİ?`,
+                modul: m.key
+              })}
+            >
+              {loading === m.key ? (
+                <><LIcon name="Loader" size={12} color="#fff"/> İŞLENİYOR...</>
+              ) : (
+                <><LIcon name="Trash2" size={12} color="#fff"/> TÜM VERİLERİ SİL</>
+              )}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* ONAY MODALI */}
+      <Confirm
+        open={confirm.open}
+        message={confirm.msg}
+        onConfirm={() => sifirla(confirm.modul)}
+        onCancel={() => setConfirm({open: false, msg: '', modul: ''})}
+      />
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════════════════════════
    ANA SAYFA BİLEŞENİ - MR.SistemPage
    ════════════════════════════════════════════════════════════════ */
 
@@ -3786,6 +4011,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
     sms: {label: 'SMS BİLDİRİM', icon: 'MessageSquare'},
     portal: {label: 'PORTAL AYARLARI', icon: 'Globe'},
     aktarim: {label: 'TOPLU AKTARIM', icon: 'FileSpreadsheet'},
+    veri: {label: 'VERİ YÖNETİMİ', icon: 'DatabaseBackup'},
     log: {label: 'LOG KAYITLARI', icon: 'Activity'}
   };
   const baslik = modulBasliklar[subPage] || {label: 'SİSTEM', icon: 'Settings'};
@@ -3838,6 +4064,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
         {subPage === 'sms' && isAdmin && <SmsTab/>}
         {subPage === 'portal' && isAdmin && <PortalTab/>}
         {subPage === 'aktarim' && isAdmin && <TopluAktarimTab/>}
+        {subPage === 'veri' && isAdmin && <VeriYonetimiTab/>}
         {subPage === 'log' && <LogTab/>}
       </div>
     </div>

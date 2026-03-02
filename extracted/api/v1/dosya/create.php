@@ -240,32 +240,44 @@ try {
         }
     }
 
-    // ═══ 5c. AVUKAT YÖNLENDİREN ÜCRETİ — DOSYA TÜRÜNE GÖRE OTOMATİK MASRAF ═══
-    // Sistem Ayarları'ndan dosya türüne göre yönlendiren ücretini oku
-    $yonlendirmAnahtari = 'yonlendiren_ucret_' . strtolower($dosyaTuru);
-    $yonlendirmeUcret = 0;
+    // ═══ 5c. DOSYA KAYNAĞI BAZLI ÜCRETLENDİRME — DOSYA TÜRÜNE VE KAYNAĞINA GÖRE OTOMATİK MASRAF ═══
+    // Dosya kaynağına göre ücret anahtarını belirle (Ofis CRM veya Yönlendiren)
+    $dosyaKaynagi = clean($body['dosya_kaynagi'] ?? '');
+    $kaynakUcretPrefix = 'yonlendiren_ucret_'; // varsayılan
+    $kaynakMasrafKalemi = 'YÖNLENDİREN ÜCRETİ';
+    $kaynakAciklama = 'DOSYA BAŞI YÖNLENDİREN ÜCRETİ';
+
+    if (mb_stripos($dosyaKaynagi, 'OFİS') !== false || mb_stripos($dosyaKaynagi, 'CRM') !== false) {
+        $kaynakUcretPrefix = 'ofis_crm_ucret_';
+        $kaynakMasrafKalemi = 'OFİS CRM ÜCRETİ';
+        $kaynakAciklama = 'DOSYA BAŞI OFİS CRM ÜCRETİ';
+    }
+
+    $ucretAnahtari = $kaynakUcretPrefix . strtolower($dosyaTuru);
+    $kaynakUcret = 0;
     try {
         $stmtYU = $db->prepare("SELECT deger FROM ayarlar WHERE anahtar = ? AND deger != '' AND deger != '0'");
-        $stmtYU->execute([$yonlendirmAnahtari]);
+        $stmtYU->execute([$ucretAnahtari]);
         $yuRow = $stmtYU->fetch();
         if ($yuRow) {
-            $yonlendirmeUcret = (float)$yuRow['deger'];
+            $kaynakUcret = (float)$yuRow['deger'];
         }
     } catch (\Exception $e) {}
 
-    if ($yonlendirmeUcret > 0) {
+    if ($kaynakUcret > 0) {
         $stmtYUM = $db->prepare('INSERT INTO masraflar (dosya_id, masraf_kalemi, tutar, kasa_id, aciklama, islem_tarihi, kullanici_id, odeme_durumu) VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?)');
         $stmtYUM->execute([
             $dosyaId,
-            'YÖNLENDİREN ÜCRETİ',
-            $yonlendirmeUcret,
+            $kaynakMasrafKalemi,
+            $kaynakUcret,
             null,
-            'OTOMATİK - ' . $dosyaTuru . ' DOSYA BAŞI YÖNLENDİREN ÜCRETİ',
+            'OTOMATİK - ' . $dosyaTuru . ' ' . $kaynakAciklama,
             $user['id'],
             'odenmedi'
         ]);
-        $otoPrimBilgi['yonlendiren_ucret'] = $yonlendirmeUcret;
+        $otoPrimBilgi['yonlendiren_ucret'] = $kaynakUcret;
         $otoPrimBilgi['yonlendiren_tur'] = $dosyaTuru;
+        $otoPrimBilgi['kaynak_tipi'] = $kaynakMasrafKalemi;
     }
 
     // ═══ DOSYA SÜRECİ: İLK KAYIT ═══
@@ -372,7 +384,8 @@ try {
         $mesaj .= ' | PAYDAŞ PRİMİ: ₺' . number_format($otoPrimBilgi['paydas_prim'], 2, ',', '.') . ' OTOMATİK EKLENDİ (ÖDENMEDİ)';
     }
     if (!empty($otoPrimBilgi['yonlendiren_ucret'])) {
-        $mesaj .= ' | YÖNLENDİREN ÜCRETİ: ₺' . number_format($otoPrimBilgi['yonlendiren_ucret'], 2, ',', '.') . ' MASRAFA EKLENDİ';
+        $ucretLabel = $otoPrimBilgi['kaynak_tipi'] ?? 'YÖNLENDİREN ÜCRETİ';
+        $mesaj .= ' | ' . $ucretLabel . ': ₺' . number_format($otoPrimBilgi['yonlendiren_ucret'], 2, ',', '.') . ' MASRAFA EKLENDİ';
     }
     if ($portalBilgi) {
         $mesaj .= ' | PORTAL ERİŞİMİ OTOMATİK OLUŞTURULDU';

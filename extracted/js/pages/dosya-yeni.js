@@ -116,7 +116,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
           )}
           {result.oto_prim?.yonlendiren_ucret > 0 && (
             <div style={{marginTop:8,padding:12,background:`${C.accent}11`,borderRadius:10,border:`1px solid ${C.accent}33`,fontSize:12,color:C.textSec}}>
-              YÖNLENDİREN ÜCRETİ: <strong>₺{Number(result.oto_prim.yonlendiren_ucret).toLocaleString('tr-TR')}</strong> — {result.oto_prim.yonlendiren_tur} MASRAFA OTOMATİK EKLENDİ
+              {result.oto_prim.kaynak_tipi || 'YÖNLENDİREN ÜCRETİ'}: <strong>₺{Number(result.oto_prim.yonlendiren_ucret).toLocaleString('tr-TR')}</strong> — {result.oto_prim.yonlendiren_tur} MASRAFA OTOMATİK EKLENDİ
             </div>
           )}
           <div style={{display:'flex',gap:12,justifyContent:'center',marginTop:24}}>

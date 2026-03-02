@@ -180,6 +180,7 @@ MR.api = {
   finansalRapor(p = {}) { return this.req('/muhasebe/finansal-rapor.php?' + new URLSearchParams(p)); },
   kapanisRapor(p = {}) { return this.req('/muhasebe/kapanis-rapor.php?' + new URLSearchParams(p)); },
   bakiyeSifirla() { return this.req('/muhasebe/bakiye-sifirla.php', { method: 'POST', body: '{}' }); },
+  topluSifirla(modul) { return this.req('/sistem/toplu-sifirla.php', { method: 'POST', body: JSON.stringify({modul}) }); },
   bakiyeDuzelt(d) { return this.req('/muhasebe/bakiye-duzelt.php', { method: 'PUT', body: JSON.stringify(d) }); },
   // MESAJ
   mesajList(p = {}) { return this.req('/mesaj/list.php?' + new URLSearchParams(p)); },
