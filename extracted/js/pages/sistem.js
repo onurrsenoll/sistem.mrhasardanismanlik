@@ -47,7 +47,17 @@ const MODUL_YETKILERI = [
     {key: 'dosya-detay', label: 'DOSYA DETAY'},
     {key: 'dosya-duzenle', label: 'DOSYA DÜZENLE'},
     {key: 'dosya-sil', label: 'DOSYA SİL'},
-    {key: 'dosya-toplu-sil', label: 'TOPLU SİLME'}
+    {key: 'dosya-toplu-sil', label: 'TOPLU SİLME'},
+    {key: 'dosya-asama', label: 'AŞAMA DEĞİŞTİR'},
+    {key: 'dosya-portal', label: 'PORTAL ERİŞİMİ OLUŞTUR'},
+    {key: 'dosya-kapat', label: 'DOSYA KAPAT'},
+    {key: 'dosya-masraf-ekle', label: 'MASRAF EKLE'},
+    {key: 'dosya-masraf-sil', label: 'MASRAF SİL'},
+    {key: 'dosya-masraf-ode', label: 'MASRAF ÖDE'},
+    {key: 'dosya-evrak-yukle', label: 'EVRAK YÜKLE'},
+    {key: 'dosya-evrak-sil', label: 'EVRAK SİL'},
+    {key: 'dosya-evrak-indir', label: 'EVRAK İNDİR'},
+    {key: 'dosya-hesap-ozeti', label: 'HESAP ÖZETİ GÖRÜNTÜLE'}
   ]},
   {modul: 'crm', label: 'CRM / SAHA', icon: 'Users', islemler: [
     {key: 'crm-liste', label: 'CRM LİSTESİ'},
@@ -56,7 +66,9 @@ const MODUL_YETKILERI = [
     {key: 'crm-sil', label: 'KAYIT SİL'},
     {key: 'crm-arama', label: 'ARAMA LİSTESİ'},
     {key: 'saha-liste', label: 'SAHA DOSYALARI'},
-    {key: 'saha-yeni', label: 'YENİ SAHA KAYDI'}
+    {key: 'saha-yeni', label: 'YENİ SAHA KAYDI'},
+    {key: 'saha-duzenle', label: 'SAHA KAYDI DÜZENLE'},
+    {key: 'saha-sil', label: 'SAHA KAYDI SİL'}
   ]},
   {modul: 'hesaplamalar', label: 'HESAPLAMALAR', icon: 'Calculator', islemler: [
     {key: 'hesap-adk', label: 'ARAÇ DEĞER KAYBI'},
@@ -66,6 +78,7 @@ const MODUL_YETKILERI = [
     {key: 'ortaklar-ortaklar', label: 'İŞ ORTAKLARI'},
     {key: 'ortaklar-paydaslar', label: 'İŞ PAYDAŞLARI'},
     {key: 'ortaklar-yeni', label: 'YENİ ORTAK/PAYDAŞ'},
+    {key: 'ortaklar-detay', label: 'ORTAK/PAYDAŞ DETAY'},
     {key: 'ortaklar-duzenle', label: 'DÜZENLE'},
     {key: 'ortaklar-sil', label: 'SİL'},
     {key: 'personel-liste', label: 'PERSONEL'}
@@ -82,15 +95,21 @@ const MODUL_YETKILERI = [
   ]},
   {modul: 'muhasebe', label: 'MUHASEBE', icon: 'Landmark', islemler: [
     {key: 'muhasebe-gelir', label: 'GELİR YÖNETİMİ'},
+    {key: 'muhasebe-gelir-ekle', label: 'GELİR EKLE'},
+    {key: 'muhasebe-gelir-sil', label: 'GELİR SİL'},
     {key: 'muhasebe-gider', label: 'GİDER YÖNETİMİ'},
+    {key: 'muhasebe-gider-ekle', label: 'GİDER EKLE'},
+    {key: 'muhasebe-gider-sil', label: 'GİDER SİL'},
     {key: 'muhasebe-komisyon', label: 'KOMİSYON / PRİM'},
     {key: 'muhasebe-kasa', label: 'KASA / BANKA'},
     {key: 'muhasebe-kasa-sil', label: 'KASA SİL (SİSTEM YÖNETİCİSİ)'},
+    {key: 'muhasebe-transfer', label: 'KASA TRANSFERİ'},
     {key: 'muhasebe-hareket-duzenle', label: 'HESAP HAREKETİ DÜZENLE (SİSTEM YÖNETİCİSİ)'},
     {key: 'muhasebe-hareket-sil', label: 'HESAP HAREKETİ SİL (SİSTEM YÖNETİCİSİ)'},
     {key: 'muhasebe-maliyet', label: 'MALİYET ANALİZİ'},
     {key: 'muhasebe-rapor', label: 'FİNANSAL RAPORLAR'},
     {key: 'muhasebe-kapanis', label: 'KAPANIŞ RAPORU'},
+    {key: 'muhasebe-aysonu', label: 'AY SONU RAPORU'},
     {key: 'personel-liste', label: 'PERSONEL LİSTESİ'},
     {key: 'personel-yeni', label: 'YENİ PERSONEL'},
     {key: 'personel-duzenle', label: 'PERSONEL DÜZENLE'},
@@ -100,17 +119,20 @@ const MODUL_YETKILERI = [
   {modul: 'masraf', label: 'MASRAF YÖNETİMİ', icon: 'Receipt', islemler: [
     {key: 'masraf-goruntule', label: 'MASRAFLARI GÖRÜNTÜLE'},
     {key: 'masraf-ekle', label: 'MASRAF EKLE'},
+    {key: 'masraf-duzenle', label: 'MASRAF DÜZENLE'},
     {key: 'masraf-sil', label: 'MASRAF SİL'},
     {key: 'masraf-ode', label: 'MASRAF ÖDE'}
   ]},
   {modul: 'evrak', label: 'EVRAK YÖNETİMİ', icon: 'FileUp', islemler: [
     {key: 'evrak-goruntule', label: 'EVRAK GÖRÜNTÜLE'},
     {key: 'evrak-yukle', label: 'EVRAK YÜKLE'},
-    {key: 'evrak-sil', label: 'EVRAK SİL'}
+    {key: 'evrak-sil', label: 'EVRAK SİL'},
+    {key: 'evrak-indir', label: 'EVRAK İNDİR'}
   ]},
   {modul: 'ajanda', label: 'AJANDA', icon: 'Calendar', islemler: [
     {key: 'goruntule', label: 'AJANDA GÖRÜNTÜLE'},
     {key: 'ajanda-ekle', label: 'ETKİNLİK EKLE'},
+    {key: 'ajanda-duzenle', label: 'ETKİNLİK DÜZENLE'},
     {key: 'ajanda-sil', label: 'ETKİNLİK SİL'}
   ]},
   {modul: 'mesajlar', label: 'MESAJLAR', icon: 'MessageSquare', islemler: [

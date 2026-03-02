@@ -2570,21 +2570,62 @@ const AySonuRaporu = ({setPage, user}) => {
   const b2 = data?.bolum2;
   const fin = data?.final;
 
-  /* PDF yazdırma */
+  /* PDF yazdırma - Beyaz arka plan, okunabilir çıktı */
   const yazdir = () => {
     const el = document.getElementById('aysonu-rapor-icerik');
     if (!el) return;
-    const w = window.open('', '_blank');
-    w.document.write('<html><head><title>AY SONU RAPORU - ' + (data?.donem?.ay_adi || ay) + '</title>' +
-      '<style>' +
-        'body{font-family:"Segoe UI",sans-serif;padding:20px;color:#1a1a2e;font-size:12px}' +
-        'table{width:100%;border-collapse:collapse;margin:10px 0}' +
-        'th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:11px}' +
-        'th{background:#f4f4f8;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}' +
-        '@media print{body{padding:10px}}' +
-      '</style></head><body>' + el.innerHTML + '</body></html>');
+    var w = window.open('', '_blank');
+    var css = [
+      'body{font-family:"Segoe UI",Tahoma,sans-serif;padding:30px 40px;color:#1a1a2e;background:#fff;font-size:12px;line-height:1.6}',
+      'table{width:100%;border-collapse:collapse;margin:8px 0}',
+      'th,td{border:1px solid #bbb;padding:8px 10px;text-align:left;font-size:11px}',
+      'th{background:#eef0f4;font-weight:700;color:#333;text-transform:uppercase;letter-spacing:.5px;font-size:10px}',
+      'svg{display:none}',
+      '@media print{body{padding:10px}@page{margin:12mm}}'
+    ].join('');
+    w.document.write('<html><head><title>AY SONU RAPORU - ' + (data?.donem?.ay_adi || ay) + '</title><style>' + css + '</style></head><body>' + el.innerHTML + '</body></html>');
     w.document.close();
-    setTimeout(function(){ w.print(); }, 300);
+    setTimeout(function(){
+      try {
+        /* Tüm elementlerin inline dark-theme stillerini temizle */
+        var allEls = w.document.body.getElementsByTagName('*');
+        for (var i = 0; i < allEls.length; i++) {
+          var s = allEls[i].style;
+          /* Arka planları temizle (koyu tema renkleri) */
+          if (s.background) s.background = '';
+          if (s.backgroundColor) s.backgroundColor = '';
+          if (s.backgroundImage) s.backgroundImage = '';
+          s.boxShadow = 'none';
+          s.textShadow = 'none';
+          /* Açık/beyaz yazı renklerini koyuya çevir */
+          var c = w.getComputedStyle(allEls[i]).color;
+          var m = c.match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/);
+          if (m) {
+            var lum = (parseInt(m[1])*299 + parseInt(m[2])*587 + parseInt(m[3])*114) / 1000;
+            if (lum > 180) allEls[i].style.color = '#1a1a2e';
+          }
+        }
+        /* Tablo başlıklarını geri ayarla */
+        var ths = w.document.getElementsByTagName('th');
+        for (var j = 0; j < ths.length; j++) {
+          ths[j].style.background = '#eef0f4';
+          ths[j].style.color = '#333';
+        }
+        /* Toplam satırlarına hafif arka plan */
+        var trs = w.document.getElementsByTagName('tr');
+        for (var k = 0; k < trs.length; k++) {
+          var cells = trs[k].getElementsByTagName('td');
+          if (cells.length > 0) {
+            var txt = (cells[0].textContent || '').toUpperCase();
+            if (txt.includes('TOPLAM') || txt.includes('ÖZET') || txt.includes('KALAN')) {
+              trs[k].style.background = '#f5f5fa';
+              trs[k].style.fontWeight = '700';
+            }
+          }
+        }
+      } catch(e) { console.error('YAZDIR HATA:', e); }
+      w.print();
+    }, 400);
   };
 
   return (

@@ -173,7 +173,6 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const [kapatModal, setKapatModal] = useState(false);
   const [kapatForm, setKapatForm] = useState({
     tazminat: '', vekalet_ucreti: '', faiz: '', stopaj: '', kdv_oran: '20',
-    noter_masrafi: '', cezaevi_harci: '', diger_masraf: '',
     dosya_basi_odenen: '0', kasa_id: 1, pay_orani: '50'
   });
   const [kapatLoading, setKapatLoading] = useState(false);
@@ -367,6 +366,12 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const u = (k, v) => setEditForm(p => ({...p, [k]: v}));
   const isAvukat = user?.rol === 'avukat';
 
+  // YETKİ KONTROL FONKSİYONU
+  const hasYetki = (modul, islem) => {
+    if (user?.rol === 'admin') return true;
+    return user?.yetkiler?.[modul + '_' + islem] === 1 || user?.yetkiler?.[modul + '_' + islem] === true;
+  };
+
   // Bilgi satır bileşeni
   const InfoRow = ({label, value, mono, bold, color}) => (
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderBottom:`1px solid ${C.border}`}}>
@@ -427,23 +432,23 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               </div>
             </div>
           </div>
-          {!isAvukat && <div style={{display:'flex',alignItems:'center',gap:8}}>
-            <select value={dosya.asama} onChange={e => asamaDegistir(e.target.value)}
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            {hasYetki('dosya','dosya-asama') && <select value={dosya.asama} onChange={e => asamaDegistir(e.target.value)}
               style={{...S.select,minWidth:180,maxWidth:500,fontSize:10,padding:'6px 10px',background:`${ac}11`,border:`1px solid ${ac}33`,color:ac,fontWeight:600}}>
               {ASAMALAR.map(a => <option key={a} value={a}>{a}</option>)}
-            </select>
-            <button style={{...S.btn,...S.btnP,fontSize:10,padding:'7px 14px'}} onClick={openEditModal}>
+            </select>}
+            {hasYetki('dosya','dosya-duzenle') && <button style={{...S.btn,...S.btnP,fontSize:10,padding:'7px 14px'}} onClick={openEditModal}>
               <LIcon name="Edit2" size={12} color="#fff"/> DÜZENLE
-            </button>
-            {user?.rol === 'admin' && <button style={{...S.btn,...S.btnS,fontSize:10,padding:'7px 14px'}} disabled={portalCreating}
+            </button>}
+            {hasYetki('dosya','dosya-portal') && <button style={{...S.btn,...S.btnS,fontSize:10,padding:'7px 14px'}} disabled={portalCreating}
               onClick={portalOlustur} title="MÜŞTERİ PORTAL ERİŞİMİ OLUŞTUR">
               <LIcon name="Globe" size={12} color="#fff"/> {portalCreating ? 'OLUŞTURULUYOR...' : 'PORTAL'}
             </button>}
-            <button style={{...S.btn,...S.btnD,fontSize:10,padding:'7px 14px'}}
+            {hasYetki('dosya','dosya-sil') && <button style={{...S.btn,...S.btnD,fontSize:10,padding:'7px 14px'}}
               onClick={() => setDosyaSilConfirm(true)}>
               <LIcon name="Trash2" size={12} color="#fff"/> SİL
-            </button>
-          </div>}
+            </button>}
+          </div>
         </div>
       </div>
 
@@ -543,7 +548,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             )}
 
             {/* FİNANSAL ÖZET */}
-            {!isAvukat && <div style={S.card}>
+            <div style={S.card}>
               <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`${C.danger}06`}}>
                 <LIcon name="DollarSign" size={14} color={C.danger}/>
                 <span style={{fontSize:12,fontWeight:700}}>FİNANSAL ÖZET</span>
@@ -563,7 +568,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <InfoRow label="MASRAF SAYISI" value={dosya.masraflar?.length || 0}/>
                 <InfoRow label="EVRAK SAYISI" value={dosya.evraklar?.length || 0}/>
               </div>
-            </div>}
+            </div>
           </div>
         </div>
       )}
@@ -577,7 +582,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <span style={{fontSize:12,fontWeight:700}}>MASRAFLAR</span>
               <span style={{fontSize:10,color:C.textMuted}}>TOPLAM: {fmt(dosya.toplam_masraf || 0)}</span>
             </div>
-            {!isAvukat && <button style={{...S.btn,...S.btnP,fontSize:10,padding:'5px 12px'}} onClick={() => setMasrafM(true)}>
+            {hasYetki('dosya','dosya-masraf-ekle') && <button style={{...S.btn,...S.btnP,fontSize:10,padding:'5px 12px'}} onClick={() => setMasrafM(true)}>
               <LIcon name="Plus" size={12} color="#fff"/> YENİ MASRAF
             </button>}
           </div>
@@ -586,7 +591,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                 <thead>
                   <tr style={{background:C.bgHover}}>
-                    {(isAvukat ? ['#','MASRAF KALEMİ','TUTAR','DURUM','TARİH'] : ['#','MASRAF KALEMİ','TUTAR','DURUM','KASA','TARİH','KULLANICI','İŞLEM']).map(h =>
+                    {((!hasYetki('dosya','dosya-masraf-ode') && !hasYetki('dosya','dosya-masraf-sil')) ? ['#','MASRAF KALEMİ','TUTAR','DURUM','TARİH'] : ['#','MASRAF KALEMİ','TUTAR','DURUM','KASA','TARİH','KULLANICI','İŞLEM']).map(h =>
                       <th key={h} style={{padding:'8px 10px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
                     )}
                   </tr>
@@ -601,8 +606,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                         <td style={{padding:'8px 10px',fontWeight:700,color:C.danger,fontSize:11}}>{fmt(m.tutar)}</td>
                         <td style={{padding:'8px 10px'}}>
                           {odenmedi ? (
-                            <span style={{...S.btnMini,...S.btnMiniW, padding:'4px 12px', fontSize:9, cursor:isAvukat?'default':'pointer'}}
-                              onClick={isAvukat ? undefined : () => { setMasrafOdeItem(m); setMasrafOdeKasa(''); setMasrafOdeModal(true); }}>
+                            <span style={{...S.btnMini,...S.btnMiniW, padding:'4px 12px', fontSize:9, cursor:hasYetki('dosya','dosya-masraf-ode')?'pointer':'default'}}
+                              onClick={hasYetki('dosya','dosya-masraf-ode') ? () => { setMasrafOdeItem(m); setMasrafOdeKasa(''); setMasrafOdeModal(true); } : undefined}>
                               <LIcon name="Clock" size={10} color="#000"/> ÖDENMEDİ
                             </span>
                           ) : (
@@ -612,21 +617,21 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                             </span>
                           )}
                         </td>
-                        {!isAvukat && <td style={{padding:'8px 10px'}}><Badge text={m.kasa_adi || (odenmedi ? 'BEKLİYOR' : '-')} color={odenmedi ? C.warning : C.cyan}/></td>}
+                        {(hasYetki('dosya','dosya-masraf-ode') || hasYetki('dosya','dosya-masraf-sil')) && <td style={{padding:'8px 10px'}}><Badge text={m.kasa_adi || (odenmedi ? 'BEKLİYOR' : '-')} color={odenmedi ? C.warning : C.cyan}/></td>}
                         <td style={{padding:'8px 10px',color:C.textMuted,fontSize:10}}>{m.islem_tarihi}</td>
-                        {!isAvukat && <td style={{padding:'8px 10px',color:C.textSec,fontSize:10}}>{m.kullanici_adi || '-'}</td>}
-                        {!isAvukat && <td style={{padding:'8px 10px'}}>
+                        {(hasYetki('dosya','dosya-masraf-ode') || hasYetki('dosya','dosya-masraf-sil')) && <td style={{padding:'8px 10px',color:C.textSec,fontSize:10}}>{m.kullanici_adi || '-'}</td>}
+                        {(hasYetki('dosya','dosya-masraf-ode') || hasYetki('dosya','dosya-masraf-sil')) && <td style={{padding:'8px 10px'}}>
                           <div style={{display:'flex',gap:4}}>
-                            {odenmedi && (
+                            {odenmedi && hasYetki('dosya','dosya-masraf-ode') && (
                               <span style={{cursor:'pointer',display:'flex',padding:'3px 8px',borderRadius:4,background:`${C.success}18`,alignItems:'center',gap:3}}
                                 onClick={() => { setMasrafOdeItem(m); setMasrafOdeKasa(''); setMasrafOdeModal(true); }}>
                                 <LIcon name="Wallet" size={11} color={C.success}/><span style={{fontSize:9,fontWeight:700,color:C.success}}>ÖDE</span>
                               </span>
                             )}
-                            <span style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.danger}11`,width:'fit-content'}}
+                            {hasYetki('dosya','dosya-masraf-sil') && <span style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.danger}11`,width:'fit-content'}}
                               onClick={() => setDeleteConfirm({type:'masraf', id:m.id, text:m.masraf_kalemi})}>
                               <LIcon name="Trash2" size={12} color={C.danger}/>
-                            </span>
+                            </span>}
                           </div>
                         </td>}
                       </tr>
@@ -635,7 +640,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                   <tr style={{background:`${C.accent}06`}}>
                     <td colSpan={2} style={{padding:'10px 12px',fontWeight:800,textAlign:'right',fontSize:11}}>TOPLAM:</td>
                     <td style={{padding:'10px 12px',fontWeight:800,fontSize:13,color:C.danger}}>{fmt(dosya.toplam_masraf || 0)}</td>
-                    <td colSpan={isAvukat ? 2 : 5}/>
+                    <td colSpan={(!hasYetki('dosya','dosya-masraf-ode') && !hasYetki('dosya','dosya-masraf-sil')) ? 2 : 5}/>
                   </tr>
                 </tbody>
               </table>
@@ -787,7 +792,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                           style={{...S.btnMini,...S.btnMiniS}}>
                           <LIcon name="Download" size={10} color="#fff"/>
                         </button>
-                        {!isAvukat && <button title="SİL" onClick={() => setDeleteConfirm({type:'evrak', id:y.id, text:y.dosya_adi})}
+                        {hasYetki('dosya','dosya-evrak-sil') && <button title="SİL" onClick={() => setDeleteConfirm({type:'evrak', id:y.id, text:y.dosya_adi})}
                           style={{...S.btnMini,...S.btnMiniD}}>
                           <LIcon name="Trash2" size={10} color="#fff"/>
                         </button>}
@@ -843,14 +848,13 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <LIcon name="CheckCircle" size={14} color={C.success}/>
                 <span style={{fontSize:12,fontWeight:700}}>DOSYA KAPAT - HESAP ÖZETİ</span>
               </div>
-              {dosya.asama !== 'DOSYA KAPANDI' && (
+              {dosya.asama !== 'DOSYA KAPANDI' && hasYetki('dosya','dosya-kapat') && (
                 <button style={{...S.btn,...S.btnS,fontSize:10,padding:'5px 12px'}} onClick={() => {
                   api.kasaList().then(r => { if(r?.success) setKasalar(r.data||[]); });
                   // Avukat ödeme oranı: ortak varsa onun odeme_orani, yoksa komisyon_orani veya 50
                   const avukatOran = dosya.avukat_odeme_orani || dosya.komisyon_orani || 50;
                   setKapatForm({
                     tazminat:'', vekalet_ucreti:'', faiz:'', stopaj:'', kdv_oran:'20',
-                    noter_masrafi:'', cezaevi_harci:'', diger_masraf:'',
                     dosya_basi_odenen:'0', kasa_id:1, pay_orani: String(dosya.komisyon_orani || 50),
                     avukat_pay_orani: String(avukatOran)
                   });
@@ -887,11 +891,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           const t = parseFloat(kapatForm.tazminat) || 0;
           const sozlesmeOran = parseFloat(kapatForm.pay_orani) || 0;
           const sozlesme = t * sozlesmeOran / 100;
-          const noter = parseFloat(kapatForm.noter_masrafi) || 0;
-          const cezaevi = parseFloat(kapatForm.cezaevi_harci) || 0;
-          const digerM = parseFloat(kapatForm.diger_masraf) || 0;
-          const toplamEkMasraf = noter + cezaevi + digerM;
-          const muvekkileHavale = t - sozlesme - toplamEkMasraf;
+          const muvekkileHavale = t - sozlesme;
           const vekalet = parseFloat(kapatForm.vekalet_ucreti) || 0;
           const faiz = parseFloat(kapatForm.faiz) || 0;
           const stopaj = parseFloat(kapatForm.stopaj) || 0;
@@ -962,25 +962,16 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <FormGroup label="KDV ORANI (%)">
                   <input type="number" value={kapatForm.kdv_oran} onChange={e=>kF('kdv_oran',e.target.value)} placeholder="20" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
                 </FormGroup>
-                <FormGroup label="NOTER MASRAFI">
-                  <input type="number" value={kapatForm.noter_masrafi} onChange={e=>kF('noter_masrafi',e.target.value)} placeholder="0" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
-                </FormGroup>
-                <FormGroup label="CEZAEVİ HARCI">
-                  <input type="number" value={kapatForm.cezaevi_harci} onChange={e=>kF('cezaevi_harci',e.target.value)} placeholder="0" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
-                </FormGroup>
-                <FormGroup label="DİĞER MASRAF">
-                  <input type="number" value={kapatForm.diger_masraf} onChange={e=>kF('diger_masraf',e.target.value)} placeholder="0" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
-                </FormGroup>
-                {!isAvukat && <FormGroup label="DOSYA BAŞI ÖDENEN">
+                {hasYetki('dosya','dosya-kapat') && <FormGroup label="DOSYA BAŞI ÖDENEN">
                   <input type="number" value={kapatForm.dosya_basi_odenen} onChange={e=>kF('dosya_basi_odenen',e.target.value)} placeholder="0" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
                 </FormGroup>}
-                {!isAvukat && <FormGroup label={`AVUKAT PAY ORANI (%${avukatPayYuzde})`}>
+                {hasYetki('dosya','dosya-kapat') && <FormGroup label={`AVUKAT PAY ORANI (%${avukatPayYuzde})`}>
                   <input type="number" min="0" max="100" value={kapatForm.avukat_pay_orani} onChange={e=>kF('avukat_pay_orani',e.target.value)} placeholder="50" style={{...S.input,padding:'8px 10px',fontSize:12,fontWeight:700,color:C.purple}}/>
                 </FormGroup>}
               </div>
 
               {/* AVUKAT BİLGİ BANNER */}
-              {!isAvukat && dosya.avukat_adi && (
+              {hasYetki('dosya','dosya-kapat') && dosya.avukat_adi && (
                 <div style={{padding:10,background:`${C.purple}11`,borderRadius:8,marginBottom:16,display:'flex',alignItems:'center',gap:12,border:`1px solid ${C.purple}33`}}>
                   <LIcon name="Scale" size={16} color={C.purple}/>
                   <div style={{flex:1}}>
@@ -1003,9 +994,6 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 </div>
                 {hesapRow('SİGORTA ÖDEMESİ (TAZMİNAT)', t, {bold:true,color:C.accent})}
                 {hesapRow(`SÖZLEŞME (%${sozlesmeOran})`, sozlesme)}
-                {noter > 0 && hesapRow('NOTER MASRAFI', noter, {color:C.danger})}
-                {cezaevi > 0 && hesapRow('CEZAEVİ HARCI', cezaevi, {color:C.danger})}
-                {digerM > 0 && hesapRow('DİĞER MASRAF', digerM, {color:C.danger})}
                 {hesapRow('MÜVEKKİLE HAVALE', muvekkileHavale, {bold:true,border:true})}
 
                 <div style={{marginTop:10}}/>
@@ -1021,9 +1009,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
                 <div style={{marginTop:10,paddingTop:10,borderTop:`2px solid ${C.warning}44`}}/>
                 {hesapRow('DOSYA MASRAFLARI (SİSTEMDEN)', dosyaMasraflari, {color:C.danger})}
-                {!isAvukat && hesapRow('DOSYA BAŞI ÖDENEN (MR HASAR\'A)', dosyaBasi, {color:C.warning})}
+                {hasYetki('dosya','dosya-kapat') && hesapRow('DOSYA BAŞI ÖDENEN (MR HASAR\'A)', dosyaBasi, {color:C.warning})}
 
-                {!isAvukat && <>
+                {hasYetki('dosya','dosya-kapat') && <>
                 <div style={{marginTop:10,paddingTop:10,borderTop:`2px solid ${C.purple}44`}}/>
                 <div style={{fontSize:10,fontWeight:700,color:C.purple,marginBottom:6,display:'flex',alignItems:'center',gap:4}}>
                   PAY BÖLÜŞÜMÜ (MR HASAR %{mrPayYuzde} / AVUKAT %{avukatPayYuzde})
@@ -1036,7 +1024,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               </div>
 
               {/* KASA SEÇİMİ */}
-              {!isAvukat && <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
+              {hasYetki('dosya','dosya-kapat') && <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
                 <FormGroup label="KAZANÇ AKTARILACAK KASA">
                   <select value={kapatForm.kasa_id} onChange={e=>kF('kasa_id',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:12}}>
                     {kasalar.map(k => <option key={k.id} value={k.id}>{k.ad} ({fmt(k.bakiye)})</option>)}
