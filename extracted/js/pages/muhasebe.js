@@ -28,7 +28,7 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
     if (user?.rol === 'admin') return tumSekmeler;
     const yetkiler = user?.yetkiler;
     if (!yetkiler || Object.keys(yetkiler).length === 0) return tumSekmeler;
-    return tumSekmeler.filter(s => yetkiler['muhasebe_muhasebe-' + s.key] === 1);
+    return tumSekmeler.filter(s => { const v = yetkiler['muhasebe_muhasebe-' + s.key]; return v === undefined || v === 1; });
   }, [user?.rol, user?.yetkiler]);
 
   /* Aktif sekme: yetkisi yoksa ilk izinli sekmeye yönlendir */

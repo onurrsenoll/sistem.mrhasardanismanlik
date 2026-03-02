@@ -106,6 +106,7 @@ const MODUL_YETKILERI = [
     {key: 'muhasebe-transfer', label: 'KASA TRANSFERİ'},
     {key: 'muhasebe-hareket-duzenle', label: 'HESAP HAREKETİ DÜZENLE (SİSTEM YÖNETİCİSİ)'},
     {key: 'muhasebe-hareket-sil', label: 'HESAP HAREKETİ SİL (SİSTEM YÖNETİCİSİ)'},
+    {key: 'muhasebe-ortakkasa', label: 'ORTAK KASA'},
     {key: 'muhasebe-maliyet', label: 'MALİYET ANALİZİ'},
     {key: 'muhasebe-rapor', label: 'FİNANSAL RAPORLAR'},
     {key: 'muhasebe-kapanis', label: 'KAPANIŞ RAPORU'},

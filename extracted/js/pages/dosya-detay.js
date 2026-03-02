@@ -427,7 +427,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                   {dosya.asama}
                 </span>
               </div>
-              <div style={{fontSize:11,color:C.textSec,marginTop:2}}>
+              <div style={{fontSize:14,color:C.text,marginTop:4,fontWeight:700,letterSpacing:0.3}}>
                 {magdur.ad_soyad || '-'} {dosya.sigorta_sirket ? `• ${dosya.sigorta_sirket}` : ''} {dosya.hasar_no ? `• ${dosya.hasar_no}` : ''}
               </div>
             </div>
@@ -453,7 +453,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       </div>
 
       {/* TABS — 3D MAVİ */}
-      <div style={{display:'flex',gap:6,marginBottom:12}}>
+      <div style={{display:'flex',gap:6,marginBottom:12,justifyContent:'center'}}>
         {tabs.map(t => (
           <div key={t.id} onClick={() => setTab(t.id)}
             style={{display:'flex',alignItems:'center',gap:5,padding:'9px 18px',borderRadius:10,fontSize:11,fontWeight:800,cursor:'pointer',
@@ -651,7 +651,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
       {/* EVRAKLAR TAB */}
       {tab === 'evrak' && (
-        <div style={S.card}>
+        <div style={{...S.card, maxWidth:'50%', margin:'0 auto'}}>
           <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',background:`${C.accent}06`}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <LIcon name="Folder" size={14} color={C.accent}/>
@@ -731,13 +731,13 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                   {/* SIRA NO */}
                   <span style={{fontSize:9,color:C.textMuted,minWidth:22,textAlign:'center',fontWeight:600}}>{idx+1}</span>
                   {/* DURUM İKONU */}
-                  <div style={{width:22,height:22,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+                  <div style={{width:28,height:28,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
                     background:yukluMu ? `${C.success}22` : `${C.border}44`}}>
-                    <LIcon name={yukluMu ? 'Check' : 'Minus'} size={12} color={yukluMu ? C.success : C.textMuted}/>
+                    <LIcon name={yukluMu ? 'Check' : 'Minus'} size={15} color={yukluMu ? C.success : C.textMuted}/>
                   </div>
                   {/* EVRAK TÜRÜ ADI */}
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:10,fontWeight:yukluMu?700:500,color:yukluMu?C.text:C.textSec,
+                    <div style={{fontSize:13,fontWeight:yukluMu?700:500,color:yukluMu?C.text:C.textSec,
                       overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{tur}</div>
                     {yukluMu && (
                       <div style={{fontSize:8,color:C.textMuted,marginTop:1}}>
@@ -799,8 +799,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                       </React.Fragment>
                     ))}
                     {/* YÜKLE BUTONU */}
-                    <label title="DOSYA YÜKLE" style={{...S.btnMini,...(yukluMu ? S.btnMiniW : S.btnMiniP)}}>
-                      <LIcon name="Upload" size={10} color={yukluMu ? '#000' : '#fff'}/>
+                    <label title="DOSYA YÜKLE" style={{...S.btnMini,...(yukluMu ? S.btnMiniW : S.btnMiniP), width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center'}}>
+                      <LIcon name="Upload" size={14} color={yukluMu ? '#000' : '#fff'}/>
                       <input type="file" accept=".pdf,.jpg,.jpeg,.png,.svg,.doc,.docx" style={{display:'none'}} onChange={async (ev) => {
                         const f = ev.target.files[0];
                         if (!f) return;

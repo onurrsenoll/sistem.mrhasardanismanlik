@@ -110,7 +110,7 @@ function menuErisim(user) {
 
       if (m.sub) {
         /* ALT MODÜL BAZLI: HER SUB-ITEM İÇİN İZİN KONTROLÜ */
-        const filteredSub = m.sub.filter(s => yetkiler[modul + '_' + s.id] === 1);
+        const filteredSub = m.sub.filter(s => { const v = yetkiler[modul + '_' + s.id]; return v === undefined || v === 1; });
         if (filteredSub.length === 0) return null;
         return {...m, sub: filteredSub};
       }
@@ -2038,7 +2038,7 @@ const App = () => {
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
         textAlign: 'center',
-        background: `linear-gradient(transparent, ${C.bg} 30%)`,
+        background: 'transparent',
         zIndex: 10, pointerEvents: 'none', padding: '20px 40px 10px'
       }}>
         {/* AI MOTİVASYON SÖZÜ */}
