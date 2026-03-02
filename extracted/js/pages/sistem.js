@@ -58,7 +58,8 @@ const MODUL_YETKILERI = [
   ]},
   {modul: 'paydaslar', label: 'PAYDAŞLAR', icon: 'Handshake', islemler: [
     {key: 'ortaklar-ortaklar', label: 'İŞ ORTAKLARI'},
-    {key: 'ortaklar-paydaslar', label: 'İŞ PAYDAŞLARI'}
+    {key: 'ortaklar-paydaslar', label: 'İŞ PAYDAŞLARI'},
+    {key: 'personel-liste', label: 'PERSONEL'}
   ]},
   {modul: 'police', label: 'POLİÇE', icon: 'FileCheck', islemler: [
     {key: 'police-liste', label: 'POLİÇE LİSTESİ'},
@@ -82,6 +83,12 @@ const MODUL_YETKILERI = [
   {modul: 'ajanda', label: 'AJANDA', icon: 'Calendar', islemler: [
     {key: 'goruntule', label: 'AJANDA GÖRÜNTÜLE'}
   ]},
+  {modul: 'ictihat', label: 'İÇTİHAT', icon: 'Scale', islemler: [
+    {key: 'ictihat-yargitay', label: 'YARGITAY KARARLARI'},
+    {key: 'ictihat-tahkim', label: 'TAHKİM KABUL ÖRNEKLERİ'},
+    {key: 'ictihat-police-limit', label: 'POLİÇE LİMİT TABLOLARI'},
+    {key: 'ictihat-kusur-emsal', label: 'KUSUR EMSAL DOSYALARI'}
+  ]},
   {modul: 'sistem', label: 'SİSTEM', icon: 'Shield', islemler: [
     {key: 'sistem-kullanici', label: 'KULLANICI YÖNETİMİ'},
     {key: 'sistem-yetki', label: 'YETKİ YÖNETİMİ'},
@@ -95,7 +102,8 @@ const MODUL_YETKILERI = [
     {key: 'tanimlamalar-evrak', label: 'EVRAK TANIMLAMALARI'},
     {key: 'tanimlamalar-finansal', label: 'FİNANSAL TANIMLAMALAR'},
     {key: 'tanimlamalar-sablon', label: 'MATBU EVRAK / SÖZLEŞME'},
-    {key: 'tanimlamalar-genel', label: 'GENEL TANIMLAMALAR'}
+    {key: 'tanimlamalar-genel', label: 'GENEL TANIMLAMALAR'},
+    {key: 'sistem-konum', label: 'KONUM TAKİBİ'}
   ]},
   {modul: 'netsantral', label: 'NETSANTRAL (GİDEN ARAMA)', icon: 'Phone', islemler: [
     {key: 'goruntule', label: 'ARAMA PANELİ GÖRÜNTÜLE'},
