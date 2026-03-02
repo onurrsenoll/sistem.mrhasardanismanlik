@@ -27,7 +27,44 @@ if (!isset($body['dosya_kaynagi']) && isset($body['dosya_kaynak'])) {
 if (!isset($body['komisyon_orani']) && isset($body['komisyon'])) {
     $body['komisyon_orani'] = $body['komisyon'];
 }
+// Frontend 'il/ilce' gönderir, backend 'kaza_il/kaza_ilce' bekler
+if (!isset($body['kaza_il']) && isset($body['il'])) {
+    $body['kaza_il'] = $body['il'];
+}
+if (!isset($body['kaza_ilce']) && isset($body['ilce'])) {
+    $body['kaza_ilce'] = $body['ilce'];
+}
 
+// ═══ DDL MİGRASYONLARI — TRANSACTION ÖNCESİ ═══
+// ALTER TABLE / CREATE TABLE ifadeleri MariaDB'de implicit commit yapar.
+// Transaction bütünlüğünü korumak için tüm DDL işlemleri transaction öncesi çalıştırılır.
+try {
+    // BH ek sütunları
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS sorumlu_sigorta VARCHAR(255) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS sakatlik_aciklama TEXT DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS surucu_ad VARCHAR(255) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS surucu_ehliyet VARCHAR(100) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS surucu_kusur INT DEFAULT NULL");
+} catch (\Exception $e) {}
+
+try {
+    // masraflar ek sütunları
+    $db->exec("ALTER TABLE masraflar ADD COLUMN IF NOT EXISTS odeme_durumu VARCHAR(20) DEFAULT 'odendi'");
+    $db->exec("ALTER TABLE masraflar ADD COLUMN IF NOT EXISTS paydas_komisyon_id INT DEFAULT NULL");
+} catch (\Exception $e) {}
+
+try {
+    // paydas_komisyonlari ek sütunları
+    $db->exec("ALTER TABLE paydas_komisyonlari ADD COLUMN IF NOT EXISTS masraf_id INT DEFAULT NULL");
+} catch (\Exception $e) {}
+
+// Portal tabloları
+try {
+    require_once __DIR__ . '/../portal/migration.php';
+    ensure_portal_tables();
+} catch (\Exception $e) {}
+
+// ═══ ANA İŞLEM — TRANSACTION İÇİNDE ═══
 try {
     $db->beginTransaction();
 
@@ -86,9 +123,9 @@ try {
         clean($body['notlar'] ?? ''),
         $user['id']
     ]);
-    
+
     $dosyaId = (int)$db->lastInsertId();
-    
+
     // 3. Mağdur kaydı
     $stmt = $db->prepare('INSERT INTO magdurlar (dosya_id, tc_kimlik, ad_soyad, telefon, telefon2, email, iban, adres, il, ilce, dogum_tarihi, cinsiyet, meslek, gelir_durumu) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $stmt->execute([
@@ -107,7 +144,7 @@ try {
         clean($body['meslek'] ?? ''),
         clean($body['gelir_durumu'] ?? '')
     ]);
-    
+
     // 4. Araç kayıtları (ADK veya MDK ise)
     if ($body['dosya_turu'] === 'ADK' || $body['dosya_turu'] === 'MDK') {
         // Mağdur aracı
@@ -146,15 +183,6 @@ try {
 
     // 4b. BH ek alanları (sürücü, araç, sorumlu sigorta, sakatlık)
     if ($body['dosya_turu'] === 'BH') {
-        // dosyalar tablosuna BH ek sütunlar
-        try {
-            $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS sorumlu_sigorta VARCHAR(255) DEFAULT NULL");
-            $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS sakatlik_aciklama TEXT DEFAULT NULL");
-            $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS surucu_ad VARCHAR(255) DEFAULT NULL");
-            $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS surucu_ehliyet VARCHAR(100) DEFAULT NULL");
-            $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS surucu_kusur INT DEFAULT NULL");
-        } catch (\Exception $e) {}
-
         $stmtBH = $db->prepare('UPDATE dosyalar SET sorumlu_sigorta=?, sakatlik_aciklama=?, surucu_ad=?, surucu_ehliyet=?, surucu_kusur=? WHERE id=?');
         $stmtBH->execute([
             clean($body['sorumlu_sigorta'] ?? ''),
@@ -177,22 +205,11 @@ try {
             ]);
         }
     }
-    
+
     // ═══ 5. OTOMATİK PRİM İŞLEMLERİ ═══
     $dosyaTuru = clean($body['dosya_turu']);
     $primField = ($dosyaTuru === 'BH') ? 'prim_bh' : 'prim_adk';
     $otoPrimBilgi = [];
-
-    // masraflar tablosunda odeme_durumu sütunu yoksa ekle
-    try {
-        $db->exec("ALTER TABLE masraflar ADD COLUMN IF NOT EXISTS odeme_durumu VARCHAR(20) DEFAULT 'odendi'");
-        $db->exec("ALTER TABLE masraflar ADD COLUMN IF NOT EXISTS paydas_komisyon_id INT DEFAULT NULL");
-    } catch (\Exception $e) {}
-
-    // paydas_komisyonlari tablosunda masraf_id sütunu yoksa ekle
-    try {
-        $db->exec("ALTER TABLE paydas_komisyonlari ADD COLUMN IF NOT EXISTS masraf_id INT DEFAULT NULL");
-    } catch (\Exception $e) {}
 
     // 5a. PERSONEL (SORUMLU) PRİMİ — SADECE HAKEDİŞ İÇİN SAYILIR, MASRAF YAZILMAZ
     // Personel primi aylık hak ediş hesaplamasında otomatik olarak
@@ -306,8 +323,6 @@ try {
 
     // ═══ DOSYA SÜRECİ: İLK KAYIT ═══
     try {
-        require_once __DIR__ . '/../portal/migration.php';
-        ensure_portal_tables();
         $stmtSurec = $db->prepare("INSERT INTO dosya_surecler (dosya_id, baslik, detay, islem_tipi, created_at) VALUES (?, ?, ?, 'sistem', NOW())");
         $stmtSurec->execute([$dosyaId, 'DOSYA SİSTEMDE AÇILDI', 'Dosya No: ' . $dosyaNo . ' | Dosya Türü: ' . clean($body['dosya_turu']) . ' | Aşama: Dosya Açık']);
     } catch (\Exception $e) {}
@@ -335,10 +350,6 @@ try {
         $musteriTelefon = clean($body['telefon'] ?? '');
 
         if ($portalAktif && $portalOtomatik && !empty($musteriTelefon)) {
-            // Portal migration
-            require_once __DIR__ . '/../portal/migration.php';
-            ensure_portal_tables();
-
             // Telefon normalize
             require_once __DIR__ . '/../../config/sms_helper.php';
             $telNorm = sms_telefon_normalize($musteriTelefon);
@@ -422,8 +433,10 @@ try {
         'oto_prim' => $otoPrimBilgi,
         'portal' => $portalBilgi
     ], $mesaj, 201);
-    
+
 } catch (\Exception $e) {
-    $db->rollBack();
+    if ($db->inTransaction()) {
+        $db->rollBack();
+    }
     json_error('Dosya oluşturulurken hata: ' . $e->getMessage(), 500);
 }
