@@ -917,6 +917,10 @@ const KasaBanka = ({setPage, user}) => {
   const [duzeltmeModal, setDuzeltmeModal] = useState(null);
   const [duzeltmeForm, setDuzeltmeForm] = useState({yeni_bakiye:'', aciklama:''});
 
+  /* HAREKET DÜZENLEME / SİLME (SADECE ADMİN) */
+  const [hareketDuzenleModal, setHareketDuzenleModal] = useState(null);
+  const [hareketDuzenleForm, setHareketDuzenleForm] = useState({tutar:'', aciklama:'', islem_turu:''});
+
   /* HAREKET FİLTRELERİ */
   const [hKasaF, setHKasaF] = useState('');
   const [hTurF, setHTurF] = useState('');
@@ -1118,6 +1122,9 @@ const KasaBanka = ({setPage, user}) => {
                           <div onClick={() => toggleAktif(kasa)} style={{width:30,height:30,borderRadius:7,background: pasif ? 'linear-gradient(180deg, #34d399 0%, #10b981 40%, #059669 100%)' : 'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow: pasif ? '0 2px 8px -1px rgba(16,185,129,0.45), inset 0 1px 0 rgba(255,255,255,0.2)' : '0 2px 8px -1px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom: pasif ? '1px solid #047857' : '1px solid #b91c1c'}} title={pasif ? 'AKTİF ET' : 'PASİF YAP'}>
                             <LIcon name={pasif ? 'ToggleRight' : 'ToggleLeft'} size={13} color="#fff"/>
                           </div>
+                          <div onClick={() => setConfirm({open:true, msg:`"${kasa.ad}" KASASINI VE TÜM HAREKETLERİNİ KALICI OLARAK SİLMEK İSTEDİĞİNİZE EMİN MİSİNİZ?\n\nBU İŞLEM GERİ ALINAMAZ!`, cb: async () => { setConfirm({open:false, msg:'', cb:null}); const r = await api.kasaDelete(kasa.id); if(r?.success){ setBasari('KASA BAŞARIYLA SİLİNDİ'); kasaYukle(); hareketYukle(); setTimeout(()=>setBasari(''),4000); } else { setHata(r?.error||'SİLME HATASI'); setTimeout(()=>setHata(''),4000); }}})} style={{width:30,height:30,borderRadius:7,background:'linear-gradient(180deg, #f87171 0%, #dc2626 40%, #991b1b 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(220,38,38,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom:'1px solid #7f1d1d'}} title="KASAYI SİL">
+                            <LIcon name="Trash2" size={13} color="#fff"/>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1194,7 +1201,7 @@ const KasaBanka = ({setPage, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:800}}>
               <thead>
                 <tr style={{background:C.bgHover}}>
-                  {['TARİH','KASA','TÜR','TUTAR','AÇIKLAMA','DOSYA NO'].map(h =>
+                  {['TARİH','KASA','TÜR','TUTAR','AÇIKLAMA','DOSYA NO', ...(isAdmin ? ['İŞLEM'] : [])].map(h =>
                     <th key={h} style={{padding:'12px 14px',textAlign:'left',color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                   )}
                 </tr>
@@ -1221,6 +1228,18 @@ const KasaBanka = ({setPage, user}) => {
                           </span>
                         ) : <span style={{color:C.textMuted}}>-</span>}
                       </td>
+                      {isAdmin && (
+                        <td style={{padding:'10px 12px'}}>
+                          <div style={{display:'flex',gap:4}}>
+                            <div onClick={() => { setHareketDuzenleModal(h); setHareketDuzenleForm({tutar: String(tutar), aciklama: h.aciklama || '', islem_turu: h.tur || h.islem_turu || ''}); setHata(''); }} style={{width:26,height:26,borderRadius:6,background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 6px -1px rgba(37,99,235,0.4)'}} title="DÜZENLE">
+                              <LIcon name="Pencil" size={11} color="#fff"/>
+                            </div>
+                            <div onClick={() => setConfirm({open:true, msg:'BU HAREKETİ SİLMEK İSTEDİĞİNİZE EMİN MİSİNİZ?\n\nKASA BAKİYESİ OTOMATİK GÜNCELLENECEKTİR.', cb: async () => { setConfirm({open:false,msg:'',cb:null}); const r = await api.kasaHareketSil(h.id); if(r?.success){ setBasari('HAREKET BAŞARIYLA SİLİNDİ'); kasaYukle(); hareketYukle(); setTimeout(()=>setBasari(''),4000); } else { setHata(r?.error||'SİLME HATASI'); setTimeout(()=>setHata(''),4000); }}})} style={{width:26,height:26,borderRadius:6,background:'linear-gradient(180deg, #f87171 0%, #dc2626 40%, #991b1b 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 6px -1px rgba(220,38,38,0.4)'}} title="SİL">
+                              <LIcon name="Trash2" size={11} color="#fff"/>
+                            </div>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -1384,6 +1403,71 @@ const KasaBanka = ({setPage, user}) => {
             <LIcon name="ArrowRightLeft" size={14} color="#000"/> {kayitLoading ? 'TRANSFER EDİLİYOR...' : 'TRANSFER YAP'}
           </button>
         </div>
+      </Modal>
+
+      {/* HAREKET DÜZENLEME MODAL (SADECE ADMİN) */}
+      <Modal open={!!hareketDuzenleModal} onClose={() => setHareketDuzenleModal(null)} title="HAREKET DÜZENLE" width="500px">
+        {hareketDuzenleModal && (
+          <div>
+            <HataMesaji mesaj={hata}/>
+            <div style={{padding:12,borderRadius:8,background:`${C.accent}11`,border:`1px solid ${C.accent}33`,marginBottom:16}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700}}>{hareketDuzenleModal.kasa_adi || kasaAdi(hareketDuzenleModal.kasa_id)}</div>
+                  <div style={{fontSize:11,color:C.textSec,marginTop:2}}>{hareketDuzenleModal.tarih || hareketDuzenleModal.created_at?.split(' ')[0] || '-'}</div>
+                </div>
+                <Badge text={turLabel(hareketDuzenleModal.tur)} color={turRenk(hareketDuzenleModal.tur)}/>
+              </div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <FormGroup label="TUTAR (₺) *">
+                <input style={{...S.input,fontSize:16,fontWeight:700}} value={hareketDuzenleForm.tutar}
+                  onChange={e => setHareketDuzenleForm(f => ({...f, tutar: e.target.value.replace(/[^0-9.,\-]/g,'')}))}
+                  placeholder="0"/>
+              </FormGroup>
+              <FormGroup label="İŞLEM TÜRÜ *">
+                <select style={S.select} value={hareketDuzenleForm.islem_turu} onChange={e => setHareketDuzenleForm(f => ({...f, islem_turu: e.target.value}))}>
+                  <option value="gelir">GELİR</option>
+                  <option value="gider">GİDER</option>
+                  <option value="giris">GİRİŞ</option>
+                  <option value="cikis">ÇIKIŞ</option>
+                  <option value="komisyon">KOMİSYON</option>
+                  <option value="transfer">TRANSFER</option>
+                  <option value="duzeltme">DÜZELTME</option>
+                </select>
+              </FormGroup>
+            </div>
+            <FormGroup label="AÇIKLAMA">
+              <input style={S.input} value={hareketDuzenleForm.aciklama}
+                onChange={e => setHareketDuzenleForm(f => ({...f, aciklama: e.target.value.toUpperCase()}))}
+                placeholder="HAREKET AÇIKLAMASI"/>
+            </FormGroup>
+            <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:20}}>
+              <button style={{...S.btn,...S.btnG}} onClick={() => setHareketDuzenleModal(null)}>İPTAL</button>
+              <button style={{...S.btn,...S.btnP}} onClick={async () => {
+                const yeniTutar = parseNum(hareketDuzenleForm.tutar);
+                if (yeniTutar <= 0) { setHata('TUTAR 0\'DAN BÜYÜK OLMALIDIR'); return; }
+                const r = await api.kasaHareketGuncelle({
+                  id: hareketDuzenleModal.id,
+                  tutar: yeniTutar,
+                  aciklama: hareketDuzenleForm.aciklama,
+                  islem_turu: hareketDuzenleForm.islem_turu
+                });
+                if (r?.success) {
+                  setHareketDuzenleModal(null);
+                  setBasari('HAREKET BAŞARIYLA GÜNCELLENDİ');
+                  kasaYukle(); hareketYukle();
+                  setTimeout(() => setBasari(''), 4000);
+                } else {
+                  setHata(r?.error || 'GÜNCELLEME HATASI');
+                  setTimeout(() => setHata(''), 4000);
+                }
+              }}>
+                <LIcon name="Save" size={14} color="#fff"/> KAYDET
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* ONAY DİALOG */}

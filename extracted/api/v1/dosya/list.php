@@ -53,17 +53,19 @@ if ($kaynak !== '') {
     $params[] = $kaynak;
 }
 
-// Avukat rolü: yetki verilmişse tüm dosyaları görür, verilmemişse sadece kendi dosyalarını
-if ($user['rol'] === 'avukat') {
+// Avukat ve diğer kısıtlı roller: yetki verilmişse tüm dosyaları görür, verilmemişse sadece kendi dosyalarını
+if ($user['rol'] !== 'admin') {
     $dosyaYetkisi = false;
     try {
-        $yStmt = $db->prepare("SELECT izin FROM yetkiler WHERE kullanici_id = ? AND modul = 'dosya' AND islem = 'goruntule' LIMIT 1");
+        // Hem eski 'goruntule' hem yeni 'dosya-liste' ve 'dosya-detay' anahtarlarını kontrol et
+        $yStmt = $db->prepare("SELECT izin FROM yetkiler WHERE kullanici_id = ? AND modul = 'dosya' AND islem IN ('goruntule', 'dosya-liste', 'dosya-detay') AND izin = 1 LIMIT 1");
         $yStmt->execute([$user['id']]);
         $yRow = $yStmt->fetch();
-        if ($yRow && (int)$yRow['izin'] === 1) $dosyaYetkisi = true;
+        if ($yRow) $dosyaYetkisi = true;
     } catch (Exception $e) {}
 
     if (!$dosyaYetkisi) {
+        // Yetkisi yoksa sadece kendi atanmış dosyalarını görsün
         $where[] = 'd.avukat_id = ?';
         $params[] = $user['id'];
     }

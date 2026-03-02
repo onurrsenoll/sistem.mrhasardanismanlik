@@ -120,9 +120,12 @@ MR.api = {
   kasaList() { return this.req('/muhasebe/kasa-list.php'); },
   kasaCreate(d) { return this.req('/muhasebe/kasa-create.php', { method: 'POST', body: JSON.stringify(d) }); },
   kasaUpdate(d) { return this.req('/muhasebe/kasa-update.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  kasaDelete(id) { return this.req('/muhasebe/kasa-delete.php?id=' + id, { method: 'DELETE' }); },
   gelirEkle(d) { return this.req('/muhasebe/gelir-ekle.php', { method: 'POST', body: JSON.stringify(d) }); },
   kasaTransfer(d) { return this.req('/muhasebe/transfer.php', { method: 'POST', body: JSON.stringify(d) }); },
   kasaHareketler(p = {}) { return this.req('/muhasebe/hareketler.php?' + new URLSearchParams(p)); },
+  kasaHareketSil(id) { return this.req('/muhasebe/hareket-delete.php?id=' + id, { method: 'DELETE' }); },
+  kasaHareketGuncelle(d) { return this.req('/muhasebe/hareket-update.php', { method: 'PUT', body: JSON.stringify(d) }); },
   muhasebeRapor(p = {}) { return this.req('/muhasebe/rapor.php?' + new URLSearchParams(p)); },
   // SİSTEM
   kullaniciList(p = {}) { return this.req('/sistem/kullanici-list.php?' + new URLSearchParams(p)); },
