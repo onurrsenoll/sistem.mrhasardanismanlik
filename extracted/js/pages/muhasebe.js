@@ -10,9 +10,8 @@ const {useState, useEffect, useRef, useMemo} = React;
    ═══════════════════════════════════════════════════════════ */
 MR.MuhasebePage = ({setPage, user, subPage}) => {
   const {C, S, LIcon} = MR;
-  const aktifSekme = subPage || 'gelir';
 
-  const sekmeler = [
+  const tumSekmeler = [
     {key:'gelir',    label:'GELİR YÖNETİMİ',     icon:'TrendingUp'},
     {key:'gider',    label:'GİDER YÖNETİMİ',      icon:'TrendingDown'},
     {key:'komisyon', label:'KOMİSYON / PRİM',      icon:'Percent'},
@@ -21,6 +20,21 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
     {key:'rapor',    label:'FİNANSAL RAPORLAR',     icon:'BarChart3'},
     {key:'kapanis',  label:'KAPANIŞ RAPORU',         icon:'FileCheck'}
   ];
+
+  /* YETKİ BAZLI SEKME FİLTRELEME */
+  const sekmeler = useMemo(() => {
+    if (user?.rol === 'admin') return tumSekmeler;
+    const yetkiler = user?.yetkiler;
+    if (!yetkiler || Object.keys(yetkiler).length === 0) return tumSekmeler;
+    return tumSekmeler.filter(s => yetkiler['muhasebe_muhasebe-' + s.key] === 1);
+  }, [user?.rol, user?.yetkiler]);
+
+  /* Aktif sekme: yetkisi yoksa ilk izinli sekmeye yönlendir */
+  const aktifSekme = useMemo(() => {
+    const hedef = subPage || 'gelir';
+    if (sekmeler.some(s => s.key === hedef)) return hedef;
+    return sekmeler.length > 0 ? sekmeler[0].key : 'gelir';
+  }, [subPage, sekmeler]);
 
   return (
     <div className="fade-in">

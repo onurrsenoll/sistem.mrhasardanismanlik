@@ -95,7 +95,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
   const isBH = form.dosya_turu === 'BH';
   const isPaydas = form.dosya_kaynak === 'PAYDAŞ/YÖNLENDİREN';
   const seciliOrtak = ortaklar.find(o => String(o.id) === String(form.ortak_id));
-  const seciliSorumlu = personeller.find(p => String(p.id) === String(form.sorumlu_id));
+  const seciliSorumlu = personeller.find(p => String(p.user_id || p.id) === String(form.sorumlu_id));
   const seciliPaydas = paydaslar.find(p => String(p.id) === String(form.paydas_id));
   const paydasPrimTutar = seciliPaydas ? parseFloat(isBH ? seciliPaydas.prim_bh : seciliPaydas.prim_adk) || 0 : 0;
 
@@ -174,7 +174,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
               <select style={{...S.select,fontWeight:600}} value={form.sorumlu_id} onChange={e=>u('sorumlu_id',e.target.value)}>
                 <option value="">SORUMLU SEÇİNİZ</option>
                 {personeller.length > 0 && personeller.map(p => (
-                  <option key={'p-'+p.id} value={p.id}>
+                  <option key={'p-'+p.id} value={p.user_id || p.id}>
                     {p.ad_soyad}{p.pozisyon ? ` - ${p.pozisyon}` : ''}{p.departman ? ` (${p.departman})` : ''}
                   </option>
                 ))}

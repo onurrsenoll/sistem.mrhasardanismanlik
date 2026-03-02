@@ -34,6 +34,30 @@ try {
     // 1. Dosya No üret
     $dosyaNo = generate_dosya_no($db);
 
+    // ═══ SORUMLU ID ÇÖZÜMLEME ═══
+    // Frontend personel tablosu ID'si gönderir, FK users tablosuna bağlı.
+    // Personel ID'sini users tablosundaki user_id'ye çevir.
+    $sorumluIdRaw = !empty($body['sorumlu_id']) ? (int)$body['sorumlu_id'] : null;
+    $sorumluIdFinal = $user['id']; // varsayılan: giriş yapan kullanıcı
+
+    if ($sorumluIdRaw) {
+        // Önce users tablosunda doğrudan var mı kontrol et
+        $stmtUCheck = $db->prepare('SELECT id FROM users WHERE id = ?');
+        $stmtUCheck->execute([$sorumluIdRaw]);
+        if ($stmtUCheck->fetch()) {
+            $sorumluIdFinal = $sorumluIdRaw;
+        } else {
+            // Personel tablosundan user_id'yi al
+            $stmtPCheck = $db->prepare('SELECT user_id FROM personel WHERE id = ?');
+            $stmtPCheck->execute([$sorumluIdRaw]);
+            $persRow = $stmtPCheck->fetch();
+            if ($persRow && !empty($persRow['user_id'])) {
+                $sorumluIdFinal = (int)$persRow['user_id'];
+            }
+            // user_id yoksa varsayılan (giriş yapan kullanıcı) kullanılır
+        }
+    }
+
     // 2. Dosya kaydı
     $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, talep_turu, asama, sigorta_sirket, police_no, sigorta_turu, dosya_kaynagi, avukat_id, ortak_id, sorumlu_id, paydas_id, haklilik, komisyon_orani, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, notlar, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), ?, ?)');
 
@@ -51,7 +75,7 @@ try {
         clean($body['dosya_kaynagi'] ?? ''),
         !empty($body['avukat_id']) ? (int)$body['avukat_id'] : null,
         !empty($body['ortak_id']) ? (int)$body['ortak_id'] : null,
-        !empty($body['sorumlu_id']) ? (int)$body['sorumlu_id'] : $user['id'],
+        $sorumluIdFinal,
         !empty($body['paydas_id']) ? (int)$body['paydas_id'] : null,
         (int)($body['haklilik'] ?? 100),
         (float)($body['komisyon_orani'] ?? 0),
