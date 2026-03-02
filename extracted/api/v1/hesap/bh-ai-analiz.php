@@ -26,7 +26,7 @@ if (!$input) {
 $apiKey = '';
 try {
     $db = getDB();
-    $stmt = $db->prepare("SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('ai_api_key', 'openai_api_key') ORDER BY anahtar ASC");
+    $stmt = $db->prepare("SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('gemini_api_key', 'ai_api_key', 'openai_api_key') AND deger != '' ORDER BY anahtar ASC");
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($rows as $row) {

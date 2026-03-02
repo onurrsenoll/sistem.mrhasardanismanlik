@@ -32,7 +32,7 @@ $kazaTarihi = $input['kaza_tarihi'] ?? date('Y-m-d', strtotime('-6 months'));
 $apiKey = '';
 try {
     $db = getDB();
-    $stmt = $db->prepare("SELECT deger FROM ayarlar WHERE anahtar IN ('ai_api_key','openai_api_key') AND deger != '' ORDER BY anahtar ASC LIMIT 1");
+    $stmt = $db->prepare("SELECT deger FROM ayarlar WHERE anahtar IN ('gemini_api_key','ai_api_key','openai_api_key') AND deger != '' ORDER BY anahtar ASC LIMIT 1");
     $stmt->execute();
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($row) $apiKey = trim($row['deger']);

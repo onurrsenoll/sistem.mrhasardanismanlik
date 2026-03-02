@@ -29,7 +29,7 @@ $apiKey = '';
 try {
     $db = getDB();
     // Önce ai_api_key, yoksa openai_api_key dene
-    $stmt = $db->prepare("SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('ai_api_key', 'openai_api_key') ORDER BY anahtar ASC");
+    $stmt = $db->prepare("SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('gemini_api_key', 'ai_api_key', 'openai_api_key') AND deger != '' ORDER BY anahtar ASC");
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($rows as $row) {
@@ -100,6 +100,7 @@ function callGemini($apiKey, $systemPrompt, $userPrompt) {
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlErr = curl_error($ch);
     curl_close($ch);
 
     if ($httpCode === 200 && $response) {
@@ -118,7 +119,6 @@ function callGemini($apiKey, $systemPrompt, $userPrompt) {
         $errData = json_decode($response, true);
         $errDetail = $errData['error']['message'] ?? '';
     }
-    $curlErr = curl_error($ch) ?: '';
     error_log("GEMINI API HATA: HTTP {$httpCode} - {$errDetail} {$curlErr}");
     return null;
 }
