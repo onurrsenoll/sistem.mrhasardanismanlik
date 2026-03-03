@@ -75,6 +75,15 @@ $stmt = $db->prepare("SELECT COUNT(*) as total FROM komisyonlar k $whereSQL");
 $stmt->execute($params);
 $total = (int)$stmt->fetch()['total'];
 
+// Toplamlar (params henüz limit/offset eklenmeden)
+$stmt = $db->prepare("SELECT
+    COALESCE(SUM(k.tutar), 0) as toplam_tutar,
+    COALESCE(SUM(CASE WHEN k.odendi = 1 THEN k.tutar ELSE 0 END), 0) as odenen_toplam,
+    COALESCE(SUM(CASE WHEN k.odendi = 0 THEN k.tutar ELSE 0 END), 0) as bekleyen_toplam
+    FROM komisyonlar k $whereSQL");
+$stmt->execute($params);
+$totals = $stmt->fetch();
+
 // Liste - ortaklar ve paydaslar tablolarından da JOIN
 $stmt = $db->prepare("SELECT k.*,
     d.dosya_no,
@@ -128,14 +137,6 @@ foreach ($items as &$item) {
     unset($item['paydas_adi_tbl']);
 }
 unset($item);
-
-// Toplamlar
-$stmt = $db->prepare("SELECT
-    COALESCE(SUM(k.tutar), 0) as toplam_tutar,
-    COALESCE(SUM(CASE WHEN k.odendi = 1 THEN k.tutar ELSE 0 END), 0) as odenen_toplam,
-    COALESCE(SUM(CASE WHEN k.odendi = 0 THEN k.tutar ELSE 0 END), 0) as bekleyen_toplam
-    FROM komisyonlar k $whereSQL");
-$stmt->execute($params);
 $totals = $stmt->fetch();
 
 json_success([

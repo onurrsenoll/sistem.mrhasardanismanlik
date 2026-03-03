@@ -153,6 +153,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const [masrafM, setMasrafM] = useState(false);
   const [evrakM, setEvrakM] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [asamaOnay, setAsamaOnay] = useState(null);
   const [editM, setEditM] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [editLoading, setEditLoading] = useState(false);
@@ -208,11 +209,18 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
   const [smsBildirim, setSmsBildirim] = useState(null);
 
-  const asamaDegistir = async (yeniAsama) => {
+  const asamaDegistirOnay = (yeniAsama) => {
+    if (yeniAsama === dosya.asama) return;
+    setAsamaOnay(yeniAsama);
+  };
+
+  const asamaDegistirOnayla = async () => {
+    if (!asamaOnay) return;
+    const yeniAsama = asamaOnay;
+    setAsamaOnay(null);
     const r = await api.dosyaUpdate({id: dosya.id, asama: yeniAsama});
     if (r?.success) {
       load();
-      // SMS GÖNDERİM SONUCUNU GÖSTER
       if (r.data?.sms_gonderildi) {
         setSmsBildirim({type:'success', text:'DURUM DEĞİŞTİRİLDİ VE MAĞDURA SMS GÖNDERİLDİ'});
       } else if (r.data?.sms_sonuc && !r.data.sms_sonuc.basarili) {
@@ -476,7 +484,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             </div>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
-            {hasYetki('dosya','dosya-asama') && <select value={dosya.asama} onChange={e => asamaDegistir(e.target.value)}
+            {hasYetki('dosya','dosya-asama') && <select value={dosya.asama} onChange={e => asamaDegistirOnay(e.target.value)}
               style={{...S.select,minWidth:180,maxWidth:500,fontSize:10,padding:'6px 10px',background:`${ac}11`,border:`1px solid ${ac}33`,color:ac,fontWeight:600}}>
               {ASAMALAR.map(a => <option key={a} value={a}>{a}</option>)}
             </select>}
@@ -496,7 +504,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       </div>
 
       {/* TABS — 3D MAVİ */}
-      <div style={{display:'flex',gap:6,marginBottom:12,justifyContent:'center'}}>
+      <div style={{display:'flex',gap:6,marginBottom:12,justifyContent:'flex-start'}}>
         {tabs.map(t => (
           <div key={t.id} onClick={() => setTab(t.id)}
             style={{display:'flex',alignItems:'center',gap:5,padding:'9px 18px',borderRadius:10,fontSize:11,fontWeight:800,cursor:'pointer',
@@ -533,8 +541,6 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <InfoRow label="HASAR DOSYA NO" value={dosya.hasar_no} mono/>
               <InfoRow label="DOSYA KAYNAĞI" value={isAvukat ? (dosya.dosya_kaynagi === 'PAYDAŞ/YÖNLENDİREN' ? 'YÖNLENDİRME' : 'CRM') : dosya.dosya_kaynagi}/>
               {!isAvukat && <InfoRow label="AVUKAT" value={dosya.avukat_adi} bold color={C.purple}/>}
-              {!isAvukat && dosya.avukat_firma && <InfoRow label="AVUKAT FİRMA" value={dosya.avukat_firma}/>}
-              {!isAvukat && dosya.avukat_baro && <InfoRow label="BARO" value={dosya.avukat_baro}/>}
               {!isAvukat && dosya.avukat_odeme_orani != null && dosya.avukat_odeme_orani > 0 && <InfoRow label="AVUKAT ÖDEME ORANI" value={`%${dosya.avukat_odeme_orani}`} bold color={C.purple}/>}
               {!isAvukat && <InfoRow label="SORUMLU" value={dosya.sorumlu_adi}/>}
               <InfoRow label="AÇILIŞ TARİHİ" value={dosya.acilis_tarihi}/>
@@ -725,7 +731,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
       {/* EVRAKLAR TAB */}
       {tab === 'evrak' && (
-        <div style={{...S.card, maxWidth:'50%', margin:'0 auto'}}>
+        <div style={{...S.card, maxWidth:'66.67%', margin:'0 auto'}}>
           <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',background:`${C.accent}06`}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <LIcon name="Folder" size={14} color={C.accent}/>
@@ -799,9 +805,12 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               const yuklenen = (dosya.evraklar||[]).filter(e => e.evrak_turu === tur);
               const yukluMu = yuklenen.length > 0;
               return (
-                <div key={idx} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',
-                  borderBottom:`1px solid ${C.border}22`,
-                  background:yukluMu ? `${C.success}08` : 'transparent'}}>
+                <div key={idx} style={{display:'flex',alignItems:'center',gap:8,padding:'10px 14px',
+                  margin:'4px 8px',borderRadius:10,
+                  border: yukluMu ? `1px solid ${C.success}33` : `1px solid ${C.border}44`,
+                  background: yukluMu ? `linear-gradient(180deg, ${C.success}0A 0%, ${C.success}04 100%)` : `linear-gradient(180deg, ${C.bgCard} 0%, ${C.bgHover}44 100%)`,
+                  boxShadow: yukluMu ? `0 2px 8px -2px ${C.success}22, 0 1px 3px -1px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.06)` : '0 2px 6px -2px rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.04)',
+                  transition:'all .15s ease'}}>
                   {/* SIRA NO */}
                   <span style={{fontSize:9,color:C.textMuted,minWidth:22,textAlign:'center',fontWeight:600}}>{idx+1}</span>
                   {/* DURUM İKONU */}
@@ -873,8 +882,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                       </React.Fragment>
                     ))}
                     {/* YÜKLE BUTONU */}
-                    <label title="DOSYA YÜKLE" style={{...S.btnMini,...(yukluMu ? S.btnMiniW : S.btnMiniP), width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center'}}>
-                      <LIcon name="Upload" size={14} color={yukluMu ? '#000' : '#fff'}/>
+                    <label title="DOSYA YÜKLE" style={{...S.btn,...(yukluMu ? S.btnW : S.btnP), fontSize:10, padding:'7px 14px', cursor:'pointer', display:'inline-flex', alignItems:'center', gap:5}}>
+                      <LIcon name="Upload" size={12} color={yukluMu ? '#000' : '#fff'}/> YÜKLE
                       <input type="file" accept=".pdf,.jpg,.jpeg,.png,.svg,.doc,.docx" style={{display:'none'}} onChange={async (ev) => {
                         const f = ev.target.files[0];
                         if (!f) return;
@@ -1293,6 +1302,48 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           </div>
         </div>
       </Modal>}
+
+      {/* AŞAMA DEĞİŞTİRME ONAY */}
+      {asamaOnay && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.6)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',animation:'fadeIn .2s ease'}}>
+          <div style={{background:C.bgCard,borderRadius:16,padding:0,width:480,maxWidth:'90vw',border:`1px solid ${C.border}`,boxShadow:'0 25px 50px -12px rgba(0,0,0,0.4)',overflow:'hidden'}}>
+            <div style={{padding:'20px 24px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:10,background:`${C.warning}08`}}>
+              <div style={{width:40,height:40,borderRadius:'50%',background:`${C.warning}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <LIcon name="AlertTriangle" size={20} color={C.warning}/>
+              </div>
+              <div>
+                <div style={{fontSize:14,fontWeight:800,color:C.text}}>AŞAMA DEĞİŞİKLİĞİ ONAY</div>
+                <div style={{fontSize:11,color:C.textSec,marginTop:2}}>EMİN MİSİNİZ?</div>
+              </div>
+            </div>
+            <div style={{padding:'20px 24px'}}>
+              <div style={{fontSize:13,fontWeight:700,color:C.text,marginBottom:16,lineHeight:1.6}}>
+                <span style={{color:C.accent,fontWeight:800}}>{(magdur.ad_soyad || dosya.dosya_no || '').toUpperCase()}</span>'IN DOSYA AŞAMASI DEĞİŞTİRİLECEK. ONAYLIYOR MUSUNUZ?
+              </div>
+              <div style={{padding:'12px 16px',borderRadius:10,background:'#16a34a12',border:'1px solid #16a34a33',marginBottom:16}}>
+                <div style={{fontSize:11,fontWeight:600,color:'#16a34a',lineHeight:1.7,opacity:0.85}}>
+                  YAPACAĞINIZ DEĞİŞİKLİK SONRASI, SEÇİLEN AŞAMANIN EVRAKI MAĞDURA SMS İLE GÖNDERİLECEKTİR. LÜTFEN EVRAK YÜKLEMEYİ UNUTMAYINIZ.
+                </div>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 14px',borderRadius:8,background:`${C.accent}08`,border:`1px solid ${C.accent}22`}}>
+                <LIcon name="ArrowRight" size={14} color={C.accent}/>
+                <div style={{fontSize:12,color:C.textSec}}>
+                  <span style={{fontWeight:600}}>YENİ AŞAMA:</span>{' '}
+                  <span style={{fontWeight:800,color:C.accent}}>{asamaOnay}</span>
+                </div>
+              </div>
+            </div>
+            <div style={{padding:'16px 24px',borderTop:`1px solid ${C.border}`,display:'flex',gap:10,justifyContent:'flex-end',background:`${C.bgHover}44`}}>
+              <button style={{...S.btn,...S.btnG,fontSize:12}} onClick={() => setAsamaOnay(null)}>
+                <LIcon name="X" size={14} color={C.textSec}/> İPTAL
+              </button>
+              <button style={{...S.btn,...S.btnP,fontSize:12}} onClick={asamaDegistirOnayla}>
+                <LIcon name="Check" size={14} color="#fff"/> ONAYLA
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* DOSYA SİL */}
       <Confirm open={dosyaSilConfirm} message={`"${dosya.dosya_no}" DOSYASI TAMAMEN SİLİNSİN Mİ? BU İŞLEM GERİ ALINAMAZ!`}

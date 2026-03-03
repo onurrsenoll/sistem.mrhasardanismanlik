@@ -1049,13 +1049,14 @@ const KasaBanka = ({setPage, user}) => {
   const kasaAdi = (id) => { const k = kasalar.find(k => k.id == id); return k ? k.ad : '-'; };
 
   const turRenk = (tur) => {
-    if (tur === 'giris' || tur === 'gelir' || tur === 'komisyon') return C.success;
-    if (tur === 'cikis' || tur === 'gider') return C.danger;
+    if (tur === 'gelir' || tur === 'komisyon') return C.success;
+    if (tur === 'gider' || tur === 'masraf') return C.danger;
     if (tur === 'transfer') return C.warning;
+    if (tur === 'duzeltme') return C.cyan || C.accent;
     return C.textSec;
   };
   const turLabel = (tur) => {
-    const map = {giris:'GİRİŞ', cikis:'ÇIKIŞ', gelir:'GELİR', gider:'GİDER', komisyon:'KOMİSYON', transfer:'TRANSFER'};
+    const map = {gelir:'GELİR', gider:'GİDER', masraf:'MASRAF', komisyon:'KOMİSYON', transfer:'TRANSFER', duzeltme:'DÜZELTME'};
     return map[tur] || (tur || '').toUpperCase();
   };
 
@@ -1172,11 +1173,12 @@ const KasaBanka = ({setPage, user}) => {
             <label style={{...S.label,marginBottom:4}}>TÜR</label>
             <select style={{...S.select,width:140,fontSize:11}} value={hTurF} onChange={e => setHTurF(e.target.value)}>
               <option value="">TÜMÜ</option>
-              <option value="giris">GİRİŞ</option>
-              <option value="cikis">ÇIKIŞ</option>
-              <option value="transfer">TRANSFER</option>
               <option value="gelir">GELİR</option>
               <option value="gider">GİDER</option>
+              <option value="masraf">MASRAF</option>
+              <option value="komisyon">KOMİSYON</option>
+              <option value="transfer">TRANSFER</option>
+              <option value="duzeltme">DÜZELTME</option>
             </select>
           </div>
           <div>
@@ -1209,7 +1211,7 @@ const KasaBanka = ({setPage, user}) => {
               <tbody>
                 {hareketler.map((h, i) => {
                   const tutar = parseFloat(h.tutar) || 0;
-                  const giris = h.tur === 'giris' || h.tur === 'gelir' || h.tur === 'komisyon';
+                  const giris = h.tur === 'gelir' || h.tur === 'komisyon' || h.tur === 'duzeltme';
                   return (
                     <tr key={h.id || i} style={{borderBottom:`1px solid ${C.border}`}}
                       onMouseEnter={e=>e.currentTarget.style.background=C.bgHover}
