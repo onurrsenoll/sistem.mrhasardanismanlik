@@ -10,7 +10,8 @@ require_once __DIR__ . '/../../config/auth.php';
 setup_headers();
 require_method('POST');
 
-$user = auth_required(['admin']);
+$user = auth_required();
+if (!has_yetki($user, 'police', 'police-toplu-sil')) json_error('Bu işlem için yetkiniz bulunmamaktadır', 403);
 $db = getDB();
 
 $body = json_decode(file_get_contents('php://input'), true);
