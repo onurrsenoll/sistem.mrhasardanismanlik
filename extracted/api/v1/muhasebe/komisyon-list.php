@@ -137,7 +137,6 @@ foreach ($items as &$item) {
     unset($item['paydas_adi_tbl']);
 }
 unset($item);
-$totals = $stmt->fetch();
 
 json_success([
     'items' => $items,
