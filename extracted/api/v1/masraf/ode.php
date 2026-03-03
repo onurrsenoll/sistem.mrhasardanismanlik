@@ -16,9 +16,15 @@ require_once __DIR__ . '/../../config/auth.php';
 setup_headers();
 require_method('PUT');
 
-$user = auth_required(['admin', 'uzman', 'muhasebe']);
+// Masraf ödeme: yetki bazlı kontrol (dosya-masraf-ode yetkisi gerekli)
+$user = auth_required();
 $body = get_json_body();
 require_fields($body, ['id', 'kasa_id']);
+
+// Yetki kontrolü: admin veya dosya-masraf-ode yetkisi olmalı
+if (!has_yetki($user, 'dosya', 'dosya-masraf-ode')) {
+    json_error('Bu işlem için yetkiniz bulunmamaktadır', 403);
+}
 
 $db = getDB();
 $masrafId = (int)$body['id'];

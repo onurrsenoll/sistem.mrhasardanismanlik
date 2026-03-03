@@ -10,7 +10,8 @@ require_once __DIR__ . '/../../config/auth.php';
 setup_headers();
 require_method('GET');
 
-$user = auth_required(['admin', 'muhasebe', 'avukat']);
+// Kasa listesi: tüm oturum açmış kullanıcılar erişebilir (masraf ödeme, dosya kapatma vb. için gerekli)
+$user = auth_required();
 $db = getDB();
 
 $aktif = isset($_GET['aktif']) ? (int)$_GET['aktif'] : -1;

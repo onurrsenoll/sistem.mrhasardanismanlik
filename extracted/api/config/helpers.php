@@ -374,3 +374,21 @@ function http_decode_chunked($data) {
     }
     return $decoded;
 }
+
+/**
+ * Veritabanı yetki kontrolü
+ * Kullanıcının belirli bir modül+işlem için yetkisi var mı kontrol eder
+ * Admin her zaman true döner
+ */
+function has_yetki($user, $modul, $islem) {
+    if ($user['rol'] === 'admin') return true;
+    try {
+        $db = getDB();
+        $stmt = $db->prepare('SELECT izin FROM yetkiler WHERE kullanici_id = ? AND modul = ? AND islem = ? LIMIT 1');
+        $stmt->execute([$user['id'], $modul, $islem]);
+        $row = $stmt->fetch();
+        return $row && ($row['izin'] == 1);
+    } catch (\Exception $e) {
+        return false;
+    }
+}
