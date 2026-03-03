@@ -1,0 +1,100 @@
+═══════════════════════════════════════════════════════════════
+  MR HASAR DANIŞMANLIK SİSTEMİ - GÜNCELLEME v73
+  TARİH: 2026-03-03
+  İÇERİK: YETKİ SİSTEMİ DÖNÜŞÜMÜ
+         ROL BAZLI → YETKİ MATRİSİ BAZLI
+═══════════════════════════════════════════════════════════════
+
+ÖNEMLİ: Bu güncelleme mevcut verilerinizi SİLMEZ.
+Sadece belirtilen dosyalar değiştirilecektir.
+
+ÖNEMLİ: v72 güncellemesini ÖNCE yükleyin, sonra v73'ü yükleyin.
+
+═══════════════════════════════════════════════════════════════
+  ADIM 1: PHP DOSYALARINI YÜKLE
+═══════════════════════════════════════════════════════════════
+
+Aşağıdaki dosyaları sunucunuza yükleyin:
+(Mevcut dosyaların ÜZERİNE yazılacak)
+
+DOSYA                                    → HEDEF KONUM
+─────────────────────────────────────────────────────────────
+api/config/helpers.php                   → api/config/helpers.php
+api/config/auth.php                      → api/config/auth.php
+
+═══════════════════════════════════════════════════════════════
+  ADIM 2: JAVASCRIPT DOSYASINI YÜKLE
+═══════════════════════════════════════════════════════════════
+
+DOSYA                                    → HEDEF KONUM
+─────────────────────────────────────────────────────────────
+js/app.js                               → js/app.js
+
+═══════════════════════════════════════════════════════════════
+  ADIM 3: YETKİLERİ AYARLA (ÇOK ÖNEMLİ!)
+═══════════════════════════════════════════════════════════════
+
+Bu güncelleme sonrası TÜM kullanıcıların erişimleri
+YETKİ MATRİSİ üzerinden kontrol edilecektir.
+
+1. Admin hesabı ile giriş yapın
+2. SİSTEM → YETKİ YÖNETİMİ sayfasına gidin
+3. Her kullanıcı için tek tek yetki kutucuklarını işaretleyin:
+   - Hangi menüleri görebilecek
+   - Hangi işlemleri yapabilecek
+   - Hangi raporları görüntüleyebilecek
+
+DİKKAT: Yetki tanımlanmamış kullanıcılar hiçbir menüyü
+göremeyecek ve hiçbir işlem yapamayacaktır!
+
+Admin kullanıcılar bu değişiklikten ETKİLENMEZ,
+her zaman tam erişime sahiptir.
+
+═══════════════════════════════════════════════════════════════
+  ADIM 4: TARAYICI ÖNBELLEK TEMİZLEME
+═══════════════════════════════════════════════════════════════
+
+Güncelleme sonrası tarayıcınızda CTRL+SHIFT+R yaparak
+önbelleği temizleyin. Tüm kullanıcılara da bildirin.
+
+═══════════════════════════════════════════════════════════════
+  YAPILAN DEĞİŞİKLİKLER
+═══════════════════════════════════════════════════════════════
+
+1. YETKİ SİSTEMİ DÖNÜŞÜMÜ:
+   - ESKİ: Kullanıcılar rol bazlı erişim alıyordu
+     (UZMAN rolü otomatik bazı menüleri görüyordu)
+   - YENİ: Tüm erişimler SİSTEM YÖNETİCİSİNİN
+     Yetki Yönetimi ekranından belirlediği kutucuklara göre
+
+2. FRONTEND (app.js):
+   - ROL_ERISIM statik erişim tablosu KALDIRILDI
+   - Menü filtreleme artık SADECE yetki matrisine bakıyor
+   - Yetki tanımlanmamış kullanıcılar menü göremez
+   - undefined izinler artık "izin var" olarak sayılmıyor
+
+3. BACKEND (auth.php + helpers.php):
+   - Tüm API endpoint'leri için YETKI_MAP eklendi
+   - auth_required() artık rol kontrolü YAPMIYOR
+   - Her API isteğinde otomatik yetki matris kontrolü
+   - 140+ endpoint yetki haritasına eklendi
+   - Admin kullanıcılar otomatik bypass (değişiklik yok)
+
+4. KAPSAM:
+   - DOSYA İŞLEMLERİ: Liste, yeni, detay, düzenle, sil
+   - CRM / SAHA: Liste, yeni, düzenle, sil, onay
+   - HESAPLAMALAR: ADK, BH hesaplama ve raporlama
+   - PAYDAŞLAR: Ortaklar, paydaşlar, personel
+   - POLİÇE: Tüm işlemler
+   - MUHASEBE: Gelir, gider, kasa, komisyon, raporlar
+   - İÇTİHAT: Arama ve görüntüleme
+   - AJANDA: Tüm işlemler
+   - SİSTEM: Kullanıcı, yetki, ayarlar, tanımlamalar
+   - PORTAL: Erişim yönetimi, mesajlar
+   - SMS: Gönderme, loglama
+   - NETSANTRAL: Arama, log
+   - BİLDİRİM / MESAJ: Oluşturma, silme
+
+═══════════════════════════════════════════════════════════════
+  TOPLAM DEĞİŞEN DOSYA SAYISI: 3
+═══════════════════════════════════════════════════════════════
