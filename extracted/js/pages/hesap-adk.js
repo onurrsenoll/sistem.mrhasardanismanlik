@@ -620,10 +620,10 @@ MR.HesapADKPage = () => {
               </div>
 
               {/* PDF BUTON */}
-              <button onClick={pdfIndir} disabled={pdfLoading}
+              {MR.hasYetki(user,'hesaplamalar','hesap-adk-rapor') && <button onClick={pdfIndir} disabled={pdfLoading}
                 style={{...S.btn, width:'100%', justifyContent:'center', padding:14, fontSize:13, fontWeight:800, background:'linear-gradient(135deg,'+C.success+','+C.cyan+')', color:'#fff', opacity:pdfLoading?0.5:1}}>
                 {pdfLoading ? 'PDF OLUŞTURULUYOR...' : 'PDF RAPOR İNDİR (TÜM DETAYLAR)'}
-              </button>
+              </button>}
             </div>
           )}
         </div>

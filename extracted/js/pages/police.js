@@ -217,7 +217,7 @@ const PoliceListe = ({setPage, user}) => {
       <div style={S.card}>
         <SectionTitle icon="List" title="POLİÇE LİSTESİ" sub={toplam + ' POLİÇE'}
           right={<div style={{display:'flex',gap:6,alignItems:'center'}}>
-            {isAdmin && secililer.length > 0 && (
+            {MR.hasYetki(user,'police','police-toplu-sil') && secililer.length > 0 && (
               <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px',display:'flex',alignItems:'center',gap:4}} onClick={()=>setTopluSilConfirm(true)}>
                 <LIcon name="Trash2" size={12} color="#fff"/> TOPLU SİL ({secililer.length})
               </button>
@@ -259,7 +259,7 @@ const PoliceListe = ({setPage, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:1100}}>
               <thead>
                 <tr style={{background:C.bgHover}}>
-                  {isAdmin && <th style={{padding:'12px 10px',textAlign:'center',borderBottom:`2px solid ${C.border}`,width:30}}>
+                  {MR.hasYetki(user,'police','police-toplu-sil') && <th style={{padding:'12px 10px',textAlign:'center',borderBottom:`2px solid ${C.border}`,width:30}}>
                     <input type="checkbox" checked={policeler.length > 0 && secililer.length === policeler.length} onChange={tumunuSec} style={{cursor:'pointer',width:15,height:15,accentColor:C.accent}}/>
                   </th>}
                   {['POLİÇE NO','MÜŞTERİ','SİGORTA ŞİRKETİ','BRANŞ','BRÜT PRİM','KOMİSYON','BAŞLANGIÇ','BİTİŞ','TAHSİLAT','DURUM','İŞLEM'].map(h=>
@@ -273,7 +273,7 @@ const PoliceListe = ({setPage, user}) => {
                     onClick={()=>detayAc(p)}
                     onMouseEnter={e=>e.currentTarget.style.background=C.bgHover}
                     onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-                    {isAdmin && <td style={{padding:'10px 8px',textAlign:'center'}} onClick={e=>e.stopPropagation()}>
+                    {MR.hasYetki(user,'police','police-toplu-sil') && <td style={{padding:'10px 8px',textAlign:'center'}} onClick={e=>e.stopPropagation()}>
                       <input type="checkbox" checked={secililer.includes(p.id)} onChange={()=>toggleSecim(p.id)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                     </td>}
                     <td style={{padding:'10px 8px',fontWeight:700,color:C.accent,fontSize:12}}>{p.police_no}</td>
@@ -875,12 +875,12 @@ const PoliceYenileme = ({setPage, user}) => {
 
       {/* BUTONLAR SATIRI */}
       <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap'}}>
-        <button style={{...S.btn,...S.btnW,fontSize:11,padding:'10px 18px'}} onClick={() => downloadExcel(policeler)}>
+        {MR.hasYetki(user,'police','police-excel') && <button style={{...S.btn,...S.btnW,fontSize:11,padding:'10px 18px'}} onClick={() => downloadExcel(policeler)}>
           <LIcon name="Download" size={14} color="#000"/> EXCEL ŞABLON İNDİR
-        </button>
-        <button style={{...S.btn,...S.btnS,fontSize:11,padding:'10px 18px'}} onClick={() => fileInputRef.current && fileInputRef.current.click()}>
+        </button>}
+        {MR.hasYetki(user,'police','police-excel') && <button style={{...S.btn,...S.btnS,fontSize:11,padding:'10px 18px'}} onClick={() => fileInputRef.current && fileInputRef.current.click()}>
           <LIcon name="Upload" size={14} color="#fff"/> EXCEL YÜKLE
-        </button>
+        </button>}
         <input ref={fileInputRef} type="file" accept=".xlsx,.xls" style={{display:'none'}} onChange={handleExcelUpload}/>
         <button style={{...S.btn,...S.btnP,fontSize:11,padding:'10px 18px'}} onClick={hatirlatmaGonder}>
           <LIcon name="Bell" size={14} color="#fff"/> HATIRLATMA GÖNDER

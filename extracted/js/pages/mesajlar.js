@@ -448,7 +448,7 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
             sub={gelenToplam + ' MESAJ, ' + gelenOkunmamis + ' OKUNMAMIŞ'}
             right={
               <div style={{display:'flex',gap:6}}>
-                {isAdmin && secililer.length > 0 && (
+                {MR.hasYetki(user,'mesajlar','mesaj-toplu-sil') && secililer.length > 0 && (
                   <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px',display:'flex',alignItems:'center',gap:4}}
                     onClick={() => setTopluSilConfirm(true)}>
                     <LIcon name="Trash2" size={12} color="#fff"/> TOPLU SİL ({secililer.length})
@@ -512,7 +512,7 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
               <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:750}}>
                 <thead>
                   <tr style={{background:C.bgHover}}>
-                    {isAdmin && (
+                    {MR.hasYetki(user,'mesajlar','mesaj-toplu-sil') && (
                       <th style={{padding:'10px 8px',textAlign:'center',borderBottom:`1px solid ${C.border}`,width:30}} onClick={e => e.stopPropagation()}>
                         <input type="checkbox"
                           checked={filtrelenmisGelen.length > 0 && filtrelenmisGelen.every(m => secililer.includes(m.id))}
@@ -542,8 +542,8 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
                         }}
                         onMouseEnter={e => e.currentTarget.style.background = `${C.accent}11`}
                         onMouseLeave={e => e.currentTarget.style.background = okunmadi ? `${C.accent}06` : 'transparent'}>
-                        {/* TOPLU SEÇİM CHECKBOX (ADMIN) */}
-                        {isAdmin && (
+                        {/* TOPLU SEÇİM CHECKBOX */}
+                        {MR.hasYetki(user,'mesajlar','mesaj-toplu-sil') && (
                           <td style={{padding:'12px 8px',width:30,textAlign:'center'}} onClick={e => e.stopPropagation()}>
                             <input type="checkbox"
                               checked={secililer.includes(m.id)}
@@ -627,7 +627,7 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
             sub={gidenMesajlar.length + ' GÖNDERİLEN MESAJ'}
             right={
               <div style={{display:'flex',gap:6}}>
-                {isAdmin && secililer.length > 0 && (
+                {MR.hasYetki(user,'mesajlar','mesaj-toplu-sil') && secililer.length > 0 && (
                   <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px',display:'flex',alignItems:'center',gap:4}}
                     onClick={() => setTopluSilConfirm(true)}>
                     <LIcon name="Trash2" size={12} color="#fff"/> TOPLU SİL ({secililer.length})
@@ -663,7 +663,7 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
               <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:750}}>
                 <thead>
                   <tr style={{background:C.bgHover}}>
-                    {isAdmin && (
+                    {MR.hasYetki(user,'mesajlar','mesaj-toplu-sil') && (
                       <th style={{padding:'10px 8px',textAlign:'center',borderBottom:`1px solid ${C.border}`,width:30}} onClick={e => e.stopPropagation()}>
                         <input type="checkbox"
                           checked={filtrelenmisGiden.length > 0 && filtrelenmisGiden.every(m => secililer.includes(m.id))}
@@ -686,8 +686,8 @@ MR.MesajlarPage = ({setPage, user, subPage}) => {
                         style={{borderBottom:`1px solid ${C.border}`,cursor:'pointer',transition:'all .15s'}}
                         onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                        {/* TOPLU SEÇİM CHECKBOX (ADMIN) */}
-                        {isAdmin && (
+                        {/* TOPLU SEÇİM CHECKBOX */}
+                        {MR.hasYetki(user,'mesajlar','mesaj-toplu-sil') && (
                           <td style={{padding:'12px 8px',width:30,textAlign:'center'}} onClick={e => e.stopPropagation()}>
                             <input type="checkbox"
                               checked={secililer.includes(m.id)}

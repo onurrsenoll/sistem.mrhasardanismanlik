@@ -330,7 +330,7 @@ const IsOrtaklari = ({setPage, user}) => {
           sub={`TOPLAM ${totalCount} ORTAK KAYITLI`}
           right={
             <div style={{display:'flex',gap:6,alignItems:'center'}}>
-              {isAdmin && secililer.length > 0 && (
+              {MR.hasYetki(user,'paydaslar','ortaklar-toplu-sil') && secililer.length > 0 && (
                 <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px'}} onClick={() => setTopluSilConfirm(true)}>
                   <LIcon name="Trash2" size={12} color="#fff"/> TOPLU SİL ({secililer.length})
                 </button>
@@ -372,7 +372,7 @@ const IsOrtaklari = ({setPage, user}) => {
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:900}}>
                   <thead>
                     <tr style={{background:C.bgHover}}>
-                      {isAdmin && (
+                      {MR.hasYetki(user,'paydaslar','ortaklar-toplu-sil') && (
                         <th style={{padding:'10px 6px',textAlign:'center',borderBottom:`1px solid ${C.border}`,width:32}}>
                           <input type="checkbox" checked={ortaklar.length > 0 && secililer.length === ortaklar.length} onChange={tumunuSec} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                         </th>
@@ -387,7 +387,7 @@ const IsOrtaklari = ({setPage, user}) => {
                       <tr key={ortak.id || i} style={{borderBottom:`1px solid ${C.border}`,background: secililer.includes(ortak.id) ? `${C.accent}11` : 'transparent'}}
                         onMouseEnter={e => { if(!secililer.includes(ortak.id)) e.currentTarget.style.background = C.bgHover; }}
                         onMouseLeave={e => { if(!secililer.includes(ortak.id)) e.currentTarget.style.background = 'transparent'; }}>
-                        {isAdmin && (
+                        {MR.hasYetki(user,'paydaslar','ortaklar-toplu-sil') && (
                           <td style={{padding:'10px 6px',textAlign:'center',width:32}}>
                             <input type="checkbox" checked={secililer.includes(ortak.id)} onChange={() => toggleSecim(ortak.id)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                           </td>
@@ -1018,7 +1018,7 @@ const IsPaydaslari = ({setPage, user}) => {
           sub={`TOPLAM ${totalCount} PAYDAŞ KAYITLI`}
           right={
             <div style={{display:'flex',gap:6,alignItems:'center'}}>
-              {isAdmin && secililerP.length > 0 && (
+              {MR.hasYetki(user,'paydaslar','paydaslar-toplu-sil') && secililerP.length > 0 && (
                 <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px'}} onClick={() => setTopluSilConfirmP(true)}>
                   <LIcon name="Trash2" size={12} color="#fff"/> TOPLU SİL ({secililerP.length})
                 </button>
@@ -1064,7 +1064,7 @@ const IsPaydaslari = ({setPage, user}) => {
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:900}}>
                   <thead>
                     <tr style={{background:C.bgHover}}>
-                      {isAdmin && (
+                      {MR.hasYetki(user,'paydaslar','paydaslar-toplu-sil') && (
                         <th style={{padding:'10px 6px',textAlign:'center',borderBottom:`1px solid ${C.border}`,width:32}}>
                           <input type="checkbox" checked={paydaslar.length > 0 && secililerP.length === paydaslar.length} onChange={tumunuSecP} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                         </th>
@@ -1079,7 +1079,7 @@ const IsPaydaslari = ({setPage, user}) => {
                       <tr key={paydas.id || i} style={{borderBottom:`1px solid ${C.border}`,background: secililerP.includes(paydas.id) ? `${C.accent}11` : 'transparent'}}
                         onMouseEnter={e => { if(!secililerP.includes(paydas.id)) e.currentTarget.style.background = C.bgHover; }}
                         onMouseLeave={e => { if(!secililerP.includes(paydas.id)) e.currentTarget.style.background = 'transparent'; }}>
-                        {isAdmin && (
+                        {MR.hasYetki(user,'paydaslar','paydaslar-toplu-sil') && (
                           <td style={{padding:'10px 6px',textAlign:'center',width:32}}>
                             <input type="checkbox" checked={secililerP.includes(paydas.id)} onChange={() => toggleSecimP(paydas.id)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                           </td>

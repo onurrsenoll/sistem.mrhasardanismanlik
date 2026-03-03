@@ -64,15 +64,20 @@ const MODUL_YETKILERI = [
     {key: 'crm-yeni', label: 'YENİ KAYIT'},
     {key: 'crm-duzenle', label: 'KAYIT DÜZENLE'},
     {key: 'crm-sil', label: 'KAYIT SİL'},
+    {key: 'crm-toplu-sil', label: 'TOPLU SİLME'},
     {key: 'crm-arama', label: 'ARAMA LİSTESİ'},
     {key: 'saha-liste', label: 'SAHA DOSYALARI'},
     {key: 'saha-yeni', label: 'YENİ SAHA KAYDI'},
     {key: 'saha-duzenle', label: 'SAHA KAYDI DÜZENLE'},
-    {key: 'saha-sil', label: 'SAHA KAYDI SİL'}
+    {key: 'saha-sil', label: 'SAHA KAYDI SİL'},
+    {key: 'saha-onay', label: 'SAHA KAYDI ONAYLA'},
+    {key: 'saha-red', label: 'SAHA KAYDI REDDET'}
   ]},
   {modul: 'hesaplamalar', label: 'HESAPLAMALAR', icon: 'Calculator', islemler: [
     {key: 'hesap-adk', label: 'ARAÇ DEĞER KAYBI'},
-    {key: 'hesap-bh', label: 'BEDENİ HASAR'}
+    {key: 'hesap-bh', label: 'BEDENİ HASAR'},
+    {key: 'hesap-adk-rapor', label: 'ADK RAPOR OLUŞTUR'},
+    {key: 'hesap-bh-rapor', label: 'BH RAPOR OLUŞTUR'}
   ]},
   {modul: 'paydaslar', label: 'PAYDAŞLAR / ORTAKLAR', icon: 'Handshake', islemler: [
     {key: 'ortaklar-ortaklar', label: 'İŞ ORTAKLARI'},
@@ -81,6 +86,8 @@ const MODUL_YETKILERI = [
     {key: 'ortaklar-detay', label: 'ORTAK/PAYDAŞ DETAY'},
     {key: 'ortaklar-duzenle', label: 'DÜZENLE'},
     {key: 'ortaklar-sil', label: 'SİL'},
+    {key: 'ortaklar-toplu-sil', label: 'ORTAK TOPLU SİLME'},
+    {key: 'paydaslar-toplu-sil', label: 'PAYDAŞ TOPLU SİLME'},
     {key: 'personel-liste', label: 'PERSONEL'}
   ]},
   {modul: 'police', label: 'POLİÇE', icon: 'FileCheck', islemler: [
@@ -88,6 +95,8 @@ const MODUL_YETKILERI = [
     {key: 'police-yeni', label: 'YENİ POLİÇE'},
     {key: 'police-duzenle', label: 'POLİÇE DÜZENLE'},
     {key: 'police-sil', label: 'POLİÇE SİL'},
+    {key: 'police-toplu-sil', label: 'TOPLU SİLME'},
+    {key: 'police-excel', label: 'EXCEL İHRAÇ'},
     {key: 'police-yenileme', label: 'YENİLEME TAKİBİ'},
     {key: 'police-tahsilat', label: 'TAHSİLAT / CARİ'},
     {key: 'police-rapor', label: 'RAPORLAR'},
@@ -111,10 +120,12 @@ const MODUL_YETKILERI = [
     {key: 'muhasebe-rapor', label: 'FİNANSAL RAPORLAR'},
     {key: 'muhasebe-kapanis', label: 'KAPANIŞ RAPORU'},
     {key: 'muhasebe-aysonu', label: 'AY SONU RAPORU'},
+    {key: 'muhasebe-bakiye-sifirla', label: 'BAKİYE SIFIRLA (SİSTEM YÖNETİCİSİ)'},
     {key: 'personel-liste', label: 'PERSONEL LİSTESİ'},
     {key: 'personel-yeni', label: 'YENİ PERSONEL'},
     {key: 'personel-duzenle', label: 'PERSONEL DÜZENLE'},
     {key: 'personel-sil', label: 'PERSONEL SİL'},
+    {key: 'personel-toplu-sil', label: 'PERSONEL TOPLU SİLME'},
     {key: 'personel-hakedis', label: 'HAKEDİŞ TAKİBİ'}
   ]},
   {modul: 'masraf', label: 'MASRAF YÖNETİMİ', icon: 'Receipt', islemler: [
@@ -134,12 +145,14 @@ const MODUL_YETKILERI = [
     {key: 'goruntule', label: 'AJANDA GÖRÜNTÜLE'},
     {key: 'ajanda-ekle', label: 'ETKİNLİK EKLE'},
     {key: 'ajanda-duzenle', label: 'ETKİNLİK DÜZENLE'},
-    {key: 'ajanda-sil', label: 'ETKİNLİK SİL'}
+    {key: 'ajanda-sil', label: 'ETKİNLİK SİL'},
+    {key: 'ajanda-toplu-sil', label: 'TOPLU SİLME'}
   ]},
   {modul: 'mesajlar', label: 'MESAJLAR', icon: 'MessageSquare', islemler: [
     {key: 'mesaj-goruntule', label: 'MESAJLARI GÖRÜNTÜLE'},
     {key: 'mesaj-gonder', label: 'MESAJ GÖNDER'},
-    {key: 'mesaj-sil', label: 'MESAJ SİL'}
+    {key: 'mesaj-sil', label: 'MESAJ SİL'},
+    {key: 'mesaj-toplu-sil', label: 'TOPLU SİLME'}
   ]},
   {modul: 'bildirim', label: 'BİLDİRİMLER', icon: 'Bell', islemler: [
     {key: 'bildirim-goruntule', label: 'BİLDİRİMLERİ GÖRÜNTÜLE'},
@@ -158,6 +171,8 @@ const MODUL_YETKILERI = [
     {key: 'sistem-sms', label: 'SMS BİLDİRİM'},
     {key: 'sistem-portal', label: 'PORTAL AYARLARI'},
     {key: 'sistem-netsantral', label: 'NETSANTRAL'},
+    {key: 'sistem-guvenlik', label: 'CİHAZ GÜVENLİĞİ'},
+    {key: 'sistem-2fa', label: '2FA YÖNETİMİ'},
     {key: 'sistem-veri', label: 'VERİ YÖNETİMİ'},
     {key: 'sistem-log', label: 'LOG KAYITLARI'},
     {key: 'mesajlar-sistem', label: 'SİSTEM BİLDİRİMLERİ'},
@@ -166,6 +181,11 @@ const MODUL_YETKILERI = [
     {key: 'tanimlamalar-finansal', label: 'FİNANSAL TANIMLAMALAR'},
     {key: 'tanimlamalar-sablon', label: 'MATBU EVRAK / SÖZLEŞME'},
     {key: 'tanimlamalar-genel', label: 'GENEL TANIMLAMALAR'},
+    {key: 'tanimlamalar-ekle', label: 'TANIMLAMA EKLE'},
+    {key: 'tanimlamalar-duzenle', label: 'TANIMLAMA DÜZENLE'},
+    {key: 'tanimlamalar-sil', label: 'TANIMLAMA SİL'},
+    {key: 'tanimlamalar-sablon-ekle', label: 'ŞABLON EKLE'},
+    {key: 'tanimlamalar-sablon-duzenle', label: 'ŞABLON DÜZENLE'},
     {key: 'sistem-konum', label: 'KONUM TAKİBİ'},
     {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'}
   ]},
@@ -4381,7 +4401,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
         {subPage === 'netsantral' && isAdmin && <NetsantralTab/>}
         {subPage === 'sms' && isAdmin && <SmsTab/>}
         {subPage === 'portal' && isAdmin && <PortalTab/>}
-        {subPage === 'guvenlik' && isAdmin && <GuvenlikTab/>}
+        {subPage === 'guvenlik' && MR.hasYetki(user,'sistem','sistem-guvenlik') && <GuvenlikTab/>}
         {subPage === 'aktarim' && isAdmin && <TopluAktarimTab/>}
         {subPage === 'veri' && isAdmin && <VeriYonetimiTab/>}
         {subPage === 'log' && isAdmin && <LogTab/>}

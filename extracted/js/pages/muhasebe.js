@@ -1078,11 +1078,11 @@ const KasaBanka = ({setPage, user}) => {
       <div style={S.card}>
         <SectionTitle icon="Wallet" title="KASALAR"
           sub={`${kasalar.length} KASA TANIMLI`}
-          right={isAdmin ? (
+          right={MR.hasYetki(user,'muhasebe','muhasebe-kasa') ? (
             <div style={{display:'flex',gap:8}}>
-              <button style={{...S.btn,...S.btnD,fontSize:11}} onClick={()=>setConfirm({open:true,msg:'TÜM KASA BAKİYELERİNİ SIFIRLAMAK İSTEDİĞİNİZE EMİN MİSİNİZ? BU İŞLEM GERİ ALINAMAZ!',cb:async()=>{setConfirm({open:false,msg:'',cb:null});const r=await api.bakiyeSifirla();if(r?.success){setBasari('TÜM BAKİYELER SIFIRLANDI');kasaYukle();hareketYukle();setTimeout(()=>setBasari(''),4000);}else{setHata(r?.error||'SIFIRLAMA HATASI');setTimeout(()=>setHata(''),4000);}}})}>
+              {MR.hasYetki(user,'muhasebe','muhasebe-bakiye-sifirla') && <button style={{...S.btn,...S.btnD,fontSize:11}} onClick={()=>setConfirm({open:true,msg:'TÜM KASA BAKİYELERİNİ SIFIRLAMAK İSTEDİĞİNİZE EMİN MİSİNİZ? BU İŞLEM GERİ ALINAMAZ!',cb:async()=>{setConfirm({open:false,msg:'',cb:null});const r=await api.bakiyeSifirla();if(r?.success){setBasari('TÜM BAKİYELER SIFIRLANDI');kasaYukle();hareketYukle();setTimeout(()=>setBasari(''),4000);}else{setHata(r?.error||'SIFIRLAMA HATASI');setTimeout(()=>setHata(''),4000);}}})}>
                 <LIcon name="RotateCcw" size={14} color="#fff"/> BAKİYELERİ SIFIRLA
-              </button>
+              </button>}
               <button style={{...S.btn,...S.btnW,fontSize:11}} onClick={transferAc}>
                 <LIcon name="ArrowRightLeft" size={14} color="#000"/> TRANSFER
               </button>
@@ -1112,7 +1112,7 @@ const KasaBanka = ({setPage, user}) => {
                         <Badge text={kasa.tur === 'nakit' ? 'NAKİT' : 'BANKA'} color={turRenk}/>
                         {pasif && <span style={{marginLeft:6}}><Badge text="PASİF" color={C.danger}/></span>}
                       </div>
-                      {isAdmin && (
+                      {MR.hasYetki(user,'muhasebe','muhasebe-kasa') && (
                         <div style={{display:'flex',gap:6}}>
                           <div onClick={() => duzenleAc(kasa)} style={{width:30,height:30,borderRadius:7,background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom:'1px solid #1d4ed8'}} title="DÜZENLE">
                             <LIcon name="Pencil" size={13} color="#fff"/>
@@ -1123,9 +1123,9 @@ const KasaBanka = ({setPage, user}) => {
                           <div onClick={() => toggleAktif(kasa)} style={{width:30,height:30,borderRadius:7,background: pasif ? 'linear-gradient(180deg, #34d399 0%, #10b981 40%, #059669 100%)' : 'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow: pasif ? '0 2px 8px -1px rgba(16,185,129,0.45), inset 0 1px 0 rgba(255,255,255,0.2)' : '0 2px 8px -1px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom: pasif ? '1px solid #047857' : '1px solid #b91c1c'}} title={pasif ? 'AKTİF ET' : 'PASİF YAP'}>
                             <LIcon name={pasif ? 'ToggleRight' : 'ToggleLeft'} size={13} color="#fff"/>
                           </div>
-                          <div onClick={() => setConfirm({open:true, msg:`"${kasa.ad}" KASASINI VE TÜM HAREKETLERİNİ KALICI OLARAK SİLMEK İSTEDİĞİNİZE EMİN MİSİNİZ?\n\nBU İŞLEM GERİ ALINAMAZ!`, cb: async () => { setConfirm({open:false, msg:'', cb:null}); const r = await api.kasaDelete(kasa.id); if(r?.success){ setBasari('KASA BAŞARIYLA SİLİNDİ'); kasaYukle(); hareketYukle(); setTimeout(()=>setBasari(''),4000); } else { setHata(r?.error||'SİLME HATASI'); setTimeout(()=>setHata(''),4000); }}})} style={{width:30,height:30,borderRadius:7,background:'linear-gradient(180deg, #f87171 0%, #dc2626 40%, #991b1b 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(220,38,38,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom:'1px solid #7f1d1d'}} title="KASAYI SİL">
+                          {MR.hasYetki(user,'muhasebe','muhasebe-kasa-sil') && <div onClick={() => setConfirm({open:true, msg:`"${kasa.ad}" KASASINI VE TÜM HAREKETLERİNİ KALICI OLARAK SİLMEK İSTEDİĞİNİZE EMİN MİSİNİZ?\n\nBU İŞLEM GERİ ALINAMAZ!`, cb: async () => { setConfirm({open:false, msg:'', cb:null}); const r = await api.kasaDelete(kasa.id); if(r?.success){ setBasari('KASA BAŞARIYLA SİLİNDİ'); kasaYukle(); hareketYukle(); setTimeout(()=>setBasari(''),4000); } else { setHata(r?.error||'SİLME HATASI'); setTimeout(()=>setHata(''),4000); }}})} style={{width:30,height:30,borderRadius:7,background:'linear-gradient(180deg, #f87171 0%, #dc2626 40%, #991b1b 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(220,38,38,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom:'1px solid #7f1d1d'}} title="KASAYI SİL">
                             <LIcon name="Trash2" size={13} color="#fff"/>
-                          </div>
+                          </div>}
                         </div>
                       )}
                     </div>
@@ -1203,7 +1203,7 @@ const KasaBanka = ({setPage, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:800}}>
               <thead>
                 <tr style={{background:C.bgHover}}>
-                  {['TARİH','KASA','TÜR','TUTAR','AÇIKLAMA','DOSYA NO', ...(isAdmin ? ['İŞLEM'] : [])].map(h =>
+                  {['TARİH','KASA','TÜR','TUTAR','AÇIKLAMA','DOSYA NO', ...((MR.hasYetki(user,'muhasebe','muhasebe-hareket-duzenle') || MR.hasYetki(user,'muhasebe','muhasebe-hareket-sil')) ? ['İŞLEM'] : [])].map(h =>
                     <th key={h} style={{padding:'12px 14px',textAlign:'left',color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                   )}
                 </tr>
@@ -1230,15 +1230,15 @@ const KasaBanka = ({setPage, user}) => {
                           </span>
                         ) : <span style={{color:C.textMuted}}>-</span>}
                       </td>
-                      {isAdmin && (
+                      {(MR.hasYetki(user,'muhasebe','muhasebe-hareket-duzenle') || MR.hasYetki(user,'muhasebe','muhasebe-hareket-sil')) && (
                         <td style={{padding:'10px 12px'}}>
                           <div style={{display:'flex',gap:4}}>
-                            <div onClick={() => { setHareketDuzenleModal(h); setHareketDuzenleForm({tutar: String(tutar), aciklama: h.aciklama || '', islem_turu: h.tur || h.islem_turu || ''}); setHata(''); }} style={{width:26,height:26,borderRadius:6,background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 6px -1px rgba(37,99,235,0.4)'}} title="DÜZENLE">
+                            {MR.hasYetki(user,'muhasebe','muhasebe-hareket-duzenle') && <div onClick={() => { setHareketDuzenleModal(h); setHareketDuzenleForm({tutar: String(tutar), aciklama: h.aciklama || '', islem_turu: h.tur || h.islem_turu || ''}); setHata(''); }} style={{width:26,height:26,borderRadius:6,background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 6px -1px rgba(37,99,235,0.4)'}} title="DÜZENLE">
                               <LIcon name="Pencil" size={11} color="#fff"/>
-                            </div>
-                            <div onClick={() => setConfirm({open:true, msg:'BU HAREKETİ SİLMEK İSTEDİĞİNİZE EMİN MİSİNİZ?\n\nKASA BAKİYESİ OTOMATİK GÜNCELLENECEKTİR.', cb: async () => { setConfirm({open:false,msg:'',cb:null}); const r = await api.kasaHareketSil(h.id); if(r?.success){ setBasari('HAREKET BAŞARIYLA SİLİNDİ'); kasaYukle(); hareketYukle(); setTimeout(()=>setBasari(''),4000); } else { setHata(r?.error||'SİLME HATASI'); setTimeout(()=>setHata(''),4000); }}})} style={{width:26,height:26,borderRadius:6,background:'linear-gradient(180deg, #f87171 0%, #dc2626 40%, #991b1b 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 6px -1px rgba(220,38,38,0.4)'}} title="SİL">
+                            </div>}
+                            {MR.hasYetki(user,'muhasebe','muhasebe-hareket-sil') && <div onClick={() => setConfirm({open:true, msg:'BU HAREKETİ SİLMEK İSTEDİĞİNİZE EMİN MİSİNİZ?\n\nKASA BAKİYESİ OTOMATİK GÜNCELLENECEKTİR.', cb: async () => { setConfirm({open:false,msg:'',cb:null}); const r = await api.kasaHareketSil(h.id); if(r?.success){ setBasari('HAREKET BAŞARIYLA SİLİNDİ'); kasaYukle(); hareketYukle(); setTimeout(()=>setBasari(''),4000); } else { setHata(r?.error||'SİLME HATASI'); setTimeout(()=>setHata(''),4000); }}})} style={{width:26,height:26,borderRadius:6,background:'linear-gradient(180deg, #f87171 0%, #dc2626 40%, #991b1b 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 6px -1px rgba(220,38,38,0.4)'}} title="SİL">
                               <LIcon name="Trash2" size={11} color="#fff"/>
-                            </div>
+                            </div>}
                           </div>
                         </td>
                       )}

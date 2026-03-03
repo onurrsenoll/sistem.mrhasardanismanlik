@@ -25,6 +25,12 @@ MR.toast = (mesaj, tip = 'info') => {
   setTimeout(() => { if(el.parentNode) el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(), 300); }, 3000);
 };
 
+// ═══ YETKİ KONTROL FONKSİYONU ═══
+MR.hasYetki = (user, modul, islem) => {
+  if (user?.rol === 'admin') return true;
+  return user?.yetkiler?.[modul + '_' + islem] === 1 || user?.yetkiler?.[modul + '_' + islem] === true;
+};
+
 // ═══ API ═══
 const API_BASE = '/api/v1';
 MR.api = {

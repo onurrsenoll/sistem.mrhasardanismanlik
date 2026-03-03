@@ -596,15 +596,15 @@ const SahaDetayModal = ({item, onClose, user, onOnayla, onReddet}) => {
         </div>
       </div>
 
-      {/* ADMİN BUTONLARI */}
-      {isAdmin && item.durum === 'beklemede' && (
+      {/* ONAY/RED BUTONLARI */}
+      {MR.hasYetki(user,'crm','saha-onay') && item.durum === 'beklemede' && (
         <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:16}}>
           <button style={{...S.btn,...S.btnS}} onClick={() => onOnayla && onOnayla(item)}>
             <LIcon name="CheckCircle" size={14}/> ONAYLA
           </button>
-          <button style={{...S.btn,...S.btnD}} onClick={() => onReddet && onReddet(item)}>
+          {MR.hasYetki(user,'crm','saha-red') && <button style={{...S.btn,...S.btnD}} onClick={() => onReddet && onReddet(item)}>
             <LIcon name="XCircle" size={14}/> REDDET
-          </button>
+          </button>}
         </div>
       )}
     </Modal>
@@ -708,13 +708,13 @@ const SahaBekleyen = ({setPage, user}) => {
                     <td style={{padding:'10px 12px',fontWeight:600,color:C.warning,whiteSpace:'nowrap'}}>{item.hasar_tutari ? fmtTL(item.hasar_tutari) + ' ₺' : '-'}</td>
                     <td style={{padding:'10px 12px'}} onClick={e=>e.stopPropagation()}>
                       <div style={{display:'flex',gap:6}}>
-                        {isAdmin ? (<>
+                        {MR.hasYetki(user,'crm','saha-onay') ? (<>
                           <button style={{...S.btn,...S.btnS,padding:'6px 12px',fontSize:10}} onClick={()=>{setOnayModal(item);setOnayNotu('');}}>
                             <LIcon name="Check" size={12}/> ONAYLA
                           </button>
-                          <button style={{...S.btn,...S.btnD,padding:'6px 12px',fontSize:10}} onClick={()=>{setRedModal(item);setRedNedeni('');}}>
+                          {MR.hasYetki(user,'crm','saha-red') && <button style={{...S.btn,...S.btnD,padding:'6px 12px',fontSize:10}} onClick={()=>{setRedModal(item);setRedNedeni('');}}>
                             <LIcon name="X" size={12}/> REDDET
-                          </button>
+                          </button>}
                         </>) : (
                           <button style={{...S.btn,...S.btnP,padding:'6px 12px',fontSize:10}} onClick={()=>setDetayItem(item)}>
                             <LIcon name="Eye" size={12}/> DETAY

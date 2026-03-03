@@ -742,7 +742,7 @@
                 )}
 
                 {/* PDF BUTONLARI */}
-                <div style={{ display: 'flex', gap: 12 }}>
+                {MR.hasYetki(user,'hesaplamalar','hesap-bh-rapor') && <div style={{ display: 'flex', gap: 12 }}>
                   <button onClick={() => pdfIndir('bilirkisi')} disabled={pdfYukleniyor} style={{ ...S.btnP, flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
                       <MR.LIcon name="FileText" size={16} /><span>BİLİRKİŞİ RAPORU</span>
@@ -753,7 +753,7 @@
                       <MR.LIcon name="Download" size={16} /><span>HESAP SONUCU</span>
                     </div>
                   </button>
-                </div>
+                </div>}
               </div>
             ) : (
               <MR.EmptyState icon="Calculator" title="HESAPLAMA YAPILMADI" desc="MAĞDUR BİLGİLERİNİ GİRİP HESAPLA BUTONUNA BASIN" />

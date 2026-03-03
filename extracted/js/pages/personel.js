@@ -239,7 +239,7 @@ const PersonelListesi = ({setPage, user}) => {
               <option value="aktif">AKTİF</option>
               <option value="pasif">PASİF</option>
             </select>
-            {isAdmin && secililer.length > 0 && (
+            {MR.hasYetki(user,'muhasebe','personel-toplu-sil') && secililer.length > 0 && (
               <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px',display:'flex',alignItems:'center',gap:4}}
                 onClick={() => setTopluSilConfirm(true)} disabled={topluSilLoading}>
                 <LIcon name="Trash2" size={11} color="#fff"/> TOPLU SİL ({secililer.length})
@@ -259,7 +259,7 @@ const PersonelListesi = ({setPage, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',minWidth:1200}}>
               <thead>
                 <tr>
-                  {isAdmin && <th style={{...thS,minWidth:35,textAlign:'center',padding:'8px 4px'}}>
+                  {MR.hasYetki(user,'muhasebe','personel-toplu-sil') && <th style={{...thS,minWidth:35,textAlign:'center',padding:'8px 4px'}}>
                     <input type="checkbox" checked={data.length > 0 && secililer.length === data.length}
                       onChange={tumunuSec} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                   </th>}
@@ -283,7 +283,7 @@ const PersonelListesi = ({setPage, user}) => {
                     onClick={() => duzenleAc(d)}
                     onMouseEnter={e => e.currentTarget.style.background=`${C.accent}0a`}
                     onMouseLeave={e => e.currentTarget.style.background=i%2===1?`${C.bgHover}66`:'transparent'}>
-                    {isAdmin && <td style={{...tdS,textAlign:'center',padding:'6px 4px'}} onClick={e => e.stopPropagation()}>
+                    {MR.hasYetki(user,'muhasebe','personel-toplu-sil') && <td style={{...tdS,textAlign:'center',padding:'6px 4px'}} onClick={e => e.stopPropagation()}>
                       <input type="checkbox" checked={secililer.includes(d.id)} onChange={() => toggleSecim(d.id)}
                         style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                     </td>}

@@ -325,9 +325,9 @@ const TanimGrubu = ({kategoriler, user}) => {
                 <input ref={bulkFileRef} type="file" accept=".xlsx,.xls,.csv" onChange={excelOku} style={{display:'none'}}/>
               </label>
               {/* TEK TEK EKLE */}
-              <button style={{...S.btn,...S.btnP, fontSize:10, padding:'6px 12px'}} onClick={yeniKayit}>
+              {MR.hasYetki(user,'sistem','tanimlamalar-ekle') && <button style={{...S.btn,...S.btnP, fontSize:10, padding:'6px 12px'}} onClick={yeniKayit}>
                 <LIcon name="Plus" size={12} color="#fff"/> YENİ EKLE
-              </button>
+              </button>}
             </div>
           }
         />
@@ -396,12 +396,12 @@ const TanimGrubu = ({kategoriler, user}) => {
                       </td>
                       <td style={{...TD_STYLE, textAlign:'center'}}>
                         <div style={{display:'flex', justifyContent:'center', gap:6}}>
-                          <div onClick={() => duzenleAc(d)} style={{...BTN_KUCUK, background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)', boxShadow:'0 2px 8px -1px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #1d4ed8'}} title="DÜZENLE">
+                          {MR.hasYetki(user,'sistem','tanimlamalar-duzenle') && <div onClick={() => duzenleAc(d)} style={{...BTN_KUCUK, background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)', boxShadow:'0 2px 8px -1px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #1d4ed8'}} title="DÜZENLE">
                             <LIcon name="Pencil" size={12} color="#fff"/>
-                          </div>
-                          <div onClick={() => setConfirm({open:true, id:d.id})} style={{...BTN_KUCUK, background:'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)', boxShadow:'0 2px 8px -1px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #b91c1c'}} title="SİL">
+                          </div>}
+                          {MR.hasYetki(user,'sistem','tanimlamalar-sil') && <div onClick={() => setConfirm({open:true, id:d.id})} style={{...BTN_KUCUK, background:'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)', boxShadow:'0 2px 8px -1px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #b91c1c'}} title="SİL">
                             <LIcon name="Trash2" size={12} color="#fff"/>
-                          </div>
+                          </div>}
                         </div>
                       </td>
                     </tr>
@@ -793,9 +793,9 @@ const SablonYonetimi = ({user}) => {
         <SectionTitle icon="FileSignature" title="ŞABLON LİSTESİ"
           sub={`${filtrelenmis.length} ŞABLON LİSTELENİYOR`}
           right={
-            <button style={{...S.btn,...S.btnP}} onClick={yeniSablon}>
+            MR.hasYetki(user,'sistem','tanimlamalar-sablon-ekle') ? <button style={{...S.btn,...S.btnP}} onClick={yeniSablon}>
               <LIcon name="Plus" size={14} color="#fff"/> YENİ ŞABLON
-            </button>
+            </button> : null
           }
         />
 
@@ -876,12 +876,12 @@ const SablonYonetimi = ({user}) => {
                             <div onClick={() => onizlemeGoster(s)} style={{...BTN_KUCUK, background:'linear-gradient(180deg, #22d3ee 0%, #06b6d4 40%, #0891b2 100%)', boxShadow:'0 2px 8px -1px rgba(6,182,212,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #0e7490'}} title="ÖNİZLEME">
                               <LIcon name="Eye" size={12} color="#fff"/>
                             </div>
-                            <div onClick={() => duzenleAc(s)} style={{...BTN_KUCUK, background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)', boxShadow:'0 2px 8px -1px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #1d4ed8'}} title="DÜZENLE">
+                            {MR.hasYetki(user,'sistem','tanimlamalar-sablon-duzenle') && <div onClick={() => duzenleAc(s)} style={{...BTN_KUCUK, background:'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)', boxShadow:'0 2px 8px -1px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #1d4ed8'}} title="DÜZENLE">
                               <LIcon name="Pencil" size={12} color="#fff"/>
-                            </div>
-                            <div onClick={() => setConfirm({open:true, id:s.id})} style={{...BTN_KUCUK, background:'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)', boxShadow:'0 2px 8px -1px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #b91c1c'}} title="SİL">
+                            </div>}
+                            {MR.hasYetki(user,'sistem','tanimlamalar-sil') && <div onClick={() => setConfirm({open:true, id:s.id})} style={{...BTN_KUCUK, background:'linear-gradient(180deg, #f87171 0%, #ef4444 40%, #dc2626 100%)', boxShadow:'0 2px 8px -1px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.2)', borderBottom:'1px solid #b91c1c'}} title="SİL">
                               <LIcon name="Trash2" size={12} color="#fff"/>
-                            </div>
+                            </div>}
                           </div>
                         </td>
                       </tr>

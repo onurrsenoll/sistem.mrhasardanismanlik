@@ -264,7 +264,7 @@ MR.AjandaPage = ({setPage, user}) => {
               onClick={() => setGorunum('liste')}>
               <LIcon name="List" size={14} color={gorunum === 'liste' ? '#fff' : C.textSec}/> LİSTE
             </button>
-            {isAdmin && secililer.length > 0 && (
+            {MR.hasYetki(user,'ajanda','ajanda-toplu-sil') && secililer.length > 0 && (
               <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px',display:'flex',alignItems:'center',gap:4}} onClick={() => setTopluSilConfirm(true)}>
                 <LIcon name="Trash2" size={12} color="#fff"/> TOPLU SİL ({secililer.length})
               </button>
@@ -392,7 +392,7 @@ MR.AjandaPage = ({setPage, user}) => {
                 </button>
               </div>
 
-              {isAdmin && secilenGunGorevleri.length > 0 && (
+              {MR.hasYetki(user,'ajanda','ajanda-toplu-sil') && secilenGunGorevleri.length > 0 && (
                 <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
                   <input type="checkbox" checked={secilenGunGorevleri.length > 0 && secilenGunGorevleri.every(g => secililer.includes(g.id))} onChange={() => tumunuSec(secilenGunGorevleri)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                   <span style={{fontSize:9,color:C.textMuted,fontWeight:600}}>TÜMÜNÜ SEÇ</span>
@@ -416,7 +416,7 @@ MR.AjandaPage = ({setPage, user}) => {
                 >
                   <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                     {/* SEÇİM CHECKBOX */}
-                    {isAdmin && (
+                    {MR.hasYetki(user,'ajanda','ajanda-toplu-sil') && (
                       <input type="checkbox" checked={secililer.includes(g.id)} onChange={() => toggleSecim(g.id)} onClick={e => e.stopPropagation()} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                     )}
                     {/* TAMAMLANDI CHECKBOX */}
@@ -510,7 +510,7 @@ MR.AjandaPage = ({setPage, user}) => {
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:700}}>
                   <thead>
                     <tr style={{background:C.bgHover}}>
-                      {isAdmin && (
+                      {MR.hasYetki(user,'ajanda','ajanda-toplu-sil') && (
                         <th style={{padding:'10px 8px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`,width:36}}>
                           <input type="checkbox" checked={filtrelenmis.length > 0 && filtrelenmis.every(g => secililer.includes(g.id))} onChange={() => tumunuSec(filtrelenmis)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                         </th>
@@ -526,7 +526,7 @@ MR.AjandaPage = ({setPage, user}) => {
                         onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                         {/* SEÇİM CHECKBOX */}
-                        {isAdmin && (
+                        {MR.hasYetki(user,'ajanda','ajanda-toplu-sil') && (
                           <td style={{padding:'10px 8px',width:36}}>
                             <input type="checkbox" checked={secililer.includes(g.id)} onChange={() => toggleSecim(g.id)} onClick={e => e.stopPropagation()} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                           </td>

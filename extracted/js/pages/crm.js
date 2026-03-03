@@ -227,7 +227,7 @@ MR._CRMListesiInner = ({setPage, user}) => {
           <div style={{display: 'flex', gap: 8, alignItems: 'center'}}>
             <input placeholder="AD VEYA TELEFON ARA..." value={filter} onChange={e => setFilter(e.target.value)}
               style={{...S.input, width: 220, fontSize: 11}}/>
-            {isAdmin && secililer.length > 0 && (
+            {MR.hasYetki(user,'crm','crm-toplu-sil') && secililer.length > 0 && (
               <button style={{...S.btn,...S.btnD,fontSize:9,padding:'5px 10px',display:'flex',alignItems:'center',gap:4}}
                 onClick={() => setTopluSilConfirm(true)} disabled={topluSilLoading}>
                 <LIcon name="Trash2" size={11} color="#fff"/> TOPLU SİL ({secililer.length})

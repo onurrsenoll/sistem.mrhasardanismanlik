@@ -1297,20 +1297,31 @@ INSERT IGNORE INTO yetkiler (kullanici_id, modul, islem, izin) VALUES
 (1, 'masraf', 'goruntule', 1), (1, 'masraf', 'ekle', 1), (1, 'masraf', 'duzenle', 1), (1, 'masraf', 'sil', 1),
 (1, 'evrak', 'goruntule', 1), (1, 'evrak', 'ekle', 1), (1, 'evrak', 'duzenle', 1), (1, 'evrak', 'sil', 1),
 (1, 'crm', 'goruntule', 1), (1, 'crm', 'ekle', 1), (1, 'crm', 'duzenle', 1), (1, 'crm', 'sil', 1),
+(1, 'crm', 'crm-toplu-sil', 1), (1, 'crm', 'saha-onay', 1), (1, 'crm', 'saha-red', 1),
 (1, 'muhasebe', 'goruntule', 1), (1, 'muhasebe', 'ekle', 1), (1, 'muhasebe', 'duzenle', 1), (1, 'muhasebe', 'sil', 1),
+(1, 'muhasebe', 'muhasebe-bakiye-sifirla', 1), (1, 'muhasebe', 'personel-toplu-sil', 1),
 (1, 'ajanda', 'goruntule', 1), (1, 'ajanda', 'ekle', 1), (1, 'ajanda', 'duzenle', 1), (1, 'ajanda', 'sil', 1),
+(1, 'ajanda', 'ajanda-toplu-sil', 1),
 (1, 'bildirim', 'goruntule', 1), (1, 'bildirim', 'ekle', 1), (1, 'bildirim', 'duzenle', 1), (1, 'bildirim', 'sil', 1),
 (1, 'sistem', 'goruntule', 1), (1, 'sistem', 'ekle', 1), (1, 'sistem', 'duzenle', 1), (1, 'sistem', 'sil', 1),
+(1, 'sistem', 'sistem-guvenlik', 1), (1, 'sistem', 'sistem-2fa', 1),
+(1, 'sistem', 'tanimlamalar-ekle', 1), (1, 'sistem', 'tanimlamalar-duzenle', 1), (1, 'sistem', 'tanimlamalar-sil', 1),
+(1, 'sistem', 'tanimlamalar-sablon-ekle', 1), (1, 'sistem', 'tanimlamalar-sablon-duzenle', 1),
 (1, 'hesaplamalar', 'goruntule', 1), (1, 'hesaplamalar', 'ekle', 1), (1, 'hesaplamalar', 'duzenle', 1), (1, 'hesaplamalar', 'sil', 1),
+(1, 'hesaplamalar', 'hesap-adk-rapor', 1), (1, 'hesaplamalar', 'hesap-bh-rapor', 1),
 (1, 'tanimlamalar', 'goruntule', 1), (1, 'tanimlamalar', 'ekle', 1), (1, 'tanimlamalar', 'duzenle', 1), (1, 'tanimlamalar', 'sil', 1),
 (1, 'ortaklar', 'goruntule', 1), (1, 'ortaklar', 'ekle', 1), (1, 'ortaklar', 'duzenle', 1), (1, 'ortaklar', 'sil', 1),
+(1, 'paydaslar', 'ortaklar-toplu-sil', 1), (1, 'paydaslar', 'paydaslar-toplu-sil', 1),
 (1, 'servis', 'goruntule', 1), (1, 'servis', 'ekle', 1), (1, 'servis', 'duzenle', 1), (1, 'servis', 'sil', 1),
 (1, 'mesajlar', 'goruntule', 1), (1, 'mesajlar', 'ekle', 1), (1, 'mesajlar', 'duzenle', 1), (1, 'mesajlar', 'sil', 1),
+(1, 'mesajlar', 'mesaj-toplu-sil', 1),
 (1, 'netsantral', 'goruntule', 1), (1, 'netsantral', 'arama_yap', 1), (1, 'netsantral', 'transfer', 1), (1, 'netsantral', 'ayarlar', 1),
 (1, 'netsipp', 'goruntule', 1), (1, 'netsipp', 'gelen_cagri', 1), (1, 'netsipp', 'giden_cagri', 1),
 (1, 'hesap', 'goruntule', 1), (1, 'hesap', 'ekle', 1), (1, 'hesap', 'duzenle', 1), (1, 'hesap', 'sil', 1),
 (1, 'rapor', 'goruntule', 1), (1, 'rapor', 'ekle', 1), (1, 'rapor', 'duzenle', 1), (1, 'rapor', 'sil', 1),
-(1, 'sms', 'goruntule', 1), (1, 'sms', 'gonder', 1), (1, 'sms', 'ayarlar', 1);
+(1, 'sms', 'goruntule', 1), (1, 'sms', 'gonder', 1), (1, 'sms', 'ayarlar', 1),
+(1, 'police', 'goruntule', 1), (1, 'police', 'ekle', 1), (1, 'police', 'duzenle', 1), (1, 'police', 'sil', 1),
+(1, 'police', 'police-toplu-sil', 1), (1, 'police', 'police-excel', 1);
 
 -- ═══════════════════════════════════════════
 -- 37. SAHA DOSYALARI (V2)
