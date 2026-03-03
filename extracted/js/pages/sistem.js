@@ -4021,6 +4021,297 @@ const VeriYonetimiTab = () => {
 };
 
 /* ════════════════════════════════════════════════════════════════
+   CİHAZ GÜVENLİĞİ VE OTURUM YÖNETİMİ - 2FA GOOGLE AUTHENTICATOR
+   ════════════════════════════════════════════════════════════════ */
+const GuvenlikTab = () => {
+  const {C, S, LIcon, api} = MR;
+  const [loading, setLoading] = useState(false);
+  const [twoFaAktif, setTwoFaAktif] = useState(false);
+  const [setupData, setSetupData] = useState(null);
+  const [code, setCode] = useState('');
+  const [disableCode, setDisableCode] = useState('');
+  const [mesaj, setMesaj] = useState(null);
+  const [step, setStep] = useState('status'); // status, setup, verify
+
+  useEffect(() => {
+    load2faStatus();
+  }, []);
+
+  const load2faStatus = async () => {
+    const r = await api.twoFaSetup('status');
+    if (r?.success) {
+      setTwoFaAktif(!!r.data?.totp_aktif);
+    }
+  };
+
+  const startSetup = async () => {
+    setLoading(true); setMesaj(null);
+    const r = await api.twoFaSetup('generate');
+    if (r?.success) {
+      setSetupData(r.data);
+      setStep('setup');
+      setCode('');
+    } else {
+      setMesaj({type:'error', text: r?.error || 'KURULUM BAŞLATILAMADI'});
+    }
+    setLoading(false);
+  };
+
+  const verifyAndEnable = async () => {
+    if (code.length !== 6) { setMesaj({type:'error', text:'6 HANELİ KOD GİRİN'}); return; }
+    setLoading(true); setMesaj(null);
+    const r = await api.twoFaSetup('verify_and_enable', code);
+    if (r?.success) {
+      setTwoFaAktif(true);
+      setStep('status');
+      setSetupData(null);
+      setCode('');
+      setMesaj({type:'success', text:'2FA BAŞARIYLA AKTİF EDİLDİ'});
+    } else {
+      setMesaj({type:'error', text: r?.error || 'DOĞRULAMA BAŞARISIZ'});
+      setCode('');
+    }
+    setLoading(false);
+  };
+
+  const disable2fa = async () => {
+    if (disableCode.length !== 6) { setMesaj({type:'error', text:'6 HANELİ KOD GİRİN'}); return; }
+    setLoading(true); setMesaj(null);
+    const r = await api.twoFaSetup('disable', disableCode);
+    if (r?.success) {
+      setTwoFaAktif(false);
+      setDisableCode('');
+      setMesaj({type:'success', text:'2FA DEVRE DIŞI BIRAKILDI'});
+    } else {
+      setMesaj({type:'error', text: r?.error || 'İŞLEM BAŞARISIZ'});
+      setDisableCode('');
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="fade-in">
+      {mesaj && (
+        <div style={{padding:'12px 16px',background:`${mesaj.type==='success'?C.success:C.danger}18`,
+          border:`1px solid ${mesaj.type==='success'?C.success:C.danger}33`,borderRadius:12,marginBottom:16,
+          fontSize:12,fontWeight:700,color:mesaj.type==='success'?C.success:C.danger,
+          display:'flex',alignItems:'center',gap:8}}>
+          <LIcon name={mesaj.type==='success'?'CheckCircle':'AlertCircle'} size={16} color={mesaj.type==='success'?C.success:C.danger}/>
+          {mesaj.text}
+        </div>
+      )}
+
+      {/* 2FA DURUM KARTI */}
+      <div style={S.card}>
+        <div style={{...S.cardHead,display:'flex',alignItems:'center',gap:10}}>
+          <div style={{width:36,height:36,borderRadius:10,background:`${C.success}22`,
+            display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <LIcon name="ShieldCheck" size={18} color={C.success}/>
+          </div>
+          <div>
+            <div style={{fontSize:14,fontWeight:800}}>2FA - GOOGLE AUTHENTICATOR</div>
+            <div style={{fontSize:10,color:C.textMuted}}>İKİ FAKTÖRLÜ KİMLİK DOĞRULAMA</div>
+          </div>
+        </div>
+        <div style={{padding:20}}>
+
+          {/* DURUM GÖSTERGESİ */}
+          <div style={{display:'flex',alignItems:'center',gap:16,padding:20,
+            background: twoFaAktif ? `${C.success}11` : `${C.warning}11`,
+            borderRadius:14,border:`1px solid ${twoFaAktif ? C.success : C.warning}33`,marginBottom:20}}>
+            <div style={{width:52,height:52,borderRadius:16,
+              background: twoFaAktif ? `${C.success}22` : `${C.warning}22`,
+              display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <LIcon name={twoFaAktif ? 'ShieldCheck' : 'ShieldAlert'} size={26}
+                color={twoFaAktif ? C.success : C.warning}/>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:16,fontWeight:900,color: twoFaAktif ? C.success : C.warning}}>
+                {twoFaAktif ? '2FA AKTİF' : '2FA DEVRE DIŞI'}
+              </div>
+              <div style={{fontSize:11,color:C.textMuted,marginTop:2}}>
+                {twoFaAktif
+                  ? 'HESABINIZ GOOGLE AUTHENTICATOR İLE KORUNUYOR'
+                  : 'HESABINIZI KORUMAK İÇİN 2FA ETKİNLEŞTİRİN'}
+              </div>
+            </div>
+            <div style={{
+              padding:'6px 14px',borderRadius:20,fontSize:11,fontWeight:800,
+              background: twoFaAktif ? `${C.success}22` : `${C.warning}22`,
+              color: twoFaAktif ? C.success : C.warning,
+              border:`1px solid ${twoFaAktif ? C.success : C.warning}44`
+            }}>
+              {twoFaAktif ? 'AKTİF' : 'KAPALI'}
+            </div>
+          </div>
+
+          {/* 2FA AKTİF DEĞİLSE - KURULUM */}
+          {!twoFaAktif && step === 'status' && (
+            <div style={{textAlign:'center',padding:20}}>
+              <div style={{fontSize:12,color:C.textSec,marginBottom:16,lineHeight:1.6}}>
+                GOOGLE AUTHENTICATOR UYGULAMASINI TELEFONUNUZA İNDİRİN.<br/>
+                ARDINCA AŞAĞIDAKI BUTONA TIKLAYARAK KURULUMU BAŞLATIN.
+              </div>
+              <button onClick={startSetup} disabled={loading} style={{
+                ...S.btn,...S.btnS,padding:'14px 32px',fontSize:13,fontWeight:800,borderRadius:14}}>
+                <LIcon name="ShieldCheck" size={16} color="#fff"/>
+                {loading ? 'HAZIRLANIYOR...' : '2FA KURULUMUNU BAŞLAT'}
+              </button>
+            </div>
+          )}
+
+          {/* KURULUM ADIMI - QR KOD */}
+          {!twoFaAktif && step === 'setup' && setupData && (
+            <div>
+              <div style={{display:'flex',gap:20,alignItems:'flex-start'}}>
+                {/* QR KOD */}
+                <div style={{textAlign:'center',flex:'0 0 auto'}}>
+                  <div style={{padding:12,background:'#fff',borderRadius:14,display:'inline-block',marginBottom:10}}>
+                    <img src={setupData.qr_url} alt="QR KOD" style={{width:180,height:180,display:'block'}}/>
+                  </div>
+                  <div style={{fontSize:9,color:C.textMuted}}>QR KODU TARAYIN</div>
+                </div>
+
+                {/* TALİMATLAR */}
+                <div style={{flex:1}}>
+                  <div style={{fontSize:12,fontWeight:800,color:C.accent,marginBottom:12}}>KURULUM ADIMLARI</div>
+
+                  <div style={{display:'flex',gap:10,alignItems:'flex-start',marginBottom:12}}>
+                    <div style={{width:24,height:24,borderRadius:8,background:`${C.accent}22`,
+                      display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:900,color:C.accent,flex:'0 0 24px'}}>1</div>
+                    <div style={{fontSize:11,color:C.textSec}}>GOOGLE AUTHENTICATOR UYGULAMASINI AÇIN</div>
+                  </div>
+
+                  <div style={{display:'flex',gap:10,alignItems:'flex-start',marginBottom:12}}>
+                    <div style={{width:24,height:24,borderRadius:8,background:`${C.accent}22`,
+                      display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:900,color:C.accent,flex:'0 0 24px'}}>2</div>
+                    <div style={{fontSize:11,color:C.textSec}}>+ BUTONUNA DOKUNUN VE "QR KOD TARA" SEÇİN</div>
+                  </div>
+
+                  <div style={{display:'flex',gap:10,alignItems:'flex-start',marginBottom:12}}>
+                    <div style={{width:24,height:24,borderRadius:8,background:`${C.accent}22`,
+                      display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:900,color:C.accent,flex:'0 0 24px'}}>3</div>
+                    <div style={{fontSize:11,color:C.textSec}}>YANDAKI QR KODU TELEFONUNUZLA TARAYIN</div>
+                  </div>
+
+                  <div style={{display:'flex',gap:10,alignItems:'flex-start',marginBottom:16}}>
+                    <div style={{width:24,height:24,borderRadius:8,background:`${C.accent}22`,
+                      display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:900,color:C.accent,flex:'0 0 24px'}}>4</div>
+                    <div style={{fontSize:11,color:C.textSec}}>UYGULAMADA GÖRÜNEN 6 HANELİ KODU AŞAĞIYA GİRİN</div>
+                  </div>
+
+                  {/* MANUEL GİRİŞ ANAHTARI */}
+                  <div style={{padding:10,background:`${C.accent}11`,borderRadius:10,border:`1px solid ${C.accent}33`,marginBottom:16}}>
+                    <div style={{fontSize:9,color:C.textMuted,marginBottom:4,fontWeight:600}}>MANUEL ANAHTAR (QR TARAYAMIYORSANIZ)</div>
+                    <div style={{fontSize:13,fontWeight:900,fontFamily:'monospace',color:C.accent,letterSpacing:2,wordBreak:'break-all'}}>
+                      {setupData.secret}
+                    </div>
+                  </div>
+
+                  {/* DOĞRULAMA KODU GİRİŞİ */}
+                  <div style={{display:'flex',gap:10}}>
+                    <input
+                      type="text"
+                      value={code}
+                      onChange={e => { const v = e.target.value.replace(/\D/g,''); if (v.length <= 6) setCode(v); }}
+                      placeholder="000000"
+                      maxLength={6}
+                      style={{...S.input,textAlign:'center',fontSize:22,fontWeight:900,letterSpacing:10,fontFamily:'monospace',flex:1}}
+                    />
+                    <button onClick={verifyAndEnable} disabled={loading || code.length !== 6} style={{
+                      ...S.btn,...S.btnS,padding:'0 20px',fontSize:12,fontWeight:800,borderRadius:10,
+                      opacity:(loading || code.length !== 6)?0.5:1}}>
+                      {loading ? '...' : 'DOĞRULA'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <button onClick={() => { setStep('status'); setSetupData(null); setCode(''); }}
+                style={{background:'transparent',border:'none',color:C.textMuted,fontSize:11,fontWeight:600,
+                  cursor:'pointer',marginTop:16,padding:8}}>
+                VAZGEÇ
+              </button>
+            </div>
+          )}
+
+          {/* 2FA AKTİF - DEVRE DIŞI BIRAKMA */}
+          {twoFaAktif && (
+            <div>
+              <div style={{padding:16,background:`${C.bgInput}`,borderRadius:12,border:`1px solid ${C.border}`,marginBottom:16}}>
+                <div style={{fontSize:11,fontWeight:700,color:C.text,marginBottom:12}}>
+                  2FA DEVRE DIŞI BIRAKMAK İÇİN DOĞRULAMA KODU GİRİN
+                </div>
+                <div style={{display:'flex',gap:10}}>
+                  <input
+                    type="text"
+                    value={disableCode}
+                    onChange={e => { const v = e.target.value.replace(/\D/g,''); if (v.length <= 6) setDisableCode(v); }}
+                    placeholder="000000"
+                    maxLength={6}
+                    style={{...S.input,textAlign:'center',fontSize:18,fontWeight:900,letterSpacing:8,fontFamily:'monospace',flex:1}}
+                  />
+                  <button onClick={disable2fa} disabled={loading || disableCode.length !== 6} style={{
+                    ...S.btn,background:C.danger,color:'#fff',padding:'0 20px',fontSize:11,fontWeight:800,borderRadius:10,
+                    border:'none',cursor:'pointer',
+                    opacity:(loading || disableCode.length !== 6)?0.5:1}}>
+                    {loading ? '...' : 'DEVRE DIŞI BIRAK'}
+                  </button>
+                </div>
+              </div>
+
+              {/* GÜVENLİK BİLGİLERİ */}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                <div style={{padding:14,background:`${C.success}08`,borderRadius:12,border:`1px solid ${C.success}22`}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                    <LIcon name="Lock" size={14} color={C.success}/>
+                    <span style={{fontSize:10,fontWeight:700,color:C.success}}>GÜVENLİ GİRİŞ</span>
+                  </div>
+                  <div style={{fontSize:10,color:C.textMuted}}>HER GİRİŞTE GOOGLE AUTHENTICATOR KODU İSTENİR</div>
+                </div>
+                <div style={{padding:14,background:`${C.accent}08`,borderRadius:12,border:`1px solid ${C.accent}22`}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                    <LIcon name="Smartphone" size={14} color={C.accent}/>
+                    <span style={{fontSize:10,fontWeight:700,color:C.accent}}>CİHAZ BAĞLI</span>
+                  </div>
+                  <div style={{fontSize:10,color:C.textMuted}}>GOOGLE AUTHENTICATOR UYGULAMANIZ BAĞLI</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* GÜVENLİK ÖNERİLERİ */}
+      <div style={{...S.card,marginTop:16}}>
+        <div style={{...S.cardHead,display:'flex',alignItems:'center',gap:10}}>
+          <LIcon name="Info" size={16} color={C.accent}/>
+          <span style={{fontSize:13,fontWeight:800}}>GÜVENLİK ÖNERİLERİ</span>
+        </div>
+        <div style={{padding:20}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+            {[
+              {icon:'ShieldCheck',title:'2FA KULLANIN',desc:'GOOGLE AUTHENTICATOR İLE HESABINIZI KORUYUN',color:C.success},
+              {icon:'Key',title:'GÜÇLÜ ŞİFRE',desc:'EN AZ 8 KARAKTER, BÜYÜK/KÜÇÜK HARF VE RAKAM KULLANIN',color:C.warning},
+              {icon:'LogOut',title:'OTURUM KAPAT',desc:'İŞİNİZ BİTTİĞİNDE OTURUMU KAPATMAYI UNUTMAYIN',color:C.danger},
+              {icon:'Smartphone',title:'CİHAZ GÜVENLİĞİ',desc:'TELEFONUNUZA EKRAn KİLİDİ KOYUN',color:C.accent}
+            ].map((item,i) => (
+              <div key={i} style={{padding:14,background:`${item.color}08`,borderRadius:12,border:`1px solid ${item.color}22`}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                  <LIcon name={item.icon} size={14} color={item.color}/>
+                  <span style={{fontSize:10,fontWeight:700,color:item.color}}>{item.title}</span>
+                </div>
+                <div style={{fontSize:10,color:C.textMuted}}>{item.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════════════════════════
    ANA SAYFA BİLEŞENİ - MR.SistemPage
    ════════════════════════════════════════════════════════════════ */
 
@@ -4036,6 +4327,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
     netsantral: {label: 'NETSANTRAL', icon: 'Phone'},
     sms: {label: 'SMS BİLDİRİM', icon: 'MessageSquare'},
     portal: {label: 'PORTAL AYARLARI', icon: 'Globe'},
+    guvenlik: {label: 'CİHAZ GÜVENLİĞİ VE OTURUM YÖNETİMİ', icon: 'ShieldCheck'},
     aktarim: {label: 'TOPLU AKTARIM', icon: 'FileSpreadsheet'},
     veri: {label: 'VERİ YÖNETİMİ', icon: 'DatabaseBackup'},
     log: {label: 'LOG KAYITLARI', icon: 'Activity'}
@@ -4089,6 +4381,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
         {subPage === 'netsantral' && isAdmin && <NetsantralTab/>}
         {subPage === 'sms' && isAdmin && <SmsTab/>}
         {subPage === 'portal' && isAdmin && <PortalTab/>}
+        {subPage === 'guvenlik' && isAdmin && <GuvenlikTab/>}
         {subPage === 'aktarim' && isAdmin && <TopluAktarimTab/>}
         {subPage === 'veri' && isAdmin && <VeriYonetimiTab/>}
         {subPage === 'log' && isAdmin && <LogTab/>}

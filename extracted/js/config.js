@@ -52,6 +52,9 @@ MR.api = {
   me() { return this.req('/auth/me.php'); },
   changePw(d) { return this.req('/auth/change-password.php', { method: 'POST', body: JSON.stringify(d) }); },
   profilUpdate(d) { return this.req('/auth/profil-update.php', { method: 'POST', body: JSON.stringify(d) }); },
+  // 2FA
+  twoFaSetup(action, code) { return this.req('/auth/2fa-setup.php', { method: 'POST', body: JSON.stringify({ action, code }) }); },
+  twoFaVerify(tempToken, code) { return this.req('/auth/2fa-verify.php', { method: 'POST', body: JSON.stringify({ temp_token: tempToken, code }) }); },
   avatarYukle(file) {
     const fd = new FormData(); fd.append('avatar', file);
     const h = {}; if (this.token) h['Authorization'] = 'Bearer ' + this.token;

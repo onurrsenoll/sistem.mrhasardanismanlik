@@ -902,13 +902,12 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           const dosyaBasi = parseFloat(kapatForm.dosya_basi_odenen) || 0;
           const dosyaMasraflari = dosya.toplam_masraf || 0;
 
-          /* PAY BÖLÜŞÜMÜ: AVUKAT ÖDEME ORANINA GÖRE DİNAMİK */
-          const avukatPayYuzde = parseFloat(kapatForm.avukat_pay_orani) || 50;
-          const mrPayYuzde = 100 - avukatPayYuzde;
-          const mrBrutPay = netKazanc * mrPayYuzde / 100;
-          const avukatHakedis = netKazanc * avukatPayYuzde / 100;
-          const mrHakedis = mrBrutPay - dosyaBasi;
-          const kasayaAktarilacak = mrHakedis;
+          /* PAY BÖLÜŞÜMÜ: SABİT %50 - %50 */
+          const avukatPayYuzde = 50;
+          const mrPayYuzde = 50;
+          const avukatHakedis = netKazanc * 50 / 100;
+          const mrHakedis = netKazanc * 50 / 100;
+          const kasayaAktarilacak = netKazanc;
           const kF = (k,v) => setKapatForm(p=>({...p,[k]:v}));
 
           const hesapRow = (label, val, opts={}) => (
@@ -928,7 +927,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               dosya_id: dosya.id, gelir_turu: 'TAZMİNAT ÖDEMESİ',
               tutar: kasayaAktarilacak,
               kasa_id: parseInt(kapatForm.kasa_id),
-              aciklama: `${dosya.dosya_no} DOSYA KAPATMA - TAZMİNAT: ${fmt(t)}, NET KAZANÇ: ${fmt(netKazanc)}, MR HAKEDİŞ: ${fmt(mrHakedis)}, AVUKAT HAKEDİŞ: ${fmt(avukatHakedis)}`,
+              aciklama: `${dosya.dosya_no} DOSYA KAPATMA - TAZMİNAT: ${fmt(t)}, NET KAZANÇ: ${fmt(netKazanc)}, AVUKAT HAKEDİŞ (%50): ${fmt(avukatHakedis)}, MR HAKEDİŞ (%50): ${fmt(mrHakedis)}`,
               tahsilat_durumu: 'tahsil_edildi'
             });
             const kapatR = await api.dosyaUpdate({
@@ -962,12 +961,6 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <FormGroup label="KDV ORANI (%)">
                   <input type="number" value={kapatForm.kdv_oran} onChange={e=>kF('kdv_oran',e.target.value)} placeholder="20" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
                 </FormGroup>
-                {hasYetki('dosya','dosya-kapat') && <FormGroup label="DOSYA BAŞI ÖDENEN">
-                  <input type="number" value={kapatForm.dosya_basi_odenen} onChange={e=>kF('dosya_basi_odenen',e.target.value)} placeholder="0" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
-                </FormGroup>}
-                {hasYetki('dosya','dosya-kapat') && <FormGroup label={`AVUKAT PAY ORANI (%${avukatPayYuzde})`}>
-                  <input type="number" min="0" max="100" value={kapatForm.avukat_pay_orani} onChange={e=>kF('avukat_pay_orani',e.target.value)} placeholder="50" style={{...S.input,padding:'8px 10px',fontSize:12,fontWeight:700,color:C.purple}}/>
-                </FormGroup>}
               </div>
 
               {/* AVUKAT BİLGİ BANNER */}
@@ -981,8 +974,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                     </div>
                   </div>
                   <div style={{textAlign:'center',padding:'6px 10px',background:`${C.purple}22`,borderRadius:6}}>
-                    <div style={{fontSize:8,color:C.textMuted,fontWeight:600}}>KAYITLI ÖDEME ORANI</div>
-                    <div style={{fontSize:16,fontWeight:900,color:C.purple}}>%{dosya.avukat_odeme_orani || '-'}</div>
+                    <div style={{fontSize:8,color:C.textMuted,fontWeight:600}}>PAY BÖLÜŞÜMÜ</div>
+                    <div style={{fontSize:16,fontWeight:900,color:C.purple}}>%50 - %50</div>
                   </div>
                 </div>
               )}
@@ -1009,17 +1002,14 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
                 <div style={{marginTop:10,paddingTop:10,borderTop:`2px solid ${C.warning}44`}}/>
                 {hesapRow('DOSYA MASRAFLARI (SİSTEMDEN)', dosyaMasraflari, {color:C.danger})}
-                {hasYetki('dosya','dosya-kapat') && hesapRow('DOSYA BAŞI ÖDENEN (MR HASAR\'A)', dosyaBasi, {color:C.warning})}
 
                 {hasYetki('dosya','dosya-kapat') && <>
                 <div style={{marginTop:10,paddingTop:10,borderTop:`2px solid ${C.purple}44`}}/>
                 <div style={{fontSize:10,fontWeight:700,color:C.purple,marginBottom:6,display:'flex',alignItems:'center',gap:4}}>
-                  PAY BÖLÜŞÜMÜ (MR HASAR %{mrPayYuzde} / AVUKAT %{avukatPayYuzde})
+                  PAY BÖLÜŞÜMÜ (%50 - %50)
                 </div>
-                {hesapRow(`AVUKAT HAKEDİŞİ (%${avukatPayYuzde})`, avukatHakedis, {bold:true,color:'#8b5cf6'})}
-                {hesapRow(`MR HASAR BRÜT PAY (%${mrPayYuzde})`, mrBrutPay, {color:C.textSec})}
-                {hesapRow('DOSYA BAŞI ÖDENEN (DÜŞÜLEN)', dosyaBasi, {color:C.danger})}
-                {hesapRow('MR HASAR HAKEDİŞİ', mrHakedis, {bold:true,color:C.success,big:true,border:true})}
+                {hesapRow('AVUKAT HAKEDİŞİ (%50)', avukatHakedis, {bold:true,color:'#8b5cf6'})}
+                {hesapRow('MR HASAR HAKEDİŞİ (%50)', mrHakedis, {bold:true,color:C.success,big:true,border:true})}
                 </>}
               </div>
 
@@ -1032,7 +1022,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 </FormGroup>
                 <div style={{display:'flex',alignItems:'flex-end',paddingBottom:2}}>
                   <div style={{padding:'10px 16px',background:`${C.success}11`,borderRadius:8,border:`1px solid ${C.success}33`,width:'100%'}}>
-                    <div style={{fontSize:9,color:C.textMuted,marginBottom:2}}>MR HASAR HAKEDİŞİ (KASAYA)</div>
+                    <div style={{fontSize:9,color:C.textMuted,marginBottom:2}}>KASAYA AKTARILACAK (NET KAZANÇ)</div>
                     <div style={{fontSize:16,fontWeight:800,color:C.success}}>{fmt(kasayaAktarilacak)}</div>
                   </div>
                 </div>

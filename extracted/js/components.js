@@ -95,6 +95,11 @@ MR.LoginScreen = ({onLogin}) => {
   const [sifre, setSifre] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // 2FA state
+  const [twoFaStep, setTwoFaStep] = useState(false);
+  const [tempToken, setTempToken] = useState('');
+  const [twoFaCode, setTwoFaCode] = useState('');
+  const [twoFaUser, setTwoFaUser] = useState(null);
 
   const go = async (e) => {
     e.preventDefault();
@@ -102,25 +107,55 @@ MR.LoginScreen = ({onLogin}) => {
     setLoading(true); setError('');
     try {
       const r = await MR.api.login(email, sifre);
-      if (r && r.success) { MR.api.setToken(r.data.token); onLogin(r.data.user); }
+      if (r && r.success) {
+        if (r.data?.require_2fa) {
+          // 2FA doğrulama gerekli
+          setTempToken(r.data.temp_token);
+          setTwoFaUser(r.data.user);
+          setTwoFaStep(true);
+          setTwoFaCode('');
+        } else {
+          MR.api.setToken(r.data.token);
+          onLogin(r.data.user);
+        }
+      }
       else setError(r?.error || 'GİRİŞ BAŞARISIZ');
     } catch (e) { setError('BAĞLANTI HATASI'); }
     setLoading(false);
   };
 
+  const verify2fa = async (e) => {
+    e.preventDefault();
+    if (!twoFaCode || twoFaCode.length !== 6) { setError('6 HANELİ DOĞRULAMA KODU GİRİN'); return; }
+    setLoading(true); setError('');
+    try {
+      const r = await MR.api.twoFaVerify(tempToken, twoFaCode);
+      if (r && r.success) {
+        MR.api.setToken(r.data.token);
+        onLogin(r.data.user);
+      } else {
+        setError(r?.error || 'DOĞRULAMA BAŞARISIZ');
+        setTwoFaCode('');
+      }
+    } catch (e) { setError('BAĞLANTI HATASI'); }
+    setLoading(false);
+  };
+
   const isK = MR.tema === 'koyu';
+  const cardStyle = {
+    width:440,padding:44,
+    background: isK ? MR.C.bgCard : 'rgba(237,241,247,0.85)',
+    borderRadius:26,
+    border: `1px solid ${MR.C.border}`,
+    boxShadow: isK
+      ? '0 25px 50px -12px rgba(0,0,0,0.25)'
+      : '0 25px 50px -12px rgba(0,0,0,0.1)',
+    backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'
+  };
+
   return (
     <div style={{minHeight:'100vh',background: MR.C.bgGradient || MR.C.bg,display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <div style={{
-        width:440,padding:44,
-        background: isK ? MR.C.bgCard : 'rgba(237,241,247,0.85)',
-        borderRadius:26,
-        border: `1px solid ${MR.C.border}`,
-        boxShadow: isK
-          ? '0 25px 50px -12px rgba(0,0,0,0.25)'
-          : '0 25px 50px -12px rgba(0,0,0,0.1)',
-        backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'
-      }}>
+      <div style={cardStyle}>
         <div style={{textAlign:'center',marginBottom:36}}>
           <div style={{
             width:72,height:72,borderRadius:20,
@@ -135,25 +170,79 @@ MR.LoginScreen = ({onLogin}) => {
           <div style={{fontSize:20,fontWeight:900,color:MR.C.accent,letterSpacing:2,textShadow: isK ? `0 0 30px ${MR.C.accent}60` : 'none'}}>MR HASAR DANIŞMANLIK</div>
           <div style={{fontSize:11,fontWeight:700,color:MR.C.textMuted,letterSpacing:4,marginTop:6}}>DOSYA TAKİP SİSTEMİ</div>
         </div>
-        <form onSubmit={go}>
-          {error && <div style={{padding:'12px 16px',background:`${MR.C.danger}18`,border:`1px solid ${MR.C.danger}33`,borderRadius:14,marginBottom:18,fontSize:12,color:MR.C.danger,boxShadow: isK ? 'none' : 'none'}}>{error}</div>}
-          <div style={{marginBottom:18}}>
-            <label style={MR.S.label}>E-POSTA</label>
-            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="ADMIN@MRHASAR.COM" style={MR.S.input} autoFocus/>
-          </div>
-          <div style={{marginBottom:28}}>
-            <label style={MR.S.label}>ŞİFRE</label>
-            <input type="password" value={sifre} onChange={e=>setSifre(e.target.value)} placeholder="••••••••" style={MR.S.input}/>
-          </div>
-          <button type="submit" disabled={loading} style={{
-            ...MR.S.btn,...MR.S.btnP,
-            width:'100%',justifyContent:'center',padding:'15px',fontSize:14,
-            borderRadius:16,
-            opacity:loading?0.7:1
-          }}>
-            {loading ? 'GİRİŞ YAPILIYOR...' : (<><MR.LIcon name="Lock" size={16} color="#fff"/> GİRİŞ YAP</>)}
-          </button>
-        </form>
+
+        {!twoFaStep ? (
+          /* NORMAL GİRİŞ FORMU */
+          <form onSubmit={go}>
+            {error && <div style={{padding:'12px 16px',background:`${MR.C.danger}18`,border:`1px solid ${MR.C.danger}33`,borderRadius:14,marginBottom:18,fontSize:12,color:MR.C.danger}}>{error}</div>}
+            <div style={{marginBottom:18}}>
+              <label style={MR.S.label}>E-POSTA</label>
+              <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="ADMIN@MRHASAR.COM" style={MR.S.input} autoFocus/>
+            </div>
+            <div style={{marginBottom:28}}>
+              <label style={MR.S.label}>ŞİFRE</label>
+              <input type="password" value={sifre} onChange={e=>setSifre(e.target.value)} placeholder="••••••••" style={MR.S.input}/>
+            </div>
+            <button type="submit" disabled={loading} style={{
+              ...MR.S.btn,...MR.S.btnP,
+              width:'100%',justifyContent:'center',padding:'15px',fontSize:14,
+              borderRadius:16,
+              opacity:loading?0.7:1
+            }}>
+              {loading ? 'GİRİŞ YAPILIYOR...' : (<><MR.LIcon name="Lock" size={16} color="#fff"/> GİRİŞ YAP</>)}
+            </button>
+          </form>
+        ) : (
+          /* 2FA DOĞRULAMA FORMU */
+          <form onSubmit={verify2fa}>
+            <div style={{textAlign:'center',marginBottom:20}}>
+              <div style={{
+                width:56,height:56,borderRadius:16,
+                background: `${MR.C.success}22`,
+                display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px',
+                border: `1px solid ${MR.C.success}33`
+              }}>
+                <MR.LIcon name="ShieldCheck" size={28} color={MR.C.success}/>
+              </div>
+              <div style={{fontSize:14,fontWeight:800,color:MR.C.success,marginBottom:4}}>2FA DOĞRULAMA</div>
+              <div style={{fontSize:11,color:MR.C.textMuted}}>GOOGLE AUTHENTICATOR UYGULAMANIZDAN 6 HANELİ KODU GİRİN</div>
+            </div>
+
+            {error && <div style={{padding:'12px 16px',background:`${MR.C.danger}18`,border:`1px solid ${MR.C.danger}33`,borderRadius:14,marginBottom:18,fontSize:12,color:MR.C.danger}}>{error}</div>}
+
+            <div style={{marginBottom:24}}>
+              <label style={MR.S.label}>DOĞRULAMA KODU</label>
+              <input
+                type="text"
+                value={twoFaCode}
+                onChange={e => { const v = e.target.value.replace(/\D/g,''); if (v.length <= 6) setTwoFaCode(v); }}
+                placeholder="000000"
+                maxLength={6}
+                autoFocus
+                style={{...MR.S.input, textAlign:'center', fontSize:28, fontWeight:900, letterSpacing:12, fontFamily:'monospace'}}
+              />
+            </div>
+
+            <button type="submit" disabled={loading || twoFaCode.length !== 6} style={{
+              ...MR.S.btn,...MR.S.btnS,
+              width:'100%',justifyContent:'center',padding:'15px',fontSize:14,
+              borderRadius:16,
+              opacity:(loading || twoFaCode.length !== 6)?0.7:1
+            }}>
+              {loading ? 'DOĞRULANIYOR...' : (<><MR.LIcon name="ShieldCheck" size={16} color="#fff"/> DOĞRULA</>)}
+            </button>
+
+            <button type="button" onClick={() => { setTwoFaStep(false); setError(''); setTwoFaCode(''); setTempToken(''); }}
+              style={{
+                background:'transparent',border:'none',color:MR.C.textMuted,
+                fontSize:11,fontWeight:600,cursor:'pointer',marginTop:16,width:'100%',
+                padding:8,textAlign:'center'
+              }}>
+              GERİ DÖN
+            </button>
+          </form>
+        )}
+
         <div style={{textAlign:'center',marginTop:28,fontSize:13,fontWeight:700,color:MR.C.accent,letterSpacing:4}}>HER ZAMAN FARK EDER</div>
       </div>
     </div>

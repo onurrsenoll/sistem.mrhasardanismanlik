@@ -273,6 +273,90 @@ function http_post($url, $postData, $headers = array(), $timeout = 30) {
     return $result;
 }
 
+/* ═══ TOTP (Google Authenticator) FONKSİYONLARI ═══ */
+
+function totp_generate_secret($length = 20) {
+    $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    $secret = '';
+    for ($i = 0; $i < $length; $i++) {
+        $secret .= $chars[random_int(0, 31)];
+    }
+    return $secret;
+}
+
+function totp_base32_decode($b32) {
+    $lut = array(
+        'A'=>0,'B'=>1,'C'=>2,'D'=>3,'E'=>4,'F'=>5,'G'=>6,'H'=>7,
+        'I'=>8,'J'=>9,'K'=>10,'L'=>11,'M'=>12,'N'=>13,'O'=>14,'P'=>15,
+        'Q'=>16,'R'=>17,'S'=>18,'T'=>19,'U'=>20,'V'=>21,'W'=>22,'X'=>23,
+        'Y'=>24,'Z'=>25,'2'=>26,'3'=>27,'4'=>28,'5'=>29,'6'=>30,'7'=>31
+    );
+    $b32 = strtoupper(rtrim($b32, '='));
+    $binary = '';
+    foreach (str_split($b32) as $c) {
+        if (!isset($lut[$c])) return false;
+        $binary .= str_pad(decbin($lut[$c]), 5, '0', STR_PAD_LEFT);
+    }
+    $bytes = '';
+    for ($i = 0; $i + 7 < strlen($binary); $i += 8) {
+        $bytes .= chr(bindec(substr($binary, $i, 8)));
+    }
+    return $bytes;
+}
+
+function totp_generate_code($secret, $timeSlice = null) {
+    if ($timeSlice === null) {
+        $timeSlice = floor(time() / 30);
+    }
+    $key = totp_base32_decode($secret);
+    if ($key === false) return false;
+    $time = pack('N*', 0) . pack('N*', $timeSlice);
+    $hash = hash_hmac('sha1', $time, $key, true);
+    $offset = ord($hash[19]) & 0x0F;
+    $code = (
+        ((ord($hash[$offset]) & 0x7F) << 24) |
+        ((ord($hash[$offset+1]) & 0xFF) << 16) |
+        ((ord($hash[$offset+2]) & 0xFF) << 8) |
+        (ord($hash[$offset+3]) & 0xFF)
+    ) % 1000000;
+    return str_pad($code, 6, '0', STR_PAD_LEFT);
+}
+
+function totp_verify($secret, $code, $window = 1) {
+    $code = trim($code);
+    if (strlen($code) !== 6) return false;
+    $timeSlice = floor(time() / 30);
+    for ($i = -$window; $i <= $window; $i++) {
+        $expected = totp_generate_code($secret, $timeSlice + $i);
+        if ($expected !== false && hash_equals($expected, $code)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function totp_get_qr_url($issuer, $email, $secret) {
+    $otpauth = 'otpauth://totp/' . rawurlencode($issuer) . ':' . rawurlencode($email) . '?secret=' . $secret . '&issuer=' . rawurlencode($issuer) . '&digits=6&period=30';
+    return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' . urlencode($otpauth);
+}
+
+/* ═══ 2FA USERS MIGRATION ═══ */
+function ensure_2fa_columns() {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        $db = getDB();
+        $cols = $db->query("SHOW COLUMNS FROM users LIKE 'totp_secret'")->fetchAll();
+        if (empty($cols)) {
+            $db->exec("ALTER TABLE users ADD COLUMN totp_secret VARCHAR(64) DEFAULT NULL");
+            $db->exec("ALTER TABLE users ADD COLUMN totp_aktif TINYINT(1) NOT NULL DEFAULT 0");
+        }
+    } catch (\Exception $e) {
+        // Migration hatası sessiz geç
+    }
+}
+
 /**
  * Chunked transfer encoding decode
  */

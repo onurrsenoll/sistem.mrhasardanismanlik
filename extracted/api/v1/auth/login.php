@@ -16,6 +16,8 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/helpers.php';
 
+ensure_2fa_columns();
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     echo json_encode(['status' => 'API aktif', 'endpoint' => 'login']);
     exit;
@@ -51,6 +53,40 @@ try {
     if (!password_verify($body['sifre'], $user['sifre_hash'])) {
         http_response_code(401);
         echo json_encode(['success' => false, 'error' => 'Email veya sifre hatali']);
+        exit;
+    }
+
+    // 2FA aktif mi kontrol et
+    $totp_aktif = false;
+    try {
+        $stmt2fa = $db->prepare('SELECT totp_aktif FROM users WHERE id = ?');
+        $stmt2fa->execute([$user['id']]);
+        $row2fa = $stmt2fa->fetch();
+        $totp_aktif = !empty($row2fa['totp_aktif']);
+    } catch (Exception $e) {
+        // 2FA sütunu henüz yoksa devam et
+    }
+
+    if ($totp_aktif) {
+        // 2FA aktif - geçici token oluştur (5 dakika geçerli)
+        $tempToken = jwt_create([
+            'user_id' => $user['id'],
+            'email' => $user['email'],
+            'rol' => $user['rol'],
+            'require_2fa' => true
+        ]);
+
+        unset($user['sifre_hash']);
+
+        echo json_encode([
+            'success' => true,
+            'message' => '2FA dogrulama gerekli',
+            'data' => [
+                'require_2fa' => true,
+                'temp_token' => $tempToken,
+                'user' => $user
+            ]
+        ]);
         exit;
     }
 

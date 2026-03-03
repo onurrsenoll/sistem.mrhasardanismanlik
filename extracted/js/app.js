@@ -60,6 +60,7 @@ const MENU = [
     {id:'sistem-sms', label:'SMS BİLDİRİM', icon:'MessageSquare'},
     {id:'sistem-portal', label:'PORTAL AYARLARI', icon:'Globe'},
     {id:'sistem-netsantral', label:'NETSANTRAL', icon:'Phone'},
+    {id:'sistem-guvenlik', label:'CİHAZ GÜVENLİĞİ', icon:'ShieldCheck'},
     {id:'sistem-veri', label:'VERİ YÖNETİMİ', icon:'DatabaseBackup'},
     {id:'sistem-log', label:'LOG KAYITLARI', icon:'FileText'},
     {id:'mesajlar-sistem', label:'SİSTEM BİLDİRİMLERİ', icon:'Bell'},
@@ -442,7 +443,7 @@ const Breadcrumb = ({page, setPage}) => {
       'sistem-kullanici': 'KULLANICI YÖNETİMİ', 'sistem-yetki': 'YETKİ YÖNETİMİ',
       'sistem-ayarlar': 'FİRMA AYARLARI', 'sistem-sms': 'SMS BİLDİRİM',
       'sistem-portal': 'PORTAL AYARLARI', 'sistem-netsantral': 'NETSANTRAL',
-      'sistem-log': 'LOG KAYITLARI', 'sistem-aktarim': 'TOPLU AKTARIM', 'sistem-veri': 'VERİ YÖNETİMİ',
+      'sistem-guvenlik': 'CİHAZ GÜVENLİĞİ', 'sistem-log': 'LOG KAYITLARI', 'sistem-aktarim': 'TOPLU AKTARIM', 'sistem-veri': 'VERİ YÖNETİMİ',
       'sistem-konum': 'KONUM TAKİBİ'
     };
     parts.push({label: 'SİSTEM', id: 'sistem'});
