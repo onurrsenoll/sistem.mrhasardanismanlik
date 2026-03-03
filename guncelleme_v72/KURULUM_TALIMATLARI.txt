@@ -2,6 +2,7 @@
   MR HASAR DANIŞMANLIK SİSTEMİ - GÜNCELLEME v72
   TARİH: 2026-03-03
   İÇERİK: Çift kasa kaydı düzeltmesi + Personel Maaş Ödeme
+         + Aşama Değiştirme Onay Düzeltmesi
 ═══════════════════════════════════════════════════════════════
 
 ÖNEMLİ: Bu güncelleme mevcut verilerinizi SİLMEZ.
@@ -41,6 +42,7 @@ DOSYA                                    → HEDEF KONUM
 js/pages/muhasebe.js                     → js/pages/muhasebe.js
 js/pages/personel.js                     → js/pages/personel.js
 js/pages/sistem.js                       → js/pages/sistem.js
+js/pages/dosya-detay.js                  → js/pages/dosya-detay.js
 
 ═══════════════════════════════════════════════════════════════
   ADIM 4: TARAYICI ÖNBELLEK TEMİZLEME
@@ -81,6 +83,19 @@ Güncelleme sonrası tarayıcınızda CTRL+SHIFT+R yaparak
    - Muhasebe menüsü altında yetki verilebilir
    - Yetki verilmeyen kullanıcı ödeme yapamaz
 
+4. BUG FIX: DOSYA AŞAMA DEĞİŞTİRME ONAY DİYALOGU
+   - Sorun: Aşama değiştirme dropdown'ı "dosya-asama" yetkisi
+     kontrolüne bağlıydı. Yetkiler tablosunda kaydı olmayan
+     kullanıcılar dropdown'ı göremiyordu → onay diyalogu çıkmıyordu
+   - Çözüm: Aşama dropdown'ı artık dosya detayına erişebilen
+     TÜM kullanıcılara gösteriliyor (istisnasız)
+   - Her aşama değişikliğinde ONAY diyalogu çıkıyor:
+     • Mağdur adı ile "... DOSYA AŞAMASI DEĞİŞTİRİLECEK. ONAYLIYOR MUSUNUZ?"
+     • Yeşil zeminli SMS uyarısı
+     • Yeni aşama bilgisi
+     • İPTAL / ONAYLA butonları
+   - Etkilenen: dosya-detay.js
+
 ═══════════════════════════════════════════════════════════════
-  TOPLAM DEĞİŞEN DOSYA SAYISI: 6 + 1 SQL
+  TOPLAM DEĞİŞEN DOSYA SAYISI: 7 + 1 SQL
 ═══════════════════════════════════════════════════════════════
