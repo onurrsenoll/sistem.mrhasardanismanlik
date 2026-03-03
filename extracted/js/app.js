@@ -267,7 +267,8 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                   ? '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)'
                   : '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)',
                 zIndex: 1001,
-                backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
+                backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+                maxHeight: 'calc(100vh - 80px)', overflowY: 'auto'
               }}>
                 {m.sub.map(s => (
                   <div key={s.id}

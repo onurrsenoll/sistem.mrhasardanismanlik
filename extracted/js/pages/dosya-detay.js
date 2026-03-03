@@ -898,9 +898,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           const kdvOran = parseFloat(kapatForm.kdv_oran) || 0;
           const kdv = sozlesme * kdvOran / 100;
           const toplamKazanc = sozlesme + vekalet + faiz;
-          const netKazanc = toplamKazanc - stopaj;
           const dosyaBasi = parseFloat(kapatForm.dosya_basi_odenen) || 0;
           const dosyaMasraflari = dosya.toplam_masraf || 0;
+          const netKazanc = toplamKazanc - dosyaMasraflari;
 
           /* PAY BÖLÜŞÜMÜ: SABİT %50 - %50 */
           const avukatPayYuzde = 50;
@@ -998,10 +998,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
                 <div style={{marginTop:10,paddingTop:10,borderTop:`2px solid ${C.accent}44`}}/>
                 {hesapRow('TOPLAM KAZANÇ', toplamKazanc, {bold:true,color:C.success})}
-                {hesapRow('NET TOPLAM KAZANÇ', netKazanc, {bold:true,color:C.success,big:true})}
-
-                <div style={{marginTop:10,paddingTop:10,borderTop:`2px solid ${C.warning}44`}}/>
-                {hesapRow('DOSYA MASRAFLARI (SİSTEMDEN)', dosyaMasraflari, {color:C.danger})}
+                {hesapRow('DOSYA MASRAFLARI (SİSTEMDEN)', dosyaMasraflari, {bold:true,color:C.danger})}
+                <div style={{marginTop:6,paddingTop:6,borderTop:`2px solid ${C.success}66`}}/>
+                {hesapRow('NET KAZANÇ', netKazanc, {bold:true,color:C.success,big:true})}
 
                 {hasYetki('dosya','dosya-kapat') && <>
                 <div style={{marginTop:10,paddingTop:10,borderTop:`2px solid ${C.purple}44`}}/>
