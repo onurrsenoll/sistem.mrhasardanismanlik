@@ -2601,7 +2601,7 @@ const AySonuRaporu = ({setPage, user}) => {
           s.textShadow = 'none';
           /* Açık/beyaz yazı renklerini koyuya çevir */
           var c = w.getComputedStyle(allEls[i]).color;
-          var m = c.match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/);
+          var m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
           if (m) {
             var lum = (parseInt(m[1])*299 + parseInt(m[2])*587 + parseInt(m[3])*114) / 1000;
             if (lum > 180) allEls[i].style.color = '#1a1a2e';
