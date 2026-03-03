@@ -19,9 +19,13 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     sakatlik_aciklama:'',
     // Sigorta bilgileri
     sigorta_sirket:'', hasar_no:'', police_no:'', sorumlu_sigorta:'',
-    // ADK araç bilgileri
+    // ADK araç bilgileri - mağdur
     ma_plaka:'', ma_marka:'', ma_model:'', ma_yil:'',
+    ma_ruhsat:'', ma_tc:'', ma_belge_tescil:'', ma_onarim_gun:'', ma_gecmis_hasar:'',
+    // ADK araç bilgileri - karşı
     ka_plaka:'', ka_marka:'', ka_yil:'', ka_trafik:'',
+    ka_ruhsat:'', ka_tc:'', ka_model:'', ka_belge_tescil:'', ka_trafik_police:'',
+    ka_kasko:'', ka_ruhsat_surucu:'', ka_surucu_ad:'', ka_surucu_tc:'',
     // BH araç & sürücü bilgileri
     bh_arac_plaka:'', bh_arac_marka:'', bh_arac_yil:'',
     surucu_ad:'', surucu_ehliyet:'', surucu_kusur:'',
@@ -337,9 +341,12 @@ MR.DosyaYeniPage = ({setPage, user}) => {
                   <div style={S.card}>
                     <div style={{...S.cardHead,background:`${C.accent}11`,padding:'10px 16px'}}>
                       <LIcon name="Car" size={16} color={C.accent}/><span style={{fontWeight:700,fontSize:13,marginLeft:8}}>MAĞDUR ARACI</span>
+                      {form.ma_plaka && <span style={{fontWeight:800,fontSize:13,marginLeft:'auto',fontFamily:'monospace',color:C.accent}}>{form.ma_plaka}</span>}
                     </div>
                     <div style={{padding:16,display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
                       <FormGroup label="PLAKA *"><input style={S.input} value={form.ma_plaka} onChange={e=>u('ma_plaka',formatPlaka(e.target.value))} placeholder="55MR001"/></FormGroup>
+                      <FormGroup label="ARAÇ SAHİBİ ADI SOYADI"><input style={S.input} value={form.ma_ruhsat} onChange={e=>u('ma_ruhsat',e.target.value)} placeholder="ARAÇ SAHİBİ"/></FormGroup>
+                      <FormGroup label="ARAÇ SAHİBİ TC KİMLİK"><input style={S.input} value={form.ma_tc} onChange={e=>u('ma_tc',e.target.value)} placeholder="TC KİMLİK NO" maxLength={11}/></FormGroup>
                       <FormGroup label="MARKA"><AracMarkaSelect value={form.ma_marka} onChange={v=>{u('ma_marka',v);u('ma_model','');}}/></FormGroup>
                       <FormGroup label="MODEL / PAKET"><AracModelSelect marka={form.ma_marka} value={form.ma_model} onChange={v=>u('ma_model',v)}/></FormGroup>
                       <FormGroup label="MODEL YILI">
@@ -347,25 +354,56 @@ MR.DosyaYeniPage = ({setPage, user}) => {
                           <option value="">SEÇİNİZ</option>{Array.from({length:30},(_,i)=>2026-i).map(y=><option key={y} value={y}>{y}</option>)}
                         </select>
                       </FormGroup>
+                      <FormGroup label="BELGE TESCİL NO"><input style={S.input} value={form.ma_belge_tescil} onChange={e=>u('ma_belge_tescil',e.target.value)} placeholder="BELGE TESCİL NO"/></FormGroup>
+                      <FormGroup label="ONARIM GÜN SÜRESİ"><input type="number" min="0" style={S.input} value={form.ma_onarim_gun} onChange={e=>u('ma_onarim_gun',e.target.value)} placeholder="GÜN"/></FormGroup>
+                      <FormGroup label="GEÇMİŞ HASAR">
+                        <select style={S.select} value={form.ma_gecmis_hasar} onChange={e=>u('ma_gecmis_hasar',e.target.value)}>
+                          <option value="">SEÇİNİZ</option><option value="var">VAR</option><option value="yok">YOK</option>
+                        </select>
+                      </FormGroup>
                     </div>
                   </div>
                   <div style={S.card}>
                     <div style={{...S.cardHead,background:`${C.danger}11`,padding:'10px 16px'}}>
                       <LIcon name="Car" size={16} color={C.danger}/><span style={{fontWeight:700,fontSize:13,marginLeft:8}}>KARŞI ARAÇ</span>
+                      {form.ka_plaka && <span style={{fontWeight:800,fontSize:13,marginLeft:'auto',fontFamily:'monospace',color:C.danger}}>{form.ka_plaka}</span>}
                     </div>
                     <div style={{padding:16,display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
                       <FormGroup label="PLAKA"><input style={S.input} value={form.ka_plaka} onChange={e=>u('ka_plaka',formatPlaka(e.target.value))} placeholder="34XX123"/></FormGroup>
-                      <FormGroup label="TRAFİK SİGORTASI">
-                        <select style={S.select} value={form.ka_trafik} onChange={e=>u('ka_trafik',e.target.value)}>
-                          <option value="">SEÇİNİZ</option>{SIGORTA.map(s=><option key={s} value={s}>{s}</option>)}
-                        </select>
-                      </FormGroup>
+                      <FormGroup label="ARAÇ SAHİBİ ADI SOYADI"><input style={S.input} value={form.ka_ruhsat} onChange={e=>u('ka_ruhsat',e.target.value)} placeholder="ARAÇ SAHİBİ"/></FormGroup>
+                      <FormGroup label="ARAÇ SAHİBİ TC KİMLİK"><input style={S.input} value={form.ka_tc} onChange={e=>u('ka_tc',e.target.value)} placeholder="TC KİMLİK NO" maxLength={11}/></FormGroup>
                       <FormGroup label="MARKA"><AracMarkaSelect value={form.ka_marka} onChange={v=>u('ka_marka',v)}/></FormGroup>
+                      <FormGroup label="MODEL / PAKET">
+                        <AracModelSelect marka={form.ka_marka} value={form.ka_model} onChange={v=>u('ka_model',v)}/>
+                      </FormGroup>
                       <FormGroup label="MODEL YILI">
                         <select style={S.select} value={form.ka_yil} onChange={e=>u('ka_yil',e.target.value)}>
                           <option value="">SEÇİNİZ</option>{Array.from({length:30},(_,i)=>2026-i).map(y=><option key={y} value={y}>{y}</option>)}
                         </select>
                       </FormGroup>
+                      <FormGroup label="BELGE TESCİL NO"><input style={S.input} value={form.ka_belge_tescil} onChange={e=>u('ka_belge_tescil',e.target.value)} placeholder="BELGE TESCİL NO"/></FormGroup>
+                      <FormGroup label="TRAFİK SİGORTA ŞİRKETİ">
+                        <select style={S.select} value={form.ka_trafik} onChange={e=>u('ka_trafik',e.target.value)}>
+                          <option value="">SEÇİNİZ</option>{SIGORTA.map(s=><option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </FormGroup>
+                      <FormGroup label="POLİÇE NO"><input style={S.input} value={form.ka_trafik_police} onChange={e=>u('ka_trafik_police',e.target.value)} placeholder="POLİÇE NUMARASI"/></FormGroup>
+                      <FormGroup label="KASKO">
+                        <select style={S.select} value={form.ka_kasko} onChange={e=>u('ka_kasko',e.target.value)}>
+                          <option value="">SEÇİNİZ</option><option value="1">VAR</option><option value="0">YOK</option>
+                        </select>
+                      </FormGroup>
+                      <FormGroup label="RUHSAT SAHİBİ / SÜRÜCÜ">
+                        <select style={S.select} value={form.ka_ruhsat_surucu} onChange={e=>u('ka_ruhsat_surucu',e.target.value)}>
+                          <option value="">SEÇİNİZ</option><option value="ayni">AYNI</option><option value="farkli">FARKLI</option>
+                        </select>
+                      </FormGroup>
+                      {form.ka_ruhsat_surucu === 'farkli' && (
+                        <>
+                          <FormGroup label="SÜRÜCÜ ADI SOYADI"><input style={S.input} value={form.ka_surucu_ad} onChange={e=>u('ka_surucu_ad',e.target.value)} placeholder="SÜRÜCÜ ADI SOYADI"/></FormGroup>
+                          <FormGroup label="SÜRÜCÜ TC KİMLİK"><input style={S.input} value={form.ka_surucu_tc} onChange={e=>u('ka_surucu_tc',e.target.value)} placeholder="TC KİMLİK NO" maxLength={11}/></FormGroup>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -48,6 +48,16 @@ try {
 } catch (\Exception $e) {}
 
 try {
+    // Araç ek sütunları (mağdur + karşı araç detayları)
+    $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS belge_tescil_no VARCHAR(50) DEFAULT NULL");
+    $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS onarim_gun_suresi INT DEFAULT NULL");
+    $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS gecmis_hasar ENUM('var','yok') DEFAULT NULL");
+    $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS surucu_ad VARCHAR(100) DEFAULT NULL");
+    $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS surucu_tc_kimlik VARCHAR(11) DEFAULT NULL");
+    $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS ruhsat_sahibi_surucu ENUM('ayni','farkli') DEFAULT NULL");
+} catch (\Exception $e) {}
+
+try {
     // masraflar ek sütunları
     $db->exec("ALTER TABLE masraflar ADD COLUMN IF NOT EXISTS odeme_durumu VARCHAR(20) DEFAULT 'odendi'");
     $db->exec("ALTER TABLE masraflar ADD COLUMN IF NOT EXISTS paydas_komisyon_id INT DEFAULT NULL");
@@ -151,23 +161,28 @@ try {
     if ($body['dosya_turu'] === 'ADK' || $body['dosya_turu'] === 'MDK') {
         // Mağdur aracı
         if (!empty($body['ma_plaka'])) {
-            $stmt = $db->prepare('INSERT INTO araclar (dosya_id, taraf, plaka, marka, model, model_yili, kasko, kasko_sirket, kasko_police) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+            $stmt = $db->prepare('INSERT INTO araclar (dosya_id, taraf, plaka, ruhsat_sahibi, tc_kimlik, marka, model, model_yili, kasko, kasko_sirket, kasko_police, belge_tescil_no, onarim_gun_suresi, gecmis_hasar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
             $stmt->execute([
                 $dosyaId,
                 'magdur',
                 format_plaka($body['ma_plaka']),
+                clean($body['ma_ruhsat'] ?? ''),
+                clean($body['ma_tc'] ?? ''),
                 clean($body['ma_marka'] ?? ''),
                 clean($body['ma_model'] ?? ''),
                 !empty($body['ma_yil']) ? (int)$body['ma_yil'] : null,
                 !empty($body['ma_kasko']) ? 1 : 0,
                 clean($body['ma_kasko_sirket'] ?? ''),
-                clean($body['ma_kasko_police'] ?? '')
+                clean($body['ma_kasko_police'] ?? ''),
+                clean($body['ma_belge_tescil'] ?? ''),
+                !empty($body['ma_onarim_gun']) ? (int)$body['ma_onarim_gun'] : null,
+                !empty($body['ma_gecmis_hasar']) ? clean($body['ma_gecmis_hasar']) : null
             ]);
         }
 
         // Karşı araç
         if (!empty($body['ka_plaka'])) {
-            $stmt = $db->prepare('INSERT INTO araclar (dosya_id, taraf, plaka, ruhsat_sahibi, tc_kimlik, marka, model, model_yili, trafik_sirket, trafik_police) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+            $stmt = $db->prepare('INSERT INTO araclar (dosya_id, taraf, plaka, ruhsat_sahibi, tc_kimlik, marka, model, model_yili, trafik_sirket, trafik_police, belge_tescil_no, kasko, ruhsat_sahibi_surucu, surucu_ad, surucu_tc_kimlik) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
             $stmt->execute([
                 $dosyaId,
                 'karsi',
@@ -178,7 +193,12 @@ try {
                 clean($body['ka_model'] ?? ''),
                 !empty($body['ka_yil']) ? (int)$body['ka_yil'] : null,
                 clean($body['ka_trafik'] ?? ''),
-                clean($body['ka_trafik_police'] ?? '')
+                clean($body['ka_trafik_police'] ?? ''),
+                clean($body['ka_belge_tescil'] ?? ''),
+                !empty($body['ka_kasko']) ? 1 : 0,
+                !empty($body['ka_ruhsat_surucu']) ? clean($body['ka_ruhsat_surucu']) : null,
+                clean($body['ka_surucu_ad'] ?? ''),
+                clean($body['ka_surucu_tc'] ?? '')
             ]);
         }
     }

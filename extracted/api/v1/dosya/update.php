@@ -17,6 +17,16 @@ $body = get_json_body();
 require_fields($body, ['id']);
 
 $db = getDB();
+
+// DDL Migration: araç ek sütunları
+try {
+    $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS belge_tescil_no VARCHAR(50) DEFAULT NULL");
+    $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS onarim_gun_suresi INT DEFAULT NULL");
+    $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS gecmis_hasar ENUM('var','yok') DEFAULT NULL");
+    $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS surucu_ad VARCHAR(100) DEFAULT NULL");
+    $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS surucu_tc_kimlik VARCHAR(11) DEFAULT NULL");
+    $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS ruhsat_sahibi_surucu ENUM('ayni','farkli') DEFAULT NULL");
+} catch (\Exception $e) {}
 $id = (int)$body['id'];
 
 $stmt = $db->prepare('SELECT * FROM dosyalar WHERE id = ?');
@@ -96,6 +106,127 @@ try {
         $mParams[] = $id;
         $stmt = $db->prepare('UPDATE magdurlar SET ' . implode(', ', $mSets) . ' WHERE dosya_id = ?');
         $stmt->execute($mParams);
+    }
+
+    // ═══ ARAÇ BİLGİLERİ GÜNCELLE ═══
+    // Mağdur araç güncelle
+    $magdurAracFields = ['plaka','ruhsat_sahibi','tc_kimlik','marka','model','model_yili','belge_tescil_no','onarim_gun_suresi','gecmis_hasar'];
+    $maPrefix = 'ma_';
+    $maSets = [];
+    $maParams = [];
+    $hasMagdurArac = false;
+
+    foreach ($magdurAracFields as $field) {
+        $key = $maPrefix . $field;
+        if (array_key_exists($key, $body)) {
+            $hasMagdurArac = true;
+            $maSets[] = "$field = ?";
+            if (in_array($field, ['model_yili', 'onarim_gun_suresi'])) {
+                $maParams[] = !empty($body[$key]) ? (int)$body[$key] : null;
+            } else {
+                $maParams[] = clean($body[$key]);
+            }
+        }
+    }
+
+    if ($hasMagdurArac && !empty($maSets)) {
+        // Önce mevcut kayıt var mı kontrol et
+        $stmtCheck = $db->prepare('SELECT id FROM araclar WHERE dosya_id = ? AND taraf = ?');
+        $stmtCheck->execute([$id, 'magdur']);
+        $mevcutArac = $stmtCheck->fetch();
+
+        if ($mevcutArac) {
+            $maParams[] = $id;
+            $maParams[] = 'magdur';
+            $stmt = $db->prepare('UPDATE araclar SET ' . implode(', ', $maSets) . ' WHERE dosya_id = ? AND taraf = ?');
+            $stmt->execute($maParams);
+        } else {
+            // Yeni kayıt oluştur
+            $insertFields = [];
+            $insertValues = [];
+            $insertParams = [];
+            foreach ($magdurAracFields as $field) {
+                $key = $maPrefix . $field;
+                if (array_key_exists($key, $body)) {
+                    $insertFields[] = $field;
+                    $insertValues[] = '?';
+                    if (in_array($field, ['model_yili', 'onarim_gun_suresi'])) {
+                        $insertParams[] = !empty($body[$key]) ? (int)$body[$key] : null;
+                    } else {
+                        $insertParams[] = clean($body[$key]);
+                    }
+                }
+            }
+            $insertFields[] = 'dosya_id';
+            $insertValues[] = '?';
+            $insertParams[] = $id;
+            $insertFields[] = 'taraf';
+            $insertValues[] = '?';
+            $insertParams[] = 'magdur';
+            $stmt = $db->prepare('INSERT INTO araclar (' . implode(', ', $insertFields) . ') VALUES (' . implode(', ', $insertValues) . ')');
+            $stmt->execute($insertParams);
+        }
+    }
+
+    // Karşı araç güncelle
+    $karsiAracFields = ['plaka','ruhsat_sahibi','tc_kimlik','marka','model','model_yili','belge_tescil_no','trafik_sirket','trafik_police','kasko','ruhsat_sahibi_surucu','surucu_ad','surucu_tc_kimlik'];
+    $kaPrefix = 'ka_';
+    $kaSets = [];
+    $kaParams = [];
+    $hasKarsiArac = false;
+
+    foreach ($karsiAracFields as $field) {
+        $key = $kaPrefix . $field;
+        if (array_key_exists($key, $body)) {
+            $hasKarsiArac = true;
+            $kaSets[] = "$field = ?";
+            if (in_array($field, ['model_yili'])) {
+                $kaParams[] = !empty($body[$key]) ? (int)$body[$key] : null;
+            } elseif ($field === 'kasko') {
+                $kaParams[] = !empty($body[$key]) ? 1 : 0;
+            } else {
+                $kaParams[] = clean($body[$key]);
+            }
+        }
+    }
+
+    if ($hasKarsiArac && !empty($kaSets)) {
+        $stmtCheck = $db->prepare('SELECT id FROM araclar WHERE dosya_id = ? AND taraf = ?');
+        $stmtCheck->execute([$id, 'karsi']);
+        $mevcutKarsi = $stmtCheck->fetch();
+
+        if ($mevcutKarsi) {
+            $kaParams[] = $id;
+            $kaParams[] = 'karsi';
+            $stmt = $db->prepare('UPDATE araclar SET ' . implode(', ', $kaSets) . ' WHERE dosya_id = ? AND taraf = ?');
+            $stmt->execute($kaParams);
+        } else {
+            $insertFields = [];
+            $insertValues = [];
+            $insertParams = [];
+            foreach ($karsiAracFields as $field) {
+                $key = $kaPrefix . $field;
+                if (array_key_exists($key, $body)) {
+                    $insertFields[] = $field;
+                    $insertValues[] = '?';
+                    if (in_array($field, ['model_yili'])) {
+                        $insertParams[] = !empty($body[$key]) ? (int)$body[$key] : null;
+                    } elseif ($field === 'kasko') {
+                        $insertParams[] = !empty($body[$key]) ? 1 : 0;
+                    } else {
+                        $insertParams[] = clean($body[$key]);
+                    }
+                }
+            }
+            $insertFields[] = 'dosya_id';
+            $insertValues[] = '?';
+            $insertParams[] = $id;
+            $insertFields[] = 'taraf';
+            $insertValues[] = '?';
+            $insertParams[] = 'karsi';
+            $stmt = $db->prepare('INSERT INTO araclar (' . implode(', ', $insertFields) . ') VALUES (' . implode(', ', $insertValues) . ')');
+            $stmt->execute($insertParams);
+        }
     }
 
     // ═══ AŞAMA DEĞİŞTİĞİNDE PORTAL SÜREÇ KAYDI ═══

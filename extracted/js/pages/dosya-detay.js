@@ -238,6 +238,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
   const openEditModal = () => {
     const magdur = dosya.magdur || {};
+    const maArac = dosya.araclar?.find(a=>a.taraf==='magdur') || {};
+    const kaArac = dosya.araclar?.find(a=>a.taraf==='karsi') || {};
     setEditForm({
       dosya_turu: dosya.dosya_turu || 'ADK',
       sigorta_sirket: dosya.sigorta_sirket || '',
@@ -261,7 +263,26 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       magdur_meslek: magdur.meslek || '',
       magdur_iban: magdur.iban || '',
       sorumlu_id: dosya.sorumlu_id ? String(dosya.sorumlu_id) : '',
-      paydas_id: dosya.paydas_id ? String(dosya.paydas_id) : ''
+      paydas_id: dosya.paydas_id ? String(dosya.paydas_id) : '',
+      // Mağdur araç alanları
+      ma_ruhsat_sahibi: maArac.ruhsat_sahibi || '',
+      ma_tc_kimlik: maArac.tc_kimlik || '',
+      ma_belge_tescil_no: maArac.belge_tescil_no || '',
+      ma_onarim_gun_suresi: maArac.onarim_gun_suresi || '',
+      ma_gecmis_hasar: maArac.gecmis_hasar || '',
+      // Karşı araç alanları
+      ka_ruhsat_sahibi: kaArac.ruhsat_sahibi || '',
+      ka_tc_kimlik: kaArac.tc_kimlik || '',
+      ka_marka: kaArac.marka || '',
+      ka_model: kaArac.model || '',
+      ka_model_yili: kaArac.model_yili ? String(kaArac.model_yili) : '',
+      ka_belge_tescil_no: kaArac.belge_tescil_no || '',
+      ka_trafik_sirket: kaArac.trafik_sirket || '',
+      ka_trafik_police: kaArac.trafik_police || '',
+      ka_kasko: kaArac.kasko ? 1 : 0,
+      ka_ruhsat_sahibi_surucu: kaArac.ruhsat_sahibi_surucu || '',
+      ka_surucu_ad: kaArac.surucu_ad || '',
+      ka_surucu_tc_kimlik: kaArac.surucu_tc_kimlik || ''
     });
     setEditError('');
     setEditM(true);
@@ -270,7 +291,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const dosyaGuncelle = async () => {
     setEditLoading(true);
     setEditError('');
-    const r = await api.dosyaUpdate({
+    const updateData = {
       id: dosya.id,
       dosya_turu: editForm.dosya_turu,
       sigorta_sirket: editForm.sigorta_sirket,
@@ -295,7 +316,29 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       magdur_iban: editForm.magdur_iban,
       sorumlu_id: editForm.sorumlu_id ? parseInt(editForm.sorumlu_id) : null,
       paydas_id: editForm.paydas_id ? parseInt(editForm.paydas_id) : null
-    });
+    };
+    // Mağdur araç alanları
+    if (editForm.dosya_turu === 'ADK' || editForm.dosya_turu === 'MDK') {
+      updateData.ma_ruhsat_sahibi = editForm.ma_ruhsat_sahibi || '';
+      updateData.ma_tc_kimlik = editForm.ma_tc_kimlik || '';
+      updateData.ma_belge_tescil_no = editForm.ma_belge_tescil_no || '';
+      updateData.ma_onarim_gun_suresi = editForm.ma_onarim_gun_suresi ? parseInt(editForm.ma_onarim_gun_suresi) : null;
+      updateData.ma_gecmis_hasar = editForm.ma_gecmis_hasar || '';
+      // Karşı araç alanları
+      updateData.ka_ruhsat_sahibi = editForm.ka_ruhsat_sahibi || '';
+      updateData.ka_tc_kimlik = editForm.ka_tc_kimlik || '';
+      updateData.ka_marka = editForm.ka_marka || '';
+      updateData.ka_model = editForm.ka_model || '';
+      updateData.ka_model_yili = editForm.ka_model_yili ? parseInt(editForm.ka_model_yili) : null;
+      updateData.ka_belge_tescil_no = editForm.ka_belge_tescil_no || '';
+      updateData.ka_trafik_sirket = editForm.ka_trafik_sirket || '';
+      updateData.ka_trafik_police = editForm.ka_trafik_police || '';
+      updateData.ka_kasko = editForm.ka_kasko ? 1 : 0;
+      updateData.ka_ruhsat_sahibi_surucu = editForm.ka_ruhsat_sahibi_surucu || '';
+      updateData.ka_surucu_ad = editForm.ka_surucu_ad || '';
+      updateData.ka_surucu_tc_kimlik = editForm.ka_surucu_tc_kimlik || '';
+    }
+    const r = await api.dosyaUpdate(updateData);
     if (r?.success) { load(); setEditM(false); }
     else setEditError(r?.error || 'GÜNCELLEME HATASI');
     setEditLoading(false);
@@ -524,25 +567,56 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               </div>
             </div>
 
-            {/* ARAÇ BİLGİLERİ (ADK) */}
-            {dosya.dosya_turu === 'ADK' && (
+            {/* MAĞDUR ARAÇ BİLGİLERİ (ADK/MDK) */}
+            {(dosya.dosya_turu === 'ADK' || dosya.dosya_turu === 'MDK') && (arac.plaka || getPlaka()) && (
               <div style={S.card}>
                 <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`${C.warning}06`}}>
                   <LIcon name="Truck" size={14} color={C.warning}/>
-                  <span style={{fontSize:12,fontWeight:700}}>ARAÇ BİLGİLERİ</span>
+                  <span style={{fontSize:12,fontWeight:700}}>MAĞDUR ARAÇ</span>
+                  <span style={{fontSize:12,fontWeight:800,fontFamily:'monospace',color:C.warning,marginLeft:'auto'}}>{getPlaka()}</span>
                 </div>
                 <div style={{padding:'10px 14px'}}>
-                  <InfoRow label="PLAKA" value={getPlaka()} bold mono/>
-                  <InfoRow label="MARKA" value={arac.marka}/>
-                  <InfoRow label="MODEL" value={arac.model}/>
-                  {arac.model_yili && <InfoRow label="MODEL YILI" value={arac.model_yili}/>}
-                  {karsiArac.plaka && (
-                    <>
-                      <div style={{margin:'8px 0 4px',fontSize:9,color:C.textMuted,fontWeight:600,borderTop:`1px solid ${C.border}`,paddingTop:6}}>KARŞI ARAÇ</div>
-                      <InfoRow label="PLAKA" value={karsiArac.plaka} mono/>
-                      {karsiArac.marka && <InfoRow label="MARKA" value={karsiArac.marka}/>}
-                    </>
-                  )}
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 16px'}}>
+                    <InfoRow label="ARAÇ SAHİBİ" value={arac.ruhsat_sahibi}/>
+                    <InfoRow label="SAHİBİ TC KİMLİK" value={arac.tc_kimlik} mono/>
+                    <InfoRow label="MARKA" value={arac.marka}/>
+                    <InfoRow label="MODEL" value={arac.model}/>
+                    <InfoRow label="MODEL YILI" value={arac.model_yili}/>
+                    <InfoRow label="BELGE TESCİL NO" value={arac.belge_tescil_no} mono/>
+                    <InfoRow label="ONARIM GÜN SÜRESİ" value={arac.onarim_gun_suresi ? `${arac.onarim_gun_suresi} GÜN` : '-'}/>
+                    <InfoRow label="GEÇMİŞ HASAR" value={arac.gecmis_hasar ? arac.gecmis_hasar.toUpperCase() : '-'} bold color={arac.gecmis_hasar === 'var' ? C.danger : C.success}/>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* KARŞI ARAÇ BİLGİLERİ (ADK/MDK) */}
+            {(dosya.dosya_turu === 'ADK' || dosya.dosya_turu === 'MDK') && karsiArac.plaka && (
+              <div style={S.card}>
+                <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`${C.danger}06`}}>
+                  <LIcon name="Truck" size={14} color={C.danger}/>
+                  <span style={{fontSize:12,fontWeight:700}}>KARŞI ARAÇ</span>
+                  <span style={{fontSize:12,fontWeight:800,fontFamily:'monospace',color:C.danger,marginLeft:'auto'}}>{karsiArac.plaka}</span>
+                </div>
+                <div style={{padding:'10px 14px'}}>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 16px'}}>
+                    <InfoRow label="ARAÇ SAHİBİ" value={karsiArac.ruhsat_sahibi}/>
+                    <InfoRow label="SAHİBİ TC KİMLİK" value={karsiArac.tc_kimlik} mono/>
+                    <InfoRow label="MARKA" value={karsiArac.marka}/>
+                    <InfoRow label="MODEL" value={karsiArac.model}/>
+                    <InfoRow label="MODEL YILI" value={karsiArac.model_yili}/>
+                    <InfoRow label="BELGE TESCİL NO" value={karsiArac.belge_tescil_no} mono/>
+                    <InfoRow label="TRAFİK SİGORTA" value={karsiArac.trafik_sirket}/>
+                    <InfoRow label="POLİÇE NO" value={karsiArac.trafik_police} mono/>
+                    <InfoRow label="KASKO" value={karsiArac.kasko ? 'VAR' : 'YOK'} bold color={karsiArac.kasko ? C.success : C.textMuted}/>
+                    <InfoRow label="RUHSAT SAHİBİ/SÜRÜCÜ" value={karsiArac.ruhsat_sahibi_surucu ? karsiArac.ruhsat_sahibi_surucu.toUpperCase() : '-'} bold color={karsiArac.ruhsat_sahibi_surucu === 'farkli' ? C.warning : C.success}/>
+                    {karsiArac.ruhsat_sahibi_surucu === 'farkli' && (
+                      <>
+                        <InfoRow label="SÜRÜCÜ ADI SOYADI" value={karsiArac.surucu_ad}/>
+                        <InfoRow label="SÜRÜCÜ TC KİMLİK" value={karsiArac.surucu_tc_kimlik} mono/>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -1393,6 +1467,122 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             <input value={editForm.magdur_meslek||''} onChange={e => u('magdur_meslek',e.target.value)} placeholder="MESLEK" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
           </FormGroup>
         </div>
+
+        {/* MAĞDUR ARAÇ BİLGİLERİ */}
+        {(editForm.dosya_turu === 'ADK' || editForm.dosya_turu === 'MDK') && (
+          <>
+            <div style={{fontSize:10,fontWeight:700,color:C.warning,marginBottom:8,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
+              <LIcon name="Truck" size={12} color={C.warning}/> MAĞDUR ARAÇ BİLGİLERİ
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+              <FormGroup label="ARAÇ SAHİBİ ADI SOYADI">
+                <input value={editForm.ma_ruhsat_sahibi||''} onChange={e => u('ma_ruhsat_sahibi',e.target.value)} placeholder="ARAÇ SAHİBİ" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+              </FormGroup>
+              <FormGroup label="ARAÇ SAHİBİ TC KİMLİK NO">
+                <input value={editForm.ma_tc_kimlik||''} onChange={e => u('ma_tc_kimlik',e.target.value)} placeholder="TC KİMLİK NO" maxLength={11} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+              </FormGroup>
+              <FormGroup label="BELGE TESCİL NO">
+                <input value={editForm.ma_belge_tescil_no||''} onChange={e => u('ma_belge_tescil_no',e.target.value)} placeholder="BELGE TESCİL NO" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+              </FormGroup>
+              <FormGroup label="ONARIM GÜN SÜRESİ">
+                <input type="number" min="0" value={editForm.ma_onarim_gun_suresi||''} onChange={e => u('ma_onarim_gun_suresi',e.target.value)} placeholder="GÜN" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+              </FormGroup>
+              <FormGroup label="GEÇMİŞ HASAR">
+                <div style={{display:'flex',gap:8,alignItems:'center',paddingTop:4}}>
+                  <div onClick={() => u('ma_gecmis_hasar','var')}
+                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
+                      background:editForm.ma_gecmis_hasar==='var'?`${C.danger}22`:'transparent',
+                      color:editForm.ma_gecmis_hasar==='var'?C.danger:C.textMuted,
+                      border:`1px solid ${editForm.ma_gecmis_hasar==='var'?C.danger+'66':C.border}`}}>VAR</div>
+                  <div onClick={() => u('ma_gecmis_hasar','yok')}
+                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
+                      background:editForm.ma_gecmis_hasar==='yok'?`${C.success}22`:'transparent',
+                      color:editForm.ma_gecmis_hasar==='yok'?C.success:C.textMuted,
+                      border:`1px solid ${editForm.ma_gecmis_hasar==='yok'?C.success+'66':C.border}`}}>YOK</div>
+                </div>
+              </FormGroup>
+            </div>
+          </>
+        )}
+
+        {/* KARŞI ARAÇ BİLGİLERİ */}
+        {(editForm.dosya_turu === 'ADK' || editForm.dosya_turu === 'MDK') && (
+          <>
+            <div style={{fontSize:10,fontWeight:700,color:C.danger,marginBottom:8,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
+              <LIcon name="Truck" size={12} color={C.danger}/> KARŞI ARAÇ BİLGİLERİ
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+              <FormGroup label="ARAÇ SAHİBİ ADI SOYADI">
+                <input value={editForm.ka_ruhsat_sahibi||''} onChange={e => u('ka_ruhsat_sahibi',e.target.value)} placeholder="ARAÇ SAHİBİ" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+              </FormGroup>
+              <FormGroup label="ARAÇ SAHİBİ TC KİMLİK NO">
+                <input value={editForm.ka_tc_kimlik||''} onChange={e => u('ka_tc_kimlik',e.target.value)} placeholder="TC KİMLİK NO" maxLength={11} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+              </FormGroup>
+              <FormGroup label="MARKA">
+                <MR.AracMarkaSelect value={editForm.ka_marka||''} onChange={v => {u('ka_marka',v);u('ka_model','');}}/>
+              </FormGroup>
+              <FormGroup label="MODEL / PAKET">
+                <MR.AracModelSelect marka={editForm.ka_marka||''} value={editForm.ka_model||''} onChange={v => u('ka_model',v)}/>
+              </FormGroup>
+              <FormGroup label="MODEL YILI">
+                <select value={editForm.ka_model_yili||''} onChange={e => u('ka_model_yili',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+                  <option value="">SEÇİNİZ</option>
+                  {Array.from({length:30},(_,i)=>2026-i).map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </FormGroup>
+              <FormGroup label="BELGE TESCİL NO">
+                <input value={editForm.ka_belge_tescil_no||''} onChange={e => u('ka_belge_tescil_no',e.target.value)} placeholder="BELGE TESCİL NO" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+              </FormGroup>
+              <FormGroup label="TRAFİK SİGORTA ŞİRKETİ">
+                <select value={editForm.ka_trafik_sirket||''} onChange={e => u('ka_trafik_sirket',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+                  <option value="">SEÇİNİZ</option>
+                  {(SIGORTA || []).map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </FormGroup>
+              <FormGroup label="POLİÇE NO">
+                <input value={editForm.ka_trafik_police||''} onChange={e => u('ka_trafik_police',e.target.value)} placeholder="POLİÇE NO" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+              </FormGroup>
+              <FormGroup label="KASKO">
+                <div style={{display:'flex',gap:8,alignItems:'center',paddingTop:4}}>
+                  <div onClick={() => u('ka_kasko',1)}
+                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
+                      background:editForm.ka_kasko==1?`${C.success}22`:'transparent',
+                      color:editForm.ka_kasko==1?C.success:C.textMuted,
+                      border:`1px solid ${editForm.ka_kasko==1?C.success+'66':C.border}`}}>VAR</div>
+                  <div onClick={() => u('ka_kasko',0)}
+                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
+                      background:editForm.ka_kasko==0?`${C.danger}22`:'transparent',
+                      color:editForm.ka_kasko==0?C.danger:C.textMuted,
+                      border:`1px solid ${editForm.ka_kasko==0?C.danger+'66':C.border}`}}>YOK</div>
+                </div>
+              </FormGroup>
+              <FormGroup label="RUHSAT SAHİBİ / SÜRÜCÜ">
+                <div style={{display:'flex',gap:8,alignItems:'center',paddingTop:4}}>
+                  <div onClick={() => u('ka_ruhsat_sahibi_surucu','ayni')}
+                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
+                      background:editForm.ka_ruhsat_sahibi_surucu==='ayni'?`${C.success}22`:'transparent',
+                      color:editForm.ka_ruhsat_sahibi_surucu==='ayni'?C.success:C.textMuted,
+                      border:`1px solid ${editForm.ka_ruhsat_sahibi_surucu==='ayni'?C.success+'66':C.border}`}}>AYNI</div>
+                  <div onClick={() => u('ka_ruhsat_sahibi_surucu','farkli')}
+                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
+                      background:editForm.ka_ruhsat_sahibi_surucu==='farkli'?`${C.warning}22`:'transparent',
+                      color:editForm.ka_ruhsat_sahibi_surucu==='farkli'?C.warning:C.textMuted,
+                      border:`1px solid ${editForm.ka_ruhsat_sahibi_surucu==='farkli'?C.warning+'66':C.border}`}}>FARKLI</div>
+                </div>
+              </FormGroup>
+              {editForm.ka_ruhsat_sahibi_surucu === 'farkli' && (
+                <>
+                  <FormGroup label="SÜRÜCÜ ADI SOYADI">
+                    <input value={editForm.ka_surucu_ad||''} onChange={e => u('ka_surucu_ad',e.target.value)} placeholder="SÜRÜCÜ ADI SOYADI" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+                  </FormGroup>
+                  <FormGroup label="SÜRÜCÜ TC KİMLİK NO">
+                    <input value={editForm.ka_surucu_tc_kimlik||''} onChange={e => u('ka_surucu_tc_kimlik',e.target.value)} placeholder="TC KİMLİK NO" maxLength={11} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+                  </FormGroup>
+                </>
+              )}
+            </div>
+          </>
+        )}
 
         {/* NOTLAR */}
         <div style={{fontSize:10,fontWeight:700,color:C.textSec,marginBottom:8,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
