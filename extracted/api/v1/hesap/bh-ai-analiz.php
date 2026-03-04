@@ -1,12 +1,13 @@
 <?php
 /**
  * MR HASAR DANIŞMANLIK - BH AI ANALİZ ENDPOINTİ
- * Google Gemini + OpenAI destekli bedeni hasar tazminat analizi
+ * Google Gemini + OpenAI + Claude destekli bedeni hasar tazminat analizi
  */
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/helpers.php';
+require_once __DIR__ . '/../../config/ai-helper.php';
 
 setup_headers();
 
@@ -23,21 +24,8 @@ if (!$input) {
 }
 
 // API Key çek
-$apiKey = '';
-try {
-    $db = getDB();
-    $stmt = $db->prepare("SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('gemini_api_key', 'ai_api_key', 'openai_api_key') AND deger != '' ORDER BY anahtar ASC");
-    $stmt->execute();
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($rows as $row) {
-        if (!empty(trim($row['deger']))) {
-            $apiKey = trim($row['deger']);
-            break;
-        }
-    }
-} catch (Exception $e) {
-    $apiKey = '';
-}
+$keys = getAiKeys();
+$apiKey = $keys['active'];
 
 if (empty($apiKey)) {
     $analiz = yerselBHAnaliz($input);
@@ -48,75 +36,13 @@ if (empty($apiKey)) {
 $prompt = buildBHPrompt($input);
 $systemPrompt = 'Sen bir Türk sigorta hukuku ve bedeni hasar tazminat uzmanısın. Maluliyet tazminatı, iş göremezlik, aktif/pasif dönem hesaplamaları, PMF tabloları ve progresif rant yöntemi konularında uzmansın. Yargıtay ve Sigorta Tahkim Komisyonu kararlarına hakimsin. Yanıtlarını Türkçe ve profesyonel bir dilde ver. Kısa ve öz tut, madde madde yaz. Başlıkları büyük harfle yaz.';
 
-if (str_starts_with($apiKey, 'AIzaSy')) {
-    $result = callGeminiBH($apiKey, $systemPrompt, $prompt);
-} elseif (str_starts_with($apiKey, 'sk-')) {
-    $result = callOpenAIBH($apiKey, $systemPrompt, $prompt);
-} else {
-    $result = callGeminiBH($apiKey, $systemPrompt, $prompt);
-}
+$result = callAI($apiKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 1200, 'timeout' => 30]);
 
 if ($result !== null) {
-    echo json_encode(['success' => true, 'data' => ['analiz' => $result, 'kaynak' => 'ai']]);
+    echo json_encode(['success' => true, 'data' => ['analiz' => $result, 'kaynak' => 'ai', 'provider' => detectProvider($apiKey)]]);
 } else {
     $analiz = yerselBHAnaliz($input);
     echo json_encode(['success' => true, 'data' => ['analiz' => $analiz, 'kaynak' => 'yerel']]);
-}
-
-/* ═══════════════════════════════════════════
-   GOOGLE GEMİNİ API
-   ═══════════════════════════════════════════ */
-function callGeminiBH($apiKey, $systemPrompt, $userPrompt) {
-    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
-
-    $fullPrompt = $systemPrompt . "\n\n" . $userPrompt;
-    $payload = [
-        'contents' => [
-            ['role' => 'user', 'parts' => [['text' => $fullPrompt]]]
-        ],
-        'generationConfig' => [
-            'temperature' => 0.3,
-            'maxOutputTokens' => 1200,
-            'topP' => 0.8
-        ]
-    ];
-
-    $res = http_post($url, json_encode($payload), ['Content-Type: application/json'], 30);
-
-    if ($res['http_code'] === 200 && $res['body']) {
-        $data = json_decode($res['body'], true);
-        $text = '';
-        $allParts = $data['candidates'][0]['content']['parts'] ?? [];
-        foreach ($allParts as $part) {
-            if (isset($part['text']) && empty($part['thought'])) $text = $part['text'];
-        }
-        return !empty($text) ? $text : null;
-    }
-    return null;
-}
-
-/* ═══════════════════════════════════════════
-   OPENAI API
-   ═══════════════════════════════════════════ */
-function callOpenAIBH($apiKey, $systemPrompt, $userPrompt) {
-    $res = http_post('https://api.openai.com/v1/chat/completions', json_encode([
-        'model' => 'gpt-4o-mini',
-        'messages' => [
-            ['role' => 'system', 'content' => $systemPrompt],
-            ['role' => 'user', 'content' => $userPrompt]
-        ],
-        'max_tokens' => 1000,
-        'temperature' => 0.3
-    ]), [
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . $apiKey
-    ], 30);
-
-    if ($res['http_code'] === 200 && $res['body']) {
-        $data = json_decode($res['body'], true);
-        return $data['choices'][0]['message']['content'] ?? null;
-    }
-    return null;
 }
 
 /* ═══════════════════════════════════════════
@@ -198,7 +124,6 @@ function yerselBHAnaliz($d) {
     $analiz .= "MAĞDUR: {$d['magdurAdi']} ({$yas} YAŞ, {$cinsiyet})\n";
     $analiz .= "MALULİYET: %{$maluliyet}\n\n";
 
-    // Maluliyet değerlendirmesi
     if ($maluliyet >= 50) {
         $analiz .= "AĞIR MALULİYET DURUMU: Maluliyet oranı %{$maluliyet} olup ağır maluliyet kapsamındadır. Bu durumda bakıcı gideri ve manevi tazminat talepleri de değerlendirilmelidir.\n\n";
     } elseif ($maluliyet >= 20) {
@@ -207,7 +132,6 @@ function yerselBHAnaliz($d) {
         $analiz .= "HAFİF MALULİYET: Maluliyet oranı %{$maluliyet} olup hafif maluliyet kapsamındadır.\n\n";
     }
 
-    // PMF Tablosu
     $analiz .= "PMF TABLOSU: {$pmfTablosu} kullanılmıştır. ";
     if ($pmfTablosu === 'TRH2010') {
         $analiz .= "TRH2010, Yargıtay ve Tahkim Komisyonu tarafından en çok tercih edilen güncel tablodur.\n\n";
@@ -217,13 +141,11 @@ function yerselBHAnaliz($d) {
         $analiz .= "PMF1931, en eski tablodur. Güncel hesaplamalarda TRH2010 tercih edilmektedir.\n\n";
     }
 
-    // Dönem bilgileri
     $analiz .= "HESAPLAMA DÖNEMLERİ:\n";
     $analiz .= "- Aktif Dönem: {$aktifYil} yıl (65 yaşına kadar çalışma dönemi)\n";
     $analiz .= "- Pasif Dönem: " . number_format($pasifYil, 1) . " yıl (emeklilik sonrası)\n";
     $analiz .= "- Progresif rant (1/Ln) metodu ile iskonto uygulanmıştır.\n\n";
 
-    // Tavsiyeler
     $analiz .= "TAVSİYELER:\n";
     $analiz .= "- Hesaplanan tazminat tutarı " . number_format($toplamKusurlu, 0, ',', '.') . " TL olup emsal kararlara uygun görülmektedir.\n";
 

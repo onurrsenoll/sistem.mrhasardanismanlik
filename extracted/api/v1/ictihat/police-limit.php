@@ -7,6 +7,7 @@
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/helpers.php';
+require_once __DIR__ . '/../../config/ai-helper.php';
 
 setup_headers();
 
@@ -26,14 +27,8 @@ if ($yil < 2010 || $yil > intval(date('Y')) + 1) {
 }
 
 // API KEY
-$apiKey = '';
-try {
-    $db = getDB();
-    $stmt = $db->prepare("SELECT deger FROM ayarlar WHERE anahtar IN ('ai_api_key','gemini_api_key') AND deger != '' ORDER BY anahtar ASC LIMIT 1");
-    $stmt->execute();
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($row) $apiKey = trim($row['deger']);
-} catch (Exception $e) {}
+$keys = getAiKeys();
+$apiKey = $keys['active'];
 
 if (empty($apiKey)) {
     echo json_encode(['success' => false, 'error' => 'AI API ANAHTARI TANIMLI DEĞİL. SİSTEM > FİRMA AYARLARI SAYFASINDAN TANIMLAYIN.']);
@@ -80,40 +75,13 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER:
 
 $systemPrompt = "Sen bir Türk sigorta uzmanısın. Türkiye'deki tüm sigorta branşlarının poliçe limitleri, teminat tutarları ve yıllara göre değişimleri konusunda derin bilgiye sahipsin. Hazine ve Maliye Bakanlığı, SEDDK (Sigortacılık ve Özel Emeklilik Düzenleme ve Denetleme Kurumu) tarafından belirlenen resmi limitleri biliyorsun. Yanıtını SADECE JSON formatında ver. Tutarları TL cinsinden, sayı olarak (string değil) ver.";
 
-// Gemini API
-$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
+// AI API çağrısı (Gemini/OpenAI/Claude otomatik)
+$text = callAI($apiKey, $systemPrompt, $prompt, ['temperature' => 0.2, 'maxTokens' => 8192, 'timeout' => 60]);
 
-$fullPrompt = $systemPrompt . "\n\n" . $prompt;
-$payload = [
-    'contents' => [
-        ['role' => 'user', 'parts' => [['text' => $fullPrompt]]]
-    ],
-    'generationConfig' => [
-        'temperature' => 0.2,
-        'maxOutputTokens' => 8192,
-        'topP' => 0.9
-    ]
-];
-
-$res = http_post($url, json_encode($payload), ['Content-Type: application/json'], 60);
-
-if ($res['http_code'] !== 200 || !$res['body']) {
-    $errDetail = '';
-    if ($res['body']) {
-        $errData = json_decode($res['body'], true);
-        $errDetail = $errData['error']['message'] ?? $errData['error']['status'] ?? substr($res['body'], 0, 300);
-    }
-    echo json_encode(['success' => false, 'error' => 'AI HATA (HTTP ' . $res['http_code'] . '): ' . ($errDetail ?: $res['error'] ?: 'YANIT YOK')]);
+if (empty($text)) {
+    echo json_encode(['success' => false, 'error' => 'AI YANIT ALINAMADI']);
     exit;
 }
-
-$data = json_decode($res['body'], true);
-$allParts = $data['candidates'][0]['content']['parts'] ?? [];
-$allTexts = [];
-foreach ($allParts as $part) {
-    if (isset($part['text'])) $allTexts[] = $part['text'];
-}
-$text = !empty($allTexts) ? end($allTexts) : '';
 
 // JSON parse
 $result = null;
@@ -128,17 +96,6 @@ if (!$result) {
     $last = strrpos($text, '}');
     if ($first !== false && $last !== false && $last > $first) {
         $result = json_decode(substr($text, $first, $last - $first + 1), true);
-    }
-}
-if (!$result) {
-    foreach ($allTexts as $t) {
-        $t = trim($t);
-        $r = json_decode($t, true);
-        if ($r && isset($r['limitler'])) { $result = $r; break; }
-        if (preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $t, $m2)) {
-            $r = json_decode(trim($m2[1]), true);
-            if ($r && isset($r['limitler'])) { $result = $r; break; }
-        }
     }
 }
 

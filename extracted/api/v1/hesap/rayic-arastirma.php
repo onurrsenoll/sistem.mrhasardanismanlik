@@ -2,11 +2,12 @@
 /**
  * MR HASAR DANIŞMANLIK - RAYİÇ DEĞER ARAŞTIRMASI
  * sahibinden.com + araban.com üzerinden gerçek ilan araştırması
- * Gemini AI (Google Search grounding destekli, fallback normal)
+ * Gemini/OpenAI/Claude AI destekli
  */
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/helpers.php';
+require_once __DIR__ . '/../../config/ai-helper.php';
 
 setup_headers();
 
@@ -29,14 +30,8 @@ $km = intval($input['km'] ?? 0);
 $kazaTarihi = $input['kaza_tarihi'] ?? date('Y-m-d', strtotime('-6 months'));
 
 // API KEY
-$apiKey = '';
-try {
-    $db = getDB();
-    $stmt = $db->prepare("SELECT deger FROM ayarlar WHERE anahtar IN ('gemini_api_key','ai_api_key','openai_api_key') AND deger != '' ORDER BY anahtar ASC LIMIT 1");
-    $stmt->execute();
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($row) $apiKey = trim($row['deger']);
-} catch (Exception $e) {}
+$keys = getAiKeys();
+$apiKey = $keys['active'];
 
 if (empty($apiKey)) {
     echo json_encode(['success' => false, 'error' => 'AI API ANAHTARI TANIMLI DEĞİL']);
@@ -70,43 +65,14 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER, BAŞKA HİÇBİR ŞEY YAZMA:
 
 $systemPrompt = "Sen bir araç değer kaybı uzmanısın. Görevin sahibinden.com ve araban.com sitelerinde gerçek araç ilanlarını araştırıp piyasa rayiç değer belirlemektir. SADECE gerçek ilan verisi kullan, tahmin yapma. Yanıtını SADECE JSON formatında ver.";
 
-// Gemini API - ai-analiz.php ile aynı çalışan yapı
-$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
+$fullUserPrompt = "ÖNEMLİ: Türkiye araç piyasası hakkındaki bilgini kullanarak {$marka} {$model} {$yil} model aracın gerçekçi piyasa fiyatlarını belirle. sahibinden.com ve araban.com üzerindeki güncel piyasa bilgin ile en gerçekçi ilan verilerini oluştur.\n\n" . $prompt;
 
-$fullPrompt = $systemPrompt . "\n\nÖNEMLİ: Türkiye araç piyasası hakkındaki bilgini kullanarak {$marka} {$model} {$yil} model aracın gerçekçi piyasa fiyatlarını belirle. sahibinden.com ve araban.com üzerindeki güncel piyasa bilgin ile en gerçekçi ilan verilerini oluştur.\n\n" . $prompt;
-$payload = [
-    'contents' => [
-        ['role' => 'user', 'parts' => [['text' => $fullPrompt]]]
-    ],
-    'generationConfig' => [
-        'temperature' => 0.2,
-        'maxOutputTokens' => 4096,
-        'topP' => 0.9
-    ]
-];
+$text = callAI($apiKey, $systemPrompt, $fullUserPrompt, ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60]);
 
-$res = http_post($url, json_encode($payload), ['Content-Type: application/json'], 60);
-
-if ($res['http_code'] !== 200 || !$res['body']) {
-    $errDetail = '';
-    if ($res['body']) {
-        $errData = json_decode($res['body'], true);
-        $errDetail = $errData['error']['message'] ?? $errData['error']['status'] ?? substr($res['body'], 0, 300);
-    }
-    echo json_encode(['success' => false, 'error' => 'AI HATA (HTTP ' . $res['http_code'] . '): ' . ($errDetail ?: $res['error'] ?: 'YANIT YOK')]);
+if (empty($text)) {
+    echo json_encode(['success' => false, 'error' => 'AI YANIT ALINAMADI']);
     exit;
 }
-
-$data = json_decode($res['body'], true);
-$allParts = $data['candidates'][0]['content']['parts'] ?? [];
-$text = '';
-$allTexts = [];
-foreach ($allParts as $part) {
-    if (isset($part['text'])) $allTexts[] = $part['text'];
-}
-// Son parçayı ana metin olarak al
-$text = !empty($allTexts) ? end($allTexts) : '';
-$webSources = [];
 
 // JSON parse - çoklu strateji
 $result = null;
@@ -130,26 +96,6 @@ if (!$result) {
     }
 }
 
-// Strateji 4: Tüm parçalarda JSON ara
-if (!$result) {
-    foreach ($allTexts as $t) {
-        $t = trim($t);
-        $r = json_decode($t, true);
-        if ($r && (isset($r['ilanlar']) || isset($r['ILANLAR']))) { $result = $r; break; }
-        // Code block içinden
-        if (preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $t, $m2)) {
-            $r = json_decode(trim($m2[1]), true);
-            if ($r && (isset($r['ilanlar']) || isset($r['ILANLAR']))) { $result = $r; break; }
-        }
-        // İlk { son }
-        $f = strpos($t, '{'); $l = strrpos($t, '}');
-        if ($f !== false && $l !== false && $l > $f) {
-            $r = json_decode(substr($t, $f, $l - $f + 1), true);
-            if ($r && (isset($r['ilanlar']) || isset($r['ILANLAR']))) { $result = $r; break; }
-        }
-    }
-}
-
 // Key'leri lowercase'e çevir
 if ($result) {
     $result = array_change_key_case($result, CASE_LOWER);
@@ -168,7 +114,7 @@ if (!$result || !isset($result['ilanlar'])) {
             'en_dusuk' => 0,
             'toplam_bulunan' => 0,
             'analiz_notu' => $text ?: 'İLAN VERİSİ ALINAMADI',
-            'kaynaklar' => $webSources,
+            'kaynaklar' => [],
             'ham_yanit' => $text
         ]
     ]);
@@ -200,7 +146,7 @@ echo json_encode([
         'en_dusuk' => $result['en_dusuk'] ?? (end($ilanlar)['fiyat'] ?? 0),
         'toplam_bulunan' => count($ilanlar),
         'analiz_notu' => $result['analiz_notu'] ?? '',
-        'kaynaklar' => $webSources,
+        'kaynaklar' => [],
         'arama_bilgi' => [
             'marka' => $marka,
             'model' => $model,

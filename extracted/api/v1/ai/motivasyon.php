@@ -8,6 +8,7 @@
 
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/ai-helper.php';
 
 setup_headers();
 require_method('GET');
@@ -47,18 +48,9 @@ $yedekSozler = [
 ];
 
 // API KEY: Önce veritabanından oku, yoksa varsayılan kullan
-$apiKey = '';
+$keys = getAiKeys();
+$apiKey = $keys['active'];
 $varsayilanKey = 'AIzaSyAxIkYW3-i8FfxoYU83NFPvbwJckhsxDfI';
-
-try {
-    $db = getDB();
-    $stmt = $db->prepare("SELECT deger FROM ayarlar WHERE anahtar = 'gemini_api_key'");
-    $stmt->execute();
-    $row = $stmt->fetch();
-    if ($row && !empty(trim($row['deger']))) {
-        $apiKey = trim($row['deger']);
-    }
-} catch (Exception $e) {}
 
 if (empty($apiKey)) {
     $apiKey = $varsayilanKey;

@@ -1235,12 +1235,12 @@ const AyarlarTab = () => {
         </div>
       </div>
 
-      {/* ─── BÖLÜM 4: GOOGLE GEMİNİ API AYARLARI ─── */}
+      {/* ─── BÖLÜM 4: AI API AYARLARI ─── */}
       <div style={{...S.card, marginBottom: 16}}>
         <div style={{...S.cardHead, padding: '12px 16px'}}>
           <LIcon name="Sparkles" size={14} color={C.warning}/>
-          <span style={{fontSize: 12, fontWeight: 700}}>GOOGLE GEMİNİ AI AYARLARI</span>
-          <span style={{...S.badge(C.warning), marginLeft: 8, fontSize: 9}}>MOTİVASYON SÖZLERİ</span>
+          <span style={{fontSize: 12, fontWeight: 700}}>AI API AYARLARI</span>
+          <span style={{...S.badge(C.accent), marginLeft: 8, fontSize: 9}}>GEMİNİ / OPENAI / CLAUDE</span>
           {apiTest.sonuc && (
             <span style={{
               ...S.badge(apiTest.sonuc.basarili ? C.success : C.danger),
@@ -1256,14 +1256,21 @@ const AyarlarTab = () => {
             border: `1px solid ${C.accent}20`, marginBottom: 16, fontSize: 11, color: C.textSec, lineHeight: 1.6
           }}>
             <LIcon name="Info" size={13} color={C.accent} style={{verticalAlign: 'middle'}}/>{' '}
-            HER SAYFA GEÇİŞİNDE GOOGLE GEMİNİ AI İLE MOTİVE EDİCİ SÖZLER GÖSTERİLİR.
-            API ANAHTARI LİMİTİ DOLDUĞUNDA BURADAN YENİ ANAHTAR GİREBİLİRSİNİZ.
+            AI ANALİZ, MOTİVASYON SÖZLERİ, İÇTİHAT ARAMA VE OCR İÇİN API ANAHTARLARI.
+            BİRDEN FAZLA PROVIDER TANIMLANIRSA ÖNCELİK: GEMİNİ {'>'} OPENAI {'>'} CLAUDE.
+            OCR (EVRAK OKUMA) SADECE GEMİNİ İLE ÇALIŞIR.
             BOŞ BIRAKIRSANIZ VARSAYILAN ANAHTAR KULLANILIR.
-            API ÇALIŞMAZSA YEDEK SÖZLER OTOMATİK GÖSTERİLİR.
           </div>
           <div style={{display: 'grid', gap: 16}}>
+            {/* GOOGLE GEMİNİ */}
             <div>
-              <label style={S.label}>GOOGLE GEMİNİ API ANAHTARI</label>
+              <label style={S.label}>
+                <span style={{display: 'inline-flex', alignItems: 'center', gap: 6}}>
+                  <span style={{width: 8, height: 8, borderRadius: '50%', background: '#4285F4', display: 'inline-block'}}/>
+                  GOOGLE GEMİNİ API ANAHTARI
+                  <span style={{...S.badge(C.accent), fontSize: 8, padding: '1px 6px'}}>ADK + BH + OCR + İÇTİHAT + MOTİVASYON</span>
+                </span>
+              </label>
               <div style={{display: 'flex', gap: 8, alignItems: 'center'}}>
                 <input style={{...S.input, flex: 1, fontFamily: 'monospace', fontSize: 12, letterSpacing: 0.5}}
                   value={ayarlar.gemini_api_key || ''}
@@ -1275,11 +1282,68 @@ const AyarlarTab = () => {
                   borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6
                 }} onClick={() => geminiTestEt(ayarlar.gemini_api_key)} disabled={apiTest.testing}>
                   <LIcon name={apiTest.testing ? 'Loader2' : 'Zap'} size={14} color="#fff"/>
-                  {apiTest.testing ? 'TEST EDİLİYOR...' : 'API TEST ET'}
+                  {apiTest.testing ? 'TEST EDİLİYOR...' : 'TEST ET'}
                 </button>
               </div>
-              <div style={{fontSize: 10, color: C.textMuted, marginTop: 6}}>
-                GOOGLE AI STUDIO'DAN ÜCRETSİZ API ANAHTARI ALABİLİRSİNİZ: AISTUDIO.GOOGLE.COM
+              <div style={{fontSize: 10, color: C.textMuted, marginTop: 4}}>
+                AISTUDIO.GOOGLE.COM ADRESINDEN ÜCRETSİZ API ANAHTARI ALABİLİRSİNİZ
+              </div>
+            </div>
+
+            {/* OPENAI */}
+            <div>
+              <label style={S.label}>
+                <span style={{display: 'inline-flex', alignItems: 'center', gap: 6}}>
+                  <span style={{width: 8, height: 8, borderRadius: '50%', background: '#10a37f', display: 'inline-block'}}/>
+                  OPENAI API ANAHTARI (GPT-4o-mini)
+                  <span style={{...S.badge(C.success), fontSize: 8, padding: '1px 6px'}}>ADK + BH + İÇTİHAT</span>
+                </span>
+              </label>
+              <input style={{...S.input, fontFamily: 'monospace', fontSize: 12, letterSpacing: 0.5}}
+                value={ayarlar.openai_api_key || ''}
+                onChange={e => up('openai_api_key', e.target.value)}
+                placeholder="sk-proj-... (OPSİYONEL - GEMİNİ YOKSA KULLANILIR)"/>
+              <div style={{fontSize: 10, color: C.textMuted, marginTop: 4}}>
+                PLATFORM.OPENAI.COM ADRESINDEN API ANAHTARI ALABİLİRSİNİZ
+              </div>
+            </div>
+
+            {/* CLAUDE / ANTHROPIC */}
+            <div>
+              <label style={S.label}>
+                <span style={{display: 'inline-flex', alignItems: 'center', gap: 6}}>
+                  <span style={{width: 8, height: 8, borderRadius: '50%', background: '#d97706', display: 'inline-block'}}/>
+                  CLAUDE API ANAHTARI (Anthropic)
+                  <span style={{...S.badge(C.warning), fontSize: 8, padding: '1px 6px'}}>ADK + BH + İÇTİHAT</span>
+                </span>
+              </label>
+              <input style={{...S.input, fontFamily: 'monospace', fontSize: 12, letterSpacing: 0.5}}
+                value={ayarlar.claude_api_key || ''}
+                onChange={e => up('claude_api_key', e.target.value)}
+                placeholder="sk-ant-... (OPSİYONEL - GEMİNİ VE OPENAI YOKSA KULLANILIR)"/>
+              <div style={{fontSize: 10, color: C.textMuted, marginTop: 4}}>
+                CONSOLE.ANTHROPIC.COM ADRESINDEN API ANAHTARI ALABİLİRSİNİZ
+              </div>
+            </div>
+
+            {/* PROVIDER BİLGİ TABLOSU */}
+            <div style={{
+              padding: '10px 14px', background: `${C.bgHover}`, borderRadius: 8,
+              border: `1px solid ${C.border}`, fontSize: 10, color: C.textSec
+            }}>
+              <div style={{fontWeight: 700, marginBottom: 6, fontSize: 11}}>PROVIDER ÖZELLİK TABLOSU:</div>
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 4}}>
+                <span style={{fontWeight: 700}}>ÖZELLİK</span>
+                <span style={{fontWeight: 700, color: '#4285F4'}}>GEMİNİ</span>
+                <span style={{fontWeight: 700, color: '#10a37f'}}>OPENAI</span>
+                <span style={{fontWeight: 700, color: '#d97706'}}>CLAUDE</span>
+
+                <span>ADK ANALİZ</span><span>✓</span><span>✓</span><span>✓</span>
+                <span>BH ANALİZ</span><span>✓</span><span>✓</span><span>✓</span>
+                <span>RAYİÇ ARAŞTIRMA</span><span>✓</span><span>✓</span><span>✓</span>
+                <span>İÇTİHAT ARAMA</span><span>✓</span><span>✓</span><span>✓</span>
+                <span>OCR EVRAK OKUMA</span><span>✓</span><span>-</span><span>-</span>
+                <span>MOTİVASYON</span><span>✓</span><span>✓</span><span>✓</span>
               </div>
             </div>
           </div>
@@ -3263,34 +3327,59 @@ const TopluAktarimTab = () => {
   const [secilenDosya, setSecilenDosya] = useState(null);
   const fileRef = React.useRef(null);
 
-  /* ŞABLON İNDİR */
-  const sablonIndir = async () => {
+  /* ŞABLON İNDİR (XLSX) */
+  const sablonIndir = () => {
     setSablonIndiriliyor(true);
     try {
-      const token = MR.api?.token;
-      const r = await fetch('/api/v1/dosya/excel-sablon.php', {
-        headers: token ? {'Authorization': 'Bearer ' + token} : {}
-      });
-      if (!r.ok) { setHata('ŞABLON İNDİRİLEMEDİ'); setSablonIndiriliyor(false); return; }
-      const blob = await r.blob();
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'dosya_toplu_aktarim_sablonu.csv';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      const basliklar = [
+        'T.C. NO','ADI SOYADI','DOSYA KAYNAĞI','DOSYA TÜRÜ','DAVALI ŞİRKET',
+        'SİGORTA HASAR NO','KAZA TARİHİ','DOSYA AŞAMA DURUMU',
+        'TELEFON','TELEFON 2','E-POSTA','POLİÇE NO','KAZA İL','KAZA İLÇE',
+        'PLAKA','MARKA','MODEL','MODEL YILI','KARŞI PLAKA','KARŞI SİGORTA','NOTLAR'
+      ];
+      const ornek1 = [
+        '12345678901','Ahmet Yılmaz','OFİS CRM','ADK','Axa Sigorta',
+        'HSR-2026-001','15.01.2026','Dosya Açık',
+        '0532 111 2233','','ahmet@email.com','POL-123456','İSTANBUL','KADIKÖY',
+        '34 ABC 123','TOYOTA','COROLLA','2022','06 DEF 456','Allianz Sigorta','Toplu aktarım ile eklendi'
+      ];
+      const ornek2 = [
+        '98765432109','Fatma Demir','YÖNLENDİREN','BH','Mapfre Sigorta',
+        '','20.02.2026','Dosya Açık',
+        '0533 444 5566','','','','ANKARA','ÇANKAYA',
+        '','','','','','',''
+      ];
+      const ws = XLSX.utils.aoa_to_sheet([basliklar, ornek1, ornek2]);
+      /* Sütun genişlikleri */
+      ws['!cols'] = basliklar.map(b => ({wch: Math.max(b.length + 4, 14)}));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Şablon');
+      XLSX.writeFile(wb, 'dosya_toplu_aktarim_sablonu.xlsx');
     } catch(e) { setHata('İNDİRME HATASI: ' + e.message); }
     setSablonIndiriliyor(false);
   };
 
-  /* DOSYA YÜKLE */
+  /* DOSYA YÜKLE (XLSX/CSV) */
   const dosyaYukle = async () => {
-    if (!secilenDosya) { setHata('LÜTFEN BİR CSV DOSYASI SEÇİN'); return; }
+    if (!secilenDosya) { setHata('LÜTFEN BİR EXCEL VEYA CSV DOSYASI SEÇİN'); return; }
     setYukleniyor(true); setHata(''); setSonuc(null);
 
     try {
       const token = MR.api?.token;
       const formData = new FormData();
-      formData.append('dosya', secilenDosya);
+      const ext = secilenDosya.name.split('.').pop().toLowerCase();
+
+      if (['xlsx','xls'].includes(ext)) {
+        /* Excel dosyasını oku ve CSV'ye çevir */
+        const buf = await secilenDosya.arrayBuffer();
+        const wb = XLSX.read(buf, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const csvStr = XLSX.utils.sheet_to_csv(ws, {FS:';'});
+        const csvBlob = new Blob(['\uFEFF' + csvStr], {type:'text/csv;charset=utf-8'});
+        formData.append('dosya', csvBlob, secilenDosya.name.replace(/\.xlsx?$/i, '.csv'));
+      } else {
+        formData.append('dosya', secilenDosya);
+      }
 
       const r = await fetch('/api/v1/dosya/excel-import.php', {
         method: 'POST',
@@ -3318,7 +3407,7 @@ const TopluAktarimTab = () => {
       <div style={{...S.card}}>
         <div style={{...S.cardHead}}>
           <LIcon name="FileSpreadsheet" size={16} color={C.accent}/>
-          <span style={{fontWeight:700}}>TOPLU DOSYA AKTARIMI (EXCEL/CSV)</span>
+          <span style={{fontWeight:700}}>TOPLU DOSYA AKTARIMI (EXCEL)</span>
         </div>
         <div style={{padding:16}}>
           <div style={{background:`${C.accent}08`,border:`1px solid ${C.accent}22`,borderRadius:10,padding:16,marginBottom:16}}>
@@ -3330,7 +3419,7 @@ const TopluAktarimTab = () => {
               <li>Şablondaki örnek satırları silin, kendi verilerinizi doldurun</li>
               <li><b>DOSYA TÜRÜ</b> (ADK/BH) ve <b>ADI SOYADI</b> zorunlu alanlardır</li>
               <li>Kaza tarihi formatı: <b>GG.AA.YYYY</b> (örn: 15.01.2026)</li>
-              <li>CSV dosyasını <b>YÜKLE</b> butonuyla sisteme aktarın</li>
+              <li>Excel dosyasını <b>YÜKLE</b> butonuyla sisteme aktarın</li>
             </ol>
           </div>
 
@@ -3361,7 +3450,7 @@ const TopluAktarimTab = () => {
               style={{...S.btn,...S.btnP,padding:'12px 24px',fontSize:12,
                 opacity:sablonIndiriliyor?0.6:1}}>
               <LIcon name="Download" size={16} color="#fff"/>
-              {sablonIndiriliyor ? 'İNDİRİLİYOR...' : 'ŞABLON İNDİR (CSV)'}
+              {sablonIndiriliyor ? 'İNDİRİLİYOR...' : 'ŞABLON İNDİR (EXCEL)'}
             </button>
 
             {/* DOSYA SEÇ + YÜKLE */}
@@ -3371,7 +3460,7 @@ const TopluAktarimTab = () => {
                 boxShadow:'0 4px 14px -2px rgba(16,185,129,0.5), 0 2px 4px -1px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)',borderBottom:'2px solid #047857'}}>
                 <LIcon name="Upload" size={16} color="#fff"/>
                 DOSYA SEÇ
-                <input ref={fileRef} type="file" accept=".csv,.txt" style={{display:'none'}}
+                <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.txt" style={{display:'none'}}
                   onChange={e => { setSecilenDosya(e.target.files[0] || null); setHata(''); setSonuc(null); }}/>
               </label>
               {secilenDosya && (

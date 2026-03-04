@@ -1,13 +1,14 @@
 <?php
 /**
  * MR HASAR DANIŞMANLIK - AI ADK ANALİZ ENDPOINTİ
- * Google Gemini + OpenAI destekli araç değer kaybı analizi
- * Key prefix ile otomatik API seçimi: AIzaSy = Gemini, sk- = OpenAI
+ * Google Gemini + OpenAI + Claude destekli araç değer kaybı analizi
+ * Key prefix ile otomatik API seçimi: AIzaSy = Gemini, sk- = OpenAI, sk-ant- = Claude
  */
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/helpers.php';
+require_once __DIR__ . '/../../config/ai-helper.php';
 
 setup_headers();
 
@@ -24,23 +25,9 @@ if (!$input) {
     exit;
 }
 
-// API Key'i ayarlardan çek
-$apiKey = '';
-try {
-    $db = getDB();
-    // Önce ai_api_key, yoksa openai_api_key dene
-    $stmt = $db->prepare("SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('gemini_api_key', 'ai_api_key', 'openai_api_key') AND deger != '' ORDER BY anahtar ASC");
-    $stmt->execute();
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($rows as $row) {
-        if (!empty(trim($row['deger']))) {
-            $apiKey = trim($row['deger']);
-            break;
-        }
-    }
-} catch (Exception $e) {
-    $apiKey = '';
-}
+// API Key'leri ayarlardan çek
+$keys = getAiKeys();
+$apiKey = $keys['active'];
 
 if (empty($apiKey)) {
     $analiz = yerselAnaliz($input);
@@ -51,90 +38,13 @@ if (empty($apiKey)) {
 $prompt = buildPrompt($input);
 $systemPrompt = 'Sen bir Türk sigorta hukuku ve araç değer kaybı uzmanısın. Araç değer kaybı (ADK) hesaplamaları konusunda detaylı analiz yapıyorsun. Tahkim komisyonu kararları ve Yargıtay içtihatlarına hakimsin. Yanıtlarını Türkçe ve profesyonel bir dille ver. Kısa ve öz tut, madde madde yaz. Başlıkları büyük harfle yaz.';
 
-// API tipi belirle: AIzaSy = Google Gemini, sk- = OpenAI
-if (str_starts_with($apiKey, 'AIzaSy')) {
-    $result = callGemini($apiKey, $systemPrompt, $prompt);
-} elseif (str_starts_with($apiKey, 'sk-')) {
-    $result = callOpenAI($apiKey, $systemPrompt, $prompt);
-} else {
-    // Bilinmeyen key tipi - Gemini dene
-    $result = callGemini($apiKey, $systemPrompt, $prompt);
-}
+$result = callAI($apiKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 1024, 'timeout' => 30]);
 
 if ($result !== null) {
-    echo json_encode(['success' => true, 'data' => ['analiz' => $result, 'kaynak' => 'ai']]);
+    echo json_encode(['success' => true, 'data' => ['analiz' => $result, 'kaynak' => 'ai', 'provider' => detectProvider($apiKey)]]);
 } else {
     $analiz = yerselAnaliz($input);
     echo json_encode(['success' => true, 'data' => ['analiz' => $analiz, 'kaynak' => 'yerel']]);
-}
-
-/* ═══════════════════════════════════════════
-   GOOGLE GEMİNİ API
-   ═══════════════════════════════════════════ */
-function callGemini($apiKey, $systemPrompt, $userPrompt) {
-    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
-
-    $fullPrompt = $systemPrompt . "\n\n" . $userPrompt;
-    $payload = [
-        'contents' => [
-            [
-                'role' => 'user',
-                'parts' => [['text' => $fullPrompt]]
-            ]
-        ],
-        'generationConfig' => [
-            'temperature' => 0.3,
-            'maxOutputTokens' => 1024,
-            'topP' => 0.8
-        ]
-    ];
-
-    $res = http_post($url, json_encode($payload), ['Content-Type: application/json'], 30);
-
-    if ($res['http_code'] === 200 && $res['body']) {
-        $data = json_decode($res['body'], true);
-        $text = '';
-        $allParts = $data['candidates'][0]['content']['parts'] ?? [];
-        foreach ($allParts as $part) {
-            if (isset($part['text']) && empty($part['thought'])) $text = $part['text'];
-        }
-        return !empty($text) ? $text : null;
-    }
-
-    // Hata detayını logla
-    $errDetail = '';
-    if ($res['body']) {
-        $errData = json_decode($res['body'], true);
-        $errDetail = $errData['error']['message'] ?? '';
-    }
-    error_log("GEMINI API HATA: HTTP {$res['http_code']} - {$errDetail} {$res['error']} (yontem: {$res['method']})");
-    return null;
-}
-
-/* ═══════════════════════════════════════════
-   OPENAI API
-   ═══════════════════════════════════════════ */
-function callOpenAI($apiKey, $systemPrompt, $userPrompt) {
-    $res = http_post('https://api.openai.com/v1/chat/completions', json_encode([
-        'model' => 'gpt-4o-mini',
-        'messages' => [
-            ['role' => 'system', 'content' => $systemPrompt],
-            ['role' => 'user', 'content' => $userPrompt]
-        ],
-        'max_tokens' => 800,
-        'temperature' => 0.3
-    ]), [
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . $apiKey
-    ], 30);
-
-    if ($res['http_code'] === 200 && $res['body']) {
-        $data = json_decode($res['body'], true);
-        $text = $data['choices'][0]['message']['content'] ?? '';
-        return !empty($text) ? $text : null;
-    }
-
-    return null;
 }
 
 /* ═══════════════════════════════════════════

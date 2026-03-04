@@ -23,6 +23,7 @@ try {
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/helpers.php';
+require_once __DIR__ . '/../../config/ai-helper.php';
 
 setup_headers();
 
@@ -32,25 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $user = auth_required();
 
-// API Key çek
-$apiKey = '';
-try {
-    $db = getDB();
-    $stmt = $db->prepare("SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('gemini_api_key', 'ai_api_key', 'openai_api_key') AND deger != '' ORDER BY anahtar ASC");
-    $stmt->execute();
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($rows as $row) {
-        if (!empty(trim($row['deger']))) {
-            $apiKey = trim($row['deger']);
-            break;
-        }
-    }
-} catch (Exception $e) {
-    $apiKey = '';
-}
+// API Key çek - OCR için Gemini gerekli (Vision API)
+$keys = getAiKeys();
+$apiKey = $keys['gemini'];
 
-if (empty($apiKey) || substr($apiKey, 0, 6) !== 'AIzaSy') {
-    echo json_encode(['success' => false, 'error' => 'GEMİNİ API KEY BULUNAMADI. SİSTEM AYARLARINDAN AI_API_KEY TANIMLAYIN.']);
+if (empty($apiKey)) {
+    echo json_encode(['success' => false, 'error' => 'GEMİNİ API KEY BULUNAMADI. OCR İÇİN GEMİNİ API ANAHTARI GEREKLİDİR. SİSTEM > FİRMA AYARLARI SAYFASINDAN TANIMLAYIN.']);
     exit;
 }
 
