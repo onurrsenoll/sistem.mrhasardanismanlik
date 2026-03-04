@@ -25,17 +25,19 @@ require_once __DIR__ . '/../../config/database.php';
 $user = auth_required(['admin']);
 
 // Şablon sütunları (dosya listesi excel export sıralamasıyla birebir aynı + ek alanlar)
+// Export sırası: DOSYA NO > T.C. NO > ADI SOYADI > DOSYA KAYNAĞI > AVUKATI > DOSYA TÜRÜ > DAVALI ŞİRKET > SİGORTA HASAR NO > KAZA TARİHİ > AÇILIŞ TARİHİ > DOSYA AŞAMA DURUMU
+// DOSYA NO, AVUKATI, AÇILIŞ TARİHİ sistem tarafından otomatik atanır, şablonda yer almaz
 $sutunlar = [
-    // — Dosya Listesi Export ile aynı sıra ve isim —
-    'DOSYA TÜRÜ',          // ADK veya BH (zorunlu)
-    'T.C. NO',             // Mağdur TC
-    'ADI SOYADI',          // Mağdur ad soyad (zorunlu)
-    'DOSYA KAYNAĞI',       // OFİS CRM, YÖNLENDİREN, SAHA PERSONEL
-    'DAVALI ŞİRKET',      // Davalı sigorta şirketi
-    'SİGORTA HASAR NO',   // Sigorta hasar numarası
-    'KAZA TARİHİ',        // GG.AA.YYYY formatında
-    'DOSYA AŞAMA DURUMU', // Dosya aşaması
-    // — Ek alanlar —
+    // — Dosya Listesi Export ile birebir aynı sıra ve isim —
+    'T.C. NO',             // Mağdur TC (export sırası: 2)
+    'ADI SOYADI',          // Mağdur ad soyad - zorunlu (export sırası: 3)
+    'DOSYA KAYNAĞI',       // OFİS CRM, YÖNLENDİREN, SAHA PERSONEL (export sırası: 4)
+    'DOSYA TÜRÜ',          // ADK veya BH - zorunlu (export sırası: 6)
+    'DAVALI ŞİRKET',      // Davalı sigorta şirketi (export sırası: 7)
+    'SİGORTA HASAR NO',   // Sigorta hasar numarası (export sırası: 8)
+    'KAZA TARİHİ',        // GG.AA.YYYY formatında (export sırası: 9)
+    'DOSYA AŞAMA DURUMU', // Dosya aşaması (export sırası: 11)
+    // — Ek alanlar (export'ta bulunmayan) —
     'TELEFON',             // Mağdur telefon
     'TELEFON 2',           // Mağdur ikinci telefon
     'E-POSTA',             // Mağdur email
@@ -54,10 +56,10 @@ $sutunlar = [
 // Örnek veri satırı (sütun sırası ile birebir aynı)
 $ornek = [
     // — Dosya Listesi Export sırası —
-    'ADK',                          // DOSYA TÜRÜ
     '12345678901',                  // T.C. NO
     'Ahmet Yılmaz',                 // ADI SOYADI
     'OFİS CRM',                     // DOSYA KAYNAĞI
+    'ADK',                          // DOSYA TÜRÜ
     'Axa Sigorta',                  // DAVALI ŞİRKET
     'HSR-2026-001',                 // SİGORTA HASAR NO
     '15.01.2026',                   // KAZA TARİHİ (GG.AA.YYYY)
@@ -108,10 +110,10 @@ fputcsv($output, $ornek, ';');
 // Boş ikinci örnek satır (BH türü - aynı sırada)
 $ornek2 = [
     // — Dosya Listesi Export sırası —
-    'BH',                           // DOSYA TÜRÜ
     '98765432109',                   // T.C. NO
     'Fatma Demir',                   // ADI SOYADI
     'YÖNLENDİREN',                   // DOSYA KAYNAĞI
+    'BH',                            // DOSYA TÜRÜ
     'Mapfre Sigorta',                // DAVALI ŞİRKET
     '',                              // SİGORTA HASAR NO
     '20.02.2026',                    // KAZA TARİHİ
