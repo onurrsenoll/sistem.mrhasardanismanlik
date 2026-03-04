@@ -1,0 +1,209 @@
+<?php
+/**
+ * MR HASAR DANIŞMANLIK - OCR EVRAK ANALİZ ENDPOINTİ
+ * Google Gemini Vision API ile evrak OCR okuma
+ */
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
+// Global hata yakalama
+set_exception_handler(function($e) {
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(200);
+    echo json_encode(['success' => false, 'error' => 'SUNUCU HATASI: ' . $e->getMessage()]);
+    exit;
+});
+
+set_error_handler(function($severity, $message, $file, $line) {
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
+
+try {
+
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/auth.php';
+require_once __DIR__ . '/../../config/helpers.php';
+require_once __DIR__ . '/../../config/ai-helper.php';
+
+setup_headers();
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    json_error('GEÇERSİZ İSTEK YÖNTEMİ', 405);
+}
+
+$user = auth_required();
+
+// API Key çek - OCR için Gemini gerekli (Vision API)
+$keys = getAiKeys();
+$apiKey = $keys['gemini'];
+
+if (empty($apiKey)) {
+    echo json_encode(['success' => false, 'error' => 'GEMİNİ API KEY BULUNAMADI. OCR İÇİN GEMİNİ API ANAHTARI GEREKLİDİR. SİSTEM > FİRMA AYARLARI SAYFASINDAN TANIMLAYIN.']);
+    exit;
+}
+
+// Dosya tipini belirle (adk veya bh)
+$tip = isset($_POST['tip']) ? $_POST['tip'] : 'adk';
+$dosyaSayisi = intval(isset($_POST['dosya_sayisi']) ? $_POST['dosya_sayisi'] : 1);
+
+// Dosyaları oku ve base64'e çevir
+$images = [];
+for ($i = 0; $i < $dosyaSayisi; $i++) {
+    $key = 'dosya_' . $i;
+    if (!isset($_FILES[$key]) || $_FILES[$key]['error'] !== UPLOAD_ERR_OK) continue;
+
+    $file = $_FILES[$key];
+    $maxSize = 10 * 1024 * 1024; // 10MB
+    if ($file['size'] > $maxSize) continue;
+
+    $allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    $mime = $file['type'];
+    if (!in_array($mime, $allowed)) continue;
+
+    $content = file_get_contents($file['tmp_name']);
+    if ($content === false) continue;
+
+    $mimeType = $mime;
+
+    $images[] = [
+        'inline_data' => [
+            'mime_type' => $mimeType,
+            'data' => base64_encode($content)
+        ]
+    ];
+}
+
+if (empty($images)) {
+    echo json_encode(['success' => false, 'error' => 'GEÇERLİ DOSYA BULUNAMADI. PDF, JPG VEYA PNG YÜKLEYİN. Dosya sayısı: ' . $dosyaSayisi . ', FILES: ' . json_encode(array_keys($_FILES))]);
+    exit;
+}
+
+// Prompt oluştur
+if ($tip === 'bh') {
+    $prompt = 'Bu belgeyi analiz et. Bedeni hasar / sağlık / maluliyet raporu olarak incele.
+Aşağıdaki bilgileri JSON formatında döndür:
+{
+  "magdurAdi": "kişinin adı soyadı",
+  "dogumTarihi": "YYYY-MM-DD formatında",
+  "cinsiyet": "ERKEK veya KADIN",
+  "tcNo": "TC kimlik no varsa",
+  "maluliyetOrani": sayısal değer (1-100),
+  "meslek": "meslek bilgisi",
+  "kazaTarihi": "YYYY-MM-DD formatında",
+  "tani": "tıbbi tanı/teşhis",
+  "tedavi": "uygulanan tedavi",
+  "hastane": "hastane adı",
+  "aylikGelir": sayısal değer varsa,
+  "guven": güven yüzdesi (1-100)
+}
+Bulamadığın alanları null yap. Sadece JSON döndür, başka metin yazma.';
+} else {
+    $prompt = 'Bu belgeyi analiz et. Araç ruhsatı, hasar raporu veya onarım faturası olarak incele.
+Aşağıdaki bilgileri JSON formatında döndür:
+{
+  "marka": "araç markası (BÜYÜK HARF)",
+  "model": "araç modeli (BÜYÜK HARF)",
+  "yil": model yılı (sayı),
+  "plaka": "plaka numarası",
+  "sasi_no": "şasi numarası varsa",
+  "motor_no": "motor numarası varsa",
+  "sahip_adi": "araç sahibi adı soyadı",
+  "hasar_tutari": sayısal onarım bedeli (varsa),
+  "degisen_parcalar": "değişen parçalar listesi (virgülle ayrılmış)",
+  "boyanan_parcalar": "boyanan parçalar listesi (virgülle ayrılmış)",
+  "km": kilometre (sayı, varsa),
+  "renk": "araç rengi",
+  "guven": güven yüzdesi (1-100)
+}
+Bulamadığın alanları null yap. Sadece JSON döndür, başka metin yazma.';
+}
+
+// Gemini Vision API çağrısı
+$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
+
+$parts = [];
+foreach ($images as $img) {
+    $parts[] = $img;
+}
+$parts[] = ['text' => $prompt];
+
+$payload = [
+    'contents' => [
+        [
+            'role' => 'user',
+            'parts' => $parts
+        ]
+    ],
+    'generationConfig' => [
+        'temperature' => 0.1,
+        'maxOutputTokens' => 1024,
+        'topP' => 0.8
+    ]
+];
+
+$jsonPayload = json_encode($payload);
+if ($jsonPayload === false) {
+    echo json_encode(['success' => false, 'error' => 'JSON ENCODE HATASI: ' . json_last_error_msg()]);
+    exit;
+}
+
+$res = http_post($url, $jsonPayload, ['Content-Type: application/json'], 60);
+
+if ($res['http_code'] !== 200 || !$res['body']) {
+    echo json_encode([
+        'success' => false,
+        'error' => 'GEMİNİ API HATASI: HTTP ' . $res['http_code'] . ($res['error'] ? ' - ' . $res['error'] : '') . ' (yontem: ' . $res['method'] . ')'
+    ]);
+    exit;
+}
+
+$data = json_decode($res['body'], true);
+// Gemini 2.5 Flash - TÜM parçaları topla
+$allTexts = [];
+$allParts = isset($data['candidates'][0]['content']['parts']) ? $data['candidates'][0]['content']['parts'] : [];
+foreach ($allParts as $part) {
+    if (isset($part['text'])) $allTexts[] = $part['text'];
+}
+$text = !empty($allTexts) ? end($allTexts) : '';
+
+if (empty($text)) {
+    echo json_encode(['success' => false, 'error' => 'GEMİNİ YANIT ALINAMADI']);
+    exit;
+}
+
+// JSON parse - çoklu strateji
+$parsed = null;
+
+// Tüm parçalarda JSON ara
+foreach ($allTexts as $t) {
+    $t = trim($t);
+    // Direkt
+    $r = json_decode($t, true);
+    if ($r && is_array($r)) { $parsed = $r; }
+    // Markdown code block
+    if (!$parsed && preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $t, $m)) {
+        $r = json_decode(trim($m[1]), true);
+        if ($r && is_array($r)) { $parsed = $r; }
+    }
+    // İlk { son }
+    if (!$parsed) {
+        $f = strpos($t, '{'); $l = strrpos($t, '}');
+        if ($f !== false && $l !== false && $l > $f) {
+            $r = json_decode(substr($t, $f, $l - $f + 1), true);
+            if ($r && is_array($r)) { $parsed = $r; }
+        }
+    }
+    if ($parsed) break;
+}
+
+if ($parsed) {
+    $parsed = array_change_key_case($parsed, CASE_LOWER);
+    echo json_encode(['success' => true, 'data' => $parsed]);
+} else {
+    echo json_encode(['success' => false, 'error' => 'EVRAK ANALİZ EDİLEMEDİ. LÜTFEN DAHA NET BİR GÖRÜNTÜ YÜKLEYİN.', 'raw' => $text]);
+}
+
+} catch (Throwable $e) {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'error' => 'PHP HATASI: ' . $e->getMessage() . ' (Satır: ' . $e->getLine() . ')']);
+}
