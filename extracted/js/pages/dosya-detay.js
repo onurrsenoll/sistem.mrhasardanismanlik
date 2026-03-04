@@ -257,7 +257,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       kaza_il: dosya.kaza_il || '',
       haklilik: dosya.haklilik || 100,
       komisyon_orani: dosya.komisyon_orani || 0,
-      hak_mahrumiyet: dosya.hak_mahrumiyet ? 1 : 0,
+      hak_mahrumiyet: parseInt(dosya.hak_mahrumiyet) === 1 ? 1 : 0,
       plaka: getPlaka(),
       notlar: dosya.notlar || '',
       ortak_id: dosya.ortak_id ? String(dosya.ortak_id) : '',
@@ -548,7 +548,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <InfoRow label="KAZA İLİ" value={dosya.kaza_il}/>
               <InfoRow label="HAKLILIK" value={`%${dosya.haklilik || 0}`} bold color={C.success}/>
               <InfoRow label="KOMİSYON" value={`%${dosya.komisyon_orani || 0}`}/>
-              <InfoRow label="HAK MAHRUMİYET TALEP" value={dosya.hak_mahrumiyet ? 'VAR' : 'YOK'} bold color={dosya.hak_mahrumiyet ? C.success : C.textMuted}/>
+              <InfoRow label="HAK MAHRUMİYET TALEP" value={parseInt(dosya.hak_mahrumiyet) === 1 ? 'VAR' : 'YOK'} bold color={parseInt(dosya.hak_mahrumiyet) === 1 ? C.success : C.textMuted}/>
               {dosya.notlar && <div style={{marginTop:8,padding:8,background:C.bgInput,borderRadius:6,fontSize:10,color:C.textSec}}>{dosya.notlar}</div>}
             </div>
           </div>
