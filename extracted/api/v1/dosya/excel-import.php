@@ -117,6 +117,28 @@ $hatali = 0;
 $hatalar = [];
 $olusturulan = [];
 
+// Dosya türü eşleştirme haritası (Excel'deki uzun isimler → sistem kodu)
+$dosyaTuruMap = [
+    'A.D.KAYBI'     => 'ADK',
+    'ADK'           => 'ADK',
+    'ARAÇ DEĞER KAYBI' => 'ADK',
+    'MÜRACAAT'      => 'BH',
+    'BH'            => 'BH',
+    'BEDENİ HASAR'  => 'BH',
+    'BEDENI HASAR'  => 'BH',
+];
+
+// Mevcut dosyaların en eski created_at değerini bul
+// Toplu aktarılan dosyalar bunun altına yerleşecek (created_at DESC sıralamasında)
+$minCreatedAt = null;
+try {
+    $stmt = $db->query("SELECT MIN(created_at) as min_created FROM dosyalar");
+    $row = $stmt->fetch();
+    if ($row && $row['min_created']) {
+        $minCreatedAt = new \DateTime($row['min_created']);
+    }
+} catch (\Exception $e) {}
+
 // Veri satırlarını işle (başlık satırını atla)
 $dataLines = array_slice(array_values($lines), 1);
 
@@ -136,7 +158,7 @@ foreach ($dataLines as $lineIdx => $line) {
         return isset($cols[$idx]) ? trim($cols[$idx]) : '';
     };
 
-    $dosyaTuru = mb_strtoupper($getValue('dosya_turu'), 'UTF-8');
+    $dosyaTuruRaw = mb_strtoupper(trim($getValue('dosya_turu')), 'UTF-8');
     $adSoyad = $getValue('ad_soyad');
 
     // Zorunlu alan kontrolü
@@ -145,20 +167,32 @@ foreach ($dataLines as $lineIdx => $line) {
         $hatalar[] = "Satır $satirNo: ADI SOYADI boş olamaz";
         continue;
     }
+
+    // Dosya türü eşleştirme (A.D.KAYBI → ADK, MÜRACAAT → BH, vb.)
+    $dosyaTuru = isset($dosyaTuruMap[$dosyaTuruRaw]) ? $dosyaTuruMap[$dosyaTuruRaw] : $dosyaTuruRaw;
     if (!in_array($dosyaTuru, ['ADK', 'BH'])) {
         $hatali++;
-        $hatalar[] = "Satır $satirNo: DOSYA TÜRÜ 'ADK' veya 'BH' olmalı (Girilen: '$dosyaTuru')";
+        $hatalar[] = "Satır $satirNo: DOSYA TÜRÜ 'ADK' veya 'BH' olmalı (Girilen: '$dosyaTuruRaw')";
         continue;
     }
 
-    // Tarih formatını dönüştür (GG.AA.YYYY → YYYY-MM-DD)
+    // Tarih formatını dönüştür → YYYY-MM-DD
     $kazaTarihi = $getValue('kaza_tarihi');
     if (!empty($kazaTarihi)) {
-        // Çeşitli formatları dene
         if (preg_match('#^(\d{2})[./](\d{2})[./](\d{4})$#', $kazaTarihi, $m)) {
-            $kazaTarihi = $m[3] . '-' . $m[2] . '-' . $m[1]; // YYYY-MM-DD
+            // GG.AA.YYYY veya GG/AA/YYYY → YYYY-MM-DD
+            $kazaTarihi = $m[3] . '-' . $m[2] . '-' . $m[1];
         } elseif (preg_match('#^(\d{4})-(\d{2})-(\d{2})$#', $kazaTarihi)) {
             // Zaten YYYY-MM-DD formatında
+        } elseif (preg_match('#^(\d{1,2})/(\d{1,2})/(\d{2,4})$#', $kazaTarihi, $m)) {
+            // MM/DD/YY veya M/D/YY (Excel CSV çıktısı)
+            $yil = (int)$m[3];
+            if ($yil < 100) $yil += ($yil > 50 ? 1900 : 2000);
+            $kazaTarihi = $yil . '-' . str_pad($m[1], 2, '0', STR_PAD_LEFT) . '-' . str_pad($m[2], 2, '0', STR_PAD_LEFT);
+        } elseif (is_numeric($kazaTarihi) && (int)$kazaTarihi > 30000 && (int)$kazaTarihi < 60000) {
+            // Excel serial number (örn: 46080 = 27.02.2026)
+            $unixTs = ((int)$kazaTarihi - 25569) * 86400;
+            $kazaTarihi = date('Y-m-d', $unixTs);
         } else {
             $kazaTarihi = null;
         }
@@ -175,22 +209,51 @@ foreach ($dataLines as $lineIdx => $line) {
         $asama = $getValue('asama');
         if (empty($asama)) $asama = 'Dosya Açık';
 
+        // created_at hesapla: mevcut dosyaların altına yerleşsin
+        // Her satır için 1 saniye geriye giderek sıra korunur
+        $createdAtValue = null;
+        if ($minCreatedAt) {
+            $offset = $lineIdx + 1; // 1, 2, 3, ... (ilk satır en az geriye gider)
+            $ts = clone $minCreatedAt;
+            $ts->modify("-{$offset} seconds");
+            $createdAtValue = $ts->format('Y-m-d H:i:s');
+        }
+
         // 1. Dosya kaydı
-        $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, asama, sigorta_sirket, police_no, dosya_kaynagi, haklilik, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, notlar, created_by) VALUES (?, ?, ?, ?, ?, ?, 100, ?, ?, ?, ?, CURDATE(), ?, ?)');
-        $stmt->execute([
-            $dosyaNo,
-            $dosyaTuru,
-            clean($asama),
-            clean($getValue('sigorta_sirket')),
-            clean($getValue('police_no')),
-            clean($getValue('dosya_kaynagi')),
-            $kazaTarihi,
-            clean($getValue('kaza_il')),
-            clean($getValue('kaza_ilce')),
-            clean($getValue('hasar_no')),
-            clean($getValue('notlar')),
-            $user['id']
-        ]);
+        if ($createdAtValue) {
+            $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, asama, sigorta_sirket, police_no, dosya_kaynagi, haklilik, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, notlar, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, 100, ?, ?, ?, ?, CURDATE(), ?, ?, ?)');
+            $stmt->execute([
+                $dosyaNo,
+                $dosyaTuru,
+                clean($asama),
+                clean($getValue('sigorta_sirket')),
+                clean($getValue('police_no')),
+                clean($getValue('dosya_kaynagi')),
+                $kazaTarihi,
+                clean($getValue('kaza_il')),
+                clean($getValue('kaza_ilce')),
+                clean($getValue('hasar_no')),
+                clean($getValue('notlar')),
+                $user['id'],
+                $createdAtValue
+            ]);
+        } else {
+            $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, asama, sigorta_sirket, police_no, dosya_kaynagi, haklilik, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, notlar, created_by) VALUES (?, ?, ?, ?, ?, ?, 100, ?, ?, ?, ?, CURDATE(), ?, ?)');
+            $stmt->execute([
+                $dosyaNo,
+                $dosyaTuru,
+                clean($asama),
+                clean($getValue('sigorta_sirket')),
+                clean($getValue('police_no')),
+                clean($getValue('dosya_kaynagi')),
+                $kazaTarihi,
+                clean($getValue('kaza_il')),
+                clean($getValue('kaza_ilce')),
+                clean($getValue('hasar_no')),
+                clean($getValue('notlar')),
+                $user['id']
+            ]);
+        }
 
         $dosyaId = (int)$db->lastInsertId();
 
