@@ -1,0 +1,10 @@
+HAK MAHRUMIYET BUGFIX - YUKLENECEK DOSYALAR
+=============================================
+
+BU KLASORDEKI DOSYALARI SUNUCUYA YUKLEYIN:
+
+1) api-v1-dosya/create.php  -->  SUNUCUDA: /api/v1/dosya/create.php
+2) js-pages/dosya-detay.js  -->  SUNUCUDA: /js/pages/dosya-detay.js
+
+ONCE YEDEK ALIN, SONRA USTUNE YAZIN.
+YUKLEDIKTEN SONRA CTRL+SHIFT+R ILE CACHE TEMIZLEYIN.
