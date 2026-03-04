@@ -1,0 +1,80 @@
+═══════════════════════════════════════════════════════════════
+  TOPLU DOSYA AKTARIM MODULU - KURULUM KILAVUZU
+  MR HASAR DANISMANLIK SİSTEMİ
+═══════════════════════════════════════════════════════════════
+
+MODUL DOSYALARI:
+────────────────
+1. api/v1/dosya/excel-sablon.php   → CSV sablon indirme API (GET)
+2. api/v1/dosya/excel-import.php   → CSV dosya yukleme/aktarim API (POST)
+3. js/pages/toplu-aktarim-tab.js   → Frontend React bileseni (TopluAktarimTab)
+
+KURULUM ADIMLARI:
+─────────────────
+
+ADIM 1: API DOSYALARINI KOPYALA
+   api/v1/dosya/excel-sablon.php  → sunucu/api/v1/dosya/excel-sablon.php
+   api/v1/dosya/excel-import.php  → sunucu/api/v1/dosya/excel-import.php
+
+ADIM 2: FRONTEND BILESENI ENTEGRE ET
+   toplu-aktarim-tab.js icindeki TopluAktarimTab fonksiyonunu
+   sistem.js dosyasina kopyalayin (diger Tab bilesenlerinin yanina).
+
+ADIM 3: SISTEM.JS ICINDE TAB ENTEGRASYONU
+   sistem.js dosyasinda SistemPage bileseni icinde:
+
+   a) modulBasliklar objesine ekleyin:
+      aktarim: {label: 'TOPLU AKTARIM', icon: 'FileSpreadsheet'},
+
+   b) Tab render bolumune ekleyin:
+      {subPage === 'aktarim' && isAdmin && <TopluAktarimTab/>}
+
+ADIM 4: APP.JS MENUSUNE EKLE
+   app.js dosyasindaki MENU dizisinde sistem alt menusune:
+   {id:'sistem-aktarim', label:'TOPLU AKTARIM', icon:'FileSpreadsheet'}
+
+ADIM 5: YETKI HARITASINA EKLE (OPSIYONEL)
+   sistem.js dosyasindaki MODUL_YETKILERI dizisinde sistem modulu islemlerine:
+   {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'}
+
+ERİŞİM:
+───────
+- Sadece admin rolundeki kullanicilar erisebilir
+- Konum: Sistem Yonetimi > TOPLU AKTARIM
+
+KULLANIM:
+─────────
+1. SABLON INDIR butonuyla CSV sablonunu indirin
+2. Sablondeki ornek satirlari silin, verilerinizi doldurun
+3. DOSYA TURU (ADK/BH) ve ADI SOYADI zorunlu alanlardir
+4. Kaza tarihi formati: GG.AA.YYYY (orn: 15.01.2026)
+5. DOSYA SEC + AKTAR butonlariyla sisteme aktarin
+6. Sonuc ekraninda basarili/hatali sayilari gorun
+
+SABLON SUTUNLARI:
+─────────────────
+DOSYA TURU *       → ADK veya BH (zorunlu)
+ADI SOYADI *       → Magdur ad soyad (zorunlu)
+T.C. KIMLIK        → 11 haneli TC kimlik no
+TELEFON            → Magdur telefon
+TELEFON 2          → Ikinci telefon
+E-POSTA            → Magdur email
+SIGORTA SIRKETI    → Davali sigorta sirketi
+HASAR NO           → Sigorta hasar numarasi
+POLICE NO          → Sigorta police numarasi
+KAZA TARIHI        → GG.AA.YYYY formatinda
+KAZA IL            → Kaza ili
+KAZA ILCE          → Kaza ilcesi
+PLAKA              → Magdur arac plakasi
+MARKA              → Arac markasi
+MODEL              → Arac modeli
+MODEL YILI         → Arac model yili
+KARSI PLAKA        → Karsi arac plakasi
+KARSI SIGORTA      → Karsi arac trafik sigortasi
+DOSYA KAYNAGI      → OFIS CRM / YONLENDIREN / SAHA PERSONEL
+ASAMA              → Dosya asamasi (varsayilan: Dosya Acik)
+NOTLAR             → Dosya notlari
+
+NOT: Sablonda 2 ornek satir bulunur (bir ADK, bir BH ornegi)
+
+═══════════════════════════════════════════════════════════════
