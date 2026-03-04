@@ -3263,34 +3263,59 @@ const TopluAktarimTab = () => {
   const [secilenDosya, setSecilenDosya] = useState(null);
   const fileRef = React.useRef(null);
 
-  /* ŞABLON İNDİR */
-  const sablonIndir = async () => {
+  /* ŞABLON İNDİR (XLSX) */
+  const sablonIndir = () => {
     setSablonIndiriliyor(true);
     try {
-      const token = MR.api?.token;
-      const r = await fetch('/api/v1/dosya/excel-sablon.php', {
-        headers: token ? {'Authorization': 'Bearer ' + token} : {}
-      });
-      if (!r.ok) { setHata('ŞABLON İNDİRİLEMEDİ'); setSablonIndiriliyor(false); return; }
-      const blob = await r.blob();
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'dosya_toplu_aktarim_sablonu.csv';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      const basliklar = [
+        'T.C. NO','ADI SOYADI','DOSYA KAYNAĞI','DOSYA TÜRÜ','DAVALI ŞİRKET',
+        'SİGORTA HASAR NO','KAZA TARİHİ','DOSYA AŞAMA DURUMU',
+        'TELEFON','TELEFON 2','E-POSTA','POLİÇE NO','KAZA İL','KAZA İLÇE',
+        'PLAKA','MARKA','MODEL','MODEL YILI','KARŞI PLAKA','KARŞI SİGORTA','NOTLAR'
+      ];
+      const ornek1 = [
+        '12345678901','Ahmet Yılmaz','OFİS CRM','ADK','Axa Sigorta',
+        'HSR-2026-001','15.01.2026','Dosya Açık',
+        '0532 111 2233','','ahmet@email.com','POL-123456','İSTANBUL','KADIKÖY',
+        '34 ABC 123','TOYOTA','COROLLA','2022','06 DEF 456','Allianz Sigorta','Toplu aktarım ile eklendi'
+      ];
+      const ornek2 = [
+        '98765432109','Fatma Demir','YÖNLENDİREN','BH','Mapfre Sigorta',
+        '','20.02.2026','Dosya Açık',
+        '0533 444 5566','','','','ANKARA','ÇANKAYA',
+        '','','','','','',''
+      ];
+      const ws = XLSX.utils.aoa_to_sheet([basliklar, ornek1, ornek2]);
+      /* Sütun genişlikleri */
+      ws['!cols'] = basliklar.map(b => ({wch: Math.max(b.length + 4, 14)}));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Şablon');
+      XLSX.writeFile(wb, 'dosya_toplu_aktarim_sablonu.xlsx');
     } catch(e) { setHata('İNDİRME HATASI: ' + e.message); }
     setSablonIndiriliyor(false);
   };
 
-  /* DOSYA YÜKLE */
+  /* DOSYA YÜKLE (XLSX/CSV) */
   const dosyaYukle = async () => {
-    if (!secilenDosya) { setHata('LÜTFEN BİR CSV DOSYASI SEÇİN'); return; }
+    if (!secilenDosya) { setHata('LÜTFEN BİR EXCEL VEYA CSV DOSYASI SEÇİN'); return; }
     setYukleniyor(true); setHata(''); setSonuc(null);
 
     try {
       const token = MR.api?.token;
       const formData = new FormData();
-      formData.append('dosya', secilenDosya);
+      const ext = secilenDosya.name.split('.').pop().toLowerCase();
+
+      if (['xlsx','xls'].includes(ext)) {
+        /* Excel dosyasını oku ve CSV'ye çevir */
+        const buf = await secilenDosya.arrayBuffer();
+        const wb = XLSX.read(buf, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const csvStr = XLSX.utils.sheet_to_csv(ws, {FS:';'});
+        const csvBlob = new Blob(['\uFEFF' + csvStr], {type:'text/csv;charset=utf-8'});
+        formData.append('dosya', csvBlob, secilenDosya.name.replace(/\.xlsx?$/i, '.csv'));
+      } else {
+        formData.append('dosya', secilenDosya);
+      }
 
       const r = await fetch('/api/v1/dosya/excel-import.php', {
         method: 'POST',
@@ -3318,7 +3343,7 @@ const TopluAktarimTab = () => {
       <div style={{...S.card}}>
         <div style={{...S.cardHead}}>
           <LIcon name="FileSpreadsheet" size={16} color={C.accent}/>
-          <span style={{fontWeight:700}}>TOPLU DOSYA AKTARIMI (EXCEL/CSV)</span>
+          <span style={{fontWeight:700}}>TOPLU DOSYA AKTARIMI (EXCEL)</span>
         </div>
         <div style={{padding:16}}>
           <div style={{background:`${C.accent}08`,border:`1px solid ${C.accent}22`,borderRadius:10,padding:16,marginBottom:16}}>
@@ -3330,7 +3355,7 @@ const TopluAktarimTab = () => {
               <li>Şablondaki örnek satırları silin, kendi verilerinizi doldurun</li>
               <li><b>DOSYA TÜRÜ</b> (ADK/BH) ve <b>ADI SOYADI</b> zorunlu alanlardır</li>
               <li>Kaza tarihi formatı: <b>GG.AA.YYYY</b> (örn: 15.01.2026)</li>
-              <li>CSV dosyasını <b>YÜKLE</b> butonuyla sisteme aktarın</li>
+              <li>Excel dosyasını <b>YÜKLE</b> butonuyla sisteme aktarın</li>
             </ol>
           </div>
 
@@ -3361,7 +3386,7 @@ const TopluAktarimTab = () => {
               style={{...S.btn,...S.btnP,padding:'12px 24px',fontSize:12,
                 opacity:sablonIndiriliyor?0.6:1}}>
               <LIcon name="Download" size={16} color="#fff"/>
-              {sablonIndiriliyor ? 'İNDİRİLİYOR...' : 'ŞABLON İNDİR (CSV)'}
+              {sablonIndiriliyor ? 'İNDİRİLİYOR...' : 'ŞABLON İNDİR (EXCEL)'}
             </button>
 
             {/* DOSYA SEÇ + YÜKLE */}
@@ -3371,7 +3396,7 @@ const TopluAktarimTab = () => {
                 boxShadow:'0 4px 14px -2px rgba(16,185,129,0.5), 0 2px 4px -1px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)',borderBottom:'2px solid #047857'}}>
                 <LIcon name="Upload" size={16} color="#fff"/>
                 DOSYA SEÇ
-                <input ref={fileRef} type="file" accept=".csv,.txt" style={{display:'none'}}
+                <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.txt" style={{display:'none'}}
                   onChange={e => { setSecilenDosya(e.target.files[0] || null); setHata(''); setSonuc(null); }}/>
               </label>
               {secilenDosya && (
