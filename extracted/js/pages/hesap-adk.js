@@ -75,7 +75,7 @@ const hesaplaYargitay = (rayic, onarim, yil, km, onceki, bolge, kusur) => {
 /* ═══════════════════════════════════════════════════════════
    ANA COMPONENT
    ═══════════════════════════════════════════════════════════ */
-MR.HesapADKPage = () => {
+MR.HesapADKPage = ({setPage, user}) => {
   const C = MR.C, S = MR.S;
 
   /* FORM */

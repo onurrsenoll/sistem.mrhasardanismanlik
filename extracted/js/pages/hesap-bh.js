@@ -6,7 +6,7 @@
 
   window.MR = window.MR || {};
 
-  MR.HesapBHPage = () => {
+  MR.HesapBHPage = ({setPage, user}) => {
     // MOD SEÇİMİ
     const [mod, setMod] = useState('hizli');
 
