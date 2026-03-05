@@ -5,12 +5,13 @@
 
 const MR = window.MR || (window.MR = {});
 
-/* ---------- GİDEN ARAMA BAŞLAT (NETSİPP+ SOFTPHONE) ---------- */
+/* ---------- GİDEN ARAMA BAŞLAT (NETSANTRAL ORIGINATE) ---------- */
 
 /**
- * NETSİPP+ SOFTPHONE ÜZERİNDEN GİDEN ARAMA BAŞLAT
- * AKIŞ: tel: PROTOKOLü → NETSİPP+ NUMARAYI ÇEVİRİR → GERÇEK ARAMA BAŞLAR
- * AYNI ANDA KİŞİ KARTI AÇILIR → BİLGİ GİRİŞİ YAPILABİLİR
+ * NETSANTRAL PBX ÜZERİNDEN GİDEN ARAMA BAŞLAT
+ * AKIŞ: ORIGINATE API → PBX DAHİLİNİZİ ÇALDIRIR → AÇTIĞINIZDA HEDEF NUMARAYA BAĞLAR
+ * Cloudflare Worker proxy sayesinde port 9111 kısıtlaması aşılır
+ * CRM EKRANINDA HİÇBİR YENİ PENCERE/UYGULAMA AÇILMAZ
  *
  * @param {string} telefon - ARANACAK TELEFON NUMARASI
  * @param {string} ad - ARANAN KİŞİNİN ADI (OPSİYONEL)
@@ -34,17 +35,21 @@ MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
     cleanNum = '90' + cleanNum;
   }
 
-  /* tel: PROTOKOLü İÇİN 0 İLE BAŞLAYAN FORMAT */
-  let dialNum = cleanNum;
-  if (dialNum.startsWith('90') && dialNum.length >= 12) {
-    dialNum = '0' + dialNum.substring(2); // 905551234567 → 05551234567
-  }
-
-  console.log('[NETSİPP+] ARAMA BAŞLATILIYOR:', dialNum, '| AD:', ad || '-');
+  console.log('[NETSANTRAL] ARAMA BAŞLATILIYOR:', cleanNum, '| AD:', ad || '-', '| DAHİLİ:', MR._netsantralDahili || 'YOK');
 
   /* NETSANTRAL AKTİF KONTROLÜ */
   if (MR._netsantralAktif === false) {
     const hata = 'NETSANTRAL PASİF DURUMDA! SİSTEM > AYARLAR > NETSANTRAL BÖLÜMÜNDEN AKTİF EDİN.';
+    alert(hata);
+    window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
+      detail: { basarili: false, hata: hata, telefon: cleanNum, ad: ad || '' }
+    }));
+    return;
+  }
+
+  /* DAHİLİ KONTROLÜ */
+  if (!MR._netsantralDahili) {
+    const hata = 'DAHİLİ NUMARASI TANIMLI DEĞİL! SİSTEM > AYARLAR > NETSANTRAL BÖLÜMÜNDEN DAHİLİ NUMARASINI GİRİN.';
     alert(hata);
     window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
       detail: { basarili: false, hata: hata, telefon: cleanNum, ad: ad || '' }
@@ -61,7 +66,7 @@ MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
   let _aramaLogId = 0;
   try {
     const logR = await MR.api.netsantralAramaLogCreate({
-      arayan: MR._netsantralDahili || dialNum,
+      arayan: MR._netsantralDahili,
       aranan: cleanNum,
       arayan_adi: ad || '',
       yon: 'giden',
@@ -72,35 +77,38 @@ MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
     }
   } catch(e) {}
 
-  /* NETSİPP+ İLE GERÇEK ARAMA BAŞLAT (tel: PROTOKOLü)
-     Netsipp+ masaüstü uygulaması tel: protokolünü yakalayıp numarayı çevirir.
-     Bu yöntem port 9111 gerektirmez - doğrudan softphone üzerinden çalışır. */
+  /* ORIGINATE API İLE ARAMA BAŞLAT
+     Cloudflare Worker proxy üzerinden crmsntrl.netgsm.com.tr:9111'e ulaşır
+     CRM ekranında hiçbir pencere/uygulama açılmaz - arka planda çalışır */
   try {
-    /* tel: LINK OLUŞTUR VE TIKLA */
-    const telLink = document.createElement('a');
-    telLink.href = 'tel:' + dialNum;
-    telLink.style.display = 'none';
-    document.body.appendChild(telLink);
-    telLink.click();
-    document.body.removeChild(telLink);
-
-    console.log('[NETSİPP+] tel: PROTOKOLü TETİKLENDİ:', dialNum);
-
-    /* LOG GÜNCELLE - ARAMA BAŞLATILDI */
-    if (_aramaLogId) {
-      MR.api.netsantralAramaLogUpdate({ log_id: _aramaLogId, durum: 'gorusmede' }).catch(() => {});
+    const r = await MR.api.netsantralOriginate(cleanNum, MR._netsantralDahili);
+    console.log('[NETSANTRAL] ORIGINATE YANIT:', JSON.stringify(r));
+    if (r?.success && r.data?.success_api) {
+      if (_aramaLogId) {
+        MR.api.netsantralAramaLogUpdate({ log_id: _aramaLogId, durum: 'gorusmede' }).catch(() => {});
+      }
+      window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
+        detail: { basarili: true, telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
+      }));
+    } else {
+      const hataMesaj = r?.data?.response?.hata_mesaj || r?.error || 'ÇAĞRI BAŞLATILAMADI';
+      console.error('[NETSANTRAL] ORIGINATE HATA:', hataMesaj, r);
+      if (_aramaLogId) {
+        MR.api.netsantralAramaLogUpdate({ log_id: _aramaLogId, durum: 'basarisiz', notlar: hataMesaj }).catch(() => {});
+      }
+      alert('ARAMA HATASI: ' + hataMesaj);
+      window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
+        detail: { basarili: false, hata: hataMesaj, telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
+      }));
     }
-    window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
-      detail: { basarili: true, telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
-    }));
   } catch(e) {
-    console.error('[NETSİPP+] ARAMA HATASI:', e);
+    console.error('[NETSANTRAL] BAĞLANTI HATASI:', e);
     if (_aramaLogId) {
-      MR.api.netsantralAramaLogUpdate({ log_id: _aramaLogId, durum: 'basarisiz', notlar: 'TEL PROTOKOL HATASI' }).catch(() => {});
+      MR.api.netsantralAramaLogUpdate({ log_id: _aramaLogId, durum: 'basarisiz', notlar: 'BAĞLANTI HATASI' }).catch(() => {});
     }
-    alert('ARAMA BAŞLATILAMADI! NETSİPP+ UYGULAMASININ AÇIK OLDUĞUNDAN EMİN OLUN.');
+    alert('NETSANTRAL BAĞLANTI HATASI! CLOUDFLARE WORKER AYARINI KONTROL EDİN.');
     window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
-      detail: { basarili: false, hata: 'NETSİPP+ BAĞLANTI HATASI', telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
+      detail: { basarili: false, hata: 'BAĞLANTI HATASI: ' + (e?.message || ''), telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
     }));
   }
 
