@@ -47,55 +47,61 @@ if (empty($santralNo) || empty($username) || empty($password)) {
     json_error('NETSANTRAL AYARLARI YAPILANDIRILMAMIŞ. SİSTEM > NETSANTRAL AYARLARI BÖLÜMÜNDEN AYARLARI GİRİN.', 400);
 }
 
-// SANTRAL NO NORMALİZASYONU - NetGSM CRM Santral API 850 prefiksi gerektirir
-// API URL: https://crmsntrl.netgsm.com.tr/{850XXXXXXXXXX}/...
-// Kullanıcı girişi: 0850..., 850..., veya sadece 10 haneli abone no olabilir
-$santralNoTrimmed = ltrim($santralNo, '0'); // Baştaki sıfırları temizle
-if (strpos($santralNo, '0850') === 0) {
-    // 0850 ile başlıyorsa sadece baştaki 0'ı kaldır → 850...
-    $santralNoClean = substr($santralNo, 1);
-} elseif (strpos($santralNo, '850') === 0) {
-    // 850 ile başlıyorsa olduğu gibi kullan
-    $santralNoClean = $santralNo;
-} elseif (strlen(ltrim($santralNo, '0')) === 10 && strpos(ltrim($santralNo, '0'), '850') !== 0) {
-    // 10 haneli ve 850 ile başlamıyorsa → 850 ekle
-    $santralNoClean = '850' . ltrim($santralNo, '0');
-} else {
-    // Diğer durumlar: baştaki 0'ları temizle (eski davranış)
-    $santralNoClean = $santralNoTrimmed;
-}
+// SANTRAL NO NORMALİZASYONU - NetGSM CRM Santral API
+// API URL: http://crmsntrl.netgsm.com.tr:9111/{SANTRAL_NO}/originate
+// Erman (NetGSM) testi: username=3625026502, santral_no=3625026502
+$santralNoClean = preg_replace('/[^0-9]/', '', $santralNo);
+// Baştaki 0'ları temizle (0362... → 362...)
+$santralNoClean = ltrim($santralNoClean, '0');
 
-// KULLANICI ADI NORMALİZASYONU - NetGSM CRM API hat kullanıcı formatı
-$usernameClean = ltrim($username, '0');
+// KULLANICI ADI NORMALİZASYONU - NetGSM API: baştaki 0 olmadan
+$usernameClean = ltrim(preg_replace('/[^0-9]/', '', $username), '0');
 
-// API URL OLUŞTUR
-$baseUrl = "https://crmsntrl.netgsm.com.tr/{$santralNoClean}";
+// API URL OLUŞTUR - PORT 9111 (NetGSM CRM Santral HTTP API)
+$baseUrl = "http://crmsntrl.netgsm.com.tr:9111/{$santralNoClean}";
 $apiUrl = '';
 $queryParams = [];
 
-// ORTAK AUTH (başındaki 0 temizlenmiş hali kullanılır)
+// ORTAK AUTH
 $queryParams['username'] = $usernameClean;
 $queryParams['password'] = $password;
 
 switch ($action) {
     case 'originate':
-        // ÇAĞRI BAŞLAT
+        // ÇAĞRI BAŞLAT - Erman (NetGSM) Postman parametreleri ile
         $apiUrl = "{$baseUrl}/originate";
-        $queryParams['dahili'] = $params['dahili'] ?? $dahili;
-        $queryParams['hedef'] = $params['hedef'] ?? '';
-        if (empty($queryParams['dahili'])) {
+        $hedef = $params['hedef'] ?? '';
+        $dahiliParam = $params['dahili'] ?? $dahili;
+        if (empty($dahiliParam)) {
             json_error('DAHİLİ NUMARASI TANIMLANMAMIŞ. SİSTEM > NETSANTRAL AYARLARI BÖLÜMÜNDEN DAHİLİ NUMARASINI GİRİN.', 422);
         }
-        if (empty($queryParams['hedef'])) {
+        if (empty($hedef)) {
             json_error('HEDEF NUMARA GEREKLİ', 422);
         }
+        // HEDEF NUMARA NORMALİZASYONU - 0 ile başlamalı (05XX formatı)
+        $hedefClean = preg_replace('/[^0-9]/', '', $hedef);
+        if (strpos($hedefClean, '90') === 0 && strlen($hedefClean) >= 12) {
+            $hedefClean = '0' . substr($hedefClean, 2); // 905XX → 05XX
+        } elseif (strpos($hedefClean, '0') !== 0 && strlen($hedefClean) === 10) {
+            $hedefClean = '0' . $hedefClean; // 5XX → 05XX
+        }
+        // NetGSM Originate API parametreleri (Erman Postman testi)
+        $queryParams['customer_num'] = $hedefClean;
+        $queryParams['internal_num'] = $dahiliParam;
+        $queryParams['trunk'] = $usernameClean;
+        $queryParams['pbxnum'] = $usernameClean;
+        $queryParams['ring_timeout'] = $params['ring_timeout'] ?? '20';
+        $queryParams['crm_id'] = $params['crm_id'] ?? '1';
+        $queryParams['wait_response'] = '1';
+        $queryParams['originate_order'] = 'if';
+        $queryParams['manual_answer'] = '1';
         break;
 
     case 'hangup':
         // ÇAĞRI SONLANDIR
         $apiUrl = "{$baseUrl}/hangup";
-        $queryParams['dahili'] = $params['dahili'] ?? $dahili;
-        if (empty($queryParams['dahili'])) {
+        $queryParams['internal_num'] = $params['dahili'] ?? $dahili;
+        if (empty($queryParams['internal_num'])) {
             json_error('DAHİLİ NUMARASI TANIMLANMAMIŞ. SİSTEM > NETSANTRAL AYARLARI BÖLÜMÜNDEN DAHİLİ NUMARASINI GİRİN.', 422);
         }
         break;
@@ -103,7 +109,7 @@ switch ($action) {
     case 'muteaudio':
         // SESİ KAPAT/AÇ
         $apiUrl = "{$baseUrl}/muteaudio";
-        $queryParams['dahili'] = $params['dahili'] ?? $dahili;
+        $queryParams['internal_num'] = $params['dahili'] ?? $dahili;
         $queryParams['direction'] = $params['direction'] ?? 'all';
         $queryParams['state'] = $params['state'] ?? 'on';
         break;
@@ -111,7 +117,7 @@ switch ($action) {
     case 'xfer':
         // KÖR TRANSFER
         $apiUrl = "{$baseUrl}/xfer";
-        $queryParams['dahili'] = $params['dahili'] ?? $dahili;
+        $queryParams['internal_num'] = $params['dahili'] ?? $dahili;
         $queryParams['hedef'] = $params['hedef'] ?? '';
         if (empty($queryParams['hedef'])) {
             json_error('TRANSFER HEDEFİ GEREKLİ', 422);
@@ -121,7 +127,7 @@ switch ($action) {
     case 'atxfer':
         // DANIŞMALI TRANSFER
         $apiUrl = "{$baseUrl}/atxfer";
-        $queryParams['dahili'] = $params['dahili'] ?? $dahili;
+        $queryParams['internal_num'] = $params['dahili'] ?? $dahili;
         $queryParams['hedef'] = $params['hedef'] ?? '';
         if (empty($queryParams['hedef'])) {
             json_error('TRANSFER HEDEFİ GEREKLİ', 422);
@@ -149,21 +155,21 @@ switch ($action) {
     case 'agentlogin':
         // DAHİLİ KUYRUĞA EKLE
         $apiUrl = "{$baseUrl}/agentlogin";
-        $queryParams['dahili'] = $params['dahili'] ?? $dahili;
+        $queryParams['internal_num'] = $params['dahili'] ?? $dahili;
         $queryParams['kuyruk'] = $params['kuyruk'] ?? '';
         break;
 
     case 'agentlogoff':
         // DAHİLİ KUYRUKTAN ÇIKAR
         $apiUrl = "{$baseUrl}/agentlogoff";
-        $queryParams['dahili'] = $params['dahili'] ?? $dahili;
+        $queryParams['internal_num'] = $params['dahili'] ?? $dahili;
         $queryParams['kuyruk'] = $params['kuyruk'] ?? '';
         break;
 
     case 'agentpause':
         // MOLA AL / MOLA BİTİR
         $apiUrl = "{$baseUrl}/agentpause";
-        $queryParams['dahili'] = $params['dahili'] ?? $dahili;
+        $queryParams['internal_num'] = $params['dahili'] ?? $dahili;
         $queryParams['pause'] = $params['pause'] ?? '1';
         if (!empty($params['reason'])) {
             $queryParams['reason'] = $params['reason'];
@@ -186,24 +192,22 @@ $fullUrl = $apiUrl . '?' . http_build_query($queryParams);
 function netsantral_curl_exec($url, $attempt = 1) {
     $ch = curl_init();
 
-    // TEMEL CURL OPSİYONLARI
+    // TEMEL CURL OPSİYONLARI - HTTP:9111 (SSL gereksiz)
     $opts = [
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT => 25,
         CURLOPT_CONNECTTIMEOUT => 15,
-        // SSL - cPanel uyumluluğu için doğrulama kapalı
+        // SSL - HTTP kullanıldığı için sadece fallback olarak
         CURLOPT_SSL_VERIFYPEER => false,
         CURLOPT_SSL_VERIFYHOST => 0,
-        // IPv4 ZORLA - cPanel/shared hosting ortamlarında IPv6 protokol hatası önlenir
+        // IPv4 ZORLA
         CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
-        // HTTP/1.1 zorla - HTTP/2 protokol hataları önlenir
+        // HTTP/1.1
         CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_MAXREDIRS => 3,
-        // ENCODING - gzip/deflate desteği
         CURLOPT_ENCODING => '',
-        // DNS CACHE - tekrarlı istekler hızlanır
         CURLOPT_DNS_CACHE_TIMEOUT => 300,
         CURLOPT_HTTPHEADER => [
             'Accept: application/json, text/plain, */*',
@@ -211,7 +215,6 @@ function netsantral_curl_exec($url, $attempt = 1) {
             'Cache-Control: no-cache',
             'Connection: close'
         ],
-        // FRESH CONNECT - eski bağlantı sorunlarını önler
         CURLOPT_FRESH_CONNECT => ($attempt > 1),
         CURLOPT_FORBID_REUSE => ($attempt > 1),
     ];
@@ -221,13 +224,9 @@ function netsantral_curl_exec($url, $attempt = 1) {
         $opts[CURLOPT_HTTP_VERSION] = CURL_HTTP_VERSION_NONE;
     }
 
-    // 3. DENEME: TLS ayarlarını gevşet
+    // 3. DENEME: Farklı ayarlar dene
     if ($attempt >= 3) {
         $opts[CURLOPT_HTTP_VERSION] = CURL_HTTP_VERSION_NONE;
-        if (defined('CURLOPT_SSL_OPTIONS')) {
-            $opts[CURLOPT_SSL_OPTIONS] = CURLSSLOPT_ALLOW_BEAST | CURLSSLOPT_NO_REVOKE;
-        }
-        $opts[CURLOPT_SSLVERSION] = CURL_SSLVERSION_TLSv1;
     }
 
     curl_setopt_array($ch, $opts);
@@ -476,7 +475,7 @@ if ($action === 'test' && !$apiBasarili) {
 
     foreach ($altFormatlar as $altNo) {
         $altQuery = http_build_query(['username' => $usernameClean, 'password' => $password]);
-        $altUrl = "https://crmsntrl.netgsm.com.tr/{$altNo}/queuestats?{$altQuery}";
+        $altUrl = "http://crmsntrl.netgsm.com.tr:9111/{$altNo}/queuestats?{$altQuery}";
         $altResult = netsantral_curl_exec($altUrl, 1);
 
         if (!empty($altResult['info']['curl_error'])) continue;

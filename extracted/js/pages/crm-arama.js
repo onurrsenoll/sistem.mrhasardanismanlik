@@ -262,6 +262,82 @@ MR.CrmAramaPage = ({setPage, user}) => {
     setAktarimLoading(null);
   };
 
+  /* ── OTOMATİK ARAMA (AUTOCALL) ── */
+  const [autocallLoading, setAutocallLoading] = useState(false);
+  const [autocallMsg, setAutocallMsg] = useState({type:'', text:''});
+  const [autocallListId, setAutocallListId] = useState(null);
+  const [autocallListeler, setAutocallListeler] = useState([]);
+  const [autocallRapor, setAutocallRapor] = useState(null);
+  const [autocallModal, setAutocallModal] = useState(false);
+
+  /* OTOMATİK ARAMA LİSTESİ OLUŞTUR - MEVCUT DATA'DAN */
+  const autocallBaslat = async () => {
+    const telefonlar = data.filter(d => d.magdur_telefon && d.durum !== 'Alindi').map(d => d.magdur_telefon);
+    if (telefonlar.length === 0) {
+      setAutocallMsg({type:'error', text:'ARANACAK NUMARA BULUNAMADI (ALINDI HARİÇ)'});
+      setTimeout(() => setAutocallMsg({type:'', text:''}), 4000);
+      return;
+    }
+    setAutocallLoading(true);
+    setAutocallMsg({type:'', text:''});
+    try {
+      const listName = 'CRM_' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '_' + Date.now().toString(36).toUpperCase();
+      const r = await api.autocallListeOlustur({
+        list_name: listName,
+        list_prefix: '110',
+        list_type: 'static',
+        numaralar: telefonlar
+      });
+      if (r?.success && r.data?.success_api) {
+        const lid = r.data?.response?.list_id || r.data?.response?.data?.list_id || null;
+        setAutocallListId(lid);
+        setAutocallMsg({type:'success', text: telefonlar.length + ' NUMARA İLE OTOMATİK ARAMA LİSTESİ OLUŞTURULDU' + (lid ? ' (ID: ' + lid + ')' : '')});
+      } else {
+        const hata = r?.data?.response?.hata_mesaj || r?.error || 'OTOMATİK ARAMA LİSTESİ OLUŞTURULAMADI';
+        setAutocallMsg({type:'error', text: hata});
+      }
+    } catch(e) {
+      setAutocallMsg({type:'error', text:'BAĞLANTI HATASI: ' + (e?.message || '')});
+    }
+    setAutocallLoading(false);
+    setTimeout(() => setAutocallMsg({type:'', text:''}), 8000);
+  };
+
+  /* OTOMATİK ARAMA LİSTELERİNİ YÜKLE */
+  const autocallListeleriYukle = async () => {
+    setAutocallModal(true);
+    setAutocallLoading(true);
+    try {
+      const r = await api.autocallListeler();
+      if (r?.success && r.data?.response) {
+        setAutocallListeler(Array.isArray(r.data.response) ? r.data.response : (r.data.response?.data || []));
+      }
+    } catch(e) {}
+    setAutocallLoading(false);
+  };
+
+  /* OTOMATİK ARAMA RAPORU */
+  const autocallRaporAl = async (listId) => {
+    try {
+      const r = await api.autocallRapor(listId);
+      if (r?.success) {
+        setAutocallRapor(r.data?.response || null);
+      }
+    } catch(e) {}
+  };
+
+  /* OTOMATİK ARAMA DURDUR */
+  const autocallDurdur = async (listId) => {
+    try {
+      const r = await api.autocallListeDurdur(listId);
+      if (r?.success) {
+        setAutocallMsg({type:'success', text:'LİSTE DURDURULDU'});
+        autocallListeleriYukle();
+      }
+    } catch(e) {}
+    setTimeout(() => setAutocallMsg({type:'', text:''}), 4000);
+  };
+
   /* ── GİDEN ARAMA DURUMU ── */
   const [aramaAktif, setAramaAktif] = useState(null); // ARANMAKTA OLAN KAYIT ID'Sİ
   const [aramaMsg, setAramaMsg] = useState('');
@@ -358,12 +434,33 @@ MR.CrmAramaPage = ({setPage, user}) => {
           </div>
         </div>
 
-        {/* GÜNLÜK ARAMA ÖZETİ */}
+        {/* GÜNLÜK ARAMA ÖZETİ + OTOMATİK ARAMA */}
         <div style={S.card}>
-          <div style={{...S.cardHead, padding:'10px 16px'}}>
-            <LIcon name="BarChart3" size={14} color={C.accent}/>
-            <span style={{fontSize:12, fontWeight:700}}>GÜNLÜK ARAMA ÖZETİ</span>
+          <div style={{...S.cardHead, padding:'10px 16px', justifyContent:'space-between'}}>
+            <div style={{display:'flex', alignItems:'center', gap:8}}>
+              <LIcon name="BarChart3" size={14} color={C.accent}/>
+              <span style={{fontSize:12, fontWeight:700}}>GÜNLÜK ARAMA ÖZETİ</span>
+            </div>
+            <div style={{display:'flex', gap:6}}>
+              <button style={{...S.btn, ...S.btnS, fontSize:9, padding:'5px 10px'}}
+                onClick={autocallBaslat} disabled={autocallLoading || data.length === 0}
+                title="LİSTEDEKİ NUMARALARI OTOMATİK ARAMA LİSTESİ OLARAK NETGSM'E GÖNDER">
+                <LIcon name="PhoneOutgoing" size={12} color="#fff"/>
+                {autocallLoading ? 'GÖNDERİLİYOR...' : 'OTOMATİK ARAMA BAŞLAT'}
+              </button>
+              <button style={{...S.btn, ...S.btnG, fontSize:9, padding:'5px 10px'}}
+                onClick={autocallListeleriYukle} title="OTOMATİK ARAMA LİSTELERİ VE RAPORLARI">
+                <LIcon name="List" size={12} color={C.textSec}/>
+                LİSTELER
+              </button>
+            </div>
           </div>
+          {/* OTOMATİK ARAMA MESAJI */}
+          {autocallMsg.text && (
+            <div style={{padding:'8px 16px', background: autocallMsg.type === 'success' ? `${C.success}12` : `${C.danger}12`, fontSize:11, fontWeight:600, color: autocallMsg.type === 'success' ? C.success : C.danger, display:'flex', alignItems:'center', gap:6}}>
+              <LIcon name={autocallMsg.type === 'success' ? 'CheckCircle' : 'AlertCircle'} size={14} color={autocallMsg.type === 'success' ? C.success : C.danger}/> {autocallMsg.text}
+            </div>
+          )}
           <div style={{padding:16}}>
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
               {[
@@ -677,6 +774,55 @@ MR.CrmAramaPage = ({setPage, user}) => {
                 <LIcon name="Save" size={14} color="#fff"/> {notLoading ? 'KAYDEDİLİYOR...' : 'NOTU KAYDET'}
               </button>
             </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ═══ OTOMATİK ARAMA LİSTELERİ MODAL ═══ */}
+      <Modal open={autocallModal} onClose={() => {setAutocallModal(false); setAutocallRapor(null);}} title="OTOMATİK ARAMA LİSTELERİ (NETGSM)" width="680px">
+        {autocallLoading ? <Loading/> : (
+          <div>
+            {autocallListeler.length === 0 ? (
+              <EmptyState icon="PhoneOutgoing" title="OTOMATİK ARAMA LİSTESİ YOK" desc="Excel yükleyip 'Otomatik Arama Başlat' butonunu kullanarak yeni liste oluşturabilirsiniz."/>
+            ) : (
+              <div style={{maxHeight:400, overflowY:'auto'}}>
+                {autocallListeler.map((liste, i) => (
+                  <div key={liste.list_id || i} style={{
+                    background:`${C.accent}08`, border:`1px solid ${C.border}`,
+                    borderRadius:10, padding:14, marginBottom:8
+                  }}>
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
+                      <div>
+                        <span style={{fontWeight:700, fontSize:13, color:C.text}}>{liste.list_name || 'LİSTE #' + (liste.list_id || i)}</span>
+                        {liste.list_id && <span style={{fontSize:10, color:C.textMuted, marginLeft:8}}>ID: {liste.list_id}</span>}
+                      </div>
+                      <div style={{display:'flex', gap:4}}>
+                        <button style={{...S.btn, ...S.btnMini, ...S.btnMiniP}} onClick={() => autocallRaporAl(liste.list_id)}>
+                          <LIcon name="BarChart3" size={10} color="#fff"/> RAPOR
+                        </button>
+                        <button style={{...S.btn, ...S.btnMini, ...S.btnMiniD}} onClick={() => autocallDurdur(liste.list_id)}>
+                          <LIcon name="Square" size={10} color="#fff"/> DURDUR
+                        </button>
+                      </div>
+                    </div>
+                    {liste.status && <span style={{fontSize:10, color:C.textMuted}}>DURUM: {liste.status}</span>}
+                    {liste.total_phones && <span style={{fontSize:10, color:C.textMuted, marginLeft:12}}>NUMARA: {liste.total_phones}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* RAPOR SONUÇLARI */}
+            {autocallRapor && (
+              <div style={{marginTop:16, padding:14, background:`${C.success}08`, border:`1px solid ${C.success}25`, borderRadius:10}}>
+                <div style={{fontSize:12, fontWeight:700, color:C.success, marginBottom:8}}>
+                  <LIcon name="BarChart3" size={14} color={C.success}/> ARAMA RAPORU
+                </div>
+                <pre style={{fontSize:11, color:C.text, whiteSpace:'pre-wrap', wordBreak:'break-all', maxHeight:200, overflowY:'auto'}}>
+                  {typeof autocallRapor === 'object' ? JSON.stringify(autocallRapor, null, 2) : String(autocallRapor)}
+                </pre>
+              </div>
+            )}
           </div>
         )}
       </Modal>

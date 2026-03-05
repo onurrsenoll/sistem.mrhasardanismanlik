@@ -125,6 +125,15 @@ MR.api = {
   netsantralAramaLogUpdate(d) { return this.req('/netsantral/arama-log.php', { method: 'POST', body: JSON.stringify({ action: 'update', ...d }) }); },
   netsantralAramaLogHangup(d) { return this.req('/netsantral/arama-log.php', { method: 'POST', body: JSON.stringify({ action: 'hangup', ...d }) }); },
   netsantralAramaList(p = {}) { return this.req('/netsantral/arama-list.php?' + new URLSearchParams(p)); },
+  // NETSANTRAL OTOMATİK ARAMA (AUTOCALL)
+  autocallProxy(d) { return this.req('/netsantral/autocall.php', { method: 'POST', body: JSON.stringify(d) }); },
+  autocallListeOlustur(params) { return this.autocallProxy({ action: 'liste_olustur', params }); },
+  autocallListeDurdur(listId) { return this.autocallProxy({ action: 'liste_durdur', params: { list_id: listId } }); },
+  autocallListeBaslat(listId) { return this.autocallProxy({ action: 'liste_baslat', params: { list_id: listId } }); },
+  autocallNumaraEkle(listId, numaralar) { return this.autocallProxy({ action: 'numara_ekle', params: { list_id: listId, numaralar } }); },
+  autocallNumaraCikar(listId, numaralar) { return this.autocallProxy({ action: 'numara_cikar', params: { list_id: listId, numaralar } }); },
+  autocallRapor(listId) { return this.autocallProxy({ action: 'rapor', params: { list_id: listId } }); },
+  autocallListeler() { return this.autocallProxy({ action: 'listeler', params: {} }); },
   // MUHASEBE
   kasaList() { return this.req('/muhasebe/kasa-list.php'); },
   kasaCreate(d) { return this.req('/muhasebe/kasa-create.php', { method: 'POST', body: JSON.stringify(d) }); },
