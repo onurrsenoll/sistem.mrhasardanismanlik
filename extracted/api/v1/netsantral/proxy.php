@@ -58,10 +58,15 @@ $santralNoClean = ltrim($santralNoClean, '0');
 // KULLANICI ADI NORMALİZASYONU - NetGSM API: baştaki 0 olmadan
 $usernameClean = ltrim(preg_replace('/[^0-9]/', '', $username), '0');
 
-// API URL OLUŞTUR - HTTPS:443 (cPanel port 9111 engelliyor, 443 çalışıyor)
+// ═══ ORIGINATE YÖNTEMİ SEÇİMİ ═══
+// crmsntrl.netgsm.com.tr:9111 portu cPanel shared hosting'de BLOKE!
+// Bu yüzden originate için api.netgsm.com.tr/autocallservice (HTTPS:443) kullanılıyor
+// Diğer komutlar (hangup, mute, transfer) hala crmsntrl üzerinden denenecek
 $baseUrl = "https://crmsntrl.netgsm.com.tr/{$santralNoClean}";
+$autocallUrl = 'https://api.netgsm.com.tr/autocallservice';
 $apiUrl = '';
 $queryParams = [];
+$useAutocall = false; // originate için autocall kullan
 
 // ORTAK AUTH
 $queryParams['username'] = $usernameClean;
@@ -69,8 +74,8 @@ $queryParams['password'] = $password;
 
 switch ($action) {
     case 'originate':
-        // ÇAĞRI BAŞLAT - Erman (NetGSM) Postman parametreleri ile
-        $apiUrl = "{$baseUrl}/originate";
+        // ÇAĞRI BAŞLAT - autocallservice üzerinden (port 443)
+        // crmsntrl:9111 portu bloke olduğu için autocall API kullanılıyor
         $hedef = $params['hedef'] ?? '';
         $dahiliParam = $params['dahili'] ?? $dahili;
         if (empty($dahiliParam)) {
@@ -86,16 +91,24 @@ switch ($action) {
         } elseif (strpos($hedefClean, '0') !== 0 && strlen($hedefClean) === 10) {
             $hedefClean = '0' . $hedefClean; // 5XX → 05XX
         }
-        // NetGSM Originate API parametreleri (Erman Postman testi)
-        $queryParams['customer_num'] = $hedefClean;
-        $queryParams['internal_num'] = $dahiliParam;
-        $queryParams['trunk'] = $usernameClean;
-        $queryParams['pbxnum'] = $usernameClean;
-        $queryParams['ring_timeout'] = $params['ring_timeout'] ?? '20';
-        $queryParams['crm_id'] = $params['crm_id'] ?? '1';
-        $queryParams['wait_response'] = '1';
-        $queryParams['originate_order'] = 'if';
-        $queryParams['manual_answer'] = '1';
+
+        // AUTOCALL İLE ARAMA BAŞLAT
+        $useAutocall = true;
+        $autocallPostData = [
+            'header' => [
+                'username' => $usernameClean,
+                'password' => $password
+            ],
+            'body' => [
+                'event' => 'addautocall',
+                'data' => [
+                    'list_name' => 'CRM_' . date('Ymd_His') . '_' . $dahiliParam,
+                    'list_prefix' => $dahiliParam,
+                    'list_type' => '1',
+                    'phones' => [$hedefClean]
+                ]
+            ]
+        ];
         break;
 
     case 'hangup':
@@ -178,15 +191,122 @@ switch ($action) {
         break;
 
     case 'test':
-        // BAĞLANTI TESTİ - queuestats ile test
-        $apiUrl = "{$baseUrl}/queuestats";
+        // BAĞLANTI TESTİ - Önce autocall API (port 443) ile test, sonra crmsntrl (port 9111)
+        $useAutocall = true;
+        $autocallPostData = [
+            'header' => [
+                'username' => $usernameClean,
+                'password' => $password
+            ],
+            'body' => [
+                'event' => 'listautocall',
+                'data' => []
+            ]
+        ];
         break;
 
     default:
         json_error('GEÇERSİZ AKSİYON: ' . $action, 422);
 }
 
-// HTTP İSTEĞİ GÖNDER
+// ═══ ORIGINATE AUTOCALL İLE ÇALIŞIYORSA AYRI İŞLE ═══
+if ($useAutocall) {
+    $jsonPayload = json_encode($autocallPostData, JSON_UNESCAPED_UNICODE);
+
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $autocallUrl,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $jsonPayload,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_CONNECTTIMEOUT => 15,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Accept: application/json',
+            'User-Agent: MR-Hasar-CRM/1.0'
+        ]
+    ]);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+    $curlErrno = curl_errno($ch);
+    $totalTime = round(curl_getinfo($ch, CURLINFO_TOTAL_TIME), 2);
+    curl_close($ch);
+
+    // LOG
+    $logDir = __DIR__ . '/../../../data';
+    if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
+    $logHedef = $hedefClean ?? '-';
+    $logDahili = $dahiliParam ?? '-';
+    @file_put_contents($logDir . '/netsantral_proxy.log',
+        date('Y-m-d H:i:s') . " | {$action}_autocall | http={$httpCode} | sure={$totalTime}s | hedef={$logHedef} | dahili={$logDahili} | yanit=" . substr($response ?? '', 0, 300) . "\n",
+        FILE_APPEND | LOCK_EX
+    );
+
+    try {
+        log_action($user['id'], 'netsantral_' . $action . '_autocall', "Autocall {$action}: hedef={$logHedef} | dahili={$logDahili} | http={$httpCode}", 'netsantral');
+    } catch (Exception $e) {}
+
+    if ($curlError) {
+        json_success([
+            'action' => $action,
+            'http_code' => 0,
+            'response' => ['hata_mesaj' => 'AUTOCALL BAĞLANTI HATASI: ' . $curlError, 'hata_kodu' => 'CURL_' . $curlErrno],
+            'success_api' => false,
+            'debug' => ['api_url' => $autocallUrl, 'method' => 'autocall', 'sure' => $totalTime . 's']
+        ]);
+        exit;
+    }
+
+    $parsed = json_decode($response, true);
+    $apiBasarili = ($httpCode >= 200 && $httpCode < 300);
+
+    // NetGSM hata kodlarını kontrol et
+    if ($parsed === null) {
+        $rawTrimmed = trim($response);
+        $parsed = ['raw_response' => $rawTrimmed];
+        $netgsmHatalar = ['30' => 'GEÇERSİZ KULLANICI ADI VEYA ŞİFRE', '40' => 'YETERSİZ BAKİYE', '50' => 'SUNUCU HATASI', '60' => 'GEÇERSİZ SANTRAL NUMARASI', '70' => 'GEÇERSİZ PARAMETRE'];
+        if (isset($netgsmHatalar[$rawTrimmed])) {
+            $apiBasarili = false;
+            $parsed['hata_mesaj'] = $netgsmHatalar[$rawTrimmed];
+        }
+    } elseif (isset($parsed['status']) && strtolower($parsed['status']) === 'error') {
+        $apiBasarili = false;
+        $parsed['hata_mesaj'] = $parsed['message'] ?? 'AUTOCALL API HATASI';
+    }
+
+    if ($apiBasarili) {
+        $parsed['hata_mesaj'] = '';
+        $parsed['method'] = 'autocall';
+        if ($action === 'originate') {
+            $parsed['caller_num'] = $dahiliParam;
+            $parsed['called_num'] = $hedefClean;
+        }
+    }
+
+    json_success([
+        'action' => $action,
+        'http_code' => $httpCode,
+        'response' => $parsed,
+        'success_api' => $apiBasarili,
+        'debug' => [
+            'api_url' => $autocallUrl,
+            'method' => 'autocall',
+            'hedef' => $logHedef,
+            'dahili' => $logDahili,
+            'sure' => $totalTime . 's'
+        ]
+    ]);
+    exit;
+}
+
+// ═══ DİĞER KOMUTLAR İÇİN crmsntrl API ═══
 $fullUrl = $apiUrl . '?' . http_build_query($queryParams);
 
 // ═══ cURL BAĞLANTI FONKSİYONU (YENİDEN DENEME DESTEKLİ) ═══
