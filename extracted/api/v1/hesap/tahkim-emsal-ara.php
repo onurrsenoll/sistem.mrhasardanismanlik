@@ -61,10 +61,13 @@ $systemPrompt = "Sen bir Türk sigorta hukuku uzmanısın. Görevin Sigorta Tahk
 
 $fullUserPrompt = "ÖNEMLİ: Sigorta Tahkim Komisyonu kararları hakkındaki bilgi birikimin ile {$marka} {$model} {$yil} model araç için gerçekçi emsal kararlar oluştur. Türkiye'deki güncel tahkim kararlarına ve rayiç değerlere uygun, tutarlı ve gerçekçi veriler sun.\n\n" . $prompt;
 
-$text = callAI($apiKey, $systemPrompt, $fullUserPrompt, ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60]);
+$aiResult = callAIWithDetail($apiKey, $systemPrompt, $fullUserPrompt, ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60]);
+$text = $aiResult['text'];
 
 if (empty($text)) {
-    echo json_encode(['success' => false, 'error' => 'AI YANIT ALINAMADI']);
+    $errMsg = 'AI YANIT ALINAMADI';
+    if (!empty($aiResult['error'])) $errMsg .= ' - ' . $aiResult['error'];
+    echo json_encode(['success' => false, 'error' => $errMsg]);
     exit;
 }
 

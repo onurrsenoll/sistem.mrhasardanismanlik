@@ -110,6 +110,42 @@ function callAI($apiKey, $systemPrompt, $userPrompt, $options = []) {
 }
 
 /**
+ * AI API çağrısı yapar ve hata detayını da döner
+ *
+ * @return array ['text' => string|null, 'error' => string]
+ */
+function callAIWithDetail($apiKey, $systemPrompt, $userPrompt, $options = []) {
+    $provider = detectProvider($apiKey);
+    $temperature = $options['temperature'] ?? 0.3;
+    $maxTokens = $options['maxTokens'] ?? 1024;
+    $timeout = $options['timeout'] ?? 30;
+
+    $text = null;
+    switch ($provider) {
+        case 'gemini':
+            $text = callGeminiAPI($apiKey, $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
+            break;
+        case 'openai':
+            $text = callOpenAIAPI($apiKey, $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
+            break;
+        case 'claude':
+            $text = callClaudeAPI($apiKey, $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
+            break;
+        default:
+            $text = callGeminiAPI($apiKey, $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
+            break;
+    }
+
+    if ($text !== null) {
+        return ['text' => $text, 'error' => ''];
+    }
+
+    // Son hata logunu oku
+    $lastErr = $GLOBALS['_ai_last_error'] ?? '';
+    return ['text' => null, 'error' => $lastErr ?: ('API yanit bos (' . $provider . ')')];
+}
+
+/**
  * Google Gemini API çağrısı
  */
 function callGeminiAPI($apiKey, $systemPrompt, $userPrompt, $temperature = 0.3, $maxTokens = 1024, $timeout = 30) {
@@ -139,13 +175,15 @@ function callGeminiAPI($apiKey, $systemPrompt, $userPrompt, $temperature = 0.3, 
         return !empty($text) ? $text : null;
     }
 
-    // Hata logla
+    // Hata logla ve global değişkene kaydet
     $errDetail = '';
     if ($res['body']) {
         $errData = json_decode($res['body'], true);
         $errDetail = $errData['error']['message'] ?? '';
     }
-    error_log("GEMINI API HATA: HTTP {$res['http_code']} - {$errDetail} {$res['error']} (yontem: {$res['method']})");
+    $fullErr = "GEMINI HTTP {$res['http_code']} - {$errDetail} {$res['error']} (yontem: {$res['method']})";
+    error_log("GEMINI API HATA: " . $fullErr);
+    $GLOBALS['_ai_last_error'] = $fullErr;
     return null;
 }
 
@@ -172,13 +210,15 @@ function callOpenAIAPI($apiKey, $systemPrompt, $userPrompt, $temperature = 0.3, 
         return !empty($text) ? $text : null;
     }
 
-    // Hata logla
+    // Hata logla ve global değişkene kaydet
     $errDetail = '';
     if ($res['body']) {
         $errData = json_decode($res['body'], true);
         $errDetail = $errData['error']['message'] ?? '';
     }
-    error_log("OPENAI API HATA: HTTP {$res['http_code']} - {$errDetail} {$res['error']}");
+    $fullErr = "OPENAI HTTP {$res['http_code']} - {$errDetail} {$res['error']}";
+    error_log("OPENAI API HATA: " . $fullErr);
+    $GLOBALS['_ai_last_error'] = $fullErr;
     return null;
 }
 
@@ -211,13 +251,15 @@ function callClaudeAPI($apiKey, $systemPrompt, $userPrompt, $temperature = 0.3, 
         return !empty($text) ? $text : null;
     }
 
-    // Hata logla
+    // Hata logla ve global değişkene kaydet
     $errDetail = '';
     if ($res['body']) {
         $errData = json_decode($res['body'], true);
         $errDetail = $errData['error']['message'] ?? '';
     }
-    error_log("CLAUDE API HATA: HTTP {$res['http_code']} - {$errDetail} {$res['error']}");
+    $fullErr = "CLAUDE HTTP {$res['http_code']} - {$errDetail} {$res['error']}";
+    error_log("CLAUDE API HATA: " . $fullErr);
+    $GLOBALS['_ai_last_error'] = $fullErr;
     return null;
 }
 

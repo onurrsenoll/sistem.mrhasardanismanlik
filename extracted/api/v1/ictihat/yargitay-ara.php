@@ -77,10 +77,13 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER:
 $systemPrompt = "Sen bir Türk hukuk uzmanısın ve Yargıtay kararları konusunda derin bilgi birikimine sahipsin. Görevin Yargıtay kararlarını araştırıp emsal kararları sunmaktır. Sigorta hukuku, borçlar hukuku, trafik hukuku ve tazminat hukuku konularında uzmansın. Gerçekçi ve tutarlı Yargıtay karar numaraları, tarihler ve tutarlar kullan. Yanıtını SADECE JSON formatında ver.";
 
 // AI API çağrısı (Gemini/OpenAI/Claude otomatik)
-$text = callAI($apiKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 8192, 'timeout' => 60]);
+$aiResult = callAIWithDetail($apiKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 8192, 'timeout' => 60]);
+$text = $aiResult['text'];
 
 if (empty($text)) {
-    echo json_encode(['success' => false, 'error' => 'AI YANIT ALINAMADI']);
+    $errMsg = 'AI YANIT ALINAMADI';
+    if (!empty($aiResult['error'])) $errMsg .= ' - ' . $aiResult['error'];
+    echo json_encode(['success' => false, 'error' => $errMsg]);
     exit;
 }
 

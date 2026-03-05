@@ -76,10 +76,13 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER:
 $systemPrompt = "Sen bir Türk sigorta uzmanısın. Türkiye'deki tüm sigorta branşlarının poliçe limitleri, teminat tutarları ve yıllara göre değişimleri konusunda derin bilgiye sahipsin. Hazine ve Maliye Bakanlığı, SEDDK (Sigortacılık ve Özel Emeklilik Düzenleme ve Denetleme Kurumu) tarafından belirlenen resmi limitleri biliyorsun. Yanıtını SADECE JSON formatında ver. Tutarları TL cinsinden, sayı olarak (string değil) ver.";
 
 // AI API çağrısı (Gemini/OpenAI/Claude otomatik)
-$text = callAI($apiKey, $systemPrompt, $prompt, ['temperature' => 0.2, 'maxTokens' => 8192, 'timeout' => 60]);
+$aiResult = callAIWithDetail($apiKey, $systemPrompt, $prompt, ['temperature' => 0.2, 'maxTokens' => 8192, 'timeout' => 60]);
+$text = $aiResult['text'];
 
 if (empty($text)) {
-    echo json_encode(['success' => false, 'error' => 'AI YANIT ALINAMADI']);
+    $errMsg = 'AI YANIT ALINAMADI';
+    if (!empty($aiResult['error'])) $errMsg .= ' - ' . $aiResult['error'];
+    echo json_encode(['success' => false, 'error' => $errMsg]);
     exit;
 }
 

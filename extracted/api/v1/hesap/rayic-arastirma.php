@@ -67,10 +67,15 @@ $systemPrompt = "Sen bir araç değer kaybı uzmanısın. Görevin sahibinden.co
 
 $fullUserPrompt = "ÖNEMLİ: Türkiye araç piyasası hakkındaki bilgini kullanarak {$marka} {$model} {$yil} model aracın gerçekçi piyasa fiyatlarını belirle. sahibinden.com ve araban.com üzerindeki güncel piyasa bilgin ile en gerçekçi ilan verilerini oluştur.\n\n" . $prompt;
 
-$text = callAI($apiKey, $systemPrompt, $fullUserPrompt, ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60]);
+$aiResult = callAIWithDetail($apiKey, $systemPrompt, $fullUserPrompt, ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60]);
+$text = $aiResult['text'];
 
 if (empty($text)) {
-    echo json_encode(['success' => false, 'error' => 'AI YANIT ALINAMADI']);
+    $errMsg = 'AI YANIT ALINAMADI';
+    if (!empty($aiResult['error'])) {
+        $errMsg .= ' - ' . $aiResult['error'];
+    }
+    echo json_encode(['success' => false, 'error' => $errMsg]);
     exit;
 }
 
