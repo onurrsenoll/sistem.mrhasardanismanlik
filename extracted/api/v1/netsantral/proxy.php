@@ -48,7 +48,8 @@ if (empty($santralNo) || empty($username) || empty($password)) {
 }
 
 // SANTRAL NO NORMALİZASYONU - NetGSM CRM Santral API
-// API URL: http://crmsntrl.netgsm.com.tr:9111/{SANTRAL_NO}/originate
+// API URL: https://crmsntrl.netgsm.com.tr/{SANTRAL_NO}/originate (HTTPS:443)
+// NOT: cPanel shared hosting port 9111'e bağlanamadığı için HTTPS:443 kullanılıyor
 // Erman (NetGSM) testi: username=3625026502, santral_no=3625026502
 $santralNoClean = preg_replace('/[^0-9]/', '', $santralNo);
 // Baştaki 0'ları temizle (0362... → 362...)
@@ -57,8 +58,8 @@ $santralNoClean = ltrim($santralNoClean, '0');
 // KULLANICI ADI NORMALİZASYONU - NetGSM API: baştaki 0 olmadan
 $usernameClean = ltrim(preg_replace('/[^0-9]/', '', $username), '0');
 
-// API URL OLUŞTUR - PORT 9111 (NetGSM CRM Santral HTTP API)
-$baseUrl = "http://crmsntrl.netgsm.com.tr:9111/{$santralNoClean}";
+// API URL OLUŞTUR - HTTPS:443 (cPanel port 9111 engelliyor, 443 çalışıyor)
+$baseUrl = "https://crmsntrl.netgsm.com.tr/{$santralNoClean}";
 $apiUrl = '';
 $queryParams = [];
 
@@ -192,7 +193,7 @@ $fullUrl = $apiUrl . '?' . http_build_query($queryParams);
 function netsantral_curl_exec($url, $attempt = 1) {
     $ch = curl_init();
 
-    // TEMEL CURL OPSİYONLARI - HTTP:9111 (SSL gereksiz)
+    // TEMEL CURL OPSİYONLARI - HTTPS:443
     $opts = [
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
@@ -475,7 +476,7 @@ if ($action === 'test' && !$apiBasarili) {
 
     foreach ($altFormatlar as $altNo) {
         $altQuery = http_build_query(['username' => $usernameClean, 'password' => $password]);
-        $altUrl = "http://crmsntrl.netgsm.com.tr:9111/{$altNo}/queuestats?{$altQuery}";
+        $altUrl = "https://crmsntrl.netgsm.com.tr/{$altNo}/queuestats?{$altQuery}";
         $altResult = netsantral_curl_exec($altUrl, 1);
 
         if (!empty($altResult['info']['curl_error'])) continue;
