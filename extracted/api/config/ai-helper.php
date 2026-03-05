@@ -272,6 +272,96 @@ function callClaudeAPI($apiKey, $systemPrompt, $userPrompt, $temperature = 0.3, 
 }
 
 /**
+ * Google Gemini API - Google Search Grounding destekli çağrı
+ * Gerçek zamanlı web araması yaparak güncel veri getirir (sahibinden.com, araban.com vb.)
+ */
+function callGeminiWithGrounding($apiKey, $systemPrompt, $userPrompt, $temperature = 0.3, $maxTokens = 4096, $timeout = 60) {
+    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
+
+    $fullPrompt = $systemPrompt . "\n\n" . $userPrompt;
+    $payload = [
+        'contents' => [
+            ['role' => 'user', 'parts' => [['text' => $fullPrompt]]]
+        ],
+        'tools' => [
+            ['googleSearch' => new \stdClass()]
+        ],
+        'generationConfig' => [
+            'temperature' => $temperature,
+            'maxOutputTokens' => $maxTokens,
+            'topP' => 0.8
+        ]
+    ];
+
+    $res = http_post($url, json_encode($payload), ['Content-Type: application/json'], $timeout);
+
+    if ($res['http_code'] === 200 && $res['body']) {
+        $data = json_decode($res['body'], true);
+        $text = '';
+        $allParts = $data['candidates'][0]['content']['parts'] ?? [];
+        foreach ($allParts as $part) {
+            if (isset($part['text']) && empty($part['thought'])) $text .= $part['text'];
+        }
+        return !empty($text) ? $text : null;
+    }
+
+    $errDetail = '';
+    if ($res['body']) {
+        $errData = json_decode($res['body'], true);
+        $errDetail = $errData['error']['message'] ?? '';
+    }
+    $fullErr = "GEMINI-GROUNDING HTTP {$res['http_code']} - {$errDetail} {$res['error']} (yontem: {$res['method']})";
+    error_log("GEMINI GROUNDING HATA: " . $fullErr);
+    $GLOBALS['_ai_last_error'] = $fullErr;
+    return null;
+}
+
+/**
+ * Rayiç araştırması için AI çağrısı - Provider'a göre otomatik yönlendirir
+ * Gemini: Google Search Grounding ile GERÇEK web araması
+ * OpenAI/Claude: Piyasa bilgisine dayalı tahmin
+ *
+ * @return array ['text' => string|null, 'error' => string, 'provider' => string, 'method' => string]
+ */
+function callAIForRayic($keys, $systemPrompt, $userPrompt, $marketPrompt, $options = []) {
+    $temperature = $options['temperature'] ?? 0.2;
+    $maxTokens = $options['maxTokens'] ?? 4096;
+    $timeout = $options['timeout'] ?? 60;
+
+    // 1. Önce Gemini ile Google Search Grounding dene (gerçek web araması)
+    if (!empty($keys['gemini'])) {
+        $text = callGeminiWithGrounding($keys['gemini'], $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
+        if (!empty($text)) {
+            return ['text' => $text, 'error' => '', 'provider' => 'gemini', 'method' => 'google_search'];
+        }
+        // Grounding başarısızsa normal Gemini dene
+        $text = callGeminiAPI($keys['gemini'], $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
+        if (!empty($text)) {
+            return ['text' => $text, 'error' => '', 'provider' => 'gemini', 'method' => 'ai_knowledge'];
+        }
+    }
+
+    // 2. OpenAI ile piyasa bilgisi tabanlı tahmin
+    if (!empty($keys['openai'])) {
+        $text = callOpenAIAPI($keys['openai'], $systemPrompt, $marketPrompt, $temperature, $maxTokens, $timeout);
+        if (!empty($text)) {
+            return ['text' => $text, 'error' => '', 'provider' => 'openai', 'method' => 'ai_knowledge'];
+        }
+    }
+
+    // 3. Claude ile piyasa bilgisi tabanlı tahmin
+    if (!empty($keys['claude'])) {
+        $text = callClaudeAPI($keys['claude'], $systemPrompt, $marketPrompt, $temperature, $maxTokens, $timeout);
+        if (!empty($text)) {
+            return ['text' => $text, 'error' => '', 'provider' => 'claude', 'method' => 'ai_knowledge'];
+        }
+    }
+
+    $lastErr = $GLOBALS['_ai_last_error'] ?? 'Tüm provider\'lar başarısız';
+    return ['text' => null, 'error' => $lastErr, 'provider' => '', 'method' => ''];
+}
+
+/**
  * AI API hata detayını döner (kullanıcıya gösterilebilecek formatta)
  */
 function getAiErrorDetail($res) {
