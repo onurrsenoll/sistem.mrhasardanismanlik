@@ -5,10 +5,14 @@
  * Key prefix ile otomatik API seçimi: AIzaSy = Gemini, sk- = OpenAI, sk-ant- = Claude
  */
 
+ob_start(); error_reporting(0);
+
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/ai-helper.php';
+
+ob_end_clean();
 
 setup_headers();
 
@@ -38,9 +42,22 @@ if (empty($apiKey)) {
 $prompt = buildPrompt($input);
 $systemPrompt = 'Sen bir Türk sigorta hukuku ve araç değer kaybı uzmanısın. Araç değer kaybı (ADK) hesaplamaları konusunda detaylı analiz yapıyorsun. Tahkim komisyonu kararları ve Yargıtay içtihatlarına hakimsin. Yanıtlarını Türkçe ve profesyonel bir dille ver. Kısa ve öz tut, madde madde yaz. Başlıkları büyük harfle yaz.';
 
-$result = callAI($apiKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 1024, 'timeout' => 30]);
+$aiResult = callAIWithDetail($apiKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 1024, 'timeout' => 30]);
+$result = $aiResult['text'];
 
-if ($result !== null) {
+// Başarısızsa fallback key'leri dene
+if (empty($result) && !empty($keys['fallbacks'])) {
+    foreach ($keys['fallbacks'] as $fbKey) {
+        $aiResult = callAIWithDetail($fbKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 1024, 'timeout' => 30]);
+        $result = $aiResult['text'];
+        if (!empty($result)) {
+            $apiKey = $fbKey;
+            break;
+        }
+    }
+}
+
+if (!empty($result)) {
     echo json_encode(['success' => true, 'data' => ['analiz' => $result, 'kaynak' => 'ai', 'provider' => detectProvider($apiKey)]]);
 } else {
     $analiz = yerselAnaliz($input);

@@ -4,10 +4,14 @@
  * Google Gemini + OpenAI + Claude destekli bedeni hasar tazminat analizi
  */
 
+ob_start(); error_reporting(0);
+
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/ai-helper.php';
+
+ob_end_clean();
 
 setup_headers();
 
@@ -36,9 +40,22 @@ if (empty($apiKey)) {
 $prompt = buildBHPrompt($input);
 $systemPrompt = 'Sen bir Türk sigorta hukuku ve bedeni hasar tazminat uzmanısın. Maluliyet tazminatı, iş göremezlik, aktif/pasif dönem hesaplamaları, PMF tabloları ve progresif rant yöntemi konularında uzmansın. Yargıtay ve Sigorta Tahkim Komisyonu kararlarına hakimsin. Yanıtlarını Türkçe ve profesyonel bir dilde ver. Kısa ve öz tut, madde madde yaz. Başlıkları büyük harfle yaz.';
 
-$result = callAI($apiKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 1200, 'timeout' => 30]);
+$aiResult = callAIWithDetail($apiKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 1200, 'timeout' => 30]);
+$result = $aiResult['text'];
 
-if ($result !== null) {
+// Başarısızsa fallback key'leri dene
+if (empty($result) && !empty($keys['fallbacks'])) {
+    foreach ($keys['fallbacks'] as $fbKey) {
+        $aiResult = callAIWithDetail($fbKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 1200, 'timeout' => 30]);
+        $result = $aiResult['text'];
+        if (!empty($result)) {
+            $apiKey = $fbKey;
+            break;
+        }
+    }
+}
+
+if (!empty($result)) {
     echo json_encode(['success' => true, 'data' => ['analiz' => $result, 'kaynak' => 'ai', 'provider' => detectProvider($apiKey)]]);
 } else {
     $analiz = yerselBHAnaliz($input);

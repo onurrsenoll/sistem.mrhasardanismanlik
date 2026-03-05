@@ -4,10 +4,15 @@
  * Aynı marka/model/yaş araçların tahkim kararları
  * Gemini/OpenAI/Claude AI destekli
  */
+
+ob_start(); error_reporting(0);
+
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/ai-helper.php';
+
+ob_end_clean();
 
 setup_headers();
 
@@ -63,6 +68,15 @@ $fullUserPrompt = "ÖNEMLİ: Sigorta Tahkim Komisyonu kararları hakkındaki bil
 
 $aiResult = callAIWithDetail($apiKey, $systemPrompt, $fullUserPrompt, ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60]);
 $text = $aiResult['text'];
+
+// Başarısızsa fallback key'leri dene
+if (empty($text) && !empty($keys['fallbacks'])) {
+    foreach ($keys['fallbacks'] as $fbKey) {
+        $aiResult = callAIWithDetail($fbKey, $systemPrompt, $fullUserPrompt, ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60]);
+        $text = $aiResult['text'];
+        if (!empty($text)) break;
+    }
+}
 
 if (empty($text)) {
     $errMsg = 'AI YANIT ALINAMADI';

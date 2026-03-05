@@ -47,7 +47,7 @@ MR.api = {
       clearTimeout(timeoutId);
       if (r.status === 401) { this.setToken(null); location.reload(); return null; }
       const t = await r.text();
-      try { return JSON.parse(t); } catch (e) { return { success: false, error: 'SUNUCU YANIT HATASI' }; }
+      try { return JSON.parse(t); } catch (e) { return { success: false, error: 'SUNUCU YANIT HATASI: ' + (t || '').substring(0, 300) }; }
     } catch (e) {
       if (e.name === 'AbortError') return { success: false, error: 'İSTEK ZAMAN AŞIMINA UĞRADI' };
       return { success: false, error: 'BAĞLANTI HATASI' };

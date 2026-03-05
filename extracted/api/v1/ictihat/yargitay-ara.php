@@ -4,10 +4,15 @@
  * Konu başlığına göre Yargıtay kararları AI destekli arama
  * Gemini AI ile gerçek zamanlı içtihat araştırması
  */
+
+ob_start(); error_reporting(0);
+
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/ai-helper.php';
+
+ob_end_clean();
 
 setup_headers();
 
@@ -79,6 +84,15 @@ $systemPrompt = "Sen bir Türk hukuk uzmanısın ve Yargıtay kararları konusun
 // AI API çağrısı (Gemini/OpenAI/Claude otomatik)
 $aiResult = callAIWithDetail($apiKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 8192, 'timeout' => 60]);
 $text = $aiResult['text'];
+
+// Başarısızsa fallback key'leri dene
+if (empty($text) && !empty($keys['fallbacks'])) {
+    foreach ($keys['fallbacks'] as $fbKey) {
+        $aiResult = callAIWithDetail($fbKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 8192, 'timeout' => 60]);
+        $text = $aiResult['text'];
+        if (!empty($text)) break;
+    }
+}
 
 if (empty($text)) {
     $errMsg = 'AI YANIT ALINAMADI';

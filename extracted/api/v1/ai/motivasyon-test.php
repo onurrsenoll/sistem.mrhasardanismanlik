@@ -19,7 +19,7 @@ ob_end_clean();
 
 setup_headers();
 require_method('POST');
-$user = require_auth();
+$user = auth_required();
 
 $body = get_json_body();
 

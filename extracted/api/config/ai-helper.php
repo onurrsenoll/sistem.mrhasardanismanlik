@@ -65,6 +65,14 @@ function getAiKeys() {
         $keys['active'] = $keys['claude'];
     }
 
+    // Fallback sırası: aktif key dışındaki tüm key'ler
+    $keys['fallbacks'] = [];
+    foreach (['gemini', 'openai', 'claude'] as $p) {
+        if (!empty($keys[$p]) && $keys[$p] !== $keys['active']) {
+            $keys['fallbacks'][] = $keys[$p];
+        }
+    }
+
     return $keys;
 }
 

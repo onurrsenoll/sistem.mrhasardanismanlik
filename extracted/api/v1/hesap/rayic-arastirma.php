@@ -4,10 +4,15 @@
  * sahibinden.com + araban.com üzerinden gerçek ilan araştırması
  * Gemini/OpenAI/Claude AI destekli
  */
+ob_start();
+error_reporting(0);
+
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/ai-helper.php';
+
+ob_end_clean();
 
 setup_headers();
 
@@ -29,13 +34,21 @@ $yil = intval($input['yil']);
 $km = intval($input['km'] ?? 0);
 $kazaTarihi = $input['kaza_tarihi'] ?? date('Y-m-d', strtotime('-6 months'));
 
-// API KEY
+// API KEY - tüm key'leri al (fallback için)
 $keys = getAiKeys();
 $apiKey = $keys['active'];
 
 if (empty($apiKey)) {
     echo json_encode(['success' => false, 'error' => 'AI API ANAHTARI TANIMLI DEĞİL']);
     exit;
+}
+
+// Fallback sırası: aktif key başarısız olursa diğerlerini dene
+$fallbackKeys = [];
+foreach (['gemini', 'openai', 'claude'] as $p) {
+    if (!empty($keys[$p]) && $keys[$p] !== $apiKey) {
+        $fallbackKeys[] = $keys[$p];
+    }
 }
 
 $bugun = date('Y-m-d');
@@ -67,8 +80,18 @@ $systemPrompt = "Sen bir araç değer kaybı uzmanısın. Görevin sahibinden.co
 
 $fullUserPrompt = "ÖNEMLİ: Türkiye araç piyasası hakkındaki bilgini kullanarak {$marka} {$model} {$yil} model aracın gerçekçi piyasa fiyatlarını belirle. sahibinden.com ve araban.com üzerindeki güncel piyasa bilgin ile en gerçekçi ilan verilerini oluştur.\n\n" . $prompt;
 
-$aiResult = callAIWithDetail($apiKey, $systemPrompt, $fullUserPrompt, ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60]);
+$aiOpts = ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60];
+$aiResult = callAIWithDetail($apiKey, $systemPrompt, $fullUserPrompt, $aiOpts);
 $text = $aiResult['text'];
+
+// Başarısızsa fallback key'leri dene
+if (empty($text) && !empty($fallbackKeys)) {
+    foreach ($fallbackKeys as $fbKey) {
+        $aiResult = callAIWithDetail($fbKey, $systemPrompt, $fullUserPrompt, $aiOpts);
+        $text = $aiResult['text'];
+        if (!empty($text)) break;
+    }
+}
 
 if (empty($text)) {
     $errMsg = 'AI YANIT ALINAMADI';
