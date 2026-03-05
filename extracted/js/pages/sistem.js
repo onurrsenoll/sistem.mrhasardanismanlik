@@ -831,10 +831,18 @@ const AyarlarTab = () => {
       if (r?.success && r.data) {
         setApiTest({testing: false, sonuc: r.data});
       } else {
-        setApiTest({testing: false, sonuc: {basarili: false, ozet: r?.error || 'TEST SIRASINDA HATA OLUŞTU', hata_detay: r?.error || 'BİLİNMEYEN HATA'}});
+        setApiTest({testing: false, sonuc: {
+          basarili: false,
+          ozet: r?.error || 'TEST SIRASINDA HATA OLUŞTU',
+          hata_detay: r?.error || 'BİLİNMEYEN HATA',
+          curl_destegi: r?.data?.curl_destegi ?? null,
+          file_get_contents_destegi: r?.data?.file_get_contents_destegi ?? null,
+          yontem: r?.data?.yontem || '',
+          http_kodu: r?.data?.http_kodu || 0
+        }});
       }
     } catch(e) {
-      setApiTest({testing: false, sonuc: {basarili: false, ozet: 'BAĞLANTI HATASI - SUNUCUYA ULAŞILAMIYOR', hata_detay: 'SUNUCUYA BAĞLANTI KURULAMADI'}});
+      setApiTest({testing: false, sonuc: {basarili: false, ozet: 'BAĞLANTI HATASI - SUNUCUYA ULAŞILAMIYOR', hata_detay: 'SUNUCUYA BAĞLANTI KURULAMADI', curl_destegi: null, file_get_contents_destegi: null}});
     }
   };
 
@@ -1421,8 +1429,8 @@ const AyarlarTab = () => {
                 }}>
                   <div><span style={{color: C.textMuted}}>YÖNTEM:</span> <span style={{fontWeight: 600}}>{apiTest.sonuc.yontem || '-'}</span></div>
                   <div><span style={{color: C.textMuted}}>HTTP KODU:</span> <span style={{fontWeight: 600, color: apiTest.sonuc.http_kodu === 200 ? C.success : C.danger}}>{apiTest.sonuc.http_kodu || '-'}</span></div>
-                  <div><span style={{color: C.textMuted}}>cURL:</span> <span style={{fontWeight: 600, color: apiTest.sonuc.curl_destegi ? C.success : C.danger}}>{apiTest.sonuc.curl_destegi ? 'AKTİF' : 'KAPALI'}</span></div>
-                  <div><span style={{color: C.textMuted}}>FILE_GET_CONTENTS:</span> <span style={{fontWeight: 600, color: apiTest.sonuc.file_get_contents_destegi ? C.success : C.danger}}>{apiTest.sonuc.file_get_contents_destegi ? 'AKTİF' : 'KAPALI'}</span></div>
+                  <div><span style={{color: C.textMuted}}>cURL:</span> <span style={{fontWeight: 600, color: apiTest.sonuc.curl_destegi === true ? C.success : apiTest.sonuc.curl_destegi === false ? C.danger : C.warning}}>{apiTest.sonuc.curl_destegi === true ? 'AKTİF' : apiTest.sonuc.curl_destegi === false ? 'KAPALI' : 'BİLİNMİYOR'}</span></div>
+                  <div><span style={{color: C.textMuted}}>FILE_GET_CONTENTS:</span> <span style={{fontWeight: 600, color: apiTest.sonuc.file_get_contents_destegi === true ? C.success : apiTest.sonuc.file_get_contents_destegi === false ? C.danger : C.warning}}>{apiTest.sonuc.file_get_contents_destegi === true ? 'AKTİF' : apiTest.sonuc.file_get_contents_destegi === false ? 'KAPALI' : 'BİLİNMİYOR'}</span></div>
                 </div>
 
                 {/* BAŞARILI İSE ÖRNEK SÖZ */}

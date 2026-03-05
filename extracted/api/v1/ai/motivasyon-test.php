@@ -5,10 +5,17 @@
  * Gemini / OpenAI / Claude otomatik algılama
  */
 
+// PHP uyarılarının JSON çıktısını bozmasını engelle
+ob_start();
+error_reporting(0);
+
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/ai-helper.php';
+
+// Buffer'daki PHP uyarılarını temizle
+ob_end_clean();
 
 setup_headers();
 require_method('POST');
