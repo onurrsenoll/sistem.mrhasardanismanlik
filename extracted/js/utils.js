@@ -62,48 +62,41 @@ MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
     detail: { telefon: cleanNum, ad: ad || '', yon: 'giden', timestamp: Date.now() }
   }));
 
-  /* GİDEN ARAMA LOGU OLUŞTUR */
-  let _aramaLogId = 0;
-  try {
-    const logR = await MR.api.netsantralAramaLogCreate({
-      arayan: MR._netsantralDahili,
-      aranan: cleanNum,
-      arayan_adi: ad || '',
-      yon: 'giden',
-      durum: 'araniyor'
-    });
-    if (logR?.success && logR.data?.log_id) {
-      _aramaLogId = logR.data.log_id;
-    }
-  } catch(e) {}
-
-  /* WEBRTC İLE DİREKT ARAMA BAŞLAT
+  /* WEBRTC İLE DİREKT ARAMA BAŞLAT - ÖNCE ÇAĞRIYI GÖNDERİYORUZ
      Tarayıcı → WebSocket → PBX → Karşı taraf çalar
-     Hiçbir harici uygulama gerekmez */
+     Hiçbir harici uygulama gerekmez
+     NOT: API log kaydını beklemeden ÖNCE çağrıyı başlatıyoruz ki gecikme olmasın */
+  let _aramaLogId = 0;
+
   try {
-    const basarili = await MR.webrtcTelefon.ara(cleanNum);
+    const basarili = MR.webrtcTelefon.ara(cleanNum);
     if (basarili) {
       console.log('[WEBRTC ARAMA] ÇAĞRI GÖNDERİLDİ:', cleanNum);
-      if (_aramaLogId) {
-        MR.api.netsantralAramaLogUpdate({ log_id: _aramaLogId, durum: 'gorusmede' }).catch(() => {});
-      }
+
+      /* ARAMA LOGU OLUŞTUR (ÇAĞRI BAŞLADIKTAN SONRA - GECİKME YARATMAZ) */
+      MR.api.netsantralAramaLogCreate({
+        arayan: MR._netsantralDahili,
+        aranan: cleanNum,
+        arayan_adi: ad || '',
+        yon: 'giden',
+        durum: 'gorusmede'
+      }).then(logR => {
+        if (logR?.success && logR.data?.log_id) {
+          _aramaLogId = logR.data.log_id;
+        }
+      }).catch(() => {});
+
       window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
         detail: { basarili: true, telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
       }));
     } else {
       const hataMesaj = 'ARAMA BAŞLATILAMADI - WEBRTC BAĞLANTISINI KONTROL EDİN';
-      if (_aramaLogId) {
-        MR.api.netsantralAramaLogUpdate({ log_id: _aramaLogId, durum: 'basarisiz', notlar: hataMesaj }).catch(() => {});
-      }
       window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
         detail: { basarili: false, hata: hataMesaj, telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
       }));
     }
   } catch(e) {
     console.error('[WEBRTC ARAMA] HATA:', e);
-    if (_aramaLogId) {
-      MR.api.netsantralAramaLogUpdate({ log_id: _aramaLogId, durum: 'basarisiz', notlar: 'WEBRTC HATASI' }).catch(() => {});
-    }
     alert('WEBRTC ARAMA HATASI! TARAYICI MİKROFON İZNİNİ KONTROL EDİN.');
     window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
       detail: { basarili: false, hata: 'WEBRTC HATASI: ' + (e?.message || ''), telefon: cleanNum, ad: ad || '', logId: _aramaLogId }

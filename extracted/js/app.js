@@ -1156,7 +1156,7 @@ const NetsantralPanel = ({user}) => {
     setTransferOpen(false);
     pbxOriginatedRef.current = false;
     activeLogIdRef.current = 0;
-    setStatusMsg(hangupOk ? 'ÇAĞRI SONLANDIRILDI' : 'ÇAĞRI SONLANDIRILDI (PBX ZATEN KAPANMIŞ OLABİLİR)');
+    setStatusMsg('ÇAĞRI SONLANDIRILDI');
     window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
     setTimeout(() => setStatusMsg(''), 3000);
   };
