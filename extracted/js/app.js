@@ -1069,44 +1069,37 @@ const NetsantralPanel = ({user}) => {
 
     console.log('[NETSANTRAL PANEL] WEBRTC ARAMA:', cleanNum);
 
-    /* GİDEN ARAMA LOGU OLUŞTUR */
+    /* WEBRTC İLE DİREKT ARAMA - ÖNCE ÇAĞRIYI BAŞLAT, SONRA LOG OLUŞTUR
+       API log kaydını beklemeden ÖNCE çağrıyı başlatıyoruz ki gecikme olmasın */
     activeLogIdRef.current = 0;
-    try {
-      const logR = await api.netsantralAramaLogCreate({
-        arayan: MR._netsantralDahili,
-        aranan: cleanNum,
-        arayan_adi: '',
-        yon: 'giden',
-        durum: 'araniyor'
-      });
-      if (logR?.success && logR.data?.log_id) {
-        activeLogIdRef.current = logR.data.log_id;
-      }
-    } catch(e) {}
 
-    /* WEBRTC İLE DİREKT ARAMA - KARŞI TARAFIN TELEFONU ÇALAR */
     try {
-      const basarili = await MR.webrtcTelefon.ara(cleanNum);
+      const basarili = MR.webrtcTelefon.ara(cleanNum);
       if (basarili) {
         pbxOriginatedRef.current = true;
         setStatusMsg('ÇAĞRI GÖNDERİLDİ - ' + cleanNum);
-        /* GÖRÜŞME BAŞLADIĞINDA mr-webrtc-durum EVENT'İ YAKALANIR */
+
+        /* GİDEN ARAMA LOGU OLUŞTUR (ÇAĞRI BAŞLADIKTAN SONRA - GECİKME YARATMAZ) */
+        api.netsantralAramaLogCreate({
+          arayan: MR._netsantralDahili,
+          aranan: cleanNum,
+          arayan_adi: '',
+          yon: 'giden',
+          durum: 'gorusmede'
+        }).then(logR => {
+          if (logR?.success && logR.data?.log_id) {
+            activeLogIdRef.current = logR.data.log_id;
+          }
+        }).catch(() => {});
+
       } else {
         setStatusMsg('ARAMA BAŞLATILAMADI');
         setStatus('hazir');
-        if (activeLogIdRef.current) {
-          api.netsantralAramaLogUpdate({ log_id: activeLogIdRef.current, durum: 'basarisiz', notlar: 'WEBRTC ARAMA BAŞARISIZ' }).catch(() => {});
-          activeLogIdRef.current = 0;
-        }
       }
     } catch(e) {
       console.error('[NETSANTRAL PANEL] WEBRTC HATASI:', e);
       setStatusMsg('WEBRTC HATASI - MİKROFON İZNİNİ KONTROL EDİN');
       setStatus('hazir');
-      if (activeLogIdRef.current) {
-        api.netsantralAramaLogUpdate({ log_id: activeLogIdRef.current, durum: 'basarisiz', notlar: 'WEBRTC HATASI' }).catch(() => {});
-        activeLogIdRef.current = 0;
-      }
     }
 
     setTimeout(() => setStatusMsg(''), 5000);
