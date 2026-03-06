@@ -56,10 +56,10 @@ MR.webrtcTelefon = {
     /* SES ELEMENTİ */
     this._remoteAudioOlustur();
 
-    /* NetSantral/NETSiPP+ authorization formatı: 102@3625026502 (dahili@santralNo)
-       URI sadece dahili numarasını kullanır, auth_user @ formatında olmalı */
+    /* NetSantral/Asterisk authorization formatı: 102-3625026502 (dahili-santralNo)
+       URI sadece dahili numarasını kullanır, auth_user tire formatında olmalı */
     var santralNo = (this._config.santralNo || '').replace(/^0+/, '');
-    var authUser = santralNo ? this._config.dahili + '@' + santralNo : this._config.dahili;
+    var authUser = santralNo ? this._config.dahili + '-' + santralNo : this._config.dahili;
     var sipUri = 'sip:' + this._config.dahili + '@' + this._config.domain;
 
     console.log('[WEBRTC] JsSIP BAŞLATILIYOR:', sipUri, '| AUTH USER:', authUser, '| WSS:', this._config.wssUrl);
