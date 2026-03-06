@@ -2693,7 +2693,6 @@ const NetsantralTab = () => {
     netsantral_aktif: '0',
     netsantral_yonlendirme_modu: 'dynamic',
     netsantral_sip_sifre: '',
-    netsantral_sip_kullanici: '',
     netsantral_wss_url: 'wss://sip6.netsantral.com:8089/ws',
     netsantral_sip_domain: 'sip6.netsantral.com'
   });
@@ -2725,7 +2724,6 @@ const NetsantralTab = () => {
           netsantral_aktif: data.netsantral_aktif || '0',
           netsantral_yonlendirme_modu: data.netsantral_yonlendirme_modu || 'dynamic',
           netsantral_sip_sifre: data.netsantral_sip_sifre || '',
-          netsantral_sip_kullanici: data.netsantral_sip_kullanici || '',
           netsantral_wss_url: data.netsantral_wss_url || 'wss://sip6.netsantral.com:8089/ws',
           netsantral_sip_domain: data.netsantral_sip_domain || 'sip6.netsantral.com'
         }));
@@ -2757,14 +2755,15 @@ const NetsantralTab = () => {
       }));
       console.log('[NETSANTRAL] AYARLAR GÜNCELLENDİ - DAHİLİ:', MR._netsantralDahili, '| AKTİF:', MR._netsantralAktif);
       /* WEBRTC TELEFONU YENİDEN BAŞLAT (SIP BİLGİLERİ DEĞİŞMİŞ OLABİLİR) */
-      if (MR.webrtcTelefon && ayarlar.netsantral_sip_sifre && ayarlar.netsantral_dahili) {
+      if (MR.webrtcTelefon && (ayarlar.netsantral_sip_sifre || ayarlar.netsantral_sifre) && ayarlar.netsantral_dahili) {
         MR.webrtcTelefon.durdur().then(() => {
           MR.webrtcTelefon.baslat({
             wssUrl: ayarlar.netsantral_wss_url || 'wss://sip6.netsantral.com:8089/ws',
             domain: ayarlar.netsantral_sip_domain || 'sip6.netsantral.com',
             dahili: ayarlar.netsantral_dahili,
-            sipSifre: ayarlar.netsantral_sip_sifre,
-            sipKullanici: ayarlar.netsantral_sip_kullanici || '',
+            sipSifre: ayarlar.netsantral_sip_sifre || '',
+            kullanici: ayarlar.netsantral_kullanici || '',
+            apiSifre: ayarlar.netsantral_sifre || '',
             santralNo: ayarlar.netsantral_santral_no || MR._netsantralSantralNo || ''
           });
         });
@@ -2992,18 +2991,6 @@ const NetsantralTab = () => {
                 </div>
               </div>
 
-              {/* SIP KULLANICI ADI (KAYIT ADI) */}
-              <div>
-                <label style={S.label}>SIP KULLANICI ADI (KAYIT ADI)</label>
-                <input style={S.input} value={ayarlar.netsantral_sip_kullanici}
-                  onChange={e => up('netsantral_sip_kullanici', e.target.value)}
-                  placeholder="BOŞ BIRAKIRSANIZ DAHİLİ NUMARASI KULLANILIR"/>
-                <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
-                  NETSİPP+ UYGULAMASI → AYARLAR → SIP AYARLARI → "KAYIT ADI" ALANINDAKI DEĞER.<br/>
-                  BOŞ BIRAKIRSANIZ DAHİLİ NUMARASI (ÖR: 102) KULLANILIR. FARKLI BİR DEĞER GEREKİYORSA BURAYA GİRİN.
-                </div>
-              </div>
-
               {/* SIP ŞİFRESİ */}
               <div>
                 <label style={S.label}>SIP ŞİFRESİ (WEBRTC İÇİN) *</label>
@@ -3012,7 +2999,7 @@ const NetsantralTab = () => {
                   placeholder="NETSANTRAL DAHİLİ SIP ŞİFRESİ"/>
                 <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
                   NETSİPP+ UYGULAMASI → AYARLAR → SIP AYARLARI → "ŞİFRE" ALANI.<br/>
-                  NETSANTRAL PANELİ → AYARLAR → DAHİLİ LİSTESİ → DAHİLİNİZİ SEÇİN → "ŞİFRE" ALANI.
+                  SİSTEM OTOMATİK OLARAK ÜSTTEKİ KULLANICI/ŞİFRE İLE BİRLİKTE TÜM KOMBİNASYONLARI DENER.
                 </div>
               </div>
 

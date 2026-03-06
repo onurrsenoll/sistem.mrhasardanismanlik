@@ -1640,17 +1640,20 @@ const App = () => {
           const sipSifre = r.data.netsantral_sip_sifre || '';
           const wssUrl = r.data.netsantral_wss_url || 'wss://sip6.netsantral.com:8089/ws';
           const sipDomain = r.data.netsantral_sip_domain || 'sip6.netsantral.com';
-          if (MR.webrtcTelefon && sipSifre && MR._netsantralDahili && MR._netsantralAktif) {
-            console.log('[WEBRTC] OTOMATİK BAŞLATILIYOR - DAHİLİ:', MR._netsantralDahili, '| SANTRAL:', MR._netsantralSantralNo, '| WSS:', wssUrl);
+          const apiSifre = r.data.netsantral_sifre || '';
+          const kullanici = r.data.netsantral_kullanici || '';
+          if (MR.webrtcTelefon && (sipSifre || apiSifre) && MR._netsantralDahili && MR._netsantralAktif) {
+            console.log('[WEBRTC] OTOMATİK BAŞLATILIYOR - DAHİLİ:', MR._netsantralDahili, '| KULLANICI:', kullanici, '| SANTRAL:', MR._netsantralSantralNo);
             MR.webrtcTelefon.baslat({
               wssUrl: wssUrl,
               domain: sipDomain,
               dahili: MR._netsantralDahili,
               sipSifre: sipSifre,
-              sipKullanici: r.data.netsantral_sip_kullanici || '',
+              kullanici: kullanici,
+              apiSifre: apiSifre,
               santralNo: MR._netsantralSantralNo || ''
             });
-          } else if (!sipSifre) {
+          } else if (!sipSifre && !apiSifre) {
             console.warn('[WEBRTC] SIP ŞİFRESİ GİRİLMEMİŞ - SİSTEM > NETSANTRAL AYARLARINDAN GİRİN');
           }
         } else {
