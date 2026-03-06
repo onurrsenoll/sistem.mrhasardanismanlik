@@ -1897,8 +1897,7 @@ const App = () => {
         setPage={setPage}
       />}
 
-      {/* NETSANTRAL FLOATING KONTROL PANELİ - YETKİ KONTROLLÜ */}
-      <NetsantralPanel user={user}/>
+      {/* NETSANTRAL FLOATING KONTROL PANELİ KALDIRILDI - ARAMA CRM YENİ SAYFASINDAN YAPILIR */}
 
       {/* ANİMASYON CSS */}
       <style>{`

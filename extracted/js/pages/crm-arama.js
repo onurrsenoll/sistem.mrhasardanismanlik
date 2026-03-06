@@ -359,12 +359,10 @@ MR.CrmAramaPage = ({setPage, user}) => {
 
   const aramaYap = (item) => {
     if (!item.magdur_telefon) return;
-    setAramaAktif(item.id);
-    setAramaMsg('NETSİPP+ İLE ARANIYOR...');
-    /* ARAMA BAŞLAT (tel: protokolü ile Netsipp+ tetiklenir) */
-    MR.aramaBaslat(item.magdur_telefon, item.magdur_ad_soyad, false);
-    /* AYNI ANDA NOT/BİLGİ GİRİŞ MODALINI AÇ - GÖRÜŞME SIRASINDA BİLGİ GİRİLEBİLSİN */
-    openNot(item);
+    /* CRM YENİ SAYFASINA YÖNLENDİR - TELEFON VE AD BİLGİSİ İLE */
+    MR._gelenCagriTelefon = item.magdur_telefon;
+    MR._gelenCagriAdi = item.magdur_ad_soyad || '';
+    setPage('crm-yeni');
   };
 
   /* ── STİLLER ── */

@@ -55,6 +55,258 @@ MR._NetsippDurum = () => {
 };
 
 /* ═══════════════════════════════════════════
+   SES & MİKROFON AYARLARI PANELİ (GELİŞMİŞ)
+   ═══════════════════════════════════════════ */
+MR._SesAyarlariPaneli = () => {
+  const {C, S, LIcon} = MR;
+  const [acik, setAcik] = useState(false);
+  const [ayarlar, setAyarlar] = useState(MR.webrtcTelefon ? MR.webrtcTelefon.getSesAyarlari() : {});
+  const [cihazlar, setCihazlar] = useState({mikrofonlar: [], hoparlorler: []});
+  const [mikTest, setMikTest] = useState(false);
+  const [mikLevel, setMikLevel] = useState(0);
+  const mikTestRef = useRef(null);
+  const analyserRef = useRef(null);
+
+  useEffect(() => {
+    if (acik && MR.webrtcTelefon) {
+      MR.webrtcTelefon.cihazlariListele().then(function(d) {
+        setCihazlar(d || {mikrofonlar: [], hoparlorler: []});
+      });
+      setAyarlar(MR.webrtcTelefon.getSesAyarlari());
+    }
+  }, [acik]);
+
+  const guncelle = (key, val) => {
+    setAyarlar(p => ({...p, [key]: val}));
+    if (MR.webrtcTelefon) MR.webrtcTelefon.sesAyarla(key, val);
+  };
+
+  /* MİKROFON TEST */
+  const mikTestBaslat = async () => {
+    if (mikTest) { mikTestDurdur(); return; }
+    try {
+      var constraints = {audio: true, video: false};
+      if (ayarlar.mikrofonId) constraints.audio = {deviceId: {exact: ayarlar.mikrofonId}};
+      var stream = await navigator.mediaDevices.getUserMedia(constraints);
+      var ac = new (window.AudioContext || window.webkitAudioContext)();
+      var src = ac.createMediaStreamSource(stream);
+      var analyser = ac.createAnalyser();
+      analyser.fftSize = 256;
+      src.connect(analyser);
+      mikTestRef.current = {stream, ac};
+      analyserRef.current = analyser;
+      setMikTest(true);
+
+      var dataArray = new Uint8Array(analyser.frequencyBinCount);
+      var loop = function() {
+        if (!mikTestRef.current) return;
+        analyser.getByteFrequencyData(dataArray);
+        var sum = 0;
+        for (var i = 0; i < dataArray.length; i++) sum += dataArray[i];
+        var avg = sum / dataArray.length;
+        setMikLevel(Math.min(100, Math.round(avg * 1.5)));
+        requestAnimationFrame(loop);
+      };
+      loop();
+    } catch(e) {
+      alert('MİKROFON ERİŞİM HATASI: ' + (e.message || ''));
+    }
+  };
+
+  const mikTestDurdur = () => {
+    if (mikTestRef.current) {
+      mikTestRef.current.stream.getTracks().forEach(t => t.stop());
+      try { mikTestRef.current.ac.close(); } catch(e) {}
+      mikTestRef.current = null;
+    }
+    analyserRef.current = null;
+    setMikTest(false);
+    setMikLevel(0);
+  };
+
+  useEffect(() => { return () => mikTestDurdur(); }, []);
+
+  /* HOPARLÖR TEST */
+  const hopTest = () => {
+    try {
+      var ac = new (window.AudioContext || window.webkitAudioContext)();
+      var osc = ac.createOscillator();
+      var gain = ac.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 440;
+      gain.gain.value = ayarlar.volume || 0.5;
+      gain.gain.setValueAtTime(0, ac.currentTime);
+      gain.gain.linearRampToValueAtTime(ayarlar.volume || 0.5, ac.currentTime + 0.1);
+      gain.gain.setValueAtTime(ayarlar.volume || 0.5, ac.currentTime + 0.4);
+      gain.gain.linearRampToValueAtTime(0, ac.currentTime + 0.5);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start();
+      osc.stop(ac.currentTime + 0.5);
+      setTimeout(() => { try { ac.close(); } catch(e) {} }, 1000);
+    } catch(e) {}
+  };
+
+  const sliderSt = {width:'100%', accentColor: C.accent, cursor:'pointer', height:6};
+
+  return (
+    <div style={{...S.card, marginBottom:16}}>
+      <div style={{...S.cardHead, padding:'12px 16px', cursor:'pointer', justifyContent:'space-between'}} onClick={() => setAcik(!acik)}>
+        <div style={{display:'flex', alignItems:'center', gap:8}}>
+          <LIcon name="Volume2" size={16} color={C.cyan}/>
+          <span style={{fontSize:12, fontWeight:700}}>SES & MİKROFON AYARLARI</span>
+        </div>
+        <LIcon name={acik ? 'ChevronUp' : 'ChevronDown'} size={14} color={C.textMuted}/>
+      </div>
+      {acik && (
+        <div style={{padding:16}}>
+
+          {/* HOPARLÖR SES SEVİYESİ */}
+          <div style={{marginBottom:14}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
+              <span style={{fontSize:10, fontWeight:700, color:C.textSec}}>
+                <LIcon name="Volume2" size={12} color={C.textSec}/> HOPARLÖR SESİ
+              </span>
+              <span style={{fontSize:10, fontWeight:800, color:C.accent}}>{Math.round((ayarlar.volume || 1) * 100)}%</span>
+            </div>
+            <input type="range" min="0" max="1" step="0.05" value={ayarlar.volume || 1}
+              onChange={e => guncelle('volume', parseFloat(e.target.value))}
+              style={sliderSt}/>
+            <div style={{display:'flex', justifyContent:'flex-end', marginTop:4}}>
+              <button onClick={hopTest} style={{...S.btnMini, ...S.btnMiniP, fontSize:8, padding:'3px 8px'}}>
+                <LIcon name="Play" size={10} color="#fff"/> TEST
+              </button>
+            </div>
+          </div>
+
+          {/* ÇALMA SESİ SEVİYESİ */}
+          <div style={{marginBottom:14}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
+              <span style={{fontSize:10, fontWeight:700, color:C.textSec}}>
+                <LIcon name="PhoneOutgoing" size={12} color={C.textSec}/> ÇALMA SESİ (GİDEN)
+              </span>
+              <span style={{fontSize:10, fontWeight:800, color:C.accent}}>{Math.round((ayarlar.ringbackVolume || 0.3) * 100)}%</span>
+            </div>
+            <input type="range" min="0" max="1" step="0.05" value={ayarlar.ringbackVolume || 0.3}
+              onChange={e => guncelle('ringbackVolume', parseFloat(e.target.value))}
+              style={sliderSt}/>
+          </div>
+
+          {/* ZİL SESİ SEVİYESİ */}
+          <div style={{marginBottom:14}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
+              <span style={{fontSize:10, fontWeight:700, color:C.textSec}}>
+                <LIcon name="PhoneIncoming" size={12} color={C.textSec}/> ZİL SESİ (GELEN)
+              </span>
+              <span style={{fontSize:10, fontWeight:800, color:C.accent}}>{Math.round((ayarlar.ringtoneVolume || 0.5) * 100)}%</span>
+            </div>
+            <input type="range" min="0" max="1" step="0.05" value={ayarlar.ringtoneVolume || 0.5}
+              onChange={e => guncelle('ringtoneVolume', parseFloat(e.target.value))}
+              style={sliderSt}/>
+          </div>
+
+          {/* MİKROFON GAIN */}
+          <div style={{marginBottom:14}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
+              <span style={{fontSize:10, fontWeight:700, color:C.textSec}}>
+                <LIcon name="Mic" size={12} color={C.textSec}/> MİKROFON SEVİYESİ
+              </span>
+              <span style={{fontSize:10, fontWeight:800, color:C.accent}}>{Math.round((ayarlar.mikrofonGain || 1) * 100)}%</span>
+            </div>
+            <input type="range" min="0.1" max="3.0" step="0.1" value={ayarlar.mikrofonGain || 1}
+              onChange={e => guncelle('mikrofonGain', parseFloat(e.target.value))}
+              style={sliderSt}/>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:4}}>
+              <button onClick={mikTestBaslat} style={{
+                ...S.btnMini, fontSize:8, padding:'3px 8px',
+                ...(mikTest ? S.btnMiniD : S.btnMiniS)
+              }}>
+                <LIcon name={mikTest ? 'MicOff' : 'Mic'} size={10} color="#fff"/>
+                {mikTest ? 'DURDUR' : 'MİK TEST'}
+              </button>
+              {mikTest && (
+                <div style={{flex:1, marginLeft:8, height:8, borderRadius:4, background:`${C.border}`, overflow:'hidden'}}>
+                  <div style={{
+                    height:'100%', borderRadius:4, transition:'width .1s',
+                    width: mikLevel + '%',
+                    background: mikLevel > 70 ? C.danger : mikLevel > 40 ? C.warning : C.success
+                  }}/>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* MİKROFON SEÇİMİ */}
+          {cihazlar.mikrofonlar.length > 0 && (
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:10, fontWeight:700, color:C.textSec, marginBottom:6}}>
+                <LIcon name="Mic" size={12} color={C.textSec}/> MİKROFON CİHAZI
+              </div>
+              <select style={{...S.select, fontSize:10, padding:'6px 10px'}}
+                value={ayarlar.mikrofonId || ''}
+                onChange={e => guncelle('mikrofonId', e.target.value)}>
+                <option value="">VARSAYILAN MİKROFON</option>
+                {cihazlar.mikrofonlar.map((d, i) => (
+                  <option key={d.deviceId || i} value={d.deviceId}>{d.label || ('MİKROFON ' + (i+1))}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* HOPARLÖR SEÇİMİ */}
+          {cihazlar.hoparlorler.length > 0 && (
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:10, fontWeight:700, color:C.textSec, marginBottom:6}}>
+                <LIcon name="Speaker" size={12} color={C.textSec}/> HOPARLÖR CİHAZI
+              </div>
+              <select style={{...S.select, fontSize:10, padding:'6px 10px'}}
+                value={ayarlar.hoparlörId || ''}
+                onChange={e => guncelle('hoparlörId', e.target.value)}>
+                <option value="">VARSAYILAN HOPARLÖR</option>
+                {cihazlar.hoparlorler.map((d, i) => (
+                  <option key={d.deviceId || i} value={d.deviceId}>{d.label || ('HOPARLÖR ' + (i+1))}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* GELİŞMİŞ SES İŞLEME */}
+          <div style={{borderTop:`1px solid ${C.border}`, paddingTop:12, marginTop:4}}>
+            <div style={{fontSize:10, fontWeight:700, color:C.textSec, marginBottom:8}}>
+              <LIcon name="Settings" size={12} color={C.textSec}/> GELİŞMİŞ SES İŞLEME
+            </div>
+            <div style={{display:'flex', flexDirection:'column', gap:6}}>
+              {[
+                {key:'echoCancellation', label:'EKO İPTALİ'},
+                {key:'noiseSuppression', label:'GÜRÜLTÜ AZALTMA'},
+                {key:'autoGainControl', label:'OTOMATİK KAZANÇ'}
+              ].map(item => (
+                <div key={item.key} style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                  <span style={{fontSize:10, color:C.text}}>{item.label}</span>
+                  <div onClick={() => guncelle(item.key, !ayarlar[item.key])} style={{
+                    width:32, height:18, borderRadius:9, cursor:'pointer',
+                    background: ayarlar[item.key] ? C.success : C.borderLight,
+                    position:'relative', transition:'all .3s'
+                  }}>
+                    <div style={{
+                      width:14, height:14, borderRadius:'50%', background:'#fff',
+                      position:'absolute', top:2,
+                      left: ayarlar[item.key] ? 16 : 2,
+                      transition:'all .3s', boxShadow:'0 1px 3px rgba(0,0,0,.3)'
+                    }}/>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════
    CRM SAYFA YÖNLENDİRİCİ
    ═══════════════════════════════════════════ */
 MR.CrmPage = ({setPage, user, view, crmId}) => {
@@ -284,7 +536,7 @@ MR._CRMListesiInner = ({setPage, user}) => {
                       {c.telefon || '-'}
                       {c.telefon && (
                         <button style={{...iconBtn(C.success), width:24, height:24}} title="ARA"
-                          onClick={(e) => { e.stopPropagation(); MR.aramaBaslat(c.telefon, c.ad_soyad, true); }}>
+                          onClick={(e) => { e.stopPropagation(); MR._gelenCagriTelefon = c.telefon; MR._gelenCagriAdi = c.ad_soyad || ''; setPage('crm-yeni'); }}>
                           <LIcon name="Phone" size={12} color={C.success}/>
                         </button>
                       )}
@@ -637,7 +889,7 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
               <div style={{fontSize: 12, color: C.textSec, marginTop: 4, display: 'flex', gap: 10, alignItems: 'center'}}>
                 <span>{crm.telefon || '-'}</span>
                 {crm.telefon && (
-                  <button onClick={() => MR.aramaBaslat(crm.telefon, crm.ad_soyad, true)} style={{
+                  <button onClick={() => { MR._gelenCagriTelefon = crm.telefon; MR._gelenCagriAdi = crm.ad_soyad || ''; setPage('crm-yeni'); }} style={{
                     ...S.btnMini,...S.btnMiniS, padding:'5px 12px', fontSize:11
                   }}>
                     <LIcon name="Phone" size={13} color="#fff"/> ARA
@@ -680,7 +932,7 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
             {infoRow('TELEFON', crm.telefon ? (
               <div style={{display:'flex', alignItems:'center', gap:8}}>
                 <span>{crm.telefon}</span>
-                <button onClick={() => MR.aramaBaslat(crm.telefon, crm.ad_soyad, true)} style={{
+                <button onClick={() => { MR._gelenCagriTelefon = crm.telefon; MR._gelenCagriAdi = crm.ad_soyad || ''; setPage('crm-yeni'); }} style={{
                   ...S.btnMini,...S.btnMiniS, padding:'4px 10px'
                 }}>
                   <LIcon name="Phone" size={11} color="#fff"/> ARA
@@ -917,13 +1169,11 @@ MR._CRMYeniInner = ({setPage}) => {
     });
   };
 
-  /* ── GELEN ÇAĞRI'DAN OTOMATİK DOLDURMA ── */
+  /* ── GELEN ÇAĞRI / ARA BUTONUNDAN OTOMATİK DOLDURMA ── */
   useEffect(() => {
     if (MR._gelenCagriTelefon) {
       sF(p => ({...p, telefon: MR._gelenCagriTelefon, ad_soyad: MR._gelenCagriAdi || ''}));
-      /* GELEN ÇAĞRI İSE OTOMATİK ÇAĞRIYI AKTİF YAP */
-      setCallActive(true);
-      callSecondsRef.current = 0;
+      /* FORMU DOLDUR AMA ÇAĞRIYI OTOMATİK BAŞLATMA - KULLANICI ÇAĞRI BAŞLAT BUTONUNA BASSIN */
       MR._gelenCagriTelefon = null;
       MR._gelenCagriAdi = null;
     }
@@ -1333,6 +1583,9 @@ MR._CRMYeniInner = ({setPage}) => {
               )}
             </div>
           </div>}
+
+          {/* SES & MİKROFON AYARLARI PANELİ */}
+          <MR._SesAyarlariPaneli/>
 
           {/* AI ANALİZ PANELİ */}
           <div style={{...S.card}}>
