@@ -2829,9 +2829,7 @@ const NetsantralTab = () => {
     setTimeout(() => setMesaj({type: '', text: ''}), 8000);
   };
 
-
   if (loading) return <Loading/>;
-
 
   return (
     <div>
@@ -2941,7 +2939,7 @@ const NetsantralTab = () => {
               {/* ═══ WEBRTC TELEFON AYARLARI ═══ */}
               <div style={{gridColumn: '1/-1', borderTop: '2px solid #334155', paddingTop: 16, marginTop: 8}}>
                 <div style={{fontSize: 13, fontWeight: 700, color: '#38bdf8', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8}}>
-                  {LIcon('Phone', 18)} WEBRTC TELEFON (TARAYICIDAN DİREKT ARAMA)
+                  <LIcon name="Phone" size={18}/> WEBRTC TELEFON (TARAYICIDAN DİREKT ARAMA)
                 </div>
                 <div style={{fontSize: 10, color: '#94a3b8', marginBottom: 16, lineHeight: 1.6, background: '#1e293b', padding: 12, borderRadius: 8}}>
                   CRM EKRANINDAN DİREKT ARAMA YAPMAK İÇİN SIP ŞİFRENİZİ GİRİN.<br/>

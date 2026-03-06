@@ -825,7 +825,6 @@ const PageRouter = ({page, setPage, user, setUser}) => {
 };
 
 /* ═══ NETSANTRAL FLOATING KONTROL PANELİ ═══ */
-/* ═══ NETSANTRAL FLOATING KONTROL PANELİ - TEMİZ YAPI v2.0 ═══ */
 const NetsantralPanel = ({user}) => {
   const {C, LIcon, api} = MR;
 
