@@ -28,11 +28,6 @@ MR.webrtcTelefon = {
     santralNo: ''
   },
 
-  /* OTOMATİK DENEME SİSTEMİ */
-  _authDenemeler: [],
-  _authIndex: 0,
-  _authBasarili: null,
-
   /* ═══ BAŞLAT ═══ */
   baslat(config) {
     if (this._ua) {
@@ -48,115 +43,40 @@ MR.webrtcTelefon = {
 
     if (config) Object.assign(this._config, config);
 
-    /* EN AZ BİR ŞİFRE OLMALI */
-    if (!this._config.dahili || (!this._config.sipSifre && !this._config.apiSifre)) {
-      console.warn('[WEBRTC] DAHİLİ VEYA ŞİFRE EKSİK');
-      this._durumBildir('hata', 'DAHİLİ VEYA ŞİFRE GİRİLMEMİŞ');
+    if (!this._config.dahili || !this._config.sipSifre) {
+      console.warn('[WEBRTC] DAHİLİ VEYA SIP ŞİFRESİ EKSİK');
+      this._durumBildir('hata', 'DAHİLİ VEYA SIP ŞİFRESİ GİRİLMEMİŞ');
       return;
     }
 
-    /* SES ELEMENTİ */
     this._remoteAudioOlustur();
 
-    /* KİMLİK KOMBİNASYONLARI OLUŞTUR
-       Üst bölümdeki kullanıcı/şifre + alt bölümdeki SIP şifresi ile
-       tüm mantıklı kombinasyonları dene */
-    var dahili = this._config.dahili;
-    var kullanici = (this._config.kullanici || '').replace(/^0+/, '');
+    /* NETSANTRAL FORMAT: dahili-santralNo (ör: 102-3625026502) */
     var santralNo = (this._config.santralNo || '').replace(/^0+/, '');
-    var sipSifre = this._config.sipSifre || '';
-    var apiSifre = this._config.apiSifre || '';
+    var authUser = santralNo ? this._config.dahili + '-' + santralNo : this._config.dahili;
+    var sipUri = 'sip:' + authUser + '@' + this._config.domain;
 
-    this._authDenemeler = [];
-    var eklenen = {};
-    var ekle = function(user, pass, aciklama) {
-      if (!user || !pass) return;
-      var key = user + ':' + pass;
-      if (eklenen[key]) return;
-      eklenen[key] = true;
-      this._authDenemeler.push({ user: user, pass: pass, aciklama: aciklama });
-    }.bind(this);
-
-    /* SIRALAMA: Sunucu 3625026502'yi tanıyor (Rejected verdi, Auth Error değil)
-       Bu yüzden kullanici bazlı kombinasyonları öne al */
-    if (kullanici && kullanici !== dahili) {
-      ekle(kullanici, sipSifre, 'kullanici(' + kullanici + ') + SIP şifre');
-      ekle(kullanici, apiSifre, 'kullanici(' + kullanici + ') + API şifre');
-    }
-    ekle(dahili, sipSifre, 'dahili(' + dahili + ') + SIP şifre');
-    ekle(dahili, apiSifre, 'dahili(' + dahili + ') + API şifre');
-    if (santralNo) {
-      ekle(dahili + '-' + santralNo, sipSifre, 'dahili-santral(' + dahili + '-' + santralNo + ') + SIP şifre');
-      ekle(dahili + '-' + santralNo, apiSifre, 'dahili-santral(' + dahili + '-' + santralNo + ') + API şifre');
-      if (kullanici && kullanici !== santralNo) {
-        ekle(dahili + '-' + kullanici, sipSifre, 'dahili-kullanici(' + dahili + '-' + kullanici + ') + SIP şifre');
-      }
-    }
-
-    this._authIndex = 0;
-    this._authBasarili = null;
-
-    console.log('[WEBRTC] ════════════════════════════════════════');
-    console.log('[WEBRTC] OTOMATİK KİMLİK DENEME SİSTEMİ');
-    console.log('[WEBRTC] TOPLAM', this._authDenemeler.length, 'KOMBİNASYON DENENecek:');
-    this._authDenemeler.forEach(function(d, i) {
-      console.log('[WEBRTC]  ', (i + 1) + '.', d.aciklama);
-    });
-    console.log('[WEBRTC] ════════════════════════════════════════');
-
-    this._sonrakiDeneme();
-  },
-
-  /* ═══ BİR KOMBİNASYONU DENE ═══ */
-  _sonrakiDeneme() {
-    if (this._authIndex >= this._authDenemeler.length) {
-      console.error('[WEBRTC] ════════════════════════════════════════');
-      console.error('[WEBRTC] TÜM KOMBİNASYONLAR BAŞARISIZ!');
-      console.error('[WEBRTC] NETSiPP+ UYGULAMANIZI AÇIN → AYARLAR → SIP AYARLARI');
-      console.error('[WEBRTC] ORDAKİ "KAYIT ADI" VE "ŞİFRE" BİLGİLERİNİ KONTROL EDİN');
-      console.error('[WEBRTC] ════════════════════════════════════════');
-      this._durumBildir('hata', 'TÜM KİMLİK KOMBİNASYONLARI BAŞARISIZ - NETSiPP+ AYARLARINI KONTROL EDİN');
-      return;
-    }
-
-    var deneme = this._authDenemeler[this._authIndex];
-    var sipUri = 'sip:' + deneme.user + '@' + this._config.domain;
-
-    console.log('[WEBRTC] ── DENEME', (this._authIndex + 1) + '/' + this._authDenemeler.length, '──', deneme.aciklama);
-    console.log('[WEBRTC] URI:', sipUri, '| AUTH:', deneme.user, '| PASS:', deneme.pass.length + ' karakter');
+    console.log('[WEBRTC] BAĞLANIYOR:', sipUri, '| AUTH:', authUser, '| WSS:', this._config.wssUrl);
 
     try {
       var socket = new JsSIP.WebSocketInterface(this._config.wssUrl);
 
-      var uaConfig = {
+      this._ua = new JsSIP.UA({
         sockets: [socket],
         uri: sipUri,
-        authorization_user: deneme.user,
-        password: deneme.pass,
+        authorization_user: authUser,
+        password: this._config.sipSifre,
         display_name: 'MR HASAR CRM',
         register: true,
         register_expires: 300,
         session_timers: false,
         connection_recovery_min_interval: 4,
         connection_recovery_max_interval: 30
-      };
-
-      /* ÖNCEKİ UA'YI TEMİZLE */
-      if (this._ua) {
-        try { this._ua.stop(); } catch(ex) {}
-        this._ua = null;
-      }
-
-      this._ua = new JsSIP.UA(uaConfig);
+      });
 
       this._ua.on('registered', () => {
-        console.log('[WEBRTC] ════════════════════════════════════════');
-        console.log('[WEBRTC] PBX KAYIT BAŞARILI ✓✓✓');
-        console.log('[WEBRTC] ÇALIŞAN KOMBİNASYON:', deneme.aciklama);
-        console.log('[WEBRTC] AUTH USER:', deneme.user);
-        console.log('[WEBRTC] ════════════════════════════════════════');
+        console.log('[WEBRTC] PBX KAYIT BAŞARILI ✓ AUTH:', authUser);
         this._kayitli = true;
-        this._authBasarili = deneme;
         this._durumBildir('kayitli');
       });
 
@@ -167,19 +87,9 @@ MR.webrtcTelefon = {
       });
 
       this._ua.on('registrationFailed', (e) => {
-        console.warn('[WEBRTC] DENEME', (this._authIndex + 1), 'BAŞARISIZ:', e.cause, '-', deneme.aciklama);
-
-        /* HER TÜRLÜ HATADA SONRAKİ KOMBİNASYONU DENE */
-        try { this._ua.stop(); } catch(ex) {}
-        this._ua = null;
-        this._authIndex++;
-
-        if (this._authIndex < this._authDenemeler.length) {
-          console.log('[WEBRTC] SONRAKİ KOMBİNASYON DENENİYOR...');
-          setTimeout(() => this._sonrakiDeneme(), 1000);
-        } else {
-          this._sonrakiDeneme();
-        }
+        console.error('[WEBRTC] KAYIT BAŞARISIZ:', e.cause);
+        this._kayitli = false;
+        this._durumBildir('hata', 'PBX KAYIT HATASI: ' + (e.cause || ''));
       });
 
       this._ua.on('connected', () => {
@@ -187,31 +97,23 @@ MR.webrtcTelefon = {
       });
 
       this._ua.on('disconnected', () => {
-        /* Sadece başarılı kayıt sonrası kopma durumunda bildir */
-        if (this._authBasarili) {
-          console.warn('[WEBRTC] WEBSOCKET KOPTU');
-          this._kayitli = false;
-          this._durumBildir('baglanti-koptu');
-        }
+        console.warn('[WEBRTC] WEBSOCKET KOPTU');
+        this._kayitli = false;
+        this._durumBildir('baglanti-koptu');
       });
 
       this._ua.on('newRTCSession', (data) => {
-        var session = data.session;
-        if (session.direction === 'incoming') {
-          this._gelenCagri(session);
+        if (data.session.direction === 'incoming') {
+          this._gelenCagri(data.session);
         }
       });
 
       this._ua.start();
+      console.log('[WEBRTC] JsSIP BAŞLATILDI');
 
     } catch(e) {
       console.error('[WEBRTC] BAŞLATMA HATASI:', e);
-      this._authIndex++;
-      if (this._authIndex < this._authDenemeler.length) {
-        setTimeout(() => this._sonrakiDeneme(), 1000);
-      } else {
-        this._durumBildir('hata', 'WebRTC BAŞLATILAMADI');
-      }
+      this._durumBildir('hata', 'WebRTC BAŞLATILAMADI: ' + (e.message || ''));
     }
   },
 
