@@ -77,13 +77,14 @@ MR.webrtcTelefon = {
       this._authDenemeler.push({ user: user, pass: pass, aciklama: aciklama });
     }.bind(this);
 
-    /* SIRALAMA: En olası kombinasyondan başla */
+    /* SIRALAMA: Sunucu 3625026502'yi tanıyor (Rejected verdi, Auth Error değil)
+       Bu yüzden kullanici bazlı kombinasyonları öne al */
+    if (kullanici && kullanici !== dahili) {
+      ekle(kullanici, sipSifre, 'kullanici(' + kullanici + ') + SIP şifre');
+      ekle(kullanici, apiSifre, 'kullanici(' + kullanici + ') + API şifre');
+    }
     ekle(dahili, sipSifre, 'dahili(' + dahili + ') + SIP şifre');
     ekle(dahili, apiSifre, 'dahili(' + dahili + ') + API şifre');
-    if (kullanici && kullanici !== dahili) {
-      ekle(kullanici, apiSifre, 'kullanici(' + kullanici + ') + API şifre');
-      ekle(kullanici, sipSifre, 'kullanici(' + kullanici + ') + SIP şifre');
-    }
     if (santralNo) {
       ekle(dahili + '-' + santralNo, sipSifre, 'dahili-santral(' + dahili + '-' + santralNo + ') + SIP şifre');
       ekle(dahili + '-' + santralNo, apiSifre, 'dahili-santral(' + dahili + '-' + santralNo + ') + API şifre');
@@ -168,23 +169,16 @@ MR.webrtcTelefon = {
       this._ua.on('registrationFailed', (e) => {
         console.warn('[WEBRTC] DENEME', (this._authIndex + 1), 'BAŞARISIZ:', e.cause, '-', deneme.aciklama);
 
-        if (e.cause === 'Authentication Error') {
-          /* BU KOMBİNASYON ÇALIŞMADI, SONRAKİNİ DENE */
-          try { this._ua.stop(); } catch(ex) {}
-          this._ua = null;
-          this._authIndex++;
+        /* HER TÜRLÜ HATADA SONRAKİ KOMBİNASYONU DENE */
+        try { this._ua.stop(); } catch(ex) {}
+        this._ua = null;
+        this._authIndex++;
 
-          if (this._authIndex < this._authDenemeler.length) {
-            console.log('[WEBRTC] SONRAKİ KOMBİNASYON DENENİYOR...');
-            setTimeout(() => this._sonrakiDeneme(), 1000);
-          } else {
-            this._sonrakiDeneme(); /* Tüm denemeler bitti mesajını göster */
-          }
+        if (this._authIndex < this._authDenemeler.length) {
+          console.log('[WEBRTC] SONRAKİ KOMBİNASYON DENENİYOR...');
+          setTimeout(() => this._sonrakiDeneme(), 1000);
         } else {
-          /* Authentication dışı hata - bağlantı sorunu vs. */
-          console.error('[WEBRTC] BAĞLANTI HATASI:', e.cause);
-          this._kayitli = false;
-          this._durumBildir('hata', 'PBX KAYIT HATASI: ' + (e.cause || ''));
+          this._sonrakiDeneme();
         }
       });
 
