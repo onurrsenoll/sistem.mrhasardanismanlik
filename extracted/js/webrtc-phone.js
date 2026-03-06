@@ -301,6 +301,7 @@ MR.webrtcTelefon = {
   /* ═══ SESSION OLAYLARI ═══ */
   _sessionOlaylari(session) {
     var self = this;
+    var _sesAyarlandi = false;
 
     session.on('progress', function() {
       console.log('[WEBRTC] ÇALIYOR...');
@@ -311,13 +312,20 @@ MR.webrtcTelefon = {
       console.log('[WEBRTC] GÖRÜŞME BAŞLADI');
       self._zilDurdur();
       self._aramaDurumu = 'gorusmede';
-      self._sesAyarla(session);
+      if (!_sesAyarlandi) {
+        self._sesAyarla(session);
+        _sesAyarlandi = true;
+      }
       self._durumBildir('gorusmede');
     });
 
     session.on('confirmed', function() {
       console.log('[WEBRTC] GÖRÜŞME ONAYLANDI');
-      self._sesAyarla(session);
+      /* SES ZATEN accepted'DA AYARLANDI - TEKRAR AYARLAMAYA GEREK YOK */
+      if (!_sesAyarlandi) {
+        self._sesAyarla(session);
+        _sesAyarlandi = true;
+      }
     });
 
     session.on('ended', function() {
@@ -357,6 +365,11 @@ MR.webrtcTelefon = {
     try {
       var pc = session.connection;
       if (!pc) return;
+      /* ZATEN STREAM VARSA VE ÇALIYORSA TEKRAR AYARLAMA */
+      if (this._remoteAudio && this._remoteAudio.srcObject && !this._remoteAudio.paused) {
+        console.log('[WEBRTC] SES ZATEN ÇALIYOR - TEKRAR AYARLANMADI');
+        return;
+      }
       var receivers = pc.getReceivers();
       for (var i = 0; i < receivers.length; i++) {
         if (receivers[i].track && receivers[i].track.kind === 'audio' && this._remoteAudio) {

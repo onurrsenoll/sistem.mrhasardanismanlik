@@ -57,6 +57,13 @@ MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
     return;
   }
 
+  /* AKTİF GÖRÜŞME KONTROLÜ - ZATEN GÖRÜŞME VARSA YENİ ARAMA BAŞLATMA */
+  if (MR.webrtcTelefon._session) {
+    console.warn('[WEBRTC ARAMA] ZATEN AKTİF GÖRÜŞME VAR - YENİ ARAMA ENGELLENDİ');
+    alert('ZATEN AKTİF BİR GÖRÜŞME VAR! ÖNCE MEVCUT GÖRÜŞMEYI KAPATINIZ.');
+    return;
+  }
+
   /* GİDEN ÇAĞRI BİLDİRİMİ */
   window.dispatchEvent(new CustomEvent('mr-arama-baslat', {
     detail: { telefon: cleanNum, ad: ad || '', yon: 'giden', timestamp: Date.now() }

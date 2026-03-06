@@ -919,6 +919,11 @@ const NetsantralPanel = ({user}) => {
     const handleAramaBaslat = (e) => {
       const data = e.detail || {};
       if (data.telefon) {
+        /* AKTİF GÖRÜŞME VARSA UI'I GÜNCELLEMEYİ ENGELLE */
+        if (MR.webrtcTelefon && MR.webrtcTelefon._session) {
+          console.warn('[NETSANTRAL PANEL] AKTİF GÖRÜŞME VAR - YENİ ARAMA UI GÜNCELLEMESİ ENGELLENDİ');
+          return;
+        }
         setNumber(data.telefon);
         setStatusMsg('GİDEN ARAMA BAŞLATILIYOR: ' + (data.ad || data.telefon));
         setStatus('araniyor');
@@ -1049,6 +1054,14 @@ const NetsantralPanel = ({user}) => {
     if (!MR.webrtcTelefon || !MR.webrtcTelefon._kayitli) {
       setStatusMsg('WEBRTC TELEFON KAYITLI DEĞİL! SİSTEM > NETSANTRAL AYARLARINDAN SIP ŞİFRESİNİ GİRİN.');
       setTimeout(() => setStatusMsg(''), 6000);
+      return;
+    }
+
+    /* AKTİF GÖRÜŞME KONTROLÜ - ZATEN GÖRÜŞME VARSA YENİ ARAMA BAŞLATMA */
+    if (MR.webrtcTelefon._session || activeCall) {
+      console.warn('[NETSANTRAL PANEL] ZATEN AKTİF GÖRÜŞME VAR - YENİ ARAMA ENGELLENDİ');
+      setStatusMsg('ZATEN AKTİF BİR GÖRÜŞME VAR!');
+      setTimeout(() => setStatusMsg(''), 3000);
       return;
     }
 
