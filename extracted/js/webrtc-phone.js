@@ -56,11 +56,12 @@ MR.webrtcTelefon = {
     /* SES ELEMENTİ */
     this._remoteAudioOlustur();
 
-    /* NetSantral/Asterisk: auth_user sadece dahili numarası olabilir
-       Farklı formatları sırayla deneriz, önce sadece dahili numarası */
+    /* NetSantral multi-tenant PBX: dahili-santralNo formatı gerekli
+       Hem URI hem auth_user tam format olmalı: 102-3625026502 */
     var santralNo = (this._config.santralNo || '').replace(/^0+/, '');
-    var authUser = this._config.dahili;
-    var sipUri = 'sip:' + this._config.dahili + '@' + this._config.domain;
+    var fullUser = santralNo ? this._config.dahili + '-' + santralNo : this._config.dahili;
+    var authUser = fullUser;
+    var sipUri = 'sip:' + fullUser + '@' + this._config.domain;
 
     console.log('[WEBRTC] JsSIP BAŞLATILIYOR:', sipUri, '| AUTH USER:', authUser, '| WSS:', this._config.wssUrl);
 
