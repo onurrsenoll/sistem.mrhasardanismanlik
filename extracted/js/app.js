@@ -825,48 +825,36 @@ const PageRouter = ({page, setPage, user, setUser}) => {
 };
 
 /* ═══ NETSANTRAL FLOATING KONTROL PANELİ ═══ */
+/* ═══ NETSANTRAL FLOATING KONTROL PANELİ - TEMİZ YAPI v2.0 ═══ */
 const NetsantralPanel = ({user}) => {
   const {C, LIcon, api} = MR;
 
-  /* YETKİ KONTROLÜ: ADMIN HER ZAMAN GÖREBİLİR, DİĞERLERİ İZİN GEREKTİRİR */
+  /* YETKİ KONTROLÜ */
   const yetkiler = user?.yetkiler || {};
   const isAdmin = user?.rol === 'admin';
   const netsantralIzin = isAdmin || yetkiler['netsantral_goruntule'] === 1;
 
+  /* UI STATE */
   const [minimized, setMinimized] = useState(true);
   const [dialpadOpen, setDialpadOpen] = useState(false);
   const [number, setNumber] = useState('');
   const [activeCall, setActiveCall] = useState(false);
   const [muted, setMuted] = useState(false);
   const [callTimer, setCallTimer] = useState(0);
-  const [status, setStatus] = useState('hazir'); // hazir, araniyor, gorusmede, mola
+  const [status, setStatus] = useState('hazir');
   const [statusMsg, setStatusMsg] = useState('');
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferNum, setTransferNum] = useState('');
-  const [queueInfo, setQueueInfo] = useState(null);
   const [hangupLoading, setHangupLoading] = useState(false);
+  const [webrtcKayitli, setWebrtcKayitli] = useState(false);
+  const [gelenCagriData, setGelenCagriData] = useState(null);
 
   const timerRef = useRef(null);
   const callStartRef = useRef(null);
   const panelRef = useRef(null);
-  const pbxOriginatedRef = useRef(false);
   const activeLogIdRef = useRef(0);
 
-  // DAHİLİ NUMARASI APP BİLEŞENİNDE YÜKLENİYOR (MR._netsantralDahili)
-
-  // AYAR DEĞİŞİKLİĞİ DİNLE (SİSTEM > NETSANTRAL SAYFASINDAN KAYDET YAPILINCA)
-  useEffect(() => {
-    const handler = (e) => {
-      const data = e.detail || {};
-      console.log('[NETSANTRAL PANEL] AYARLAR GÜNCELLEME ALGILANDI:', data);
-      if (data.dahili) setStatusMsg('DAHİLİ GÜNCELLENDİ: ' + data.dahili);
-      setTimeout(() => setStatusMsg(''), 3000);
-    };
-    window.addEventListener('mr-netsantral-ayar-degisti', handler);
-    return () => window.removeEventListener('mr-netsantral-ayar-degisti', handler);
-  }, []);
-
-  // ARAMA SÜRE SAYACI
+  /* ─── GÖRÜŞME SÜRESİ SAYACI ─── */
   useEffect(() => {
     if (activeCall) {
       callStartRef.current = Date.now();
@@ -881,88 +869,10 @@ const NetsantralPanel = ({user}) => {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [activeCall]);
 
-  // GELEN ÇAĞRI BİLDİRİMİ (OPSİYONEL - WEBHOOK AKTİFSE)
+  /* ─── WEBRTC DURUM DEĞİŞİKLİKLERİ (TEK MERKEZ) ─── */
   useEffect(() => {
-    const handler = (e) => {
-      const data = e.detail || {};
-      if (data.arayan) {
-        setNumber(data.arayan);
-        setActiveCall(true);
-        setStatus('gorusmede');
-        setMinimized(false);
-        setStatusMsg('GELEN ÇAĞRI: ' + (data.arayanAdi || data.arayan));
-        setTimeout(() => setStatusMsg(''), 4000);
-      }
-    };
-    window.addEventListener('mr-netsantral-gelen', handler);
-    return () => window.removeEventListener('mr-netsantral-gelen', handler);
-  }, []);
-
-  // CRM EKRANINDAN ÇAĞRI SONLANDIRILINCA DİNLE
-  useEffect(() => {
-    const handler = () => {
-      if (activeCall) {
-        setActiveCall(false);
-        setMuted(false);
-        setStatus('hazir');
-        setStatusMsg('ÇAĞRI SONLANDIRILDI');
-        setTransferOpen(false);
-        setTimeout(() => setStatusMsg(''), 2000);
-      }
-    };
-    window.addEventListener('mr-arama-sonlandi', handler);
-    return () => window.removeEventListener('mr-arama-sonlandi', handler);
-  }, [activeCall]);
-
-  // DIŞARIDAN BAŞLATILAN GİDEN ÇAĞRILARI DİNLE (CRM-ARAMA, DOSYA DETAY vs.)
-  useEffect(() => {
-    const handleAramaBaslat = (e) => {
-      const data = e.detail || {};
-      if (data.telefon) {
-        /* AKTİF GÖRÜŞME VARSA UI'I GÜNCELLEMEYİ ENGELLE */
-        if (MR.webrtcTelefon && MR.webrtcTelefon._session) {
-          console.warn('[NETSANTRAL PANEL] AKTİF GÖRÜŞME VAR - YENİ ARAMA UI GÜNCELLEMESİ ENGELLENDİ');
-          return;
-        }
-        setNumber(data.telefon);
-        setStatusMsg('GİDEN ARAMA BAŞLATILIYOR: ' + (data.ad || data.telefon));
-        setStatus('araniyor');
-        setMinimized(false);
-      }
-    };
-    const handlePbxSonuc = (e) => {
-      const data = e.detail || {};
-      if (data.logId) activeLogIdRef.current = data.logId;
-      if (data.basarili) {
-        pbxOriginatedRef.current = true;
-        setActiveCall(true);
-        setStatus('araniyor');
-        setStatusMsg('ÇAĞRI GÖNDERİLDİ - ' + (data.ad || data.telefon));
-      } else {
-        /* PBX BAŞARISIZ - HATA GÖSTER VE TEMİZLE */
-        setStatus('hazir');
-        setStatusMsg(data.hata || 'GİDEN ARAMA BAŞLATILAMADI');
-        pbxOriginatedRef.current = false;
-        activeLogIdRef.current = 0;
-      }
-      setTimeout(() => setStatusMsg(''), 5000);
-    };
-    window.addEventListener('mr-arama-baslat', handleAramaBaslat);
-    window.addEventListener('mr-arama-pbx-sonuc', handlePbxSonuc);
-    return () => {
-      window.removeEventListener('mr-arama-baslat', handleAramaBaslat);
-      window.removeEventListener('mr-arama-pbx-sonuc', handlePbxSonuc);
-    };
-  }, []);
-
-  /* WEBRTC DURUM DEĞİŞİKLİKLERİNİ DİNLE */
-  const [webrtcKayitli, setWebrtcKayitli] = useState(false);
-  const [gelenCagriData, setGelenCagriData] = useState(null);
-
-  useEffect(() => {
-    const handleWebrtcDurum = (e) => {
+    const handleDurum = (e) => {
       const d = e.detail || {};
-      console.log('[NETSANTRAL PANEL] WEBRTC DURUM:', d.durum, d.detay || '');
       setWebrtcKayitli(d.kayitli);
 
       switch(d.durum) {
@@ -974,18 +884,17 @@ const NetsantralPanel = ({user}) => {
           setActiveCall(true);
           setStatus('gorusmede');
           setMinimized(false);
-          setStatusMsg('GÖRÜŞME BAŞLADI');
           setGelenCagriData(null);
+          setStatusMsg('GÖRÜŞME BAŞLADI');
           setTimeout(() => setStatusMsg(''), 3000);
           break;
         case 'kapandi':
           setActiveCall(false);
           setMuted(false);
           setStatus('hazir');
-          setStatusMsg('GÖRÜŞME SONLANDI');
           setGelenCagriData(null);
-          pbxOriginatedRef.current = false;
           activeLogIdRef.current = 0;
+          setStatusMsg('GÖRÜŞME SONLANDI');
           setTimeout(() => setStatusMsg(''), 3000);
           break;
         case 'sessize-alindi':
@@ -995,15 +904,16 @@ const NetsantralPanel = ({user}) => {
           setMuted(false);
           break;
         case 'hata':
+          setActiveCall(false);
+          setStatus('hazir');
           setStatusMsg(d.detay || 'WEBRTC HATASI');
           setTimeout(() => setStatusMsg(''), 5000);
           break;
       }
     };
 
-    const handleWebrtcGelen = (e) => {
+    const handleGelen = (e) => {
       const d = e.detail || {};
-      console.log('[NETSANTRAL PANEL] WEBRTC GELEN ÇAĞRI:', d.arayan);
       setGelenCagriData(d);
       setNumber(d.arayan || '');
       setStatus('gelen');
@@ -1011,55 +921,90 @@ const NetsantralPanel = ({user}) => {
       setStatusMsg('GELEN ÇAĞRI: ' + (d.arayanAdi || d.arayan));
     };
 
-    window.addEventListener('mr-webrtc-durum', handleWebrtcDurum);
-    window.addEventListener('mr-webrtc-gelen-cagri', handleWebrtcGelen);
+    window.addEventListener('mr-webrtc-durum', handleDurum);
+    window.addEventListener('mr-webrtc-gelen-cagri', handleGelen);
     return () => {
-      window.removeEventListener('mr-webrtc-durum', handleWebrtcDurum);
-      window.removeEventListener('mr-webrtc-gelen-cagri', handleWebrtcGelen);
+      window.removeEventListener('mr-webrtc-durum', handleDurum);
+      window.removeEventListener('mr-webrtc-gelen-cagri', handleGelen);
     };
   }, []);
 
-  // DIŞARI TIKLANINCA MİNİMİZE ET (AKTİF ÇAĞRI YOKSA)
+  /* ─── DIŞARIDAN BAŞLATILAN ARAMALAR (CRM, DOSYA DETAY vs.) ─── */
+  useEffect(() => {
+    const handleBaslat = (e) => {
+      const data = e.detail || {};
+      if (!data.telefon) return;
+      if (MR.webrtcTelefon && MR.webrtcTelefon._session) return;
+      setNumber(data.telefon);
+      setStatus('araniyor');
+      setMinimized(false);
+      setStatusMsg('GİDEN ARAMA: ' + (data.ad || data.telefon));
+    };
+    const handleSonuc = (e) => {
+      const data = e.detail || {};
+      if (data.basarili) {
+        setStatusMsg('ÇAĞRI GÖNDERİLDİ');
+      } else {
+        setStatus('hazir');
+        setStatusMsg(data.hata || 'ARAMA BAŞLATILAMADI');
+      }
+      setTimeout(() => setStatusMsg(''), 5000);
+    };
+    const handleLogId = (e) => {
+      if (e.detail?.logId) activeLogIdRef.current = e.detail.logId;
+    };
+    const handleSonlandi = () => {
+      setActiveCall(false);
+      setMuted(false);
+      setStatus('hazir');
+      setStatusMsg('ÇAĞRI SONLANDIRILDI');
+      setTransferOpen(false);
+      setTimeout(() => setStatusMsg(''), 2000);
+    };
+
+    window.addEventListener('mr-arama-baslat', handleBaslat);
+    window.addEventListener('mr-arama-pbx-sonuc', handleSonuc);
+    window.addEventListener('mr-arama-log-id', handleLogId);
+    window.addEventListener('mr-arama-sonlandi', handleSonlandi);
+    return () => {
+      window.removeEventListener('mr-arama-baslat', handleBaslat);
+      window.removeEventListener('mr-arama-pbx-sonuc', handleSonuc);
+      window.removeEventListener('mr-arama-log-id', handleLogId);
+      window.removeEventListener('mr-arama-sonlandi', handleSonlandi);
+    };
+  }, []);
+
+  /* ─── DIŞARI TIKLANINCA MİNİMİZE ─── */
   useEffect(() => {
     if (minimized) return;
-    const handleClickOutside = (e) => {
-      if (activeCall) return; // AKTİF ÇAĞRI VARKEN MİNİMİZE ETME
-      if (panelRef.current && !panelRef.current.contains(e.target)) {
-        setMinimized(true);
-      }
+    const handler = (e) => {
+      if (activeCall) return;
+      if (panelRef.current && !panelRef.current.contains(e.target)) setMinimized(true);
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, [minimized, activeCall]);
 
-  /* YETKİ YOKSA RENDER ETME (HOOK'LARDAN SONRA) */
+  /* YETKİ YOKSA RENDER ETME */
   if (!netsantralIzin) return null;
 
+  /* ─── YARDIMCI ─── */
   const fmtTime = (s) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   };
+  const dialKey = (key) => setNumber(prev => prev + key);
 
-  // NUMARA TUŞU
-  const dialKey = (key) => {
-    setNumber(prev => prev + key);
-  };
-
-  // GİDEN ARAMA BAŞLAT - WEBRTC İLE DİREKT ARAMA
-  const aramaBaslat = async () => {
+  /* ─── GİDEN ARAMA BAŞLAT ─── */
+  const aramaBaslat = () => {
     if (!number) return;
-
-    /* WEBRTC KAYITLI MI KONTROL ET */
     if (!MR.webrtcTelefon || !MR.webrtcTelefon._kayitli) {
-      setStatusMsg('WEBRTC TELEFON KAYITLI DEĞİL! SİSTEM > NETSANTRAL AYARLARINDAN SIP ŞİFRESİNİ GİRİN.');
-      setTimeout(() => setStatusMsg(''), 6000);
+      setStatusMsg('WEBRTC KAYITLI DEĞİL! SİSTEM > NETSANTRAL AYARLARINDAN SIP ŞİFRESİ GİRİN.');
+      setTimeout(() => setStatusMsg(''), 5000);
       return;
     }
-
-    /* AKTİF GÖRÜŞME KONTROLÜ - ZATEN GÖRÜŞME VARSA YENİ ARAMA BAŞLATMA */
     if (MR.webrtcTelefon._session || activeCall) {
-      console.warn('[NETSANTRAL PANEL] ZATEN AKTİF GÖRÜŞME VAR - YENİ ARAMA ENGELLENDİ');
       setStatusMsg('ZATEN AKTİF BİR GÖRÜŞME VAR!');
       setTimeout(() => setStatusMsg(''), 3000);
       return;
@@ -1068,141 +1013,67 @@ const NetsantralPanel = ({user}) => {
     setStatusMsg('ARAMA BAŞLATILIYOR...');
     setStatus('araniyor');
     setMinimized(false);
-    pbxOriginatedRef.current = false;
-
-    /* NUMARA TEMİZLEME VE NORMALİZASYON */
-    let cleanNum = number.replace(/[\s\-\(\)\+]/g, '');
-    if (cleanNum.startsWith('90') && cleanNum.length >= 12) {
-      /* ZATEN 90 İLE BAŞLIYOR */
-    } else if (cleanNum.startsWith('0') && cleanNum.length >= 11) {
-      cleanNum = '90' + cleanNum.substring(1);
-    } else if (cleanNum.length === 10 && /^\d{10}$/.test(cleanNum)) {
-      cleanNum = '90' + cleanNum;
-    }
-
-    console.log('[NETSANTRAL PANEL] WEBRTC ARAMA:', cleanNum);
-
-    /* WEBRTC İLE DİREKT ARAMA - ÖNCE ÇAĞRIYI BAŞLAT, SONRA LOG OLUŞTUR
-       API log kaydını beklemeden ÖNCE çağrıyı başlatıyoruz ki gecikme olmasın */
     activeLogIdRef.current = 0;
 
+    let cleanNum = number.replace(/[\s\-\(\)\+]/g, '');
+    if (cleanNum.startsWith('90') && cleanNum.length >= 12) { /* OK */ }
+    else if (cleanNum.startsWith('0') && cleanNum.length >= 11) { cleanNum = '90' + cleanNum.substring(1); }
+    else if (cleanNum.length === 10 && /^\d{10}$/.test(cleanNum)) { cleanNum = '90' + cleanNum; }
+
     try {
-      const basarili = MR.webrtcTelefon.ara(cleanNum);
-      if (basarili) {
-        pbxOriginatedRef.current = true;
+      const ok = MR.webrtcTelefon.ara(cleanNum);
+      if (ok) {
         setStatusMsg('ÇAĞRI GÖNDERİLDİ - ' + cleanNum);
-
-        /* GİDEN ARAMA LOGU OLUŞTUR (ÇAĞRI BAŞLADIKTAN SONRA - GECİKME YARATMAZ) */
         api.netsantralAramaLogCreate({
-          arayan: MR._netsantralDahili,
-          aranan: cleanNum,
-          arayan_adi: '',
-          yon: 'giden',
-          durum: 'gorusmede'
-        }).then(logR => {
-          if (logR?.success && logR.data?.log_id) {
-            activeLogIdRef.current = logR.data.log_id;
-          }
-        }).catch(() => {});
-
+          arayan: MR._netsantralDahili, aranan: cleanNum, arayan_adi: '', yon: 'giden', durum: 'gorusmede'
+        }).then(r => { if (r?.success && r.data?.log_id) activeLogIdRef.current = r.data.log_id; }).catch(() => {});
       } else {
         setStatusMsg('ARAMA BAŞLATILAMADI');
         setStatus('hazir');
       }
     } catch(e) {
-      console.error('[NETSANTRAL PANEL] WEBRTC HATASI:', e);
-      setStatusMsg('WEBRTC HATASI - MİKROFON İZNİNİ KONTROL EDİN');
+      setStatusMsg('WEBRTC HATASI');
       setStatus('hazir');
     }
-
     setTimeout(() => setStatusMsg(''), 5000);
   };
 
-  // GELEN ÇAĞRIYI CEVAPLA - WEBRTC
-  const cagriCevapla = async () => {
-    if (MR.webrtcTelefon) {
-      await MR.webrtcTelefon.cevapla();
-      setGelenCagriData(null);
-    }
-  };
+  /* ─── GELEN ÇAĞRI KONTROL ─── */
+  const cagriCevapla = () => { if (MR.webrtcTelefon) { MR.webrtcTelefon.cevapla(); setGelenCagriData(null); } };
+  const cagriReddet = () => { if (MR.webrtcTelefon) { MR.webrtcTelefon.reddet(); setGelenCagriData(null); } };
 
-  // GELEN ÇAĞRIYI REDDET - WEBRTC
-  const cagriReddet = () => {
-    if (MR.webrtcTelefon) {
-      MR.webrtcTelefon.reddet();
-      setGelenCagriData(null);
-    }
-  };
-
-  // ÇAĞRIYI SONLANDIR - WEBRTC İLE DİREKT KAPAT
-  const aramaKapat = async () => {
+  /* ─── ÇAĞRI KAPAT ─── */
+  const aramaKapat = () => {
     setHangupLoading(true);
-    setStatusMsg('ÇAĞRI SONLANDIRILIYOR...');
-
-    /* WEBRTC İLE DİREKT KAPAT - ANINDA BİTER */
-    if (MR.webrtcTelefon) {
-      MR.webrtcTelefon.kapat();
-    }
-
+    if (MR.webrtcTelefon) MR.webrtcTelefon.kapat();
     setHangupLoading(false);
 
-    /* ARAMA LOGUNU GÜNCELLE: SONLANDI + SÜRE */
-    const aramaLogSure = callStartRef.current ? Math.floor((Date.now() - callStartRef.current) / 1000) : callTimer;
+    const sure = callStartRef.current ? Math.floor((Date.now() - callStartRef.current) / 1000) : callTimer;
     if (activeLogIdRef.current) {
-      api.netsantralAramaLogHangup({ log_id: activeLogIdRef.current, sure: aramaLogSure }).catch(() => {});
-    } else {
-      /* LOG ID YOK - EN SON AKTİF ÇAĞRIYI SONLANDIR */
-      api.netsantralAramaLogHangup({ log_id: 0, sure: aramaLogSure }).catch(() => {});
+      api.netsantralAramaLogHangup({ log_id: activeLogIdRef.current, sure: sure }).catch(() => {});
     }
 
-    /* UI'I TEMİZLE - PBX YANIT VERMEMİŞ OLSA BİLE ÇAĞRI BİTMİŞ SAYILIR */
     setActiveCall(false);
     setMuted(false);
     setStatus('hazir');
     setTransferOpen(false);
-    pbxOriginatedRef.current = false;
     activeLogIdRef.current = 0;
     setStatusMsg('ÇAĞRI SONLANDIRILDI');
     window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
     setTimeout(() => setStatusMsg(''), 3000);
   };
 
-  // ZORLA ÇAĞRI SONLANDIR (NETSANTRAL'DAN YANIT ALINAMADIĞINDA)
-  const zorlaKapat = () => {
-    const aramaLogSure = callStartRef.current ? Math.floor((Date.now() - callStartRef.current) / 1000) : callTimer;
-    if (activeLogIdRef.current) {
-      api.netsantralAramaLogHangup({ log_id: activeLogIdRef.current, sure: aramaLogSure }).catch(() => {});
-    }
-    setActiveCall(false);
-    setMuted(false);
-    setStatus('hazir');
-    setTransferOpen(false);
-    pbxOriginatedRef.current = false;
-    activeLogIdRef.current = 0;
-    setStatusMsg('ÇAĞRI ZORLA SONLANDIRILDI');
-    setHangupLoading(false);
-    window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
-    setTimeout(() => setStatusMsg(''), 3000);
-  };
-
-  // SESİ KAPAT/AÇ
-  const toggleMute = async () => {
-    /* WEBRTC İLE DİREKT MİKROFON KONTROLÜ */
-    if (MR.webrtcTelefon) {
-      MR.webrtcTelefon.sesizToggle();
-    }
+  /* ─── SESSİZ / TRANSFER ─── */
+  const toggleMute = () => {
+    if (MR.webrtcTelefon) MR.webrtcTelefon.sesizToggle();
     setMuted(!muted);
     setStatusMsg(muted ? 'MİKROFON AÇILDI' : 'MİKROFON KAPATILDI');
     setTimeout(() => setStatusMsg(''), 2000);
   };
 
-  // TRANSFER - WEBRTC İLE
-  const transferYap = async () => {
+  const transferYap = () => {
     if (!transferNum) return;
-    setStatusMsg('TRANSFER EDİLİYOR...');
-    if (MR.webrtcTelefon) {
-      await MR.webrtcTelefon.transfer(transferNum);
-    }
+    if (MR.webrtcTelefon) MR.webrtcTelefon.transfer(transferNum);
     setStatusMsg('TRANSFER YAPILDI');
     setTransferOpen(false);
     setTransferNum('');
@@ -1211,35 +1082,13 @@ const NetsantralPanel = ({user}) => {
     setTimeout(() => setStatusMsg(''), 2000);
   };
 
-  // DURUM RENKLERİ
-  const statusColors = {
-    hazir: C.success,
-    araniyor: C.warning,
-    caliyor: '#f59e0b',
-    gorusmede: C.accent,
-    gelen: '#f59e0b',
-    mola: C.purple
-  };
-  const statusLabels = {
-    hazir: webrtcKayitli ? 'HAZIR (WEBRTC)' : 'BAĞLANTI YOK',
-    araniyor: 'ARANIYOR',
-    caliyor: 'ÇALIYOR',
-    gorusmede: 'GÖRÜŞMEDE',
-    gelen: 'GELEN ÇAĞRI',
-    mola: 'MOLADA'
-  };
-
+  /* ─── DURUM RENKLERİ ─── */
+  const statusColors = { hazir: C.success, araniyor: C.warning, caliyor: '#f59e0b', gorusmede: C.accent, gelen: '#f59e0b', mola: C.purple };
+  const statusLabels = { hazir: webrtcKayitli ? 'HAZIR (WEBRTC)' : 'BAĞLANTI YOK', araniyor: 'ARANIYOR', caliyor: 'ÇALIYOR', gorusmede: 'GÖRÜŞMEDE', gelen: 'GELEN ÇAĞRI', mola: 'MOLADA' };
   const statusColor = statusColors[status] || C.success;
+  const keys = [['1','2','3'],['4','5','6'],['7','8','9'],['*','0','#']];
 
-  // DIALPAD TUŞLARI
-  const keys = [
-    ['1', '2', '3'],
-    ['4', '5', '6'],
-    ['7', '8', '9'],
-    ['*', '0', '#']
-  ];
-
-  // MİNİMİZE GÖRÜNÜM
+  /* ═══ MİNİMİZE GÖRÜNÜM ═══ */
   if (minimized) {
     return (
       <div onClick={() => setMinimized(false)} style={{
@@ -1249,30 +1098,25 @@ const NetsantralPanel = ({user}) => {
         border: `2px solid ${activeCall ? C.accent : C.success}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,0,0,.4)',
-        transition: 'all .3s',
-        animation: activeCall ? 'pulse 1.5s infinite' : 'none'
+        transition: 'all .3s', animation: activeCall ? 'pulse 1.5s infinite' : 'none'
       }} title="GİDEN ARAMA PANELİ">
         <LIcon name="Phone" size={22} color={activeCall ? '#fff' : C.success}/>
         {activeCall && (
           <div style={{
-            position: 'absolute', top: -4, right: -4,
-            width: 18, height: 18, borderRadius: '50%',
-            background: C.danger, color: '#fff',
-            fontSize: 8, fontWeight: 800,
+            position: 'absolute', top: -4, right: -4, width: 18, height: 18, borderRadius: '50%',
+            background: C.danger, color: '#fff', fontSize: 8, fontWeight: 800,
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>{fmtTime(callTimer)}</div>
         )}
-        {/* DURUM NOKTASI */}
         <div style={{
-          position: 'absolute', bottom: -2, right: -2,
-          width: 14, height: 14, borderRadius: '50%',
+          position: 'absolute', bottom: -2, right: -2, width: 14, height: 14, borderRadius: '50%',
           background: statusColor, border: '2px solid #0B1120'
         }}/>
       </div>
     );
   }
 
-  // AÇIK GÖRÜNÜM
+  /* ═══ AÇIK GÖRÜNÜM ═══ */
   return (
     <div ref={panelRef} style={{
       position: 'fixed', bottom: 60, right: 24, zIndex: 9998,
@@ -1288,34 +1132,15 @@ const NetsantralPanel = ({user}) => {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between'
       }}>
         <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
-          <div style={{
-            width: 10, height: 10, borderRadius: '50%',
-            background: statusColor, boxShadow: `0 0 8px ${statusColor}`
-          }}/>
-          <span style={{fontSize: 11, fontWeight: 700, color: statusColor}}>
-            {statusLabels[status]}
-          </span>
-          {activeCall && (
-            <span style={{fontSize: 11, fontWeight: 800, color: C.text, fontFamily: 'monospace'}}>
-              {fmtTime(callTimer)}
-            </span>
-          )}
+          <div style={{width: 10, height: 10, borderRadius: '50%', background: statusColor, boxShadow: `0 0 8px ${statusColor}`}}/>
+          <span style={{fontSize: 11, fontWeight: 700, color: statusColor}}>{statusLabels[status]}</span>
+          {activeCall && <span style={{fontSize: 11, fontWeight: 800, color: C.text, fontFamily: 'monospace'}}>{fmtTime(callTimer)}</span>}
         </div>
         <div style={{display: 'flex', gap: 2}}>
-          <div onClick={() => setMinimized(true)} style={{
-            cursor: 'pointer', padding: 4, borderRadius: 6,
-            transition: 'background .15s'
-          }} title="KÜÇÜLT"
-            onMouseEnter={e => e.currentTarget.style.background = `${C.textMuted}22`}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+          <div onClick={() => setMinimized(true)} style={{cursor: 'pointer', padding: 4, borderRadius: 6}} title="KÜÇÜLT">
             <LIcon name="Minus" size={14} color={C.textMuted}/>
           </div>
-          <div onClick={() => setMinimized(true)} style={{
-            cursor: 'pointer', padding: 4, borderRadius: 6,
-            transition: 'background .15s'
-          }} title="KAPAT"
-            onMouseEnter={e => e.currentTarget.style.background = `${C.danger}22`}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+          <div onClick={() => setMinimized(true)} style={{cursor: 'pointer', padding: 4, borderRadius: 6}} title="KAPAT">
             <LIcon name="X" size={14} color={C.textMuted}/>
           </div>
         </div>
@@ -1323,36 +1148,18 @@ const NetsantralPanel = ({user}) => {
 
       {/* DURUM MESAJI */}
       {statusMsg && (
-        <div style={{
-          padding: '6px 14px', background: `${C.warning}15`,
-          fontSize: 10, fontWeight: 600, color: C.warning, textAlign: 'center'
-        }}>{statusMsg}</div>
+        <div style={{padding: '6px 14px', background: `${C.warning}15`, fontSize: 10, fontWeight: 600, color: C.warning, textAlign: 'center'}}>{statusMsg}</div>
       )}
 
       {/* NUMARA GİRİŞİ */}
       <div style={{padding: '12px 14px'}}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          background: C.bgInput, border: `1px solid ${C.borderLight}`,
-          borderRadius: 10, padding: '8px 12px'
-        }}>
+        <div style={{display: 'flex', alignItems: 'center', gap: 8, background: C.bgInput, border: `1px solid ${C.borderLight}`, borderRadius: 10, padding: '8px 12px'}}>
           <LIcon name="Phone" size={16} color={C.textMuted}/>
-          <input
-            value={number}
-            onChange={e => setNumber(e.target.value)}
-            placeholder="GİDEN ARAMA İÇİN NUMARA GİRİN..."
-            style={{
-              flex: 1, background: 'transparent', border: 'none',
-              color: C.text, fontSize: 16, fontWeight: 700,
-              letterSpacing: 1, outline: 'none', fontFamily: 'monospace'
-            }}
+          <input value={number} onChange={e => setNumber(e.target.value)} placeholder="GİDEN ARAMA İÇİN NUMARA GİRİN..."
+            style={{flex: 1, background: 'transparent', border: 'none', color: C.text, fontSize: 16, fontWeight: 700, letterSpacing: 1, outline: 'none', fontFamily: 'monospace'}}
             onKeyDown={e => { if (e.key === 'Enter' && !activeCall) aramaBaslat(); }}
           />
-          {number && (
-            <div onClick={() => setNumber('')} style={{cursor: 'pointer', padding: 2}}>
-              <LIcon name="X" size={14} color={C.textMuted}/>
-            </div>
-          )}
+          {number && <div onClick={() => setNumber('')} style={{cursor: 'pointer', padding: 2}}><LIcon name="X" size={14} color={C.textMuted}/></div>}
         </div>
       </div>
 
@@ -1421,82 +1228,44 @@ const NetsantralPanel = ({user}) => {
         )}
       </div>
 
-      {/* ZORLA KAPAT BUTONU - HANGUP BAŞARISIZ OLDUĞUNDA */}
-      {activeCall && !hangupLoading && statusMsg && statusMsg.includes('SONLANDIRILAMADI') && (
-        <div style={{padding: '0 14px 12px'}}>
-          <button onClick={zorlaKapat} style={{
-            width: '100%', padding: '8px', borderRadius: 8, border: `1px solid ${C.warning}`,
-            background: `${C.warning}22`, color: C.warning, fontSize: 11, fontWeight: 700,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-          }}>
-            <LIcon name="XCircle" size={14} color={C.warning}/> ZORLA SONLANDIR
-          </button>
-        </div>
-      )}
-
       {/* TRANSFER PANELİ */}
       {transferOpen && activeCall && (
         <div style={{padding: '0 14px 12px'}}>
-          <div style={{
-            padding: 10, background: `${C.purple}11`, borderRadius: 10,
-            border: `1px solid ${C.purple}22`
-          }}>
+          <div style={{padding: 10, background: `${C.purple}11`, borderRadius: 10, border: `1px solid ${C.purple}22`}}>
             <div style={{fontSize: 10, fontWeight: 700, color: C.purple, marginBottom: 8}}>
               <LIcon name="ArrowRightLeft" size={12} color={C.purple}/> TRANSFER
             </div>
             <div style={{display: 'flex', gap: 6}}>
-              <input
-                value={transferNum}
-                onChange={e => setTransferNum(e.target.value)}
-                placeholder="HEDEF NUMARA..."
-                style={{
-                  flex: 1, padding: '8px 10px', background: C.bgInput,
-                  border: `1px solid ${C.borderLight}`, borderRadius: 8,
-                  color: C.text, fontSize: 12, outline: 'none'
-                }}
-              />
-              <button onClick={transferYap} style={{
-                padding: '8px 14px', borderRadius: 8, border: 'none',
-                background: C.purple, color: '#fff', fontSize: 11,
-                fontWeight: 700, cursor: 'pointer'
-              }}>TRANSFER</button>
+              <input value={transferNum} onChange={e => setTransferNum(e.target.value)} placeholder="HEDEF NUMARA..."
+                style={{flex: 1, padding: '8px 10px', background: C.bgInput, border: `1px solid ${C.borderLight}`, borderRadius: 8, color: C.text, fontSize: 12, outline: 'none'}}/>
+              <button onClick={transferYap} style={{padding: '8px 14px', borderRadius: 8, border: 'none', background: C.purple, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer'}}>TRANSFER</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* DIALPAD TOGGLE */}
-      <div style={{
-        padding: '0 14px 12px', display: 'flex', justifyContent: 'center'
-      }}>
-        <div onClick={() => setDialpadOpen(!dialpadOpen)} style={{
-          cursor: 'pointer', fontSize: 10, fontWeight: 600,
-          color: C.textMuted, display: 'flex', alignItems: 'center', gap: 4
-        }}>
+      {/* DIALPAD */}
+      <div style={{padding: '0 14px 12px', display: 'flex', justifyContent: 'center'}}>
+        <div onClick={() => setDialpadOpen(!dialpadOpen)} style={{cursor: 'pointer', fontSize: 10, fontWeight: 600, color: C.textMuted, display: 'flex', alignItems: 'center', gap: 4}}>
           <LIcon name={dialpadOpen ? 'ChevronDown' : 'ChevronUp'} size={12} color={C.textMuted}/>
           {dialpadOpen ? 'TUŞLARI GİZLE' : 'TUŞLARI GÖSTER'}
         </div>
       </div>
 
-      {/* DIALPAD */}
       {dialpadOpen && (
         <div style={{padding: '0 14px 14px'}}>
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6
-          }}>
+          <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6}}>
             {keys.flat().map(k => (
               <button key={k} onClick={() => dialKey(k)} style={{
                 padding: '12px 0', borderRadius: 10, border: `1px solid ${C.border}`,
-                background: C.bgHover, color: C.text,
-                fontSize: 18, fontWeight: 700, cursor: 'pointer',
-                transition: 'all .15s', fontFamily: 'monospace'
+                background: C.bgHover, color: C.text, fontSize: 18, fontWeight: 700,
+                cursor: 'pointer', transition: 'all .15s', fontFamily: 'monospace'
               }}
                 onMouseEnter={e => e.currentTarget.style.background = `${C.accent}22`}
                 onMouseLeave={e => e.currentTarget.style.background = C.bgHover}
               >{k}</button>
             ))}
           </div>
-          {/* SİL BUTONU */}
           <div style={{marginTop: 6, display: 'flex', justifyContent: 'center'}}>
             <div onClick={() => setNumber(prev => prev.slice(0, -1))} style={{
               cursor: 'pointer', padding: '6px 20px', borderRadius: 8,
@@ -1509,13 +1278,11 @@ const NetsantralPanel = ({user}) => {
         </div>
       )}
 
-      {/* ANİMASYON */}
       <style>{`@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
     </div>
   );
 };
 
-/* ═══ GELEN ÇAĞRI POPUP ═══ */
 const GelenCagriPopup = ({call, onKapat, onCrmGit, setPage}) => {
   const {C, LIcon} = MR;
   if (!call) return null;

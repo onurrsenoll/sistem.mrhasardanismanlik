@@ -1,14 +1,15 @@
 /* ============================================================
-   MR HASAR DANIŞMANLIK – WEBRTC TELEFON MODÜLÜ
+   MR HASAR DANIŞMANLIK – WEBRTC TELEFON MODÜLÜ v2.0
+   SIFIRDAN TEMİZ YAPI
    JsSIP İLE TARAYICI İÇİ SOFTPHONE
    wss://sip6.netsantral.com:8089/ws ÜZERİNDEN NETGSM PBX'E BAĞLANIR
-   JsSIP LOKAL BUNDLE (jssip.bundle.min.js) - CDN BAĞIMLILIĞI YOK
    ============================================================ */
 
 const MR = window.MR || (window.MR = {});
 
 MR.webrtcTelefon = {
-  /* DURUM */
+
+  /* ═══ DURUM ═══ */
   _ua: null,
   _session: null,
   _kayitli: false,
@@ -17,7 +18,7 @@ MR.webrtcTelefon = {
   _muteState: false,
   _ringtoneCtx: null,
 
-  /* YAPILANDIRMA */
+  /* ═══ YAPILANDIRMA ═══ */
   _config: {
     wssUrl: 'wss://sip6.netsantral.com:8089/ws',
     domain: 'sip6.netsantral.com',
@@ -29,14 +30,11 @@ MR.webrtcTelefon = {
   },
 
   /* ═══ BAŞLAT ═══ */
-  baslat(config) {
-    if (this._ua) {
-      console.log('[WEBRTC] ZATEN BAŞLATILMIŞ');
-      return;
-    }
+  baslat: function(config) {
+    if (this._ua) return;
 
     if (typeof JsSIP === 'undefined') {
-      console.error('[WEBRTC] JsSIP KÜTÜPHANESİ BULUNAMADI!');
+      console.error('[WEBRTC] JsSIP BULUNAMADI');
       this._durumBildir('hata', 'JsSIP KÜTÜPHANESİ BULUNAMADI');
       return;
     }
@@ -44,18 +42,18 @@ MR.webrtcTelefon = {
     if (config) Object.assign(this._config, config);
 
     if (!this._config.dahili || !this._config.sipSifre) {
-      console.warn('[WEBRTC] DAHİLİ VEYA SIP ŞİFRESİ EKSİK');
       this._durumBildir('hata', 'DAHİLİ VEYA SIP ŞİFRESİ GİRİLMEMİŞ');
       return;
     }
 
     this._remoteAudioOlustur();
 
-    /* NETSANTRAL FORMAT: dahili-santralNo (ör: 102-3625026502) */
     var santralNo = (this._config.santralNo || '').replace(/^0+/, '');
     var authUser = santralNo ? this._config.dahili + '-' + santralNo : this._config.dahili;
     var sipUri = 'sip:' + authUser + '@' + this._config.domain;
+    var self = this;
 
+    console.log('[WEBRTC] OTOMATİK BAŞLATILIYOR - DAHİLİ:', this._config.dahili, '| KULLANICI:', this._config.kullanici, '| SANTRAL:', this._config.santralNo);
     console.log('[WEBRTC] BAĞLANIYOR:', sipUri, '| AUTH:', authUser, '| WSS:', this._config.wssUrl);
 
     try {
@@ -74,37 +72,36 @@ MR.webrtcTelefon = {
         connection_recovery_max_interval: 30
       });
 
-      this._ua.on('registered', () => {
+      this._ua.on('registered', function() {
         console.log('[WEBRTC] PBX KAYIT BAŞARILI ✓ AUTH:', authUser);
-        this._kayitli = true;
-        this._durumBildir('kayitli');
+        self._kayitli = true;
+        self._durumBildir('kayitli');
       });
 
-      this._ua.on('unregistered', () => {
-        console.log('[WEBRTC] PBX KAYIT KALDIRILDI');
-        this._kayitli = false;
-        this._durumBildir('kayit-kaldirildi');
+      this._ua.on('unregistered', function() {
+        self._kayitli = false;
+        self._durumBildir('kayit-kaldirildi');
       });
 
-      this._ua.on('registrationFailed', (e) => {
+      this._ua.on('registrationFailed', function(e) {
         console.error('[WEBRTC] KAYIT BAŞARISIZ:', e.cause);
-        this._kayitli = false;
-        this._durumBildir('hata', 'PBX KAYIT HATASI: ' + (e.cause || ''));
+        self._kayitli = false;
+        self._durumBildir('hata', 'PBX KAYIT HATASI: ' + (e.cause || ''));
       });
 
-      this._ua.on('connected', () => {
+      this._ua.on('connected', function() {
         console.log('[WEBRTC] WEBSOCKET BAĞLANDI');
       });
 
-      this._ua.on('disconnected', () => {
+      this._ua.on('disconnected', function() {
         console.warn('[WEBRTC] WEBSOCKET KOPTU');
-        this._kayitli = false;
-        this._durumBildir('baglanti-koptu');
+        self._kayitli = false;
+        self._durumBildir('baglanti-koptu');
       });
 
-      this._ua.on('newRTCSession', (data) => {
+      this._ua.on('newRTCSession', function(data) {
         if (data.session.direction === 'incoming') {
-          this._gelenCagri(data.session);
+          self._gelenCagri(data.session);
         }
       });
 
@@ -117,20 +114,28 @@ MR.webrtcTelefon = {
     }
   },
 
+  /* ═══ DURDUR ═══ */
+  durdur: function() {
+    this.kapat();
+    if (this._ua) { try { this._ua.stop(); } catch(e) {} }
+    this._ua = null;
+    this._kayitli = false;
+    this._aramaDurumu = 'bos';
+    this._durumBildir('durduruldu');
+    return Promise.resolve();
+  },
+
   /* ═══ GİDEN ARAMA ═══ */
-  ara(numara) {
+  ara: function(numara) {
     if (!this._ua || !this._kayitli) {
-      console.error('[WEBRTC] TELEFON KAYITLI DEĞİL');
       this._durumBildir('hata', 'WEBRTC TELEFON PBX\'E KAYITLI DEĞİL');
       return false;
     }
-
     if (this._session) {
-      console.warn('[WEBRTC] ZATEN AKTİF GÖRÜŞME VAR');
+      console.warn('[WEBRTC] ZATEN AKTİF GÖRÜŞME VAR - ARAMA ENGELLENDİ');
       return false;
     }
 
-    /* NUMARA TEMİZLE */
     var cleanNum = numara.replace(/[\s\-\(\)\+]/g, '');
     if (cleanNum.startsWith('90') && cleanNum.length >= 12) {
       cleanNum = '0' + cleanNum.substring(2);
@@ -145,7 +150,7 @@ MR.webrtcTelefon = {
     this._durumBildir('araniyor', cleanNum);
 
     try {
-      var callOptions = {
+      var session = this._ua.call(targetUri, {
         mediaConstraints: { audio: true, video: false },
         pcConfig: {
           iceServers: [
@@ -153,33 +158,26 @@ MR.webrtcTelefon = {
             { urls: 'stun:stun1.l.google.com:19302' }
           ]
         },
-        rtcOfferConstraints: {
-          offerToReceiveAudio: true,
-          offerToReceiveVideo: false
-        }
-      };
+        rtcOfferConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false }
+      });
 
-      var session = this._ua.call(targetUri, callOptions);
       this._session = session;
-      this._sessionOlaylari(session);
-
+      this._sessionOlaylariBagla(session);
       console.log('[WEBRTC] ÇAĞRI GÖNDERİLDİ:', cleanNum);
       return true;
 
     } catch(e) {
       console.error('[WEBRTC] ARAMA HATASI:', e);
-      this._session = null;
-      this._aramaDurumu = 'bos';
+      this._temizle();
       this._durumBildir('hata', 'ARAMA BAŞLATILAMADI: ' + (e && e.message ? e.message : ''));
       return false;
     }
   },
 
   /* ═══ GELEN ÇAĞRI ═══ */
-  _gelenCagri(session) {
+  _gelenCagri: function(session) {
     var arayanNum = (session.remote_identity && session.remote_identity.uri) ? session.remote_identity.uri.user : 'BİLİNMEYEN';
-    var arayanAdi = (session.remote_identity) ? session.remote_identity.display_name || '' : '';
-    console.log('[WEBRTC] GELEN ÇAĞRI:', arayanNum, '|', arayanAdi);
+    var arayanAdi = session.remote_identity ? (session.remote_identity.display_name || '') : '';
 
     if (this._session) {
       console.warn('[WEBRTC] AKTİF GÖRÜŞME VAR, GELEN ÇAĞRI REDDEDİLDİ');
@@ -189,35 +187,24 @@ MR.webrtcTelefon = {
 
     this._session = session;
     this._aramaDurumu = 'gelen';
-    this._sessionOlaylari(session);
+    this._sessionOlaylariBagla(session);
     this._zilCaldir();
 
     this._durumBildir('gelen-cagri', { arayan: arayanNum, arayanAdi: arayanAdi });
-
     window.dispatchEvent(new CustomEvent('mr-webrtc-gelen-cagri', {
       detail: { arayan: arayanNum, arayanAdi: arayanAdi, timestamp: Date.now() }
     }));
   },
 
   /* ═══ CEVAPLA ═══ */
-  cevapla() {
-    if (!this._session || this._aramaDurumu !== 'gelen') {
-      console.warn('[WEBRTC] CEVAPLANACAK ÇAĞRI YOK');
-      return false;
-    }
-
+  cevapla: function() {
+    if (!this._session || this._aramaDurumu !== 'gelen') return false;
     this._zilDurdur();
-
     try {
       this._session.answer({
         mediaConstraints: { audio: true, video: false },
-        pcConfig: {
-          iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' }
-          ]
-        }
+        pcConfig: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
       });
-      console.log('[WEBRTC] ÇAĞRI CEVAPLANDI');
       this._aramaDurumu = 'gorusmede';
       this._durumBildir('gorusmede');
       return true;
@@ -228,28 +215,25 @@ MR.webrtcTelefon = {
   },
 
   /* ═══ REDDET ═══ */
-  reddet() {
+  reddet: function() {
     if (!this._session || this._aramaDurumu !== 'gelen') return;
     this._zilDurdur();
     try { this._session.terminate(); } catch(e) {}
-    this._session = null;
-    this._aramaDurumu = 'bos';
+    this._temizle();
     this._durumBildir('reddedildi');
   },
 
   /* ═══ KAPAT ═══ */
-  kapat() {
+  kapat: function() {
     this._zilDurdur();
     if (!this._session) return;
     try { this._session.terminate(); } catch(e) {}
-    this._session = null;
-    this._aramaDurumu = 'bos';
-    this._muteState = false;
+    this._temizle();
     this._durumBildir('kapandi');
   },
 
-  /* ═══ MUTE ═══ */
-  sesizToggle() {
+  /* ═══ SESSİZ TOGGLE ═══ */
+  sesizToggle: function() {
     if (!this._session || this._aramaDurumu !== 'gorusmede') return false;
     try {
       if (this._muteState) {
@@ -261,50 +245,28 @@ MR.webrtcTelefon = {
         this._muteState = true;
         this._durumBildir('sessize-alindi');
       }
-      console.log('[WEBRTC] MİKROFON:', this._muteState ? 'KAPALI' : 'AÇIK');
       return this._muteState;
-    } catch(e) {
-      console.error('[WEBRTC] MUTE HATASI:', e);
-      return false;
-    }
+    } catch(e) { return false; }
   },
 
   /* ═══ TRANSFER ═══ */
-  transfer(hedefDahili) {
+  transfer: function(hedefDahili) {
     if (!this._session || this._aramaDurumu !== 'gorusmede') return false;
     try {
-      var targetUri = 'sip:' + hedefDahili + '@' + this._config.domain;
-      this._session.refer(targetUri);
-      console.log('[WEBRTC] TRANSFER:', hedefDahili);
+      this._session.refer('sip:' + hedefDahili + '@' + this._config.domain);
       this._durumBildir('transfer', hedefDahili);
       return true;
-    } catch(e) {
-      console.error('[WEBRTC] TRANSFER HATASI:', e);
-      return false;
-    }
-  },
-
-  /* ═══ DURDUR ═══ */
-  durdur() {
-    this.kapat();
-    if (this._ua) {
-      try { this._ua.stop(); } catch(e) {}
-    }
-    this._ua = null;
-    this._kayitli = false;
-    this._aramaDurumu = 'bos';
-    this._durumBildir('durduruldu');
-    console.log('[WEBRTC] TELEFON DURDURULDU');
-    return Promise.resolve();
+    } catch(e) { return false; }
   },
 
   /* ═══ SESSION OLAYLARI ═══ */
-  _sessionOlaylari(session) {
+  _sessionOlaylariBagla: function(session) {
     var self = this;
     var _sesAyarlandi = false;
 
     session.on('progress', function() {
       console.log('[WEBRTC] ÇALIYOR...');
+      self._aramaDurumu = 'caliyor';
       self._durumBildir('caliyor');
     });
 
@@ -312,77 +274,68 @@ MR.webrtcTelefon = {
       console.log('[WEBRTC] GÖRÜŞME BAŞLADI');
       self._zilDurdur();
       self._aramaDurumu = 'gorusmede';
-      if (!_sesAyarlandi) {
-        self._sesAyarla(session);
-        _sesAyarlandi = true;
-      }
+      if (!_sesAyarlandi) { self._sesAyarla(session); _sesAyarlandi = true; }
       self._durumBildir('gorusmede');
     });
 
     session.on('confirmed', function() {
       console.log('[WEBRTC] GÖRÜŞME ONAYLANDI');
-      /* SES ZATEN accepted'DA AYARLANDI - TEKRAR AYARLAMAYA GEREK YOK */
-      if (!_sesAyarlandi) {
-        self._sesAyarla(session);
-        _sesAyarlandi = true;
-      }
+      if (!_sesAyarlandi) { self._sesAyarla(session); _sesAyarlandi = true; }
     });
 
     session.on('ended', function() {
       console.log('[WEBRTC] GÖRÜŞME BİTTİ');
       self._zilDurdur();
-      self._session = null;
-      self._aramaDurumu = 'bos';
-      self._muteState = false;
+      self._temizle();
       self._durumBildir('kapandi');
     });
 
     session.on('failed', function(e) {
       console.error('[WEBRTC] ÇAĞRI BAŞARISIZ:', e && e.cause ? e.cause : '');
       self._zilDurdur();
-      self._session = null;
-      self._aramaDurumu = 'bos';
-      self._muteState = false;
+      self._temizle();
       self._durumBildir('hata', 'ÇAĞRI BAŞARISIZ: ' + (e && e.cause ? e.cause : ''));
     });
 
-    /* SES STREAM YAKALAMA */
     session.on('peerconnection', function(data) {
-      var pc = data.peerconnection;
-      pc.ontrack = function(event) {
+      data.peerconnection.ontrack = function(event) {
         if (event.track.kind === 'audio' && self._remoteAudio) {
           var stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
           self._remoteAudio.srcObject = stream;
-          self._remoteAudio.play().catch(function(e) { console.warn('[WEBRTC] SES ÇALMA HATASI:', e); });
-          console.log('[WEBRTC] UZAK SES BAĞLANDI');
+          self._remoteAudio.play().catch(function() {});
+          _sesAyarlandi = true;
+          console.log('[WEBRTC] UZAK SES BAĞLANDI (ontrack)');
         }
       };
     });
   },
 
   /* ═══ SES AYARLA ═══ */
-  _sesAyarla(session) {
+  _sesAyarla: function(session) {
     try {
       var pc = session.connection;
       if (!pc) return;
-      /* ZATEN STREAM VARSA VE ÇALIYORSA TEKRAR AYARLAMA */
-      if (this._remoteAudio && this._remoteAudio.srcObject && !this._remoteAudio.paused) {
-        console.log('[WEBRTC] SES ZATEN ÇALIYOR - TEKRAR AYARLANMADI');
-        return;
-      }
+      if (this._remoteAudio && this._remoteAudio.srcObject && !this._remoteAudio.paused) return;
       var receivers = pc.getReceivers();
       for (var i = 0; i < receivers.length; i++) {
         if (receivers[i].track && receivers[i].track.kind === 'audio' && this._remoteAudio) {
-          var stream = new MediaStream([receivers[i].track]);
-          this._remoteAudio.srcObject = stream;
-          this._remoteAudio.play().catch(function(e) { console.warn('[WEBRTC] SES:', e); });
+          this._remoteAudio.srcObject = new MediaStream([receivers[i].track]);
+          this._remoteAudio.play().catch(function() {});
+          break;
         }
       }
     } catch(e) {}
   },
 
+  /* ═══ TEMİZLE ═══ */
+  _temizle: function() {
+    this._session = null;
+    this._aramaDurumu = 'bos';
+    this._muteState = false;
+  },
+
   /* ═══ SES ELEMENTİ ═══ */
-  _remoteAudioOlustur() {
+  _remoteAudioOlustur: function() {
     if (!this._remoteAudio) {
       this._remoteAudio = document.createElement('audio');
       this._remoteAudio.id = 'mr-webrtc-remote-audio';
@@ -392,29 +345,28 @@ MR.webrtcTelefon = {
     }
   },
 
-  _zilCaldir() {
+  /* ═══ ZİL SESİ ═══ */
+  _zilCaldir: function() {
     var self = this;
     try {
       var ac = new (window.AudioContext || window.webkitAudioContext)();
-      var zilCaldir = function() {
+      var caldir = function() {
         if (self._aramaDurumu !== 'gelen') { ac.close(); return; }
         var osc = ac.createOscillator();
         var gain = ac.createGain();
-        osc.connect(gain);
-        gain.connect(ac.destination);
-        osc.frequency.value = 440;
-        gain.gain.value = 0.2;
+        osc.connect(gain); gain.connect(ac.destination);
+        osc.frequency.value = 440; gain.gain.value = 0.2;
         osc.start();
         setTimeout(function() { osc.frequency.value = 480; }, 200);
         setTimeout(function() { osc.stop(); }, 400);
-        setTimeout(function() { if (self._aramaDurumu === 'gelen') zilCaldir(); }, 2000);
+        setTimeout(function() { if (self._aramaDurumu === 'gelen') caldir(); }, 2000);
       };
-      zilCaldir();
+      caldir();
       this._ringtoneCtx = ac;
     } catch(e) {}
   },
 
-  _zilDurdur() {
+  _zilDurdur: function() {
     if (this._ringtoneCtx) {
       try { this._ringtoneCtx.close(); } catch(e) {}
       this._ringtoneCtx = null;
@@ -422,12 +374,11 @@ MR.webrtcTelefon = {
   },
 
   /* ═══ DURUM BİLDİR ═══ */
-  _durumBildir(durum, detay) {
+  _durumBildir: function(durum, detay) {
     console.log('[WEBRTC] DURUM:', durum, detay || '');
     window.dispatchEvent(new CustomEvent('mr-webrtc-durum', {
       detail: {
-        durum: durum,
-        detay: detay,
+        durum: durum, detay: detay,
         kayitli: this._kayitli,
         aramaDurumu: this._aramaDurumu,
         mute: this._muteState,
@@ -436,12 +387,7 @@ MR.webrtcTelefon = {
     }));
   },
 
-  durum() {
-    return {
-      kayitli: this._kayitli,
-      aramaDurumu: this._aramaDurumu,
-      mute: this._muteState,
-      session: !!this._session
-    };
+  durum: function() {
+    return { kayitli: this._kayitli, aramaDurumu: this._aramaDurumu, mute: this._muteState, session: !!this._session };
   }
 };

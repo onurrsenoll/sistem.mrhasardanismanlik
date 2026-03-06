@@ -5,28 +5,22 @@
 
 const MR = window.MR || (window.MR = {});
 
-/* ---------- GİDEN ARAMA BAŞLAT (WEBRTC SOFTPHONE) ---------- */
+/* ══════════════════════════════════════════════════════════════
+   GİDEN ARAMA BAŞLAT (WEBRTC SOFTPHONE) - TEMİZ YAPI v2.0
+   CRM, DOSYA DETAY, vs. SAYFALARINDAN ÇAĞRILIR
+   AKIŞ: TIKLA → KONTROL → WEBRTC ARA → LOG KAYDET → PANEL GÜNCELLE
+   ══════════════════════════════════════════════════════════════ */
 
-/**
- * WEBRTC İLE TARAYICIDAN DİREK ARAMA BAŞLAT
- * AKIŞ: CRM'DE TIKLA → KARŞI TARAF DİREKT ÇALAR → KONUŞ → KAPAT
- * NETSİPP+ DAHİL HİÇBİR EKSTERNAl UYGULAMA GEREKMİYOR
- * SES TARAYICI MİKROFON/HOPARLÖR ÜZERİNDEN AKAR
- *
- * @param {string} telefon - ARANACAK TELEFON NUMARASI
- * @param {string} ad - ARANAN KİŞİNİN ADI (OPSİYONEL)
- * @param {boolean} otomatikCrmAc - CRM EKRANI AÇILSIN MI (VARSAYILAN: TRUE)
- */
 MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
   if (!telefon) {
-    alert('TELEFON NUMARASI BOŞ! LÜTFEN GEÇERLİ BİR NUMARA GİRİN.');
+    alert('TELEFON NUMARASI BOŞ!');
     return;
   }
 
-  /* NUMARA TEMİZLEME VE NORMALİZASYON */
+  /* 1) NUMARA TEMİZLE */
   let cleanNum = telefon.replace(/[\s\-\(\)\+]/g, '');
   if (cleanNum.startsWith('90') && cleanNum.length >= 12) {
-    /* ZATEN 90 İLE BAŞLIYOR */
+    /* ZATEN 90 İLE BAŞLIYOR - DOKUNMA */
   } else if (cleanNum.startsWith('0') && cleanNum.length >= 11) {
     cleanNum = '90' + cleanNum.substring(1);
   } else if (cleanNum.length === 10 && /^[5]\d{9}$/.test(cleanNum)) {
@@ -35,82 +29,77 @@ MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
     cleanNum = '90' + cleanNum;
   }
 
-  console.log('[WEBRTC ARAMA] BAŞLATILIYOR:', cleanNum, '| AD:', ad || '-');
+  console.log('[ARAMA] BAŞLATILIYOR:', cleanNum, '| AD:', ad || '-');
 
-  /* NETSANTRAL AKTİF KONTROLÜ */
+  /* 2) NETSANTRAL AKTİF Mİ */
   if (MR._netsantralAktif === false) {
-    const hata = 'NETSANTRAL PASİF DURUMDA! SİSTEM > AYARLAR > NETSANTRAL BÖLÜMÜNDEN AKTİF EDİN.';
-    alert(hata);
+    alert('NETSANTRAL PASİF DURUMDA! SİSTEM > AYARLAR > NETSANTRAL BÖLÜMÜNDEN AKTİF EDİN.');
     window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
-      detail: { basarili: false, hata: hata, telefon: cleanNum, ad: ad || '' }
+      detail: { basarili: false, hata: 'NETSANTRAL PASİF', telefon: cleanNum, ad: ad || '' }
     }));
     return;
   }
 
-  /* WEBRTC TELEFON KAYITLI MI KONTROL ET */
+  /* 3) WEBRTC KAYITLI MI */
   if (!MR.webrtcTelefon || !MR.webrtcTelefon._kayitli) {
-    const hata = 'WEBRTC TELEFON PBX\'E KAYITLI DEĞİL! SİSTEM > NETSANTRAL AYARLARINDAN SIP ŞİFRESİNİ GİRİN VE SAYFAYI YENİLEYİN.';
-    alert(hata);
+    alert('WEBRTC TELEFON PBX\'E KAYITLI DEĞİL! SİSTEM > NETSANTRAL AYARLARINDAN SIP ŞİFRESİNİ GİRİN.');
     window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
-      detail: { basarili: false, hata: hata, telefon: cleanNum, ad: ad || '' }
+      detail: { basarili: false, hata: 'WEBRTC KAYITLI DEĞİL', telefon: cleanNum, ad: ad || '' }
     }));
     return;
   }
 
-  /* AKTİF GÖRÜŞME KONTROLÜ - ZATEN GÖRÜŞME VARSA YENİ ARAMA BAŞLATMA */
+  /* 4) AKTİF GÖRÜŞME VAR MI */
   if (MR.webrtcTelefon._session) {
-    console.warn('[WEBRTC ARAMA] ZATEN AKTİF GÖRÜŞME VAR - YENİ ARAMA ENGELLENDİ');
+    console.warn('[ARAMA] AKTİF GÖRÜŞME VAR - YENİ ARAMA ENGELLENDİ');
     alert('ZATEN AKTİF BİR GÖRÜŞME VAR! ÖNCE MEVCUT GÖRÜŞMEYI KAPATINIZ.');
     return;
   }
 
-  /* GİDEN ÇAĞRI BİLDİRİMİ */
+  /* 5) PANELİ BİLGİLENDİR (NUMARA + DURUM GÜNCELLESİN) */
   window.dispatchEvent(new CustomEvent('mr-arama-baslat', {
     detail: { telefon: cleanNum, ad: ad || '', yon: 'giden', timestamp: Date.now() }
   }));
 
-  /* WEBRTC İLE DİREKT ARAMA BAŞLAT - ÖNCE ÇAĞRIYI GÖNDERİYORUZ
-     Tarayıcı → WebSocket → PBX → Karşı taraf çalar
-     Hiçbir harici uygulama gerekmez
-     NOT: API log kaydını beklemeden ÖNCE çağrıyı başlatıyoruz ki gecikme olmasın */
-  let _aramaLogId = 0;
-
+  /* 6) WEBRTC İLE ARAMAYI BAŞLAT */
   try {
     const basarili = MR.webrtcTelefon.ara(cleanNum);
-    if (basarili) {
-      console.log('[WEBRTC ARAMA] ÇAĞRI GÖNDERİLDİ:', cleanNum);
 
-      /* ARAMA LOGU OLUŞTUR (ÇAĞRI BAŞLADIKTAN SONRA - GECİKME YARATMAZ) */
+    if (basarili) {
+      console.log('[ARAMA] ÇAĞRI GÖNDERİLDİ:', cleanNum);
+
+      /* LOG KAYDET (ARKA PLANDA - GECİKME YARATMAZ) */
       MR.api.netsantralAramaLogCreate({
         arayan: MR._netsantralDahili,
         aranan: cleanNum,
         arayan_adi: ad || '',
         yon: 'giden',
         durum: 'gorusmede'
-      }).then(logR => {
-        if (logR?.success && logR.data?.log_id) {
-          _aramaLogId = logR.data.log_id;
+      }).then(function(logR) {
+        if (logR && logR.success && logR.data && logR.data.log_id) {
+          window.dispatchEvent(new CustomEvent('mr-arama-log-id', {
+            detail: { logId: logR.data.log_id }
+          }));
         }
-      }).catch(() => {});
+      }).catch(function() {});
 
       window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
-        detail: { basarili: true, telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
+        detail: { basarili: true, telefon: cleanNum, ad: ad || '' }
       }));
     } else {
-      const hataMesaj = 'ARAMA BAŞLATILAMADI - WEBRTC BAĞLANTISINI KONTROL EDİN';
       window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
-        detail: { basarili: false, hata: hataMesaj, telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
+        detail: { basarili: false, hata: 'ARAMA BAŞLATILAMADI', telefon: cleanNum, ad: ad || '' }
       }));
     }
   } catch(e) {
-    console.error('[WEBRTC ARAMA] HATA:', e);
-    alert('WEBRTC ARAMA HATASI! TARAYICI MİKROFON İZNİNİ KONTROL EDİN.');
+    console.error('[ARAMA] HATA:', e);
+    alert('WEBRTC ARAMA HATASI! MİKROFON İZNİNİ KONTROL EDİN.');
     window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
-      detail: { basarili: false, hata: 'WEBRTC HATASI: ' + (e?.message || ''), telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
+      detail: { basarili: false, hata: 'WEBRTC HATASI', telefon: cleanNum, ad: ad || '' }
     }));
   }
 
-  /* OTOMATİK CRM KAYIT EKRANI AÇ */
+  /* 7) OTOMATİK CRM KAYIT EKRANI AÇ */
   if (otomatikCrmAc !== false) {
     MR._gelenCagriTelefon = telefon;
     MR._gelenCagriAdi = ad || '';
