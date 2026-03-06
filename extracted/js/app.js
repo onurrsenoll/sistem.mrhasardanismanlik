@@ -931,8 +931,8 @@ const NetsantralPanel = ({user}) => {
       if (data.basarili) {
         pbxOriginatedRef.current = true;
         setActiveCall(true);
-        setStatus('gorusmede');
-        setStatusMsg('ÇAĞRI BAĞLANDI - ' + (data.ad || data.telefon));
+        setStatus('araniyor');
+        setStatusMsg('ÇAĞRI GÖNDERİLDİ - ' + (data.ad || data.telefon));
       } else {
         /* PBX BAŞARISIZ - HATA GÖSTER VE TEMİZLE */
         setStatus('hazir');
@@ -961,6 +961,10 @@ const NetsantralPanel = ({user}) => {
       setWebrtcKayitli(d.kayitli);
 
       switch(d.durum) {
+        case 'caliyor':
+          setStatus('caliyor');
+          setStatusMsg('KARŞI TARAF ÇALIYOR...');
+          break;
         case 'gorusmede':
           setActiveCall(true);
           setStatus('gorusmede');
@@ -1205,6 +1209,7 @@ const NetsantralPanel = ({user}) => {
   const statusColors = {
     hazir: C.success,
     araniyor: C.warning,
+    caliyor: '#f59e0b',
     gorusmede: C.accent,
     gelen: '#f59e0b',
     mola: C.purple
@@ -1212,6 +1217,7 @@ const NetsantralPanel = ({user}) => {
   const statusLabels = {
     hazir: webrtcKayitli ? 'HAZIR (WEBRTC)' : 'BAĞLANTI YOK',
     araniyor: 'ARANIYOR',
+    caliyor: 'ÇALIYOR',
     gorusmede: 'GÖRÜŞMEDE',
     gelen: 'GELEN ÇAĞRI',
     mola: 'MOLADA'

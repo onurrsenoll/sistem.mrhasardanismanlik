@@ -930,8 +930,8 @@ const NetsantralPanel = ({user}) => {
       if (data.basarili) {
         pbxOriginatedRef.current = true;
         setActiveCall(true);
-        setStatus('gorusmede');
-        setStatusMsg('ÇAĞRI BAĞLANDI - ' + (data.ad || data.telefon));
+        setStatus('araniyor');
+        setStatusMsg('ÇAĞRI GÖNDERİLDİ - ' + (data.ad || data.telefon));
       } else {
         /* PBX BAŞARISIZ - HATA GÖSTER VE TEMİZLE */
         setStatus('hazir');
@@ -1026,11 +1026,11 @@ const NetsantralPanel = ({user}) => {
       if (r?.success && r.data?.success_api) {
         pbxOriginatedRef.current = true;
         setActiveCall(true);
-        setStatus('gorusmede');
-        setStatusMsg('ÇAĞRI BAĞLANDI - ' + cleanNum);
-        /* LOG GÜNCELLE: GÖRÜŞMEDE */
+        setStatus('araniyor');
+        setStatusMsg('ÇAĞRI GÖNDERİLDİ - ' + cleanNum);
+        /* LOG GÜNCELLE: ARANIYOR */
         if (activeLogIdRef.current) {
-          api.netsantralAramaLogUpdate({ log_id: activeLogIdRef.current, durum: 'gorusmede' }).catch(() => {});
+          api.netsantralAramaLogUpdate({ log_id: activeLogIdRef.current, durum: 'araniyor' }).catch(() => {});
         }
       } else {
         const hataMesaj = r?.data?.response?.hata_mesaj || r?.error || 'PBX ÇAĞRI BAŞLATILAMADI';
@@ -1157,13 +1157,17 @@ const NetsantralPanel = ({user}) => {
   const statusColors = {
     hazir: C.success,
     araniyor: C.warning,
+    caliyor: '#f59e0b',
     gorusmede: C.accent,
+    gelen: '#f59e0b',
     mola: C.purple
   };
   const statusLabels = {
     hazir: 'HAZIR',
     araniyor: 'ARANIYOR',
+    caliyor: 'ÇALIYOR',
     gorusmede: 'GÖRÜŞMEDE',
+    gelen: 'GELEN ÇAĞRI',
     mola: 'MOLADA'
   };
 
