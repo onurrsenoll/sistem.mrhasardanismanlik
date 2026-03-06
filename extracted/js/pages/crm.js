@@ -1179,7 +1179,7 @@ MR._CRMYeniInner = ({setPage}) => {
     }
   }, []);
 
-  /* ── NETSANTRAL PANELİNDEN ÇAĞRI SONLANDIRILINCA DİNLE ── */
+  /* ── NETSANTRAL PANELİNDEN VEYA WEBRTC'DEN ÇAĞRI SONLANDIRILINCA DİNLE ── */
   useEffect(() => {
     const handler = () => {
       if (callActive) {
@@ -1187,8 +1187,26 @@ MR._CRMYeniInner = ({setPage}) => {
         setCallActive(false);
       }
     };
+    /* WEBRTC DURUM DİNLEYİCİSİ - ÇAĞRI BİTTİĞİNDE UI'I GÜNCELLE */
+    const webrtcHandler = (e) => {
+      const d = e.detail || {};
+      if (d.durum === 'kapandi' || d.durum === 'hata') {
+        if (callActive) {
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+          setCallActive(false);
+          pbxOriginatedRef.current = false;
+        }
+      } else if (d.durum === 'gorusmede') {
+        /* GÖRÜŞME BAŞLADI - TIMER HALA ÇALIŞIYORSA DEVAM ET */
+        if (!callActive) setCallActive(true);
+      }
+    };
     window.addEventListener('mr-arama-sonlandi', handler);
-    return () => window.removeEventListener('mr-arama-sonlandi', handler);
+    window.addEventListener('mr-webrtc-durum', webrtcHandler);
+    return () => {
+      window.removeEventListener('mr-arama-sonlandi', handler);
+      window.removeEventListener('mr-webrtc-durum', webrtcHandler);
+    };
   }, [callActive]);
 
   /* ── ÇAĞRI ZAMANLAYICI (REF BAZLI - RE-RENDER ENGELLER) ── */
@@ -1296,7 +1314,15 @@ MR._CRMYeniInner = ({setPage}) => {
           if (attempt < maxRetry) await new Promise(ok => setTimeout(ok, 1500));
         }
       } else {
-        /* SIP FALLBACK ÇAĞRISI - PBX KONTROLÜNDE DEĞİL, DİREKT UI KAPAT */
+        /* SIP/WEBRTC ÇAĞRISI - WEBRTC TELEFON İLE SONLANDIR */
+        if (MR.webrtcTelefon && MR.webrtcTelefon._session) {
+          try {
+            MR.webrtcTelefon.kapat();
+            console.log('[CRM] WEBRTC SIP ÇAĞRI SONLANDIRILDI');
+          } catch(e) {
+            console.warn('[CRM] WEBRTC KAPAT HATASI:', e);
+          }
+        }
         hangupOk = true;
       }
 
@@ -1311,7 +1337,7 @@ MR._CRMYeniInner = ({setPage}) => {
       else setError('');
       window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
     } else {
-      /* ÇAĞRI BAŞLAT - PBX ORIGINATE API İLE */
+      /* ÇAĞRI BAŞLAT */
       if (!f.telefon || f.telefon.length < 10) {
         setError('GEÇERLİ BİR TELEFON NUMARASI GİRİN');
         return;
@@ -1320,36 +1346,48 @@ MR._CRMYeniInner = ({setPage}) => {
       pbxOriginatedRef.current = false;
       const cleanNum = f.telefon.replace(/[\s\-\(\)]/g, '').replace(/^0/, '90');
 
+      /* WEBRTC SIP İLE DOĞRUDAN ARAMA (BİRİNCİL YÖNTEM) */
+      const sipAramaYap = async () => {
+        if (MR.webrtcTelefon && MR.webrtcTelefon._kayitli) {
+          try {
+            const sonuc = await MR.webrtcTelefon.ara(f.telefon);
+            if (sonuc) {
+              console.log('[CRM] WEBRTC SIP ARAMA BAŞLATILDI:', f.telefon);
+              callSecondsRef.current = 0;
+              if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
+              setCallActive(true);
+              return true;
+            }
+          } catch(e) {
+            console.error('[CRM] WEBRTC SIP ARAMA HATASI:', e);
+          }
+        }
+        return false;
+      };
+
       /* PBX ÜZERİNDEN ÇAĞRI BAŞLAT (ORIGINATE) */
+      let pbxBasarili = false;
       try {
         const r = await api.netsantralOriginate(cleanNum, MR._netsantralDahili || undefined);
         if (r?.success && r.data?.success_api) {
           /* PBX BAŞARIYLA ÇAĞRIYI BAŞLATTI */
           pbxOriginatedRef.current = true;
-          callSecondsRef.current = 0;
-          if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
-          setCallActive(true);
-        } else if (r?.success && !r.data?.success_api) {
-          /* PBX HATASI - SIP FALLBACK */
-          const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || '';
-          setError(hataMesaj || 'PBX BAŞARISIZ - SIP İLE DEVAM EDİLİYOR');
-          callSecondsRef.current = 0;
-          if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
-          setCallActive(true);
-        } else {
-          setError(r?.error || 'ÇAĞRI BAŞLATILAMADI - SIP İLE DEVAM EDİLİYOR');
+          pbxBasarili = true;
           callSecondsRef.current = 0;
           if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
           setCallActive(true);
         }
       } catch(e) {
-        setError('NETSANTRAL BAĞLANTI HATASI - SIP İLE DEVAM EDİLİYOR');
-        callSecondsRef.current = 0;
-        if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
-        setCallActive(true);
+        console.warn('[CRM] PBX ORIGINATE HATASI:', e);
       }
 
-      /* GİDEN ARAMA LOGU - netsantral arama-log endpoint'i üzerinden kaydedilir (aramaBaslat içinde) */
+      /* PBX BAŞARISIZSA WEBRTC SIP İLE ARA */
+      if (!pbxBasarili) {
+        const sipOk = await sipAramaYap();
+        if (!sipOk) {
+          setError('ARAMA YAPILAMADI - WEBRTC TELEFON KAYITLI DEĞİL');
+        }
+      }
     }
   };
 

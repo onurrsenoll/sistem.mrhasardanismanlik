@@ -86,16 +86,24 @@ $debug = [
 ];
 
 // NETGSM NETSANTRAL ORIGINATE API
+// Doğru endpoint: http://crmsntrl.netgsm.com.tr:9111/originate
 $postData = http_build_query([
-    'usercode' => $kullanici,
+    'username' => $kullanici,
     'password' => $sifre,
-    'santession' => $cleanSantral,
-    'dahession' => $dahili,
-    'numara' => $numara
+    'customer_num' => $numara,
+    'pbxnum' => $cleanSantral,
+    'internal_num' => $dahili
 ]);
 
+$debug['post_params'] = [
+    'username' => $kullanici,
+    'customer_num' => $numara,
+    'pbxnum' => $cleanSantral,
+    'internal_num' => $dahili
+];
+
 $result = http_post(
-    'https://api.netgsm.com.tr/netsantral/originate/',
+    'http://crmsntrl.netgsm.com.tr:9111/originate',
     $postData,
     ['Content-Type: application/x-www-form-urlencoded'],
     20

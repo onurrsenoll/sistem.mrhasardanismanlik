@@ -65,15 +65,16 @@ $debug = [
 ];
 
 // NETGSM NETSANTRAL HANGUP API
+// Doğru endpoint: http://crmsntrl.netgsm.com.tr:9111/hangup
 $postData = http_build_query([
-    'usercode' => $kullanici,
+    'username' => $kullanici,
     'password' => $sifre,
-    'santession' => $cleanSantral,
-    'dahession' => $dahili
+    'pbxnum' => $cleanSantral,
+    'internal_num' => $dahili
 ]);
 
 $result = http_post(
-    'https://api.netgsm.com.tr/netsantral/hangup/',
+    'http://crmsntrl.netgsm.com.tr:9111/hangup',
     $postData,
     ['Content-Type: application/x-www-form-urlencoded'],
     15
