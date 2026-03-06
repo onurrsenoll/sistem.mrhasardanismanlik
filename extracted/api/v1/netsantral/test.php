@@ -83,13 +83,13 @@ if ($kullanici && $kullanici !== $cleanSantral) {
 
 foreach ($formats as $fmt) {
     $postData = http_build_query([
-        'usercode' => $kullanici,
+        'username' => $kullanici,
         'password' => $sifre,
-        'santession' => $fmt['santral']
+        'pbxnum' => $fmt['santral']
     ]);
 
     $result = http_post(
-        'https://api.netgsm.com.tr/netsantral/queue/',
+        'https://api.netgsm.com.tr/netsantral/queue',
         $postData,
         ['Content-Type: application/x-www-form-urlencoded'],
         15
