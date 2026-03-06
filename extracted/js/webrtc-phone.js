@@ -47,10 +47,15 @@ MR.webrtcTelefon = {
       return;
     }
 
+    /* JsSIP DEBUG MODE - SIP MESAJLARINI KONSOLDA GÖSTER */
+    if (typeof JsSIP !== 'undefined' && JsSIP.debug) {
+      JsSIP.debug.enable('JsSIP:*');
+    }
+
     /* SES ELEMENTİ */
     this._remoteAudioOlustur();
 
-    const sipUri = 'sip:' + this._config.dahili + '@' + this._config.domain;
+    var sipUri = 'sip:' + this._config.dahili + '@' + this._config.domain;
     console.log('[WEBRTC] JsSIP BAŞLATILIYOR:', sipUri, '| WSS:', this._config.wssUrl);
 
     try {
@@ -61,6 +66,7 @@ MR.webrtcTelefon = {
       var uaConfig = {
         sockets: [socket],
         uri: sipUri,
+        authorization_user: this._config.dahili,
         password: this._config.sipSifre,
         display_name: 'MR HASAR CRM',
         register: true,
@@ -87,23 +93,41 @@ MR.webrtcTelefon = {
 
       this._ua.on('registrationFailed', (e) => {
         console.error('[WEBRTC] KAYIT BAŞARISIZ:', e.cause);
-        console.error('[WEBRTC] KAYIT DETAY:', JSON.stringify({
+        /* SIP RESPONSE DETAYLARI */
+        var detay = {
           cause: e.cause,
           status_code: e.response ? e.response.status_code : 'YOK',
           reason_phrase: e.response ? e.response.reason_phrase : 'YOK',
           dahili: this._config.dahili,
           domain: this._config.domain,
+          authorization_user: this._config.dahili,
           sifre_uzunluk: this._config.sipSifre ? this._config.sipSifre.length : 0,
-          sifre_ilk2: this._config.sipSifre ? this._config.sipSifre.substring(0, 2) + '***' : 'BOŞ'
-        }));
+          sifre_ilk2: this._config.sipSifre ? this._config.sipSifre.substring(0, 2) + '***' : 'BOŞ',
+          sifre_son2: this._config.sipSifre ? '***' + this._config.sipSifre.substring(this._config.sipSifre.length - 2) : 'BOŞ'
+        };
+        /* WWW-Authenticate HEADER - REALM KONTROLÜ */
+        if (e.response) {
+          try {
+            var wwwAuth = e.response.getHeader('www-authenticate') || e.response.getHeader('WWW-Authenticate');
+            if (wwwAuth) detay.www_authenticate = wwwAuth;
+            var sipBody = e.response.body || '';
+            if (sipBody) detay.response_body = sipBody.substring(0, 200);
+          } catch(ex) {}
+          /* HAM SIP MESAJ */
+          try {
+            if (e.response.data) {
+              console.error('[WEBRTC] HAM SIP YANIT:', e.response.data);
+            }
+          } catch(ex) {}
+        }
+        console.error('[WEBRTC] KAYIT DETAY:', JSON.stringify(detay, null, 2));
         if (e.cause === 'Authentication Error') {
           console.error('[WEBRTC] ════════════════════════════════════════');
-          console.error('[WEBRTC] SIP ŞİFRESİ YANLIŞ! ÇÖZÜM:');
-          console.error('[WEBRTC] 1. NETSANTRAL PANELİ → AYARLAR → DAHİLİ LİSTESİ → DAHİLİ', this._config.dahili);
-          console.error('[WEBRTC] 2. "ŞİFRE" ALANINI KONTROL EDİN VEYA DEĞİŞTİRİN');
-          console.error('[WEBRTC] 3. CRM → SİSTEM → NETSANTRAL → SIP ŞİFRESİ ALANINA GİRİN');
-          console.error('[WEBRTC] 4. NOT: NETSİPP+ MOBİL UYGULAMA ŞİFRESİ İLE AYNIDIR');
-          console.error('[WEBRTC] TANI ÇALIŞTIR: /api/v1/netsantral/test-webhook.php?mode=sip-debug');
+          console.error('[WEBRTC] SIP ŞİFRESİ HATASI! KONTROL LİSTESİ:');
+          console.error('[WEBRTC] 1. NetSantral panelde dahili', this._config.dahili, 'şifresi:', this._config.sipSifre ? this._config.sipSifre.length + ' karakter (ilk 2: ' + this._config.sipSifre.substring(0, 2) + ')' : 'BOŞ!');
+          console.error('[WEBRTC] 2. NetSantral panelde şifreyi değiştirdikten sonra "Kaydet" butonuna bastınız mı?');
+          console.error('[WEBRTC] 3. NETSiPP+ mobil uygulamada aynı şifre ile giriş yapıyor musunuz?');
+          console.error('[WEBRTC] 4. Bağlantı tipi WSS olarak ayarlı mı? (Gelişmiş Ayarlar)');
           console.error('[WEBRTC] ════════════════════════════════════════');
         }
         this._kayitli = false;
