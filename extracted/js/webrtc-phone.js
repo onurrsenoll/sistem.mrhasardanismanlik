@@ -6,6 +6,24 @@
 
 const MR = window.MR || (window.MR = {});
 
+/* ═══ JsSIP HAZIR BEKLEYİCİ ═══ */
+MR._jssipYukle = function() {
+  return new Promise((resolve, reject) => {
+    /* ZATEN YÜKLÜ İSE */
+    if (typeof window.JsSIP !== 'undefined') { resolve(); return; }
+    /* MODULE SCRIPT'TEN 'jssip-ready' EVENT'İ BEKLENİYOR */
+    console.log('[WEBRTC] JsSIP BEKLENİYOR (esm.sh module)...');
+    let timeout = setTimeout(() => {
+      reject(new Error('JsSIP 15sn İÇİNDE YÜKLENEMEDİ'));
+    }, 15000);
+    window.addEventListener('jssip-ready', () => {
+      clearTimeout(timeout);
+      console.log('[WEBRTC] JsSIP HAZIR ✓');
+      resolve();
+    }, { once: true });
+  });
+};
+
 MR.webrtcTelefon = {
   /* DURUM */
   _ua: null,
@@ -31,14 +49,18 @@ MR.webrtcTelefon = {
       return;
     }
 
-    /* JsSIP YÜKLÜ MÜ */
-    if (typeof JsSIP === 'undefined') {
-      console.error('[WEBRTC] JsSIP KÜTÜPHANESİ YÜKLENMEMİŞ!');
-      this._durumBildir('hata', 'JsSIP KÜTÜPHANESİ BULUNAMADI');
-      return;
-    }
-
     if (config) Object.assign(this._config, config);
+
+    /* JsSIP DİNAMİK YÜKLE VE BAŞLAT */
+    MR._jssipYukle().then(() => {
+      this._baslatInternal();
+    }).catch((e) => {
+      console.error('[WEBRTC] ' + e.message);
+      this._durumBildir('hata', e.message);
+    });
+  },
+
+  _baslatInternal() {
 
     if (!this._config.dahili || !this._config.sipSifre) {
       console.warn('[WEBRTC] DAHİLİ VEYA SIP ŞİFRESİ EKSİK');
