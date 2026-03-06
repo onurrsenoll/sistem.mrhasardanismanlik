@@ -2691,7 +2691,10 @@ const NetsantralTab = () => {
     netsantral_sifre: '',
     netsantral_dahili: '',
     netsantral_aktif: '0',
-    netsantral_yonlendirme_modu: 'dynamic'
+    netsantral_yonlendirme_modu: 'dynamic',
+    netsantral_sip_sifre: '',
+    netsantral_wss_url: 'wss://sip6.netsantral.com:8089/ws',
+    netsantral_sip_domain: 'sip6.netsantral.com'
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -2719,7 +2722,10 @@ const NetsantralTab = () => {
           netsantral_sifre: data.netsantral_sifre || '',
           netsantral_dahili: data.netsantral_dahili || '',
           netsantral_aktif: data.netsantral_aktif || '0',
-          netsantral_yonlendirme_modu: data.netsantral_yonlendirme_modu || 'dynamic'
+          netsantral_yonlendirme_modu: data.netsantral_yonlendirme_modu || 'dynamic',
+          netsantral_sip_sifre: data.netsantral_sip_sifre || '',
+          netsantral_wss_url: data.netsantral_wss_url || 'wss://sip6.netsantral.com:8089/ws',
+          netsantral_sip_domain: data.netsantral_sip_domain || 'sip6.netsantral.com'
         }));
       }
       setLoading(false);
@@ -2748,6 +2754,17 @@ const NetsantralTab = () => {
         }
       }));
       console.log('[NETSANTRAL] AYARLAR GÜNCELLENDİ - DAHİLİ:', MR._netsantralDahili, '| AKTİF:', MR._netsantralAktif);
+      /* WEBRTC TELEFONU YENİDEN BAŞLAT (SIP BİLGİLERİ DEĞİŞMİŞ OLABİLİR) */
+      if (MR.webrtcTelefon && ayarlar.netsantral_sip_sifre && ayarlar.netsantral_dahili) {
+        MR.webrtcTelefon.durdur().then(() => {
+          MR.webrtcTelefon.baslat({
+            wssUrl: ayarlar.netsantral_wss_url || 'wss://sip6.netsantral.com:8089/ws',
+            domain: ayarlar.netsantral_sip_domain || 'sip6.netsantral.com',
+            dahili: ayarlar.netsantral_dahili,
+            sipSifre: ayarlar.netsantral_sip_sifre
+          });
+        });
+      }
     } else {
       setMesaj({type: 'error', text: r?.error || 'AYARLAR KAYDEDİLİRKEN HATA OLUŞTU'});
     }
@@ -2956,6 +2973,53 @@ const NetsantralTab = () => {
                 <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
                   NETSANTRAL DAHİLİ NUMARANIZ (ÖRN: 100, 101, 102). GELEN ÇAĞRILAR BU DAHİLİYE YÖNLENDİRİLİR.
                   NETGSM NETSANTRAL PANELİNDEN DAHİLİ TANIMLAYIN.
+                </div>
+              </div>
+
+              {/* ═══ WEBRTC TELEFON AYARLARI ═══ */}
+              <div style={{gridColumn: '1/-1', borderTop: '2px solid #334155', paddingTop: 16, marginTop: 8}}>
+                <div style={{fontSize: 13, fontWeight: 700, color: '#38bdf8', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8}}>
+                  {LIcon('Phone', 18)} WEBRTC TELEFON (TARAYICIDAN DİREKT ARAMA)
+                </div>
+                <div style={{fontSize: 10, color: '#94a3b8', marginBottom: 16, lineHeight: 1.6, background: '#1e293b', padding: 12, borderRadius: 8}}>
+                  CRM EKRANINDAN DİREKT ARAMA YAPMAK İÇİN SIP ŞİFRENİZİ GİRİN.<br/>
+                  TIKLA → KARŞI TARAF ÇALAR → KONUŞ → KAPAT. NETSİPP+ GEREKMİYOR!<br/>
+                  <strong>ÖNEMLİ:</strong> NETSANTRAL PANELİNDE BAĞLANTI TİPİNİ "WSS" OLARAK DEĞİŞTİRİN.
+                </div>
+              </div>
+
+              {/* SIP ŞİFRESİ */}
+              <div>
+                <label style={S.label}>SIP ŞİFRESİ (WEBRTC İÇİN) *</label>
+                <input style={S.input} type="password" value={ayarlar.netsantral_sip_sifre}
+                  onChange={e => up('netsantral_sip_sifre', e.target.value)}
+                  placeholder="NETSANTRAL DAHİLİ SIP ŞİFRESİ"/>
+                <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
+                  NETSANTRAL PANELİ → AYARLAR → DAHİLİ LİSTESİ → DAHİLİNİZİ SEÇİN → TEMEL AYARLAR → "ŞİFRE" ALANI.
+                  NETSİPP+ UYGULAMASINDA DA AYNI ŞİFRE KULLANILIR.
+                </div>
+              </div>
+
+              {/* WSS URL */}
+              <div>
+                <label style={S.label}>WSS BAĞLANTI ADRESİ</label>
+                <input style={S.input} value={ayarlar.netsantral_wss_url}
+                  onChange={e => up('netsantral_wss_url', e.target.value)}
+                  placeholder="wss://sip6.netsantral.com:8089/ws"/>
+                <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
+                  NETSANTRAL PANELİ → AYARLAR → DAHİLİ → GELİŞMİŞ AYARLAR → "WSS BAĞLANTI ADRESİ" ALANINDAKI URL.
+                  GENELLİKLE: wss://sip6.netsantral.com:8089/ws
+                </div>
+              </div>
+
+              {/* SIP DOMAIN */}
+              <div>
+                <label style={S.label}>SIP DOMAIN</label>
+                <input style={S.input} value={ayarlar.netsantral_sip_domain}
+                  onChange={e => up('netsantral_sip_domain', e.target.value)}
+                  placeholder="sip6.netsantral.com"/>
+                <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
+                  WSS ADRESİNDEKİ SUNUCU ADI. GENELLİKLE: sip6.netsantral.com
                 </div>
               </div>
 

@@ -5,13 +5,13 @@
 
 const MR = window.MR || (window.MR = {});
 
-/* ---------- GİDEN ARAMA BAŞLAT (NETSANTRAL ORIGINATE) ---------- */
+/* ---------- GİDEN ARAMA BAŞLAT (WEBRTC SOFTPHONE) ---------- */
 
 /**
- * NETSANTRAL PBX ÜZERİNDEN GİDEN ARAMA BAŞLAT
- * AKIŞ: ORIGINATE API → PBX DAHİLİNİZİ ÇALDIRIR → AÇTIĞINIZDA HEDEF NUMARAYA BAĞLAR
- * Cloudflare Worker proxy sayesinde port 9111 kısıtlaması aşılır
- * CRM EKRANINDA HİÇBİR YENİ PENCERE/UYGULAMA AÇILMAZ
+ * WEBRTC İLE TARAYICIDAN DİREK ARAMA BAŞLAT
+ * AKIŞ: CRM'DE TIKLA → KARŞI TARAF DİREKT ÇALAR → KONUŞ → KAPAT
+ * NETSİPP+ DAHİL HİÇBİR EKSTERNAl UYGULAMA GEREKMİYOR
+ * SES TARAYICI MİKROFON/HOPARLÖR ÜZERİNDEN AKAR
  *
  * @param {string} telefon - ARANACAK TELEFON NUMARASI
  * @param {string} ad - ARANAN KİŞİNİN ADI (OPSİYONEL)
@@ -35,7 +35,7 @@ MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
     cleanNum = '90' + cleanNum;
   }
 
-  console.log('[NETSANTRAL] ARAMA BAŞLATILIYOR:', cleanNum, '| AD:', ad || '-', '| DAHİLİ:', MR._netsantralDahili || 'YOK');
+  console.log('[WEBRTC ARAMA] BAŞLATILIYOR:', cleanNum, '| AD:', ad || '-');
 
   /* NETSANTRAL AKTİF KONTROLÜ */
   if (MR._netsantralAktif === false) {
@@ -47,9 +47,9 @@ MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
     return;
   }
 
-  /* DAHİLİ KONTROLÜ */
-  if (!MR._netsantralDahili) {
-    const hata = 'DAHİLİ NUMARASI TANIMLI DEĞİL! SİSTEM > AYARLAR > NETSANTRAL BÖLÜMÜNDEN DAHİLİ NUMARASINI GİRİN.';
+  /* WEBRTC TELEFON KAYITLI MI KONTROL ET */
+  if (!MR.webrtcTelefon || !MR.webrtcTelefon._kayitli) {
+    const hata = 'WEBRTC TELEFON PBX\'E KAYITLI DEĞİL! SİSTEM > NETSANTRAL AYARLARINDAN SIP ŞİFRESİNİ GİRİN VE SAYFAYI YENİLEYİN.';
     alert(hata);
     window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
       detail: { basarili: false, hata: hata, telefon: cleanNum, ad: ad || '' }
@@ -57,7 +57,7 @@ MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
     return;
   }
 
-  /* NETSANTRAL PANELİNE GİDEN ÇAĞRI BAŞLATILDIĞINI BİLDİR */
+  /* GİDEN ÇAĞRI BİLDİRİMİ */
   window.dispatchEvent(new CustomEvent('mr-arama-baslat', {
     detail: { telefon: cleanNum, ad: ad || '', yon: 'giden', timestamp: Date.now() }
   }));
@@ -77,13 +77,13 @@ MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
     }
   } catch(e) {}
 
-  /* ORIGINATE API İLE ARAMA BAŞLAT
-     Cloudflare Worker proxy üzerinden crmsntrl.netgsm.com.tr:9111'e ulaşır
-     CRM ekranında hiçbir pencere/uygulama açılmaz - arka planda çalışır */
+  /* WEBRTC İLE DİREKT ARAMA BAŞLAT
+     Tarayıcı → WebSocket → PBX → Karşı taraf çalar
+     Hiçbir harici uygulama gerekmez */
   try {
-    const r = await MR.api.netsantralOriginate(cleanNum, MR._netsantralDahili);
-    console.log('[NETSANTRAL] ORIGINATE YANIT:', JSON.stringify(r));
-    if (r?.success && r.data?.success_api) {
+    const basarili = await MR.webrtcTelefon.ara(cleanNum);
+    if (basarili) {
+      console.log('[WEBRTC ARAMA] ÇAĞRI GÖNDERİLDİ:', cleanNum);
       if (_aramaLogId) {
         MR.api.netsantralAramaLogUpdate({ log_id: _aramaLogId, durum: 'gorusmede' }).catch(() => {});
       }
@@ -91,24 +91,22 @@ MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
         detail: { basarili: true, telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
       }));
     } else {
-      const hataMesaj = r?.data?.response?.hata_mesaj || r?.error || 'ÇAĞRI BAŞLATILAMADI';
-      console.error('[NETSANTRAL] ORIGINATE HATA:', hataMesaj, r);
+      const hataMesaj = 'ARAMA BAŞLATILAMADI - WEBRTC BAĞLANTISINI KONTROL EDİN';
       if (_aramaLogId) {
         MR.api.netsantralAramaLogUpdate({ log_id: _aramaLogId, durum: 'basarisiz', notlar: hataMesaj }).catch(() => {});
       }
-      alert('ARAMA HATASI: ' + hataMesaj);
       window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
         detail: { basarili: false, hata: hataMesaj, telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
       }));
     }
   } catch(e) {
-    console.error('[NETSANTRAL] BAĞLANTI HATASI:', e);
+    console.error('[WEBRTC ARAMA] HATA:', e);
     if (_aramaLogId) {
-      MR.api.netsantralAramaLogUpdate({ log_id: _aramaLogId, durum: 'basarisiz', notlar: 'BAĞLANTI HATASI' }).catch(() => {});
+      MR.api.netsantralAramaLogUpdate({ log_id: _aramaLogId, durum: 'basarisiz', notlar: 'WEBRTC HATASI' }).catch(() => {});
     }
-    alert('NETSANTRAL BAĞLANTI HATASI! CLOUDFLARE WORKER AYARINI KONTROL EDİN.');
+    alert('WEBRTC ARAMA HATASI! TARAYICI MİKROFON İZNİNİ KONTROL EDİN.');
     window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
-      detail: { basarili: false, hata: 'BAĞLANTI HATASI: ' + (e?.message || ''), telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
+      detail: { basarili: false, hata: 'WEBRTC HATASI: ' + (e?.message || ''), telefon: cleanNum, ad: ad || '', logId: _aramaLogId }
     }));
   }
 

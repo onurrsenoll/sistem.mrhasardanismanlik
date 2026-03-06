@@ -950,6 +950,66 @@ const NetsantralPanel = ({user}) => {
     };
   }, []);
 
+  /* WEBRTC DURUM DEĞİŞİKLİKLERİNİ DİNLE */
+  const [webrtcKayitli, setWebrtcKayitli] = useState(false);
+  const [gelenCagriData, setGelenCagriData] = useState(null);
+
+  useEffect(() => {
+    const handleWebrtcDurum = (e) => {
+      const d = e.detail || {};
+      console.log('[NETSANTRAL PANEL] WEBRTC DURUM:', d.durum, d.detay || '');
+      setWebrtcKayitli(d.kayitli);
+
+      switch(d.durum) {
+        case 'gorusmede':
+          setActiveCall(true);
+          setStatus('gorusmede');
+          setMinimized(false);
+          setStatusMsg('GÖRÜŞME BAŞLADI');
+          setGelenCagriData(null);
+          setTimeout(() => setStatusMsg(''), 3000);
+          break;
+        case 'kapandi':
+          setActiveCall(false);
+          setMuted(false);
+          setStatus('hazir');
+          setStatusMsg('GÖRÜŞME SONLANDI');
+          setGelenCagriData(null);
+          pbxOriginatedRef.current = false;
+          activeLogIdRef.current = 0;
+          setTimeout(() => setStatusMsg(''), 3000);
+          break;
+        case 'sessize-alindi':
+          setMuted(true);
+          break;
+        case 'ses-acildi':
+          setMuted(false);
+          break;
+        case 'hata':
+          setStatusMsg(d.detay || 'WEBRTC HATASI');
+          setTimeout(() => setStatusMsg(''), 5000);
+          break;
+      }
+    };
+
+    const handleWebrtcGelen = (e) => {
+      const d = e.detail || {};
+      console.log('[NETSANTRAL PANEL] WEBRTC GELEN ÇAĞRI:', d.arayan);
+      setGelenCagriData(d);
+      setNumber(d.arayan || '');
+      setStatus('gelen');
+      setMinimized(false);
+      setStatusMsg('GELEN ÇAĞRI: ' + (d.arayanAdi || d.arayan));
+    };
+
+    window.addEventListener('mr-webrtc-durum', handleWebrtcDurum);
+    window.addEventListener('mr-webrtc-gelen-cagri', handleWebrtcGelen);
+    return () => {
+      window.removeEventListener('mr-webrtc-durum', handleWebrtcDurum);
+      window.removeEventListener('mr-webrtc-gelen-cagri', handleWebrtcGelen);
+    };
+  }, []);
+
   // DIŞARI TIKLANINCA MİNİMİZE ET (AKTİF ÇAĞRI YOKSA)
   useEffect(() => {
     if (minimized) return;
@@ -977,18 +1037,18 @@ const NetsantralPanel = ({user}) => {
     setNumber(prev => prev + key);
   };
 
-  // GİDEN ARAMA BAŞLAT - NETSANTRAL PBX ORIGINATE API İLE
+  // GİDEN ARAMA BAŞLAT - WEBRTC İLE DİREKT ARAMA
   const aramaBaslat = async () => {
     if (!number) return;
 
-    /* DAHİLİ KONTROLÜ */
-    if (!MR._netsantralDahili) {
-      setStatusMsg('DAHİLİ NUMARASI TANIMLI DEĞİL! SİSTEM > AYARLAR > NETSANTRAL BÖLÜMÜNDEN DAHİLİ GİRİN.');
+    /* WEBRTC KAYITLI MI KONTROL ET */
+    if (!MR.webrtcTelefon || !MR.webrtcTelefon._kayitli) {
+      setStatusMsg('WEBRTC TELEFON KAYITLI DEĞİL! SİSTEM > NETSANTRAL AYARLARINDAN SIP ŞİFRESİNİ GİRİN.');
       setTimeout(() => setStatusMsg(''), 6000);
       return;
     }
 
-    setStatusMsg('GİDEN ARAMA BAŞLATILIYOR...');
+    setStatusMsg('ARAMA BAŞLATILIYOR...');
     setStatus('araniyor');
     setMinimized(false);
     pbxOriginatedRef.current = false;
@@ -1003,7 +1063,7 @@ const NetsantralPanel = ({user}) => {
       cleanNum = '90' + cleanNum;
     }
 
-    console.log('[NETSANTRAL PANEL] ARAMA:', cleanNum, '| DAHİLİ:', MR._netsantralDahili);
+    console.log('[NETSANTRAL PANEL] WEBRTC ARAMA:', cleanNum);
 
     /* GİDEN ARAMA LOGU OLUŞTUR */
     activeLogIdRef.current = 0;
@@ -1020,75 +1080,58 @@ const NetsantralPanel = ({user}) => {
       }
     } catch(e) {}
 
-    /* PBX ORIGINATE: ÖNCEKİ DAHİLİNİZİ ÇALDIRIR, AÇTIĞINIZDA HEDEF NUMARAYI BAĞLAR */
+    /* WEBRTC İLE DİREKT ARAMA - KARŞI TARAFIN TELEFONU ÇALAR */
     try {
-      const r = await api.netsantralOriginate(cleanNum, MR._netsantralDahili);
-      console.log('[NETSANTRAL PANEL] ORIGINATE YANIT:', JSON.stringify(r));
-      if (r?.success && r.data?.success_api) {
+      const basarili = await MR.webrtcTelefon.ara(cleanNum);
+      if (basarili) {
         pbxOriginatedRef.current = true;
-        setActiveCall(true);
-        setStatus('gorusmede');
-        setStatusMsg('ÇAĞRI BAĞLANDI - ' + cleanNum);
-        /* LOG GÜNCELLE: GÖRÜŞMEDE */
-        if (activeLogIdRef.current) {
-          api.netsantralAramaLogUpdate({ log_id: activeLogIdRef.current, durum: 'gorusmede' }).catch(() => {});
-        }
+        setStatusMsg('ÇAĞRI GÖNDERİLDİ - ' + cleanNum);
+        /* GÖRÜŞME BAŞLADIĞINDA mr-webrtc-durum EVENT'İ YAKALANIR */
       } else {
-        const hataMesaj = r?.data?.response?.hata_mesaj || r?.error || 'PBX ÇAĞRI BAŞLATILAMADI';
-        setStatusMsg('HATA: ' + hataMesaj);
+        setStatusMsg('ARAMA BAŞLATILAMADI');
         setStatus('hazir');
-        /* LOG GÜNCELLE: BAŞARISIZ */
         if (activeLogIdRef.current) {
-          api.netsantralAramaLogUpdate({ log_id: activeLogIdRef.current, durum: 'basarisiz', notlar: hataMesaj }).catch(() => {});
+          api.netsantralAramaLogUpdate({ log_id: activeLogIdRef.current, durum: 'basarisiz', notlar: 'WEBRTC ARAMA BAŞARISIZ' }).catch(() => {});
           activeLogIdRef.current = 0;
         }
-        alert('ARAMA HATASI: ' + hataMesaj);
       }
     } catch(e) {
-      console.error('[NETSANTRAL PANEL] BAĞLANTI HATASI:', e);
-      setStatusMsg('NETSANTRAL BAĞLANTI HATASI - İNTERNET BAĞLANTINIZI KONTROL EDİN');
+      console.error('[NETSANTRAL PANEL] WEBRTC HATASI:', e);
+      setStatusMsg('WEBRTC HATASI - MİKROFON İZNİNİ KONTROL EDİN');
       setStatus('hazir');
       if (activeLogIdRef.current) {
-        api.netsantralAramaLogUpdate({ log_id: activeLogIdRef.current, durum: 'basarisiz', notlar: 'BAĞLANTI HATASI' }).catch(() => {});
+        api.netsantralAramaLogUpdate({ log_id: activeLogIdRef.current, durum: 'basarisiz', notlar: 'WEBRTC HATASI' }).catch(() => {});
         activeLogIdRef.current = 0;
       }
-      alert('NETSANTRAL BAĞLANTI HATASI! İNTERNET BAĞLANTINIZI KONTROL EDİN.');
     }
 
     setTimeout(() => setStatusMsg(''), 5000);
   };
 
-  // GİDEN ARAMAYI SONLANDIR - PBX HANGUP API İLE
+  // GELEN ÇAĞRIYI CEVAPLA - WEBRTC
+  const cagriCevapla = async () => {
+    if (MR.webrtcTelefon) {
+      await MR.webrtcTelefon.cevapla();
+      setGelenCagriData(null);
+    }
+  };
+
+  // GELEN ÇAĞRIYI REDDET - WEBRTC
+  const cagriReddet = () => {
+    if (MR.webrtcTelefon) {
+      MR.webrtcTelefon.reddet();
+      setGelenCagriData(null);
+    }
+  };
+
+  // ÇAĞRIYI SONLANDIR - WEBRTC İLE DİREKT KAPAT
   const aramaKapat = async () => {
     setHangupLoading(true);
     setStatusMsg('ÇAĞRI SONLANDIRILIYOR...');
 
-    let hangupOk = false;
-
-    /* PBX HANGUP API İLE ÇAĞRIYI SONLANDIR */
-    const maxRetry = 3;
-    for (let attempt = 1; attempt <= maxRetry; attempt++) {
-      try {
-        const r = await api.netsantralHangup(MR._netsantralDahili || undefined);
-        if (r?.success && r.data?.success_api) {
-          hangupOk = true;
-          break;
-        } else if (r?.success && !r.data?.success_api) {
-          const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || '';
-          const hataKodu = r.data?.response?.hata_kodu || '';
-          /* 70 = GEÇERSİZ PARAMETRE = ÇAĞRI ZATEN BİTMİŞ */
-          if (hataKodu === '70' || (hataMesaj && (hataMesaj.includes('70') || hataMesaj.includes('GEÇERSİZ') || hataMesaj.includes('PARAMETRE') || hataMesaj.includes('AKTİF DEĞİL')))) {
-            hangupOk = true;
-            break;
-          }
-          if (hataMesaj) setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${hataMesaj}`);
-        } else {
-          setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${r?.error || 'ÇAĞRI SONLANDIRMA HATASI'}`);
-        }
-      } catch(e) {
-        setStatusMsg(`DENEME ${attempt}/${maxRetry}: BAĞLANTI HATASI`);
-      }
-      if (attempt < maxRetry) await new Promise(ok => setTimeout(ok, 1500));
+    /* WEBRTC İLE DİREKT KAPAT - ANINDA BİTER */
+    if (MR.webrtcTelefon) {
+      MR.webrtcTelefon.kapat();
     }
 
     setHangupLoading(false);
@@ -1134,18 +1177,22 @@ const NetsantralPanel = ({user}) => {
 
   // SESİ KAPAT/AÇ
   const toggleMute = async () => {
-    const newState = muted ? 'off' : 'on';
-    const r = await api.netsantralMute(newState, MR._netsantralDahili || undefined);
+    /* WEBRTC İLE DİREKT MİKROFON KONTROLÜ */
+    if (MR.webrtcTelefon) {
+      MR.webrtcTelefon.sesizToggle();
+    }
     setMuted(!muted);
     setStatusMsg(muted ? 'MİKROFON AÇILDI' : 'MİKROFON KAPATILDI');
     setTimeout(() => setStatusMsg(''), 2000);
   };
 
-  // TRANSFER
+  // TRANSFER - WEBRTC İLE
   const transferYap = async () => {
     if (!transferNum) return;
     setStatusMsg('TRANSFER EDİLİYOR...');
-    const r = await api.netsantralTransfer(transferNum, MR._netsantralDahili || undefined);
+    if (MR.webrtcTelefon) {
+      await MR.webrtcTelefon.transfer(transferNum);
+    }
     setStatusMsg('TRANSFER YAPILDI');
     setTransferOpen(false);
     setTransferNum('');
@@ -1159,12 +1206,14 @@ const NetsantralPanel = ({user}) => {
     hazir: C.success,
     araniyor: C.warning,
     gorusmede: C.accent,
+    gelen: '#f59e0b',
     mola: C.purple
   };
   const statusLabels = {
-    hazir: 'HAZIR',
+    hazir: webrtcKayitli ? 'HAZIR (WEBRTC)' : 'BAĞLANTI YOK',
     araniyor: 'ARANIYOR',
     gorusmede: 'GÖRÜŞMEDE',
+    gelen: 'GELEN ÇAĞRI',
     mola: 'MOLADA'
   };
 
@@ -1297,16 +1346,34 @@ const NetsantralPanel = ({user}) => {
 
       {/* KONTROL BUTONLARI */}
       <div style={{padding: '0 14px 12px', display: 'flex', gap: 8}}>
-        {!activeCall ? (
-          <button onClick={aramaBaslat} disabled={!number} style={{
+        {status === 'gelen' && gelenCagriData ? (
+          <>
+            <button onClick={cagriCevapla} style={{
+              flex: 1, padding: '12px', borderRadius: 10, border: 'none',
+              background: C.success, color: '#fff', fontSize: 13, fontWeight: 800,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              animation: 'pulse 1s infinite'
+            }}>
+              <LIcon name="PhoneCall" size={18} color="#fff"/> CEVAPLA
+            </button>
+            <button onClick={cagriReddet} style={{
+              padding: '12px 18px', borderRadius: 10, border: 'none',
+              background: C.danger, color: '#fff', fontSize: 13, fontWeight: 800,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+            }}>
+              <LIcon name="PhoneOff" size={18} color="#fff"/> REDDET
+            </button>
+          </>
+        ) : !activeCall ? (
+          <button onClick={aramaBaslat} disabled={!number || !webrtcKayitli} style={{
             flex: 1, padding: '10px', borderRadius: 10, border: 'none',
-            background: number ? C.success : `${C.success}33`,
+            background: (number && webrtcKayitli) ? C.success : `${C.success}33`,
             color: '#fff', fontSize: 12, fontWeight: 700,
-            cursor: number ? 'pointer' : 'default',
+            cursor: (number && webrtcKayitli) ? 'pointer' : 'default',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            opacity: number ? 1 : 0.5
+            opacity: (number && webrtcKayitli) ? 1 : 0.5
           }}>
-            <LIcon name="PhoneCall" size={16} color="#fff"/> GİDEN ARAMA YAP
+            <LIcon name="PhoneCall" size={16} color="#fff"/> {webrtcKayitli ? 'TIKLA ARA' : 'WEBRTC BAĞLANTI YOK'}
           </button>
         ) : (
           <>
@@ -1568,6 +1635,21 @@ const App = () => {
           console.log('[NETSANTRAL] AYARLAR YÜKLENDİ - DAHİLİ:', MR._netsantralDahili || 'BOŞ!', '| AKTİF:', MR._netsantralAktif, '| SANTRAL:', MR._netsantralSantralNo || 'BOŞ!');
           if (!MR._netsantralDahili) {
             console.warn('[NETSANTRAL] UYARI: DAHİLİ NUMARASI TANIMLANMAMIŞ! SİSTEM > AYARLAR > NETSANTRAL BÖLÜMÜNDEN TANIMLAYIN.');
+          }
+          /* WEBRTC TELEFONU BAŞLAT (SIP BİLGİLERİ VARSA) */
+          const sipSifre = r.data.netsantral_sip_sifre || '';
+          const wssUrl = r.data.netsantral_wss_url || 'wss://sip6.netsantral.com:8089/ws';
+          const sipDomain = r.data.netsantral_sip_domain || 'sip6.netsantral.com';
+          if (MR.webrtcTelefon && sipSifre && MR._netsantralDahili && MR._netsantralAktif) {
+            console.log('[WEBRTC] OTOMATİK BAŞLATILIYOR - DAHİLİ:', MR._netsantralDahili, '| WSS:', wssUrl);
+            MR.webrtcTelefon.baslat({
+              wssUrl: wssUrl,
+              domain: sipDomain,
+              dahili: MR._netsantralDahili,
+              sipSifre: sipSifre
+            });
+          } else if (!sipSifre) {
+            console.warn('[WEBRTC] SIP ŞİFRESİ GİRİLMEMİŞ - SİSTEM > NETSANTRAL AYARLARINDAN GİRİN');
           }
         } else {
           console.warn('[NETSANTRAL] AYARLAR YÜKLENEMEDI:', r);
