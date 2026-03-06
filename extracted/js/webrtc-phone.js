@@ -56,15 +56,13 @@ MR.webrtcTelefon = {
     /* SES ELEMENTİ */
     this._remoteAudioOlustur();
 
-    var sipUri = 'sip:' + this._config.dahili + '@' + this._config.domain;
-
-    /* NETSiPP+ FORMATINDA AUTHORIZATION USER OLUŞTUR
-       NETSiPP+ kullanıcı adı: 102@3625026502 (dahili@santralNo)
-       SIP sunucusu bu formatı bekliyor */
+    /* NetSantral dahili formatı: 102-3625026502 (dahili-santralNo)
+       Asterisk peer adı bu formatta tanımlı, hem URI hem auth_user bu olmalı */
     var santralNo = (this._config.santralNo || '').replace(/^0+/, '');
-    var authUser = santralNo ? this._config.dahili + '@' + santralNo : this._config.dahili;
+    var sipUser = santralNo ? this._config.dahili + '-' + santralNo : this._config.dahili;
+    var sipUri = 'sip:' + sipUser + '@' + this._config.domain;
 
-    console.log('[WEBRTC] JsSIP BAŞLATILIYOR:', sipUri, '| AUTH USER:', authUser, '| WSS:', this._config.wssUrl);
+    console.log('[WEBRTC] JsSIP BAŞLATILIYOR:', sipUri, '| AUTH USER:', sipUser, '| WSS:', this._config.wssUrl);
 
     try {
       /* WEBSOCKET BAĞLANTISI */
@@ -74,7 +72,7 @@ MR.webrtcTelefon = {
       var uaConfig = {
         sockets: [socket],
         uri: sipUri,
-        authorization_user: authUser,
+        authorization_user: sipUser,
         password: this._config.sipSifre,
         display_name: 'MR HASAR CRM',
         register: true,
@@ -108,7 +106,7 @@ MR.webrtcTelefon = {
           reason_phrase: e.response ? e.response.reason_phrase : 'YOK',
           dahili: this._config.dahili,
           domain: this._config.domain,
-          authorization_user: this._config.dahili,
+          authorization_user: sipUser || this._config.dahili,
           sifre_uzunluk: this._config.sipSifre ? this._config.sipSifre.length : 0,
           sifre_ilk2: this._config.sipSifre ? this._config.sipSifre.substring(0, 2) + '***' : 'BOŞ',
           sifre_son2: this._config.sipSifre ? '***' + this._config.sipSifre.substring(this._config.sipSifre.length - 2) : 'BOŞ'
