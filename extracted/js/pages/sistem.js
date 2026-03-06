@@ -2693,6 +2693,7 @@ const NetsantralTab = () => {
     netsantral_aktif: '0',
     netsantral_yonlendirme_modu: 'dynamic',
     netsantral_sip_sifre: '',
+    netsantral_sip_kullanici: '',
     netsantral_wss_url: 'wss://sip6.netsantral.com:8089/ws',
     netsantral_sip_domain: 'sip6.netsantral.com'
   });
@@ -2724,6 +2725,7 @@ const NetsantralTab = () => {
           netsantral_aktif: data.netsantral_aktif || '0',
           netsantral_yonlendirme_modu: data.netsantral_yonlendirme_modu || 'dynamic',
           netsantral_sip_sifre: data.netsantral_sip_sifre || '',
+          netsantral_sip_kullanici: data.netsantral_sip_kullanici || '',
           netsantral_wss_url: data.netsantral_wss_url || 'wss://sip6.netsantral.com:8089/ws',
           netsantral_sip_domain: data.netsantral_sip_domain || 'sip6.netsantral.com'
         }));
@@ -2762,6 +2764,7 @@ const NetsantralTab = () => {
             domain: ayarlar.netsantral_sip_domain || 'sip6.netsantral.com',
             dahili: ayarlar.netsantral_dahili,
             sipSifre: ayarlar.netsantral_sip_sifre,
+            sipKullanici: ayarlar.netsantral_sip_kullanici || '',
             santralNo: ayarlar.netsantral_santral_no || MR._netsantralSantralNo || ''
           });
         });
@@ -2989,6 +2992,18 @@ const NetsantralTab = () => {
                 </div>
               </div>
 
+              {/* SIP KULLANICI ADI (KAYIT ADI) */}
+              <div>
+                <label style={S.label}>SIP KULLANICI ADI (KAYIT ADI)</label>
+                <input style={S.input} value={ayarlar.netsantral_sip_kullanici}
+                  onChange={e => up('netsantral_sip_kullanici', e.target.value)}
+                  placeholder="BOŞ BIRAKIRSANIZ DAHİLİ NUMARASI KULLANILIR"/>
+                <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
+                  NETSİPP+ UYGULAMASI → AYARLAR → SIP AYARLARI → "KAYIT ADI" ALANINDAKI DEĞER.<br/>
+                  BOŞ BIRAKIRSANIZ DAHİLİ NUMARASI (ÖR: 102) KULLANILIR. FARKLI BİR DEĞER GEREKİYORSA BURAYA GİRİN.
+                </div>
+              </div>
+
               {/* SIP ŞİFRESİ */}
               <div>
                 <label style={S.label}>SIP ŞİFRESİ (WEBRTC İÇİN) *</label>
@@ -2996,8 +3011,8 @@ const NetsantralTab = () => {
                   onChange={e => up('netsantral_sip_sifre', e.target.value)}
                   placeholder="NETSANTRAL DAHİLİ SIP ŞİFRESİ"/>
                 <div style={{fontSize: 9, color: C.textMuted, marginTop: 4}}>
-                  NETSANTRAL PANELİ → AYARLAR → DAHİLİ LİSTESİ → DAHİLİNİZİ SEÇİN → TEMEL AYARLAR → "ŞİFRE" ALANI.
-                  NETSİPP+ UYGULAMASINDA DA AYNI ŞİFRE KULLANILIR.
+                  NETSİPP+ UYGULAMASI → AYARLAR → SIP AYARLARI → "ŞİFRE" ALANI.<br/>
+                  NETSANTRAL PANELİ → AYARLAR → DAHİLİ LİSTESİ → DAHİLİNİZİ SEÇİN → "ŞİFRE" ALANI.
                 </div>
               </div>
 

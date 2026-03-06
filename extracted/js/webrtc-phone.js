@@ -23,6 +23,7 @@ MR.webrtcTelefon = {
     domain: 'sip6.netsantral.com',
     dahili: '',
     sipSifre: '',
+    sipKullanici: '',
     santralNo: ''
   },
 
@@ -56,12 +57,11 @@ MR.webrtcTelefon = {
     /* SES ELEMENTİ */
     this._remoteAudioOlustur();
 
-    /* NetSantral multi-tenant PBX: dahili-santralNo formatı gerekli
-       Hem URI hem auth_user tam format olmalı: 102-3625026502 */
-    var santralNo = (this._config.santralNo || '').replace(/^0+/, '');
-    var fullUser = santralNo ? this._config.dahili + '-' + santralNo : this._config.dahili;
-    var authUser = fullUser;
-    var sipUri = 'sip:' + fullUser + '@' + this._config.domain;
+    /* SIP KULLANICI: NETSiPP+ "Kayıt Adı" alanındaki değer
+       Boşsa dahili numarası kullanılır */
+    var sipUser = this._config.sipKullanici || this._config.dahili;
+    var authUser = sipUser;
+    var sipUri = 'sip:' + sipUser + '@' + this._config.domain;
 
     console.log('[WEBRTC] JsSIP BAŞLATILIYOR:', sipUri, '| AUTH USER:', authUser, '| WSS:', this._config.wssUrl);
 

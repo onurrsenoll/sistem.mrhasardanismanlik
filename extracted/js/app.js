@@ -1647,6 +1647,7 @@ const App = () => {
               domain: sipDomain,
               dahili: MR._netsantralDahili,
               sipSifre: sipSifre,
+              sipKullanici: r.data.netsantral_sip_kullanici || '',
               santralNo: MR._netsantralSantralNo || ''
             });
           } else if (!sipSifre) {
