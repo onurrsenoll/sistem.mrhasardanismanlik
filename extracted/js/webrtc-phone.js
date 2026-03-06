@@ -22,7 +22,8 @@ MR.webrtcTelefon = {
     wssUrl: 'wss://sip6.netsantral.com:8089/ws',
     domain: 'sip6.netsantral.com',
     dahili: '',
-    sipSifre: ''
+    sipSifre: '',
+    santralNo: ''
   },
 
   /* ═══ BAŞLAT ═══ */
@@ -56,7 +57,14 @@ MR.webrtcTelefon = {
     this._remoteAudioOlustur();
 
     var sipUri = 'sip:' + this._config.dahili + '@' + this._config.domain;
-    console.log('[WEBRTC] JsSIP BAŞLATILIYOR:', sipUri, '| WSS:', this._config.wssUrl);
+
+    /* NETSiPP+ FORMATINDA AUTHORIZATION USER OLUŞTUR
+       NETSiPP+ kullanıcı adı: 102@3625026502 (dahili@santralNo)
+       SIP sunucusu bu formatı bekliyor */
+    var santralNo = (this._config.santralNo || '').replace(/^0+/, '');
+    var authUser = santralNo ? this._config.dahili + '@' + santralNo : this._config.dahili;
+
+    console.log('[WEBRTC] JsSIP BAŞLATILIYOR:', sipUri, '| AUTH USER:', authUser, '| WSS:', this._config.wssUrl);
 
     try {
       /* WEBSOCKET BAĞLANTISI */
@@ -66,7 +74,7 @@ MR.webrtcTelefon = {
       var uaConfig = {
         sockets: [socket],
         uri: sipUri,
-        authorization_user: this._config.dahili,
+        authorization_user: authUser,
         password: this._config.sipSifre,
         display_name: 'MR HASAR CRM',
         register: true,

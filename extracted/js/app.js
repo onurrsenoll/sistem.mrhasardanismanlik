@@ -1641,12 +1641,13 @@ const App = () => {
           const wssUrl = r.data.netsantral_wss_url || 'wss://sip6.netsantral.com:8089/ws';
           const sipDomain = r.data.netsantral_sip_domain || 'sip6.netsantral.com';
           if (MR.webrtcTelefon && sipSifre && MR._netsantralDahili && MR._netsantralAktif) {
-            console.log('[WEBRTC] OTOMATİK BAŞLATILIYOR - DAHİLİ:', MR._netsantralDahili, '| WSS:', wssUrl);
+            console.log('[WEBRTC] OTOMATİK BAŞLATILIYOR - DAHİLİ:', MR._netsantralDahili, '| SANTRAL:', MR._netsantralSantralNo, '| WSS:', wssUrl);
             MR.webrtcTelefon.baslat({
               wssUrl: wssUrl,
               domain: sipDomain,
               dahili: MR._netsantralDahili,
-              sipSifre: sipSifre
+              sipSifre: sipSifre,
+              santralNo: MR._netsantralSantralNo || ''
             });
           } else if (!sipSifre) {
             console.warn('[WEBRTC] SIP ŞİFRESİ GİRİLMEMİŞ - SİSTEM > NETSANTRAL AYARLARINDAN GİRİN');

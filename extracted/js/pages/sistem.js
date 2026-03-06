@@ -2761,7 +2761,8 @@ const NetsantralTab = () => {
             wssUrl: ayarlar.netsantral_wss_url || 'wss://sip6.netsantral.com:8089/ws',
             domain: ayarlar.netsantral_sip_domain || 'sip6.netsantral.com',
             dahili: ayarlar.netsantral_dahili,
-            sipSifre: ayarlar.netsantral_sip_sifre
+            sipSifre: ayarlar.netsantral_sip_sifre,
+            santralNo: ayarlar.netsantral_santral_no || MR._netsantralSantralNo || ''
           });
         });
       }
