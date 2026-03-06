@@ -1445,14 +1445,14 @@ MR._CRMYeniInner = ({setPage}) => {
   /* ── FIELDSET BİLEŞENİ ── */
   const Fieldset = ({title, icon, children}) => (
     <fieldset style={{
-      border: `1px solid ${C.border}`, borderRadius: 10,
-      padding: '18px 20px 14px', marginBottom: 16, background: 'transparent'
+      border: `1px solid ${C.border}`, borderRadius: 8,
+      padding: '12px 14px 10px', marginBottom: 10, background: 'transparent'
     }}>
       <legend style={{
-        padding: '4px 12px', fontSize: 12, fontWeight: 700, color: C.textSec,
-        display: 'flex', alignItems: 'center', gap: 6, letterSpacing: 0.5
+        padding: '3px 10px', fontSize: 11, fontWeight: 700, color: C.textSec,
+        display: 'flex', alignItems: 'center', gap: 5, letterSpacing: 0.5
       }}>
-        <LIcon name={icon} size={14} color={C.accent}/>
+        <LIcon name={icon} size={12} color={C.accent}/>
         {title}
       </legend>
       {children}
@@ -1463,80 +1463,81 @@ MR._CRMYeniInner = ({setPage}) => {
   const actionBtn = (color) => ({
     ...S.btn, width: '100%', justifyContent: 'flex-start',
     background: `${color}12`, border: `1px solid ${color}30`,
-    color: color, fontSize: 12, padding: '11px 14px', borderRadius: 10
+    color: color, fontSize: 10, padding: '8px 10px', borderRadius: 8
   });
 
   /* ── RENDER ── */
   return (
     <div className="fade-in">
-      {/* ÜST BAR */}
-      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16}}>
-        <button style={{...S.btn, ...S.btnG, fontSize: 11}} onClick={() => setPage('crm-liste')}>
-          <LIcon name="ArrowLeft" size={14}/> LİSTEYE DÖN
-        </button>
-        <div style={{display:'flex', alignItems:'center', gap:8}}>
-          <LIcon name="UserPlus" size={16} color={C.accent}/>
-          <span style={{fontSize:14, fontWeight:700}}>ÇAĞRI / CRM KAYIT EKRANI</span>
-        </div>
-        <div style={{fontSize:11, color:C.textMuted}}>
-          {new Date().toLocaleDateString('tr-TR')} | {new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'})}
-        </div>
-      </div>
 
       {/* MESAJLAR */}
       {error && (
-        <div style={{padding:'10px 16px', background:`${C.danger}15`, borderRadius:10, marginBottom:14, fontSize:12, color:C.danger, border:`1px solid ${C.danger}33`, display:'flex', alignItems:'center', gap:8}}>
-          <LIcon name="AlertCircle" size={16} color={C.danger}/> {error}
+        <div style={{padding:'8px 14px', background:`${C.danger}15`, borderRadius:8, marginBottom:8, fontSize:11, color:C.danger, border:`1px solid ${C.danger}33`, display:'flex', alignItems:'center', gap:6}}>
+          <LIcon name="AlertCircle" size={14} color={C.danger}/> {error}
         </div>
       )}
       {success && (
-        <div style={{padding:'10px 16px', background:`${C.success}15`, borderRadius:10, marginBottom:14, fontSize:12, color:C.success, border:`1px solid ${C.success}33`, display:'flex', alignItems:'center', gap:8}}>
-          <LIcon name="CheckCircle" size={16} color={C.success}/> {success}
+        <div style={{padding:'8px 14px', background:`${C.success}15`, borderRadius:8, marginBottom:8, fontSize:11, color:C.success, border:`1px solid ${C.success}33`, display:'flex', alignItems:'center', gap:6}}>
+          <LIcon name="CheckCircle" size={14} color={C.success}/> {success}
         </div>
       )}
 
       {/* ═══ ANA İKİ SÜTUN LAYOUT ═══ */}
-      <div style={{display:'flex', gap:16, alignItems:'flex-start'}}>
+      <div style={{display:'flex', gap:12, alignItems:'flex-start'}}>
 
         {/* ═══ SOL PANEL - ANLIK ÇAĞRI & ANALİZ ═══ */}
-        <div style={{width:310, minWidth:310, flexShrink:0}}>
+        <div style={{width:260, minWidth:260, flexShrink:0}}>
+
+          {/* ÜST BAR - KOMPAKT */}
+          <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10, flexWrap:'wrap'}}>
+            <button style={{...S.btn, ...S.btnG, fontSize:9, padding:'5px 10px', borderRadius:7}} onClick={() => setPage('crm-liste')}>
+              <LIcon name="ArrowLeft" size={11}/> LİSTEYE DÖN
+            </button>
+            <div style={{display:'flex', alignItems:'center', gap:5, flex:1, minWidth:0}}>
+              <LIcon name="UserPlus" size={12} color={C.accent}/>
+              <span style={{fontSize:10, fontWeight:700, whiteSpace:'nowrap'}}>ÇAĞRI / CRM KAYIT</span>
+            </div>
+            <span style={{fontSize:9, color:C.textMuted, whiteSpace:'nowrap'}}>
+              {new Date().toLocaleDateString('tr-TR')} {new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'})}
+            </span>
+          </div>
 
           {/* ÇAĞRI PANELİ - YETKİ KONTROLLÜ */}
-          {(MR._currentUser?.rol === 'admin' || MR._currentUser?.yetkiler?.netsipp_goruntule === 1) && <div style={{...S.card, marginBottom:16}}>
-            <div style={{...S.cardHead, padding:'12px 16px'}}>
-              <LIcon name="Headphones" size={16} color={C.accent}/>
-              <span style={{fontSize:12, fontWeight:700}}>ANLIK ÇAĞRI & ANALİZ</span>
+          {(MR._currentUser?.rol === 'admin' || MR._currentUser?.yetkiler?.netsipp_goruntule === 1) && <div style={{...S.card, marginBottom:10}}>
+            <div style={{...S.cardHead, padding:'8px 12px'}}>
+              <LIcon name="Headphones" size={13} color={C.accent}/>
+              <span style={{fontSize:11, fontWeight:700}}>ANLIK ÇAĞRI & ANALİZ</span>
             </div>
-            <div style={{padding:16}}>
+            <div style={{padding:12}}>
               {/* TELEFON NUMARASI */}
               <div style={{
                 background: callActive ? `${C.success}18` : `${C.accent}15`,
                 border: `1px solid ${callActive ? C.success : C.accent}40`,
-                borderRadius: 10, padding: '14px 16px', marginBottom: 12,
-                display: 'flex', alignItems: 'center', gap: 10,
+                borderRadius: 8, padding: '10px 12px', marginBottom: 8,
+                display: 'flex', alignItems: 'center', gap: 8,
                 transition: 'all .3s'
               }}>
                 <div style={{
-                  width:36, height:36, borderRadius:'50%',
+                  width:30, height:30, borderRadius:'50%',
                   background: callActive ? `${C.success}30` : `${C.accent}25`,
                   display:'flex', alignItems:'center', justifyContent:'center',
                   animation: callActive ? 'pulse 2s infinite' : 'none'
                 }}>
-                  <LIcon name={callActive ? 'PhoneCall' : 'Phone'} size={18} color={callActive ? C.success : C.accent}/>
+                  <LIcon name={callActive ? 'PhoneCall' : 'Phone'} size={15} color={callActive ? C.success : C.accent}/>
                 </div>
-                <span style={{fontSize:18, fontWeight:800, letterSpacing:1.5, color: callActive ? C.success : C.text}}>
+                <span style={{fontSize:15, fontWeight:800, letterSpacing:1, color: callActive ? C.success : C.text}}>
                   {f.telefon || '0XXX XXX XX XX'}
                 </span>
               </div>
 
               {/* ZAMANLAYICI */}
               <div style={{
-                display:'flex', alignItems:'center', gap:10,
-                marginBottom:14, padding:'8px 0'
+                display:'flex', alignItems:'center', gap:8,
+                marginBottom:10, padding:'4px 0'
               }}>
-                <LIcon name="Clock" size={16} color={callActive ? C.success : C.textMuted}/>
+                <LIcon name="Clock" size={14} color={callActive ? C.success : C.textMuted}/>
                 <span ref={timerDisplayRef} style={{
-                  fontSize:28, fontWeight:800, fontFamily:'monospace', letterSpacing:2,
+                  fontSize:22, fontWeight:800, fontFamily:'monospace', letterSpacing:2,
                   color: callActive ? C.text : C.textMuted
                 }}>
                   {fmtTime(0)}
@@ -1555,30 +1556,30 @@ MR._CRMYeniInner = ({setPage}) => {
                 style={{
                   ...S.btn, width:'100%', justifyContent:'center',
                   background: callActive ? C.danger : C.success,
-                  color:'#fff', padding:'12px', fontSize:13, borderRadius:10,
+                  color:'#fff', padding:'10px', fontSize:12, borderRadius:8,
                   transition:'all .2s', userSelect:'none', WebkitUserSelect:'none',
                   position:'relative', zIndex:10,
                   opacity: hangupLoading ? 0.7 : 1
                 }}>
-                <LIcon name={callActive ? 'PhoneOff' : 'PhoneCall'} size={16} color="#fff"/>
+                <LIcon name={callActive ? 'PhoneOff' : 'PhoneCall'} size={15} color="#fff"/>
                 {hangupLoading ? 'SONLANDIRILIYOR...' : (callActive ? 'ÇAĞRIYI SONLANDIR' : 'ÇAĞRI BAŞLAT')}
               </button>
-              {/* ZORLA SONLANDIR - HANGUP BAŞARISIZ OLDUĞUNDA */}
+              {/* ZORLA SONLANDIR */}
               {callActive && !hangupLoading && error && error.includes('SONLANDIRILAMADI') && (
                 <button onClick={zorlaKapat} style={{
-                  ...S.btn, width:'100%', justifyContent:'center', marginTop:8,
-                  background:`${C.warning}22`, color:C.warning, padding:'10px',
-                  fontSize:12, borderRadius:8, border:`1px solid ${C.warning}`,
+                  ...S.btn, width:'100%', justifyContent:'center', marginTop:6,
+                  background:`${C.warning}22`, color:C.warning, padding:'8px',
+                  fontSize:10, borderRadius:7, border:`1px solid ${C.warning}`,
                   cursor:'pointer'
                 }}>
-                  <LIcon name="XCircle" size={14} color={C.warning}/> ZORLA SONLANDIR
+                  <LIcon name="XCircle" size={12} color={C.warning}/> ZORLA SONLANDIR
                 </button>
               )}
-              {/* NetSIPP DURUM - DİNAMİK */}
+              {/* NetSIPP DURUM */}
               <MR._NetsippDurum/>
               {callActive && (
-                <div style={{marginTop:10, padding:'8px 12px', background:`${C.warning}12`, borderRadius:8, fontSize:10, color:C.warning, border:`1px solid ${C.warning}30`}}>
-                  <LIcon name="Info" size={12} color={C.warning}/> GÖRÜŞME SONUNDA OTOMATİK KAYDEDİLECEK
+                <div style={{marginTop:8, padding:'6px 10px', background:`${C.warning}12`, borderRadius:6, fontSize:9, color:C.warning, border:`1px solid ${C.warning}30`}}>
+                  <LIcon name="Info" size={10} color={C.warning}/> OTOMATİK KAYDEDİLECEK
                 </div>
               )}
             </div>
@@ -1589,41 +1590,37 @@ MR._CRMYeniInner = ({setPage}) => {
 
           {/* AI ANALİZ PANELİ */}
           <div style={{...S.card}}>
-            <div style={{...S.cardHead, padding:'12px 16px'}}>
-              <LIcon name="Bot" size={16} color={C.accent}/>
-              <span style={{fontSize:12, fontWeight:700}}>AI ANALİZ</span>
+            <div style={{...S.cardHead, padding:'8px 12px'}}>
+              <LIcon name="Bot" size={13} color={C.accent}/>
+              <span style={{fontSize:11, fontWeight:700}}>AI ANALİZ</span>
             </div>
-            <div style={{padding:16}}>
-              {/* ANALİZ SONUÇLARI */}
+            <div style={{padding:10}}>
               {aiItems.length === 0 ? (
-                <div style={{color:C.textMuted, fontSize:11, textAlign:'center', padding:'16px 0'}}>
-                  <LIcon name="Brain" size={24} color={C.textMuted} style={{opacity:0.3, marginBottom:8, display:'block', margin:'0 auto 8px'}}/>
-                  BİLGİ GİRİLDİKÇE AI ANALİZ<br/>SONUÇLARI OLUŞACAKTIR...
+                <div style={{color:C.textMuted, fontSize:10, textAlign:'center', padding:'10px 0'}}>
+                  BİLGİ GİRİLDİKÇE ANALİZ OLUŞACAK...
                 </div>
               ) : (
-                <div style={{marginBottom:16}}>
+                <div style={{marginBottom:10}}>
                   {aiItems.map((item, i) => (
                     <div key={i} style={{
-                      display:'flex', alignItems:'center', gap:8, padding:'8px 0',
+                      display:'flex', alignItems:'center', gap:6, padding:'5px 0',
                       borderBottom: i < aiItems.length-1 ? `1px solid ${C.border}` : 'none'
                     }}>
-                      <LIcon name="CheckCircle" size={16} color={item.c}/>
-                      <span style={{fontSize:11, fontWeight:500}}>{item.t}</span>
+                      <LIcon name="CheckCircle" size={13} color={item.c}/>
+                      <span style={{fontSize:10, fontWeight:500}}>{item.t}</span>
                     </div>
                   ))}
                 </div>
               )}
-
-              {/* HIZLI İŞLEM BUTONLARI */}
-              <div style={{display:'flex', flexDirection:'column', gap:8, marginTop: aiItems.length > 0 ? 0 : 12}}>
+              <div style={{display:'flex', flexDirection:'column', gap:5, marginTop: aiItems.length > 0 ? 0 : 8}}>
                 <button style={actionBtn(C.accent)} onClick={() => setPage('hesap-adk')}>
-                  <LIcon name="Calculator" size={16} color={C.accent}/> DEĞER KAYBI HESAPLA
+                  <LIcon name="Calculator" size={14} color={C.accent}/> DEĞER KAYBI HESAPLA
                 </button>
                 <button style={actionBtn(C.purple)} onClick={() => setPage('hesap-bh')}>
-                  <LIcon name="Stethoscope" size={16} color={C.purple}/> BEDENİ HASAR HESAPLA
+                  <LIcon name="Stethoscope" size={14} color={C.purple}/> BEDENİ HASAR HESAPLA
                 </button>
                 <button style={actionBtn(C.success)} onClick={() => setDonusturConfirm(true)}>
-                  <LIcon name="ArrowRightCircle" size={16} color={C.success}/> DOSYAYI ONAYA GÖNDER
+                  <LIcon name="ArrowRightCircle" size={14} color={C.success}/> DOSYAYI ONAYA GÖNDER
                 </button>
               </div>
             </div>
@@ -1635,36 +1632,36 @@ MR._CRMYeniInner = ({setPage}) => {
 
           {/* ── MÜŞTERİ BİLGİLERİ ── */}
           <Fieldset title="MÜŞTERİ BİLGİLERİ" icon="User">
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:14}}>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
               <FormGroup label="ADI SOYADI *">
-                <input style={S.input} value={f.ad_soyad} onChange={e => up('ad_soyad', e.target.value)} placeholder="ADI SOYADI"/>
+                <input style={{...S.input, padding:'10px 12px', fontSize:13}} value={f.ad_soyad} onChange={e => up('ad_soyad', e.target.value)} placeholder="ADI SOYADI"/>
               </FormGroup>
               <FormGroup label="TC KİMLİK NO">
-                <input style={S.input} value={f.tc_vergi_no} onChange={e => up('tc_vergi_no', e.target.value.replace(/[^0-9]/g,''))} placeholder="TC KİMLİK NO" maxLength={11}/>
+                <input style={{...S.input, padding:'10px 12px', fontSize:13}} value={f.tc_vergi_no} onChange={e => up('tc_vergi_no', e.target.value.replace(/[^0-9]/g,''))} placeholder="TC KİMLİK NO" maxLength={11}/>
               </FormGroup>
               <FormGroup label="TELEFON *">
-                <input style={S.input} value={f.telefon} onChange={e => up('telefon', e.target.value)} placeholder="05XX XXX XX XX"/>
+                <input style={{...S.input, padding:'10px 12px', fontSize:13}} value={f.telefon} onChange={e => up('telefon', e.target.value)} placeholder="05XX XXX XX XX"/>
               </FormGroup>
               <FormGroup label="İL / İLÇE">
                 <div style={{display:'flex', gap:6}}>
-                  <select style={{...S.select, flex:'1 1 50%'}} value={f.il} onChange={e => up('il', e.target.value)}>
+                  <select style={{...S.select, flex:'1 1 50%', padding:'10px 12px', fontSize:13}} value={f.il} onChange={e => up('il', e.target.value)}>
                     <option value="">İL SEÇİNİZ</option>
                     {ILLER.map(i => <option key={i} value={i}>{i}</option>)}
                   </select>
-                  <input style={{...S.input, flex:'1 1 50%'}} value={f.ilce} onChange={e => up('ilce', e.target.value)} placeholder="İLÇE"/>
+                  <input style={{...S.input, flex:'1 1 50%', padding:'10px 12px', fontSize:13}} value={f.ilce} onChange={e => up('ilce', e.target.value)} placeholder="İLÇE"/>
                 </div>
               </FormGroup>
             </div>
-            <div style={{marginTop:14}}>
+            <div style={{marginTop:10}}>
               <FormGroup label="ADRES">
-                <textarea style={{...S.input, minHeight:60}} value={f.adres} onChange={e => up('adres', e.target.value)} placeholder="AÇIK ADRES..."/>
+                <textarea style={{...S.input, minHeight:50, padding:'10px 12px', fontSize:13}} value={f.adres} onChange={e => up('adres', e.target.value)} placeholder="AÇIK ADRES..."/>
               </FormGroup>
             </div>
           </Fieldset>
 
           {/* ── OLAY BİLGİLERİ ── */}
           <Fieldset title="OLAY BİLGİLERİ" icon="FileText">
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:14}}>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10}}>
               <FormGroup label="DOSYA TÜRÜ">
                 <select style={S.select} value={f.dosya_turu} onChange={e => up('dosya_turu', e.target.value)}>
                   <option value="ADK">ADK</option>
@@ -1700,7 +1697,7 @@ MR._CRMYeniInner = ({setPage}) => {
 
             {/* ── POZİSYON TOGGLE ── */}
             <FormGroup label="POZİSYON">
-              <div style={{display:'flex', gap:6, marginBottom:14}}>
+              <div style={{display:'flex', gap:6, marginBottom:10}}>
                 {[{v:'SURUCU', l:'SÜRÜCÜ', icon:'Steering'}, {v:'YOLCU', l:'YOLCU', icon:'Users'}, {v:'YAYA', l:'YAYA', icon:'PersonStanding'}].map(opt => (
                   <button key={opt.v} type="button" onClick={() => up('pozisyon', opt.v)}
                     style={{
@@ -1720,13 +1717,13 @@ MR._CRMYeniInner = ({setPage}) => {
             </FormGroup>
 
             <FormGroup label="OLAY AÇIKLAMASI / GÖRÜŞME NOTU">
-              <textarea style={{...S.input, minHeight:120}} value={f.olay_aciklama} onChange={e => up('olay_aciklama', e.target.value)} placeholder="MÜŞTERİ SAĞ ÖN ÇAMURLUK HASARLI, SİGORTA EKSPER BEKLİYOR, DEĞER KAYBI TALEP EDECEK..."/>
+              <textarea style={{...S.input, minHeight:80, padding:'10px 12px', fontSize:13}} value={f.olay_aciklama} onChange={e => up('olay_aciklama', e.target.value)} placeholder="MÜŞTERİ SAĞ ÖN ÇAMURLUK HASARLI, SİGORTA EKSPER BEKLİYOR, DEĞER KAYBI TALEP EDECEK..."/>
             </FormGroup>
           </Fieldset>
 
           {/* ── EKLER / MEDYA ── */}
           <Fieldset title="EKLER" icon="Paperclip">
-            <div style={{display:'flex', gap:8, marginBottom:14, flexWrap:'wrap'}}>
+            <div style={{display:'flex', gap:8, marginBottom:10, flexWrap:'wrap'}}>
               {/* DOSYA EKLE */}
               <button type="button" onClick={() => dosyaInputRef.current?.click()}
                 style={{
@@ -1782,18 +1779,18 @@ MR._CRMYeniInner = ({setPage}) => {
 
       {/* ═══ ALT AKSİYON BAR ═══ */}
       <div style={{
-        marginTop:20, padding:'18px 0 4px',
-        display:'flex', justifyContent:'center', gap:12,
+        marginTop:12, padding:'12px 0 4px',
+        display:'flex', justifyContent:'center', gap:10,
         borderTop:`1px solid ${C.border}`
       }}>
-        <button style={{...S.btn, ...S.btnS, fontSize:13, padding:'12px 28px', borderRadius:10}} onClick={() => kaydet()} disabled={loading}>
-          <LIcon name="Folder" size={16} color="#fff"/> {loading ? 'KAYDEDİLİYOR...' : 'KAYDET'}
+        <button style={{...S.btn, ...S.btnS, fontSize:12, padding:'10px 24px', borderRadius:8}} onClick={() => kaydet()} disabled={loading}>
+          <LIcon name="Folder" size={15} color="#fff"/> {loading ? 'KAYDEDİLİYOR...' : 'KAYDET'}
         </button>
-        <button style={{...S.btn, background:C.warning, color:'#000', fontSize:13, padding:'12px 28px', borderRadius:10}} onClick={() => setDonusturConfirm(true)} disabled={loading}>
-          <LIcon name="ArrowRightCircle" size={16} color="#000"/> DOSYAYA DÖNÜŞTÜR
+        <button style={{...S.btn, background:C.warning, color:'#000', fontSize:12, padding:'10px 24px', borderRadius:8}} onClick={() => setDonusturConfirm(true)} disabled={loading}>
+          <LIcon name="ArrowRightCircle" size={15} color="#000"/> DOSYAYA DÖNÜŞTÜR
         </button>
-        <button style={{...S.btn, ...S.btnD, fontSize:13, padding:'12px 28px', borderRadius:10}} onClick={() => setClearConfirm(true)}>
-          <LIcon name="Trash2" size={16} color="#fff"/> TEMİZLE
+        <button style={{...S.btn, ...S.btnD, fontSize:12, padding:'10px 24px', borderRadius:8}} onClick={() => setClearConfirm(true)}>
+          <LIcon name="Trash2" size={15} color="#fff"/> TEMİZLE
         </button>
       </div>
 
