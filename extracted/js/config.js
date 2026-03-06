@@ -110,6 +110,9 @@ MR.api = {
   netsantralAramaLogUpdate(d) { return this.req('/netsantral/arama-log.php', { method: 'POST', body: JSON.stringify({ action: 'update', ...d }) }); },
   netsantralAramaLogHangup(d) { return this.req('/netsantral/arama-log.php', { method: 'POST', body: JSON.stringify({ action: 'hangup', ...d }) }); },
   netsantralAramaList(p = {}) { return this.req('/netsantral/arama-list.php?' + new URLSearchParams(p)); },
+  netsantralTest() { return this.req('/netsantral/test.php', {}, 20000); },
+  netsantralOriginate(numara, dahili) { return this.req('/netsantral/originate.php', { method: 'POST', body: JSON.stringify({ numara, dahili }) }, 25000); },
+  netsantralHangup(dahili) { return this.req('/netsantral/hangup.php', { method: 'POST', body: JSON.stringify({ dahili }) }, 20000); },
   // MUHASEBE
   kasaList() { return this.req('/muhasebe/kasa-list.php'); },
   kasaCreate(d) { return this.req('/muhasebe/kasa-create.php', { method: 'POST', body: JSON.stringify(d) }); },

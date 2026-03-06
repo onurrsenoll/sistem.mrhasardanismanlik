@@ -596,6 +596,9 @@ $GLOBALS['YETKI_MAP'] = array(
     // ─── NETSANTRAL ───
     'netsantral/arama-list.php' => array('netsantral', 'goruntule'),
     'netsantral/arama-log.php' => array('netsantral', 'goruntule'),
+    'netsantral/test.php' => array('sistem', 'sistem-ayarlar'),
+    'netsantral/originate.php' => array('netsantral', 'goruntule'),
+    'netsantral/hangup.php' => array('netsantral', 'goruntule'),
 
     // ─── BİLDİRİM ───
     'bildirim/create.php' => array('bildirim', 'bildirim-goruntule'),
