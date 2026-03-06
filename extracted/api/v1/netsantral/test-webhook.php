@@ -237,6 +237,114 @@ if ($mode === 'status') {
     exit;
 }
 
+// ══════════ SIP KİMLİK BİLGİSİ TANILAMA ══════════
+if ($mode === 'sip-debug') {
+    $sonuc = [
+        'baslik' => 'SIP/WEBRTC KİMLİK DOĞRULAMA TANILAMA',
+        'zaman' => date('Y-m-d H:i:s')
+    ];
+
+    // 1. DB'deki SIP ayarlarını oku
+    $sipAyarlar = [];
+    $anahtarlar = ['netsantral_dahili', 'netsantral_sip_sifre', 'netsantral_wss_url', 'netsantral_sip_domain', 'netsantral_aktif'];
+    try {
+        $stmt = $db->query("SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('netsantral_dahili','netsantral_sip_sifre','netsantral_wss_url','netsantral_sip_domain','netsantral_aktif')");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $sipAyarlar[$row['anahtar']] = $row['deger'];
+        }
+    } catch (Exception $e) {
+        $sonuc['db_hata'] = $e->getMessage();
+    }
+
+    $dahili = $sipAyarlar['netsantral_dahili'] ?? '';
+    $sipSifre = $sipAyarlar['netsantral_sip_sifre'] ?? '';
+    $wssUrl = $sipAyarlar['netsantral_wss_url'] ?? 'wss://sip6.netsantral.com:8089/ws';
+    $sipDomain = $sipAyarlar['netsantral_sip_domain'] ?? 'sip6.netsantral.com';
+    $aktif = $sipAyarlar['netsantral_aktif'] ?? '0';
+
+    // 2. Şifre analizi (güvenli - şifrenin kendisi gösterilmez)
+    $sonuc['sip_bilgileri'] = [
+        'dahili' => $dahili ?: '(BOŞ!)',
+        'sip_uri' => $dahili ? "sip:{$dahili}@{$sipDomain}" : '(DAHİLİ BOŞ!)',
+        'wss_url' => $wssUrl ?: '(BOŞ!)',
+        'sip_domain' => $sipDomain ?: '(BOŞ!)',
+        'aktif' => $aktif === '1' ? 'EVET' : 'HAYIR'
+    ];
+
+    $sonuc['sifre_analiz'] = [
+        'sifre_girilmis' => !empty($sipSifre) ? 'EVET' : 'HAYIR - SIP ŞİFRESİ BOŞ!',
+        'sifre_uzunluk' => strlen($sipSifre),
+        'sifre_ilk_2_karakter' => strlen($sipSifre) >= 2 ? substr($sipSifre, 0, 2) . str_repeat('*', strlen($sipSifre) - 2) : '(KISA)',
+        'sifre_son_2_karakter' => strlen($sipSifre) >= 2 ? str_repeat('*', strlen($sipSifre) - 2) . substr($sipSifre, -2) : '(KISA)',
+        'bosluk_var_mi' => (trim($sipSifre) !== $sipSifre) ? 'EVET! BAŞTA VEYA SONDA BOŞLUK VAR - BU SORUN OLABİLİR' : 'HAYIR',
+        'turkce_karakter_var_mi' => preg_match('/[çÇğĞıİöÖşŞüÜ]/u', $sipSifre) ? 'EVET! TÜRKÇE KARAKTER İÇERİYOR - BU SORUN OLABİLİR' : 'HAYIR',
+        'ozel_karakter_var_mi' => preg_match('/[^a-zA-Z0-9]/', $sipSifre) ? 'EVET: ' . preg_replace('/[a-zA-Z0-9]/', '*', $sipSifre) : 'HAYIR (SADECE HARF/RAKAM)',
+        'encoding' => mb_detect_encoding($sipSifre, ['UTF-8', 'ASCII', 'ISO-8859-9'], true) ?: 'BİLİNMİYOR'
+    ];
+
+    // 3. Olası sorunlar listesi
+    $sorunlar = [];
+    if (empty($sipSifre)) {
+        $sorunlar[] = '❌ SIP ŞİFRESİ BOŞ - NETSANTRAL PANELİNDEN SIP ŞİFRENİZİ ALIN VE GİRİN';
+    }
+    if (trim($sipSifre) !== $sipSifre) {
+        $sorunlar[] = '❌ ŞİFRENİN BAŞINDA VEYA SONUNDA BOŞLUK VAR - SİLİN';
+    }
+    if (preg_match('/[çÇğĞıİöÖşŞüÜ]/u', $sipSifre)) {
+        $sorunlar[] = '❌ ŞİFRE TÜRKÇE KARAKTER İÇERİYOR - NETSANTRAL PANELİNDEN KONTROL EDİN';
+    }
+    if (empty($dahili)) {
+        $sorunlar[] = '❌ DAHİLİ NUMARASI BOŞ';
+    }
+    if (strlen($sipSifre) < 4) {
+        $sorunlar[] = '⚠️ ŞİFRE ÇOK KISA (' . strlen($sipSifre) . ' KARAKTER) - DOĞRU MU?';
+    }
+
+    // 4. NetSantral SIP sunucu bağlantı testi (sadece TCP/TLS)
+    $wssHost = parse_url(str_replace('wss://', 'https://', $wssUrl), PHP_URL_HOST);
+    $wssPort = parse_url(str_replace('wss://', 'https://', $wssUrl), PHP_URL_PORT) ?: 8089;
+
+    $tcpTest = ['host' => $wssHost, 'port' => $wssPort];
+    if ($wssHost) {
+        $dnsResult = @gethostbyname($wssHost);
+        $tcpTest['dns'] = ($dnsResult !== $wssHost) ? "ÇÖZÜLDÜ: {$dnsResult}" : 'DNS ÇÖZÜLEMEDI!';
+
+        $sock = @fsockopen('ssl://' . $wssHost, $wssPort, $errno, $errstr, 10);
+        if ($sock) {
+            $tcpTest['baglanti'] = 'BAŞARILI ✓';
+            fclose($sock);
+        } else {
+            $tcpTest['baglanti'] = "BAŞARISIZ: {$errstr} (errno: {$errno})";
+            $sorunlar[] = "❌ WSS SUNUCUSUNA BAĞLANILAMIYOR: {$wssHost}:{$wssPort}";
+        }
+    } else {
+        $tcpTest['baglanti'] = 'WSS URL PARSE EDİLEMEDİ';
+        $sorunlar[] = '❌ WSS URL GEÇERSİZ: ' . $wssUrl;
+    }
+    $sonuc['wss_sunucu_testi'] = $tcpTest;
+
+    if (empty($sorunlar)) {
+        $sorunlar[] = '✅ AYARLARDA GÖRÜNÜR BİR SORUN YOK';
+        $sorunlar[] = '→ ŞİFRE MUHTEMELEN YANLIŞ. NETSANTRAL PANELİ → AYARLAR → DAHİLİ LİSTESİ → ' . $dahili . ' → ŞİFRE ALANINI KONTROL EDİN';
+        $sorunlar[] = '→ NETSİPP+ MOBİL UYGULAMASINDA AYNI ŞİFRE İLE GİRİŞ YAPABİLİYOR MUSUNUZ?';
+        $sorunlar[] = '→ ŞİFREYİ NETSANTRAL PANELİNDEN DEĞİŞTİRİP TEKRARDENEYİN';
+    }
+    $sonuc['sorunlar'] = $sorunlar;
+
+    $sonuc['cozum_adimlari'] = [
+        '1' => 'NETSANTRAL PANELİNE GİRİN: https://panelim.netsantral.com',
+        '2' => 'AYARLAR → DAHİLİ LİSTESİ → DAHİLİ ' . ($dahili ?: '???') . ' TIKLAYIN',
+        '3' => 'TEMEL AYARLAR → "ŞİFRE" ALANINI NOT EDİN (YA DA YENİ ŞİFRE BELİRLEYİN)',
+        '4' => 'GELİŞMİŞ AYARLAR → BAĞLANTI TİPİ: "WSS" OLDUĞUNDAN EMİN OLUN',
+        '5' => 'GELİŞMİŞ AYARLAR → WSS BAĞLANTI ADRESİ: wss://sip6.netsantral.com:8089/ws',
+        '6' => 'CRM → SİSTEM → NETSANTRAL → SIP ŞİFRESİNİ BURAIYA GİRİN VE KAYDIN',
+        '7' => 'SAYFA YENİLEYİN → KONSOLU KONTROL EDİN'
+    ];
+
+    json_success($sonuc);
+    exit;
+}
+
 // ══════════ ADIM ADIM TANILAMA ══════════
 if ($mode === 'diagnose') {
     $adimlar = [];

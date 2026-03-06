@@ -87,6 +87,25 @@ MR.webrtcTelefon = {
 
       this._ua.on('registrationFailed', (e) => {
         console.error('[WEBRTC] KAYIT BAŞARISIZ:', e.cause);
+        console.error('[WEBRTC] KAYIT DETAY:', JSON.stringify({
+          cause: e.cause,
+          status_code: e.response ? e.response.status_code : 'YOK',
+          reason_phrase: e.response ? e.response.reason_phrase : 'YOK',
+          dahili: this._config.dahili,
+          domain: this._config.domain,
+          sifre_uzunluk: this._config.sipSifre ? this._config.sipSifre.length : 0,
+          sifre_ilk2: this._config.sipSifre ? this._config.sipSifre.substring(0, 2) + '***' : 'BOŞ'
+        }));
+        if (e.cause === 'Authentication Error') {
+          console.error('[WEBRTC] ════════════════════════════════════════');
+          console.error('[WEBRTC] SIP ŞİFRESİ YANLIŞ! ÇÖZÜM:');
+          console.error('[WEBRTC] 1. NETSANTRAL PANELİ → AYARLAR → DAHİLİ LİSTESİ → DAHİLİ', this._config.dahili);
+          console.error('[WEBRTC] 2. "ŞİFRE" ALANINI KONTROL EDİN VEYA DEĞİŞTİRİN');
+          console.error('[WEBRTC] 3. CRM → SİSTEM → NETSANTRAL → SIP ŞİFRESİ ALANINA GİRİN');
+          console.error('[WEBRTC] 4. NOT: NETSİPP+ MOBİL UYGULAMA ŞİFRESİ İLE AYNIDIR');
+          console.error('[WEBRTC] TANI ÇALIŞTIR: /api/v1/netsantral/test-webhook.php?mode=sip-debug');
+          console.error('[WEBRTC] ════════════════════════════════════════');
+        }
         this._kayitli = false;
         this._durumBildir('hata', 'PBX KAYIT HATASI: ' + (e.cause || ''));
       });
