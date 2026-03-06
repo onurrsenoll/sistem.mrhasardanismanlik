@@ -252,11 +252,28 @@ MR.webrtcTelefon = {
   /* ═══ TRANSFER ═══ */
   transfer: function(hedefDahili) {
     if (!this._session || this._aramaDurumu !== 'gorusmede') return false;
+    var self = this;
     try {
+      var eskiSession = this._session;
       this._session.refer('sip:' + hedefDahili + '@' + this._config.domain);
+      console.log('[WEBRTC] TRANSFER GÖNDERİLDİ:', hedefDahili);
       this._durumBildir('transfer', hedefDahili);
+
+      /* Transfer sonrası session'ı temizle - gelen çağrılar engellenmesin */
+      setTimeout(function() {
+        if (self._session === eskiSession) {
+          console.log('[WEBRTC] TRANSFER SONRASI SESSION TEMİZLENDİ');
+          try { eskiSession.terminate(); } catch(e) {}
+          self._temizle();
+          self._durumBildir('kapandi');
+        }
+      }, 2000);
+
       return true;
-    } catch(e) { return false; }
+    } catch(e) {
+      console.error('[WEBRTC] TRANSFER HATASI:', e);
+      return false;
+    }
   },
 
   /* ═══ SESSION OLAYLARI ═══ */
@@ -295,6 +312,23 @@ MR.webrtcTelefon = {
       self._zilDurdur();
       self._temizle();
       self._durumBildir('hata', 'ÇAĞRI BAŞARISIZ: ' + (e && e.cause ? e.cause : ''));
+    });
+
+    /* Transfer (REFER) olayları */
+    session.on('refer', function() {
+      console.log('[WEBRTC] REFER OLAYI - TRANSFER İŞLENİYOR');
+    });
+
+    session.on('replaces', function(data) {
+      console.log('[WEBRTC] SESSION DEĞİŞTİRİLİYOR (REPLACES)');
+      /* Transfer sırasında yeni session gelirse kabul et */
+      if (data && data.accept) {
+        var newSession = data.accept();
+        self._session = newSession;
+        self._sessionOlaylariBagla(newSession);
+        self._aramaDurumu = 'gorusmede';
+        self._durumBildir('gorusmede');
+      }
     });
 
     session.on('peerconnection', function(data) {
