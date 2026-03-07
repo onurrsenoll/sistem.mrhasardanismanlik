@@ -345,8 +345,11 @@ MR.webrtcTelefon = {
 
   /* ═══ CEVAPLA ═══ */
   cevapla: async function() {
-    if (!this._session || this._aramaDurumu !== 'gelen') return false;
+    if (!this._session) return false;
+    /* GELEN ÇAĞRI KONTROLÜ: _aramaDurumu 'gelen' OLMALIDIR VEYA session direction 'incoming' OLMALIDIR */
+    if (this._aramaDurumu !== 'gelen' && this._session.direction !== 'incoming') return false;
     this._zilDurdur();
+    this._aramaDurumu = 'gelen'; /* DURUMU GELEN OLARAK GARANTİ ALTINA AL */
 
     /* MİKROFON AKIŞINI HAZIRLA */
     var localStream = await this._mikrofonAkisiOlustur();
@@ -443,7 +446,10 @@ MR.webrtcTelefon = {
 
     session.on('progress', function() {
       console.log('[WEBRTC] ÇALIYOR...');
-      self._aramaDurumu = 'caliyor';
+      /* GELEN ÇAĞRI İSE DURUMU 'gelen' OLARAK KORU - YOKSA cevapla() ÇALIŞMAZ */
+      if (self._aramaDurumu !== 'gelen') {
+        self._aramaDurumu = 'caliyor';
+      }
       self._durumBildir('caliyor');
     });
 
@@ -548,8 +554,10 @@ MR.webrtcTelefon = {
   /* ═══ SES AYARLA ═══ */
   _sesAyarla: function(session) {
     try {
+      if (!session) return;
       var pc = session.connection;
       if (!pc) return;
+      if (typeof pc.getReceivers !== 'function') return;
       if (this._remoteAudio && this._remoteAudio.srcObject && !this._remoteAudio.paused) return;
       var receivers = pc.getReceivers();
       for (var i = 0; i < receivers.length; i++) {

@@ -1075,20 +1075,38 @@ const NetsantralPanel = ({user, setPage}) => {
     else if (cleanNum.startsWith('0') && cleanNum.length >= 11) { cleanNum = '90' + cleanNum.substring(1); }
     else if (cleanNum.length === 10 && /^\d{10}$/.test(cleanNum)) { cleanNum = '90' + cleanNum; }
 
+    /* ÖNCELİK 1: PBX ORIGINATE İLE ÇAĞRI BAŞLAT (DAHİLİYİ ARAR, SONRA HEDEFİ BAĞLAR) */
+    let pbxBasarili = false;
     try {
-      const ok = await MR.webrtcTelefon.ara(cleanNum);
-      if (ok) {
-        setStatusMsg('ÇAĞRI GÖNDERİLDİ - ' + cleanNum);
+      const r = await api.netsantralOriginate(cleanNum, MR._netsantralDahili || undefined);
+      if (r?.success && r.data?.success_api) {
+        pbxBasarili = true;
+        setStatusMsg('PBX ÇAĞRI BAŞLATILDI - ' + cleanNum);
         api.netsantralAramaLogCreate({
           arayan: MR._netsantralDahili, aranan: cleanNum, arayan_adi: '', yon: 'giden', durum: 'gorusmede'
         }).then(r => { if (r?.success && r.data?.log_id) activeLogIdRef.current = r.data.log_id; }).catch(() => {});
-      } else {
-        setStatusMsg('ARAMA BAŞLATILAMADI');
-        setStatus('hazir');
       }
     } catch(e) {
-      setStatusMsg('WEBRTC HATASI');
-      setStatus('hazir');
+      console.warn('[WEBRTC WIDGET] PBX ORIGINATE HATASI:', e);
+    }
+
+    /* ÖNCELİK 2: PBX BAŞARISIZSA DOĞRUDAN WEBRTC SIP İLE ARA */
+    if (!pbxBasarili) {
+      try {
+        const ok = await MR.webrtcTelefon.ara(cleanNum);
+        if (ok) {
+          setStatusMsg('ÇAĞRI GÖNDERİLDİ - ' + cleanNum);
+          api.netsantralAramaLogCreate({
+            arayan: MR._netsantralDahili, aranan: cleanNum, arayan_adi: '', yon: 'giden', durum: 'gorusmede'
+          }).then(r => { if (r?.success && r.data?.log_id) activeLogIdRef.current = r.data.log_id; }).catch(() => {});
+        } else {
+          setStatusMsg('ARAMA BAŞLATILAMADI');
+          setStatus('hazir');
+        }
+      } catch(e) {
+        setStatusMsg('WEBRTC HATASI');
+        setStatus('hazir');
+      }
     }
     setTimeout(() => setStatusMsg(''), 5000);
   };
@@ -1268,7 +1286,7 @@ const NetsantralPanel = ({user, setPage}) => {
       )}
 
       {/* GELEN ÇAĞRI - ARAYAN BİLGİSİ */}
-      {(status === 'gelen' || (gelenCagriData && (status === 'caliyor' || status === 'araniyor'))) && (
+      {gelenCagriData && (status === 'gelen' || status === 'caliyor' || status === 'araniyor') && (
         <div style={{padding: '12px 14px', borderBottom: `1px solid ${C.border}`}}>
           <div style={{fontSize: 22, fontWeight: 800, letterSpacing: 1.5, color: C.text, textAlign: 'center', fontFamily: 'monospace'}}>
             {gelenCagriData.arayan || 'BİLİNMEYEN'}
@@ -1325,7 +1343,7 @@ const NetsantralPanel = ({user, setPage}) => {
 
       {/* KONTROL BUTONLARI */}
       <div style={{padding: '0 14px 12px', display: 'flex', gap: 8}}>
-        {(status === 'gelen' || (gelenCagriData && (status === 'caliyor' || status === 'araniyor'))) ? (
+        {(gelenCagriData && (status === 'gelen' || status === 'caliyor' || status === 'araniyor')) ? (
           <>
             <button onClick={cagriCevapla} style={{
               flex: 1, padding: '16px', borderRadius: 14, border: 'none',
