@@ -47,7 +47,30 @@ MR.webrtcTelefon = {
     sipSifre: '',
     kullanici: '',
     apiSifre: '',
-    santralNo: ''
+    santralNo: '',
+    turnUrl: '',
+    turnUser: '',
+    turnPass: ''
+  },
+
+  /* ═══ ICE SUNUCULARI ═══ */
+  _getIceServers: function() {
+    var servers = [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:stun4.l.google.com:19302' }
+    ];
+    /* TURN SUNUCUSU VARSA EKLE (NAT ARKASI İÇİN KRİTİK) */
+    if (this._config.turnUrl) {
+      servers.push({
+        urls: this._config.turnUrl,
+        username: this._config.turnUser || '',
+        credential: this._config.turnPass || ''
+      });
+    }
+    return servers;
   },
 
   /* ═══ CİHAZLARI LİSTELE ═══ */
@@ -283,14 +306,15 @@ MR.webrtcTelefon = {
     var localStream = await this._mikrofonAkisiOlustur();
 
     try {
+      var iceServers = this._getIceServers();
       var callOptions = {
         pcConfig: {
-          iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' }
-          ]
+          iceServers: iceServers,
+          iceTransportPolicy: this._config.turnUrl ? 'all' : 'all',
+          iceCandidatePoolSize: 2
         },
-        rtcOfferConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false }
+        rtcOfferConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false },
+        sessionTimersExpires: 180
       };
 
       /* ÖZEL MİKROFON AKIŞI VARSA KULLAN, YOKSA JsSIP KENDİ getUserMedia'SINI KULLANSIN */
@@ -408,14 +432,15 @@ MR.webrtcTelefon = {
     }
 
     try {
+      var iceServers = this._getIceServers();
       var answerOptions = {
         pcConfig: {
-          iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' }
-          ]
+          iceServers: iceServers,
+          iceTransportPolicy: this._config.turnUrl ? 'all' : 'all',
+          iceCandidatePoolSize: 2
         },
-        rtcAnswerConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false }
+        rtcAnswerConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false },
+        sessionTimersExpires: 180
       };
 
       /* ÖZEL MİKROFON AKIŞI VARSA KULLAN, YOKSA JsSIP KENDİ getUserMedia'SINI KULLANSIN */
@@ -625,9 +650,33 @@ MR.webrtcTelefon = {
         }
       };
 
+      /* ICE ADAYLARINI LOGLA (DEBUG İÇİN) */
+      pc.onicecandidate = function(event) {
+        if (event.candidate) {
+          console.log('[WEBRTC] ICE ADAY:', event.candidate.type, event.candidate.protocol, event.candidate.address || '');
+        } else {
+          console.log('[WEBRTC] ICE ADAY TOPLAMA TAMAMLANDI');
+        }
+      };
+
+      /* ICE TOPLAMA DURUMUNU İZLE */
+      pc.onicegatheringstatechange = function() {
+        console.log('[WEBRTC] ICE TOPLAMA DURUMU:', pc.iceGatheringState);
+      };
+
       /* ICE BAĞLANTI DURUMUNU İZLE */
       pc.oniceconnectionstatechange = function() {
         console.log('[WEBRTC] ICE DURUMU:', pc.iceConnectionState);
+        if (pc.iceConnectionState === 'failed') {
+          console.error('[WEBRTC] ICE BAŞARISIZ - MEDYA BAĞLANTISI KURULAMADI! TURN SUNUCUSU GEREKEBİLİR.');
+          /* ICE RESTART DENE */
+          try {
+            pc.restartIce();
+            console.log('[WEBRTC] ICE RESTART DENENİYOR...');
+          } catch(e) {
+            console.error('[WEBRTC] ICE RESTART HATASI:', e);
+          }
+        }
         if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
           self._ringbackDurdur();
         }
