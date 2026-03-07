@@ -337,6 +337,16 @@ MR.webrtcTelefon = {
     this._sessionOlaylariBagla(session);
     this._zilCaldir();
 
+    /* MİKROFONU ÖN-HAZIRLA: CEVAPLA BUTONUNA BASILDIĞINDA GECİKME OLMASIN */
+    this._preStream = null;
+    var self = this;
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+      self._preStream = stream;
+      console.log('[WEBRTC] MİKROFON ÖN-HAZIRLIK TAMAMLANDI ✓');
+    }).catch(function(e) {
+      console.warn('[WEBRTC] MİKROFON ÖN-HAZIRLIK BAŞARISIZ:', e);
+    });
+
     this._durumBildir('gelen-cagri', { arayan: arayanNum, arayanAdi: arayanAdi });
     window.dispatchEvent(new CustomEvent('mr-webrtc-gelen-cagri', {
       detail: { arayan: arayanNum, arayanAdi: arayanAdi, timestamp: Date.now() }
@@ -345,25 +355,56 @@ MR.webrtcTelefon = {
 
   /* ═══ CEVAPLA ═══ */
   cevapla: async function() {
-    if (!this._session) {
+    /* SESSION REFERANSINI YEREL DEĞİŞKENE KAYDET (RACE CONDITION KORUMASI) */
+    var session = this._session;
+    if (!session) {
       console.error('[WEBRTC] CEVAPLA: SESSION YOK');
       return false;
     }
     /* GELEN ÇAĞRI KONTROLÜ: session direction 'incoming' OLMALI */
-    if (this._session.direction !== 'incoming') {
-      console.error('[WEBRTC] CEVAPLA: BU GELEN ÇAĞRI DEĞİL, direction:', this._session.direction);
+    if (session.direction !== 'incoming') {
+      console.error('[WEBRTC] CEVAPLA: BU GELEN ÇAĞRI DEĞİL, direction:', session.direction);
+      return false;
+    }
+
+    /* SESSION DURUMUNU KONTROL ET - ZATEN SONLANMIŞ OLMASIN */
+    if (session.isEnded && session.isEnded()) {
+      console.error('[WEBRTC] CEVAPLA: SESSION ZATEN SONLANMIŞ (Canceled/Terminated)');
+      this._zilDurdur();
+      this._temizle();
+      this._durumBildir('hata', 'ÇAĞRI ZATEN SONLANMIŞ');
       return false;
     }
 
     console.log('[WEBRTC] CEVAPLA: ÇAĞRI CEVAPLANMAYA BAŞLANIYOR...');
     this._zilDurdur();
 
-    /* MİKROFON AKIŞINI HAZIRLA */
+    /* MİKROFON AKIŞINI HAZIRLA - ÖN-HAZIRLIK VARSA KULLAN, YOKSA YENİ AL */
     var localStream = null;
     try {
-      localStream = await this._mikrofonAkisiOlustur();
+      if (this._preStream) {
+        /* ÖN-HAZIRLANMIŞ MİKROFON AKIŞI - HIZLI CEVAPLAMA */
+        localStream = this._preStream;
+        this._preStream = null;
+        this._localStream = localStream;
+        console.log('[WEBRTC] CEVAPLA: ÖN-HAZIRLANMIŞ MİKROFON KULLANILIYOR ✓');
+      } else {
+        localStream = await this._mikrofonAkisiOlustur();
+      }
     } catch(e) {
       console.error('[WEBRTC] CEVAPLA: MİKROFON HATASI:', e);
+    }
+
+    /* MİKROFON HAZIRLIĞI SONRASI SESSION HALA GEÇERLİ Mİ KONTROL ET */
+    if (!this._session || this._session !== session) {
+      console.error('[WEBRTC] CEVAPLA: SESSION DEĞİŞMİŞ VEYA SONLANMIŞ (async sırasında iptal edilmiş olabilir)');
+      if (localStream) { localStream.getTracks().forEach(function(t) { t.stop(); }); }
+      return false;
+    }
+    if (session.isEnded && session.isEnded()) {
+      console.error('[WEBRTC] CEVAPLA: SESSION MİKROFON HAZIRLIĞI SIRASINDA SONLANMIŞ');
+      if (localStream) { localStream.getTracks().forEach(function(t) { t.stop(); }); }
+      return false;
     }
 
     try {
@@ -385,13 +426,14 @@ MR.webrtcTelefon = {
         answerOptions.mediaConstraints = { audio: true, video: false };
       }
 
-      this._session.answer(answerOptions);
+      session.answer(answerOptions);
       this._aramaDurumu = 'gorusmede';
       this._durumBildir('gorusmede');
       console.log('[WEBRTC] CEVAPLA: ÇAĞRI CEVAPLANDI ✓');
       return true;
     } catch(e) {
       console.error('[WEBRTC] CEVAPLAMA HATASI:', e);
+      if (localStream) { localStream.getTracks().forEach(function(t) { t.stop(); }); }
       this._durumBildir('hata', 'CEVAPLAMA HATASI: ' + (e && e.message ? e.message : ''));
       return false;
     }
@@ -628,6 +670,12 @@ MR.webrtcTelefon = {
     this._session = null;
     this._aramaDurumu = 'bos';
     this._muteState = false;
+
+    /* ÖN-HAZIRLANMIŞ MİKROFON AKIŞINI DURDUR */
+    if (this._preStream) {
+      this._preStream.getTracks().forEach(function(t) { t.stop(); });
+      this._preStream = null;
+    }
 
     /* YEREL AKIŞI DURDUR */
     if (this._localStream) {

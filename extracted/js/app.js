@@ -1141,10 +1141,23 @@ const NetsantralPanel = ({user, setPage}) => {
     if (!MR.webrtcTelefon) return;
     console.log('[WEBRTC WIDGET] CEVAPLA BUTONUNA BASILDI');
 
+    /* SESSION VARLIĞINI KONTROL ET */
+    if (!MR.webrtcTelefon._session) {
+      console.error('[WEBRTC WIDGET] SESSION YOK - ÇAĞRI ZATEN SONLANMIŞ OLABİLİR');
+      setStatusMsg('ÇAĞRI SONLANMIŞ - SESSION YOK');
+      setStatus('hazir');
+      setGelenCagriData(null);
+      setCrmKayit(null);
+      setTimeout(() => setStatusMsg(''), 3000);
+      return;
+    }
+
     /* ÖNCELİKLE ARAYAN BİLGİLERİNİ KAYDET (state null olmadan önce) */
     const arayanNo = gelenCagriData?.arayan || number;
     const arayanAdi = gelenCagriData?.arayanAdi || '';
     const kayitBilgi = crmKayit ? { ...crmKayit } : null;
+
+    setStatusMsg('CEVAPLANACAK...');
 
     try {
       const sonuc = await MR.webrtcTelefon.cevapla();
@@ -1154,6 +1167,7 @@ const NetsantralPanel = ({user, setPage}) => {
         setActiveCall(true);
         setStatus('gorusmede');
         setGelenCagriData(null);
+        setStatusMsg('GÖRÜŞME BAŞLADI');
 
         /* CRM KAYITLI İSE DETAY SAYFASINA, DEĞİLSE YENİ KAYIT SAYFASINA GİT */
         setTimeout(() => {
@@ -1166,15 +1180,27 @@ const NetsantralPanel = ({user, setPage}) => {
             setPage('crm-yeni');
           }
         }, 300);
+        setTimeout(() => setStatusMsg(''), 3000);
       } else {
         console.error('[WEBRTC WIDGET] CEVAPLAMA BAŞARISIZ');
-        setStatusMsg('CEVAPLAMA BAŞARISIZ - TEKRAR DENEYİN');
-        setTimeout(() => setStatusMsg(''), 3000);
+        /* SESSION HALA VARSA GELEN DURUMUNDA TUT, YOKSA HAZIR'A DÖN */
+        if (MR.webrtcTelefon._session && MR.webrtcTelefon._aramaDurumu === 'gelen') {
+          setStatusMsg('CEVAPLAMA BAŞARISIZ - TEKRAR DENEYİN');
+        } else {
+          setStatus('hazir');
+          setGelenCagriData(null);
+          setCrmKayit(null);
+          setStatusMsg('ÇAĞRI SONLANMIŞ - CEVAPLANAMIYOR');
+        }
+        setTimeout(() => setStatusMsg(''), 4000);
       }
     } catch(e) {
       console.error('[WEBRTC WIDGET] CEVAPLAMA HATASI:', e);
-      setStatusMsg('CEVAPLAMA HATASI');
-      setTimeout(() => setStatusMsg(''), 3000);
+      setStatus('hazir');
+      setGelenCagriData(null);
+      setCrmKayit(null);
+      setStatusMsg('CEVAPLAMA HATASI: ' + (e?.message || ''));
+      setTimeout(() => setStatusMsg(''), 4000);
     }
   };
 
@@ -1554,6 +1580,32 @@ const NetsantralPanel = ({user, setPage}) => {
 const GelenCagriPopup = ({call, onKapat, onCrmGit, setPage}) => {
   const {C, LIcon} = MR;
   if (!call) return null;
+
+  /* WEBRTC İLE GELEN ÇAĞRIYI CEVAPLA */
+  const cevapla = async () => {
+    if (MR.webrtcTelefon && MR.webrtcTelefon._session) {
+      console.log('[POPUP] CEVAPLA: WEBRTC İLE CEVAPLANACAK');
+      try {
+        const sonuc = await MR.webrtcTelefon.cevapla();
+        if (sonuc) {
+          console.log('[POPUP] CEVAPLA: BAŞARILI ✓');
+          onCrmGit(call);
+          onKapat();
+        } else {
+          console.error('[POPUP] CEVAPLA: BAŞARISIZ');
+          onKapat();
+        }
+      } catch(e) {
+        console.error('[POPUP] CEVAPLA HATASI:', e);
+        onKapat();
+      }
+    } else {
+      console.warn('[POPUP] CEVAPLA: WEBRTC SESSION YOK');
+      onCrmGit(call);
+      onKapat();
+    }
+  };
+
   return (
     <div style={{
       position:'fixed', top:60, right:24, zIndex:9999, width:360,
@@ -1592,17 +1644,7 @@ const GelenCagriPopup = ({call, onKapat, onCrmGit, setPage}) => {
           </div>
         )}
         <div style={{display:'flex', gap:8}}>
-          <button onClick={() => {
-            /* NETSİPP+ İLE GELEN ÇAĞRIYI CEVAPLA + CRM KAYIT AÇ */
-            const telLink = document.createElement('a');
-            telLink.href = 'tel:' + (call.arayan || '');
-            telLink.style.display = 'none';
-            document.body.appendChild(telLink);
-            telLink.click();
-            document.body.removeChild(telLink);
-            onCrmGit(call);
-            onKapat();
-          }} style={{
+          <button onClick={cevapla} style={{
             flex:1, padding:'10px', borderRadius:8, border:'none', cursor:'pointer',
             background:C.success, color:'#fff', fontSize:12, fontWeight:700,
             display:'flex', alignItems:'center', justifyContent:'center', gap:6,
@@ -1725,9 +1767,9 @@ const App = () => {
 
   const gelenCagriIsle = useCallback((data) => {
     if (!data || !data.timestamp || (Date.now() - data.timestamp > 30000)) return;
-    /* POPUP GÖSTER (15 SANİYE GÖRÜNSÜN - KULLANICI İŞLEM YAPANA KADAR) */
+    /* POPUP GÖSTER (30 SANİYE GÖRÜNSÜN - KULLANICI İŞLEM YAPANA KADAR) */
     setGelenCagri(data);
-    setTimeout(() => setGelenCagri(prev => prev?.timestamp === data.timestamp ? null : prev), 15000);
+    setTimeout(() => setGelenCagri(prev => prev?.timestamp === data.timestamp ? null : prev), 30000);
     /* SES BİLDİRİMİ - TARAYıCı İZİN VERİYORSA */
     try {
       const ac = new (window.AudioContext || window.webkitAudioContext)();
@@ -1742,12 +1784,32 @@ const App = () => {
       setTimeout(() => { osc.frequency.value = 800; }, 400);
       setTimeout(() => { osc.stop(); ac.close(); }, 600);
     } catch(e) {}
-    /* OTOMATİK CRM YENİ KAYIT EKRANINA YÖNLENDİR */
+    /* ARAYAN BİLGİLERİNİ KAYDET (CRM sayfası açılınca kullanılacak) */
     MR._gelenCagriTelefon = data.arayan;
     MR._gelenCagriAdi = data.arayanAdi || '';
-    setPage('crm-yeni');
+    /* OTOMATİK YÖNLENDİRME YAPMA - KULLANICI POPUP'TAN VEYA WİDGET'TAN CEVAPLAYACAK */
   }, [setPage]);
 
+
+  /* WEBRTC GELEN ÇAĞRI DİNLEYİCİ - POPUP GÖSTER */
+  useEffect(() => {
+    if (!user || !netsippIzinVar) return;
+    const handleGelenCagri = (e) => {
+      const data = e.detail || {};
+      console.log('[APP] WEBRTC GELEN ÇAĞRI:', data);
+      gelenCagriIsle(data);
+    };
+    const handleAramaSonlandi = () => {
+      /* ÇAĞRI SONLANDIĞINDA POPUP'I KAPAT */
+      setGelenCagri(null);
+    };
+    window.addEventListener('mr-webrtc-gelen-cagri', handleGelenCagri);
+    window.addEventListener('mr-arama-sonlandi', handleAramaSonlandi);
+    return () => {
+      window.removeEventListener('mr-webrtc-gelen-cagri', handleGelenCagri);
+      window.removeEventListener('mr-arama-sonlandi', handleAramaSonlandi);
+    };
+  }, [user, netsippIzinVar, gelenCagriIsle]);
 
   /* GİDEN ARAMA'DAN OTOMATİK CRM EKRANI AÇ - YETKİ KONTROLLÜ */
   useEffect(() => {
