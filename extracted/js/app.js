@@ -928,8 +928,9 @@ const NetsantralPanel = ({user, setPage}) => {
 
       switch(d.durum) {
         case 'caliyor':
-          setStatus('caliyor');
-          setStatusMsg('KARŞI TARAF ÇALIYOR...');
+          /* Gelen çağrı varsa status'u 'gelen' olarak koru, 'caliyor'a çevirme */
+          setStatus(prev => prev === 'gelen' ? 'gelen' : 'caliyor');
+          if (status !== 'gelen') setStatusMsg('KARŞI TARAF ÇALIYOR...');
           break;
         case 'gorusmede':
           setActiveCall(true);
@@ -1186,12 +1187,16 @@ const NetsantralPanel = ({user, setPage}) => {
     return (
       <div onClick={() => setMinimized(false)} style={{
         position: 'fixed', bottom: 60, right: 24, zIndex: 9998,
-        width: 52, height: 52, borderRadius: '50%',
-        background: status === 'gelen' ? `${btnColor}` : activeCall ? btnColor : `${btnColor}22`,
+        width: 56, height: 56, borderRadius: '50%',
+        background: status === 'gelen' ? `radial-gradient(circle, ${btnColor}, ${btnColor}cc)` : activeCall ? `radial-gradient(circle, ${btnColor}, ${btnColor}cc)` : `radial-gradient(circle, ${btnColor}33, ${btnColor}11)`,
         border: `2px solid ${btnBorder}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', boxShadow: status === 'gelen' ? `0 0 20px ${C.success}80, 0 4px 20px rgba(0,0,0,.4)` : '0 4px 20px rgba(0,0,0,.4)',
-        transition: 'all .3s'
+        cursor: 'pointer',
+        boxShadow: status === 'gelen'
+          ? `0 0 25px ${C.success}80, 0 0 50px ${C.success}30, 0 4px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,0.2)`
+          : `0 4px 20px rgba(0,0,0,.5), 0 0 15px rgba(80,120,255,0.15), inset 0 1px 0 rgba(255,255,255,0.1)`,
+        transition: 'all .3s',
+        backdropFilter: 'blur(10px)'
       }} title={statusLabels[status]}>
         <LIcon name={status === 'gelen' ? 'PhoneIncoming' : 'Phone'} size={22} color={activeCall || status === 'gelen' ? '#fff' : btnBorder}/>
         {activeCall && (
@@ -1212,30 +1217,46 @@ const NetsantralPanel = ({user, setPage}) => {
   }
 
   /* ═══ AÇIK GÖRÜNÜM ═══ */
+  const isGelenAktif = status === 'gelen' || (gelenCagriData && (status === 'caliyor' || status === 'araniyor'));
   return (
     <div ref={panelRef} style={{
       position: 'fixed', bottom: 60, right: 24, zIndex: 9998,
-      width: 320, background: C.bgCard,
-      border: status === 'gelen' ? `2px solid ${C.success}` : `1px solid ${C.border}`,
-      borderRadius: 16,
-      boxShadow: status === 'gelen' ? `0 10px 50px rgba(0,0,0,.5), 0 0 30px ${C.success}40` : '0 10px 50px rgba(0,0,0,.5)',
-      overflow: 'hidden', animation: 'slideUp .2s ease-out'
+      width: 340, background: `linear-gradient(145deg, ${C.bgCard}, ${C.bgCard}ee, rgba(30,40,80,0.95))`,
+      border: isGelenAktif ? `2px solid ${C.success}` : `1.5px solid rgba(100,140,255,0.3)`,
+      borderRadius: 20,
+      boxShadow: isGelenAktif
+        ? `0 10px 50px rgba(0,0,0,.6), 0 0 40px ${C.success}50, 0 0 80px ${C.success}20, inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.3)`
+        : `0 10px 50px rgba(0,0,0,.6), 0 0 30px rgba(80,120,255,0.15), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.3)`,
+      overflow: 'hidden', animation: 'slideUp .2s ease-out',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)'
     }}>
-      {/* BAŞLIK */}
+      {/* BAŞLIK - 3D HOLOGRAM */}
       <div style={{
-        padding: '10px 14px', background: `${statusColor}15`,
-        borderBottom: `1px solid ${C.border}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+        padding: '12px 16px',
+        background: `linear-gradient(135deg, ${statusColor}18, ${statusColor}08, rgba(100,180,255,0.05))`,
+        borderBottom: `1px solid ${statusColor}33`,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        position: 'relative', overflow: 'hidden'
       }}>
-        <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
-          <div style={{width: 10, height: 10, borderRadius: '50%', background: statusColor, boxShadow: `0 0 8px ${statusColor}`,
-            animation: status === 'gelen' ? 'gelenPulse 0.8s infinite' : 'none'
+        {/* Hologram ışık çizgisi */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: 1,
+          background: `linear-gradient(90deg, transparent, ${statusColor}66, rgba(100,200,255,0.4), ${statusColor}66, transparent)`
+        }}/>
+        <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+          <div style={{
+            width: 12, height: 12, borderRadius: '50%', background: statusColor,
+            boxShadow: `0 0 12px ${statusColor}, 0 0 24px ${statusColor}55`,
+            animation: isGelenAktif ? 'gelenPulse 0.8s infinite' : 'none'
           }}/>
-          <span style={{fontSize: 11, fontWeight: 700, color: statusColor}}>{statusLabels[status]}</span>
-          {activeCall && <span style={{fontSize: 11, fontWeight: 800, color: C.text, fontFamily: 'monospace'}}>{fmtTime(callTimer)}</span>}
+          <span style={{fontSize: 12, fontWeight: 800, color: statusColor, letterSpacing: 1, textShadow: `0 0 10px ${statusColor}55`}}>
+            {isGelenAktif ? 'GELEN ÇAĞRI' : statusLabels[status]}
+          </span>
+          {activeCall && <span style={{fontSize: 12, fontWeight: 800, color: C.text, fontFamily: 'monospace', textShadow: '0 0 8px rgba(100,200,255,0.3)'}}>{fmtTime(callTimer)}</span>}
         </div>
         <div style={{display: 'flex', gap: 2}}>
-          <div onClick={() => setMinimized(true)} style={{cursor: 'pointer', padding: 4, borderRadius: 6}} title="KÜÇÜLT">
+          <div onClick={() => setMinimized(true)} style={{cursor: 'pointer', padding: 4, borderRadius: 8, background: 'rgba(255,255,255,0.05)', transition: 'all .2s'}} title="KÜÇÜLT">
             <LIcon name="Minus" size={14} color={C.textMuted}/>
           </div>
         </div>
@@ -1247,7 +1268,7 @@ const NetsantralPanel = ({user, setPage}) => {
       )}
 
       {/* GELEN ÇAĞRI - ARAYAN BİLGİSİ */}
-      {status === 'gelen' && gelenCagriData && (
+      {(status === 'gelen' || (gelenCagriData && (status === 'caliyor' || status === 'araniyor'))) && (
         <div style={{padding: '12px 14px', borderBottom: `1px solid ${C.border}`}}>
           <div style={{fontSize: 22, fontWeight: 800, letterSpacing: 1.5, color: C.text, textAlign: 'center', fontFamily: 'monospace'}}>
             {gelenCagriData.arayan || 'BİLİNMEYEN'}
@@ -1283,77 +1304,101 @@ const NetsantralPanel = ({user, setPage}) => {
       )}
 
       {/* NUMARA GİRİŞİ (GELEN ÇAĞRI YOKSA) */}
-      {status !== 'gelen' && (
-        <div style={{padding: '12px 14px'}}>
-          <div style={{display: 'flex', alignItems: 'center', gap: 8, background: C.bgInput, border: `1px solid ${C.borderLight}`, borderRadius: 10, padding: '8px 12px'}}>
-            <LIcon name="Phone" size={16} color={C.textMuted}/>
+      {status !== 'gelen' && !gelenCagriData && (
+        <div style={{padding: '12px 16px'}}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: 'linear-gradient(145deg, rgba(30,40,70,0.9), rgba(20,30,50,0.95))',
+            border: '1px solid rgba(100,160,255,0.2)',
+            borderRadius: 12, padding: '10px 14px',
+            boxShadow: '0 3px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08)'
+          }}>
+            <LIcon name="Phone" size={16} color="rgba(100,180,255,0.6)"/>
             <input value={number} onChange={e => setNumber(e.target.value)} placeholder="NUMARA GİRİN..."
-              style={{flex: 1, background: 'transparent', border: 'none', color: C.text, fontSize: 16, fontWeight: 700, letterSpacing: 1, outline: 'none', fontFamily: 'monospace'}}
+              style={{flex: 1, background: 'transparent', border: 'none', color: C.text, fontSize: 17, fontWeight: 800, letterSpacing: 1.5, outline: 'none', fontFamily: 'monospace', textShadow: '0 0 6px rgba(100,180,255,0.2)'}}
               onKeyDown={e => { if (e.key === 'Enter' && !activeCall) aramaBaslat(); }}
             />
-            {number && <div onClick={() => setNumber('')} style={{cursor: 'pointer', padding: 2}}><LIcon name="X" size={14} color={C.textMuted}/></div>}
+            {number && <div onClick={() => setNumber('')} style={{cursor: 'pointer', padding: 4, borderRadius: 6, background: 'rgba(255,255,255,0.05)'}}><LIcon name="X" size={14} color={C.textMuted}/></div>}
           </div>
         </div>
       )}
 
       {/* KONTROL BUTONLARI */}
       <div style={{padding: '0 14px 12px', display: 'flex', gap: 8}}>
-        {status === 'gelen' && gelenCagriData ? (
+        {(status === 'gelen' || (gelenCagriData && (status === 'caliyor' || status === 'araniyor'))) ? (
           <>
             <button onClick={cagriCevapla} style={{
-              flex: 1, padding: '14px', borderRadius: 10, border: 'none',
-              background: C.success, color: '#fff', fontSize: 14, fontWeight: 800,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              animation: 'gelenPulse 0.8s infinite', boxShadow: `0 0 15px ${C.success}60`
+              flex: 1, padding: '16px', borderRadius: 14, border: 'none',
+              background: `linear-gradient(135deg, ${C.success}, #00c853)`,
+              color: '#fff', fontSize: 15, fontWeight: 900, letterSpacing: 1,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              animation: 'gelenPulse 0.8s infinite',
+              boxShadow: `0 0 20px ${C.success}70, 0 4px 15px ${C.success}40, inset 0 1px 0 rgba(255,255,255,0.3)`,
+              textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+              transform: 'perspective(500px) translateZ(0)',
+              transition: 'all 0.2s ease'
             }}>
-              <LIcon name="PhoneCall" size={20} color="#fff"/> CEVAPLA
+              <LIcon name="PhoneCall" size={22} color="#fff"/> CEVAPLA
             </button>
             <button onClick={cagriReddet} style={{
-              padding: '14px 18px', borderRadius: 10, border: 'none',
-              background: C.danger, color: '#fff', fontSize: 13, fontWeight: 800,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+              flex: 1, padding: '16px', borderRadius: 14, border: 'none',
+              background: `linear-gradient(135deg, ${C.danger}, #d32f2f)`,
+              color: '#fff', fontSize: 15, fontWeight: 900, letterSpacing: 1,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              boxShadow: `0 0 20px ${C.danger}70, 0 4px 15px ${C.danger}40, inset 0 1px 0 rgba(255,255,255,0.3)`,
+              textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+              transform: 'perspective(500px) translateZ(0)',
+              transition: 'all 0.2s ease'
             }}>
-              <LIcon name="PhoneOff" size={18} color="#fff"/> REDDET
+              <LIcon name="PhoneOff" size={22} color="#fff"/> REDDET
             </button>
           </>
         ) : !activeCall ? (
           <button onClick={aramaBaslat} disabled={!number || !webrtcKayitli} style={{
-            flex: 1, padding: '10px', borderRadius: 10, border: 'none',
-            background: (number && webrtcKayitli) ? C.success : `${C.success}33`,
-            color: '#fff', fontSize: 12, fontWeight: 700,
+            flex: 1, padding: '12px', borderRadius: 14, border: 'none',
+            background: (number && webrtcKayitli) ? `linear-gradient(135deg, ${C.success}, #00c853)` : `linear-gradient(135deg, ${C.success}33, ${C.success}22)`,
+            color: '#fff', fontSize: 14, fontWeight: 800, letterSpacing: 1,
             cursor: (number && webrtcKayitli) ? 'pointer' : 'default',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            opacity: (number && webrtcKayitli) ? 1 : 0.5
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            opacity: (number && webrtcKayitli) ? 1 : 0.5,
+            boxShadow: (number && webrtcKayitli) ? `0 4px 15px ${C.success}40, inset 0 1px 0 rgba(255,255,255,0.2)` : 'none',
+            textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            transition: 'all 0.2s ease'
           }}>
-            <LIcon name="PhoneCall" size={16} color="#fff"/> {webrtcKayitli ? 'ARA' : 'BAĞLANTI YOK'}
+            <LIcon name="PhoneCall" size={18} color="#fff"/> {webrtcKayitli ? 'ARA' : 'BAĞLANTI YOK'}
           </button>
         ) : (
           <>
             <button onClick={aramaKapat} disabled={hangupLoading} style={{
-              flex: 1, padding: '10px', borderRadius: 10, border: 'none',
-              background: C.danger, color: '#fff', fontSize: 12, fontWeight: 700,
+              flex: 1, padding: '12px', borderRadius: 14, border: 'none',
+              background: `linear-gradient(135deg, ${C.danger}, #d32f2f)`,
+              color: '#fff', fontSize: 13, fontWeight: 800, letterSpacing: 0.5,
               cursor: hangupLoading ? 'wait' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              opacity: hangupLoading ? 0.7 : 1
+              opacity: hangupLoading ? 0.7 : 1,
+              boxShadow: `0 4px 15px ${C.danger}40, inset 0 1px 0 rgba(255,255,255,0.2)`,
+              textShadow: '0 1px 3px rgba(0,0,0,0.3)'
             }}>
               <LIcon name="PhoneOff" size={16} color="#fff"/>
               {hangupLoading ? 'SONLANDIRILIYOR...' : 'KAPAT'}
             </button>
             <button onClick={toggleMute} style={{
-              padding: '10px 14px', borderRadius: 10, border: 'none',
-              background: muted ? `${C.warning}33` : `${C.textMuted}22`,
+              padding: '12px 16px', borderRadius: 14, border: '1px solid rgba(100,160,255,0.15)',
+              background: muted ? `linear-gradient(135deg, ${C.warning}44, ${C.warning}22)` : 'linear-gradient(145deg, rgba(40,50,80,0.8), rgba(25,35,60,0.9))',
               color: muted ? C.warning : C.textSec,
               fontSize: 11, fontWeight: 700, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 4
+              display: 'flex', alignItems: 'center', gap: 4,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)'
             }}>
               <LIcon name={muted ? 'MicOff' : 'Mic'} size={14} color={muted ? C.warning : C.textSec}/>
             </button>
             <button onClick={() => setTransferOpen(!transferOpen)} style={{
-              padding: '10px 14px', borderRadius: 10, border: 'none',
-              background: transferOpen ? `${C.purple}33` : `${C.textMuted}22`,
+              padding: '12px 16px', borderRadius: 14, border: '1px solid rgba(100,160,255,0.15)',
+              background: transferOpen ? `linear-gradient(135deg, ${C.purple}44, ${C.purple}22)` : 'linear-gradient(145deg, rgba(40,50,80,0.8), rgba(25,35,60,0.9))',
               color: transferOpen ? C.purple : C.textSec,
               fontSize: 11, fontWeight: 700, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 4
+              display: 'flex', alignItems: 'center', gap: 4,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)'
             }}>
               <LIcon name="ArrowRightLeft" size={14} color={transferOpen ? C.purple : C.textSec}/>
             </button>
@@ -1378,32 +1423,47 @@ const NetsantralPanel = ({user, setPage}) => {
       )}
 
       {/* DIALPAD */}
-      <div style={{padding: '0 14px 12px', display: 'flex', justifyContent: 'center'}}>
-        <div onClick={() => setDialpadOpen(!dialpadOpen)} style={{cursor: 'pointer', fontSize: 10, fontWeight: 600, color: C.textMuted, display: 'flex', alignItems: 'center', gap: 4}}>
-          <LIcon name={dialpadOpen ? 'ChevronDown' : 'ChevronUp'} size={12} color={C.textMuted}/>
+      <div style={{padding: '0 16px 12px', display: 'flex', justifyContent: 'center'}}>
+        <div onClick={() => setDialpadOpen(!dialpadOpen)} style={{
+          cursor: 'pointer', fontSize: 10, fontWeight: 700, letterSpacing: 0.5,
+          color: 'rgba(100,180,255,0.5)', display: 'flex', alignItems: 'center', gap: 5,
+          padding: '4px 12px', borderRadius: 8,
+          background: 'rgba(100,160,255,0.05)', border: '1px solid rgba(100,160,255,0.1)',
+          transition: 'all .2s'
+        }}>
+          <LIcon name={dialpadOpen ? 'ChevronDown' : 'ChevronUp'} size={12} color="rgba(100,180,255,0.5)"/>
           {dialpadOpen ? 'TUŞLARI GİZLE' : 'TUŞLARI GÖSTER'}
         </div>
       </div>
 
       {dialpadOpen && (
         <div style={{padding: '0 14px 14px'}}>
-          <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6}}>
+          <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8}}>
             {keys.flat().map(k => (
               <button key={k} onClick={() => dialKey(k)} style={{
-                padding: '12px 0', borderRadius: 10, border: `1px solid ${C.border}`,
-                background: C.bgHover, color: C.text, fontSize: 18, fontWeight: 700,
-                cursor: 'pointer', transition: 'all .15s', fontFamily: 'monospace'
+                padding: '14px 0', borderRadius: 12,
+                border: '1px solid rgba(100,160,255,0.2)',
+                background: 'linear-gradient(145deg, rgba(40,50,80,0.8), rgba(25,35,60,0.9))',
+                color: C.text, fontSize: 20, fontWeight: 800,
+                cursor: 'pointer', transition: 'all .15s', fontFamily: 'monospace',
+                boxShadow: '0 3px 10px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.2)',
+                textShadow: '0 0 8px rgba(100,180,255,0.3)',
+                transform: 'perspective(500px) translateZ(0)'
               }}
-                onMouseEnter={e => e.currentTarget.style.background = `${C.accent}22`}
-                onMouseLeave={e => e.currentTarget.style.background = C.bgHover}
+                onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(60,80,140,0.9), rgba(40,60,100,0.9))'; e.currentTarget.style.boxShadow = `0 4px 15px rgba(0,0,0,0.4), 0 0 15px ${C.accent}30, inset 0 1px 0 rgba(255,255,255,0.15)`; e.currentTarget.style.transform = 'perspective(500px) translateZ(3px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(40,50,80,0.8), rgba(25,35,60,0.9))'; e.currentTarget.style.boxShadow = '0 3px 10px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.2)'; e.currentTarget.style.transform = 'perspective(500px) translateZ(0)'; }}
               >{k}</button>
             ))}
           </div>
-          <div style={{marginTop: 6, display: 'flex', justifyContent: 'center'}}>
+          <div style={{marginTop: 8, display: 'flex', justifyContent: 'center'}}>
             <div onClick={() => setNumber(prev => prev.slice(0, -1))} style={{
-              cursor: 'pointer', padding: '6px 20px', borderRadius: 8,
-              background: `${C.warning}22`, color: C.warning,
-              fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4
+              cursor: 'pointer', padding: '8px 24px', borderRadius: 10,
+              background: `linear-gradient(135deg, ${C.warning}33, ${C.warning}18)`,
+              border: `1px solid ${C.warning}33`,
+              color: C.warning, fontSize: 11, fontWeight: 800, letterSpacing: 0.5,
+              display: 'flex', alignItems: 'center', gap: 6,
+              boxShadow: `0 2px 8px ${C.warning}22, inset 0 1px 0 rgba(255,255,255,0.1)`,
+              textShadow: `0 0 6px ${C.warning}44`
             }}>
               <LIcon name="Delete" size={14} color={C.warning}/> SİL
             </div>
@@ -1413,7 +1473,9 @@ const NetsantralPanel = ({user, setPage}) => {
 
       <style>{`
         @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
-        @keyframes gelenPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.02)}}
+        @keyframes gelenPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.03)}}
+        @keyframes holoShine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+        @keyframes holoBorder{0%,100%{border-color:rgba(100,160,255,0.3)}50%{border-color:rgba(100,200,255,0.5)}}
       `}</style>
     </div>
   );
