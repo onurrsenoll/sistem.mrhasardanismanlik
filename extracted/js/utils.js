@@ -63,7 +63,7 @@ MR.aramaBaslat = async function(telefon, ad, otomatikCrmAc) {
 
   /* 6) WEBRTC İLE ARAMAYI BAŞLAT */
   try {
-    const basarili = MR.webrtcTelefon.ara(cleanNum);
+    const basarili = await MR.webrtcTelefon.ara(cleanNum);
 
     if (basarili) {
       console.log('[ARAMA] ÇAĞRI GÖNDERİLDİ:', cleanNum);

@@ -927,10 +927,18 @@ const NetsantralPanel = ({user, setPage}) => {
       setWebrtcKayitli(d.kayitli);
 
       switch(d.durum) {
+        case 'araniyor':
+          setActiveCall(true); /* GİDEN ARAMA BAŞLADI - KAPAT BUTONU İÇİN */
+          setStatus('araniyor');
+          setStatusMsg('ARANIYOR...');
+          break;
         case 'caliyor':
           /* Gelen çağrı varsa status'u 'gelen' olarak koru, 'caliyor'a çevirme */
           setStatus(prev => prev === 'gelen' ? 'gelen' : 'caliyor');
-          if (status !== 'gelen') setStatusMsg('KARŞI TARAF ÇALIYOR...');
+          if (d.aramaDurumu !== 'gelen') {
+            setActiveCall(true); /* GİDEN ARAMA ÇALIYOR - KAPAT BUTONU İÇİN */
+            setStatusMsg('KARŞI TARAF ÇALIYOR...');
+          }
           break;
         case 'gorusmede':
           setActiveCall(true);
@@ -949,6 +957,15 @@ const NetsantralPanel = ({user, setPage}) => {
           setStatusMsg('GÖRÜŞME SONLANDI');
           setTimeout(() => setStatusMsg(''), 3000);
           break;
+        case 'reddedildi':
+          setActiveCall(false);
+          setMuted(false);
+          setStatus('hazir');
+          setGelenCagriData(null);
+          setCrmKayit(null);
+          setStatusMsg('ÇAĞRI REDDEDİLDİ');
+          setTimeout(() => setStatusMsg(''), 3000);
+          break;
         case 'sessize-alindi':
           setMuted(true);
           break;
@@ -958,6 +975,7 @@ const NetsantralPanel = ({user, setPage}) => {
         case 'hata':
           setActiveCall(false);
           setStatus('hazir');
+          setGelenCagriData(null);
           setStatusMsg(d.detay || 'WEBRTC HATASI');
           setTimeout(() => setStatusMsg(''), 5000);
           break;
@@ -991,6 +1009,7 @@ const NetsantralPanel = ({user, setPage}) => {
       if (MR.webrtcTelefon && MR.webrtcTelefon._session) return;
       setNumber(data.telefon);
       setStatus('araniyor');
+      setActiveCall(true); /* GİDEN ARAMA İÇİN KAPAT BUTONU HEMEN GÖRÜNSİN */
       setMinimized(false);
       setStatusMsg('GİDEN ARAMA: ' + (data.ad || data.telefon));
     };
@@ -1033,7 +1052,7 @@ const NetsantralPanel = ({user, setPage}) => {
   useEffect(() => {
     if (minimized) return;
     const handler = (e) => {
-      if (activeCall || status === 'gelen') return;
+      if (activeCall || status === 'gelen' || status === 'araniyor' || status === 'caliyor') return;
       if (panelRef.current && !panelRef.current.contains(e.target)) setMinimized(true);
     };
     document.addEventListener('mousedown', handler);
@@ -1067,6 +1086,7 @@ const NetsantralPanel = ({user, setPage}) => {
 
     setStatusMsg('ARAMA BAŞLATILIYOR...');
     setStatus('araniyor');
+    setActiveCall(true); /* GİDEN ARAMA İÇİN KAPAT BUTONU HEMEN GÖRÜNSİN */
     setMinimized(false);
     activeLogIdRef.current = 0;
 
@@ -1101,10 +1121,12 @@ const NetsantralPanel = ({user, setPage}) => {
           }).then(r => { if (r?.success && r.data?.log_id) activeLogIdRef.current = r.data.log_id; }).catch(() => {});
         } else {
           setStatusMsg('ARAMA BAŞLATILAMADI');
+          setActiveCall(false);
           setStatus('hazir');
         }
       } catch(e) {
         setStatusMsg('WEBRTC HATASI');
+        setActiveCall(false);
         setStatus('hazir');
       }
     }
@@ -1114,27 +1136,54 @@ const NetsantralPanel = ({user, setPage}) => {
   /* ─── GELEN ÇAĞRI CEVAPLA + CRM SAYFASI AÇ ─── */
   const cagriCevapla = async () => {
     if (!MR.webrtcTelefon) return;
-    await MR.webrtcTelefon.cevapla();
+    console.log('[WEBRTC WIDGET] CEVAPLA BUTONUNA BASILDI');
+
+    /* ÖNCELİKLE ARAYAN BİLGİLERİNİ KAYDET (state null olmadan önce) */
     const arayanNo = gelenCagriData?.arayan || number;
     const arayanAdi = gelenCagriData?.arayanAdi || '';
-    setGelenCagriData(null);
-    /* CRM KAYITLI İSE DETAY SAYFASINA, DEĞİLSE YENİ KAYIT SAYFASINA GİT */
-    setTimeout(() => {
-      setMinimized(true); /* Widget küçülsün */
-      if (crmKayit && crmKayit.id) {
-        setPage('crm-detay-' + crmKayit.id);
+    const kayitBilgi = crmKayit ? { ...crmKayit } : null;
+
+    try {
+      const sonuc = await MR.webrtcTelefon.cevapla();
+      console.log('[WEBRTC WIDGET] CEVAPLA SONUCU:', sonuc);
+
+      if (sonuc) {
+        setActiveCall(true);
+        setStatus('gorusmede');
+        setGelenCagriData(null);
+
+        /* CRM KAYITLI İSE DETAY SAYFASINA, DEĞİLSE YENİ KAYIT SAYFASINA GİT */
+        setTimeout(() => {
+          setMinimized(true); /* Widget küçülsün */
+          if (kayitBilgi && kayitBilgi.id) {
+            setPage('crm-detay-' + kayitBilgi.id);
+          } else {
+            MR._gelenCagriTelefon = arayanNo;
+            MR._gelenCagriAdi = arayanAdi;
+            setPage('crm-yeni');
+          }
+        }, 300);
       } else {
-        MR._gelenCagriTelefon = arayanNo;
-        MR._gelenCagriAdi = arayanAdi;
-        setPage('crm-yeni');
+        console.error('[WEBRTC WIDGET] CEVAPLAMA BAŞARISIZ');
+        setStatusMsg('CEVAPLAMA BAŞARISIZ - TEKRAR DENEYİN');
+        setTimeout(() => setStatusMsg(''), 3000);
       }
-    }, 300);
+    } catch(e) {
+      console.error('[WEBRTC WIDGET] CEVAPLAMA HATASI:', e);
+      setStatusMsg('CEVAPLAMA HATASI');
+      setTimeout(() => setStatusMsg(''), 3000);
+    }
   };
 
   const cagriReddet = () => {
+    console.log('[WEBRTC WIDGET] REDDET BUTONUNA BASILDI');
     if (MR.webrtcTelefon) MR.webrtcTelefon.reddet();
     setGelenCagriData(null);
     setCrmKayit(null);
+    setActiveCall(false);
+    setStatus('hazir');
+    setStatusMsg('ÇAĞRI REDDEDİLDİ');
+    setTimeout(() => setStatusMsg(''), 3000);
   };
 
   /* ─── ÇAĞRI KAPAT ─── */
@@ -1235,7 +1284,7 @@ const NetsantralPanel = ({user, setPage}) => {
   }
 
   /* ═══ AÇIK GÖRÜNÜM ═══ */
-  const isGelenAktif = status === 'gelen' || (gelenCagriData && (status === 'caliyor' || status === 'araniyor'));
+  const isGelenAktif = status === 'gelen' && !!gelenCagriData;
   return (
     <div ref={panelRef} style={{
       position: 'fixed', bottom: 60, right: 24, zIndex: 9998,
@@ -1286,7 +1335,7 @@ const NetsantralPanel = ({user, setPage}) => {
       )}
 
       {/* GELEN ÇAĞRI - ARAYAN BİLGİSİ */}
-      {gelenCagriData && (status === 'gelen' || status === 'caliyor' || status === 'araniyor') && (
+      {gelenCagriData && status === 'gelen' && (
         <div style={{padding: '12px 14px', borderBottom: `1px solid ${C.border}`}}>
           <div style={{fontSize: 22, fontWeight: 800, letterSpacing: 1.5, color: C.text, textAlign: 'center', fontFamily: 'monospace'}}>
             {gelenCagriData.arayan || 'BİLİNMEYEN'}
@@ -1343,7 +1392,7 @@ const NetsantralPanel = ({user, setPage}) => {
 
       {/* KONTROL BUTONLARI */}
       <div style={{padding: '0 14px 12px', display: 'flex', gap: 8}}>
-        {(gelenCagriData && (status === 'gelen' || status === 'caliyor' || status === 'araniyor')) ? (
+        {(gelenCagriData && status === 'gelen') ? (
           <>
             <button onClick={cagriCevapla} style={{
               flex: 1, padding: '16px', borderRadius: 14, border: 'none',

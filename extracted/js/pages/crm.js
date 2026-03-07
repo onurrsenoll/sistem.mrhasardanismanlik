@@ -1350,9 +1350,16 @@ MR._CRMYeniInner = ({setPage}) => {
       const sipAramaYap = async () => {
         if (MR.webrtcTelefon && MR.webrtcTelefon._kayitli) {
           try {
+            /* WIDGET'I BİLGİLENDİR */
+            window.dispatchEvent(new CustomEvent('mr-arama-baslat', {
+              detail: { telefon: f.telefon, ad: f.ad_soyad || '', yon: 'giden', timestamp: Date.now() }
+            }));
             const sonuc = await MR.webrtcTelefon.ara(f.telefon);
             if (sonuc) {
               console.log('[CRM] WEBRTC SIP ARAMA BAŞLATILDI:', f.telefon);
+              window.dispatchEvent(new CustomEvent('mr-arama-pbx-sonuc', {
+                detail: { basarili: true, telefon: f.telefon, ad: f.ad_soyad || '' }
+              }));
               callSecondsRef.current = 0;
               if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
               setCallActive(true);

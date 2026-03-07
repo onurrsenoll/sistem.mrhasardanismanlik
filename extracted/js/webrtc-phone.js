@@ -345,18 +345,35 @@ MR.webrtcTelefon = {
 
   /* ═══ CEVAPLA ═══ */
   cevapla: async function() {
-    if (!this._session) return false;
-    /* GELEN ÇAĞRI KONTROLÜ: _aramaDurumu 'gelen' OLMALIDIR VEYA session direction 'incoming' OLMALIDIR */
-    if (this._aramaDurumu !== 'gelen' && this._session.direction !== 'incoming') return false;
+    if (!this._session) {
+      console.error('[WEBRTC] CEVAPLA: SESSION YOK');
+      return false;
+    }
+    /* GELEN ÇAĞRI KONTROLÜ: session direction 'incoming' OLMALI */
+    if (this._session.direction !== 'incoming') {
+      console.error('[WEBRTC] CEVAPLA: BU GELEN ÇAĞRI DEĞİL, direction:', this._session.direction);
+      return false;
+    }
+
+    console.log('[WEBRTC] CEVAPLA: ÇAĞRI CEVAPLANMAYA BAŞLANIYOR...');
     this._zilDurdur();
-    this._aramaDurumu = 'gelen'; /* DURUMU GELEN OLARAK GARANTİ ALTINA AL */
 
     /* MİKROFON AKIŞINI HAZIRLA */
-    var localStream = await this._mikrofonAkisiOlustur();
+    var localStream = null;
+    try {
+      localStream = await this._mikrofonAkisiOlustur();
+    } catch(e) {
+      console.error('[WEBRTC] CEVAPLA: MİKROFON HATASI:', e);
+    }
 
     try {
       var answerOptions = {
-        pcConfig: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+        pcConfig: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+          ]
+        }
       };
 
       /* ÖZEL MİKROFON AKIŞI VARSA KULLAN, YOKSA JsSIP KENDİ getUserMedia'SINI KULLANSIN */
@@ -370,18 +387,25 @@ MR.webrtcTelefon = {
       this._session.answer(answerOptions);
       this._aramaDurumu = 'gorusmede';
       this._durumBildir('gorusmede');
+      console.log('[WEBRTC] CEVAPLA: ÇAĞRI CEVAPLANDI ✓');
       return true;
     } catch(e) {
       console.error('[WEBRTC] CEVAPLAMA HATASI:', e);
+      this._durumBildir('hata', 'CEVAPLAMA HATASI: ' + (e && e.message ? e.message : ''));
       return false;
     }
   },
 
   /* ═══ REDDET ═══ */
   reddet: function() {
-    if (!this._session || this._aramaDurumu !== 'gelen') return;
+    if (!this._session) return;
+    console.log('[WEBRTC] REDDET: ÇAĞRI REDDEDİLİYOR... direction:', this._session.direction, 'durum:', this._aramaDurumu);
     this._zilDurdur();
-    try { this._session.terminate(); } catch(e) {}
+    try {
+      this._session.terminate({ status_code: 486, reason_phrase: 'Busy Here' });
+    } catch(e) {
+      console.error('[WEBRTC] REDDET HATASI:', e);
+    }
     this._temizle();
     this._durumBildir('reddedildi');
   },
@@ -445,9 +469,12 @@ MR.webrtcTelefon = {
     var _sesAyarlandi = false;
 
     session.on('progress', function() {
-      console.log('[WEBRTC] ÇALIYOR...');
+      console.log('[WEBRTC] ÇALIYOR... direction:', session.direction, 'mevcut durum:', self._aramaDurumu);
       /* GELEN ÇAĞRI İSE DURUMU 'gelen' OLARAK KORU - YOKSA cevapla() ÇALIŞMAZ */
-      if (self._aramaDurumu !== 'gelen') {
+      if (session.direction === 'incoming') {
+        /* GELEN ÇAĞRI: DURUMU DEĞİŞTİRME */
+        self._aramaDurumu = 'gelen';
+      } else {
         self._aramaDurumu = 'caliyor';
       }
       self._durumBildir('caliyor');
