@@ -1094,20 +1094,27 @@ const NetsantralPanel = ({user, setPage}) => {
     activeLogIdRef.current = 0;
 
     let cleanNum = number.replace(/[\s\-\(\)\+]/g, '');
-    if (cleanNum.startsWith('90') && cleanNum.length >= 12) { /* OK */ }
-    else if (cleanNum.startsWith('0') && cleanNum.length >= 11) { cleanNum = '90' + cleanNum.substring(1); }
-    else if (cleanNum.length === 10 && /^\d{10}$/.test(cleanNum)) { cleanNum = '90' + cleanNum; }
+    /* ORIGINATE API İÇİN 90 FORMATINA ÇEVİR */
+    let apiNum = cleanNum;
+    if (apiNum.startsWith('90') && apiNum.length >= 12) { /* OK */ }
+    else if (apiNum.startsWith('0') && apiNum.length >= 11) { apiNum = '9' + apiNum; }
+    else if (apiNum.length === 10 && /^\d{10}$/.test(apiNum)) { apiNum = '90' + apiNum; }
+
+    console.log('[WEBRTC WIDGET] ARAMA BAŞLATILIYOR - GİRİLEN:', number, '| API FORMAT:', apiNum, '| WEBRTC FORMAT:', cleanNum);
 
     /* ÖNCELİK 1: PBX ORIGINATE İLE ÇAĞRI BAŞLAT (DAHİLİYİ ARAR, SONRA HEDEFİ BAĞLAR) */
     let pbxBasarili = false;
     try {
-      const r = await api.netsantralOriginate(cleanNum, MR._netsantralDahili || undefined);
+      const r = await api.netsantralOriginate(apiNum, MR._netsantralDahili || undefined);
+      console.log('[WEBRTC WIDGET] PBX ORIGINATE SONUÇ:', r?.data);
       if (r?.success && r.data?.success_api) {
         pbxBasarili = true;
         setStatusMsg('PBX ÇAĞRI BAŞLATILDI - ' + cleanNum);
         api.netsantralAramaLogCreate({
-          arayan: MR._netsantralDahili, aranan: cleanNum, arayan_adi: '', yon: 'giden', durum: 'gorusmede'
+          arayan: MR._netsantralDahili, aranan: apiNum, arayan_adi: '', yon: 'giden', durum: 'gorusmede'
         }).then(r => { if (r?.success && r.data?.log_id) activeLogIdRef.current = r.data.log_id; }).catch(() => {});
+      } else {
+        console.warn('[WEBRTC WIDGET] PBX ORIGINATE BAŞARISIZ:', r?.data?.response?.hata_mesaj || 'BİLİNMEYEN HATA');
       }
     } catch(e) {
       console.warn('[WEBRTC WIDGET] PBX ORIGINATE HATASI:', e);
@@ -1115,12 +1122,13 @@ const NetsantralPanel = ({user, setPage}) => {
 
     /* ÖNCELİK 2: PBX BAŞARISIZSA DOĞRUDAN WEBRTC SIP İLE ARA */
     if (!pbxBasarili) {
+      console.log('[WEBRTC WIDGET] PBX BAŞARISIZ → WEBRTC SIP İLE ARANACAK:', cleanNum);
       try {
         const ok = await MR.webrtcTelefon.ara(cleanNum);
         if (ok) {
-          setStatusMsg('ÇAĞRI GÖNDERİLDİ - ' + cleanNum);
+          setStatusMsg('WEBRTC ÇAĞRI GÖNDERİLDİ - ' + cleanNum);
           api.netsantralAramaLogCreate({
-            arayan: MR._netsantralDahili, aranan: cleanNum, arayan_adi: '', yon: 'giden', durum: 'gorusmede'
+            arayan: MR._netsantralDahili, aranan: apiNum, arayan_adi: '', yon: 'giden', durum: 'gorusmede'
           }).then(r => { if (r?.success && r.data?.log_id) activeLogIdRef.current = r.data.log_id; }).catch(() => {});
         } else {
           setStatusMsg('ARAMA BAŞLATILAMADI');

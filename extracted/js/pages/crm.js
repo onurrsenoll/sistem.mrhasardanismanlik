@@ -1345,7 +1345,11 @@ MR._CRMYeniInner = ({setPage}) => {
       }
       setError('');
       pbxOriginatedRef.current = false;
-      const cleanNum = f.telefon.replace(/[\s\-\(\)]/g, '').replace(/^0/, '90');
+      /* ORIGINATE API İÇİN 90 FORMATINA ÇEVİR */
+      let cleanNum = f.telefon.replace(/[\s\-\(\)]/g, '');
+      if (cleanNum.startsWith('0') && cleanNum.length === 11) { cleanNum = '9' + cleanNum; }
+      else if (cleanNum.length === 10 && !cleanNum.startsWith('0')) { cleanNum = '90' + cleanNum; }
+      /* cleanNum artık 905550984254 formatında */
 
       /* WEBRTC SIP İLE DOĞRUDAN ARAMA (BİRİNCİL YÖNTEM) */
       const sipAramaYap = async () => {
@@ -1355,6 +1359,7 @@ MR._CRMYeniInner = ({setPage}) => {
             window.dispatchEvent(new CustomEvent('mr-arama-baslat', {
               detail: { telefon: f.telefon, ad: f.ad_soyad || '', yon: 'giden', timestamp: Date.now() }
             }));
+            /* WEBRTC İÇİN ORIJINAL NUMARAYI GÖNDER - webrtc-phone.js KENDİ FORMATLAYACAK */
             const sonuc = await MR.webrtcTelefon.ara(f.telefon);
             if (sonuc) {
               console.log('[CRM] WEBRTC SIP ARAMA BAŞLATILDI:', f.telefon);

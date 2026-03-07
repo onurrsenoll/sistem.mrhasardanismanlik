@@ -64,11 +64,16 @@ if (empty($dahili)) {
     ]);
 }
 
-// NUMARA FORMATLA (90 ile başlamalı)
-if (substr($numara, 0, 2) !== '90' && strlen($numara) === 10) {
-    $numara = '90' . $numara;
+// NUMARA FORMATLA (NetGSM Netsantral API için)
+// NetGSM API '905551234567' formatını bekler (12 hane, 90 ile başlar)
+if (substr($numara, 0, 2) === '90' && strlen($numara) === 12) {
+    // Zaten doğru formatta: 905551234567
 } elseif (substr($numara, 0, 1) === '0' && strlen($numara) === 11) {
+    // 05551234567 → 905551234567
     $numara = '9' . $numara;
+} elseif (strlen($numara) === 10 && substr($numara, 0, 1) !== '0') {
+    // 5551234567 → 905551234567
+    $numara = '90' . $numara;
 }
 
 // SANTRAL NUMARASINI TEMİZLE

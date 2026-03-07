@@ -1,8 +1,14 @@
 /* ============================================================
-   MR HASAR DANIŞMANLIK – WEBRTC TELEFON MODÜLÜ v3.0
+   MR HASAR DANIŞMANLIK – WEBRTC TELEFON MODÜLÜ v4.0
    GELİŞMİŞ SES / MİKROFON / HOPARLÖR YÖNETİMİ
    JsSIP İLE TARAYICI İÇİ SOFTPHONE
    wss://sip6.netsantral.com:8089/ws ÜZERİNDEN NETGSM PBX'E BAĞLANIR
+
+   v4.0 DEĞİŞİKLİKLER:
+   - ICE BAĞLANTI HATASI DÜZELTMESI (TURN RELAY EKLENDİ)
+   - GELEN ÇAĞRI CEVAPLAMA DÜZELTMESI
+   - GİDEN ARAMA ICE RESTART MEKANİZMASI
+   - SESSION TIMERS ÇAKIŞMASI GİDERİLDİ
    ============================================================ */
 
 const MR = window.MR || (window.MR = {});
@@ -19,6 +25,8 @@ MR.webrtcTelefon = {
   _ringtoneCtx: null,
   _ringbackCtx: null,
   _ringbackTimer: null,
+  _iceRestartCount: 0,
+  _iceMaxRestart: 3,
 
   /* ═══ SES YÖNETİMİ ═══ */
   _sesAyarlari: {
@@ -62,7 +70,8 @@ MR.webrtcTelefon = {
       { urls: 'stun:stun3.l.google.com:19302' },
       { urls: 'stun:stun4.l.google.com:19302' }
     ];
-    /* TURN SUNUCUSU VARSA EKLE (NAT ARKASI İÇİN KRİTİK) */
+
+    /* KULLANICI TURN SUNUCUSU VARSA EKLE */
     if (this._config.turnUrl) {
       servers.push({
         urls: this._config.turnUrl,
@@ -70,6 +79,21 @@ MR.webrtcTelefon = {
         credential: this._config.turnPass || ''
       });
     }
+
+    /* NETSANTRAL MEDYA RELAY - SIP SUNUCUSUNUN KENDİSİ ÜZERİNDEN GEÇ */
+    /* NAT ARKASINDA STUN YETERSİZ KALDIĞINDA BU SUNUCULAR DEVREYE GİRER */
+    servers.push({ urls: 'stun:sip6.netsantral.com:3478' });
+    servers.push({
+      urls: 'turn:sip6.netsantral.com:3478?transport=udp',
+      username: this._config.dahili + (this._config.santralNo ? '-' + (this._config.santralNo || '').replace(/^0+/, '') : ''),
+      credential: this._config.sipSifre || ''
+    });
+    servers.push({
+      urls: 'turn:sip6.netsantral.com:3478?transport=tcp',
+      username: this._config.dahili + (this._config.santralNo ? '-' + (this._config.santralNo || '').replace(/^0+/, '') : ''),
+      credential: this._config.sipSifre || ''
+    });
+
     return servers;
   },
 
@@ -172,8 +196,9 @@ MR.webrtcTelefon = {
         register: true,
         register_expires: 300,
         session_timers: false,
-        connection_recovery_min_interval: 4,
-        connection_recovery_max_interval: 30
+        no_answer_timeout: 60,
+        connection_recovery_min_interval: 2,
+        connection_recovery_max_interval: 15
       });
 
       this._ua.on('registered', function() {
@@ -290,6 +315,11 @@ MR.webrtcTelefon = {
     }
 
     var cleanNum = numara.replace(/[\s\-\(\)\+]/g, '');
+    /* NETSANTRAL SIP GW İÇİN NUMARA FORMATI:
+       - 0 ile başlayan: olduğu gibi gönder (ör: 05550984254)
+       - 90 ile başlayan ve 12+ hane: 0 + son 10 hane (ör: 905550984254 → 05550984254)
+       - 10 hane: başına 0 ekle (ör: 5550984254 → 05550984254)
+    */
     if (cleanNum.startsWith('90') && cleanNum.length >= 12) {
       cleanNum = '0' + cleanNum.substring(2);
     } else if (!cleanNum.startsWith('0') && cleanNum.length === 10) {
@@ -298,6 +328,7 @@ MR.webrtcTelefon = {
 
     var targetUri = 'sip:' + cleanNum + '@' + this._config.domain;
     console.log('[WEBRTC] ARAMA BAŞLATILIYOR:', cleanNum, '| URI:', targetUri);
+    this._iceRestartCount = 0;
 
     this._aramaDurumu = 'araniyor';
     this._durumBildir('araniyor', cleanNum);
@@ -307,14 +338,16 @@ MR.webrtcTelefon = {
 
     try {
       var iceServers = this._getIceServers();
+      this._iceRestartCount = 0;
       var callOptions = {
         pcConfig: {
           iceServers: iceServers,
-          iceTransportPolicy: this._config.turnUrl ? 'all' : 'all',
-          iceCandidatePoolSize: 2
+          iceTransportPolicy: 'all',
+          iceCandidatePoolSize: 4,
+          bundlePolicy: 'max-bundle',
+          rtcpMuxPolicy: 'require'
         },
-        rtcOfferConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false },
-        sessionTimersExpires: 180
+        rtcOfferConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false }
       };
 
       /* ÖZEL MİKROFON AKIŞI VARSA KULLAN, YOKSA JsSIP KENDİ getUserMedia'SINI KULLANSIN */
@@ -358,8 +391,20 @@ MR.webrtcTelefon = {
 
     this._session = session;
     this._aramaDurumu = 'gelen';
+    this._iceRestartCount = 0;
     this._sessionOlaylariBagla(session);
     this._zilCaldir();
+
+    /* GELEN ÇAĞRI İÇİN 180 RINGING GÖNDERMEYİ DENE - SESSION'IN ZAMAN AŞIMINA UĞRAMASINI ENGELLE */
+    try {
+      if (typeof session.progress === 'function') {
+        session.progress({ statusCode: 180, reasonPhrase: 'Ringing' });
+        console.log('[WEBRTC] 180 RINGING GÖNDERİLDİ ✓');
+      }
+    } catch(e) {
+      /* JsSIP bazı versiyonlarda progress desteklemeyebilir */
+      console.warn('[WEBRTC] 180 RINGING GÖNDERİLEMEDİ:', e.message);
+    }
 
     /* MİKROFONU ÖN-HAZIRLA: CEVAPLA BUTONUNA BASILDIĞINDA GECİKME OLMASIN */
     this._preStream = null;
@@ -433,14 +478,16 @@ MR.webrtcTelefon = {
 
     try {
       var iceServers = this._getIceServers();
+      this._iceRestartCount = 0;
       var answerOptions = {
         pcConfig: {
           iceServers: iceServers,
-          iceTransportPolicy: this._config.turnUrl ? 'all' : 'all',
-          iceCandidatePoolSize: 2
+          iceTransportPolicy: 'all',
+          iceCandidatePoolSize: 4,
+          bundlePolicy: 'max-bundle',
+          rtcpMuxPolicy: 'require'
         },
-        rtcAnswerConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false },
-        sessionTimersExpires: 180
+        rtcAnswerConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false }
       };
 
       /* ÖZEL MİKROFON AKIŞI VARSA KULLAN, YOKSA JsSIP KENDİ getUserMedia'SINI KULLANSIN */
@@ -455,6 +502,16 @@ MR.webrtcTelefon = {
       this._aramaDurumu = 'gorusmede';
       this._durumBildir('gorusmede');
       console.log('[WEBRTC] CEVAPLA: ÇAĞRI CEVAPLANDI ✓');
+
+      /* CEVAPLAMA SONRASI SES KONTROLÜ - 1 SANİYE SONRA SES AKMIYORSA TEKRAR DENE */
+      var self2 = this;
+      setTimeout(function() {
+        if (self2._session === session && self2._remoteAudio && !self2._remoteAudio.srcObject) {
+          console.warn('[WEBRTC] CEVAPLA: SES AKIŞI GELMEDİ - TEKRAR KONTROL EDİLİYOR...');
+          self2._sesAyarla(session);
+        }
+      }, 1500);
+
       return true;
     } catch(e) {
       console.error('[WEBRTC] CEVAPLAMA HATASI:', e);
@@ -667,18 +724,51 @@ MR.webrtcTelefon = {
       /* ICE BAĞLANTI DURUMUNU İZLE */
       pc.oniceconnectionstatechange = function() {
         console.log('[WEBRTC] ICE DURUMU:', pc.iceConnectionState);
+
+        if (pc.iceConnectionState === 'disconnected') {
+          /* DISCONNECTED DURUMU - HEMEN ÖLMEDEN ÖNCE BİRAZ BEKLE, RECOVER OLABİLİR */
+          console.warn('[WEBRTC] ICE DISCONNECTED - 3 SANİYE SONRA KONTROL EDİLECEK...');
+          setTimeout(function() {
+            if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+              if (self._iceRestartCount < self._iceMaxRestart) {
+                self._iceRestartCount++;
+                console.log('[WEBRTC] ICE RESTART DENENİYOR (' + self._iceRestartCount + '/' + self._iceMaxRestart + ')');
+                try {
+                  pc.restartIce();
+                } catch(e) {
+                  console.error('[WEBRTC] ICE RESTART HATASI:', e);
+                }
+              } else {
+                console.error('[WEBRTC] ICE RESTART LİMİTİNE ULAŞILDI - MEDYA BAĞLANTISI KURULAMADI');
+              }
+            } else {
+              console.log('[WEBRTC] ICE KENDILIĞINDEN DÜZELDI:', pc.iceConnectionState);
+            }
+          }, 3000);
+        }
+
         if (pc.iceConnectionState === 'failed') {
-          console.error('[WEBRTC] ICE BAŞARISIZ - MEDYA BAĞLANTISI KURULAMADI! TURN SUNUCUSU GEREKEBİLİR.');
-          /* ICE RESTART DENE */
-          try {
-            pc.restartIce();
-            console.log('[WEBRTC] ICE RESTART DENENİYOR...');
-          } catch(e) {
-            console.error('[WEBRTC] ICE RESTART HATASI:', e);
+          if (self._iceRestartCount < self._iceMaxRestart) {
+            self._iceRestartCount++;
+            console.log('[WEBRTC] ICE FAILED - RESTART DENENİYOR (' + self._iceRestartCount + '/' + self._iceMaxRestart + ')');
+            try {
+              pc.restartIce();
+            } catch(e) {
+              console.error('[WEBRTC] ICE RESTART HATASI:', e);
+            }
+          } else {
+            console.error('[WEBRTC] ICE TAMAMEN BAŞARISIZ - TURN SUNUCUSU GEREKEBİLİR.');
           }
         }
+
         if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+          self._iceRestartCount = 0;
           self._ringbackDurdur();
+          console.log('[WEBRTC] ICE BAĞLANTI BAŞARILI ✓');
+          /* BAĞLANTI BAŞARILI - SES AKIŞINI TEKRAR KONTROL ET */
+          if (self._remoteAudio && !self._remoteAudio.srcObject) {
+            self._sesAyarla(session);
+          }
         }
       };
     });
@@ -719,6 +809,7 @@ MR.webrtcTelefon = {
     this._session = null;
     this._aramaDurumu = 'bos';
     this._muteState = false;
+    this._iceRestartCount = 0;
 
     /* ÖN-HAZIRLANMIŞ MİKROFON AKIŞINI DURDUR */
     if (this._preStream) {
