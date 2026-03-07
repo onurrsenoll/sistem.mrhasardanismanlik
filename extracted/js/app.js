@@ -1052,7 +1052,7 @@ const NetsantralPanel = ({user, setPage}) => {
   const dialKey = (key) => setNumber(prev => prev + key);
 
   /* ─── GİDEN ARAMA BAŞLAT ─── */
-  const aramaBaslat = () => {
+  const aramaBaslat = async () => {
     if (!number) return;
     if (!MR.webrtcTelefon || !MR.webrtcTelefon._kayitli) {
       setStatusMsg('WEBRTC KAYITLI DEĞİL! SİSTEM > NETSANTRAL AYARLARINDAN SIP ŞİFRESİ GİRİN.');
@@ -1076,7 +1076,7 @@ const NetsantralPanel = ({user, setPage}) => {
     else if (cleanNum.length === 10 && /^\d{10}$/.test(cleanNum)) { cleanNum = '90' + cleanNum; }
 
     try {
-      const ok = MR.webrtcTelefon.ara(cleanNum);
+      const ok = await MR.webrtcTelefon.ara(cleanNum);
       if (ok) {
         setStatusMsg('ÇAĞRI GÖNDERİLDİ - ' + cleanNum);
         api.netsantralAramaLogCreate({
@@ -1094,9 +1094,9 @@ const NetsantralPanel = ({user, setPage}) => {
   };
 
   /* ─── GELEN ÇAĞRI CEVAPLA + CRM SAYFASI AÇ ─── */
-  const cagriCevapla = () => {
+  const cagriCevapla = async () => {
     if (!MR.webrtcTelefon) return;
-    MR.webrtcTelefon.cevapla();
+    await MR.webrtcTelefon.cevapla();
     const arayanNo = gelenCagriData?.arayan || number;
     const arayanAdi = gelenCagriData?.arayanAdi || '';
     setGelenCagriData(null);

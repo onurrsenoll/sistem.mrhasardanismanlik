@@ -284,7 +284,6 @@ MR.webrtcTelefon = {
 
     try {
       var callOptions = {
-        mediaConstraints: { audio: true, video: false },
         pcConfig: {
           iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
@@ -294,9 +293,12 @@ MR.webrtcTelefon = {
         rtcOfferConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false }
       };
 
-      /* ÖZEL MİKROFON AKIŞI VARSA KULLAN */
+      /* ÖZEL MİKROFON AKIŞI VARSA KULLAN, YOKSA JsSIP KENDİ getUserMedia'SINI KULLANSIN */
       if (localStream) {
         callOptions.mediaStream = localStream;
+        callOptions.mediaConstraints = { audio: false, video: false };
+      } else {
+        callOptions.mediaConstraints = { audio: true, video: false };
       }
 
       var session = this._ua.call(targetUri, callOptions);
@@ -351,12 +353,15 @@ MR.webrtcTelefon = {
 
     try {
       var answerOptions = {
-        mediaConstraints: { audio: true, video: false },
         pcConfig: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
       };
 
+      /* ÖZEL MİKROFON AKIŞI VARSA KULLAN, YOKSA JsSIP KENDİ getUserMedia'SINI KULLANSIN */
       if (localStream) {
         answerOptions.mediaStream = localStream;
+        answerOptions.mediaConstraints = { audio: false, video: false };
+      } else {
+        answerOptions.mediaConstraints = { audio: true, video: false };
       }
 
       this._session.answer(answerOptions);
