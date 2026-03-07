@@ -1182,23 +1182,24 @@ MR._CRMYeniInner = ({setPage}) => {
   /* ── NETSANTRAL PANELİNDEN VEYA WEBRTC'DEN ÇAĞRI SONLANDIRILINCA DİNLE ── */
   useEffect(() => {
     const handler = () => {
-      if (callActive) {
-        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-        setCallActive(false);
-      }
+      /* STALE CLOSURE SORUNUNU ÖNLEMEK İÇİN DOĞRUDAN set KULLAN */
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      setCallActive(false);
+      pbxOriginatedRef.current = false;
     };
     /* WEBRTC DURUM DİNLEYİCİSİ - ÇAĞRI BİTTİĞİNDE UI'I GÜNCELLE */
     const webrtcHandler = (e) => {
       const d = e.detail || {};
-      if (d.durum === 'kapandi' || d.durum === 'hata') {
-        if (callActive) {
-          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-          setCallActive(false);
-          pbxOriginatedRef.current = false;
-        }
+      if (d.durum === 'kapandi' || d.durum === 'hata' || d.durum === 'reddedildi') {
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+        setCallActive(false);
+        pbxOriginatedRef.current = false;
       } else if (d.durum === 'gorusmede') {
-        /* GÖRÜŞME BAŞLADI - TIMER HALA ÇALIŞIYORSA DEVAM ET */
-        if (!callActive) setCallActive(true);
+        /* GÖRÜŞME BAŞLADI */
+        setCallActive(true);
+      } else if (d.durum === 'araniyor' || d.durum === 'caliyor') {
+        /* GİDEN ARAMA ÇALIYOR */
+        setCallActive(true);
       }
     };
     window.addEventListener('mr-arama-sonlandi', handler);
@@ -1207,7 +1208,7 @@ MR._CRMYeniInner = ({setPage}) => {
       window.removeEventListener('mr-arama-sonlandi', handler);
       window.removeEventListener('mr-webrtc-durum', webrtcHandler);
     };
-  }, [callActive]);
+  }, []); /* BOŞ DEP ARRAY - STALE CLOSURE SORUNU DÜZELTİLDİ */
 
   /* ── ÇAĞRI ZAMANLAYICI (REF BAZLI - RE-RENDER ENGELLER) ── */
   const [callActive, setCallActive] = useState(false);

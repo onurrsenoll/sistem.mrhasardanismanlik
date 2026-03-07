@@ -373,7 +373,8 @@ MR.webrtcTelefon = {
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' }
           ]
-        }
+        },
+        rtcAnswerConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false }
       };
 
       /* ÖZEL MİKROFON AKIŞI VARSA KULLAN, YOKSA JsSIP KENDİ getUserMedia'SINI KULLANSIN */
@@ -401,6 +402,7 @@ MR.webrtcTelefon = {
     if (!this._session) return;
     console.log('[WEBRTC] REDDET: ÇAĞRI REDDEDİLİYOR... direction:', this._session.direction, 'durum:', this._aramaDurumu);
     this._zilDurdur();
+    this._ringbackDurdur();
     try {
       this._session.terminate({ status_code: 486, reason_phrase: 'Busy Here' });
     } catch(e) {
@@ -408,13 +410,21 @@ MR.webrtcTelefon = {
     }
     this._temizle();
     this._durumBildir('reddedildi');
+    window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
   },
 
   /* ═══ KAPAT ═══ */
   kapat: function() {
     this._zilDurdur();
     this._ringbackDurdur();
-    if (!this._session) return;
+    if (!this._session) {
+      /* SESSION YOK AMA DURUM 'bos' DEĞİLSE TEMİZLE */
+      if (this._aramaDurumu !== 'bos') {
+        this._temizle();
+        this._durumBildir('kapandi');
+      }
+      return;
+    }
     try { this._session.terminate(); } catch(e) {}
     this._temizle();
     this._durumBildir('kapandi');
@@ -501,14 +511,19 @@ MR.webrtcTelefon = {
       self._ringbackDurdur();
       self._temizle();
       self._durumBildir('kapandi');
+      /* TÜM DİNLEYİCİLERİ BİLGİLENDİR (SOL PANEL, WİDGET vs.) */
+      window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
     });
 
     session.on('failed', function(e) {
-      console.error('[WEBRTC] ÇAĞRI BAŞARISIZ:', e && e.cause ? e.cause : '');
+      var cause = e && e.cause ? e.cause : '';
+      console.error('[WEBRTC] ÇAĞRI BAŞARISIZ:', cause);
       self._zilDurdur();
       self._ringbackDurdur();
       self._temizle();
-      self._durumBildir('hata', 'ÇAĞRI BAŞARISIZ: ' + (e && e.cause ? e.cause : ''));
+      self._durumBildir('hata', 'ÇAĞRI BAŞARISIZ: ' + cause);
+      /* TÜM DİNLEYİCİLERİ BİLGİLENDİR */
+      window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
     });
 
     session.on('refer', function() {
@@ -619,6 +634,15 @@ MR.webrtcTelefon = {
       this._localStream.getTracks().forEach(function(t) { t.stop(); });
       this._localStream = null;
     }
+
+    /* UZAK SES ELEMENTİNİ TEMİZLE - ESKİ AKIŞIN ÇALMAYA DEVAM ETMESİNİ ENGELLE */
+    if (this._remoteAudio) {
+      this._remoteAudio.pause();
+      this._remoteAudio.srcObject = null;
+    }
+
+    /* MİKROFON AudioContext TEMİZLE */
+    this._audioContextKapat();
   },
 
   /* ═══ SES ELEMENTİ (GELİŞMİŞ) ═══ */
@@ -656,6 +680,10 @@ MR.webrtcTelefon = {
     var self = this;
     try {
       var ac = new (window.AudioContext || window.webkitAudioContext)();
+      /* TARAYICI AUTOPLAY POLİTİKASI: AudioContext suspended OLABİLİR - RESUME ET */
+      if (ac.state === 'suspended') {
+        ac.resume().catch(function() {});
+      }
       this._ringbackCtx = ac;
       var vol = this._sesAyarlari.ringbackVolume;
 
@@ -720,6 +748,10 @@ MR.webrtcTelefon = {
     var self = this;
     try {
       var ac = new (window.AudioContext || window.webkitAudioContext)();
+      /* TARAYICI AUTOPLAY POLİTİKASI: AudioContext suspended OLABİLİR - RESUME ET */
+      if (ac.state === 'suspended') {
+        ac.resume().catch(function() {});
+      }
       var vol = this._sesAyarlari.ringtoneVolume;
 
       var caldir = function() {

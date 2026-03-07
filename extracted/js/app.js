@@ -974,8 +974,11 @@ const NetsantralPanel = ({user, setPage}) => {
           break;
         case 'hata':
           setActiveCall(false);
+          setMuted(false);
           setStatus('hazir');
           setGelenCagriData(null);
+          setCrmKayit(null);
+          activeLogIdRef.current = 0;
           setStatusMsg(d.detay || 'WEBRTC HATASI');
           setTimeout(() => setStatusMsg(''), 5000);
           break;
