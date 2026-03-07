@@ -67,14 +67,13 @@ MR.webrtcTelefon = {
   /* ═══ ICE SUNUCULARI ═══ */
   _getIceServers: function() {
     var servers = [
-      /* SADECE 2 STUN YETERLİ - FAZLA STUN GECİKME YAPAR */
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' }
     ];
 
-    /* KULLANICI TURN SUNUCUSU VARSA EKLE */
+    /* KULLANICI TURN SUNUCUSU VARSA EN BAŞA EKLE (EN YÜKSEK ÖNCELİK) */
     if (this._config.turnUrl) {
-      servers.push({
+      servers.unshift({
         urls: this._config.turnUrl,
         username: this._config.turnUser || '',
         credential: this._config.turnPass || ''
@@ -82,35 +81,55 @@ MR.webrtcTelefon = {
     }
 
     /* NETSANTRAL MEDYA RELAY - SIP SUNUCUSUNUN KENDİSİ ÜZERİNDEN GEÇ */
-    /* NAT ARKASINDA STUN YETERSİZ KALDIĞINDA BU SUNUCULAR DEVREYE GİRER */
     var santralNo = (this._config.santralNo || '').replace(/^0+/, '');
-    var authUser = this._config.dahili + (santralNo ? '-' + santralNo : '');
+    var sipSifre = this._config.sipSifre || '';
+    var kullanici = this._config.kullanici || '';
 
+    /* NETSANTRAL STUN */
     servers.push({ urls: 'stun:sip6.netsantral.com:3478' });
 
     /* TURN - FARKLI KİMLİK DOĞRULAMA FORMATLARI DENE */
-    /* FORMAT 1: dahili-santralNo (SIP kayıt formatı) */
+    /* FORMAT 1: kullanici (hat kullanıcı adı - genellikle telefon numarası) */
+    if (kullanici) {
+      servers.push({
+        urls: ['turn:sip6.netsantral.com:3478?transport=udp', 'turn:sip6.netsantral.com:3478?transport=tcp'],
+        username: kullanici,
+        credential: sipSifre
+      });
+    }
+
+    /* FORMAT 2: dahili-santralNo (SIP kayıt formatı) */
+    var authUser = this._config.dahili + (santralNo ? '-' + santralNo : '');
     servers.push({
       urls: ['turn:sip6.netsantral.com:3478?transport=udp', 'turn:sip6.netsantral.com:3478?transport=tcp'],
       username: authUser,
-      credential: this._config.sipSifre || ''
+      credential: sipSifre
     });
 
-    /* FORMAT 2: sadece dahili (bazı TURN sunucuları sadece dahili bekler) */
+    /* FORMAT 3: sadece dahili */
     if (santralNo) {
       servers.push({
         urls: ['turn:sip6.netsantral.com:3478?transport=udp', 'turn:sip6.netsantral.com:3478?transport=tcp'],
         username: this._config.dahili,
-        credential: this._config.sipSifre || ''
+        credential: sipSifre
       });
     }
 
-    /* FORMAT 3: TURN over TLS port 443 (güvenlik duvarı/VPN arkası için) */
+    /* FORMAT 4: TURN over TLS port 443 (güvenlik duvarı/VPN arkası için) */
     servers.push({
       urls: ['turns:sip6.netsantral.com:443?transport=tcp'],
       username: authUser,
-      credential: this._config.sipSifre || ''
+      credential: sipSifre
     });
+
+    /* FORMAT 5: kullanici ile TLS */
+    if (kullanici) {
+      servers.push({
+        urls: ['turns:sip6.netsantral.com:443?transport=tcp'],
+        username: kullanici,
+        credential: sipSifre
+      });
+    }
 
     /* STUN - NETSANTRAL ALTERNATİF PORTLAR */
     servers.push({ urls: 'stun:sip6.netsantral.com:5349' });
@@ -216,8 +235,7 @@ MR.webrtcTelefon = {
         display_name: 'MR HASAR CRM',
         register: true,
         register_expires: 300,
-        session_timers: true,
-        session_timers_refresh_method: 'update',
+        session_timers: false,
         no_answer_timeout: 60,
         connection_recovery_min_interval: 2,
         connection_recovery_max_interval: 15
@@ -365,9 +383,9 @@ MR.webrtcTelefon = {
         pcConfig: {
           iceServers: iceServers,
           iceTransportPolicy: 'all',
-          iceCandidatePoolSize: 0,
-          bundlePolicy: 'balanced',
-          rtcpMuxPolicy: 'negotiate'
+          iceCandidatePoolSize: 1,
+          bundlePolicy: 'max-bundle',
+          rtcpMuxPolicy: 'require'
         },
         rtcOfferConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false }
       };
@@ -431,7 +449,15 @@ MR.webrtcTelefon = {
     /* MİKROFONU ÖN-HAZIRLA: CEVAPLA BUTONUNA BASILDIĞINDA GECİKME OLMASIN */
     this._preStream = null;
     var self = this;
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+    var audioConstraints = {
+      echoCancellation: self._sesAyarlari.echoCancellation,
+      noiseSuppression: self._sesAyarlari.noiseSuppression,
+      autoGainControl: self._sesAyarlari.autoGainControl
+    };
+    if (self._sesAyarlari.mikrofonId) {
+      audioConstraints.deviceId = { exact: self._sesAyarlari.mikrofonId };
+    }
+    navigator.mediaDevices.getUserMedia({ audio: audioConstraints }).then(function(stream) {
       self._preStream = stream;
       console.log('[WEBRTC] MİKROFON ÖN-HAZIRLIK TAMAMLANDI ✓');
     }).catch(function(e) {
@@ -475,10 +501,19 @@ MR.webrtcTelefon = {
     try {
       if (this._preStream) {
         /* ÖN-HAZIRLANMIŞ MİKROFON AKIŞI - HIZLI CEVAPLAMA */
-        localStream = this._preStream;
-        this._preStream = null;
-        this._localStream = localStream;
-        console.log('[WEBRTC] CEVAPLA: ÖN-HAZIRLANMIŞ MİKROFON KULLANILIYOR ✓');
+        /* TRACKLERIN HALA AKTİF OLDUĞUNU KONTROL ET */
+        var tracks = this._preStream.getAudioTracks();
+        if (tracks.length > 0 && tracks[0].readyState === 'live') {
+          localStream = this._preStream;
+          this._preStream = null;
+          this._localStream = localStream;
+          console.log('[WEBRTC] CEVAPLA: ÖN-HAZIRLANMIŞ MİKROFON KULLANILIYOR ✓');
+        } else {
+          console.warn('[WEBRTC] CEVAPLA: ÖN-HAZIRLANMIŞ MİKROFON ÖLÜ - YENİ ALINIYOR');
+          this._preStream.getTracks().forEach(function(t) { t.stop(); });
+          this._preStream = null;
+          localStream = await this._mikrofonAkisiOlustur();
+        }
       } else {
         localStream = await this._mikrofonAkisiOlustur();
       }
@@ -505,9 +540,9 @@ MR.webrtcTelefon = {
         pcConfig: {
           iceServers: iceServers,
           iceTransportPolicy: 'all',
-          iceCandidatePoolSize: 0,
-          bundlePolicy: 'balanced',
-          rtcpMuxPolicy: 'negotiate'
+          iceCandidatePoolSize: 1,
+          bundlePolicy: 'max-bundle',
+          rtcpMuxPolicy: 'require'
         },
         rtcAnswerConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false }
       };
@@ -520,19 +555,32 @@ MR.webrtcTelefon = {
         answerOptions.mediaConstraints = { audio: true, video: false };
       }
 
+      console.log('[WEBRTC] CEVAPLA: session.answer() ÇAĞRILIYOR...', JSON.stringify({
+        iceServerCount: iceServers.length,
+        hasMediaStream: !!localStream,
+        sessionStatus: session.status,
+        sessionDirection: session.direction
+      }));
+
       session.answer(answerOptions);
       this._aramaDurumu = 'gorusmede';
       this._durumBildir('gorusmede');
       console.log('[WEBRTC] CEVAPLA: ÇAĞRI CEVAPLANDI ✓');
 
-      /* CEVAPLAMA SONRASI SES KONTROLÜ - 1 SANİYE SONRA SES AKMIYORSA TEKRAR DENE */
+      /* CEVAPLAMA SONRASI SES KONTROLÜ - 1.5 VE 3 SANİYE SONRA KONTROL ET */
       var self2 = this;
       setTimeout(function() {
         if (self2._session === session && self2._remoteAudio && !self2._remoteAudio.srcObject) {
-          console.warn('[WEBRTC] CEVAPLA: SES AKIŞI GELMEDİ - TEKRAR KONTROL EDİLİYOR...');
+          console.warn('[WEBRTC] CEVAPLA: SES AKIŞI GELMEDİ (1.5s) - TEKRAR KONTROL EDİLİYOR...');
           self2._sesAyarla(session);
         }
       }, 1500);
+      setTimeout(function() {
+        if (self2._session === session && self2._remoteAudio && !self2._remoteAudio.srcObject) {
+          console.warn('[WEBRTC] CEVAPLA: SES AKIŞI GELMEDİ (3s) - SON DENEME...');
+          self2._sesAyarla(session);
+        }
+      }, 3000);
 
       return true;
     } catch(e) {
@@ -626,10 +674,11 @@ MR.webrtcTelefon = {
 
     session.on('progress', function() {
       console.log('[WEBRTC] ÇALIYOR... direction:', session.direction, 'mevcut durum:', self._aramaDurumu);
-      /* GELEN ÇAĞRI İSE DURUMU 'gelen' OLARAK KORU - YOKSA cevapla() ÇALIŞMAZ */
       if (session.direction === 'incoming') {
-        /* GELEN ÇAĞRI: DURUMU DEĞİŞTİRME */
-        self._aramaDurumu = 'gelen';
+        /* GELEN ÇAĞRI: ZATEN CEVAPLANMIŞSA DURUMU DEĞİŞTİRME */
+        if (self._aramaDurumu !== 'gorusmede') {
+          self._aramaDurumu = 'gelen';
+        }
       } else {
         self._aramaDurumu = 'caliyor';
       }
