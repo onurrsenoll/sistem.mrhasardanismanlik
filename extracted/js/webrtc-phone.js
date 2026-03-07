@@ -27,6 +27,9 @@ MR.webrtcTelefon = {
   _ringbackTimer: null,
   _iceRestartCount: 0,
   _iceMaxRestart: 3,
+  _iceGatherTimer: null,
+  _iceConnectTimer: null,
+  _relayCandidateFound: false,
 
   /* ═══ SES YÖNETİMİ ═══ */
   _sesAyarlari: {
@@ -64,11 +67,9 @@ MR.webrtcTelefon = {
   /* ═══ ICE SUNUCULARI ═══ */
   _getIceServers: function() {
     var servers = [
+      /* SADECE 2 STUN YETERLİ - FAZLA STUN GECİKME YAPAR */
       { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'stun:stun2.l.google.com:19302' },
-      { urls: 'stun:stun3.l.google.com:19302' },
-      { urls: 'stun:stun4.l.google.com:19302' }
+      { urls: 'stun:stun1.l.google.com:19302' }
     ];
 
     /* KULLANICI TURN SUNUCUSU VARSA EKLE */
@@ -82,17 +83,37 @@ MR.webrtcTelefon = {
 
     /* NETSANTRAL MEDYA RELAY - SIP SUNUCUSUNUN KENDİSİ ÜZERİNDEN GEÇ */
     /* NAT ARKASINDA STUN YETERSİZ KALDIĞINDA BU SUNUCULAR DEVREYE GİRER */
+    var santralNo = (this._config.santralNo || '').replace(/^0+/, '');
+    var authUser = this._config.dahili + (santralNo ? '-' + santralNo : '');
+
     servers.push({ urls: 'stun:sip6.netsantral.com:3478' });
+
+    /* TURN - FARKLI KİMLİK DOĞRULAMA FORMATLARI DENE */
+    /* FORMAT 1: dahili-santralNo (SIP kayıt formatı) */
     servers.push({
-      urls: 'turn:sip6.netsantral.com:3478?transport=udp',
-      username: this._config.dahili + (this._config.santralNo ? '-' + (this._config.santralNo || '').replace(/^0+/, '') : ''),
+      urls: ['turn:sip6.netsantral.com:3478?transport=udp', 'turn:sip6.netsantral.com:3478?transport=tcp'],
+      username: authUser,
       credential: this._config.sipSifre || ''
     });
+
+    /* FORMAT 2: sadece dahili (bazı TURN sunucuları sadece dahili bekler) */
+    if (santralNo) {
+      servers.push({
+        urls: ['turn:sip6.netsantral.com:3478?transport=udp', 'turn:sip6.netsantral.com:3478?transport=tcp'],
+        username: this._config.dahili,
+        credential: this._config.sipSifre || ''
+      });
+    }
+
+    /* FORMAT 3: TURN over TLS port 443 (güvenlik duvarı/VPN arkası için) */
     servers.push({
-      urls: 'turn:sip6.netsantral.com:3478?transport=tcp',
-      username: this._config.dahili + (this._config.santralNo ? '-' + (this._config.santralNo || '').replace(/^0+/, '') : ''),
+      urls: ['turns:sip6.netsantral.com:443?transport=tcp'],
+      username: authUser,
       credential: this._config.sipSifre || ''
     });
+
+    /* STUN - NETSANTRAL ALTERNATİF PORTLAR */
+    servers.push({ urls: 'stun:sip6.netsantral.com:5349' });
 
     return servers;
   },
@@ -195,7 +216,8 @@ MR.webrtcTelefon = {
         display_name: 'MR HASAR CRM',
         register: true,
         register_expires: 300,
-        session_timers: false,
+        session_timers: true,
+        session_timers_refresh_method: 'update',
         no_answer_timeout: 60,
         connection_recovery_min_interval: 2,
         connection_recovery_max_interval: 15
@@ -343,9 +365,9 @@ MR.webrtcTelefon = {
         pcConfig: {
           iceServers: iceServers,
           iceTransportPolicy: 'all',
-          iceCandidatePoolSize: 4,
-          bundlePolicy: 'max-bundle',
-          rtcpMuxPolicy: 'require'
+          iceCandidatePoolSize: 0,
+          bundlePolicy: 'balanced',
+          rtcpMuxPolicy: 'negotiate'
         },
         rtcOfferConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false }
       };
@@ -483,9 +505,9 @@ MR.webrtcTelefon = {
         pcConfig: {
           iceServers: iceServers,
           iceTransportPolicy: 'all',
-          iceCandidatePoolSize: 4,
-          bundlePolicy: 'max-bundle',
-          rtcpMuxPolicy: 'require'
+          iceCandidatePoolSize: 0,
+          bundlePolicy: 'balanced',
+          rtcpMuxPolicy: 'negotiate'
         },
         rtcAnswerConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false }
       };
@@ -667,6 +689,8 @@ MR.webrtcTelefon = {
 
     session.on('peerconnection', function(data) {
       var pc = data.peerconnection;
+      self._relayCandidateFound = false;
+      var _hostCount = 0, _srflxCount = 0, _relayCount = 0;
 
       pc.ontrack = function(event) {
         if (event.track.kind === 'audio' && self._remoteAudio) {
@@ -707,19 +731,64 @@ MR.webrtcTelefon = {
         }
       };
 
-      /* ICE ADAYLARINI LOGLA (DEBUG İÇİN) */
+      /* ICE ADAYLARINI LOGLA VE FİLTRELE */
       pc.onicecandidate = function(event) {
         if (event.candidate) {
-          console.log('[WEBRTC] ICE ADAY:', event.candidate.type, event.candidate.protocol, event.candidate.address || '');
+          var c = event.candidate;
+          var addr = c.address || c.ip || '';
+
+          /* İSTATİSTİK */
+          if (c.type === 'host') _hostCount++;
+          else if (c.type === 'srflx') _srflxCount++;
+          else if (c.type === 'relay') {
+            _relayCount++;
+            self._relayCandidateFound = true;
+            console.log('[WEBRTC] ✓ RELAY (TURN) ADAY BULUNDU:', c.protocol, addr);
+          }
+
+          /* DOCKER/WSL ÖZEL AĞ ADAYLARINI LOGLA (172.16-31.x.x, 172.17.x.x) */
+          if (addr && /^172\.(1[6-9]|2\d|3[01])\./.test(addr)) {
+            console.log('[WEBRTC] ICE ADAY (Docker/WSL - muhtemelen işe yaramaz):', c.type, c.protocol, addr);
+          } else {
+            console.log('[WEBRTC] ICE ADAY:', c.type, c.protocol, addr);
+          }
         } else {
-          console.log('[WEBRTC] ICE ADAY TOPLAMA TAMAMLANDI');
+          /* ICE TOPLAMA TAMAMLANDI */
+          if (self._iceGatherTimer) { clearTimeout(self._iceGatherTimer); self._iceGatherTimer = null; }
+          console.log('[WEBRTC] ICE ADAY TOPLAMA TAMAMLANDI - host:', _hostCount, 'srflx:', _srflxCount, 'relay:', _relayCount);
+          if (_relayCount === 0) {
+            console.warn('[WEBRTC] ⚠ RELAY (TURN) ADAY BULUNAMADI! NAT/VPN/GÜVENLIK DUVARI SORUNU OLABİLİR.');
+            console.warn('[WEBRTC] ⚠ Cloudflare WARP veya VPN kullanıyorsanız DEVRE DIŞI BIRAKIN.');
+            console.warn('[WEBRTC] ⚠ Sadece STUN srflx adayları var (' + _srflxCount + ' adet) - simetrik NAT varsa çalışmaz.');
+          }
         }
       };
+
+      /* ICE TOPLAMA ZAMANAŞIMI - 8 SANİYE İÇİNDE TAMAMLANMAZSA UYAR */
+      self._iceGatherTimer = setTimeout(function() {
+        if (pc.iceGatheringState === 'gathering') {
+          console.warn('[WEBRTC] ⚠ ICE TOPLAMA 8 SANİYEDİR DEVAM EDİYOR - TURN sunucularına erişilemiyor olabilir');
+          console.log('[WEBRTC] Mevcut adaylar - host:', _hostCount, 'srflx:', _srflxCount, 'relay:', _relayCount);
+        }
+      }, 8000);
 
       /* ICE TOPLAMA DURUMUNU İZLE */
       pc.onicegatheringstatechange = function() {
         console.log('[WEBRTC] ICE TOPLAMA DURUMU:', pc.iceGatheringState);
       };
+
+      /* ICE BAĞLANTI ZAMANAŞIMI - 15 SANİYE İÇİNDE BAĞLANMAZSA UYAR */
+      self._iceConnectTimer = setTimeout(function() {
+        if (pc.iceConnectionState === 'checking' || pc.iceConnectionState === 'new') {
+          console.error('[WEBRTC] ⚠ ICE BAĞLANTISI 15 SANİYEDİR KURULAMIYOR!');
+          console.error('[WEBRTC] ⚠ MUHTEMEL NEDENLER:');
+          console.error('[WEBRTC]   1. Cloudflare WARP / VPN aktif → DEVRE DIŞI BIRAKIN');
+          console.error('[WEBRTC]   2. Güvenlik duvarı UDP trafiğini engelliyor');
+          console.error('[WEBRTC]   3. Simetrik NAT - TURN relay gerekli ama TURN sunucusu çalışmıyor');
+          console.error('[WEBRTC]   4. Docker Desktop / WSL ağ arayüzleri karışıklık yaratıyor');
+          self._durumBildir('hata', 'MEDYA BAĞLANTISI KURULAMIYOR - VPN/WARP KAPATIN VEYA FARKLI AĞ DENEYİN');
+        }
+      }, 15000);
 
       /* ICE BAĞLANTI DURUMUNU İZLE */
       pc.oniceconnectionstatechange = function() {
@@ -740,6 +809,7 @@ MR.webrtcTelefon = {
                 }
               } else {
                 console.error('[WEBRTC] ICE RESTART LİMİTİNE ULAŞILDI - MEDYA BAĞLANTISI KURULAMADI');
+                self._durumBildir('hata', 'MEDYA BAĞLANTISI KOPTU - VPN/WARP KAPATIN');
               }
             } else {
               console.log('[WEBRTC] ICE KENDILIĞINDEN DÜZELDI:', pc.iceConnectionState);
@@ -748,6 +818,7 @@ MR.webrtcTelefon = {
         }
 
         if (pc.iceConnectionState === 'failed') {
+          console.error('[WEBRTC] ICE TAMAMEN BAŞARISIZ! relay aday:', self._relayCandidateFound ? 'VAR' : 'YOK');
           if (self._iceRestartCount < self._iceMaxRestart) {
             self._iceRestartCount++;
             console.log('[WEBRTC] ICE FAILED - RESTART DENENİYOR (' + self._iceRestartCount + '/' + self._iceMaxRestart + ')');
@@ -757,14 +828,21 @@ MR.webrtcTelefon = {
               console.error('[WEBRTC] ICE RESTART HATASI:', e);
             }
           } else {
-            console.error('[WEBRTC] ICE TAMAMEN BAŞARISIZ - TURN SUNUCUSU GEREKEBİLİR.');
+            console.error('[WEBRTC] ICE TAMAMEN BAŞARISIZ - TURN SUNUCUSU GEREKLİ VEYA AĞ SORUNU VAR.');
+            if (!self._relayCandidateFound) {
+              console.error('[WEBRTC] ⚠ HİÇ RELAY ADAY BULUNAMADI - TURN SUNUCUSU ÇALIŞMIYOR VEYA KİMLİK DOĞRULAMA HATASI');
+            }
+            self._durumBildir('hata', 'MEDYA BAĞLANTISI KURULAMADI - AĞ SORUNU (VPN/WARP KAPATIN)');
           }
         }
 
         if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+          /* BAŞARILI - ZAMANAŞIMI SAYAÇLARINI TEMİZLE */
+          if (self._iceConnectTimer) { clearTimeout(self._iceConnectTimer); self._iceConnectTimer = null; }
+          if (self._iceGatherTimer) { clearTimeout(self._iceGatherTimer); self._iceGatherTimer = null; }
           self._iceRestartCount = 0;
           self._ringbackDurdur();
-          console.log('[WEBRTC] ICE BAĞLANTI BAŞARILI ✓');
+          console.log('[WEBRTC] ICE BAĞLANTI BAŞARILI ✓ (relay kullanıldı:', self._relayCandidateFound, ')');
           /* BAĞLANTI BAŞARILI - SES AKIŞINI TEKRAR KONTROL ET */
           if (self._remoteAudio && !self._remoteAudio.srcObject) {
             self._sesAyarla(session);
@@ -810,6 +888,11 @@ MR.webrtcTelefon = {
     this._aramaDurumu = 'bos';
     this._muteState = false;
     this._iceRestartCount = 0;
+    this._relayCandidateFound = false;
+
+    /* ICE ZAMANAŞIMI SAYAÇLARINI TEMİZLE */
+    if (this._iceGatherTimer) { clearTimeout(this._iceGatherTimer); this._iceGatherTimer = null; }
+    if (this._iceConnectTimer) { clearTimeout(this._iceConnectTimer); this._iceConnectTimer = null; }
 
     /* ÖN-HAZIRLANMIŞ MİKROFON AKIŞINI DURDUR */
     if (this._preStream) {

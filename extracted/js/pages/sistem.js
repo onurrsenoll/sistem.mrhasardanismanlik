@@ -2683,6 +2683,168 @@ const NetsantralCagriGecmisi = () => {
   );
 };
 
+/* ═══ WEBRTC AĞ TANILAMA BİLEŞENİ ═══ */
+const AgTanilama = () => {
+  const {C, S, LIcon} = MR;
+  const [sonuc, setSonuc] = useState(null);
+  const [calisiyor, setCalisiyor] = useState(false);
+
+  const tanilamaYap = async () => {
+    setCalisiyor(true);
+    setSonuc(null);
+    var raporlar = [];
+    var uyarilar = [];
+    var hatalar = [];
+
+    try {
+      /* 1. AĞ ARAYÜZLERI KONTROLÜ */
+      raporlar.push('🔍 AĞ ARAYÜZLERI KONTROL EDİLİYOR...');
+
+      /* 2. STUN TESTİ - PUBLIC IP BUL */
+      var stunSonuc = await new Promise(function(resolve) {
+        var pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+        var publicIp = null;
+        var candidates = [];
+        var timeout = setTimeout(function() { pc.close(); resolve({ publicIp: publicIp, candidates: candidates }); }, 5000);
+        pc.onicecandidate = function(e) {
+          if (e.candidate) {
+            candidates.push({ type: e.candidate.type, protocol: e.candidate.protocol, address: e.candidate.address || '' });
+            if (e.candidate.type === 'srflx' && e.candidate.address) publicIp = e.candidate.address;
+          } else {
+            clearTimeout(timeout); pc.close(); resolve({ publicIp: publicIp, candidates: candidates });
+          }
+        };
+        pc.createDataChannel('test');
+        pc.createOffer().then(function(o) { pc.setLocalDescription(o); });
+      });
+
+      if (stunSonuc.publicIp) {
+        raporlar.push('✅ STUN BAŞARILI - Public IP: ' + stunSonuc.publicIp);
+        /* CLOUDFLARE IP KONTROLÜ */
+        if (/^104\.(16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31)\./.test(stunSonuc.publicIp) ||
+            /^172\.(64|65|66|67|68|69|70|71)\./.test(stunSonuc.publicIp)) {
+          uyarilar.push('⚠️ PUBLIC IP CLOUDFLARE ARALIĞINDA (' + stunSonuc.publicIp + ') - WARP/VPN AKTİF OLABİLİR!');
+        }
+      } else {
+        hatalar.push('❌ STUN BAŞARISIZ - PUBLIC IP BULUNAMADI (güvenlik duvarı UDP engelliyor olabilir)');
+      }
+
+      /* HOST ADAY ANALİZİ */
+      var dockerIps = stunSonuc.candidates.filter(function(c) {
+        return c.type === 'host' && /^172\.(1[6-9]|2\d|3[01])\./.test(c.address);
+      });
+      if (dockerIps.length > 0) {
+        uyarilar.push('⚠️ Docker/WSL ağ arayüzleri tespit edildi (' + dockerIps.length + ' adet) - ICE karışıklığına neden olabilir');
+      }
+
+      raporlar.push('📊 Toplam ICE adayı: ' + stunSonuc.candidates.length +
+        ' (host:' + stunSonuc.candidates.filter(function(c) { return c.type === 'host'; }).length +
+        ' srflx:' + stunSonuc.candidates.filter(function(c) { return c.type === 'srflx'; }).length +
+        ' relay:' + stunSonuc.candidates.filter(function(c) { return c.type === 'relay'; }).length + ')');
+
+      /* 3. NETSANTRAL TURN TESTİ */
+      if (MR.webrtcTelefon && MR.webrtcTelefon._config.dahili) {
+        raporlar.push('🔍 NETSANTRAL TURN SUNUCUSU TEST EDİLİYOR...');
+        var turnSonuc = await new Promise(function(resolve) {
+          var santralNo = (MR.webrtcTelefon._config.santralNo || '').replace(/^0+/, '');
+          var authUser = MR.webrtcTelefon._config.dahili + (santralNo ? '-' + santralNo : '');
+          var pc2 = new RTCPeerConnection({
+            iceServers: [
+              { urls: ['turn:sip6.netsantral.com:3478?transport=udp', 'turn:sip6.netsantral.com:3478?transport=tcp'],
+                username: authUser, credential: MR.webrtcTelefon._config.sipSifre || '' }
+            ],
+            iceTransportPolicy: 'relay' /* SADECE RELAY ADAYLARI - TURN TESTİ */
+          });
+          var relayFound = false;
+          var timeout2 = setTimeout(function() { pc2.close(); resolve(relayFound); }, 8000);
+          pc2.onicecandidate = function(e) {
+            if (e.candidate && e.candidate.type === 'relay') {
+              relayFound = true;
+              clearTimeout(timeout2); pc2.close(); resolve(true);
+            } else if (!e.candidate) {
+              clearTimeout(timeout2); pc2.close(); resolve(relayFound);
+            }
+          };
+          pc2.createDataChannel('turntest');
+          pc2.createOffer().then(function(o) { pc2.setLocalDescription(o); });
+        });
+
+        if (turnSonuc) {
+          raporlar.push('✅ NETSANTRAL TURN ÇALIŞIYOR - Relay adayları mevcut');
+        } else {
+          hatalar.push('❌ NETSANTRAL TURN ÇALIŞMIYOR - sip6.netsantral.com:3478 yanıt vermiyor veya kimlik doğrulama hatası');
+          uyarilar.push('⚠️ TURN olmadan NAT/VPN arkasındaki kullanıcılar arama yapamaz');
+        }
+      }
+
+      /* 4. WSS BAĞLANTI TESTİ */
+      raporlar.push('🔍 WSS BAĞLANTISI TEST EDİLİYOR...');
+      var wssUrl = MR.webrtcTelefon?._config?.wssUrl || 'wss://sip6.netsantral.com:8089/ws';
+      var wssSonuc = await new Promise(function(resolve) {
+        try {
+          var ws = new WebSocket(wssUrl);
+          var timeout3 = setTimeout(function() { ws.close(); resolve(false); }, 5000);
+          ws.onopen = function() { clearTimeout(timeout3); ws.close(); resolve(true); };
+          ws.onerror = function() { clearTimeout(timeout3); resolve(false); };
+        } catch(e) { resolve(false); }
+      });
+      if (wssSonuc) {
+        raporlar.push('✅ WSS BAĞLANTISI BAŞARILI - ' + wssUrl);
+      } else {
+        hatalar.push('❌ WSS BAĞLANTISI BAŞARISIZ - ' + wssUrl);
+      }
+
+      /* WEBRTC KAYIT DURUMU */
+      if (MR.webrtcTelefon && MR.webrtcTelefon._kayitli) {
+        raporlar.push('✅ SIP KAYIT AKTİF');
+      } else if (MR.webrtcTelefon) {
+        uyarilar.push('⚠️ SIP KAYIT YOK - SIP şifresini kontrol edin');
+      }
+
+    } catch(e) {
+      hatalar.push('❌ TANILAMA HATASI: ' + (e.message || e));
+    }
+
+    setSonuc({ raporlar: raporlar, uyarilar: uyarilar, hatalar: hatalar });
+    setCalisiyor(false);
+  };
+
+  return React.createElement('div', null,
+    React.createElement('button', {
+      onClick: tanilamaYap, disabled: calisiyor,
+      style: { ...S.btn, width: '100%', justifyContent: 'center', background: '#38bdf8', color: '#000',
+        fontSize: 12, fontWeight: 700, padding: '10px 16px' }
+    },
+      calisiyor
+        ? React.createElement(React.Fragment, null,
+            React.createElement('div', { style: { width: 14, height: 14, border: '2px solid rgba(0,0,0,0.3)',
+              borderTop: '2px solid #000', borderRadius: '50%', animation: 'spin 1s linear infinite' } }),
+            'TANILAMA YAPILIYOR...')
+        : React.createElement(React.Fragment, null,
+            React.createElement(LIcon, { name: 'Search', size: 14, color: '#000' }),
+            'AĞ TANILAMA BAŞLAT')
+    ),
+    sonuc && React.createElement('div', { style: { marginTop: 12, padding: 12, borderRadius: 8,
+      background: C.bg + '88', fontSize: 10, fontFamily: 'monospace', lineHeight: 2 } },
+      sonuc.raporlar.map(function(r, i) {
+        return React.createElement('div', { key: 'r' + i, style: { color: C.textSec } }, r);
+      }),
+      sonuc.uyarilar.map(function(u, i) {
+        return React.createElement('div', { key: 'u' + i, style: { color: '#f59e0b', fontWeight: 600 } }, u);
+      }),
+      sonuc.hatalar.map(function(h, i) {
+        return React.createElement('div', { key: 'h' + i, style: { color: C.danger, fontWeight: 700 } }, h);
+      }),
+      React.createElement('div', { style: { marginTop: 8, paddingTop: 8, borderTop: '1px solid ' + C.border,
+        fontSize: 9, color: C.textMuted } },
+        sonuc.hatalar.length === 0
+          ? 'SONUÇ: Ağ bağlantısı uygun görünüyor.'
+          : 'ÇÖZÜM: Cloudflare WARP/VPN varsa kapatın. Docker Desktop aktifse WebRTC ile çakışabilir. Farklı bir ağda deneyin.'
+      )
+    )
+  );
+};
+
 const NetsantralTab = () => {
   const {C, S, LIcon, Badge, Loading, StatCard, api} = MR;
   const [ayarlar, setAyarlar] = useState({
@@ -3105,6 +3267,17 @@ const NetsantralTab = () => {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* WEBRTC AĞ TANILAMA */}
+          <div style={S.card}>
+            <div style={{...S.cardHead, padding: '12px 16px'}}>
+              <LIcon name="Globe" size={14} color="#38bdf8"/>
+              <span style={{fontSize: 12, fontWeight: 700}}>WEBRTC AĞ TANILAMA</span>
+            </div>
+            <div style={{padding: 16}}>
+              <AgTanilama />
             </div>
           </div>
 
