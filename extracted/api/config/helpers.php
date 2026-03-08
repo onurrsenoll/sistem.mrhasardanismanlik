@@ -599,6 +599,10 @@ $GLOBALS['YETKI_MAP'] = array(
     'netsantral/test.php' => array('sistem', 'sistem-ayarlar'),
     'netsantral/originate.php' => array('netsantral', 'goruntule'),
     'netsantral/hangup.php' => array('netsantral', 'goruntule'),
+    'netsantral/autocall-liste-olustur.php' => array('netsantral', 'goruntule'),
+    'netsantral/autocall-listeler.php' => array('netsantral', 'goruntule'),
+    'netsantral/autocall-rapor.php' => array('netsantral', 'goruntule'),
+    'netsantral/autocall-durdur.php' => array('netsantral', 'goruntule'),
 
     // ─── BİLDİRİM ───
     'bildirim/create.php' => array('bildirim', 'bildirim-goruntule'),

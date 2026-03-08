@@ -113,6 +113,11 @@ MR.api = {
   netsantralTest() { return this.req('/netsantral/test.php', {}, 20000); },
   netsantralOriginate(numara, dahili) { return this.req('/netsantral/originate.php', { method: 'POST', body: JSON.stringify({ numara, dahili }) }, 25000); },
   netsantralHangup(dahili) { return this.req('/netsantral/hangup.php', { method: 'POST', body: JSON.stringify({ dahili }) }, 20000); },
+  // AUTOCALL (OTOMATİK ARAMA)
+  autocallListeOlustur(d) { return this.req('/netsantral/autocall-liste-olustur.php', { method: 'POST', body: JSON.stringify(d) }, 30000); },
+  autocallListeler() { return this.req('/netsantral/autocall-listeler.php'); },
+  autocallRapor(listId) { return this.req('/netsantral/autocall-rapor.php?list_id=' + listId); },
+  autocallListeDurdur(listId) { return this.req('/netsantral/autocall-durdur.php', { method: 'POST', body: JSON.stringify({ list_id: listId }) }); },
   // MUHASEBE
   kasaList() { return this.req('/muhasebe/kasa-list.php'); },
   kasaCreate(d) { return this.req('/muhasebe/kasa-create.php', { method: 'POST', body: JSON.stringify(d) }); },
