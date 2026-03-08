@@ -1830,8 +1830,8 @@ const MiniCallStatus = ({user, setPage}) => {
 
   if (!netsantralIzin) return null;
 
-  /* SADECE AKTİF ÇAĞRI VARKEN VEYA ARANIYOR/ÇALIYOR DURUMLARINDA GÖSTER */
-  if (!activeCall && status !== 'araniyor' && status !== 'caliyor') return null;
+  /* SADECE AKTİF ÇAĞRI VARKEN VEYA ARANIYOR/ÇALIYOR/GELEN DURUMLARINDA GÖSTER */
+  if (!activeCall && status !== 'araniyor' && status !== 'caliyor' && status !== 'gelen') return null;
 
   const fmtTime = (s) => {
     const m = Math.floor(s / 60);
@@ -1852,9 +1852,26 @@ const MiniCallStatus = ({user, setPage}) => {
     setMuted(!muted);
   };
 
-  const statusColors = { araniyor: '#f59e0b', caliyor: '#f59e0b', gorusmede: C.accent };
-  const statusLabels = { araniyor: 'ARANIYOR', caliyor: 'ÇALIYOR', gorusmede: 'GÖRÜŞMEDE' };
+  const statusColors = { araniyor: '#f59e0b', caliyor: '#f59e0b', gorusmede: C.accent, gelen: C.success };
+  const statusLabels = { araniyor: 'ARANIYOR', caliyor: 'ÇALIYOR', gorusmede: 'GÖRÜŞMEDE', gelen: 'GELEN ÇAĞRI' };
   const statusColor = statusColors[status] || C.accent;
+
+  /* GELEN ÇAĞRI CEVAPLA */
+  const gelenCevapla = () => {
+    if (MR.webrtcTelefon && MR.webrtcTelefon._session) {
+      MR.webrtcTelefon.cevapla();
+    }
+  };
+
+  /* GELEN ÇAĞRI REDDET */
+  const gelenReddet = () => {
+    if (MR.webrtcTelefon) MR.webrtcTelefon.reddet();
+    setActiveCall(false);
+    setMuted(false);
+    setStatus('hazir');
+    setNumber('');
+    window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
+  };
 
   return (
     <div style={{
@@ -1882,6 +1899,25 @@ const MiniCallStatus = ({user, setPage}) => {
       </div>
       {/* KONTROLLER */}
       <div style={{display: 'flex', gap: 6}}>
+        {status === 'gelen' && (
+          <>
+            <div onClick={gelenCevapla} style={{
+              width: 32, height: 32, borderRadius: '50%', cursor: 'pointer',
+              background: C.success, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: `0 2px 8px ${C.success}55`,
+              animation: 'pulse 1.5s infinite'
+            }} title="CEVAPLA">
+              <LIcon name="PhoneIncoming" size={14} color="#fff"/>
+            </div>
+            <div onClick={gelenReddet} style={{
+              width: 32, height: 32, borderRadius: '50%', cursor: 'pointer',
+              background: C.danger, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: `0 2px 8px ${C.danger}55`
+            }} title="REDDET">
+              <LIcon name="PhoneOff" size={14} color="#fff"/>
+            </div>
+          </>
+        )}
         {status === 'gorusmede' && (
           <div onClick={toggleMute} style={{
             width: 32, height: 32, borderRadius: '50%', cursor: 'pointer',
@@ -1892,13 +1928,15 @@ const MiniCallStatus = ({user, setPage}) => {
             <LIcon name={muted ? 'MicOff' : 'Mic'} size={14} color={muted ? C.warning : C.textSec}/>
           </div>
         )}
-        <div onClick={aramaKapat} style={{
-          width: 32, height: 32, borderRadius: '50%', cursor: 'pointer',
-          background: C.danger, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: `0 2px 8px ${C.danger}55`
-        }} title="ÇAĞRIYI KAPAT">
-          <LIcon name="PhoneOff" size={14} color="#fff"/>
-        </div>
+        {status !== 'gelen' && (
+          <div onClick={aramaKapat} style={{
+            width: 32, height: 32, borderRadius: '50%', cursor: 'pointer',
+            background: C.danger, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: `0 2px 8px ${C.danger}55`
+          }} title="ÇAĞRIYI KAPAT">
+            <LIcon name="PhoneOff" size={14} color="#fff"/>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2001,7 +2039,7 @@ const App = () => {
 
   /* NETSIPP GELEN ÇAĞRI DİNLEYİCİ (localStorage) - OTOMATİK CRM KAYIT EKRANI AÇ */
   /* YETKİ KONTROLÜ: ADMIN VEYA netsipp_goruntule / netsipp_gelen_cagri İZNİ GEREKLİ */
-  const netsippIzinVar = user?.rol === 'admin' || user?.yetkiler?.netsipp_goruntule === 1 || user?.yetkiler?.netsipp_gelen_cagri === 1;
+  const netsippIzinVar = user?.rol === 'admin' || user?.yetkiler?.netsipp_goruntule === 1 || user?.yetkiler?.netsipp_gelen_cagri === 1 || user?.yetkiler?.netsantral_goruntule === 1;
 
   const gelenCagriIsle = useCallback((data) => {
     if (!data || !data.timestamp || (Date.now() - data.timestamp > 30000)) return;

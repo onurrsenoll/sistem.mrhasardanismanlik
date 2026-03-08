@@ -825,48 +825,50 @@ const PageRouter = ({page, setPage, user, setUser}) => {
 };
 
 /* ═══ NETSANTRAL FLOATING KONTROL PANELİ ═══ */
-const NetsantralPanel = ({user}) => {
+const NetsantralPanel = ({user, setPage}) => {
   const {C, LIcon, api} = MR;
 
-  /* YETKİ KONTROLÜ: ADMIN HER ZAMAN GÖREBİLİR, DİĞERLERİ İZİN GEREKTİRİR */
+  /* YETKİ KONTROLÜ */
   const yetkiler = user?.yetkiler || {};
   const isAdmin = user?.rol === 'admin';
   const netsantralIzin = isAdmin || yetkiler['netsantral_goruntule'] === 1;
 
+  /* UI STATE */
   const [minimized, setMinimized] = useState(true);
   const [dialpadOpen, setDialpadOpen] = useState(false);
   const [number, setNumber] = useState('');
   const [activeCall, setActiveCall] = useState(false);
   const [muted, setMuted] = useState(false);
   const [callTimer, setCallTimer] = useState(0);
-  const [status, setStatus] = useState('hazir'); // hazir, araniyor, gorusmede, mola
+  const [status, setStatus] = useState('hazir');
   const [statusMsg, setStatusMsg] = useState('');
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferNum, setTransferNum] = useState('');
-  const [queueInfo, setQueueInfo] = useState(null);
   const [hangupLoading, setHangupLoading] = useState(false);
+  const [webrtcKayitli, setWebrtcKayitli] = useState(false);
+  const [gelenCagriData, setGelenCagriData] = useState(null);
+  const [crmKayit, setCrmKayit] = useState(null); /* CRM'de bulunan kayıt */
+  const [crmAranıyor, setCrmAranıyor] = useState(false);
 
   const timerRef = useRef(null);
   const callStartRef = useRef(null);
   const panelRef = useRef(null);
-  const pbxOriginatedRef = useRef(false);
   const activeLogIdRef = useRef(0);
+  const gelenBlinkRef = useRef(null);
+  const [gelenBlink, setGelenBlink] = useState(false);
 
-  // DAHİLİ NUMARASI APP BİLEŞENİNDE YÜKLENİYOR (MR._netsantralDahili)
-
-  // AYAR DEĞİŞİKLİĞİ DİNLE (SİSTEM > NETSANTRAL SAYFASINDAN KAYDET YAPILINCA)
+  /* ─── GELEN ÇAĞRI YANIP SÖNME ANİMASYONU ─── */
   useEffect(() => {
-    const handler = (e) => {
-      const data = e.detail || {};
-      console.log('[NETSANTRAL PANEL] AYARLAR GÜNCELLEME ALGILANDI:', data);
-      if (data.dahili) setStatusMsg('DAHİLİ GÜNCELLENDİ: ' + data.dahili);
-      setTimeout(() => setStatusMsg(''), 3000);
-    };
-    window.addEventListener('mr-netsantral-ayar-degisti', handler);
-    return () => window.removeEventListener('mr-netsantral-ayar-degisti', handler);
-  }, []);
+    if (status === 'gelen') {
+      gelenBlinkRef.current = setInterval(() => setGelenBlink(p => !p), 500);
+    } else {
+      if (gelenBlinkRef.current) clearInterval(gelenBlinkRef.current);
+      setGelenBlink(false);
+    }
+    return () => { if (gelenBlinkRef.current) clearInterval(gelenBlinkRef.current); };
+  }, [status]);
 
-  // ARAMA SÜRE SAYACI
+  /* ─── GÖRÜŞME SÜRESİ SAYACI ─── */
   useEffect(() => {
     if (activeCall) {
       callStartRef.current = Date.now();
@@ -881,271 +883,379 @@ const NetsantralPanel = ({user}) => {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [activeCall]);
 
-  // GELEN ÇAĞRI BİLDİRİMİ (OPSİYONEL - WEBHOOK AKTİFSE)
+  /* ─── GELEN ÇAĞRI: CRM'DE ARAYAN NUMARAYI ARA ─── */
+  const crmdeAra = async (telefon) => {
+    if (!telefon) return null;
+    setCrmAranıyor(true);
+    setCrmKayit(null);
+    try {
+      /* Numarayı temizle - farklı formatları dene */
+      let cleanNum = telefon.replace(/[\s\-\(\)\+]/g, '');
+      if (cleanNum.startsWith('90') && cleanNum.length >= 12) cleanNum = '0' + cleanNum.substring(2);
+      else if (cleanNum.length === 10 && !cleanNum.startsWith('0')) cleanNum = '0' + cleanNum;
+
+      const r = await api.crmList({q: cleanNum});
+      if (r?.success) {
+        const items = r.data?.items || [];
+        if (items.length > 0) {
+          setCrmKayit(items[0]);
+          setCrmAranıyor(false);
+          return items[0];
+        }
+      }
+      /* Ham numara ile de dene */
+      const r2 = await api.crmList({q: telefon});
+      if (r2?.success) {
+        const items2 = r2.data?.items || [];
+        if (items2.length > 0) {
+          setCrmKayit(items2[0]);
+          setCrmAranıyor(false);
+          return items2[0];
+        }
+      }
+    } catch(e) {
+      console.warn('[NETSANTRAL] CRM ARAMA HATASI:', e);
+    }
+    setCrmAranıyor(false);
+    return null;
+  };
+
+  /* ─── WEBRTC DURUM DEĞİŞİKLİKLERİ (TEK MERKEZ) ─── */
   useEffect(() => {
-    const handler = (e) => {
-      const data = e.detail || {};
-      if (data.arayan) {
-        setNumber(data.arayan);
-        setActiveCall(true);
-        setStatus('gorusmede');
-        setMinimized(false);
-        setStatusMsg('GELEN ÇAĞRI: ' + (data.arayanAdi || data.arayan));
-        setTimeout(() => setStatusMsg(''), 4000);
+    const handleDurum = (e) => {
+      const d = e.detail || {};
+      setWebrtcKayitli(d.kayitli);
+
+      switch(d.durum) {
+        case 'araniyor':
+          setActiveCall(true); /* GİDEN ARAMA BAŞLADI - KAPAT BUTONU İÇİN */
+          setStatus('araniyor');
+          setStatusMsg('ARANIYOR...');
+          break;
+        case 'caliyor':
+          /* Gelen çağrı varsa status'u 'gelen' olarak koru, 'caliyor'a çevirme */
+          setStatus(prev => prev === 'gelen' ? 'gelen' : 'caliyor');
+          if (d.aramaDurumu !== 'gelen') {
+            setActiveCall(true); /* GİDEN ARAMA ÇALIYOR - KAPAT BUTONU İÇİN */
+            setStatusMsg('KARŞI TARAF ÇALIYOR...');
+          }
+          break;
+        case 'gorusmede':
+          setActiveCall(true);
+          setStatus('gorusmede');
+          setGelenCagriData(null);
+          setStatusMsg('GÖRÜŞME BAŞLADI');
+          setTimeout(() => setStatusMsg(''), 3000);
+          break;
+        case 'kapandi':
+          setActiveCall(false);
+          setMuted(false);
+          setStatus('hazir');
+          setGelenCagriData(null);
+          setCrmKayit(null);
+          activeLogIdRef.current = 0;
+          setStatusMsg('GÖRÜŞME SONLANDI');
+          setTimeout(() => setStatusMsg(''), 3000);
+          break;
+        case 'reddedildi':
+          setActiveCall(false);
+          setMuted(false);
+          setStatus('hazir');
+          setGelenCagriData(null);
+          setCrmKayit(null);
+          setStatusMsg('ÇAĞRI REDDEDİLDİ');
+          setTimeout(() => setStatusMsg(''), 3000);
+          break;
+        case 'sessize-alindi':
+          setMuted(true);
+          break;
+        case 'ses-acildi':
+          setMuted(false);
+          break;
+        case 'hata':
+          setActiveCall(false);
+          setMuted(false);
+          setStatus('hazir');
+          setGelenCagriData(null);
+          setCrmKayit(null);
+          activeLogIdRef.current = 0;
+          setStatusMsg(d.detay || 'WEBRTC HATASI');
+          setTimeout(() => setStatusMsg(''), 5000);
+          break;
       }
     };
-    window.addEventListener('mr-netsantral-gelen', handler);
-    return () => window.removeEventListener('mr-netsantral-gelen', handler);
+
+    const handleGelen = (e) => {
+      const d = e.detail || {};
+      setGelenCagriData(d);
+      setNumber(d.arayan || '');
+      setStatus('gelen');
+      setMinimized(false);
+      setStatusMsg('GELEN ÇAĞRI: ' + (d.arayanAdi || d.arayan));
+      /* CRM'DE ARAYAN NUMARAYI ARA */
+      crmdeAra(d.arayan);
+    };
+
+    window.addEventListener('mr-webrtc-durum', handleDurum);
+    window.addEventListener('mr-webrtc-gelen-cagri', handleGelen);
+    return () => {
+      window.removeEventListener('mr-webrtc-durum', handleDurum);
+      window.removeEventListener('mr-webrtc-gelen-cagri', handleGelen);
+    };
   }, []);
 
-  // CRM EKRANINDAN ÇAĞRI SONLANDIRILINCA DİNLE
+  /* ─── DIŞARIDAN BAŞLATILAN ARAMALAR (CRM, DOSYA DETAY vs.) ─── */
   useEffect(() => {
-    const handler = () => {
-      if (activeCall) {
-        setActiveCall(false);
-        setMuted(false);
-        setStatus('hazir');
-        setStatusMsg('ÇAĞRI SONLANDIRILDI');
-        setTransferOpen(false);
-        setTimeout(() => setStatusMsg(''), 2000);
-      }
-    };
-    window.addEventListener('mr-arama-sonlandi', handler);
-    return () => window.removeEventListener('mr-arama-sonlandi', handler);
-  }, [activeCall]);
-
-  // DIŞARIDAN BAŞLATILAN GİDEN ÇAĞRILARI DİNLE (CRM-ARAMA, DOSYA DETAY vs.)
-  useEffect(() => {
-    const handleAramaBaslat = (e) => {
+    const handleBaslat = (e) => {
       const data = e.detail || {};
-      if (data.telefon) {
-        setNumber(data.telefon);
-        setStatusMsg('GİDEN ARAMA BAŞLATILIYOR: ' + (data.ad || data.telefon));
-        setStatus('araniyor');
-        setMinimized(false);
-      }
+      if (!data.telefon) return;
+      if (MR.webrtcTelefon && MR.webrtcTelefon._session) return;
+      setNumber(data.telefon);
+      setStatus('araniyor');
+      setActiveCall(true); /* GİDEN ARAMA İÇİN KAPAT BUTONU HEMEN GÖRÜNSİN */
+      setMinimized(false);
+      setStatusMsg('GİDEN ARAMA: ' + (data.ad || data.telefon));
     };
-    const handlePbxSonuc = (e) => {
+    const handleSonuc = (e) => {
       const data = e.detail || {};
-      if (data.logId) activeLogIdRef.current = data.logId;
       if (data.basarili) {
-        pbxOriginatedRef.current = true;
-        setActiveCall(true);
-        setStatus('araniyor');
-        setStatusMsg('ÇAĞRI GÖNDERİLDİ - ' + (data.ad || data.telefon));
+        setStatusMsg('ÇAĞRI GÖNDERİLDİ');
       } else {
-        /* PBX BAŞARISIZ - HATA GÖSTER VE TEMİZLE */
         setStatus('hazir');
-        setStatusMsg(data.hata || 'GİDEN ARAMA BAŞLATILAMADI');
-        pbxOriginatedRef.current = false;
-        activeLogIdRef.current = 0;
+        setStatusMsg(data.hata || 'ARAMA BAŞLATILAMADI');
       }
       setTimeout(() => setStatusMsg(''), 5000);
     };
-    window.addEventListener('mr-arama-baslat', handleAramaBaslat);
-    window.addEventListener('mr-arama-pbx-sonuc', handlePbxSonuc);
+    const handleLogId = (e) => {
+      if (e.detail?.logId) activeLogIdRef.current = e.detail.logId;
+    };
+    const handleSonlandi = () => {
+      setActiveCall(false);
+      setMuted(false);
+      setStatus('hazir');
+      setStatusMsg('ÇAĞRI SONLANDIRILDI');
+      setTransferOpen(false);
+      setCrmKayit(null);
+      setTimeout(() => setStatusMsg(''), 2000);
+    };
+
+    window.addEventListener('mr-arama-baslat', handleBaslat);
+    window.addEventListener('mr-arama-pbx-sonuc', handleSonuc);
+    window.addEventListener('mr-arama-log-id', handleLogId);
+    window.addEventListener('mr-arama-sonlandi', handleSonlandi);
     return () => {
-      window.removeEventListener('mr-arama-baslat', handleAramaBaslat);
-      window.removeEventListener('mr-arama-pbx-sonuc', handlePbxSonuc);
+      window.removeEventListener('mr-arama-baslat', handleBaslat);
+      window.removeEventListener('mr-arama-pbx-sonuc', handleSonuc);
+      window.removeEventListener('mr-arama-log-id', handleLogId);
+      window.removeEventListener('mr-arama-sonlandi', handleSonlandi);
     };
   }, []);
 
-  // DIŞARI TIKLANINCA MİNİMİZE ET (AKTİF ÇAĞRI YOKSA)
+  /* ─── DIŞARI TIKLANINCA MİNİMİZE (AKTİF ÇAĞRI / GELEN ÇAĞRI VARSA KAPANMAZ) ─── */
   useEffect(() => {
     if (minimized) return;
-    const handleClickOutside = (e) => {
-      if (activeCall) return; // AKTİF ÇAĞRI VARKEN MİNİMİZE ETME
-      if (panelRef.current && !panelRef.current.contains(e.target)) {
-        setMinimized(true);
-      }
+    const handler = (e) => {
+      if (activeCall || status === 'gelen' || status === 'araniyor' || status === 'caliyor') return;
+      if (panelRef.current && !panelRef.current.contains(e.target)) setMinimized(true);
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [minimized, activeCall]);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [minimized, activeCall, status]);
 
-  /* YETKİ YOKSA RENDER ETME (HOOK'LARDAN SONRA) */
+  /* YETKİ YOKSA RENDER ETME */
   if (!netsantralIzin) return null;
 
+  /* ─── YARDIMCI ─── */
   const fmtTime = (s) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   };
+  const dialKey = (key) => setNumber(prev => prev + key);
 
-  // NUMARA TUŞU
-  const dialKey = (key) => {
-    setNumber(prev => prev + key);
-  };
-
-  // GİDEN ARAMA BAŞLAT - NETSANTRAL PBX ORIGINATE API İLE
+  /* ─── GİDEN ARAMA BAŞLAT ─── */
   const aramaBaslat = async () => {
     if (!number) return;
-
-    /* DAHİLİ KONTROLÜ */
-    if (!MR._netsantralDahili) {
-      setStatusMsg('DAHİLİ NUMARASI TANIMLI DEĞİL! SİSTEM > AYARLAR > NETSANTRAL BÖLÜMÜNDEN DAHİLİ GİRİN.');
-      setTimeout(() => setStatusMsg(''), 6000);
+    if (!MR.webrtcTelefon || !MR.webrtcTelefon._kayitli) {
+      setStatusMsg('WEBRTC KAYITLI DEĞİL! SİSTEM > NETSANTRAL AYARLARINDAN SIP ŞİFRESİ GİRİN.');
+      setTimeout(() => setStatusMsg(''), 5000);
+      return;
+    }
+    if (MR.webrtcTelefon._session || activeCall) {
+      setStatusMsg('ZATEN AKTİF BİR GÖRÜŞME VAR!');
+      setTimeout(() => setStatusMsg(''), 3000);
       return;
     }
 
-    setStatusMsg('GİDEN ARAMA BAŞLATILIYOR...');
+    setStatusMsg('ARAMA BAŞLATILIYOR...');
     setStatus('araniyor');
+    setActiveCall(true); /* GİDEN ARAMA İÇİN KAPAT BUTONU HEMEN GÖRÜNSİN */
     setMinimized(false);
-    pbxOriginatedRef.current = false;
-
-    /* NUMARA TEMİZLEME VE NORMALİZASYON */
-    let cleanNum = number.replace(/[\s\-\(\)\+]/g, '');
-    if (cleanNum.startsWith('90') && cleanNum.length >= 12) {
-      /* ZATEN 90 İLE BAŞLIYOR */
-    } else if (cleanNum.startsWith('0') && cleanNum.length >= 11) {
-      cleanNum = '90' + cleanNum.substring(1);
-    } else if (cleanNum.length === 10 && /^\d{10}$/.test(cleanNum)) {
-      cleanNum = '90' + cleanNum;
-    }
-
-    console.log('[NETSANTRAL PANEL] ARAMA:', cleanNum, '| DAHİLİ:', MR._netsantralDahili);
-
-    /* GİDEN ARAMA LOGU OLUŞTUR */
     activeLogIdRef.current = 0;
-    try {
-      const logR = await api.netsantralAramaLogCreate({
-        arayan: MR._netsantralDahili,
-        aranan: cleanNum,
-        arayan_adi: '',
-        yon: 'giden',
-        durum: 'araniyor'
-      });
-      if (logR?.success && logR.data?.log_id) {
-        activeLogIdRef.current = logR.data.log_id;
-      }
-    } catch(e) {}
 
-    /* PBX ORIGINATE: ÖNCEKİ DAHİLİNİZİ ÇALDIRIR, AÇTIĞINIZDA HEDEF NUMARAYI BAĞLAR */
+    let cleanNum = number.replace(/[\s\-\(\)\+]/g, '');
+    /* ORIGINATE API İÇİN 90 FORMATINA ÇEVİR */
+    let apiNum = cleanNum;
+    if (apiNum.startsWith('90') && apiNum.length >= 12) { /* OK */ }
+    else if (apiNum.startsWith('0') && apiNum.length >= 11) { apiNum = '9' + apiNum; }
+    else if (apiNum.length === 10 && /^\d{10}$/.test(apiNum)) { apiNum = '90' + apiNum; }
+
+    console.log('[WEBRTC WIDGET] ARAMA BAŞLATILIYOR - GİRİLEN:', number, '| API FORMAT:', apiNum, '| WEBRTC FORMAT:', cleanNum);
+
+    /* ÖNCELİK 1: PBX ORIGINATE İLE ÇAĞRI BAŞLAT (DAHİLİYİ ARAR, SONRA HEDEFİ BAĞLAR) */
+    let pbxBasarili = false;
     try {
-      const r = await api.netsantralOriginate(cleanNum, MR._netsantralDahili);
-      console.log('[NETSANTRAL PANEL] ORIGINATE YANIT:', JSON.stringify(r));
+      const r = await api.netsantralOriginate(apiNum, MR._netsantralDahili || undefined);
+      console.log('[WEBRTC WIDGET] PBX ORIGINATE SONUÇ:', r?.data);
       if (r?.success && r.data?.success_api) {
-        pbxOriginatedRef.current = true;
-        setActiveCall(true);
-        setStatus('araniyor');
-        setStatusMsg('ÇAĞRI GÖNDERİLDİ - ' + cleanNum);
-        /* LOG GÜNCELLE: ARANIYOR */
-        if (activeLogIdRef.current) {
-          api.netsantralAramaLogUpdate({ log_id: activeLogIdRef.current, durum: 'araniyor' }).catch(() => {});
-        }
+        pbxBasarili = true;
+        setStatusMsg('PBX ÇAĞRI BAŞLATILDI - ' + cleanNum);
+        api.netsantralAramaLogCreate({
+          arayan: MR._netsantralDahili, aranan: apiNum, arayan_adi: '', yon: 'giden', durum: 'gorusmede'
+        }).then(r => { if (r?.success && r.data?.log_id) activeLogIdRef.current = r.data.log_id; }).catch(() => {});
       } else {
-        const hataMesaj = r?.data?.response?.hata_mesaj || r?.error || 'PBX ÇAĞRI BAŞLATILAMADI';
-        setStatusMsg('HATA: ' + hataMesaj);
-        setStatus('hazir');
-        /* LOG GÜNCELLE: BAŞARISIZ */
-        if (activeLogIdRef.current) {
-          api.netsantralAramaLogUpdate({ log_id: activeLogIdRef.current, durum: 'basarisiz', notlar: hataMesaj }).catch(() => {});
-          activeLogIdRef.current = 0;
-        }
-        alert('ARAMA HATASI: ' + hataMesaj);
+        console.warn('[WEBRTC WIDGET] PBX ORIGINATE BAŞARISIZ:', r?.data?.response?.hata_mesaj || 'BİLİNMEYEN HATA');
       }
     } catch(e) {
-      console.error('[NETSANTRAL PANEL] BAĞLANTI HATASI:', e);
-      setStatusMsg('NETSANTRAL BAĞLANTI HATASI - İNTERNET BAĞLANTINIZI KONTROL EDİN');
-      setStatus('hazir');
-      if (activeLogIdRef.current) {
-        api.netsantralAramaLogUpdate({ log_id: activeLogIdRef.current, durum: 'basarisiz', notlar: 'BAĞLANTI HATASI' }).catch(() => {});
-        activeLogIdRef.current = 0;
-      }
-      alert('NETSANTRAL BAĞLANTI HATASI! İNTERNET BAĞLANTINIZI KONTROL EDİN.');
+      console.warn('[WEBRTC WIDGET] PBX ORIGINATE HATASI:', e);
     }
 
+    /* ÖNCELİK 2: PBX BAŞARISIZSA DOĞRUDAN WEBRTC SIP İLE ARA */
+    if (!pbxBasarili) {
+      console.log('[WEBRTC WIDGET] PBX BAŞARISIZ → WEBRTC SIP İLE ARANACAK:', cleanNum);
+      try {
+        const ok = await MR.webrtcTelefon.ara(cleanNum);
+        if (ok) {
+          setStatusMsg('WEBRTC ÇAĞRI GÖNDERİLDİ - ' + cleanNum);
+          api.netsantralAramaLogCreate({
+            arayan: MR._netsantralDahili, aranan: apiNum, arayan_adi: '', yon: 'giden', durum: 'gorusmede'
+          }).then(r => { if (r?.success && r.data?.log_id) activeLogIdRef.current = r.data.log_id; }).catch(() => {});
+        } else {
+          setStatusMsg('ARAMA BAŞLATILAMADI');
+          setActiveCall(false);
+          setStatus('hazir');
+        }
+      } catch(e) {
+        setStatusMsg('WEBRTC HATASI');
+        setActiveCall(false);
+        setStatus('hazir');
+      }
+    }
     setTimeout(() => setStatusMsg(''), 5000);
   };
 
-  // GİDEN ARAMAYI SONLANDIR - PBX HANGUP API İLE
-  const aramaKapat = async () => {
-    setHangupLoading(true);
-    setStatusMsg('ÇAĞRI SONLANDIRILIYOR...');
+  /* ─── GELEN ÇAĞRI CEVAPLA + CRM SAYFASI AÇ ─── */
+  const cagriCevapla = async () => {
+    if (!MR.webrtcTelefon) return;
+    console.log('[WEBRTC WIDGET] CEVAPLA BUTONUNA BASILDI');
 
-    let hangupOk = false;
+    /* SESSION VARLIĞINI KONTROL ET */
+    if (!MR.webrtcTelefon._session) {
+      console.error('[WEBRTC WIDGET] SESSION YOK - ÇAĞRI ZATEN SONLANMIŞ OLABİLİR');
+      setStatusMsg('ÇAĞRI SONLANMIŞ - SESSION YOK');
+      setStatus('hazir');
+      setGelenCagriData(null);
+      setCrmKayit(null);
+      setTimeout(() => setStatusMsg(''), 3000);
+      return;
+    }
 
-    /* PBX HANGUP API İLE ÇAĞRIYI SONLANDIR */
-    const maxRetry = 3;
-    for (let attempt = 1; attempt <= maxRetry; attempt++) {
-      try {
-        const r = await api.netsantralHangup(MR._netsantralDahili || undefined);
-        if (r?.success && r.data?.success_api) {
-          hangupOk = true;
-          break;
-        } else if (r?.success && !r.data?.success_api) {
-          const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || '';
-          const hataKodu = r.data?.response?.hata_kodu || '';
-          /* 70 = GEÇERSİZ PARAMETRE = ÇAĞRI ZATEN BİTMİŞ */
-          if (hataKodu === '70' || (hataMesaj && (hataMesaj.includes('70') || hataMesaj.includes('GEÇERSİZ') || hataMesaj.includes('PARAMETRE') || hataMesaj.includes('AKTİF DEĞİL')))) {
-            hangupOk = true;
-            break;
+    /* ÖNCELİKLE ARAYAN BİLGİLERİNİ KAYDET (state null olmadan önce) */
+    const arayanNo = gelenCagriData?.arayan || number;
+    const arayanAdi = gelenCagriData?.arayanAdi || '';
+    const kayitBilgi = crmKayit ? { ...crmKayit } : null;
+
+    setStatusMsg('CEVAPLANACAK...');
+
+    try {
+      const sonuc = await MR.webrtcTelefon.cevapla();
+      console.log('[WEBRTC WIDGET] CEVAPLA SONUCU:', sonuc);
+
+      if (sonuc) {
+        setActiveCall(true);
+        setStatus('gorusmede');
+        setGelenCagriData(null);
+        setStatusMsg('GÖRÜŞME BAŞLADI');
+
+        /* CRM KAYITLI İSE DETAY SAYFASINA, DEĞİLSE YENİ KAYIT SAYFASINA GİT */
+        setTimeout(() => {
+          setMinimized(true); /* Widget küçülsün */
+          if (kayitBilgi && kayitBilgi.id) {
+            setPage('crm-detay-' + kayitBilgi.id);
+          } else {
+            MR._gelenCagriTelefon = arayanNo;
+            MR._gelenCagriAdi = arayanAdi;
+            setPage('crm-yeni');
           }
-          if (hataMesaj) setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${hataMesaj}`);
+        }, 300);
+        setTimeout(() => setStatusMsg(''), 3000);
+      } else {
+        console.error('[WEBRTC WIDGET] CEVAPLAMA BAŞARISIZ');
+        /* SESSION HALA VARSA GELEN DURUMUNDA TUT, YOKSA HAZIR'A DÖN */
+        if (MR.webrtcTelefon._session && MR.webrtcTelefon._aramaDurumu === 'gelen') {
+          setStatusMsg('CEVAPLAMA BAŞARISIZ - TEKRAR DENEYİN');
         } else {
-          setStatusMsg(`DENEME ${attempt}/${maxRetry}: ${r?.error || 'ÇAĞRI SONLANDIRMA HATASI'}`);
+          setStatus('hazir');
+          setGelenCagriData(null);
+          setCrmKayit(null);
+          setStatusMsg('ÇAĞRI SONLANMIŞ - CEVAPLANAMIYOR');
         }
-      } catch(e) {
-        setStatusMsg(`DENEME ${attempt}/${maxRetry}: BAĞLANTI HATASI`);
+        setTimeout(() => setStatusMsg(''), 4000);
       }
-      if (attempt < maxRetry) await new Promise(ok => setTimeout(ok, 1500));
+    } catch(e) {
+      console.error('[WEBRTC WIDGET] CEVAPLAMA HATASI:', e);
+      setStatus('hazir');
+      setGelenCagriData(null);
+      setCrmKayit(null);
+      setStatusMsg('CEVAPLAMA HATASI: ' + (e?.message || ''));
+      setTimeout(() => setStatusMsg(''), 4000);
     }
+  };
 
+  const cagriReddet = () => {
+    console.log('[WEBRTC WIDGET] REDDET BUTONUNA BASILDI');
+    if (MR.webrtcTelefon) MR.webrtcTelefon.reddet();
+    setGelenCagriData(null);
+    setCrmKayit(null);
+    setActiveCall(false);
+    setStatus('hazir');
+    setStatusMsg('ÇAĞRI REDDEDİLDİ');
+    setTimeout(() => setStatusMsg(''), 3000);
+  };
+
+  /* ─── ÇAĞRI KAPAT ─── */
+  const aramaKapat = () => {
+    setHangupLoading(true);
+    if (MR.webrtcTelefon) MR.webrtcTelefon.kapat();
     setHangupLoading(false);
 
-    /* ARAMA LOGUNU GÜNCELLE: SONLANDI + SÜRE */
-    const aramaLogSure = callStartRef.current ? Math.floor((Date.now() - callStartRef.current) / 1000) : callTimer;
+    const sure = callStartRef.current ? Math.floor((Date.now() - callStartRef.current) / 1000) : callTimer;
     if (activeLogIdRef.current) {
-      api.netsantralAramaLogHangup({ log_id: activeLogIdRef.current, sure: aramaLogSure }).catch(() => {});
-    } else {
-      /* LOG ID YOK - EN SON AKTİF ÇAĞRIYI SONLANDIR */
-      api.netsantralAramaLogHangup({ log_id: 0, sure: aramaLogSure }).catch(() => {});
+      api.netsantralAramaLogHangup({ log_id: activeLogIdRef.current, sure: sure }).catch(() => {});
     }
 
-    /* UI'I TEMİZLE - PBX YANIT VERMEMİŞ OLSA BİLE ÇAĞRI BİTMİŞ SAYILIR */
     setActiveCall(false);
     setMuted(false);
     setStatus('hazir');
     setTransferOpen(false);
-    pbxOriginatedRef.current = false;
+    setCrmKayit(null);
     activeLogIdRef.current = 0;
-    setStatusMsg(hangupOk ? 'ÇAĞRI SONLANDIRILDI' : 'ÇAĞRI SONLANDIRILDI (PBX ZATEN KAPANMIŞ OLABİLİR)');
+    setStatusMsg('ÇAĞRI SONLANDIRILDI');
     window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
     setTimeout(() => setStatusMsg(''), 3000);
   };
 
-  // ZORLA ÇAĞRI SONLANDIR (NETSANTRAL'DAN YANIT ALINAMADIĞINDA)
-  const zorlaKapat = () => {
-    const aramaLogSure = callStartRef.current ? Math.floor((Date.now() - callStartRef.current) / 1000) : callTimer;
-    if (activeLogIdRef.current) {
-      api.netsantralAramaLogHangup({ log_id: activeLogIdRef.current, sure: aramaLogSure }).catch(() => {});
-    }
-    setActiveCall(false);
-    setMuted(false);
-    setStatus('hazir');
-    setTransferOpen(false);
-    pbxOriginatedRef.current = false;
-    activeLogIdRef.current = 0;
-    setStatusMsg('ÇAĞRI ZORLA SONLANDIRILDI');
-    setHangupLoading(false);
-    window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
-    setTimeout(() => setStatusMsg(''), 3000);
-  };
-
-  // SESİ KAPAT/AÇ
-  const toggleMute = async () => {
-    const newState = muted ? 'off' : 'on';
-    const r = await api.netsantralMute(newState, MR._netsantralDahili || undefined);
+  /* ─── SESSİZ / TRANSFER ─── */
+  const toggleMute = () => {
+    if (MR.webrtcTelefon) MR.webrtcTelefon.sesizToggle();
     setMuted(!muted);
     setStatusMsg(muted ? 'MİKROFON AÇILDI' : 'MİKROFON KAPATILDI');
     setTimeout(() => setStatusMsg(''), 2000);
   };
 
-  // TRANSFER
-  const transferYap = async () => {
+  const transferYap = () => {
     if (!transferNum) return;
-    setStatusMsg('TRANSFER EDİLİYOR...');
-    const r = await api.netsantralTransfer(transferNum, MR._netsantralDahili || undefined);
+    if (MR.webrtcTelefon) MR.webrtcTelefon.transfer(transferNum);
     setStatusMsg('TRANSFER YAPILDI');
     setTransferOpen(false);
     setTransferNum('');
@@ -1154,191 +1264,245 @@ const NetsantralPanel = ({user}) => {
     setTimeout(() => setStatusMsg(''), 2000);
   };
 
-  // DURUM RENKLERİ
-  const statusColors = {
-    hazir: C.success,
-    araniyor: C.warning,
-    caliyor: '#f59e0b',
-    gorusmede: C.accent,
-    gelen: '#f59e0b',
-    mola: C.purple
+  /* ─── DURUM RENKLERİ ─── */
+  /* GRİ: bağlantı yok | MAVİ: bağlı/aktif | YEŞİL yanıp sönen: gelen çağrı */
+  const getButtonColor = () => {
+    if (status === 'gelen') return gelenBlink ? C.success : `${C.success}44`;
+    if (activeCall) return C.accent;
+    if (webrtcKayitli) return '#3b82f6'; /* MAVİ - bağlı */
+    return '#6b7280'; /* GRİ - bağlantı yok */
   };
-  const statusLabels = {
-    hazir: 'HAZIR',
-    araniyor: 'ARANIYOR',
-    caliyor: 'ÇALIYOR',
-    gorusmede: 'GÖRÜŞMEDE',
-    gelen: 'GELEN ÇAĞRI',
-    mola: 'MOLADA'
+  const getButtonBorder = () => {
+    if (status === 'gelen') return C.success;
+    if (activeCall) return C.accent;
+    if (webrtcKayitli) return '#3b82f6';
+    return '#6b7280';
   };
 
-  const statusColor = statusColors[status] || C.success;
+  const statusColors = { hazir: webrtcKayitli ? '#3b82f6' : '#6b7280', araniyor: C.warning, caliyor: '#f59e0b', gorusmede: C.accent, gelen: C.success, mola: C.purple };
+  const statusLabels = { hazir: webrtcKayitli ? 'BAĞLI' : 'BAĞLANTI YOK', araniyor: 'ARANIYOR', caliyor: 'ÇALIYOR', gorusmede: 'GÖRÜŞMEDE', gelen: 'GELEN ÇAĞRI', mola: 'MOLADA' };
+  const statusColor = statusColors[status] || '#6b7280';
+  const keys = [['1','2','3'],['4','5','6'],['7','8','9'],['*','0','#']];
 
-  // DIALPAD TUŞLARI
-  const keys = [
-    ['1', '2', '3'],
-    ['4', '5', '6'],
-    ['7', '8', '9'],
-    ['*', '0', '#']
-  ];
-
-  // MİNİMİZE GÖRÜNÜM
+  /* ═══ MİNİMİZE GÖRÜNÜM - YUVARLAK BUTON ═══ */
   if (minimized) {
+    const btnColor = getButtonColor();
+    const btnBorder = getButtonBorder();
     return (
       <div onClick={() => setMinimized(false)} style={{
         position: 'fixed', bottom: 60, right: 24, zIndex: 9998,
-        width: 52, height: 52, borderRadius: '50%',
-        background: activeCall ? C.accent : `${C.success}22`,
-        border: `2px solid ${activeCall ? C.accent : C.success}`,
+        width: 56, height: 56, borderRadius: '50%',
+        background: status === 'gelen' ? `radial-gradient(circle, ${btnColor}, ${btnColor}cc)` : activeCall ? `radial-gradient(circle, ${btnColor}, ${btnColor}cc)` : `radial-gradient(circle, ${btnColor}33, ${btnColor}11)`,
+        border: `2px solid ${btnBorder}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,0,0,.4)',
+        cursor: 'pointer',
+        boxShadow: status === 'gelen'
+          ? `0 0 25px ${C.success}80, 0 0 50px ${C.success}30, 0 4px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,0.2)`
+          : `0 4px 20px rgba(0,0,0,.5), 0 0 15px rgba(80,120,255,0.15), inset 0 1px 0 rgba(255,255,255,0.1)`,
         transition: 'all .3s',
-        animation: activeCall ? 'pulse 1.5s infinite' : 'none'
-      }} title="GİDEN ARAMA PANELİ">
-        <LIcon name="Phone" size={22} color={activeCall ? '#fff' : C.success}/>
+        backdropFilter: 'blur(10px)'
+      }} title={statusLabels[status]}>
+        <LIcon name={status === 'gelen' ? 'PhoneIncoming' : 'Phone'} size={22} color={activeCall || status === 'gelen' ? '#fff' : btnBorder}/>
         {activeCall && (
           <div style={{
-            position: 'absolute', top: -4, right: -4,
-            width: 18, height: 18, borderRadius: '50%',
-            background: C.danger, color: '#fff',
-            fontSize: 8, fontWeight: 800,
+            position: 'absolute', top: -4, right: -4, width: 18, height: 18, borderRadius: '50%',
+            background: C.danger, color: '#fff', fontSize: 8, fontWeight: 800,
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>{fmtTime(callTimer)}</div>
         )}
         {/* DURUM NOKTASI */}
         <div style={{
-          position: 'absolute', bottom: -2, right: -2,
-          width: 14, height: 14, borderRadius: '50%',
-          background: statusColor, border: '2px solid #0B1120'
+          position: 'absolute', bottom: -2, right: -2, width: 14, height: 14, borderRadius: '50%',
+          background: statusColor, border: '2px solid #0B1120',
+          boxShadow: status === 'gelen' ? `0 0 8px ${C.success}` : 'none'
         }}/>
       </div>
     );
   }
 
-  // AÇIK GÖRÜNÜM
+  /* ═══ AÇIK GÖRÜNÜM ═══ */
+  const isGelenAktif = status === 'gelen' && !!gelenCagriData;
   return (
     <div ref={panelRef} style={{
       position: 'fixed', bottom: 60, right: 24, zIndex: 9998,
-      width: 320, background: C.bgCard,
-      border: `1px solid ${C.border}`, borderRadius: 16,
-      boxShadow: '0 10px 50px rgba(0,0,0,.5)',
-      overflow: 'hidden', animation: 'slideUp .2s ease-out'
+      width: 340, background: `linear-gradient(145deg, ${C.bgCard}, ${C.bgCard}ee, rgba(30,40,80,0.95))`,
+      border: isGelenAktif ? `2px solid ${C.success}` : `1.5px solid rgba(100,140,255,0.3)`,
+      borderRadius: 20,
+      boxShadow: isGelenAktif
+        ? `0 10px 50px rgba(0,0,0,.6), 0 0 40px ${C.success}50, 0 0 80px ${C.success}20, inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.3)`
+        : `0 10px 50px rgba(0,0,0,.6), 0 0 30px rgba(80,120,255,0.15), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.3)`,
+      overflow: 'hidden', animation: 'slideUp .2s ease-out',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)'
     }}>
-      {/* BAŞLIK */}
+      {/* BAŞLIK - 3D HOLOGRAM */}
       <div style={{
-        padding: '10px 14px', background: `${statusColor}15`,
-        borderBottom: `1px solid ${C.border}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+        padding: '12px 16px',
+        background: `linear-gradient(135deg, ${statusColor}18, ${statusColor}08, rgba(100,180,255,0.05))`,
+        borderBottom: `1px solid ${statusColor}33`,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        position: 'relative', overflow: 'hidden'
       }}>
-        <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
+        {/* Hologram ışık çizgisi */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: 1,
+          background: `linear-gradient(90deg, transparent, ${statusColor}66, rgba(100,200,255,0.4), ${statusColor}66, transparent)`
+        }}/>
+        <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
           <div style={{
-            width: 10, height: 10, borderRadius: '50%',
-            background: statusColor, boxShadow: `0 0 8px ${statusColor}`
+            width: 12, height: 12, borderRadius: '50%', background: statusColor,
+            boxShadow: `0 0 12px ${statusColor}, 0 0 24px ${statusColor}55`,
+            animation: isGelenAktif ? 'gelenPulse 0.8s infinite' : 'none'
           }}/>
-          <span style={{fontSize: 11, fontWeight: 700, color: statusColor}}>
-            {statusLabels[status]}
+          <span style={{fontSize: 12, fontWeight: 800, color: statusColor, letterSpacing: 1, textShadow: `0 0 10px ${statusColor}55`}}>
+            {isGelenAktif ? 'GELEN ÇAĞRI' : statusLabels[status]}
           </span>
-          {activeCall && (
-            <span style={{fontSize: 11, fontWeight: 800, color: C.text, fontFamily: 'monospace'}}>
-              {fmtTime(callTimer)}
-            </span>
-          )}
+          {activeCall && <span style={{fontSize: 12, fontWeight: 800, color: C.text, fontFamily: 'monospace', textShadow: '0 0 8px rgba(100,200,255,0.3)'}}>{fmtTime(callTimer)}</span>}
         </div>
         <div style={{display: 'flex', gap: 2}}>
-          <div onClick={() => setMinimized(true)} style={{
-            cursor: 'pointer', padding: 4, borderRadius: 6,
-            transition: 'background .15s'
-          }} title="KÜÇÜLT"
-            onMouseEnter={e => e.currentTarget.style.background = `${C.textMuted}22`}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+          <div onClick={() => setMinimized(true)} style={{cursor: 'pointer', padding: 4, borderRadius: 8, background: 'rgba(255,255,255,0.05)', transition: 'all .2s'}} title="KÜÇÜLT">
             <LIcon name="Minus" size={14} color={C.textMuted}/>
-          </div>
-          <div onClick={() => setMinimized(true)} style={{
-            cursor: 'pointer', padding: 4, borderRadius: 6,
-            transition: 'background .15s'
-          }} title="KAPAT"
-            onMouseEnter={e => e.currentTarget.style.background = `${C.danger}22`}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-            <LIcon name="X" size={14} color={C.textMuted}/>
           </div>
         </div>
       </div>
 
       {/* DURUM MESAJI */}
       {statusMsg && (
-        <div style={{
-          padding: '6px 14px', background: `${C.warning}15`,
-          fontSize: 10, fontWeight: 600, color: C.warning, textAlign: 'center'
-        }}>{statusMsg}</div>
+        <div style={{padding: '6px 14px', background: `${C.warning}15`, fontSize: 10, fontWeight: 600, color: C.warning, textAlign: 'center'}}>{statusMsg}</div>
       )}
 
-      {/* NUMARA GİRİŞİ */}
-      <div style={{padding: '12px 14px'}}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          background: C.bgInput, border: `1px solid ${C.borderLight}`,
-          borderRadius: 10, padding: '8px 12px'
-        }}>
-          <LIcon name="Phone" size={16} color={C.textMuted}/>
-          <input
-            value={number}
-            onChange={e => setNumber(e.target.value)}
-            placeholder="GİDEN ARAMA İÇİN NUMARA GİRİN..."
-            style={{
-              flex: 1, background: 'transparent', border: 'none',
-              color: C.text, fontSize: 16, fontWeight: 700,
-              letterSpacing: 1, outline: 'none', fontFamily: 'monospace'
-            }}
-            onKeyDown={e => { if (e.key === 'Enter' && !activeCall) aramaBaslat(); }}
-          />
-          {number && (
-            <div onClick={() => setNumber('')} style={{cursor: 'pointer', padding: 2}}>
-              <LIcon name="X" size={14} color={C.textMuted}/>
+      {/* GELEN ÇAĞRI - ARAYAN BİLGİSİ */}
+      {gelenCagriData && status === 'gelen' && (
+        <div style={{padding: '12px 14px', borderBottom: `1px solid ${C.border}`}}>
+          <div style={{fontSize: 22, fontWeight: 800, letterSpacing: 1.5, color: C.text, textAlign: 'center', fontFamily: 'monospace'}}>
+            {gelenCagriData.arayan || 'BİLİNMEYEN'}
+          </div>
+          {gelenCagriData.arayanAdi && (
+            <div style={{fontSize: 12, color: C.textSec, textAlign: 'center', marginTop: 4}}>{gelenCagriData.arayanAdi}</div>
+          )}
+          {/* CRM KAYIT BİLGİSİ */}
+          {crmAranıyor && (
+            <div style={{fontSize: 10, color: C.textMuted, textAlign: 'center', marginTop: 6}}>CRM ARANIYOR...</div>
+          )}
+          {crmKayit && (
+            <div style={{
+              marginTop: 8, padding: '8px 12px', background: `${C.accent}15`, borderRadius: 8,
+              display: 'flex', alignItems: 'center', gap: 8
+            }}>
+              <LIcon name="User" size={16} color={C.accent}/>
+              <div>
+                <div style={{fontSize: 12, fontWeight: 700, color: C.accent}}>{crmKayit.ad_soyad}</div>
+                <div style={{fontSize: 9, color: C.textMuted}}>{crmKayit.durum || 'CRM'} | {crmKayit.il || ''}</div>
+              </div>
+            </div>
+          )}
+          {!crmAranıyor && !crmKayit && (
+            <div style={{
+              marginTop: 8, padding: '6px 10px', background: `${C.warning}12`, borderRadius: 8,
+              fontSize: 10, color: C.warning, textAlign: 'center', fontWeight: 600
+            }}>
+              CRM KAYDI BULUNAMADI - YENİ KAYIT OLUŞTURULABİLİR
             </div>
           )}
         </div>
-      </div>
+      )}
+
+      {/* NUMARA GİRİŞİ (GELEN ÇAĞRI YOKSA) */}
+      {status !== 'gelen' && !gelenCagriData && (
+        <div style={{padding: '12px 16px'}}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: 'linear-gradient(145deg, rgba(30,40,70,0.9), rgba(20,30,50,0.95))',
+            border: '1px solid rgba(100,160,255,0.2)',
+            borderRadius: 12, padding: '10px 14px',
+            boxShadow: '0 3px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08)'
+          }}>
+            <LIcon name="Phone" size={16} color="rgba(100,180,255,0.6)"/>
+            <input value={number} onChange={e => setNumber(e.target.value)} placeholder="NUMARA GİRİN..."
+              style={{flex: 1, background: 'transparent', border: 'none', color: C.text, fontSize: 17, fontWeight: 800, letterSpacing: 1.5, outline: 'none', fontFamily: 'monospace', textShadow: '0 0 6px rgba(100,180,255,0.2)'}}
+              onKeyDown={e => { if (e.key === 'Enter' && !activeCall) aramaBaslat(); }}
+            />
+            {number && <div onClick={() => setNumber('')} style={{cursor: 'pointer', padding: 4, borderRadius: 6, background: 'rgba(255,255,255,0.05)'}}><LIcon name="X" size={14} color={C.textMuted}/></div>}
+          </div>
+        </div>
+      )}
 
       {/* KONTROL BUTONLARI */}
       <div style={{padding: '0 14px 12px', display: 'flex', gap: 8}}>
-        {!activeCall ? (
-          <button onClick={aramaBaslat} disabled={!number} style={{
-            flex: 1, padding: '10px', borderRadius: 10, border: 'none',
-            background: number ? C.success : `${C.success}33`,
-            color: '#fff', fontSize: 12, fontWeight: 700,
-            cursor: number ? 'pointer' : 'default',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            opacity: number ? 1 : 0.5
+        {(gelenCagriData && status === 'gelen') ? (
+          <>
+            <button onClick={cagriCevapla} style={{
+              flex: 1, padding: '16px', borderRadius: 14, border: 'none',
+              background: `linear-gradient(135deg, ${C.success}, #00c853)`,
+              color: '#fff', fontSize: 15, fontWeight: 900, letterSpacing: 1,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              animation: 'gelenPulse 0.8s infinite',
+              boxShadow: `0 0 20px ${C.success}70, 0 4px 15px ${C.success}40, inset 0 1px 0 rgba(255,255,255,0.3)`,
+              textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+              transform: 'perspective(500px) translateZ(0)',
+              transition: 'all 0.2s ease'
+            }}>
+              <LIcon name="PhoneCall" size={22} color="#fff"/> CEVAPLA
+            </button>
+            <button onClick={cagriReddet} style={{
+              flex: 1, padding: '16px', borderRadius: 14, border: 'none',
+              background: `linear-gradient(135deg, ${C.danger}, #d32f2f)`,
+              color: '#fff', fontSize: 15, fontWeight: 900, letterSpacing: 1,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              boxShadow: `0 0 20px ${C.danger}70, 0 4px 15px ${C.danger}40, inset 0 1px 0 rgba(255,255,255,0.3)`,
+              textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+              transform: 'perspective(500px) translateZ(0)',
+              transition: 'all 0.2s ease'
+            }}>
+              <LIcon name="PhoneOff" size={22} color="#fff"/> REDDET
+            </button>
+          </>
+        ) : !activeCall ? (
+          <button onClick={aramaBaslat} disabled={!number || !webrtcKayitli} style={{
+            flex: 1, padding: '12px', borderRadius: 14, border: 'none',
+            background: (number && webrtcKayitli) ? `linear-gradient(135deg, ${C.success}, #00c853)` : `linear-gradient(135deg, ${C.success}33, ${C.success}22)`,
+            color: '#fff', fontSize: 14, fontWeight: 800, letterSpacing: 1,
+            cursor: (number && webrtcKayitli) ? 'pointer' : 'default',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            opacity: (number && webrtcKayitli) ? 1 : 0.5,
+            boxShadow: (number && webrtcKayitli) ? `0 4px 15px ${C.success}40, inset 0 1px 0 rgba(255,255,255,0.2)` : 'none',
+            textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            transition: 'all 0.2s ease'
           }}>
-            <LIcon name="PhoneCall" size={16} color="#fff"/> GİDEN ARAMA YAP
+            <LIcon name="PhoneCall" size={18} color="#fff"/> {webrtcKayitli ? 'ARA' : 'BAĞLANTI YOK'}
           </button>
         ) : (
           <>
             <button onClick={aramaKapat} disabled={hangupLoading} style={{
-              flex: 1, padding: '10px', borderRadius: 10, border: 'none',
-              background: C.danger, color: '#fff', fontSize: 12, fontWeight: 700,
+              flex: 1, padding: '12px', borderRadius: 14, border: 'none',
+              background: `linear-gradient(135deg, ${C.danger}, #d32f2f)`,
+              color: '#fff', fontSize: 13, fontWeight: 800, letterSpacing: 0.5,
               cursor: hangupLoading ? 'wait' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              opacity: hangupLoading ? 0.7 : 1
+              opacity: hangupLoading ? 0.7 : 1,
+              boxShadow: `0 4px 15px ${C.danger}40, inset 0 1px 0 rgba(255,255,255,0.2)`,
+              textShadow: '0 1px 3px rgba(0,0,0,0.3)'
             }}>
               <LIcon name="PhoneOff" size={16} color="#fff"/>
-              {hangupLoading ? 'SONLANDIRILIYOR...' : 'GÖRÜŞME KAPAT'}
+              {hangupLoading ? 'SONLANDIRILIYOR...' : 'KAPAT'}
             </button>
             <button onClick={toggleMute} style={{
-              padding: '10px 14px', borderRadius: 10, border: 'none',
-              background: muted ? `${C.warning}33` : `${C.textMuted}22`,
+              padding: '12px 16px', borderRadius: 14, border: '1px solid rgba(100,160,255,0.15)',
+              background: muted ? `linear-gradient(135deg, ${C.warning}44, ${C.warning}22)` : 'linear-gradient(145deg, rgba(40,50,80,0.8), rgba(25,35,60,0.9))',
               color: muted ? C.warning : C.textSec,
               fontSize: 11, fontWeight: 700, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 4
+              display: 'flex', alignItems: 'center', gap: 4,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)'
             }}>
               <LIcon name={muted ? 'MicOff' : 'Mic'} size={14} color={muted ? C.warning : C.textSec}/>
             </button>
             <button onClick={() => setTransferOpen(!transferOpen)} style={{
-              padding: '10px 14px', borderRadius: 10, border: 'none',
-              background: transferOpen ? `${C.purple}33` : `${C.textMuted}22`,
+              padding: '12px 16px', borderRadius: 14, border: '1px solid rgba(100,160,255,0.15)',
+              background: transferOpen ? `linear-gradient(135deg, ${C.purple}44, ${C.purple}22)` : 'linear-gradient(145deg, rgba(40,50,80,0.8), rgba(25,35,60,0.9))',
               color: transferOpen ? C.purple : C.textSec,
               fontSize: 11, fontWeight: 700, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 4
+              display: 'flex', alignItems: 'center', gap: 4,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)'
             }}>
               <LIcon name="ArrowRightLeft" size={14} color={transferOpen ? C.purple : C.textSec}/>
             </button>
@@ -1346,87 +1510,64 @@ const NetsantralPanel = ({user}) => {
         )}
       </div>
 
-      {/* ZORLA KAPAT BUTONU - HANGUP BAŞARISIZ OLDUĞUNDA */}
-      {activeCall && !hangupLoading && statusMsg && statusMsg.includes('SONLANDIRILAMADI') && (
-        <div style={{padding: '0 14px 12px'}}>
-          <button onClick={zorlaKapat} style={{
-            width: '100%', padding: '8px', borderRadius: 8, border: `1px solid ${C.warning}`,
-            background: `${C.warning}22`, color: C.warning, fontSize: 11, fontWeight: 700,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-          }}>
-            <LIcon name="XCircle" size={14} color={C.warning}/> ZORLA SONLANDIR
-          </button>
-        </div>
-      )}
-
       {/* TRANSFER PANELİ */}
       {transferOpen && activeCall && (
         <div style={{padding: '0 14px 12px'}}>
-          <div style={{
-            padding: 10, background: `${C.purple}11`, borderRadius: 10,
-            border: `1px solid ${C.purple}22`
-          }}>
+          <div style={{padding: 10, background: `${C.purple}11`, borderRadius: 10, border: `1px solid ${C.purple}22`}}>
             <div style={{fontSize: 10, fontWeight: 700, color: C.purple, marginBottom: 8}}>
               <LIcon name="ArrowRightLeft" size={12} color={C.purple}/> TRANSFER
             </div>
             <div style={{display: 'flex', gap: 6}}>
-              <input
-                value={transferNum}
-                onChange={e => setTransferNum(e.target.value)}
-                placeholder="HEDEF NUMARA..."
-                style={{
-                  flex: 1, padding: '8px 10px', background: C.bgInput,
-                  border: `1px solid ${C.borderLight}`, borderRadius: 8,
-                  color: C.text, fontSize: 12, outline: 'none'
-                }}
-              />
-              <button onClick={transferYap} style={{
-                padding: '8px 14px', borderRadius: 8, border: 'none',
-                background: C.purple, color: '#fff', fontSize: 11,
-                fontWeight: 700, cursor: 'pointer'
-              }}>TRANSFER</button>
+              <input value={transferNum} onChange={e => setTransferNum(e.target.value)} placeholder="HEDEF NUMARA..."
+                style={{flex: 1, padding: '8px 10px', background: C.bgInput, border: `1px solid ${C.borderLight}`, borderRadius: 8, color: C.text, fontSize: 12, outline: 'none'}}/>
+              <button onClick={transferYap} style={{padding: '8px 14px', borderRadius: 8, border: 'none', background: C.purple, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer'}}>TRANSFER</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* DIALPAD TOGGLE */}
-      <div style={{
-        padding: '0 14px 12px', display: 'flex', justifyContent: 'center'
-      }}>
+      {/* DIALPAD */}
+      <div style={{padding: '0 16px 12px', display: 'flex', justifyContent: 'center'}}>
         <div onClick={() => setDialpadOpen(!dialpadOpen)} style={{
-          cursor: 'pointer', fontSize: 10, fontWeight: 600,
-          color: C.textMuted, display: 'flex', alignItems: 'center', gap: 4
+          cursor: 'pointer', fontSize: 10, fontWeight: 700, letterSpacing: 0.5,
+          color: 'rgba(100,180,255,0.5)', display: 'flex', alignItems: 'center', gap: 5,
+          padding: '4px 12px', borderRadius: 8,
+          background: 'rgba(100,160,255,0.05)', border: '1px solid rgba(100,160,255,0.1)',
+          transition: 'all .2s'
         }}>
-          <LIcon name={dialpadOpen ? 'ChevronDown' : 'ChevronUp'} size={12} color={C.textMuted}/>
+          <LIcon name={dialpadOpen ? 'ChevronDown' : 'ChevronUp'} size={12} color="rgba(100,180,255,0.5)"/>
           {dialpadOpen ? 'TUŞLARI GİZLE' : 'TUŞLARI GÖSTER'}
         </div>
       </div>
 
-      {/* DIALPAD */}
       {dialpadOpen && (
         <div style={{padding: '0 14px 14px'}}>
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6
-          }}>
+          <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8}}>
             {keys.flat().map(k => (
               <button key={k} onClick={() => dialKey(k)} style={{
-                padding: '12px 0', borderRadius: 10, border: `1px solid ${C.border}`,
-                background: C.bgHover, color: C.text,
-                fontSize: 18, fontWeight: 700, cursor: 'pointer',
-                transition: 'all .15s', fontFamily: 'monospace'
+                padding: '14px 0', borderRadius: 12,
+                border: '1px solid rgba(100,160,255,0.2)',
+                background: 'linear-gradient(145deg, rgba(40,50,80,0.8), rgba(25,35,60,0.9))',
+                color: C.text, fontSize: 20, fontWeight: 800,
+                cursor: 'pointer', transition: 'all .15s', fontFamily: 'monospace',
+                boxShadow: '0 3px 10px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.2)',
+                textShadow: '0 0 8px rgba(100,180,255,0.3)',
+                transform: 'perspective(500px) translateZ(0)'
               }}
-                onMouseEnter={e => e.currentTarget.style.background = `${C.accent}22`}
-                onMouseLeave={e => e.currentTarget.style.background = C.bgHover}
+                onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(60,80,140,0.9), rgba(40,60,100,0.9))'; e.currentTarget.style.boxShadow = `0 4px 15px rgba(0,0,0,0.4), 0 0 15px ${C.accent}30, inset 0 1px 0 rgba(255,255,255,0.15)`; e.currentTarget.style.transform = 'perspective(500px) translateZ(3px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(40,50,80,0.8), rgba(25,35,60,0.9))'; e.currentTarget.style.boxShadow = '0 3px 10px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.2)'; e.currentTarget.style.transform = 'perspective(500px) translateZ(0)'; }}
               >{k}</button>
             ))}
           </div>
-          {/* SİL BUTONU */}
-          <div style={{marginTop: 6, display: 'flex', justifyContent: 'center'}}>
+          <div style={{marginTop: 8, display: 'flex', justifyContent: 'center'}}>
             <div onClick={() => setNumber(prev => prev.slice(0, -1))} style={{
-              cursor: 'pointer', padding: '6px 20px', borderRadius: 8,
-              background: `${C.warning}22`, color: C.warning,
-              fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4
+              cursor: 'pointer', padding: '8px 24px', borderRadius: 10,
+              background: `linear-gradient(135deg, ${C.warning}33, ${C.warning}18)`,
+              border: `1px solid ${C.warning}33`,
+              color: C.warning, fontSize: 11, fontWeight: 800, letterSpacing: 0.5,
+              display: 'flex', alignItems: 'center', gap: 6,
+              boxShadow: `0 2px 8px ${C.warning}22, inset 0 1px 0 rgba(255,255,255,0.1)`,
+              textShadow: `0 0 6px ${C.warning}44`
             }}>
               <LIcon name="Delete" size={14} color={C.warning}/> SİL
             </div>
@@ -1434,16 +1575,85 @@ const NetsantralPanel = ({user}) => {
         </div>
       )}
 
-      {/* ANİMASYON */}
-      <style>{`@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
+      <style>{`
+        @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+        @keyframes gelenPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.03)}}
+        @keyframes holoShine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+        @keyframes holoBorder{0%,100%{border-color:rgba(100,160,255,0.3)}50%{border-color:rgba(100,200,255,0.5)}}
+      `}</style>
     </div>
   );
 };
 
-/* ═══ GELEN ÇAĞRI POPUP ═══ */
 const GelenCagriPopup = ({call, onKapat, onCrmGit, setPage}) => {
   const {C, LIcon} = MR;
+  const [cevapYukleniyor, setCevapYukleniyor] = useState(false);
+  const [cevapHata, setCevapHata] = useState('');
   if (!call) return null;
+
+  /* WEBRTC İLE GELEN ÇAĞRIYI CEVAPLA */
+  const cevapla = async () => {
+    if (cevapYukleniyor) return;
+    setCevapYukleniyor(true);
+    setCevapHata('');
+
+    if (MR.webrtcTelefon && MR.webrtcTelefon._session) {
+      console.log('[POPUP] CEVAPLA: WEBRTC İLE CEVAPLANACAK');
+
+      /* SESSION DURUMUNU KONTROL ET */
+      if (MR.webrtcTelefon._session.isEnded && MR.webrtcTelefon._session.isEnded()) {
+        console.error('[POPUP] CEVAPLA: SESSION ZATEN SONLANMIŞ');
+        setCevapHata('ÇAĞRI SONLANMIŞ');
+        setCevapYukleniyor(false);
+        setTimeout(() => onKapat(), 2000);
+        return;
+      }
+
+      try {
+        const sonuc = await MR.webrtcTelefon.cevapla();
+        if (sonuc) {
+          console.log('[POPUP] CEVAPLA: BAŞARILI ✓');
+          /* CRM SAYFASINA YÖNLENDİR */
+          onCrmGit(call);
+          onKapat();
+        } else {
+          console.error('[POPUP] CEVAPLA: BAŞARISIZ');
+          /* SESSION HALA VARSA TEKRAR DENEYEBİLİR */
+          if (MR.webrtcTelefon._session && MR.webrtcTelefon._aramaDurumu === 'gelen') {
+            setCevapHata('CEVAPLAMA BAŞARISIZ - TEKRAR DENEYİN');
+            setCevapYukleniyor(false);
+          } else {
+            setCevapHata('ÇAĞRI SONLANMIŞ');
+            setCevapYukleniyor(false);
+            setTimeout(() => onKapat(), 2000);
+          }
+        }
+      } catch(e) {
+        console.error('[POPUP] CEVAPLA HATASI:', e);
+        setCevapHata('CEVAPLAMA HATASI: ' + (e?.message || ''));
+        setCevapYukleniyor(false);
+        setTimeout(() => { setCevapHata(''); }, 4000);
+      }
+    } else {
+      console.warn('[POPUP] CEVAPLA: WEBRTC SESSION YOK - SADECE CRM AÇILIYOR');
+      setCevapHata('SESSION YOK - ÇAĞRI CEVAPLANAMıYOR');
+      setCevapYukleniyor(false);
+      /* Session yoksa sadece CRM kayıt aç */
+      setTimeout(() => {
+        onCrmGit(call);
+        onKapat();
+      }, 1500);
+    }
+  };
+
+  /* ÇAĞRIYI REDDET */
+  const reddet = () => {
+    if (MR.webrtcTelefon) {
+      MR.webrtcTelefon.reddet();
+    }
+    onKapat();
+  };
+
   return (
     <div style={{
       position:'fixed', top:60, right:24, zIndex:9999, width:360,
@@ -1470,6 +1680,10 @@ const GelenCagriPopup = ({call, onKapat, onCrmGit, setPage}) => {
           <LIcon name="X" size={16} color={C.textMuted}/>
         </button>
       </div>
+      {/* HATA MESAJI */}
+      {cevapHata && (
+        <div style={{padding:'6px 14px', background:`${C.danger}15`, fontSize:10, fontWeight:600, color:C.danger, textAlign:'center'}}>{cevapHata}</div>
+      )}
       <div style={{padding:16}}>
         <div style={{fontSize:22, fontWeight:800, letterSpacing:1.5, marginBottom:6, color:C.text}}>
           {call.arayan || 'BİLİNMEYEN'}
@@ -1482,18 +1696,247 @@ const GelenCagriPopup = ({call, onKapat, onCrmGit, setPage}) => {
           </div>
         )}
         <div style={{display:'flex', gap:8}}>
+          <button onClick={cevapla} disabled={cevapYukleniyor} style={{
+            flex:1, padding:'10px', borderRadius:8, border:'none', cursor: cevapYukleniyor ? 'wait' : 'pointer',
+            background:C.success, color:'#fff', fontSize:12, fontWeight:700,
+            display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+            opacity: cevapYukleniyor ? 0.7 : 1,
+            animation: cevapYukleniyor ? 'none' : 'pulse 1.5s infinite'
+          }}>
+            <LIcon name="PhoneIncoming" size={14} color="#fff"/> {cevapYukleniyor ? 'CEVAPLANIYOR...' : 'CEVAPLA'}
+          </button>
           <button onClick={() => { onCrmGit(call); onKapat(); }} style={{
             flex:1, padding:'10px', borderRadius:8, border:'none', cursor:'pointer',
             background:C.accent, color:'#fff', fontSize:12, fontWeight:700,
             display:'flex', alignItems:'center', justifyContent:'center', gap:6
           }}>
-            <LIcon name="UserPlus" size={14} color="#fff"/> CRM KAYIT OLUŞTUR
+            <LIcon name="UserPlus" size={14} color="#fff"/> CRM KAYIT
           </button>
-          <button onClick={onKapat} style={{
-            padding:'10px 16px', borderRadius:8, border:`1px solid ${C.border}`, cursor:'pointer',
-            background:'transparent', color:C.textSec, fontSize:12, fontWeight:600
+          <button onClick={reddet} style={{
+            padding:'10px 16px', borderRadius:8, border:'none', cursor:'pointer',
+            background:C.danger, color:'#fff', fontSize:12, fontWeight:700
           }}>KAPAT</button>
         </div>
+      </div>
+    </div>
+  );
+};
+
+/* ═══ MİNİ ÇAĞRI DURUM PANELİ (AKTİF GÖRÜŞME SIRASINDA SAĞ ALT KÖŞEDE) ═══ */
+const MiniCallStatus = ({user, setPage}) => {
+  const {C, LIcon} = MR;
+
+  /* YETKİ KONTROLÜ */
+  const yetkiler = user?.yetkiler || {};
+  const isAdmin = user?.rol === 'admin';
+  const netsantralIzin = isAdmin || yetkiler['netsantral_goruntule'] === 1;
+
+  const [status, setStatus] = useState('hazir');
+  const [activeCall, setActiveCall] = useState(false);
+  const [callTimer, setCallTimer] = useState(0);
+  const [muted, setMuted] = useState(false);
+  const [number, setNumber] = useState('');
+  const [webrtcKayitli, setWebrtcKayitli] = useState(false);
+
+  const timerRef = useRef(null);
+  const callStartRef = useRef(null);
+
+  /* GÖRÜŞME SÜRESİ SAYACI */
+  useEffect(() => {
+    if (activeCall && status === 'gorusmede') {
+      callStartRef.current = Date.now();
+      timerRef.current = setInterval(() => {
+        setCallTimer(Math.floor((Date.now() - callStartRef.current) / 1000));
+      }, 1000);
+    } else if (!activeCall) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setCallTimer(0);
+      callStartRef.current = null;
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [activeCall, status]);
+
+  /* WEBRTC DURUM DİNLEYİCİ */
+  useEffect(() => {
+    const handleDurum = (e) => {
+      const d = e.detail || {};
+      setWebrtcKayitli(d.kayitli);
+      switch(d.durum) {
+        case 'araniyor':
+          setActiveCall(true);
+          setStatus('araniyor');
+          break;
+        case 'caliyor':
+          setStatus(prev => prev === 'gelen' ? 'gelen' : 'caliyor');
+          if (d.aramaDurumu !== 'gelen') setActiveCall(true);
+          break;
+        case 'gorusmede':
+          setActiveCall(true);
+          setStatus('gorusmede');
+          break;
+        case 'kapandi':
+        case 'reddedildi':
+          setActiveCall(false);
+          setMuted(false);
+          setStatus('hazir');
+          setNumber('');
+          break;
+        case 'sessize-alindi':
+          setMuted(true);
+          break;
+        case 'ses-acildi':
+          setMuted(false);
+          break;
+        case 'hata':
+          setActiveCall(false);
+          setMuted(false);
+          setStatus('hazir');
+          break;
+      }
+    };
+
+    const handleGelen = (e) => {
+      const d = e.detail || {};
+      setNumber(d.arayan || '');
+      setStatus('gelen');
+    };
+
+    const handleBaslat = (e) => {
+      const data = e.detail || {};
+      if (!data.telefon) return;
+      setNumber(data.telefon);
+      setStatus('araniyor');
+      setActiveCall(true);
+    };
+
+    const handleSonlandi = () => {
+      setActiveCall(false);
+      setMuted(false);
+      setStatus('hazir');
+      setNumber('');
+    };
+
+    window.addEventListener('mr-webrtc-durum', handleDurum);
+    window.addEventListener('mr-webrtc-gelen-cagri', handleGelen);
+    window.addEventListener('mr-arama-baslat', handleBaslat);
+    window.addEventListener('mr-arama-sonlandi', handleSonlandi);
+    return () => {
+      window.removeEventListener('mr-webrtc-durum', handleDurum);
+      window.removeEventListener('mr-webrtc-gelen-cagri', handleGelen);
+      window.removeEventListener('mr-arama-baslat', handleBaslat);
+      window.removeEventListener('mr-arama-sonlandi', handleSonlandi);
+    };
+  }, []);
+
+  if (!netsantralIzin) return null;
+
+  /* SADECE AKTİF ÇAĞRI VARKEN VEYA ARANIYOR/ÇALIYOR/GELEN DURUMLARINDA GÖSTER */
+  if (!activeCall && status !== 'araniyor' && status !== 'caliyor' && status !== 'gelen') return null;
+
+  const fmtTime = (s) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  const aramaKapat = () => {
+    if (MR.webrtcTelefon) MR.webrtcTelefon.kapat();
+    setActiveCall(false);
+    setMuted(false);
+    setStatus('hazir');
+    window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
+  };
+
+  const toggleMute = () => {
+    if (MR.webrtcTelefon) MR.webrtcTelefon.sesizToggle();
+    setMuted(!muted);
+  };
+
+  const statusColors = { araniyor: '#f59e0b', caliyor: '#f59e0b', gorusmede: C.accent, gelen: C.success };
+  const statusLabels = { araniyor: 'ARANIYOR', caliyor: 'ÇALIYOR', gorusmede: 'GÖRÜŞMEDE', gelen: 'GELEN ÇAĞRI' };
+  const statusColor = statusColors[status] || C.accent;
+
+  /* GELEN ÇAĞRI CEVAPLA */
+  const gelenCevapla = () => {
+    if (MR.webrtcTelefon && MR.webrtcTelefon._session) {
+      MR.webrtcTelefon.cevapla();
+    }
+  };
+
+  /* GELEN ÇAĞRI REDDET */
+  const gelenReddet = () => {
+    if (MR.webrtcTelefon) MR.webrtcTelefon.reddet();
+    setActiveCall(false);
+    setMuted(false);
+    setStatus('hazir');
+    setNumber('');
+    window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: 60, right: 24, zIndex: 9998,
+      background: `linear-gradient(145deg, ${C.bgCard}, ${C.bgCard}ee)`,
+      border: `1.5px solid ${statusColor}55`,
+      borderRadius: 16, padding: '10px 14px',
+      boxShadow: `0 8px 30px rgba(0,0,0,.5), 0 0 20px ${statusColor}20`,
+      backdropFilter: 'blur(20px)',
+      display: 'flex', alignItems: 'center', gap: 10,
+      minWidth: 200
+    }}>
+      {/* DURUM NOKTASI */}
+      <div style={{
+        width: 10, height: 10, borderRadius: '50%', background: statusColor,
+        boxShadow: `0 0 10px ${statusColor}`,
+        animation: status === 'gorusmede' ? 'none' : 'pulse 1.5s infinite'
+      }}/>
+      {/* BİLGİ */}
+      <div style={{flex: 1, minWidth: 0}}>
+        <div style={{fontSize: 10, fontWeight: 800, color: statusColor, letterSpacing: 0.5}}>
+          {statusLabels[status] || 'AKTİF'} {status === 'gorusmede' && <span style={{color: C.text, fontFamily: 'monospace'}}>{fmtTime(callTimer)}</span>}
+        </div>
+        {number && <div style={{fontSize: 11, fontWeight: 600, color: C.textSec, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{number}</div>}
+      </div>
+      {/* KONTROLLER */}
+      <div style={{display: 'flex', gap: 6}}>
+        {status === 'gelen' && (
+          <>
+            <div onClick={gelenCevapla} style={{
+              width: 32, height: 32, borderRadius: '50%', cursor: 'pointer',
+              background: C.success, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: `0 2px 8px ${C.success}55`,
+              animation: 'pulse 1.5s infinite'
+            }} title="CEVAPLA">
+              <LIcon name="PhoneIncoming" size={14} color="#fff"/>
+            </div>
+            <div onClick={gelenReddet} style={{
+              width: 32, height: 32, borderRadius: '50%', cursor: 'pointer',
+              background: C.danger, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: `0 2px 8px ${C.danger}55`
+            }} title="REDDET">
+              <LIcon name="PhoneOff" size={14} color="#fff"/>
+            </div>
+          </>
+        )}
+        {status === 'gorusmede' && (
+          <div onClick={toggleMute} style={{
+            width: 32, height: 32, borderRadius: '50%', cursor: 'pointer',
+            background: muted ? `${C.warning}33` : 'rgba(255,255,255,0.08)',
+            border: `1px solid ${muted ? C.warning + '55' : 'rgba(255,255,255,0.1)'}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }} title={muted ? 'MİKROFON AÇ' : 'SESSİZE AL'}>
+            <LIcon name={muted ? 'MicOff' : 'Mic'} size={14} color={muted ? C.warning : C.textSec}/>
+          </div>
+        )}
+        {status !== 'gelen' && (
+          <div onClick={aramaKapat} style={{
+            width: 32, height: 32, borderRadius: '50%', cursor: 'pointer',
+            background: C.danger, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: `0 2px 8px ${C.danger}55`
+          }} title="ÇAĞRIYI KAPAT">
+            <LIcon name="PhoneOff" size={14} color="#fff"/>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1555,6 +1998,29 @@ const App = () => {
           if (!MR._netsantralDahili) {
             console.warn('[NETSANTRAL] UYARI: DAHİLİ NUMARASI TANIMLANMAMIŞ! SİSTEM > AYARLAR > NETSANTRAL BÖLÜMÜNDEN TANIMLAYIN.');
           }
+          /* WEBRTC TELEFONU BAŞLAT (SIP BİLGİLERİ VARSA) */
+          const sipSifre = r.data.netsantral_sip_sifre || '';
+          const wssUrl = r.data.netsantral_wss_url || 'wss://sip6.netsantral.com:8089/ws';
+          const sipDomain = r.data.netsantral_sip_domain || 'sip6.netsantral.com';
+          const apiSifre = r.data.netsantral_sifre || '';
+          const kullanici = r.data.netsantral_kullanici || '';
+          if (MR.webrtcTelefon && (sipSifre || apiSifre) && MR._netsantralDahili && MR._netsantralAktif) {
+            console.log('[WEBRTC] OTOMATİK BAŞLATILIYOR - DAHİLİ:', MR._netsantralDahili, '| KULLANICI:', kullanici, '| SANTRAL:', MR._netsantralSantralNo);
+            MR.webrtcTelefon.baslat({
+              wssUrl: wssUrl,
+              domain: sipDomain,
+              dahili: MR._netsantralDahili,
+              sipSifre: sipSifre,
+              kullanici: kullanici,
+              apiSifre: apiSifre,
+              santralNo: MR._netsantralSantralNo || '',
+              turnUrl: r.data.netsantral_turn_url || '',
+              turnUser: r.data.netsantral_turn_user || '',
+              turnPass: r.data.netsantral_turn_pass || ''
+            });
+          } else if (!sipSifre && !apiSifre) {
+            console.warn('[WEBRTC] SIP ŞİFRESİ GİRİLMEMİŞ - SİSTEM > NETSANTRAL AYARLARINDAN GİRİN');
+          }
         } else {
           console.warn('[NETSANTRAL] AYARLAR YÜKLENEMEDI:', r);
         }
@@ -1573,13 +2039,13 @@ const App = () => {
 
   /* NETSIPP GELEN ÇAĞRI DİNLEYİCİ (localStorage) - OTOMATİK CRM KAYIT EKRANI AÇ */
   /* YETKİ KONTROLÜ: ADMIN VEYA netsipp_goruntule / netsipp_gelen_cagri İZNİ GEREKLİ */
-  const netsippIzinVar = user?.rol === 'admin' || user?.yetkiler?.netsipp_goruntule === 1 || user?.yetkiler?.netsipp_gelen_cagri === 1;
+  const netsippIzinVar = user?.rol === 'admin' || user?.yetkiler?.netsipp_goruntule === 1 || user?.yetkiler?.netsipp_gelen_cagri === 1 || user?.yetkiler?.netsantral_goruntule === 1;
 
   const gelenCagriIsle = useCallback((data) => {
     if (!data || !data.timestamp || (Date.now() - data.timestamp > 30000)) return;
-    /* POPUP GÖSTER (15 SANİYE GÖRÜNSÜN - KULLANICI İŞLEM YAPANA KADAR) */
+    /* POPUP GÖSTER (30 SANİYE GÖRÜNSÜN - KULLANICI İŞLEM YAPANA KADAR) */
     setGelenCagri(data);
-    setTimeout(() => setGelenCagri(prev => prev?.timestamp === data.timestamp ? null : prev), 15000);
+    setTimeout(() => setGelenCagri(prev => prev?.timestamp === data.timestamp ? null : prev), 30000);
     /* SES BİLDİRİMİ - TARAYıCı İZİN VERİYORSA */
     try {
       const ac = new (window.AudioContext || window.webkitAudioContext)();
@@ -1594,64 +2060,31 @@ const App = () => {
       setTimeout(() => { osc.frequency.value = 800; }, 400);
       setTimeout(() => { osc.stop(); ac.close(); }, 600);
     } catch(e) {}
-    /* OTOMATİK CRM YENİ KAYIT EKRANINA YÖNLENDİR */
+    /* ARAYAN BİLGİLERİNİ KAYDET (CRM sayfası açılınca kullanılacak) */
     MR._gelenCagriTelefon = data.arayan;
     MR._gelenCagriAdi = data.arayanAdi || '';
-    setPage('crm-yeni');
+    /* OTOMATİK YÖNLENDİRME YAPMA - KULLANICI POPUP'TAN VEYA WİDGET'TAN CEVAPLAYACAK */
   }, [setPage]);
 
-  useEffect(() => {
-    if (!user || !netsippIzinVar) return;
-    const handler = (e) => {
-      if (e.key === 'mr_netsipp_gelen') {
-        try {
-          const data = JSON.parse(e.newValue);
-          gelenCagriIsle(data);
-        } catch(err) {}
-      }
-    };
-    window.addEventListener('storage', handler);
-    /* SAYFA AÇIKKEN DE KONTROL ET (AYNI SEKMEDE) */
-    const checkLocal = () => {
-      try {
-        const raw = localStorage.getItem('mr_netsipp_gelen');
-        if (raw) {
-          const data = JSON.parse(raw);
-          if (data && data.timestamp && (Date.now() - data.timestamp < 5000)) {
-            localStorage.removeItem('mr_netsipp_gelen');
-            gelenCagriIsle(data);
-          }
-        }
-      } catch(err) {}
-    };
-    const iv = setInterval(checkLocal, 3000);
-    return () => { window.removeEventListener('storage', handler); clearInterval(iv); };
-  }, [user, netsippIzinVar, gelenCagriIsle]);
 
-  /* NETSANTRAL WEBHOOK POLLING - GELEN ÇAĞRI KONTROLÜ */
+  /* WEBRTC GELEN ÇAĞRI DİNLEYİCİ - POPUP GÖSTER */
   useEffect(() => {
     if (!user || !netsippIzinVar) return;
-    const pollNetsantral = async () => {
-      try {
-        const r = await api.netsantralBekleyen();
-        if (r?.success && r.data && r.data.length > 0) {
-          const cagri = r.data[0]; // EN SON GELEN ÇAĞRI
-          const data = {
-            arayan: cagri.arayan_no,
-            arayanAdi: cagri.arayan_adi || '',
-            aranan: cagri.aranan_no || '',
-            aramaId: cagri.arama_id || '',
-            yon: 'gelen',
-            timestamp: Date.now()
-          };
-          gelenCagriIsle(data);
-          /* NETSANTRAL PANELİNE DE BİLDİR */
-          window.dispatchEvent(new CustomEvent('mr-netsantral-gelen', {detail: data}));
-        }
-      } catch(e) {}
+    const handleGelenCagri = (e) => {
+      const data = e.detail || {};
+      console.log('[APP] WEBRTC GELEN ÇAĞRI:', data);
+      gelenCagriIsle(data);
     };
-    const iv = setInterval(pollNetsantral, 5000);
-    return () => clearInterval(iv);
+    const handleAramaSonlandi = () => {
+      /* ÇAĞRI SONLANDIĞINDA POPUP'I KAPAT */
+      setGelenCagri(null);
+    };
+    window.addEventListener('mr-webrtc-gelen-cagri', handleGelenCagri);
+    window.addEventListener('mr-arama-sonlandi', handleAramaSonlandi);
+    return () => {
+      window.removeEventListener('mr-webrtc-gelen-cagri', handleGelenCagri);
+      window.removeEventListener('mr-arama-sonlandi', handleAramaSonlandi);
+    };
   }, [user, netsippIzinVar, gelenCagriIsle]);
 
   /* GİDEN ARAMA'DAN OTOMATİK CRM EKRANI AÇ - YETKİ KONTROLLÜ */
@@ -2071,8 +2504,8 @@ const App = () => {
         setPage={setPage}
       />}
 
-      {/* NETSANTRAL FLOATING KONTROL PANELİ - YETKİ KONTROLLÜ */}
-      <NetsantralPanel user={user}/>
+      {/* NETSANTRAL MİNİ ÇAĞRI DURUM PANELİ (FLOATING WİDGET KALDIRILDI) */}
+      {netsippIzinVar && <MiniCallStatus user={user} setPage={setPage}/>}
 
       {/* ANİMASYON CSS */}
       <style>{`
