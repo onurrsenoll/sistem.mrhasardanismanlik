@@ -1,170 +1,111 @@
-# MR HASAR DANIŞMANLIK - KURULUM REHBERİ
-## cPanel Adım Adım Kurulum
+# NetSantral WebRTC Softphone – Sistem Entegrasyon Paketi
+
+NetGSM Netsantral WSS protokolü ile tarayıcıdan gerçek zamanlı arama yapan WebRTC softphone modülü.  
+**Sadece hazırlanan dosyalar** bu pakettedir.
 
 ---
 
-## ADIM 1: VERİTABANI OLUŞTURMA
+## Paket İçeriği
 
-### 1.1 — Yeni Veritabanı Oluştur
-1. cPanel ana sayfaya git
-2. **"MySQL® Veritabanı Sihirbazı"** veya **"MySQL® Databases"** tıkla
-3. **Yeni Veritabanı Adı** kısmına yaz: `dosyatakip`
-   - cPanel otomatik olarak başına ekler → `mrhasard_dosyatakip`
-4. **"Veritabanı Oluştur"** tıkla
-
-### 1.2 — Veritabanı Kullanıcısı Oluştur
-1. Aynı sayfada **"MySQL Kullanıcıları"** bölümüne git
-2. **Kullanıcı adı**: `dtuser`
-   - Tam adı olacak: `mrhasard_dtuser`
-3. **Şifre**: Güçlü bir şifre gir (Şifre Oluşturucu kullan)
-   - ⚠️ BU ŞİFREYİ BİR YERE NOT ET! API'de kullanacağız
-4. **"Kullanıcı Oluştur"** tıkla
-
-### 1.3 — Kullanıcıyı Veritabanına Ata
-1. **"Veritabanına Kullanıcı Ekle"** bölümüne git
-2. Kullanıcı: `mrhasard_dtuser`
-3. Veritabanı: `mrhasard_dosyatakip`
-4. **"Ekle"** tıkla
-5. Yetki ekranında **"TÜM AYRICALIKLAR"** (ALL PRIVILEGES) işaretle
-6. **"Değişiklik Yap"** tıkla
-
-### 1.4 — SQL Dosyasını Çalıştır
-1. cPanel'de **phpMyAdmin** aç
-2. Sol menüden **`mrhasard_dosyatakip`** veritabanını tıkla
-3. Üstteki menüden **"SQL"** sekmesini tıkla
-4. Sana verdiğim `mr_hasar_db.sql` dosyasının içeriğini yapıştır
-5. **"Git"** (veya "Çalıştır") butonuna bas
-6. Yeşil ✅ başarılı mesajı gelecek
-
-### 1.5 — Kontrol Et
-phpMyAdmin'de sol menüde şu tablolar görünmeli:
 ```
-✅ users (5 kayıt)
-✅ dosyalar
-✅ magdurlar
-✅ araclar
-✅ kasalar (4 kayıt)
-✅ masraflar
-✅ evraklar
-✅ kasa_hareketleri
-✅ crm
-✅ crm_notlari
-✅ hesaplamalar
-✅ tanimlamalar (~70 kayıt)
-✅ bildirimler
-✅ ajanda
-✅ log_kayitlari
-✅ oturumlar
+netsantral-softphone-paket/
+├── css/
+│   └── netgsm-softphone.css    # Arama paneli stilleri
+├── js/
+│   ├── netgsm-softphone.js     # JsSIP WSS çekirdek
+│   └── netgsm-softphone-ui.js  # Arama paneli arayüzü
+├── .gitignore
+└── README.md
 ```
 
 ---
 
-## ADIM 2: KARAKTER SETİ DÜZELTMESİ
+## Sisteme Entegrasyon
 
-⚠️ Senin sunucuda karakter seti `latin1` görünüyor. Türkçe için düzeltme:
+### 1. Dosyaları projenize kopyalayın
 
-1. phpMyAdmin'de `mrhasard_dosyatakip` veritabanını seç
-2. **"İşlemler"** sekmesine git
-3. **"Karşılaştırma"** (Collation) kısmını bul
-4. **`utf8mb4_turkish_ci`** seç
-5. **"Git"** tıkla
+- `css/netgsm-softphone.css` → projenizin `css/` klasörüne
+- `js/netgsm-softphone.js` ve `js/netgsm-softphone-ui.js` → projenizin `js/` (veya `js/webrtc/`) klasörüne
 
----
+### 2. HTML’e ekleyin
 
-## ADIM 3: DOSYALARI YÜKLEME
+Ana sayfa veya layout’unuzun `<head>` ve sayfa sonu:
 
-### 3.1 — Dosya Yöneticisi ile
-1. cPanel → **"Dosya Yöneticisi"** aç
-2. **`public_html`** klasörüne git
-3. Sana vereceğim dosyaları buraya yükle:
+```html
+<link rel="stylesheet" href="css/netgsm-softphone.css">
 
-```
-public_html/
-├── index.html          ← React build
-├── assets/             ← JS/CSS dosyaları
-├── .htaccess           ← Routing ayarları
-├── api/                ← PHP Backend (klasör oluştur)
-│   ├── config/
-│   │   └── database.php
-│   │   └── auth.php
-│   │   └── helpers.php
-│   ├── v1/
-│   │   ├── auth/
-│   │   ├── dosya/
-│   │   ├── masraf/
-│   │   ├── evrak/
-│   │   ├── crm/
-│   │   └── ...
-│   └── .htaccess
-└── uploads/            ← Evrak klasörü (oluştur)
-    └── .htaccess
+<!-- Sayfa sonunda, diğer script'lerden sonra -->
+<script src="https://unpkg.com/jssip@3.10.1/dist/jssip.min.js"></script>
+<script src="js/netgsm-softphone.js"></script>
+<script src="js/netgsm-softphone-ui.js"></script>
+<script>
+  NetGSMSoftphoneUI.init({
+    wssUrl: 'wss://sip.netsantral.com:8089/ws',
+    sipUri: 'sip:102@sip.netsantral.com',
+    sipDomain: 'sip.netsantral.com',
+    password: 'DAHİLİ_ŞİFRENİZ',
+    displayName: 'CRM 102',
+    autoConnect: true
+  });
+</script>
 ```
 
-### 3.2 — Klasör Oluşturma
-`public_html` içinde şu klasörleri oluştur:
-- `api`
-- `api/config`
-- `api/v1`
-- `api/v1/auth`
-- `api/v1/dosya`
-- `api/v1/masraf`
-- `api/v1/evrak`
-- `api/v1/crm`
-- `api/v1/muhasebe`
-- `api/v1/tanim`
-- `api/v1/sistem`
-- `uploads`
+### 3. Netsantral ayarlarından alacağınız bilgiler
+
+- **WSS adresi:** Örn. `wss://sip.netsantral.com:8089/ws` veya `wss://sips.netsantral.com:8089/ws`
+- **SIP Domain:** Örn. `sip.netsantral.com`
+- **Dahili no:** 102 → SIP URI: `sip:102@sip.netsantral.com`
+- **Dahili şifresi:** Netsantral dahili düzenleme ekranındaki şifre
+
+### 4. CRM’de tıklayarak arama
+
+Telefon numarasına tıklanınca arama başlatmak için:
+
+```html
+<a href="#" class="netgsm-click-to-call" data-netgsm-call="5321234567">532 123 45 67</a>
+```
+
+veya
+
+```html
+<span data-netgsm-call="5551234567">0555 123 45 67</span>
+```
 
 ---
 
-## ADIM 4: SSL SERTİFİKASI (HTTPS)
+## Özellikler
 
-1. cPanel → **"SSL/TLS"** veya **"Let's Encrypt"** bul
-2. Domain'in için **ücretsiz SSL** kur
-3. **"Force HTTPS Redirect"** aktif et
-   - Bu sayede http:// otomatik https:// olur
-
----
-
-## ADIM 5: PHP AYARLARI
-
-1. cPanel → **"MultiPHP INI Editor"** veya **"PHP Ayarları"**
-2. Şu değerleri kontrol et / ayarla:
-   - `upload_max_filesize` = **20M** (en az)
-   - `post_max_size` = **25M**
-   - `max_execution_time` = **120**
-   - `memory_limit` = **256M**
+- Sağ alt köşede **gizlenebilir arama paneli**
+- **Bağlı / Bağlanıyor / Hata** durum göstergesi
+- **Gelen arama:** Cevapla / Reddet + tarayıcıda zil sesi
+- **Görüşme sırasında** Kapat butonu
+- **CRM’de** `data-netgsm-call` veya `netgsm-click-to-call` ile tıklayarak arama
 
 ---
 
-## ÖNEMLİ BİLGİLER
+## GitHub’a Yükleme
 
-| Bilgi | Değer |
-|-------|-------|
-| Veritabanı Adı | `mrhasard_dosyatakip` |
-| Veritabanı Kullanıcı | `mrhasard_dtuser` |
-| Veritabanı Şifre | (senin belirlediğin) |
-| Veritabanı Host | `localhost` |
-| PHP Versiyonu | 8.4.17 ✅ |
-| MariaDB | 10.6.25 ✅ |
+Bu klasörü doğrudan GitHub deponuza yükleyebilirsiniz:
+
+1. GitHub’da yeni bir repository oluşturun.
+2. Bu `netsantral-softphone-paket` klasörünü açın.
+3. Git kuruluysa:
+
+   ```bash
+   git init
+   git add .
+   git commit -m "NetSantral WebRTC Softphone paketi"
+   git remote add origin https://github.com/KULLANICI_ADINIZ/repo-adi.git
+   git branch -M main
+   git push -u origin main
+   ```
+
+4. Veya klasörü ZIP’leyip GitHub’da “uploading an existing file” ile yükleyin.
 
 ---
 
-## SORUN GİDERME
+## Bağımlılık
 
-**"Access Denied" hatası alırsan:**
-- Kullanıcı-veritabanı eşleşmesini kontrol et
-- Şifreyi tekrar gir
+- **JsSIP** (tarayıcıda CDN ile yüklenir): `https://unpkg.com/jssip@3.10.1/dist/jssip.min.js`
 
-**Türkçe karakterler bozuk görünürse:**
-- Veritabanı karşılaştırmasını utf8mb4_turkish_ci yap
-- Tüm tablolarda aynı karşılaştırmayı seç
-
-**Dosya yükleme çalışmıyorsa:**
-- uploads/ klasör izinlerini 755 yap
-- PHP upload limitini kontrol et
-
-**Sayfa 404 veriyorsa:**
-- .htaccess dosyasının yüklendiğinden emin ol
-- cPanel'de "mod_rewrite" aktif mi kontrol et
-# sistem.mrhasardanismanlik
+Tarayıcı: HTTPS veya localhost gerekir (WebRTC/mikrofon izni için).

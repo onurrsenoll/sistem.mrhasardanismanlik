@@ -1,0 +1,189 @@
+/* NetGSM WebRTC Softphone - Arama Paneli */
+.netgsm-sp-wrap {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  box-sizing: border-box;
+  position: fixed;
+  z-index: 99999;
+  bottom: 20px;
+  right: 20px;
+  --netgsm-green: #00a651;
+  --netgsm-green-dark: #008c44;
+  --netgsm-red: #c0392b;
+  --netgsm-gray: #2c3e50;
+  --netgsm-light: #ecf0f1;
+}
+
+.netgsm-sp-wrap * { box-sizing: border-box; }
+
+.netgsm-sp-toggle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0,166,81,0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.netgsm-sp-toggle:hover { transform: scale(1.05); box-shadow: 0 6px 18px rgba(0,166,81,0.5); }
+.netgsm-sp-toggle svg { width: 26px; height: 26px; fill: #fff; }
+.netgsm-sp-toggle.status-connecting { background: #f39c12; }
+.netgsm-sp-toggle.status-connected,
+.netgsm-sp-toggle.status-registered { background: var(--netgsm-green); }
+.netgsm-sp-toggle.status-error { background: var(--netgsm-red); }
+.netgsm-sp-toggle.status-disconnected { background: #7f8c8d; }
+
+.netgsm-sp-toggle .netgsm-sp-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: #95a5a6;
+}
+
+.netgsm-sp-toggle .netgsm-sp-dot.registered { background: var(--netgsm-green); }
+.netgsm-sp-toggle .netgsm-sp-dot.connecting { background: #f39c12; animation: netgsm-pulse 0.8s infinite; }
+.netgsm-sp-toggle .netgsm-sp-dot.error { background: var(--netgsm-red); }
+
+@keyframes netgsm-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+.netgsm-sp-panel {
+  position: absolute;
+  bottom: 70px;
+  right: 0;
+  width: 340px;
+  max-width: calc(100vw - 40px);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  overflow: hidden;
+  display: none;
+}
+
+.netgsm-sp-panel.open { display: block; animation: netgsm-slideUp 0.25s ease; }
+@keyframes netgsm-slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.netgsm-sp-header {
+  background: linear-gradient(135deg, var(--netgsm-green) 0%, var(--netgsm-green-dark) 100%);
+  color: #fff;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.netgsm-sp-header h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.netgsm-sp-close {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.netgsm-sp-close:hover { background: rgba(255,255,255,0.3); }
+
+.netgsm-sp-body { padding: 16px; }
+.netgsm-sp-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--netgsm-light);
+  border-radius: 8px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: var(--netgsm-gray);
+}
+.netgsm-sp-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.netgsm-sp-status-dot.registered { background: var(--netgsm-green); }
+.netgsm-sp-status-dot.connecting { background: #f39c12; }
+.netgsm-sp-status-dot.error { background: var(--netgsm-red); }
+.netgsm-sp-status-dot.disconnected { background: #95a5a6; }
+
+.netgsm-sp-input-wrap { margin-bottom: 12px; }
+.netgsm-sp-input-wrap input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+}
+.netgsm-sp-input-wrap input:focus { border-color: var(--netgsm-green); }
+
+.netgsm-sp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.netgsm-sp-btn {
+  flex: 1;
+  min-width: 80px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.netgsm-sp-btn:active { transform: scale(0.98); }
+.netgsm-sp-btn-primary { background: var(--netgsm-green); color: #fff; }
+.netgsm-sp-btn-primary:hover:not(:disabled) { background: var(--netgsm-green-dark); }
+.netgsm-sp-btn-danger { background: var(--netgsm-red); color: #fff; }
+.netgsm-sp-btn-danger:hover:not(:disabled) { background: #a93226; }
+.netgsm-sp-btn-default { background: var(--netgsm-light); color: var(--netgsm-gray); }
+.netgsm-sp-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.netgsm-sp-incoming {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 100000;
+  width: 320px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  padding: 16px;
+  display: none;
+  animation: netgsm-slideUp 0.3s ease;
+}
+.netgsm-sp-incoming.show { display: block; }
+.netgsm-sp-incoming-title { font-size: 12px; color: #7f8c8d; margin-bottom: 4px; }
+.netgsm-sp-incoming-number { font-size: 18px; font-weight: 600; color: var(--netgsm-gray); margin-bottom: 14px; word-break: break-all; }
+.netgsm-sp-incoming-actions { display: flex; gap: 10px; }
+.netgsm-sp-incoming-actions .netgsm-sp-btn { flex: 1; }
+
+.netgsm-sp-active-call {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  z-index: 99998;
+  background: #fff;
+  padding: 10px 14px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  display: none;
+  align-items: center;
+  gap: 12px;
+}
+.netgsm-sp-active-call.show { display: flex; }
+.netgsm-sp-active-call span { font-size: 13px; color: var(--netgsm-gray); max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+
+.netgsm-click-to-call,
+[data-netgsm-call] {
+  color: var(--netgsm-green);
+  text-decoration: none;
+  cursor: pointer;
+  border-bottom: 1px dashed var(--netgsm-green);
+}
+.netgsm-click-to-call:hover,
+[data-netgsm-call]:hover { color: var(--netgsm-green-dark); border-bottom-style: solid; }
