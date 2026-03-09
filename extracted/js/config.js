@@ -105,19 +105,6 @@ MR.api = {
     const h = {}; if (this.token) h['Authorization'] = 'Bearer ' + this.token;
     return (await fetch(API_BASE + '/crm/dosya-yukle.php', { method: 'POST', headers: h, body: fd })).json();
   },
-  // NETSANTRAL ARAMA LOG
-  netsantralAramaLogCreate(d) { return this.req('/netsantral/arama-log.php', { method: 'POST', body: JSON.stringify({ action: 'create', ...d }) }); },
-  netsantralAramaLogUpdate(d) { return this.req('/netsantral/arama-log.php', { method: 'POST', body: JSON.stringify({ action: 'update', ...d }) }); },
-  netsantralAramaLogHangup(d) { return this.req('/netsantral/arama-log.php', { method: 'POST', body: JSON.stringify({ action: 'hangup', ...d }) }); },
-  netsantralAramaList(p = {}) { return this.req('/netsantral/arama-list.php?' + new URLSearchParams(p)); },
-  netsantralTest() { return this.req('/netsantral/test.php', {}, 20000); },
-  netsantralOriginate(numara, dahili) { return this.req('/netsantral/originate.php', { method: 'POST', body: JSON.stringify({ numara, dahili }) }, 25000); },
-  netsantralHangup(dahili) { return this.req('/netsantral/hangup.php', { method: 'POST', body: JSON.stringify({ dahili }) }, 20000); },
-  // AUTOCALL (OTOMATİK ARAMA)
-  autocallListeOlustur(d) { return this.req('/netsantral/autocall-liste-olustur.php', { method: 'POST', body: JSON.stringify(d) }, 30000); },
-  autocallListeler() { return this.req('/netsantral/autocall-listeler.php'); },
-  autocallRapor(listId) { return this.req('/netsantral/autocall-rapor.php?list_id=' + listId); },
-  autocallListeDurdur(listId) { return this.req('/netsantral/autocall-durdur.php', { method: 'POST', body: JSON.stringify({ list_id: listId }) }); },
   // MUHASEBE
   kasaList() { return this.req('/muhasebe/kasa-list.php'); },
   kasaCreate(d) { return this.req('/muhasebe/kasa-create.php', { method: 'POST', body: JSON.stringify(d) }); },
