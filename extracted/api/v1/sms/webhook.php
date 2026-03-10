@@ -141,15 +141,8 @@ try {
     }
 } catch (Exception $e) {}
 
-// Ayrıca netsantral api key'i de kabul et (aynı sistem)
+// Alternatif API key kontrolü
 $VALID_API_KEY_ALT = 'mr_hasar_2026';
-try {
-    $stmt = $db->query("SELECT deger FROM ayarlar WHERE anahtar = 'netsantral_api_key' LIMIT 1");
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($row && !empty($row['deger'])) {
-        $VALID_API_KEY_ALT = $row['deger'];
-    }
-} catch (Exception $e) {}
 
 if (empty($apiKey) || ($apiKey !== $VALID_API_KEY && $apiKey !== $VALID_API_KEY_ALT)) {
     @file_put_contents($logDir . '/sms_webhook.log',

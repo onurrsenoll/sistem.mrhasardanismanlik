@@ -1,7 +1,7 @@
 /* ============================================================
    MR HASAR DANIŞMANLIK – WEBRTC TELEFON MODÜLÜ v5.0
    JsSIP 3.10.0 İLE TARAYICI İÇİ SOFTPHONE
-   wss://sip6.netsantral.com:8089/ws ÜZERİNDEN NETSANTRAL PBX'E BAĞLANIR
+   WEBRTC TELEFON
 
    v5.0 DEĞİŞİKLİKLER:
    - CEVAPLAMA VE ARAMA FONKSİYONLARI SIFIRDAN YENİDEN YAZILDI
@@ -52,8 +52,8 @@ MR.webrtcTelefon = {
 
   /* ═══ YAPILANDIRMA ═══ */
   _config: {
-    wssUrl: 'wss://sip6.netsantral.com:8089/ws',
-    domain: 'sip6.netsantral.com',
+    wssUrl: '',
+    domain: '',
     dahili: '',
     sipSifre: '',
     kullanici: '',
@@ -68,7 +68,7 @@ MR.webrtcTelefon = {
   _getIceServers: function() {
     var servers = [
       { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:sip6.netsantral.com:3478' }
+      { urls: 'stun:stun1.l.google.com:19302' }
     ];
 
     /* KULLANICI TURN SUNUCUSU VARSA EN BAŞA EKLE */
@@ -85,9 +85,9 @@ MR.webrtcTelefon = {
     var kullanici = this._config.kullanici || '';
     var authUser = this._config.dahili + (santralNo ? '-' + santralNo : '');
 
-    /* NETSANTRAL TURN - 3 FARKLI KİMLİK DOĞRULAMA FORMATI */
-    var turnUrls = ['turn:sip6.netsantral.com:3478?transport=udp', 'turn:sip6.netsantral.com:3478?transport=tcp'];
-    var turnsUrls = ['turns:sip6.netsantral.com:443?transport=tcp'];
+    /* TURN - 3 FARKLI KİMLİK DOĞRULAMA FORMATI */
+    var turnUrls = [];
+    var turnsUrls = [];
 
     /* FORMAT 1: kullanici (telefon numarası) */
     if (kullanici) {

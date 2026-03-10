@@ -20,9 +20,9 @@
 
   function initSoftphoneUI(options) {
     options = options || {};
-    var sipDomain = options.sipDomain || 'sip.netsantral.com';
+    var sipDomain = options.sipDomain || '';
     var config = {
-      wssUrl: options.wssUrl || 'wss://sip.netsantral.com:8089/ws',
+      wssUrl: options.wssUrl || 'wss://:8089/ws',
       sipUri: options.sipUri || '',
       sipDomain: sipDomain,
       password: options.password || '',
@@ -156,7 +156,7 @@
       if (config.sipUri && config.password) {
         softphone.connect();
       } else {
-        config.sipUri = prompt('SIP URI (örn: sip:102@sip.netsantral.com):', config.sipUri);
+        config.sipUri = prompt('SIP URI (örn: sip:102@):', config.sipUri);
         config.password = prompt('Dahili şifresi:', '');
         if (config.sipUri && config.password) {
           softphone.sipUri = config.sipUri;

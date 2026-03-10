@@ -14,9 +14,9 @@
 
   function NetGSMSoftphone(options) {
     options = options || {};
-    this.wssUrl = options.wssUrl || 'wss://sip.netsantral.com:8089/ws';
+    this.wssUrl = options.wssUrl || 'wss://:8089/ws';
     this.sipUri = options.sipUri || '';
-    this.sipDomain = options.sipDomain || 'sip.netsantral.com';
+    this.sipDomain = options.sipDomain || '';
     this.password = options.password || '';
     this.displayName = options.displayName || 'CRM';
     this.ringSoundUrl = options.ringSoundUrl || '';
@@ -148,7 +148,7 @@
   NetGSMSoftphone.prototype.dial = function (number) {
     var n = normalizeNumber(number);
     if (!n) return Promise.reject(new Error('Geçersiz numara'));
-    var target = 'sip:' + n + '@' + (this.sipDomain || 'sip.netsantral.com');
+    var target = 'sip:' + n + '@' + (this.sipDomain || '');
     if (!this.ua || !this.ua.isConnected()) return Promise.reject(new Error('Önce bağlanın'));
     var self = this;
     return new Promise(function (resolve, reject) {

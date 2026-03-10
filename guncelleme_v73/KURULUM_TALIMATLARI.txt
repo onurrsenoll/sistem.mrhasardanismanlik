@@ -92,7 +92,7 @@ Güncelleme sonrası tarayıcınızda CTRL+SHIFT+R yaparak
    - SİSTEM: Kullanıcı, yetki, ayarlar, tanımlamalar
    - PORTAL: Erişim yönetimi, mesajlar
    - SMS: Gönderme, loglama
-   - NETSANTRAL: Arama, log
+
    - BİLDİRİM / MESAJ: Oluşturma, silme
 
 ═══════════════════════════════════════════════════════════════

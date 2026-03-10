@@ -77,7 +77,7 @@ TRUNCATE TABLE oturumlar;
 TRUNCATE TABLE arama_loglari;
 TRUNCATE TABLE sms_loglari;
 TRUNCATE TABLE gelen_smsler;
-TRUNCATE TABLE netsantral_bekleyen;
+TRUNCATE TABLE bekleyen_cagrilar;
 TRUNCATE TABLE konum_kayitlari;
 
 SET FOREIGN_KEY_CHECKS = 1;

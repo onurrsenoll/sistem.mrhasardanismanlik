@@ -824,7 +824,7 @@ const PageRouter = ({page, setPage, user, setUser}) => {
 };
 
 /* ═══ ANA UYGULAMA ═══ */
-/* NOT: NETSANTRAL KALDIRILDI */
+
 
 /* ═══ ANA UYGULAMA ═══ */
 const App = () => {

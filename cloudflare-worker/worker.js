@@ -1,5 +1,5 @@
 /**
- * MR HASAR DANIŞMANLIK - NETSANTRAL PROXY WORKER
+ * MR HASAR DANIŞMANLIK - PROXY WORKER
  * Cloudflare Workers üzerinde çalışır (BEDAVA - 100.000 istek/gün)
  *
  * AMAÇ: cPanel shared hosting port 9111'e bağlanamıyor.
@@ -9,14 +9,14 @@
  * 1. cloudflare.com hesabı aç (bedava)
  * 2. Workers & Pages > Create Application > Create Worker
  * 3. Bu kodu yapıştır > Deploy
- * 4. Worker URL'sini (ör: netsantral-proxy.HESABINIZ.workers.dev) kopyala
- * 5. CRM Sistem > Netsantral ayarlarına bu URL'yi gir
+ * 4. Worker URL'sini kopyala
+ * 5. CRM Sistem ayarlarına bu URL'yi gir
  *
  * GÜVENLİK: API_KEY ile korunur - sadece sizin CRM erişebilir
  */
 
 const API_KEY = 'MR_HASAR_2026';
-const NETSANTRAL_BASE = 'http://crmsntrl.netgsm.com.tr:9111';
+const PBX_BASE = 'http://crmsntrl.netgsm.com.tr:9111';
 
 export default {
   async fetch(request) {
@@ -54,9 +54,9 @@ export default {
       /* HEDEF URL OLUŞTUR */
       const proxyPath = path.replace('/proxy/', '');
       const queryString = url.search;
-      const targetUrl = `${NETSANTRAL_BASE}/${proxyPath}${queryString}`;
+      const targetUrl = `${PBX_BASE}/${proxyPath}${queryString}`;
 
-      /* NETSANTRAL'E İSTEĞİ İLET */
+      /* PBX'E İSTEĞİ İLET */
       const proxyResponse = await fetch(targetUrl, {
         method: request.method,
         headers: {

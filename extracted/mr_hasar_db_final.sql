@@ -732,7 +732,7 @@ CREATE TABLE IF NOT EXISTS ayarlar (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
 -- ═══════════════════════════════════════════
--- 31. ARAMA LOGLARI (NETSANTRAL/NETSIPP)
+-- 31. ARAMA LOGLARI
 -- ═══════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS arama_loglari (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -805,9 +805,9 @@ CREATE TABLE IF NOT EXISTS gelen_smsler (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
 -- ═══════════════════════════════════════════
--- 33. NETSANTRAL BEKLEYEN ÇAĞRILAR
+-- 33. BEKLEYEN ÇAĞRILAR
 -- ═══════════════════════════════════════════
-CREATE TABLE IF NOT EXISTS netsantral_bekleyen (
+CREATE TABLE IF NOT EXISTS bekleyen_cagrilar (
     id INT AUTO_INCREMENT PRIMARY KEY,
     arayan_no VARCHAR(30) NOT NULL,
     aranan_no VARCHAR(30) DEFAULT NULL,
@@ -1274,14 +1274,7 @@ INSERT IGNORE INTO ayarlar (anahtar, deger, tip) VALUES
 ('baslik_renk', '#2563eb', 'color'),
 ('slogan_renk', '#94a3b8', 'color'),
 ('slogan_font_boyut', '10', 'number'),
-('netsantral_santral_no', '08503625026502', 'text'),
-('netsantral_kullanici', '5550984254', 'text'),
-('netsantral_dahili', '100', 'text'),
-('netsantral_sifre', '', 'text'),
-('netsantral_domain', 'sip6.netsantral.com', 'text'),
-('netsantral_aktif', '1', 'text'),
-('netsantral_yonlendirme_modu', 'dynamic', 'text'),
-('netsantral_api_key', 'mr_hasar_2026', 'text'),
+
 ('openai_api_key', '', 'text'),
 ('ai_api_key', '', 'text'),
 ('sms_aktif', '0', 'text'),
@@ -1315,8 +1308,7 @@ INSERT IGNORE INTO yetkiler (kullanici_id, modul, islem, izin) VALUES
 (1, 'servis', 'goruntule', 1), (1, 'servis', 'ekle', 1), (1, 'servis', 'duzenle', 1), (1, 'servis', 'sil', 1),
 (1, 'mesajlar', 'goruntule', 1), (1, 'mesajlar', 'ekle', 1), (1, 'mesajlar', 'duzenle', 1), (1, 'mesajlar', 'sil', 1),
 (1, 'mesajlar', 'mesaj-toplu-sil', 1),
-(1, 'netsantral', 'goruntule', 1), (1, 'netsantral', 'arama_yap', 1), (1, 'netsantral', 'transfer', 1), (1, 'netsantral', 'ayarlar', 1),
-(1, 'netsipp', 'goruntule', 1), (1, 'netsipp', 'gelen_cagri', 1), (1, 'netsipp', 'giden_cagri', 1),
+
 (1, 'hesap', 'goruntule', 1), (1, 'hesap', 'ekle', 1), (1, 'hesap', 'duzenle', 1), (1, 'hesap', 'sil', 1),
 (1, 'rapor', 'goruntule', 1), (1, 'rapor', 'ekle', 1), (1, 'rapor', 'duzenle', 1), (1, 'rapor', 'sil', 1),
 (1, 'sms', 'goruntule', 1), (1, 'sms', 'gonder', 1), (1, 'sms', 'ayarlar', 1),

@@ -2401,7 +2401,6 @@ const SmsTab = () => {
 };
 
 
-/* NETSANTRAL TAB KALDIRILDI */
 
 /* ════════════════════════════════════════════════════════════════
    TOPLU DOSYA AKTARIM TAB'I (SADECE ADMİN)

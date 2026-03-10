@@ -1,12 +1,10 @@
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect, useCallback, useMemo, useRef} = React;
 
-/* NETSANTRAL KALDIRILDI - BOŞ BİLEŞENLER */
 MR._NetsippDurum = () => null;
 
 MR._SesAyarlariPaneli = () => null;
 
-/* NETSANTRAL KALDIRILDI - ESKİ SES AYARLARI PANELİ AŞAĞIDA DEVRE DIŞI */
 const _SesAyarlariPaneli_DEVRE_DISI = () => {
   const {C, S, LIcon} = MR;
   const [acik, setAcik] = useState(false);
@@ -1129,7 +1127,6 @@ MR._CRMYeniInner = ({setPage}) => {
     }
   }, []);
 
-  /* NETSANTRAL KALDIRILDI - ÇAĞRI DİNLEYİCİ DEVRE DIŞI */
 
   /* ── ÇAĞRI ZAMANLAYICI (REF BAZLI - RE-RENDER ENGELLER) ── */
   const [callActive, setCallActive] = useState(false);
@@ -1200,9 +1197,8 @@ MR._CRMYeniInner = ({setPage}) => {
   /* PBX ÜZERİNDEN Mİ BAŞLADI: false = SIP FALLBACK */
   const pbxOriginatedRef = useRef(false);
 
-  /* NETSANTRAL KALDIRILDI - ARAMA FONKSİYONU DEVRE DIŞI */
   const toggleCall = async () => {
-    setError('ARAMA SİSTEMİ (NETSANTRAL) DEVRE DIŞI');
+    setError('ARAMA SİSTEMİ DEVRE DIŞI');
   };
 
   /* ZORLA ÇAĞRI SONLANDIR */

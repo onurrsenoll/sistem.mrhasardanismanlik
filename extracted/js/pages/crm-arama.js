@@ -357,10 +357,9 @@ MR.CrmAramaPage = ({setPage, user}) => {
     return () => window.removeEventListener('mr-arama-pbx-sonuc', handler);
   }, []);
 
-  /* NETSANTRAL KALDIRILDI - ARAMA FONKSİYONU DEVRE DIŞI */
   const aramaYap = (item) => {
     if (!item.magdur_telefon) return;
-    setAramaMsg('ARAMA SİSTEMİ (NETSANTRAL) DEVRE DIŞI');
+    setAramaMsg('ARAMA SİSTEMİ DEVRE DIŞI');
     setTimeout(() => { setAramaMsg(''); }, 3000);
   };
 
