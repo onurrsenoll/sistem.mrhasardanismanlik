@@ -86,9 +86,17 @@ MR.webrtcTelefon = {
     var kullanici = this._config.kullanici || '';
     var authUser = this._config.dahili + (santralNo ? '-' + santralNo : '');
 
-    /* TURN - 3 FARKLI KİMLİK DOĞRULAMA FORMATI */
-    var turnUrls = [];
-    var turnsUrls = [];
+    /* NETSANTRAL TURN SUNUCULARI */
+    var domain = this._config.domain || 'sip6.netsantral.com';
+    var turnHost = domain.replace(/^sip\d*\./, '');
+    var turnUrls = [
+      'turn:' + turnHost + ':3478',
+      'turn:' + domain + ':3478'
+    ];
+    var turnsUrls = [
+      'turns:' + turnHost + ':5349',
+      'turns:' + domain + ':5349'
+    ];
 
     /* FORMAT 1: kullanici (telefon numarası) */
     if (kullanici) {
