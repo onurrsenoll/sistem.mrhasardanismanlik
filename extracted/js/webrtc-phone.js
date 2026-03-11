@@ -30,6 +30,7 @@ MR.webrtcTelefon = {
   _iceGatherTimer: null,
   _iceConnectTimer: null,
   _relayCandidateFound: false,
+  _reconnectTimer: null,
 
   /* ═══ SES YÖNETİMİ ═══ */
   _sesAyarlari: {
@@ -169,7 +170,10 @@ MR.webrtcTelefon = {
 
   /* ═══ BAŞLAT ═══ */
   baslat: function(config) {
-    if (this._ua) return;
+    if (this._ua) {
+      console.log('[WEBRTC] ZATEN BAŞLATILMIŞ - ATLANIYOR');
+      return;
+    }
 
     if (typeof JsSIP === 'undefined') {
       console.error('[WEBRTC] JsSIP BULUNAMADI');
@@ -231,12 +235,33 @@ MR.webrtcTelefon = {
 
       this._ua.on('connected', function() {
         console.log('[WEBRTC] WEBSOCKET BAĞLANDI');
+        /* RECONNECT TIMER'I İPTAL ET - BAĞLANTI BAŞARILI */
+        if (self._reconnectTimer) { clearTimeout(self._reconnectTimer); self._reconnectTimer = null; }
       });
 
       this._ua.on('disconnected', function() {
-        console.warn('[WEBRTC] WEBSOCKET KOPTU');
+        console.warn('[WEBRTC] WEBSOCKET KOPTU - OTOMATİK YENİDEN BAĞLANMA DENENİYOR...');
         self._kayitli = false;
         self._durumBildir('baglanti-koptu');
+
+        /* JsSIP KENDİ RECONNECT MEKANİZMASI BAŞARISIZ OLURSA YEDEK OLARAK MANUEL BAĞLAN */
+        if (self._reconnectTimer) clearTimeout(self._reconnectTimer);
+        self._reconnectTimer = setTimeout(function() {
+          if (self._ua && !self._kayitli) {
+            console.log('[WEBRTC] YEDEK YENİDEN BAĞLANMA DENİYOR...');
+            try {
+              self._ua.stop();
+              setTimeout(function() {
+                if (self._ua) {
+                  self._ua.start();
+                  console.log('[WEBRTC] UA YENİDEN BAŞLATILDI');
+                }
+              }, 2000);
+            } catch(e) {
+              console.error('[WEBRTC] YENİDEN BAĞLANMA HATASI:', e);
+            }
+          }
+        }, 20000); /* 20 SANİYE SONRA - JsSIP'İN KENDİ RECOVERY'SİNE FIRSAT VER */
       });
 
       this._ua.on('newRTCSession', function(data) {
@@ -257,6 +282,7 @@ MR.webrtcTelefon = {
   /* ═══ DURDUR ═══ */
   durdur: function() {
     this.kapat();
+    if (this._reconnectTimer) { clearTimeout(this._reconnectTimer); this._reconnectTimer = null; }
     if (this._ua) { try { this._ua.stop(); } catch(e) {} }
     this._ua = null;
     this._kayitli = false;

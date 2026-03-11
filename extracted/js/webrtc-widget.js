@@ -7,8 +7,8 @@ const MR = window.MR || (window.MR = {});
 const {useState, useEffect, useCallback, useRef, useMemo} = React;
 
 /* ═══ NETSANTRAL YAPILANDIRMA ═══ */
-MR._webrtcConfig = null;
-MR._webrtcBaslatildi = false;
+if (!MR._webrtcConfig) MR._webrtcConfig = null;
+if (MR._webrtcBaslatildi === undefined) MR._webrtcBaslatildi = false;
 
 /* ═══ VARSAYILAN NETSANTRAL AYARLARI ═══ */
 MR._netsantralVarsayilan = {
@@ -22,7 +22,10 @@ MR._netsantralVarsayilan = {
 
 /* ═══ WEBRTC OTOMATİK BAŞLATMA ═══ */
 MR.webrtcOtoBaslat = async (user) => {
-  if (MR._webrtcBaslatildi || !MR.webrtcTelefon) return;
+  if (MR._webrtcBaslatildi || !MR.webrtcTelefon) {
+    console.log('[WEBRTC-WIDGET] ZATEN BAŞLATILMIŞ VEYA TELEFON MODÜLÜ YOK - ATLANIYOR');
+    return;
+  }
   if (!user) return;
 
   /* NETSANTRAL AYARLARINI LOCALSTORAGEDAN VEYA VARSAYILANDAN YÜKLE */
@@ -64,6 +67,8 @@ MR.webrtcYenidenBaslat = async () => {
   }
   MR._webrtcBaslatildi = false;
   MR._webrtcConfig = null;
+  /* DURDURMA TAMAMLANSIN DİYE KISA BEKLEMEe */
+  await new Promise(r => setTimeout(r, 1500));
   MR.webrtcOtoBaslat(MR._currentUser || {});
 };
 
