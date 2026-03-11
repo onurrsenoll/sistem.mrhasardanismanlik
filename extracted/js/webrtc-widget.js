@@ -51,6 +51,7 @@ MR.webrtcOtoBaslat = async (user) => {
     var turnUrl = localStorage.getItem('mr_webrtc_turn_url') || '';
     var turnUser = localStorage.getItem('mr_webrtc_turn_user') || '';
     var turnPass = localStorage.getItem('mr_webrtc_turn_pass') || '';
+    var meteredApiKey = localStorage.getItem('mr_metered_api_key') || '';
 
     config = {
       wssUrl: wssUrl,
@@ -62,7 +63,8 @@ MR.webrtcOtoBaslat = async (user) => {
       apiSifre: apiSifre,
       turnUrl: turnUrl,
       turnUser: turnUser,
-      turnPass: turnPass
+      turnPass: turnPass,
+      meteredApiKey: meteredApiKey
     };
     MR._webrtcConfig = config;
   }

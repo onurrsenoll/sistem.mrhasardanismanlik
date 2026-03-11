@@ -69,6 +69,10 @@ MR.webrtcTelefon = {
   /* ═══ TURN KİMLİK BİLGİLERİ OLUŞTUR ═══ */
   _turnKimlikOlustur: async function() {
     /* 1. Metered.ca API ile dinamik TURN credentials al */
+    /* localStorage'dan API key kontrolü (config'de yoksa) */
+    if (!this._config.meteredApiKey) {
+      this._config.meteredApiKey = localStorage.getItem('mr_metered_api_key') || '';
+    }
     if (this._config.meteredApiKey) {
       try {
         var resp = await fetch('https://mrhasar.metered.live/api/v1/turn/credentials?apiKey=' + this._config.meteredApiKey);
@@ -88,7 +92,7 @@ MR.webrtcTelefon = {
 
     /* 2. Metered.ca static auth (yedek) */
     try {
-      var secret = 'openrelayprojectsecret';
+      var secret = 'openrelayproject';
       var timestamp = Math.floor(Date.now() / 1000) + 86400;
       var username = timestamp.toString();
       var enc = new TextEncoder();
@@ -176,10 +180,11 @@ MR.webrtcTelefon = {
       var u = this._turnCachedCreds.username;
       var c = this._turnCachedCreds.credential;
       servers.push(
-        { urls: 'turn:staticauth.openrelay.metered.ca:443?transport=tcp', username: u, credential: c },
-        { urls: 'turns:staticauth.openrelay.metered.ca:443', username: u, credential: c },
-        { urls: 'turn:staticauth.openrelay.metered.ca:80', username: u, credential: c },
-        { urls: 'turn:staticauth.openrelay.metered.ca:80?transport=tcp', username: u, credential: c }
+        { urls: 'turn:openrelay.metered.ca:443', username: u, credential: c },
+        { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: u, credential: c },
+        { urls: 'turns:openrelay.metered.ca:443', username: u, credential: c },
+        { urls: 'turn:openrelay.metered.ca:80', username: u, credential: c },
+        { urls: 'turn:openrelay.metered.ca:80?transport=tcp', username: u, credential: c }
       );
     }
 
@@ -220,12 +225,12 @@ MR.webrtcTelefon = {
         console.error('[WEBRTC] ═══════════════════════════════════════════════════');
         console.error('[WEBRTC] ⚠ HİÇBİR TURN SUNUCUSU ÇALIŞMIYOR! (' + failed.length + ' test edildi)');
         console.error('[WEBRTC] ═══════════════════════════════════════════════════');
-        console.error('[WEBRTC] ÇÖZÜM 1: Metered.ca ücretsiz hesap açın (50GB/ay ücretsiz):');
-        console.error('[WEBRTC]   → https://www.metered.ca/stun-turn');
-        console.error('[WEBRTC]   → Hesap açın → "TURN Server" → API Key kopyalayın');
-        console.error('[WEBRTC]   → config.meteredApiKey = "API_KEY_BURAYA"');
+        console.error('[WEBRTC] ÇÖZÜM 1: Metered.ca API key ayarlayın (50GB/ay ücretsiz):');
+        console.error('[WEBRTC]   → Konsolda: MR.webrtcTelefon.setTurnApiKey("API_KEY_BURAYA")');
+        console.error('[WEBRTC]   → API key almak için: https://www.metered.ca/stun-turn');
         console.error('[WEBRTC] ÇÖZÜM 2: Cloudflare WARP / VPN kapatın');
         console.error('[WEBRTC] ÇÖZÜM 3: Docker Desktop kapatıp tekrar deneyin');
+        console.error('[WEBRTC] ⚠ TURN OLMADAN SİMETRİK NAT ARKASINDA ARAMALAR BAŞARISIZ OLACAKTIR');
         console.error('[WEBRTC] ═══════════════════════════════════════════════════');
       }
     } catch(e) {
@@ -789,6 +794,28 @@ MR.webrtcTelefon = {
       }
     });
 
+    /* SDP FİLTRE - DOCKER/WSL ADAYLARINI SDP'DEN ÇIKAR */
+    session.on('sdp', function(event) {
+      if (event.originator === 'local') {
+        var originalLines = event.sdp.split('\r\n');
+        var filteredLines = [];
+        var removedCount = 0;
+        for (var i = 0; i < originalLines.length; i++) {
+          var line = originalLines[i];
+          /* Docker/WSL 172.16-31.x.x adreslerini içeren candidate satırlarını çıkar */
+          if (line.indexOf('a=candidate:') === 0 && /172\.(1[6-9]|2\d|3[01])\.\d+\.\d+/.test(line)) {
+            removedCount++;
+            continue;
+          }
+          filteredLines.push(line);
+        }
+        if (removedCount > 0) {
+          event.sdp = filteredLines.join('\r\n');
+          console.log('[WEBRTC] SDP FİLTRE: ' + removedCount + ' Docker/WSL aday çıkarıldı');
+        }
+      }
+    });
+
     session.on('peerconnection', function(data) {
       var pc = data.peerconnection;
       self._relayCandidateFound = false;
@@ -848,12 +875,13 @@ MR.webrtcTelefon = {
             console.log('[WEBRTC] ✓ RELAY (TURN) ADAY BULUNDU:', c.protocol, addr);
           }
 
-          /* DOCKER/WSL ÖZEL AĞ ADAYLARINI LOGLA (172.16-31.x.x, 172.17.x.x) */
+          /* DOCKER/WSL/SANAL AĞ ADAYLARINI FİLTRELE (172.16-31.x.x) */
           if (addr && /^172\.(1[6-9]|2\d|3[01])\./.test(addr)) {
-            console.log('[WEBRTC] ICE ADAY (Docker/WSL - muhtemelen işe yaramaz):', c.type, c.protocol, addr);
-          } else {
-            console.log('[WEBRTC] ICE ADAY:', c.type, c.protocol, addr);
+            console.log('[WEBRTC] ICE ADAY FİLTRELENDİ (Docker/WSL):', c.type, c.protocol, addr);
+            return; /* BU ADAYI GÖNDERMİYORUZ - ICE karışıklığı önlenir */
           }
+
+          console.log('[WEBRTC] ICE ADAY:', c.type, c.protocol, addr);
         } else {
           /* ICE TOPLAMA TAMAMLANDI */
           if (self._iceGatherTimer) { clearTimeout(self._iceGatherTimer); self._iceGatherTimer = null; }
@@ -1214,5 +1242,46 @@ MR.webrtcTelefon = {
       sesAyarlari: this.getSesAyarlari(),
       cihazlar: this._cihazlar
     };
+  },
+
+  /* ═══ TURN API KEY AYARLA (KONSOL YARDIMCISI) ═══ */
+  setTurnApiKey: function(apiKey) {
+    if (!apiKey) {
+      console.error('[WEBRTC] API key boş olamaz! Metered.ca hesabınızdan API key alın.');
+      console.log('[WEBRTC] → https://www.metered.ca/stun-turn → Hesap açın → API Key kopyalayın');
+      return;
+    }
+    localStorage.setItem('mr_metered_api_key', apiKey);
+    this._config.meteredApiKey = apiKey;
+    console.log('[WEBRTC] ✓ Metered API key kaydedildi. Sayfa yenilenince aktif olacak.');
+    console.log('[WEBRTC] Hemen test etmek için: MR.webrtcTelefon.turnTesti()');
+  },
+
+  /* ═══ TURN TESTİ (KONSOL YARDIMCISI) ═══ */
+  turnTesti: async function() {
+    console.log('[WEBRTC] TURN TESTİ BAŞLATILIYOR...');
+
+    /* Metered API credentials yenile */
+    if (this._config.meteredApiKey) {
+      try {
+        var resp = await fetch('https://mrhasar.metered.live/api/v1/turn/credentials?apiKey=' + this._config.meteredApiKey);
+        if (resp.ok) {
+          var creds = await resp.json();
+          if (Array.isArray(creds) && creds.length > 0) {
+            this._meteredServers = creds;
+            console.log('[WEBRTC] ✓ Metered API: ' + creds.length + ' sunucu alındı');
+          }
+        } else {
+          console.error('[WEBRTC] ✗ Metered API hatası:', resp.status, '- API key geçersiz olabilir');
+        }
+      } catch(e) {
+        console.error('[WEBRTC] ✗ Metered API erişilemedi:', e.message);
+      }
+    } else {
+      console.warn('[WEBRTC] Metered API key ayarlanmamış. Ayarlamak için: MR.webrtcTelefon.setTurnApiKey("KEY")');
+    }
+
+    /* TURN testini çalıştır */
+    await this._turnTestBaslat();
   }
 };
