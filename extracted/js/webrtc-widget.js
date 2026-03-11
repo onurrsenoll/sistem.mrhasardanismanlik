@@ -432,10 +432,12 @@ MR._SesAyarlariPaneli = () => {
   );
 };
 
-/* ═══ NETSANTRAL AYARLARI PANELİ ═══ */
-MR.NetsantralAyarlari = () => {
+/* ═══ NETSANTRAL AYARLARI - TAM SAYFA (SİSTEM MENÜSÜNDEN ERİŞİLİR) ═══ */
+MR.NetsantralAyarlariPage = ({setPage, user}) => {
   const {C, S, LIcon, FormGroup} = MR;
   const def = MR._netsantralVarsayilan;
+
+  /* FORM STATE */
   const [wss, setWss] = useState(localStorage.getItem('mr_netsantral_wss') || def.wssUrl);
   const [domain, setDomain] = useState(localStorage.getItem('mr_netsantral_domain') || def.domain);
   const [dahili, setDahili] = useState(localStorage.getItem('mr_netsantral_dahili') || def.dahili);
@@ -443,18 +445,71 @@ MR.NetsantralAyarlari = () => {
   const [santralNo, setSantralNo] = useState(localStorage.getItem('mr_netsantral_no') || def.santralNo);
   const [kullanici, setKullanici] = useState(localStorage.getItem('mr_netsantral_kullanici') || def.kullanici);
   const [apiSifre, setApiSifre] = useState(localStorage.getItem('mr_netsantral_api_sifre') || '');
-  const [kayitDurumu, setKayitDurumu] = useState('');
-  const [bagli, setBagli] = useState(false);
+  const [sipPort, setSipPort] = useState(localStorage.getItem('mr_netsantral_sip_port') || '5060');
+  const [kayitSuresi, setKayitSuresi] = useState(localStorage.getItem('mr_netsantral_kayit_suresi') || '300');
+  const [outboundProxy, setOutboundProxy] = useState(localStorage.getItem('mr_netsantral_outbound_proxy') || '');
 
+  /* BAĞLANTI DURUMU */
+  const [bagli, setBagli] = useState(false);
+  const [baglantiDetay, setBaglantiDetay] = useState('');
+  const [sonKontrol, setSonKontrol] = useState('');
+  const [testYapiliyor, setTestYapiliyor] = useState(false);
+  const [kayitDurumu, setKayitDurumu] = useState('');
+
+  /* WEBRTC DURUM DİNLE */
   useEffect(() => {
     const handler = (e) => {
-      setBagli(!!(e.detail && e.detail.kayitli));
+      const d = e.detail || {};
+      setBagli(!!d.kayitli);
+      if (d.durum === 'kayitli') {
+        setBaglantiDetay('SIP KAYDI BAŞARILI - DAHİLİ: ' + (MR._webrtcConfig?.dahili || '-'));
+      } else if (d.durum === 'hata') {
+        setBaglantiDetay(d.detay || 'BİLİNMEYEN HATA');
+      } else if (d.durum === 'baglanti-koptu') {
+        setBaglantiDetay('BAĞLANTI KOPTU');
+      } else if (d.durum === 'durduruldu') {
+        setBaglantiDetay('BAĞLANTI DURDURULDU');
+      }
     };
     window.addEventListener('mr-webrtc-durum', handler);
-    if (MR.webrtcTelefon) setBagli(MR.webrtcTelefon._kayitli);
+    if (MR.webrtcTelefon) {
+      setBagli(MR.webrtcTelefon._kayitli);
+      if (MR.webrtcTelefon._kayitli) setBaglantiDetay('SIP KAYDI BAŞARILI');
+    }
     return () => window.removeEventListener('mr-webrtc-durum', handler);
   }, []);
 
+  /* BAĞLANTI TEST */
+  const baglantiTest = async () => {
+    setTestYapiliyor(true);
+    setBaglantiDetay('TEST EDİLİYOR...');
+    var simdi = new Date().toLocaleString('tr-TR');
+    setSonKontrol(simdi);
+
+    /* 1. WSS BAĞLANTI TESTİ */
+    var wssUrl = wss || def.wssUrl;
+    try {
+      var testResult = await new Promise((resolve, reject) => {
+        var ws = new WebSocket(wssUrl);
+        var timeout = setTimeout(() => { ws.close(); reject('ZAMAN AŞIMI - WSS SUNUCUSUNA ERİŞİM SAĞLANAMADI'); }, 5000);
+        ws.onopen = () => { clearTimeout(timeout); ws.close(); resolve('WSS BAĞLANTISI BAŞARILI'); };
+        ws.onerror = () => { clearTimeout(timeout); reject('WSS SUNUCUSUNA ERİŞİM SAĞLANAMADI - URL VEYA PORT HATALI OLABİLİR'); };
+      });
+      setBaglantiDetay(testResult);
+
+      /* 2. SIP KAYIT TESTİ - MR.webrtcYenidenBaslat çağrılır */
+      if (!MR.webrtcTelefon?._kayitli) {
+        setBaglantiDetay('WSS BAĞLANTISI OK - SIP KAYDI DENENİYOR...');
+        MR.webrtcYenidenBaslat();
+        /* SIP sonucu event dinleyiciden gelecek */
+      }
+    } catch(err) {
+      setBaglantiDetay(typeof err === 'string' ? err : 'WSS BAĞLANTI HATASI: ' + (err?.message || ''));
+    }
+    setTestYapiliyor(false);
+  };
+
+  /* KAYDET */
   const kaydet = () => {
     localStorage.setItem('mr_netsantral_wss', wss);
     localStorage.setItem('mr_netsantral_domain', domain);
@@ -463,90 +518,195 @@ MR.NetsantralAyarlari = () => {
     localStorage.setItem('mr_netsantral_no', santralNo);
     localStorage.setItem('mr_netsantral_kullanici', kullanici);
     localStorage.setItem('mr_netsantral_api_sifre', apiSifre);
+    localStorage.setItem('mr_netsantral_sip_port', sipPort);
+    localStorage.setItem('mr_netsantral_kayit_suresi', kayitSuresi);
+    localStorage.setItem('mr_netsantral_outbound_proxy', outboundProxy);
     setKayitDurumu('KAYDEDİLDİ');
     setTimeout(() => setKayitDurumu(''), 3000);
     MR.webrtcYenidenBaslat();
   };
 
   return (
-    <div style={{...S.card, marginTop: 20}}>
-      <div style={{...S.cardHead, justifyContent:'space-between'}}>
-        <div style={{display:'flex', alignItems:'center', gap:10}}>
-          <LIcon name="Phone" size={16} color={C.accent}/>
-          <span style={{fontSize:14, fontWeight:700}}>NETSANTRAL / WEBRTC AYARLARI</span>
+    <div className="fade-in">
+
+      {/* ═══ BAĞLANTI DURUMU KARTI ═══ */}
+      <div style={{...S.card, marginBottom:16}}>
+        <div style={{...S.cardHead, justifyContent:'space-between'}}>
+          <div style={{display:'flex', alignItems:'center', gap:10}}>
+            <div style={{
+              width:14, height:14, borderRadius:'50%',
+              background: bagli ? C.success : C.danger,
+              boxShadow: bagli ? ('0 0 10px ' + C.success + '60') : ('0 0 10px ' + C.danger + '40'),
+              animation: bagli ? 'none' : 'pulse 2s infinite'
+            }}/>
+            <span style={{fontSize:14, fontWeight:800}}>BAĞLANTI DURUMU</span>
+          </div>
+          <div style={{display:'flex', alignItems:'center', gap:10}}>
+            {sonKontrol && <span style={{fontSize:9, color:C.textMuted}}>SON KONTROL: {sonKontrol}</span>}
+            <button onClick={baglantiTest} disabled={testYapiliyor} style={{
+              ...S.btn, ...S.btnP, fontSize:11, padding:'8px 16px',
+              opacity: testYapiliyor ? 0.6 : 1
+            }}>
+              <LIcon name="Wifi" size={14} color="#fff"/> {testYapiliyor ? 'TEST EDİLİYOR...' : 'BAGLANTIYI TEST ET'}
+            </button>
+          </div>
         </div>
-        <div style={{display:'flex', alignItems:'center', gap:6}}>
+        <div style={{padding:20}}>
           <div style={{
-            width:10, height:10, borderRadius:'50%',
-            background: bagli ? C.success : C.danger,
-            boxShadow: bagli ? ('0 0 8px ' + C.success + '60') : 'none'
-          }}/>
-          <span style={{fontSize:10, fontWeight:700, color: bagli ? C.success : C.danger}}>
-            {bagli ? 'BAĞLI' : 'BAĞLI DEĞİL'}
-          </span>
+            padding:'16px 20px', borderRadius:12,
+            background: bagli ? `${C.success}10` : `${C.danger}10`,
+            border: `2px solid ${bagli ? C.success : C.danger}30`,
+            display:'flex', alignItems:'center', gap:14
+          }}>
+            <div style={{
+              width:48, height:48, borderRadius:'50%',
+              background: bagli ? `${C.success}20` : `${C.danger}20`,
+              display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0
+            }}>
+              <LIcon name={bagli ? 'Wifi' : 'WifiOff'} size={24} color={bagli ? C.success : C.danger}/>
+            </div>
+            <div>
+              <div style={{fontSize:18, fontWeight:800, color: bagli ? C.success : C.danger, marginBottom:4}}>
+                {bagli ? 'BAĞLI' : 'BAĞLI DEĞİL'}
+              </div>
+              <div style={{fontSize:12, color:C.textSec, lineHeight:1.5}}>
+                {baglantiDetay || (bagli ? 'NETSANTRAL SIP SUNUCUSUNA BAĞLI' : 'SIP SUNUCUSUNA BAĞLANTI YOK')}
+              </div>
+              {MR._webrtcConfig && bagli && (
+                <div style={{fontSize:10, color:C.textMuted, marginTop:4}}>
+                  DAHİLİ: {MR._webrtcConfig.dahili} | WSS: {MR._webrtcConfig.wssUrl}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-      <div style={{padding:22}}>
-        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:14}}>
-          <FormGroup label="WSS URL *">
-            <input style={S.input} value={wss} onChange={e => setWss(e.target.value)} placeholder="wss://sip6.netsantral.com:8089/ws"/>
-          </FormGroup>
-          <FormGroup label="SIP DOMAIN">
-            <input style={S.input} value={domain} onChange={e => setDomain(e.target.value)} placeholder="sip6.netsantral.com"/>
-          </FormGroup>
-          <FormGroup label="DAHİLİ NUMARA *">
-            <input style={S.input} value={dahili} onChange={e => setDahili(e.target.value)} placeholder="102"/>
-          </FormGroup>
-          <FormGroup label="SIP ŞİFRESİ *">
-            <input type="password" style={{...S.input, textTransform:'none'}} value={sipSifre} onChange={e => setSipSifre(e.target.value)} placeholder="SIP ŞİFRENİZ"/>
-          </FormGroup>
-          <FormGroup label="SANTRAL NO">
-            <input style={S.input} value={santralNo} onChange={e => setSantralNo(e.target.value)} placeholder="3625026502"/>
-          </FormGroup>
-          <FormGroup label="KULLANICI ADI (TAM)">
-            <input style={S.input} value={kullanici} onChange={e => setKullanici(e.target.value)} placeholder="102-3625026502"/>
-          </FormGroup>
+
+      {/* ═══ İKİ SÜTUN: SIP AYARLARI + PROXY ═══ */}
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16}}>
+
+        {/* SIP / WSS BAĞLANTI BİLGİLERİ */}
+        <div style={S.card}>
+          <div style={S.cardHead}>
+            <LIcon name="Phone" size={16} color={C.accent}/>
+            <span style={{fontSize:13, fontWeight:700}}>SIP / WSS BAĞLANTI BİLGİLERİ</span>
+          </div>
+          <div style={{padding:20}}>
+            <div style={{display:'grid', gap:14}}>
+              <FormGroup label="WSS URL *">
+                <input style={S.input} value={wss} onChange={e => setWss(e.target.value)} placeholder="wss://sip6.netsantral.com:8089/ws"/>
+              </FormGroup>
+              <FormGroup label="SIP ALAN ADI / DOMAIN">
+                <input style={S.input} value={domain} onChange={e => setDomain(e.target.value)} placeholder="sip6.netsantral.com"/>
+              </FormGroup>
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
+                <FormGroup label="SIP KULLANICI ADI (DAHİLİ) *">
+                  <input style={S.input} value={dahili} onChange={e => setDahili(e.target.value)} placeholder="102"/>
+                </FormGroup>
+                <FormGroup label="SIP ŞİFRESİ *">
+                  <input type="password" style={{...S.input, textTransform:'none'}} value={sipSifre} onChange={e => setSipSifre(e.target.value)} placeholder="SIP ŞİFRENİZ"/>
+                </FormGroup>
+              </div>
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
+                <FormGroup label="KAYIT SÜRESİ (SANİYE)">
+                  <input style={S.input} value={kayitSuresi} onChange={e => setKayitSuresi(e.target.value.replace(/[^0-9]/g,''))} placeholder="300"/>
+                </FormGroup>
+                <FormGroup label="SIP PORT">
+                  <input style={S.input} value={sipPort} onChange={e => setSipPort(e.target.value.replace(/[^0-9]/g,''))} placeholder="5060"/>
+                </FormGroup>
+              </div>
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
+                <FormGroup label="SANTRAL NO">
+                  <input style={S.input} value={santralNo} onChange={e => setSantralNo(e.target.value)} placeholder="3625026502"/>
+                </FormGroup>
+                <FormGroup label="KULLANICI ADI (TAM)">
+                  <input style={S.input} value={kullanici} onChange={e => setKullanici(e.target.value)} placeholder="102-3625026502"/>
+                </FormGroup>
+              </div>
+            </div>
+          </div>
         </div>
-        <div style={{marginTop:14, padding:14, borderRadius:10, background:C.accent+'08', border:'1px solid '+C.accent+'20'}}>
-          <div style={{fontSize:11, fontWeight:700, color:C.accent, marginBottom:10}}>
-            <LIcon name="Key" size={12} color={C.accent}/> NETSANTRAL API (ÇAĞRI BAŞLATMA)
+
+        {/* SAĞ: PROXY + API + STUN/TURN */}
+        <div style={{display:'flex', flexDirection:'column', gap:16}}>
+
+          {/* SIP PROXY / OUTBOUND */}
+          <div style={S.card}>
+            <div style={S.cardHead}>
+              <LIcon name="ArrowRightLeft" size={16} color={C.purple}/>
+              <span style={{fontSize:13, fontWeight:700}}>SIP PROXY / OUTBOUND</span>
+            </div>
+            <div style={{padding:20}}>
+              <FormGroup label="OUTBOUND PROXY (OPSİYONEL)">
+                <input style={S.input} value={outboundProxy} onChange={e => setOutboundProxy(e.target.value)} placeholder="BOŞ BIRAKILABILIR"/>
+              </FormGroup>
+              <div style={{
+                marginTop:14, padding:12, borderRadius:10,
+                background:`${C.textMuted}08`, border:`1px solid ${C.border}`
+              }}>
+                <div style={{display:'flex', alignItems:'center', gap:6, marginBottom:6}}>
+                  <LIcon name="Globe" size={12} color={C.textMuted}/>
+                  <span style={{fontSize:11, fontWeight:700, color:C.textMuted}}>STUN / TURN</span>
+                </div>
+                <div style={{fontSize:11, color:C.textMuted, lineHeight:1.6}}>
+                  KULLANILMIYOR - PBX MEDIA RELAY SAĞLIYOR
+                </div>
+              </div>
+            </div>
           </div>
-          <div style={{fontSize:10, color:C.textSec, marginBottom:10, lineHeight:1.6}}>
-            CRM ÜZERİNDEN ARAMA YAPMAK İÇİN NETGSM API ŞİFRENİZİ GİRİN.
-            BU ŞİFRE SIP ŞİFRESİNDEN FARKLIDIR - NETGSM PANELİNDEN ALT KULLANICI API ŞİFRESİ.
-          </div>
-          <div style={{display:'grid', gridTemplateColumns:'1fr', gap:10}}>
-            <FormGroup label="API ŞİFRESİ *">
-              <input type="password" style={{...S.input, textTransform:'none'}} value={apiSifre} onChange={e => setApiSifre(e.target.value)} placeholder="NETGSM API ŞİFRENİZ"/>
-            </FormGroup>
+
+          {/* NETGSM API */}
+          <div style={S.card}>
+            <div style={S.cardHead}>
+              <LIcon name="Key" size={16} color={C.cyan}/>
+              <span style={{fontSize:13, fontWeight:700}}>NETGSM API (ÇAĞRI BAŞLATMA)</span>
+            </div>
+            <div style={{padding:20}}>
+              <div style={{fontSize:11, color:C.textSec, marginBottom:12, lineHeight:1.6}}>
+                CRM ÜZERİNDEN ARAMA YAPMAK İÇİN NETGSM API ŞİFRENİZİ GİRİN.
+                BU ŞİFRE SIP ŞİFRESİNDEN FARKLIDIR.
+              </div>
+              <FormGroup label="API ŞİFRESİ *">
+                <input type="password" style={{...S.input, textTransform:'none'}} value={apiSifre} onChange={e => setApiSifre(e.target.value)} placeholder="NETGSM API ŞİFRENİZ"/>
+              </FormGroup>
+            </div>
           </div>
         </div>
-        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:16}}>
-          <button onClick={kaydet} style={{...S.btn, ...S.btnP}}>
-            <LIcon name="Save" size={14} color="#fff"/> KAYDET & BAĞLAN
+      </div>
+
+      {/* ═══ KAYDET BUTONU ═══ */}
+      <div style={{...S.card, padding:16, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+        <div style={{display:'flex', gap:12, alignItems:'center'}}>
+          <button onClick={kaydet} style={{...S.btn, ...S.btnP, fontSize:13, padding:'12px 24px'}}>
+            <LIcon name="Save" size={16} color="#fff"/> KAYDET & BAĞLAN
           </button>
           {kayitDurumu && (
-            <span style={{fontSize:11, fontWeight:700, color:C.success}}>
-              <LIcon name="CheckCircle" size={14} color={C.success}/> {kayitDurumu}
+            <span style={{fontSize:12, fontWeight:700, color:C.success}}>
+              <LIcon name="CheckCircle" size={16} color={C.success}/> {kayitDurumu}
             </span>
           )}
         </div>
-        <div style={{
-          marginTop:14, padding:12, borderRadius:10,
-          background:C.accent+'08', border:'1px solid '+C.accent+'15',
-          fontSize:10, color:C.textSec, lineHeight:1.8
-        }}>
-          <div style={{fontWeight:700, color:C.accent, marginBottom:4}}>
-            <LIcon name="Info" size={12} color={C.accent}/> BAĞLANTI BİLGİLERİ
-          </div>
-          <div>WSS URL: NETSANTRAL PANELİNDEN ALINIR (WSS://...)</div>
-          <div>DAHİLİ: NETSIPP UYGULAMASINDA KULLANDIĞINIZ DAHİLİ NUMARA</div>
-          <div>SIP ŞİFRESİ: NETSANTRAL PANELİNDEN ALINAN SIP/WEBRTC ŞİFRESİ</div>
-          <div>SANTRAL NO: 10 HANELİ MÜŞTERİ SANTRAL NUMARASI</div>
-          <div>API ŞİFRESİ: NETGSM ALT KULLANICI API ŞİFRESİ (ARAMA BAŞLATMAK İÇİN)</div>
-          <div style={{marginTop:6, fontWeight:700, color:C.warning}}>
-            <LIcon name="AlertTriangle" size={12} color={C.warning}/> ÖNEMLİ: DAHİLİ BAĞLANTI TİPİ NETSANTRAL PANELİNDE "WSS" OLMALI (UDP DEĞİL)
-          </div>
+        <div style={{fontSize:10, color:C.textMuted}}>
+          {MR._webrtcConfig ? 'SON YAPILANDIRMA: DAHİLİ ' + (MR._webrtcConfig.dahili || '-') : 'HENÜZ YAPILANDIRILMAMIŞ'}
+        </div>
+      </div>
+
+      {/* ═══ BİLGİ PANELİ ═══ */}
+      <div style={{
+        marginTop:16, padding:16, borderRadius:12,
+        background:C.accent+'06', border:'1px solid '+C.accent+'15',
+        fontSize:11, color:C.textSec, lineHeight:1.8
+      }}>
+        <div style={{fontWeight:700, color:C.accent, marginBottom:6, fontSize:12}}>
+          <LIcon name="Info" size={14} color={C.accent}/> BAĞLANTI REHBERİ
+        </div>
+        <div>WSS URL: NETSANTRAL PANELİNDEN ALINIR (WSS://SİP_SUNUCU:PORT/WS)</div>
+        <div>DAHİLİ: NETSIPP UYGULAMASINDA KULLANDIĞINIZ DAHİLİ NUMARA</div>
+        <div>SIP ŞİFRESİ: NETSANTRAL PANELİNDEN ALINAN SIP/WEBRTC ŞİFRESİ</div>
+        <div>SANTRAL NO: 10 HANELİ MÜŞTERİ SANTRAL NUMARASI</div>
+        <div>API ŞİFRESİ: NETGSM ALT KULLANICI API ŞİFRESİ (GİDEN ARAMA İÇİN)</div>
+        <div style={{marginTop:8, fontWeight:700, color:C.warning}}>
+          <LIcon name="AlertTriangle" size={12} color={C.warning}/> ÖNEMLİ: DAHİLİ BAĞLANTI TİPİ NETSANTRAL PANELİNDE "WSS" OLMALI (UDP DEĞİL)
         </div>
       </div>
     </div>

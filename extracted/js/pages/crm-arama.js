@@ -53,7 +53,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
   /* ── VERİ YÜKLEME ── */
   const load = useCallback(async () => {
     setLoading(true);
-    const p = {page: sayfa, limit: 50};
+    const p = {page: sayfa, limit: 100};
     if (search) p.q = search;
     if (durumF) p.durum = durumF;
     if (tarihBas) p.tarih_baslangic = tarihBas;
@@ -371,8 +371,11 @@ MR.CrmAramaPage = ({setPage, user}) => {
   };
 
   /* ── STİLLER ── */
-  const thSt = {padding:'10px 8px', textAlign:'left', color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted, fontWeight:800, fontSize:11, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:C.bgCard, zIndex:1, letterSpacing:0.3};
-  const tdSt = {padding:'8px 8px', fontSize:12, fontWeight:600, borderBottom:`1px solid ${C.border}`, whiteSpace:'nowrap', color: MR.tema==='koyu' ? '#cbd5e1' : C.text};
+  const thSt = {padding:'7px 6px', textAlign:'left', color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted, fontWeight:800, fontSize:10, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:C.bgCard, zIndex:1, letterSpacing:0.3};
+  const tdSt = {padding:'6px 6px', fontSize:11, fontWeight:600, borderBottom:`1px solid ${C.border}`, whiteSpace:'nowrap', color: MR.tema==='koyu' ? '#cbd5e1' : C.text};
+  const tdTrunc = {...tdSt, maxWidth:110, overflow:'hidden', textOverflow:'ellipsis'};
+  const thSticky = {...thSt, position:'sticky', right:0, zIndex:2, background:C.bgCard, boxShadow:'-2px 0 6px rgba(0,0,0,0.06)'};
+  const tdSticky = {...tdSt, position:'sticky', right:0, background:C.bgCard, boxShadow:'-2px 0 6px rgba(0,0,0,0.06)', textAlign:'center'};
   const iconBtn = (bg) => ({
     width:26, height:26, borderRadius:6, border:'none', cursor:'pointer',
     display:'inline-flex', alignItems:'center', justifyContent:'center',
@@ -391,50 +394,62 @@ MR.CrmAramaPage = ({setPage, user}) => {
   return (
     <div className="fade-in">
 
-      {/* ═══ İSTATİSTİK KARTLARI ═══ */}
-      <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:10, marginBottom:16}}>
-        <StatCard icon="Users" label="TOPLAM YÖNLENDİRME" value={stats.toplam} color={C.accent}/>
-        <StatCard icon="Clock" label="BELİRSİZ" value={stats.belirsiz} color={C.warning}/>
-        <StatCard icon="Check" label="ALINDI" value={stats.alindi} color={C.success}/>
-        <StatCard icon="X" label="OLUMSUZ" value={stats.olumsuz} color={C.danger}/>
-        <StatCard icon="PhoneCall" label="BUGÜN ARANACAK" value={data.filter(d => d.sonraki_arama && new Date(d.sonraki_arama).toDateString() === new Date().toDateString()).length} color={C.cyan}/>
+      {/* ═══ İSTATİSTİK KARTLARI - KOMPAKT ═══ */}
+      <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:8, marginBottom:12}}>
+        {[
+          {icon:'Users', label:'TOPLAM', value:stats.toplam, c:C.accent},
+          {icon:'Clock', label:'BELİRSİZ', value:stats.belirsiz, c:C.warning},
+          {icon:'Check', label:'ALINDI', value:stats.alindi, c:C.success},
+          {icon:'X', label:'OLUMSUZ', value:stats.olumsuz, c:C.danger},
+          {icon:'PhoneCall', label:'BUGÜN', value:data.filter(d => d.sonraki_arama && new Date(d.sonraki_arama).toDateString() === new Date().toDateString()).length, c:C.cyan}
+        ].map((s,i) => (
+          <div key={i} style={{...S.card, padding:'8px 12px', display:'flex', alignItems:'center', gap:8, marginBottom:0}}>
+            <div style={{width:28, height:28, minWidth:28, borderRadius:6, background:`${s.c}18`, display:'flex', alignItems:'center', justifyContent:'center'}}>
+              <LIcon name={s.icon} size={13} color={s.c}/>
+            </div>
+            <div style={{fontSize:18, fontWeight:800, lineHeight:1, color:s.c}}>{s.value}</div>
+            <div style={{fontSize:9, color:C.textMuted, fontWeight:600}}>{s.label}</div>
+          </div>
+        ))}
       </div>
 
-      {/* ═══ EXCEL YÜKLEME & GÜNLÜK ÖZET ═══ */}
-      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16}}>
+      {/* ═══ EXCEL YÜKLEME & GÜNLÜK ÖZET - KOMPAKT ═══ */}
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12}}>
 
         {/* EXCEL YÜKLEME */}
         <div style={S.card}>
-          <div style={{...S.cardHead, padding:'10px 16px'}}>
-            <LIcon name="FileSpreadsheet" size={14} color={C.accent}/>
-            <span style={{fontSize:12, fontWeight:700}}>DATA YÜKLEME (EXCEL)</span>
+          <div style={{...S.cardHead, padding:'8px 14px'}}>
+            <LIcon name="FileSpreadsheet" size={13} color={C.accent}/>
+            <span style={{fontSize:11, fontWeight:700}}>DATA YÜKLEME (EXCEL)</span>
           </div>
-          <div style={{padding:16}}>
+          <div style={{padding:12}}>
             <div onClick={() => fileRef.current?.click()} style={{
-              border:`2px dashed ${C.borderLight}`, borderRadius:12, padding:24,
+              border:`2px dashed ${C.borderLight}`, borderRadius:8, padding:12,
               textAlign:'center', cursor:'pointer', transition:'all .3s',
-              background:`${C.accent}05`
+              background:`${C.accent}05`, display:'flex', alignItems:'center', justifyContent:'center', gap:10
             }}
               onMouseEnter={e => {e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.background = `${C.accent}10`;}}
               onMouseLeave={e => {e.currentTarget.style.borderColor = C.borderLight; e.currentTarget.style.background = `${C.accent}05`;}}
               onDragOver={e => {e.preventDefault(); e.currentTarget.style.borderColor = C.accent;}}
               onDrop={e => {e.preventDefault(); e.currentTarget.style.borderColor = C.borderLight; if(e.dataTransfer.files[0]) {const dt = new DataTransfer(); dt.items.add(e.dataTransfer.files[0]); fileRef.current.files = dt.files; handleFileSelect({target:{files:e.dataTransfer.files}});}}}
             >
-              <LIcon name="Upload" size={28} color={C.textMuted} style={{opacity:0.5, marginBottom:6}}/>
-              <div style={{fontSize:12, fontWeight:700, color:C.textSec, marginBottom:4}}>EXCEL DOSYASI SÜRÜKLE VEYA TIKLA</div>
-              <div style={{fontSize:10, color:C.textMuted}}>ŞABLON FORMATINDA .XLSX / .XLS / .CSV DOSYASI SEÇİN</div>
+              <LIcon name="Upload" size={20} color={C.textMuted} style={{opacity:0.5}}/>
+              <div>
+                <div style={{fontSize:11, fontWeight:700, color:C.textSec}}>EXCEL SÜRÜKLE VEYA TIKLA</div>
+                <div style={{fontSize:9, color:C.textMuted}}>.XLSX / .XLS / .CSV</div>
+              </div>
               <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" style={{display:'none'}} onChange={handleFileSelect}/>
             </div>
-            <div style={{marginTop:12, display:'flex', gap:8, alignItems:'center', justifyContent:'space-between'}}>
-              <button style={{...S.btn, ...S.btnP, fontSize:11, padding:'8px 14px'}} onClick={sablonIndir}>
-                <LIcon name="Download" size={14} color="#fff"/> ŞABLON İNDİR
+            <div style={{marginTop:8, display:'flex', gap:6, alignItems:'center', justifyContent:'space-between'}}>
+              <button style={{...S.btn, ...S.btnP, fontSize:9, padding:'5px 10px'}} onClick={sablonIndir}>
+                <LIcon name="Download" size={12} color="#fff"/> ŞABLON
               </button>
-              <button style={{...S.btn, ...S.btnS, fontSize:11, padding:'8px 14px'}} onClick={excelYukle}
+              <button style={{...S.btn, ...S.btnS, fontSize:9, padding:'5px 10px'}} onClick={excelYukle}
                 disabled={!excelData || excelLoading}>
-                <LIcon name="Upload" size={14} color="#fff"/> {excelLoading ? 'YÜKLENİYOR...' : 'YÜKLE'}
+                <LIcon name="Upload" size={12} color="#fff"/> {excelLoading ? 'YÜKLENİYOR...' : 'YÜKLE'}
               </button>
-              <span style={{fontSize:10, color: excelMsg.includes('BAŞARI') ? C.success : excelMsg.includes('HATA') || excelMsg.includes('BOŞ') ? C.danger : C.textMuted}}>
-                {excelFile ? excelFile.name + (excelMsg ? ' - ' + excelMsg : '') : 'DOSYA SEÇİLMEDİ'}
+              <span style={{fontSize:9, color: excelMsg.includes('BAŞARI') ? C.success : excelMsg.includes('HATA') || excelMsg.includes('BOŞ') ? C.danger : C.textMuted}}>
+                {excelFile ? excelFile.name + (excelMsg ? ' - ' + excelMsg : '') : ''}
               </span>
             </div>
           </div>
@@ -442,45 +457,42 @@ MR.CrmAramaPage = ({setPage, user}) => {
 
         {/* GÜNLÜK ARAMA ÖZETİ + OTOMATİK ARAMA */}
         <div style={S.card}>
-          <div style={{...S.cardHead, padding:'10px 16px', justifyContent:'space-between'}}>
-            <div style={{display:'flex', alignItems:'center', gap:8}}>
-              <LIcon name="BarChart3" size={14} color={C.accent}/>
-              <span style={{fontSize:12, fontWeight:700}}>GÜNLÜK ARAMA ÖZETİ</span>
+          <div style={{...S.cardHead, padding:'8px 14px', justifyContent:'space-between'}}>
+            <div style={{display:'flex', alignItems:'center', gap:6}}>
+              <LIcon name="BarChart3" size={13} color={C.accent}/>
+              <span style={{fontSize:11, fontWeight:700}}>GÜNLÜK ARAMA ÖZETİ</span>
             </div>
-            <div style={{display:'flex', gap:6}}>
-              <button style={{...S.btn, ...S.btnS, fontSize:9, padding:'5px 10px'}}
-                onClick={autocallBaslat} disabled={autocallLoading || data.length === 0}
-                title="LİSTEDEKİ NUMARALARI OTOMATİK ARAMA LİSTESİ OLARAK NETGSM'E GÖNDER">
-                <LIcon name="PhoneOutgoing" size={12} color="#fff"/>
-                {autocallLoading ? 'GÖNDERİLİYOR...' : 'OTOMATİK ARAMA BAŞLAT'}
+            <div style={{display:'flex', gap:4}}>
+              <button style={{...S.btn, ...S.btnS, fontSize:8, padding:'4px 8px'}}
+                onClick={autocallBaslat} disabled={autocallLoading || data.length === 0}>
+                <LIcon name="PhoneOutgoing" size={10} color="#fff"/>
+                {autocallLoading ? 'GÖNDERİLİYOR...' : 'OTO. ARAMA'}
               </button>
-              <button style={{...S.btn, ...S.btnG, fontSize:9, padding:'5px 10px'}}
-                onClick={autocallListeleriYukle} title="OTOMATİK ARAMA LİSTELERİ VE RAPORLARI">
-                <LIcon name="List" size={12} color={C.textSec}/>
-                LİSTELER
+              <button style={{...S.btn, ...S.btnG, fontSize:8, padding:'4px 8px'}}
+                onClick={autocallListeleriYukle}>
+                <LIcon name="List" size={10} color={C.textSec}/> LİSTELER
               </button>
             </div>
           </div>
-          {/* OTOMATİK ARAMA MESAJI */}
           {autocallMsg.text && (
-            <div style={{padding:'8px 16px', background: autocallMsg.type === 'success' ? `${C.success}12` : `${C.danger}12`, fontSize:11, fontWeight:600, color: autocallMsg.type === 'success' ? C.success : C.danger, display:'flex', alignItems:'center', gap:6}}>
-              <LIcon name={autocallMsg.type === 'success' ? 'CheckCircle' : 'AlertCircle'} size={14} color={autocallMsg.type === 'success' ? C.success : C.danger}/> {autocallMsg.text}
+            <div style={{padding:'6px 14px', background: autocallMsg.type === 'success' ? `${C.success}12` : `${C.danger}12`, fontSize:10, fontWeight:600, color: autocallMsg.type === 'success' ? C.success : C.danger, display:'flex', alignItems:'center', gap:4}}>
+              <LIcon name={autocallMsg.type === 'success' ? 'CheckCircle' : 'AlertCircle'} size={12} color={autocallMsg.type === 'success' ? C.success : C.danger}/> {autocallMsg.text}
             </div>
           )}
-          <div style={{padding:16}}>
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
+          <div style={{padding:10}}>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:6}}>
               {[
-                {label:'BUGÜN ARANAN', value: data.filter(d => d.gorusme_tarihi && new Date(d.gorusme_tarihi).toDateString() === new Date().toDateString()).length, c:C.accent},
-                {label:'OLUMLU SONUÇ', value: data.filter(d => d.durum === 'Alindi' && d.gorusme_tarihi && new Date(d.gorusme_tarihi).toDateString() === new Date().toDateString()).length, c:C.success},
-                {label:'TAKİP GEREKLİ', value: data.filter(d => d.durum === 'Belirsiz').length, c:C.warning},
-                {label:'ULAŞILAMADI', value: data.filter(d => d.alinmama_nedeni && d.alinmama_nedeni.includes('ULAŞILAMADI')).length, c:C.danger}
+                {label:'BUGÜN', value: data.filter(d => d.gorusme_tarihi && new Date(d.gorusme_tarihi).toDateString() === new Date().toDateString()).length, c:C.accent},
+                {label:'OLUMLU', value: data.filter(d => d.durum === 'Alindi' && d.gorusme_tarihi && new Date(d.gorusme_tarihi).toDateString() === new Date().toDateString()).length, c:C.success},
+                {label:'TAKİP', value: data.filter(d => d.durum === 'Belirsiz').length, c:C.warning},
+                {label:'ULAŞILMADI', value: data.filter(d => d.alinmama_nedeni && d.alinmama_nedeni.includes('ULAŞILAMADI')).length, c:C.danger}
               ].map((item,i) => (
                 <div key={i} style={{
-                  background:`${item.c}0a`, border:`1px solid ${item.c}25`,
-                  borderRadius:10, padding:14, textAlign:'center'
+                  background:`${item.c}0a`, border:`1px solid ${item.c}20`,
+                  borderRadius:8, padding:'8px 4px', textAlign:'center'
                 }}>
-                  <div style={{fontSize:24, fontWeight:800, color:item.c}}>{item.value}</div>
-                  <div style={{fontSize:10, color:C.textMuted, marginTop:4}}>{item.label}</div>
+                  <div style={{fontSize:18, fontWeight:800, color:item.c}}>{item.value}</div>
+                  <div style={{fontSize:8, color:C.textMuted, marginTop:2}}>{item.label}</div>
                 </div>
               ))}
             </div>
@@ -551,25 +563,23 @@ MR.CrmAramaPage = ({setPage, user}) => {
         {loading ? <Loading/> : data.length === 0 ? (
           <EmptyState icon="PhoneCall" title="YÖNLENDİRME KAYDI BULUNAMADI" desc="EXCEL DOSYASI YÜKLEYEREK BAŞLAYIN"/>
         ) : (
-          <div style={{overflowX:'auto', maxHeight:'calc(100vh - 520px)'}}>
-            <table style={{width:'100%', borderCollapse:'collapse', fontSize:10, minWidth:1300}}>
+          <div style={{overflowX:'auto', maxHeight:'calc(100vh - 420px)', width:'100%'}}>
+            <table style={{width:'100%', borderCollapse:'collapse', fontSize:10, minWidth:1000}}>
               <thead>
                 <tr style={{background:C.bgHover}}>
-                  <th style={{...thSt, width:30}}><input type="checkbox" checked={secili.length === data.length && data.length > 0} onChange={toggleAll}/></th>
-                  <th style={thSt}>NO</th>
+                  <th style={{...thSt, width:28}}><input type="checkbox" checked={secili.length === data.length && data.length > 0} onChange={toggleAll}/></th>
+                  <th style={{...thSt, width:35}}>NO</th>
                   <th style={thSt}>YÖNLENDİREN</th>
-                  <th style={thSt}>YÖN. TARİHİ</th>
-                  <th style={thSt}>KAZA TÜRÜ</th>
-                  <th style={thSt}>MAĞDUR AD SOYAD</th>
-                  <th style={thSt}>MAĞDUR TELEFON</th>
-                  <th style={thSt}>İL</th>
-                  <th style={thSt}>İLÇE</th>
-                  <th style={thSt}>GÖRÜŞME TARİHİ</th>
+                  <th style={thSt}>TARİH</th>
+                  <th style={thSt}>KAZA</th>
+                  <th style={thSt}>AD SOYAD</th>
+                  <th style={thSt}>TELEFON</th>
+                  <th style={{...thSt, width:40}}>İL</th>
+                  <th style={thSt}>GÖRÜŞME</th>
                   <th style={thSt}>DURUM</th>
-                  <th style={thSt}>ALINMAMA NEDENİ</th>
+                  <th style={thSt}>NEDEN</th>
                   <th style={thSt}>SON DURUM</th>
-                  <th style={thSt}>TC</th>
-                  <th style={{...thSt, textAlign:'center'}}>İŞLEMLER</th>
+                  <th style={{...thSticky, textAlign:'center'}}>İŞLEM</th>
                 </tr>
               </thead>
               <tbody>
@@ -582,37 +592,35 @@ MR.CrmAramaPage = ({setPage, user}) => {
                     onMouseLeave={e => {if(!secili.includes(item.id)) e.currentTarget.style.background = i%2===1?`${C.bgHover}66`:'transparent';}}
                   >
                     <td style={tdSt}><input type="checkbox" checked={secili.includes(item.id)} onChange={() => toggleSecili(item.id)}/></td>
-                    <td style={{...tdSt, fontWeight:700, color:C.accent}}>{item.sira_no || item.id}</td>
-                    <td style={tdSt}>{item.yonlendiren || '-'}</td>
-                    <td style={{...tdSt, color:C.textMuted}}>{item.yonlendirme_tarihi || '-'}</td>
+                    <td style={{...tdSt, fontWeight:700, color:C.accent, fontSize:10}}>{item.sira_no || item.id}</td>
+                    <td style={tdTrunc}>{item.yonlendiren || '-'}</td>
+                    <td style={{...tdSt, color:C.textMuted, fontSize:10}}>{item.yonlendirme_tarihi ? item.yonlendirme_tarihi.slice(0,10) : '-'}</td>
                     <td style={tdSt}>
                       {item.kaza_turu ? (
-                        <Badge text={item.kaza_turu} color={item.kaza_turu?.includes('ÇİFT') ? C.accent : C.purple}/>
+                        <Badge text={item.kaza_turu?.length > 10 ? item.kaza_turu.slice(0,10)+'..' : item.kaza_turu} color={item.kaza_turu?.includes('ÇİFT') ? C.accent : C.purple}/>
                       ) : '-'}
                     </td>
-                    <td style={{...tdSt, fontWeight:600}}>{item.magdur_ad_soyad || '-'}</td>
-                    <td style={tdSt}>{item.magdur_telefon || '-'}</td>
-                    <td style={tdSt}>{item.magdur_il || '-'}</td>
-                    <td style={tdSt}>{item.magdur_ilce || '-'}</td>
-                    <td style={{...tdSt, color:C.textMuted}}>{item.gorusme_tarihi || '-'}</td>
+                    <td style={{...tdTrunc, fontWeight:600, maxWidth:130}}>{item.magdur_ad_soyad || '-'}</td>
+                    <td style={{...tdSt, fontSize:10}}>{item.magdur_telefon || '-'}</td>
+                    <td style={{...tdSt, fontSize:10}}>{item.magdur_il || '-'}</td>
+                    <td style={{...tdSt, color:C.textMuted, fontSize:10}}>{item.gorusme_tarihi ? item.gorusme_tarihi.slice(0,10) : '-'}</td>
                     <td style={tdSt}>
                       <span style={durumChip(item.durum)}>
                         {item.durum === 'Alindi' ? '\u2714' : item.durum === 'Olumsuz' ? '\u2716' : '\u25CF'}{' '}
                         {durumLabels[item.durum] || 'BELİRSİZ'}
                       </span>
                     </td>
-                    <td style={{...tdSt, color:C.danger, fontSize:9, maxWidth:120, overflow:'hidden', textOverflow:'ellipsis'}}>{item.alinmama_nedeni || '-'}</td>
-                    <td style={tdSt}>
+                    <td style={{...tdTrunc, color:C.danger, fontSize:9, maxWidth:100}}>{item.alinmama_nedeni || '-'}</td>
+                    <td style={tdTrunc}>
                       {item.son_durum ? (
                         <span style={{
-                          padding:'2px 6px', borderRadius:4, fontSize:8, fontWeight:600,
+                          padding:'2px 5px', borderRadius:4, fontSize:8, fontWeight:600,
                           background: item.son_durum?.includes('DOSYA') || item.son_durum?.includes('CRM') ? `${C.accent}18` : item.son_durum?.includes('ALINDI') || item.son_durum?.includes('SÖZLEŞME') ? `${C.success}18` : `${C.warning}18`,
                           color: item.son_durum?.includes('DOSYA') || item.son_durum?.includes('CRM') ? C.accent : item.son_durum?.includes('ALINDI') || item.son_durum?.includes('SÖZLEŞME') ? C.success : C.warning
                         }}>{item.son_durum}</span>
                       ) : '-'}
                     </td>
-                    <td style={{...tdSt, color:C.textMuted, fontFamily:'monospace', fontSize:9}}>{item.magdur_tc || '-'}</td>
-                    <td style={{...tdSt, textAlign:'center'}}>
+                    <td style={tdSticky}>
                       <div style={{display:'flex', gap:3, justifyContent:'center'}}>
                         <button style={iconBtn(C.cyan)} title="NOT EKLE / GÖRÜNTÜLE" onClick={() => openNot(item)}>
                           <LIcon name="MessageSquare" size={12} color={C.cyan}/>
@@ -685,7 +693,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
               <button disabled={sayfa >= toplamSayfa} onClick={() => setSayfa(toplamSayfa)}
                 style={{...S.btn, ...S.btnG, fontSize:10, padding:'4px 8px', opacity: sayfa >= toplamSayfa ? 0.4 : 1}}>&raquo;</button>
 
-              <span style={{fontSize:9, color:C.textMuted, marginLeft:6}}>SAYFA {sayfa} / {toplamSayfa} ({toplamKayit} KAYIT)</span>
+              <span style={{fontSize:9, color:C.textMuted, marginLeft:6}}>{toplamKayit} KAYITTAN {Math.min((sayfa-1)*100+1, toplamKayit)}-{Math.min(sayfa*100, toplamKayit)} GÖSTERİLİYOR (SAYFA {sayfa}/{toplamSayfa})</span>
             </div>
           </div>
         )}
