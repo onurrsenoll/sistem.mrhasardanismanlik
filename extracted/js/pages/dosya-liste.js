@@ -67,7 +67,7 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
   const isAdmin = user?.rol === 'admin';
   const isAvukat = user?.rol === 'avukat';
   const [page, setPage2] = useState(1);
-  const [limit, setLimit] = useState(25);
+  const [limit, setLimit] = useState(100);
   const [pgInfo, setPgInfo] = useState({total:0, totalPages:0});
   const [stats, setStats] = useState({toplam:0, adk:0, bh:0, acik:0});
 
@@ -389,8 +389,13 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
     }
   }, [data, turF, asamaF, search, adkDosya, bhDosya, acikDosya]);
 
-  const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:11,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,position:'sticky',top:0,background:C.bgCard,zIndex:1,letterSpacing:0.4};
-  const tdS = {padding:'8px 8px',fontSize:12,fontWeight:600,whiteSpace:'nowrap',borderBottom:`1px solid ${C.border}`,color: MR.tema==='koyu' ? '#cbd5e1' : C.text};
+  const thS = {padding:'7px 6px',textAlign:'left',fontWeight:800,fontSize:'12px',whiteSpace:'nowrap',color:'#FFFFFF',position:'sticky',top:0,background:'#1a2744',zIndex:2,letterSpacing:0.3,borderBottom:'2px solid rgba(255,255,255,0.1)'};
+  const thSticky = {...thS,position:'sticky',right:0,zIndex:3,background:'#1a2744',boxShadow:'-3px 0 8px rgba(0,0,0,0.15)',textAlign:'center'};
+  const tdS = {padding:'6px 6px',fontSize:'12px',fontWeight:600,whiteSpace:'nowrap',color:'#FFFFFF',borderBottom:'none',opacity:1};
+  const tdTrunc = {...tdS,overflow:'hidden',textOverflow:'ellipsis'};
+  const tdSticky = {...tdS,position:'sticky',right:0,background:'inherit',boxShadow:'-3px 0 8px rgba(0,0,0,0.15)',textAlign:'center'};
+  const rowBg = (i) => i % 2 === 1 ? '#1a3050' : '#1e3a5f';
+  const rowSt = (i) => ({cursor:'pointer',backgroundColor:rowBg(i),borderBottom:'1px solid rgba(255,255,255,0.1)',boxShadow:'0 1px 3px rgba(0,0,0,0.3)',transition:'all .15s'});
 
   return (
     <div className="fade-in">
@@ -471,26 +476,41 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
         {loading ? <Loading/> : data.length === 0 ? (
           <EmptyState icon="FolderOpen" title="DOSYA BULUNAMADI" desc="FİLTRELERİ KONTROL EDİN VEYA YENİ DOSYA OLUŞTURUN"/>
         ) : (
-          <div style={{overflowX:'auto',maxHeight:'calc(100vh - 300px)'}}>
-            <table style={{width:'100%',borderCollapse:'collapse',minWidth:1350}}>
+          <div style={{overflowX:'auto',maxHeight:'calc(100vh - 300px)',width:'100%',position:'relative'}}>
+            <table style={{width:'100%',borderCollapse:'separate',borderSpacing:'0 3px',fontSize:'12px',tableLayout:'fixed'}}>
+              <colgroup>
+                {MR.hasYetki(user,'dosya','dosya-toplu-sil') && <col style={{width:35}}/>}
+                <col style={{width:90}}/>{/* DOSYA NO */}
+                <col style={{width:95}}/>{/* T.C. NO */}
+                <col style={{width:130}}/>{/* ADI SOYADI */}
+                {!isAvukat && <col style={{width:90}}/>}{/* DOSYA KAYNAĞI */}
+                {!isAvukat && <col style={{width:100}}/>}{/* AVUKATI */}
+                <col style={{width:65}}/>{/* DOSYA TÜRÜ */}
+                <col style={{width:110}}/>{/* DAVALI ŞİRKET */}
+                <col style={{width:100}}/>{/* SİGORTA HASAR NO */}
+                <col style={{width:80}}/>{/* KAZA TARİHİ */}
+                <col style={{width:80}}/>{/* AÇILIŞ TARİHİ */}
+                <col style={{width:140}}/>{/* DOSYA AŞAMA DURUMU */}
+                <col style={{width:90}}/>{/* İŞLEM */}
+              </colgroup>
               <thead>
-                <tr>
-                  {MR.hasYetki(user,'dosya','dosya-toplu-sil') && <th style={{...thS,minWidth:35,textAlign:'center',padding:'8px 4px'}}>
+                <tr style={{background:'#1a2744'}}>
+                  {MR.hasYetki(user,'dosya','dosya-toplu-sil') && <th style={{...thS,textAlign:'center',padding:'7px 4px'}}>
                     <input type="checkbox" checked={data.length > 0 && secililer.length === data.length}
                       onChange={tumunuSec} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                   </th>}
-                  <th style={{...thS,minWidth:80}}>DOSYA NO</th>
-                  <th style={{...thS,minWidth:85}}>T.C. NO</th>
-                  <th style={{...thS,minWidth:110}}>ADI SOYADI</th>
-                  {!isAvukat && <th style={{...thS,minWidth:85}}>DOSYA KAYNAĞI</th>}
-                  {!isAvukat && <th style={{...thS,minWidth:90}}>AVUKATI</th>}
-                  <th style={{...thS,minWidth:55,textAlign:'center'}}>DOSYA TÜRÜ</th>
-                  <th style={{...thS,minWidth:100}}>DAVALI ŞİRKET</th>
-                  <th style={{...thS,minWidth:100}}>SİGORTA HASAR NO</th>
-                  <th style={{...thS,minWidth:75}}>KAZA TARİHİ</th>
-                  <th style={{...thS,minWidth:75}}>AÇILIŞ TARİHİ</th>
-                  <th style={{...thS,minWidth:110}}>DOSYA AŞAMA DURUMU</th>
-                  <th style={{...thS,minWidth:50,textAlign:'center'}}>İŞLEM</th>
+                  <th style={thS}>DOSYA NO</th>
+                  <th style={thS}>T.C. NO</th>
+                  <th style={thS}>ADI SOYADI</th>
+                  {!isAvukat && <th style={thS}>DOSYA KAYNAĞI</th>}
+                  {!isAvukat && <th style={thS}>AVUKATI</th>}
+                  <th style={{...thS,textAlign:'center'}}>DOSYA TÜRÜ</th>
+                  <th style={thS}>DAVALI ŞİRKET</th>
+                  <th style={thS}>SİGORTA HASAR NO</th>
+                  <th style={thS}>KAZA TARİHİ</th>
+                  <th style={thS}>AÇILIŞ TARİHİ</th>
+                  <th style={thS}>DOSYA AŞAMA DURUMU</th>
+                  <th style={thSticky}>İŞLEM</th>
                 </tr>
               </thead>
               <tbody>
@@ -498,24 +518,25 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                   const ac = asamaRenk(d.asama);
                   return (
                     <tr key={d.id || i}
-                      style={{cursor:'pointer',background:i%2===1?`${C.bgHover}66`:'transparent',transition:'background .15s'}}
-                      onClick={() => onSelect(d.id)}
-                      onMouseEnter={e => e.currentTarget.style.background=`${C.accent}0a`}
-                      onMouseLeave={e => e.currentTarget.style.background=i%2===1?`${C.bgHover}66`:'transparent'}>
+                      style={rowSt(i)}
+                      onMouseEnter={e => {e.currentTarget.style.backgroundColor='#243d6b';e.currentTarget.style.boxShadow='0 2px 6px rgba(0,0,0,0.4)';}}
+                      onMouseLeave={e => {e.currentTarget.style.backgroundColor=rowBg(i);e.currentTarget.style.boxShadow='0 1px 3px rgba(0,0,0,0.3)';}}>
                       {MR.hasYetki(user,'dosya','dosya-toplu-sil') && <td style={{...tdS,textAlign:'center',padding:'6px 4px'}} onClick={e => e.stopPropagation()}>
                         <input type="checkbox" checked={secililer.includes(d.id)} onChange={() => toggleSecim(d.id)}
                           style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                       </td>}
                       {/* DOSYA NO */}
-                      <td style={{...tdS,fontWeight:700,color:C.accent}}><a href={`#/dosya-detay-${d.id}`} onClick={e => e.preventDefault()} style={{color:'inherit',textDecoration:'none'}}>{d.dosya_no}</a></td>
+                      <td style={{...tdS,fontWeight:700}}>
+                        <a href={'#/dosya-detay-'+d.id} onClick={e=>{if(!e.ctrlKey&&!e.metaKey){e.preventDefault();onSelect(d.id);}}} style={{color:C.accent,textDecoration:'none',fontSize:'12px'}}>{d.dosya_no}</a>
+                      </td>
                       {/* T.C. NO */}
-                      <td style={{...tdS,fontFamily:'monospace',fontSize:10,color:C.textSec,letterSpacing:0.3}}>{d.tc_kimlik || '-'}</td>
+                      <td style={{...tdTrunc,fontFamily:'monospace',letterSpacing:0.3}} title={d.tc_kimlik||''}>{d.tc_kimlik || '-'}</td>
                       {/* ADI SOYADI */}
-                      <td style={{...tdS,fontWeight:600,maxWidth:130,overflow:'hidden',textOverflow:'ellipsis'}}>{d.magdur_adi || '-'}</td>
+                      <td style={{...tdTrunc,fontWeight:600}} title={d.magdur_adi||''}>{d.magdur_adi || '-'}</td>
                       {/* DOSYA KAYNAĞI */}
-                      {!isAvukat && <td style={{...tdS,color:C.textSec,fontSize:9}}>{d.dosya_kaynagi || '-'}</td>}
+                      {!isAvukat && <td style={tdTrunc} title={d.dosya_kaynagi||''}>{d.dosya_kaynagi || '-'}</td>}
                       {/* AVUKATI */}
-                      {!isAvukat && <td style={{...tdS,color:C.textSec,maxWidth:100,overflow:'hidden',textOverflow:'ellipsis'}}>{d.avukat_adi || '-'}</td>}
+                      {!isAvukat && <td style={tdTrunc} title={d.avukat_adi||''}>{d.avukat_adi || '-'}</td>}
                       {/* DOSYA TÜRÜ */}
                       <td style={{...tdS,textAlign:'center'}}>
                         <span style={{display:'inline-block',padding:'2px 8px',borderRadius:4,fontSize:9,fontWeight:700,
@@ -525,13 +546,13 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                         </span>
                       </td>
                       {/* DAVALI ŞİRKET */}
-                      <td style={{...tdS,fontSize:9,maxWidth:110,overflow:'hidden',textOverflow:'ellipsis'}}>{d.sigorta_sirket || '-'}</td>
+                      <td style={tdTrunc} title={d.sigorta_sirket||''}>{d.sigorta_sirket || '-'}</td>
                       {/* SİGORTA HASAR NO */}
-                      <td style={{...tdS,fontFamily:'monospace',fontSize:9,color:C.textSec}}>{d.hasar_no || '-'}</td>
+                      <td style={{...tdTrunc,fontFamily:'monospace'}} title={d.hasar_no||''}>{d.hasar_no || '-'}</td>
                       {/* KAZA TARİHİ */}
-                      <td style={{...tdS,color:C.textMuted,fontSize:10}}>{d.kaza_tarihi || '-'}</td>
+                      <td style={tdS}>{d.kaza_tarihi || '-'}</td>
                       {/* AÇILIŞ TARİHİ */}
-                      <td style={{...tdS,color:C.textMuted,fontSize:10}}>{d.acilis_tarihi || '-'}</td>
+                      <td style={tdS}>{d.acilis_tarihi || '-'}</td>
                       {/* DOSYA AŞAMA DURUMU */}
                       <td style={tdS}>
                         <span style={{display:'inline-block',padding:'2px 6px',borderRadius:4,fontSize:8,fontWeight:600,
@@ -539,11 +560,16 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                           {d.asama || '-'}
                         </span>
                       </td>
-                      {/* İŞLEM */}
-                      <td style={{...tdS,textAlign:'center'}}>
+                      {/* İŞLEM - STICKY */}
+                      <td style={tdSticky}>
                         <div style={{display:'flex',gap:6,justifyContent:'center',alignItems:'center'}}>
-                          <span title="GÖRÜNTÜLE" style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.accent}11`}}>
+                          <a href={'#/dosya-detay-'+d.id} onClick={e=>{if(!e.ctrlKey&&!e.metaKey){e.preventDefault();onSelect(d.id);}}}
+                            title="GÖRÜNTÜLE" style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.accent}11`,textDecoration:'none'}}>
                             <LIcon name="Eye" size={12} color={C.accent}/>
+                          </a>
+                          <span title="YENİ SEKMEDE AÇ" onClick={()=>window.open('#/dosya-detay-'+d.id,'_blank')}
+                            style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.cyan||'#06b6d4'}11`}}>
+                            <LIcon name="ExternalLink" size={12} color={C.cyan||'#06b6d4'}/>
                           </span>
                           {!isAvukat && <span title="SİL" onClick={(e) => { e.stopPropagation(); setDeleteConfirm({id: d.id, text: d.dosya_no}); }}
                             style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.danger}11`}}>
@@ -561,10 +587,10 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
 
         {/* PAGINATION */}
         {pgInfo.totalPages > 0 && (
-          <div style={{padding:'10px 14px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+          <div style={{padding:'12px 16px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <span style={{fontSize:10,color:C.textMuted}}>SAYFA BAŞINA:</span>
-              {[25,50,100,250].map(v => (
+              {[50,100,250].map(v => (
                 <button key={v} onClick={() => changeLimit(v)}
                   style={{padding:'4px 10px',borderRadius:6,fontSize:10,fontWeight:limit===v?700:500,cursor:'pointer',
                     background:limit===v?`${C.accent}18`:'transparent',color:limit===v?C.accent:C.textSec,
@@ -573,33 +599,29 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                 </button>
               ))}
             </div>
-            <div style={{display:'flex',alignItems:'center',gap:6}}>
-              <span style={{fontSize:10,color:C.textMuted}}>
-                {((page-1)*limit)+1}-{Math.min(page*limit, pgInfo.total)} / {pgInfo.total}
-              </span>
-              <button onClick={() => changePage(1)} disabled={page<=1}
-                style={{padding:'4px 8px',borderRadius:4,fontSize:10,cursor:page<=1?'default':'pointer',
-                  background:page<=1?C.bgInput:`${C.accent}11`,color:page<=1?C.textMuted:C.accent,border:`1px solid ${C.border}`,opacity:page<=1?0.5:1}}>
-                <LIcon name="ChevronsLeft" size={12}/>
-              </button>
-              <button onClick={() => changePage(page-1)} disabled={page<=1}
-                style={{padding:'4px 8px',borderRadius:4,fontSize:10,cursor:page<=1?'default':'pointer',
-                  background:page<=1?C.bgInput:`${C.accent}11`,color:page<=1?C.textMuted:C.accent,border:`1px solid ${C.border}`,opacity:page<=1?0.5:1}}>
-                <LIcon name="ChevronLeft" size={12}/>
-              </button>
-              <span style={{padding:'4px 10px',borderRadius:6,fontSize:11,fontWeight:700,background:`${C.accent}18`,color:C.accent}}>
-                {page} / {pgInfo.totalPages}
-              </span>
-              <button onClick={() => changePage(page+1)} disabled={page>=pgInfo.totalPages}
-                style={{padding:'4px 8px',borderRadius:4,fontSize:10,cursor:page>=pgInfo.totalPages?'default':'pointer',
-                  background:page>=pgInfo.totalPages?C.bgInput:`${C.accent}11`,color:page>=pgInfo.totalPages?C.textMuted:C.accent,border:`1px solid ${C.border}`,opacity:page>=pgInfo.totalPages?0.5:1}}>
-                <LIcon name="ChevronRight" size={12}/>
-              </button>
-              <button onClick={() => changePage(pgInfo.totalPages)} disabled={page>=pgInfo.totalPages}
-                style={{padding:'4px 8px',borderRadius:4,fontSize:10,cursor:page>=pgInfo.totalPages?'default':'pointer',
-                  background:page>=pgInfo.totalPages?C.bgInput:`${C.accent}11`,color:page>=pgInfo.totalPages?C.textMuted:C.accent,border:`1px solid ${C.border}`,opacity:page>=pgInfo.totalPages?0.5:1}}>
-                <LIcon name="ChevronsRight" size={12}/>
-              </button>
+            <div style={{display:'flex',alignItems:'center',gap:4}}>
+              <button disabled={page<=1} onClick={() => changePage(1)}
+                style={{...S.btn,...S.btnG,fontSize:10,padding:'4px 8px',opacity:page<=1?0.4:1}}>&laquo;</button>
+              <button disabled={page<=1} onClick={() => changePage(page-1)}
+                style={{...S.btn,...S.btnG,fontSize:10,padding:'4px 8px',opacity:page<=1?0.4:1}}>&lsaquo;</button>
+
+              {Array.from({length:Math.min(5,pgInfo.totalPages)},(_,i)=>{
+                let p=page-2+i;if(p<1)p=i+1;if(p>pgInfo.totalPages)p=pgInfo.totalPages-(4-i);if(p<1)p=i+1;return p;
+              }).filter((v,i,a)=>v>=1&&v<=pgInfo.totalPages&&a.indexOf(v)===i).map(p=>(
+                <button key={p} onClick={() => changePage(p)}
+                  style={{width:28,height:28,borderRadius:6,border:`1px solid ${p===page?C.accent:C.borderLight||C.border}`,
+                    background:p===page?C.accent:'transparent',color:p===page?'#fff':C.textSec,
+                    cursor:'pointer',fontSize:11,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  {p}
+                </button>
+              ))}
+
+              <button disabled={page>=pgInfo.totalPages} onClick={() => changePage(page+1)}
+                style={{...S.btn,...S.btnG,fontSize:10,padding:'4px 8px',opacity:page>=pgInfo.totalPages?0.4:1}}>&rsaquo;</button>
+              <button disabled={page>=pgInfo.totalPages} onClick={() => changePage(pgInfo.totalPages)}
+                style={{...S.btn,...S.btnG,fontSize:10,padding:'4px 8px',opacity:page>=pgInfo.totalPages?0.4:1}}>&raquo;</button>
+
+              <span style={{fontSize:9,color:C.textMuted,marginLeft:6}}>{pgInfo.total} KAYITTAN {Math.min((page-1)*limit+1,pgInfo.total)}-{Math.min(page*limit,pgInfo.total)} GÖSTERİLİYOR (SAYFA {page}/{pgInfo.totalPages})</span>
             </div>
           </div>
         )}
