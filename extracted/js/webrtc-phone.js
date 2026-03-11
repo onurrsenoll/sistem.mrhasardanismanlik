@@ -31,6 +31,7 @@ MR.webrtcTelefon = {
   _iceConnectTimer: null,
   _relayCandidateFound: false,
   _reconnectTimer: null,
+  _turnCachedCreds: null,
 
   /* ═══ SES YÖNETİMİ ═══ */
   _sesAyarlari: {
@@ -65,11 +66,40 @@ MR.webrtcTelefon = {
     turnPass: ''
   },
 
+  /* ═══ TURN KİMLİK BİLGİLERİ OLUŞTUR (Metered OpenRelay Static Auth - HMAC-SHA1) ═══ */
+  _turnKimlikOlustur: async function() {
+    try {
+      var secret = 'openrelayprojectsecret';
+      var timestamp = Math.floor(Date.now() / 1000) + 86400; /* 24 SAAT GEÇERLİ */
+      var username = timestamp.toString();
+
+      var enc = new TextEncoder();
+      var key = await crypto.subtle.importKey(
+        'raw', enc.encode(secret),
+        { name: 'HMAC', hash: 'SHA-1' },
+        false, ['sign']
+      );
+      var sig = await crypto.subtle.sign('HMAC', key, enc.encode(username));
+      var credential = btoa(String.fromCharCode.apply(null, new Uint8Array(sig)));
+
+      this._turnCachedCreds = { username: username, credential: credential };
+      console.log('[WEBRTC] TURN KİMLİK BİLGİLERİ OLUŞTURULDU (Static Auth HMAC-SHA1) - KULLANICI:', username);
+      return true;
+    } catch(e) {
+      console.warn('[WEBRTC] TURN KİMLİK OLUŞTURMA HATASI (crypto.subtle):', e);
+      /* FALLBACK: LEGACY KİMLİK BİLGİLERİNİ DENE */
+      this._turnCachedCreds = { username: 'openrelayproject', credential: 'openrelayproject' };
+      console.log('[WEBRTC] TURN FALLBACK: LEGACY KİMLİK BİLGİLERİ KULLANILIYOR');
+      return false;
+    }
+  },
+
   /* ═══ ICE SUNUCULARI ═══ */
   _getIceServers: function() {
     var servers = [
       { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' }
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun.stunprotocol.org:3478' }
     ];
 
     /* KULLANICI TURN SUNUCUSU VARSA ONU EKLE */
@@ -79,7 +109,7 @@ MR.webrtcTelefon = {
         username: this._config.turnUser || '',
         credential: this._config.turnPass || ''
       });
-      /* TCP FALLBACK - AYNI SUNUCU İÇİN TCP ÜZERİNDEN DE DENE */
+      /* TCP FALLBACK */
       if (this._config.turnUrl.indexOf('?transport=') === -1) {
         servers.push({
           urls: this._config.turnUrl + '?transport=tcp',
@@ -87,22 +117,25 @@ MR.webrtcTelefon = {
           credential: this._config.turnPass || ''
         });
       }
-    } else {
-      /* VARSAYILAN TURN SUNUCULARI - Metered OpenRelay (Ücretsiz - 20GB/ay) */
-      /* Simetrik NAT, VPN, kurumsal firewall arkasında medya bağlantısı için GEREKLİ */
-      var turnUser = 'openrelayproject';
-      var turnPass = 'openrelayproject';
+      console.log('[WEBRTC] KULLANICI TURN SUNUCUSU EKLENDİ:', this._config.turnUrl);
+    } else if (this._turnCachedCreds) {
+      /* METERED OPENRELAY STATIC AUTH TURN SUNUCULARI */
+      var u = this._turnCachedCreds.username;
+      var c = this._turnCachedCreds.credential;
       servers.push(
-        { urls: 'turn:openrelay.metered.ca:80', username: turnUser, credential: turnPass },
-        { urls: 'turn:openrelay.metered.ca:80?transport=tcp', username: turnUser, credential: turnPass },
-        { urls: 'turn:openrelay.metered.ca:443', username: turnUser, credential: turnPass },
-        { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: turnUser, credential: turnPass },
-        { urls: 'turns:openrelay.metered.ca:443', username: turnUser, credential: turnPass }
+        { urls: 'turn:staticauth.openrelay.metered.ca:80', username: u, credential: c },
+        { urls: 'turn:staticauth.openrelay.metered.ca:80?transport=tcp', username: u, credential: c },
+        { urls: 'turn:staticauth.openrelay.metered.ca:443', username: u, credential: c },
+        { urls: 'turn:staticauth.openrelay.metered.ca:443?transport=tcp', username: u, credential: c },
+        { urls: 'turns:staticauth.openrelay.metered.ca:443', username: u, credential: c }
       );
-      console.log('[WEBRTC] VARSAYILAN TURN SUNUCULARI EKLENDİ (Metered OpenRelay)');
+      console.log('[WEBRTC] METERED STATIC AUTH TURN SUNUCULARI EKLENDİ (5 ADET)');
+    } else {
+      console.warn('[WEBRTC] ⚠ HİÇ TURN SUNUCUSU YOK! MEDYA BAĞLANTISI BAŞARISIZ OLABİLİR.');
     }
 
-    console.log('[WEBRTC] ICE SUNUCU SAYISI:', servers.length, '(TURN:', servers.filter(function(s) { return (s.urls || '').indexOf('turn') === 0; }).length, ')');
+    var turnCount = servers.filter(function(s) { return (s.urls || '').indexOf('turn') === 0; }).length;
+    console.log('[WEBRTC] ICE SUNUCU SAYISI:', servers.length, '(TURN:', turnCount, ')');
     return servers;
   },
 
@@ -166,7 +199,7 @@ MR.webrtcTelefon = {
   },
 
   /* ═══ BAŞLAT ═══ */
-  baslat: function(config) {
+  baslat: async function(config) {
     if (this._ua) {
       console.log('[WEBRTC] ZATEN BAŞLATILMIŞ - ATLANIYOR');
       return;
@@ -185,6 +218,11 @@ MR.webrtcTelefon = {
       return;
     }
 
+    /* TURN KİMLİK BİLGİLERİNİ ÖN-OLUŞTUR (KULLANICI TURN GİRMEMİŞSE) */
+    if (!this._config.turnUrl && !this._turnCachedCreds) {
+      await this._turnKimlikOlustur();
+    }
+
     this._remoteAudioOlustur();
     this.cihazlariListele();
 
@@ -195,6 +233,10 @@ MR.webrtcTelefon = {
 
     console.log('[WEBRTC] OTOMATİK BAŞLATILIYOR - DAHİLİ:', this._config.dahili, '| KULLANICI:', this._config.kullanici, '| SANTRAL:', this._config.santralNo);
     console.log('[WEBRTC] BAĞLANIYOR:', sipUri, '| AUTH:', authUser, '| WSS:', this._config.wssUrl);
+    console.log('[WEBRTC] TURN DURUMU:', this._turnCachedCreds ? 'HAZIR (Static Auth)' : (this._config.turnUrl ? 'KULLANICI TURN' : 'YOK'));
+
+    /* JsSIP SIP MESAJLARINI GÖRMEK İÇİN DEBUG MODU */
+    try { JsSIP.debug.enable('JsSIP:RTCSession*'); } catch(e) { console.log('[WEBRTC] JsSIP debug etkinleştirilemedi (normal)'); }
 
     try {
       var socket = new JsSIP.WebSocketInterface(this._config.wssUrl);
@@ -364,16 +406,40 @@ MR.webrtcTelefon = {
 
     try {
       var iceServers = this._getIceServers();
+      var self = this;
 
       /* EN BASİT YAKLAŞIM: JsSIP KENDİ getUserMedia'SINI KULLANSIN */
       var callOptions = {
         mediaConstraints: { audio: true, video: false },
         pcConfig: {
-          iceServers: iceServers
+          iceServers: iceServers,
+          iceTransportPolicy: 'all'
         },
-        rtcOfferConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false }
+        rtcOfferConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false },
+        /* JsSIP SESSİON OLAY DİNLEYİCİLERİ - ua.call()'DAN ÖNCE BAĞLANIR (RACE CONDITION ÖNLEME) */
+        eventHandlers: {
+          peerconnection: function(data) {
+            console.log('[WEBRTC] GİDEN ARAMA: PeerConnection OLUŞTU');
+          },
+          sending: function(data) {
+            console.log('[WEBRTC] GİDEN ARAMA: SIP INVITE GÖNDERİLİYOR...');
+            if (data && data.request) {
+              console.log('[WEBRTC] SIP INVITE METHOD:', data.request.method, '| URI:', data.request.ruri ? data.request.ruri.toString() : '');
+            }
+          },
+          failed: function(e) {
+            var cause = e && e.cause ? e.cause : 'BİLİNMEYEN';
+            var originator = e && e.originator ? e.originator : '';
+            var msg = e && e.message;
+            console.error('[WEBRTC] GİDEN ARAMA BAŞARISIZ (eventHandlers) - CAUSE:', cause, '| ORIGINATOR:', originator);
+            if (msg && msg.status_code) {
+              console.error('[WEBRTC] SIP YANIT KODU:', msg.status_code, msg.reason_phrase || '');
+            }
+          }
+        }
       };
 
+      console.log('[WEBRTC] ua.call() ÇAĞRILIYOR... ICE SUNUCU SAYISI:', iceServers.length);
       var session = this._ua.call(targetUri, callOptions);
 
       this._session = session;
