@@ -730,6 +730,13 @@ const ProfilPage = ({user, setUser}) => {
           </div>
         </div>
       </div>
+
+      {/* NETSANTRAL WEBRTC AYARLARI */}
+      {MR.NetsantralAyarlari && (
+        <div style={{marginTop: 20}}>
+          <MR.NetsantralAyarlari/>
+        </div>
+      )}
     </div>
   );
 };
@@ -860,7 +867,11 @@ const App = () => {
     (async () => {
       if (api.token) {
         const r = await api.me();
-        if (r?.success) { setUser(r.data?.user || r.data); }
+        if (r?.success) {
+          const u = r.data?.user || r.data;
+          setUser(u);
+          if (MR.webrtcOtoBaslat) MR.webrtcOtoBaslat(u);
+        }
         else { api.setToken(null); }
       }
       setLoading(false);
@@ -1190,7 +1201,12 @@ const App = () => {
     setUser(u);
     try {
       const r = await api.me();
-      if (r?.success) { setUser(r.data?.user || r.data); }
+      if (r?.success) {
+        const fullUser = r.data?.user || r.data;
+        setUser(fullUser);
+        /* WebRTC otomatik başlat */
+        if (MR.webrtcOtoBaslat) MR.webrtcOtoBaslat(fullUser);
+      }
     } catch(e) {}
   };
 
@@ -1271,6 +1287,9 @@ const App = () => {
         </div>
       </div>
 
+
+      {/* WEBRTC FLOATING TELEFON WİDGET */}
+      {MR.WebrtcWidget && <MR.WebrtcWidget user={user} setPage={setPage}/>}
 
       {/* ANİMASYON CSS */}
       <style>{`

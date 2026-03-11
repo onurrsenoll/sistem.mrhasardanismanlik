@@ -10,38 +10,31 @@ const {useState, useEffect, useCallback, useRef, useMemo} = React;
 MR._webrtcConfig = null;
 MR._webrtcBaslatildi = false;
 
+/* ═══ VARSAYILAN NETSANTRAL AYARLARI ═══ */
+MR._netsantralVarsayilan = {
+  wssUrl: 'wss://sip6.netsantral.com:8089/ws',
+  domain: 'sip6.netsantral.com',
+  dahili: '102',
+  sipSifre: 'mayaarHeK4',
+  santralNo: '3625026502',
+  kullanici: '102-3625026502'
+};
+
 /* ═══ WEBRTC OTOMATİK BAŞLATMA ═══ */
 MR.webrtcOtoBaslat = async (user) => {
   if (MR._webrtcBaslatildi || !MR.webrtcTelefon) return;
   if (!user) return;
 
-  /* NETSANTRAL AYARLARINI LOCALSTORAGEDAN VEYA AYARLARDAN YÜKLE */
+  /* NETSANTRAL AYARLARINI LOCALSTORAGEDAN VEYA VARSAYILANDAN YÜKLE */
   var config = MR._webrtcConfig;
   if (!config) {
-    /* ÖNCE KULLANICI BİLGİLERİNDE ARA */
-    var dahili = user.netsantral_dahili || user.dahili || localStorage.getItem('mr_netsantral_dahili') || '';
-    var sipSifre = user.netsantral_sip_sifre || user.sip_sifre || localStorage.getItem('mr_netsantral_sip_sifre') || '';
-    var wssUrl = user.netsantral_wss || localStorage.getItem('mr_netsantral_wss') || '';
-    var domain = user.netsantral_domain || localStorage.getItem('mr_netsantral_domain') || '';
-    var santralNo = user.netsantral_no || user.santral_no || localStorage.getItem('mr_netsantral_no') || '';
-    var kullanici = user.netsantral_kullanici || localStorage.getItem('mr_netsantral_kullanici') || '';
-
-    /* AYARLAR API'DEN YÜKLE */
-    if (!dahili || !sipSifre || !wssUrl) {
-      try {
-        var r = await MR.api.ayarlarList();
-        if (r && r.success && r.data) {
-          dahili = dahili || r.data.netsantral_dahili || '';
-          sipSifre = sipSifre || r.data.netsantral_sip_sifre || '';
-          wssUrl = wssUrl || r.data.netsantral_wss || '';
-          domain = domain || r.data.netsantral_domain || '';
-          santralNo = santralNo || r.data.netsantral_no || '';
-          kullanici = kullanici || r.data.netsantral_kullanici || '';
-        }
-      } catch(e) {
-        console.log('[WEBRTC-WIDGET] AYARLAR YÜKLENEMEDI:', e);
-      }
-    }
+    var def = MR._netsantralVarsayilan;
+    var wssUrl = localStorage.getItem('mr_netsantral_wss') || def.wssUrl;
+    var domain = localStorage.getItem('mr_netsantral_domain') || def.domain;
+    var dahili = localStorage.getItem('mr_netsantral_dahili') || def.dahili;
+    var sipSifre = localStorage.getItem('mr_netsantral_sip_sifre') || def.sipSifre;
+    var santralNo = localStorage.getItem('mr_netsantral_no') || def.santralNo;
+    var kullanici = localStorage.getItem('mr_netsantral_kullanici') || def.kullanici;
 
     if (!dahili || !sipSifre || !wssUrl) {
       console.log('[WEBRTC-WIDGET] NETSANTRAL AYARLARI EKSİK - DAHİLİ:', !!dahili, '| SIP:', !!sipSifre, '| WSS:', !!wssUrl);
@@ -59,9 +52,19 @@ MR.webrtcOtoBaslat = async (user) => {
     MR._webrtcConfig = config;
   }
 
-  console.log('[WEBRTC-WIDGET] BAŞLATILIYOR - DAHİLİ:', config.dahili);
+  console.log('[WEBRTC-WIDGET] BAŞLATILIYOR - DAHİLİ:', config.dahili, '| WSS:', config.wssUrl);
   MR._webrtcBaslatildi = true;
   MR.webrtcTelefon.baslat(config);
+};
+
+/* ═══ WEBRTC YENİDEN BAŞLAT (AYARLAR DEĞİŞTİĞİNDE) ═══ */
+MR.webrtcYenidenBaslat = async () => {
+  if (MR.webrtcTelefon) {
+    await MR.webrtcTelefon.durdur();
+  }
+  MR._webrtcBaslatildi = false;
+  MR._webrtcConfig = null;
+  MR.webrtcOtoBaslat(MR._currentUser || {});
 };
 
 /* ═══ GLOBAL ARAMA FONKSİYONU ═══ */
@@ -650,7 +653,6 @@ MR._NetsippDurum = () => {
       setKayitli(!!(e.detail && e.detail.kayitli));
     };
     window.addEventListener('mr-webrtc-durum', handler);
-    /* İLK DURUM */
     if (MR.webrtcTelefon) setKayitli(MR.webrtcTelefon._kayitli);
     return () => window.removeEventListener('mr-webrtc-durum', handler);
   }, []);
@@ -669,6 +671,199 @@ MR._NetsippDurum = () => {
         background: kayitli ? C.success : C.warning
       }}/>
       {kayitli ? 'NETSANTRAL BAĞLI' : 'NETSANTRAL BAĞLANTI BEKLENİYOR'}
+    </div>
+  );
+};
+
+/* ═══ SES AYARLARI PANELİ (CRM YENİ KAYIT SAYFASI İÇİN) ═══ */
+MR._SesAyarlariPaneli = () => {
+  const {C, S, LIcon} = MR;
+  const [acik, setAcik] = useState(false);
+  const [ayarlar, setAyarlar] = useState({});
+  const [cihazlar, setCihazlar] = useState({mikrofonlar: [], hoparlorler: []});
+
+  useEffect(() => {
+    if (acik && MR.webrtcTelefon) {
+      MR.webrtcTelefon.cihazlariListele().then(function(d) {
+        setCihazlar(d || {mikrofonlar: [], hoparlorler: []});
+      });
+      setAyarlar(MR.webrtcTelefon.getSesAyarlari());
+    }
+  }, [acik]);
+
+  const guncelle = (key, val) => {
+    setAyarlar(p => ({...p, [key]: val}));
+    if (MR.webrtcTelefon) MR.webrtcTelefon.sesAyarla(key, val);
+  };
+
+  const sliderSt = {width:'100%', accentColor: C.accent, cursor:'pointer', height:6};
+
+  return (
+    <div style={{...S.card, marginBottom:16}}>
+      <div style={{...S.cardHead, padding:'12px 16px', cursor:'pointer', justifyContent:'space-between'}} onClick={() => setAcik(!acik)}>
+        <div style={{display:'flex', alignItems:'center', gap:8}}>
+          <LIcon name="Volume2" size={16} color={C.cyan}/>
+          <span style={{fontSize:12, fontWeight:700}}>SES & MİKROFON AYARLARI</span>
+        </div>
+        <LIcon name={acik ? 'ChevronUp' : 'ChevronDown'} size={14} color={C.textMuted}/>
+      </div>
+      {acik && (
+        <div style={{padding:16}}>
+          <div style={{marginBottom:14}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
+              <span style={{fontSize:10, fontWeight:700, color:C.textSec}}>HOPARLÖR SESİ</span>
+              <span style={{fontSize:10, fontWeight:800, color:C.accent}}>{Math.round((ayarlar.volume || 1) * 100)}%</span>
+            </div>
+            <input type="range" min="0" max="1" step="0.05" value={ayarlar.volume || 1}
+              onChange={e => guncelle('volume', parseFloat(e.target.value))} style={sliderSt}/>
+          </div>
+          <div style={{marginBottom:14}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
+              <span style={{fontSize:10, fontWeight:700, color:C.textSec}}>ÇALMA SESİ (GİDEN)</span>
+              <span style={{fontSize:10, fontWeight:800, color:C.accent}}>{Math.round((ayarlar.ringbackVolume || 0.3) * 100)}%</span>
+            </div>
+            <input type="range" min="0" max="1" step="0.05" value={ayarlar.ringbackVolume || 0.3}
+              onChange={e => guncelle('ringbackVolume', parseFloat(e.target.value))} style={sliderSt}/>
+          </div>
+          <div style={{marginBottom:14}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
+              <span style={{fontSize:10, fontWeight:700, color:C.textSec}}>ZİL SESİ (GELEN)</span>
+              <span style={{fontSize:10, fontWeight:800, color:C.accent}}>{Math.round((ayarlar.ringtoneVolume || 0.5) * 100)}%</span>
+            </div>
+            <input type="range" min="0" max="1" step="0.05" value={ayarlar.ringtoneVolume || 0.5}
+              onChange={e => guncelle('ringtoneVolume', parseFloat(e.target.value))} style={sliderSt}/>
+          </div>
+          <div style={{marginBottom:14}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
+              <span style={{fontSize:10, fontWeight:700, color:C.textSec}}>MİKROFON SEVİYESİ</span>
+              <span style={{fontSize:10, fontWeight:800, color:C.accent}}>{Math.round((ayarlar.mikrofonGain || 1) * 100)}%</span>
+            </div>
+            <input type="range" min="0.1" max="3.0" step="0.1" value={ayarlar.mikrofonGain || 1}
+              onChange={e => guncelle('mikrofonGain', parseFloat(e.target.value))} style={sliderSt}/>
+          </div>
+          {cihazlar.mikrofonlar.length > 0 && (
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:10, fontWeight:700, color:C.textSec, marginBottom:6}}>MİKROFON CİHAZI</div>
+              <select style={{...S.select, fontSize:10, padding:'6px 10px'}} value={ayarlar.mikrofonId || ''}
+                onChange={e => guncelle('mikrofonId', e.target.value)}>
+                <option value="">VARSAYILAN MİKROFON</option>
+                {cihazlar.mikrofonlar.map((d, i) => <option key={d.deviceId || i} value={d.deviceId}>{d.label || ('MİKROFON ' + (i+1))}</option>)}
+              </select>
+            </div>
+          )}
+          {cihazlar.hoparlorler.length > 0 && (
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:10, fontWeight:700, color:C.textSec, marginBottom:6}}>HOPARLÖR CİHAZI</div>
+              <select style={{...S.select, fontSize:10, padding:'6px 10px'}} value={ayarlar.hoparlörId || ''}
+                onChange={e => guncelle('hoparlörId', e.target.value)}>
+                <option value="">VARSAYILAN HOPARLÖR</option>
+                {cihazlar.hoparlorler.map((d, i) => <option key={d.deviceId || i} value={d.deviceId}>{d.label || ('HOPARLÖR ' + (i+1))}</option>)}
+              </select>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ═══ NETSANTRAL AYARLARI PANELİ (PROFİL SAYFASINDA GÖRÜNECEk) ═══ */
+MR.NetsantralAyarlari = () => {
+  const {C, S, LIcon, FormGroup} = MR;
+  const def = MR._netsantralVarsayilan;
+  const [wss, setWss] = useState(localStorage.getItem('mr_netsantral_wss') || def.wssUrl);
+  const [domain, setDomain] = useState(localStorage.getItem('mr_netsantral_domain') || def.domain);
+  const [dahili, setDahili] = useState(localStorage.getItem('mr_netsantral_dahili') || def.dahili);
+  const [sipSifre, setSipSifre] = useState(localStorage.getItem('mr_netsantral_sip_sifre') || def.sipSifre);
+  const [santralNo, setSantralNo] = useState(localStorage.getItem('mr_netsantral_no') || def.santralNo);
+  const [kullanici, setKullanici] = useState(localStorage.getItem('mr_netsantral_kullanici') || def.kullanici);
+  const [kayitDurumu, setKayitDurumu] = useState('');
+  const [bagli, setBagli] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      setBagli(!!(e.detail && e.detail.kayitli));
+    };
+    window.addEventListener('mr-webrtc-durum', handler);
+    if (MR.webrtcTelefon) setBagli(MR.webrtcTelefon._kayitli);
+    return () => window.removeEventListener('mr-webrtc-durum', handler);
+  }, []);
+
+  const kaydet = () => {
+    localStorage.setItem('mr_netsantral_wss', wss);
+    localStorage.setItem('mr_netsantral_domain', domain);
+    localStorage.setItem('mr_netsantral_dahili', dahili);
+    localStorage.setItem('mr_netsantral_sip_sifre', sipSifre);
+    localStorage.setItem('mr_netsantral_no', santralNo);
+    localStorage.setItem('mr_netsantral_kullanici', kullanici);
+    setKayitDurumu('KAYDEDİLDİ');
+    setTimeout(() => setKayitDurumu(''), 3000);
+    MR.webrtcYenidenBaslat();
+  };
+
+  return (
+    <div style={{...S.card, marginTop: 20}}>
+      <div style={{...S.cardHead, justifyContent:'space-between'}}>
+        <div style={{display:'flex', alignItems:'center', gap:10}}>
+          <LIcon name="Phone" size={16} color={C.accent}/>
+          <span style={{fontSize:14, fontWeight:700}}>NETSANTRAL / WEBRTC AYARLARI</span>
+        </div>
+        <div style={{display:'flex', alignItems:'center', gap:6}}>
+          <div style={{
+            width:10, height:10, borderRadius:'50%',
+            background: bagli ? C.success : C.danger,
+            boxShadow: bagli ? `0 0 8px ${C.success}60` : 'none'
+          }}/>
+          <span style={{fontSize:10, fontWeight:700, color: bagli ? C.success : C.danger}}>
+            {bagli ? 'BAĞLI' : 'BAĞLI DEĞİL'}
+          </span>
+        </div>
+      </div>
+      <div style={{padding:22}}>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:14}}>
+          <FormGroup label="WSS URL *">
+            <input style={S.input} value={wss} onChange={e => setWss(e.target.value)} placeholder="wss://sip6.netsantral.com:8089/ws"/>
+          </FormGroup>
+          <FormGroup label="SIP DOMAIN">
+            <input style={S.input} value={domain} onChange={e => setDomain(e.target.value)} placeholder="sip6.netsantral.com"/>
+          </FormGroup>
+          <FormGroup label="DAHİLİ NUMARA *">
+            <input style={S.input} value={dahili} onChange={e => setDahili(e.target.value)} placeholder="102"/>
+          </FormGroup>
+          <FormGroup label="SIP ŞİFRESİ *">
+            <input type="password" style={{...S.input, textTransform:'none'}} value={sipSifre} onChange={e => setSipSifre(e.target.value)} placeholder="SIP ŞİFRENİZ"/>
+          </FormGroup>
+          <FormGroup label="SANTRAL NO">
+            <input style={S.input} value={santralNo} onChange={e => setSantralNo(e.target.value)} placeholder="3625026502"/>
+          </FormGroup>
+          <FormGroup label="KULLANICI ADI (TAM)">
+            <input style={S.input} value={kullanici} onChange={e => setKullanici(e.target.value)} placeholder="102-3625026502"/>
+          </FormGroup>
+        </div>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:16}}>
+          <button onClick={kaydet} style={{...S.btn, ...S.btnP}}>
+            <LIcon name="Save" size={14} color="#fff"/> KAYDET & BAĞLAN
+          </button>
+          {kayitDurumu && (
+            <span style={{fontSize:11, fontWeight:700, color:C.success}}>
+              <LIcon name="CheckCircle" size={14} color={C.success}/> {kayitDurumu}
+            </span>
+          )}
+        </div>
+        <div style={{
+          marginTop:14, padding:12, borderRadius:10,
+          background:`${C.accent}08`, border:`1px solid ${C.accent}15`,
+          fontSize:10, color:C.textSec, lineHeight:1.8
+        }}>
+          <div style={{fontWeight:700, color:C.accent, marginBottom:4}}>
+            <LIcon name="Info" size={12} color={C.accent}/> BAĞLANTI BİLGİLERİ
+          </div>
+          <div>WSS URL: NETSANTRAL PANELINDEN ALINIR (WSS://...)</div>
+          <div>DAHİLİ: NETSIPP UYGULAMASINDA KULLANDIĞINIZ DAHİLİ NUMARA</div>
+          <div>SIP ŞİFRESİ: NETSANTRAL PANELINDEN ALINAN SIP/WEBRTC ŞİFRESİ</div>
+          <div>SANTRAL NO: 10 HANELİ MÜŞTERİ SANTRAL NUMARASI</div>
+        </div>
+      </div>
     </div>
   );
 };

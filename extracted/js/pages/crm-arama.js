@@ -359,8 +359,15 @@ MR.CrmAramaPage = ({setPage, user}) => {
 
   const aramaYap = (item) => {
     if (!item.magdur_telefon) return;
-    setAramaMsg('ARAMA SİSTEMİ DEVRE DIŞI');
-    setTimeout(() => { setAramaMsg(''); }, 3000);
+    if (MR.webrtcAra) {
+      MR.webrtcAra(item.magdur_telefon, {ad: item.magdur_ad_soyad || ''});
+      setAramaMsg('WEBRTC ARAMA BAŞLATILIYOR...');
+      setAramaAktif(item.id);
+      setTimeout(() => { setAramaMsg(''); setAramaAktif(null); }, 4000);
+    } else {
+      setAramaMsg('ARAMA SİSTEMİ DEVRE DIŞI');
+      setTimeout(() => { setAramaMsg(''); }, 3000);
+    }
   };
 
   /* ── STİLLER ── */
