@@ -174,8 +174,9 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
         : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)'
     }}>
       {/* SOL ÜST LOGO - ANASAYFAYA YÖNLENDİRİR */}
-      <div
-        onClick={() => { setPage('home'); setMenuOpen(null); }}
+      <a
+        href="#/"
+        onClick={(e) => { e.preventDefault(); setPage('home'); setMenuOpen(null); }}
         style={{
           height: 40, minWidth: 40, maxWidth: 150, flexShrink: 0,
           borderRadius: 12, cursor: 'pointer', marginRight: 10,
@@ -202,7 +203,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
             textShadow: isK ? `0 0 20px ${C.accent}40` : 'none'
           }}>MR</div>
         )}
-      </div>
+      </a>
 
       {/* MENÜ - ESNEK ALAN, TEK SATIR */}
       <div style={{
@@ -211,8 +212,10 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
       }}>
         {filteredMenu.map(m => (
           <div key={m.id} style={{position: 'relative'}}>
-            <div
-              onClick={() => {
+            <a
+              href={m.sub ? `#/${m.sub[0]?.id || m.id}` : `#/${m.id}`}
+              onClick={(e) => {
+                e.preventDefault();
                 if (m.sub) { setMenuOpen(menuOpen === m.id ? null : m.id); }
                 else { setPage(m.id); setMenuOpen(null); }
               }}
@@ -223,6 +226,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                 color: isActive(m) ? C.accent : C.text,
                 background: isActive(m) ? `${C.accent}15` : 'transparent',
                 transition: 'all .2s', position: 'relative',
+                textDecoration: 'none',
                 boxShadow: isActive(m)
                   ? (isK ? '0 1px 2px rgba(0,0,0,0.05)' : '0 1px 2px rgba(0,0,0,0.05)')
                   : 'none'
@@ -241,7 +245,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                 }}>{bildirimSayisi > 9 ? '9+' : bildirimSayisi}</span>
               )}
               {m.sub && <LIcon name="ChevronDown" size={10} color={C.textMuted}/>}
-            </div>
+            </a>
 
             {/* DROPDOWN */}
             {m.sub && menuOpen === m.id && (
@@ -258,12 +262,13 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                 maxHeight: 'calc(100vh - 80px)', overflowY: 'auto'
               }}>
                 {m.sub.map(s => (
-                  <div key={s.id}
-                    onClick={() => { setPage(s.id); setMenuOpen(null); }}
+                  <a key={s.id}
+                    href={`#/${s.id}`}
+                    onClick={(e) => { e.preventDefault(); setPage(s.id); setMenuOpen(null); }}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10,
                       padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
-                      fontSize: 13, fontWeight: 700,
+                      fontSize: 13, fontWeight: 700, textDecoration: 'none',
                       color: page === s.id ? C.accent : C.textSec,
                       background: page === s.id ? `${C.accent}12` : 'transparent',
                       transition: 'all .15s',
@@ -276,7 +281,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                   >
                     <LIcon name={s.icon} size={14} color={page === s.id ? C.accent : C.textMuted}/>
                     {s.label}
-                  </div>
+                  </a>
                 ))}
               </div>
             )}
@@ -350,12 +355,12 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                   <div style={{fontSize: 10, color: C.textMuted}}>{user?.email}</div>
                 </div>
               </div>
-              <div onClick={() => { setPage('profil'); setProfilOpen(false); }}
-                style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 600, color: C.textSec}}
+              <a href="#/profil" onClick={(e) => { e.preventDefault(); setPage('profil'); setProfilOpen(false); }}
+                style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 600, color: C.textSec, textDecoration: 'none'}}
                 onMouseEnter={e => e.currentTarget.style.background = `${C.accent}0c`}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                 <LIcon name="User" size={14} color={C.textMuted}/> PROFİL
-              </div>
+              </a>
               <div onClick={onLogout}
                 style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 600, color: C.danger}}
                 onMouseEnter={e => e.currentTarget.style.background = `${C.danger}0c`}
@@ -467,11 +472,11 @@ const Breadcrumb = ({page, setPage}) => {
         <React.Fragment key={i}>
           {i > 0 && <LIcon name="ChevronRight" size={12} color={C.textMuted}/>}
           {i < parts.length - 1 ? (
-            <span onClick={() => setPage(p.id)} style={{cursor: 'pointer', color: C.textSec}}
+            <a href={`#/${p.id}`} onClick={(e) => { e.preventDefault(); setPage(p.id); }} style={{cursor: 'pointer', color: C.textSec, textDecoration: 'none'}}
               onMouseEnter={e => e.currentTarget.style.color = C.accent}
               onMouseLeave={e => e.currentTarget.style.color = C.textSec}>
               {p.label}
-            </span>
+            </a>
           ) : (
             <span style={{color: C.text, fontWeight: 600}}>{p.label}</span>
           )}

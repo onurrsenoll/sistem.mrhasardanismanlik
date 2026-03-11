@@ -507,7 +507,7 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                           style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                       </td>}
                       {/* DOSYA NO */}
-                      <td style={{...tdS,fontWeight:700,color:C.accent}}>{d.dosya_no}</td>
+                      <td style={{...tdS,fontWeight:700,color:C.accent}}><a href={`#/dosya-detay-${d.id}`} onClick={e => e.preventDefault()} style={{color:'inherit',textDecoration:'none'}}>{d.dosya_no}</a></td>
                       {/* T.C. NO */}
                       <td style={{...tdS,fontFamily:'monospace',fontSize:10,color:C.textSec,letterSpacing:0.3}}>{d.tc_kimlik || '-'}</td>
                       {/* ADI SOYADI */}

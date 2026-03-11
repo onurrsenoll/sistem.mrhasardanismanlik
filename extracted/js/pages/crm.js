@@ -495,10 +495,10 @@ MR._CRMListesiInner = ({setPage, user}) => {
                     <td style={{...cellSt, position: 'relative'}}>
                       <div style={{display: 'flex', gap: 4, alignItems: 'center'}}>
                         {/* DETAY */}
-                        <button style={iconBtn(C.accent)} title="DETAY"
-                          onClick={() => setPage('crm-detay-' + c.id)}>
+                        <a href={`#/crm-detay-${c.id}`} onClick={(e) => { e.preventDefault(); setPage('crm-detay-' + c.id); }}
+                          style={{...iconBtn(C.accent), textDecoration:'none'}} title="DETAY">
                           <LIcon name="Eye" size={13} color={C.accent}/>
-                        </button>
+                        </a>
                         {/* DÜZENLE */}
                         <button style={iconBtn(C.warning)} title="DÜZENLE"
                           onClick={() => openEdit(c)}>

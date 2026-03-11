@@ -371,11 +371,19 @@ MR.CrmAramaPage = ({setPage, user}) => {
   };
 
   /* ── STİLLER ── */
-  const thSt = {padding:'7px 6px', textAlign:'left', color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted, fontWeight:800, fontSize:10, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:C.bgCard, zIndex:1, letterSpacing:0.3};
-  const tdSt = {padding:'6px 6px', fontSize:11, fontWeight:600, borderBottom:`1px solid ${C.border}`, whiteSpace:'nowrap', color: MR.tema==='koyu' ? '#cbd5e1' : C.text};
-  const tdTrunc = {...tdSt, maxWidth:110, overflow:'hidden', textOverflow:'ellipsis'};
-  const thSticky = {...thSt, position:'sticky', right:0, zIndex:2, background:C.bgCard, boxShadow:'-2px 0 6px rgba(0,0,0,0.06)'};
-  const tdSticky = {...tdSt, position:'sticky', right:0, background:C.bgCard, boxShadow:'-2px 0 6px rgba(0,0,0,0.06)', textAlign:'center'};
+  const FS = 11; /* TÜM HÜCRELER AYNI FONT BOYUTU */
+  const thSt = {padding:'7px 6px', textAlign:'left', color:'#fff', fontWeight:800, fontSize:FS, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:C.bgCard, zIndex:2, letterSpacing:0.3};
+  const tdSt = {padding:'6px 6px', fontSize:FS, fontWeight:600, borderBottom:'none', whiteSpace:'nowrap', color:'#fff'};
+  const tdTrunc = {...tdSt, maxWidth:90, overflow:'hidden', textOverflow:'ellipsis'};
+  const thSticky = {...thSt, position:'sticky', right:0, zIndex:3, background:C.bgCard, boxShadow:'-3px 0 8px rgba(0,0,0,0.15)'};
+  const tdSticky = {...tdSt, position:'sticky', right:0, background:'inherit', boxShadow:'-3px 0 8px rgba(0,0,0,0.15)', textAlign:'center'};
+  const rowSt = (i, selected) => ({
+    background: selected ? `${C.accent}18` : i % 2 === 1 ? `${C.bgHover}` : C.bgCard,
+    transition:'all .15s',
+    borderLeft:`3px solid ${selected ? C.accent : C.border}`,
+    borderRadius:4,
+    boxShadow: `0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.04)`
+  });
   const iconBtn = (bg) => ({
     width:26, height:26, borderRadius:6, border:'none', cursor:'pointer',
     display:'inline-flex', alignItems:'center', justifyContent:'center',
@@ -384,7 +392,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
   const durumChip = (d) => {
     const c = durumRenk(d);
     return {
-      padding:'3px 8px', borderRadius:6, fontSize:9, fontWeight:700,
+      padding:'3px 8px', borderRadius:6, fontSize:FS, fontWeight:700,
       display:'inline-flex', alignItems:'center', gap:4,
       background:`${c}18`, color:c
     };
@@ -543,12 +551,29 @@ MR.CrmAramaPage = ({setPage, user}) => {
         {loading ? <Loading/> : data.length === 0 ? (
           <EmptyState icon="PhoneCall" title="YÖNLENDİRME KAYDI BULUNAMADI" desc="EXCEL DOSYASI YÜKLEYEREK BAŞLAYIN"/>
         ) : (
-          <div style={{overflowX:'auto', maxHeight:'calc(100vh - 420px)', width:'100%'}}>
-            <table style={{width:'100%', borderCollapse:'collapse', fontSize:10, minWidth:1000}}>
+          <div style={{overflowX:'auto', maxHeight:'calc(100vh - 420px)', width:'100%', position:'relative'}}>
+            <table style={{width:'100%', borderCollapse:'separate', borderSpacing:'0 3px', fontSize:FS, minWidth:900, tableLayout:'fixed'}}>
+              <colgroup>
+                <col style={{width:30}}/>{/* checkbox */}
+                <col style={{width:36}}/>{/* NO */}
+                <col style={{width:80}}/>{/* YÖNLENDİREN */}
+                <col style={{width:72}}/>{/* TARİH */}
+                <col style={{width:68}}/>{/* KAZA */}
+                <col style={{width:100}}/>{/* AD SOYAD */}
+                <col style={{width:86}}/>{/* TELEFON */}
+                <col style={{width:48}}/>{/* İL */}
+                <col style={{width:56}}/>{/* İLÇE */}
+                <col style={{width:72}}/>{/* GÖRÜŞME */}
+                <col style={{width:72}}/>{/* DURUM */}
+                <col style={{width:80}}/>{/* NEDEN */}
+                <col style={{width:76}}/>{/* SON DURUM */}
+                <col style={{width:82}}/>{/* TC */}
+                <col style={{width:88}}/>{/* İŞLEM */}
+              </colgroup>
               <thead>
                 <tr style={{background:C.bgHover}}>
-                  <th style={{...thSt, width:28}}><input type="checkbox" checked={secili.length === data.length && data.length > 0} onChange={toggleAll}/></th>
-                  <th style={{...thSt, width:35}}>NO</th>
+                  <th style={thSt}><input type="checkbox" checked={secili.length === data.length && data.length > 0} onChange={toggleAll}/></th>
+                  <th style={thSt}>NO</th>
                   <th style={thSt}>YÖNLENDİREN</th>
                   <th style={thSt}>TARİH</th>
                   <th style={thSt}>KAZA</th>
@@ -565,45 +590,44 @@ MR.CrmAramaPage = ({setPage, user}) => {
                 </tr>
               </thead>
               <tbody>
-                {data.map((item, i) => (
-                  <tr key={item.id} style={{
-                    background: secili.includes(item.id) ? `${C.accent}0a` : i % 2 === 1 ? `${C.bgHover}66` : 'transparent',
-                    transition:'background .15s'
-                  }}
-                    onMouseEnter={e => {if(!secili.includes(item.id)) e.currentTarget.style.background=`${C.accent}08`;}}
-                    onMouseLeave={e => {if(!secili.includes(item.id)) e.currentTarget.style.background = i%2===1?`${C.bgHover}66`:'transparent';}}
+                {data.map((item, i) => {
+                  const sel = secili.includes(item.id);
+                  return (
+                  <tr key={item.id} style={rowSt(i, sel)}
+                    onMouseEnter={e => {if(!sel) {e.currentTarget.style.borderLeftColor=C.accent; e.currentTarget.style.boxShadow='0 2px 6px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.06)';}}}
+                    onMouseLeave={e => {if(!sel) {e.currentTarget.style.borderLeftColor=C.border; e.currentTarget.style.boxShadow='0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.04)';}}}
                   >
-                    <td style={tdSt}><input type="checkbox" checked={secili.includes(item.id)} onChange={() => toggleSecili(item.id)}/></td>
-                    <td style={{...tdSt, fontWeight:700, color:C.accent, fontSize:10}}>{item.sira_no || item.id}</td>
-                    <td style={tdTrunc}>{item.yonlendiren || '-'}</td>
-                    <td style={{...tdSt, color:C.textMuted, fontSize:10}}>{item.yonlendirme_tarihi ? item.yonlendirme_tarihi.slice(0,10) : '-'}</td>
-                    <td style={tdSt}>
+                    <td style={tdSt}><input type="checkbox" checked={sel} onChange={() => toggleSecili(item.id)}/></td>
+                    <td style={{...tdSt, fontWeight:700, color:C.accent}}>{item.sira_no || item.id}</td>
+                    <td style={tdTrunc} title={item.yonlendiren || ''}>{item.yonlendiren || '-'}</td>
+                    <td style={tdSt}>{item.yonlendirme_tarihi ? item.yonlendirme_tarihi.slice(0,10) : '-'}</td>
+                    <td style={tdTrunc} title={item.kaza_turu || ''}>
                       {item.kaza_turu ? (
-                        <Badge text={item.kaza_turu?.length > 10 ? item.kaza_turu.slice(0,10)+'..' : item.kaza_turu} color={item.kaza_turu?.includes('ÇİFT') ? C.accent : C.purple}/>
+                        <Badge text={item.kaza_turu?.length > 8 ? item.kaza_turu.slice(0,8)+'..' : item.kaza_turu} color={item.kaza_turu?.includes('ÇİFT') ? C.accent : C.purple}/>
                       ) : '-'}
                     </td>
-                    <td style={{...tdTrunc, fontWeight:600, maxWidth:130}}>{item.magdur_ad_soyad || '-'}</td>
-                    <td style={{...tdSt, fontSize:10}}>{item.magdur_telefon || '-'}</td>
-                    <td style={{...tdSt, fontSize:10}}>{item.magdur_il || '-'}</td>
-                    <td style={{...tdSt, fontSize:10}}>{item.magdur_ilce || '-'}</td>
-                    <td style={{...tdSt, color:C.textMuted, fontSize:10}}>{item.gorusme_tarihi ? item.gorusme_tarihi.slice(0,10) : '-'}</td>
+                    <td style={{...tdTrunc, fontWeight:600}} title={item.magdur_ad_soyad || ''}>{item.magdur_ad_soyad || '-'}</td>
+                    <td style={tdSt}>{item.magdur_telefon || '-'}</td>
+                    <td style={tdTrunc} title={item.magdur_il || ''}>{item.magdur_il || '-'}</td>
+                    <td style={tdTrunc} title={item.magdur_ilce || ''}>{item.magdur_ilce || '-'}</td>
+                    <td style={tdSt}>{item.gorusme_tarihi ? item.gorusme_tarihi.slice(0,10) : '-'}</td>
                     <td style={tdSt}>
                       <span style={durumChip(item.durum)}>
                         {item.durum === 'Alindi' ? '\u2714' : item.durum === 'Olumsuz' ? '\u2716' : '\u25CF'}{' '}
                         {durumLabels[item.durum] || 'BELİRSİZ'}
                       </span>
                     </td>
-                    <td style={{...tdTrunc, color:C.danger, fontSize:9, maxWidth:100}}>{item.alinmama_nedeni || '-'}</td>
-                    <td style={tdTrunc}>
+                    <td style={{...tdTrunc, color:C.danger}} title={item.alinmama_nedeni || ''}>{item.alinmama_nedeni || '-'}</td>
+                    <td style={tdTrunc} title={item.son_durum || ''}>
                       {item.son_durum ? (
                         <span style={{
-                          padding:'2px 5px', borderRadius:4, fontSize:8, fontWeight:600,
+                          padding:'2px 5px', borderRadius:4, fontSize:FS, fontWeight:600,
                           background: item.son_durum?.includes('DOSYA') || item.son_durum?.includes('CRM') ? `${C.accent}18` : item.son_durum?.includes('ALINDI') || item.son_durum?.includes('SÖZLEŞME') ? `${C.success}18` : `${C.warning}18`,
                           color: item.son_durum?.includes('DOSYA') || item.son_durum?.includes('CRM') ? C.accent : item.son_durum?.includes('ALINDI') || item.son_durum?.includes('SÖZLEŞME') ? C.success : C.warning
                         }}>{item.son_durum}</span>
                       ) : '-'}
                     </td>
-                    <td style={{...tdSt, color:C.textMuted, fontFamily:'monospace', fontSize:9}}>{item.magdur_tc || '-'}</td>
+                    <td style={{...tdSt, fontFamily:'monospace'}} title={item.magdur_tc || ''}>{item.magdur_tc || '-'}</td>
                     <td style={tdSticky}>
                       <div style={{display:'flex', gap:3, justifyContent:'center'}}>
                         <button style={iconBtn(C.cyan)} title="NOT EKLE / GÖRÜNTÜLE" onClick={() => openNot(item)}>
@@ -625,7 +649,8 @@ MR.CrmAramaPage = ({setPage, user}) => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
