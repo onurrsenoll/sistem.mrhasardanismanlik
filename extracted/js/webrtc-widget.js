@@ -1,9 +1,7 @@
 /**
- * MR HASAR DANISMANLIK - WEBRTC SOFTPHONE WIDGET v2.0
- * 3 MODLU KOMPAKT TELEFON ARAYUZU
- * MODE_INCOMING: Sag ust kose - kucuk bildirim (gelen cagri)
- * MODE_ACTIVE_MINIMIZED: Sag alt kose - mini bar (aktif gorusme)
- * MODE_IDLE: Sag alt kose - kucuk telefon ikonu (bosta)
+ * MR HASAR DANISMANLIK - WEBRTC SOFTPHONE WIDGET v3.0
+ * SADECE GELEN ÇAĞRI POPUP'I (SAĞ ÜST KÖŞE)
+ * Sağ alt floating widget KALDIRILDI - tüm çağrı kontrolü sol panel üzerinden
  */
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect, useCallback, useRef, useMemo} = React;
@@ -110,48 +108,25 @@ MR._musteriEslestir = async (numara) => {
 };
 
 /* ═══════════════════════════════════════════
-   FLOATING SOFTPHONE WIDGET v2.0
-   3 MODLU KOMPAKT TELEFON ARAYÜZÜ
+   WEBRTC WIDGET v3.0
+   SADECE GELEN ÇAĞRI POPUP'I (SAĞ ÜST KÖŞE)
+   Sağ alt floating widget KALDIRILDI
+   Tüm çağrı kontrolü sol panel ANLIK ÇAĞRI & ANALİZ üzerinden
    ═══════════════════════════════════════════ */
 MR.WebrtcWidget = ({user, setPage}) => {
-  const {C, S, LIcon} = MR;
+  const {C, LIcon} = MR;
 
-  /* DURUM STATE'LERİ */
-  const [kayitli, setKayitli] = useState(false);
-  const [aramaDurumu, setAramaDurumu] = useState('bos'); /* bos, araniyor, caliyor, gorusmede, gelen */
+  /* DURUM STATE'LERİ - SADECE GELEN ÇAĞRI İÇİN */
+  const [aramaDurumu, setAramaDurumu] = useState('bos');
   const [karsiTaraf, setKarsiTaraf] = useState('');
   const [karsiTarafAdi, setKarsiTarafAdi] = useState('');
   const [eslestirme, setEslestirme] = useState(null);
-  const [mute, setMute] = useState(false);
-  const [hata, setHata] = useState('');
-  const [panelAcik, setPanelAcik] = useState(false);
-  const [numInput, setNumInput] = useState('');
-  const [sureSn, setSureSn] = useState(0);
-  const timerRef = useRef(null);
-  const aramaBilgiRef = useRef(null); /* CRM/Arama listesinden gelen bilgi (id, kaynak) */
 
   /* WEBRTC DURUM DİNLEYİCİ */
   useEffect(() => {
     const handler = (e) => {
       const d = e.detail || {};
-      setKayitli(!!d.kayitli);
-      setMute(!!d.mute);
-
       switch(d.durum) {
-        case 'kayitli':
-          setHata('');
-          break;
-        case 'hata':
-          setHata(d.detay || 'BİLİNMEYEN HATA');
-          setTimeout(() => setHata(''), 8000);
-          break;
-        case 'araniyor':
-          setAramaDurumu('araniyor');
-          if (d.detay && typeof d.detay === 'string') setKarsiTaraf(d.detay);
-          break;
-        case 'caliyor':
-          setAramaDurumu(prev => prev === 'gelen' ? 'gelen' : 'caliyor');
-          break;
         case 'gelen-cagri':
           setAramaDurumu('gelen');
           if (d.detay) {
@@ -164,40 +139,37 @@ MR.WebrtcWidget = ({user, setPage}) => {
           }
           break;
         case 'gorusmede':
-          setAramaDurumu('gorusmede');
+          /* Cevaplanınca popup kapansın */
+          if (aramaDurumu === 'gelen') setAramaDurumu('bos');
           break;
         case 'kapandi':
         case 'reddedildi':
           setAramaDurumu('bos');
           setEslestirme(null);
           setKarsiTarafAdi('');
-          setSureSn(0);
-          aramaBilgiRef.current = null;
           break;
         case 'baglanti-koptu':
         case 'durduruldu':
         case 'kayit-kaldirildi':
-          setKayitli(false);
           setAramaDurumu('bos');
           break;
       }
     };
-
     window.addEventListener('mr-webrtc-durum', handler);
     return () => window.removeEventListener('mr-webrtc-durum', handler);
-  }, []);
+  }, [aramaDurumu]);
 
-  /* GİDEN ARAMA BAŞLATMA DİNLEYİCİ */
+  /* GİDEN ARAMA BAŞLATMA DİNLEYİCİ - crm-yeni sayfasına yönlendir */
   useEffect(() => {
     const handler = (e) => {
       const d = e.detail || {};
-      if (d.numara) setKarsiTaraf(d.numara);
       if (d.bilgi) {
-        setKarsiTarafAdi(d.bilgi.ad || d.bilgi.ad_soyad || '');
-        aramaBilgiRef.current = d.bilgi;
-        /* CRM/ARAMA LİSTESİNDEN ARAMA → localStorage'a yaz + crm-yeni aç */
         localStorage.setItem('webrtc_new_call_phone', d.numara || '');
         localStorage.setItem('webrtc_new_call_name', d.bilgi.ad || d.bilgi.ad_soyad || '');
+        setPage('crm-yeni');
+      } else if (d.numara) {
+        localStorage.setItem('webrtc_new_call_phone', d.numara || '');
+        localStorage.setItem('webrtc_new_call_name', '');
         setPage('crm-yeni');
       }
     };
@@ -205,428 +177,132 @@ MR.WebrtcWidget = ({user, setPage}) => {
     return () => window.removeEventListener('mr-webrtc-arama-basla', handler);
   }, [setPage]);
 
-  /* GÖRÜŞME SÜRE SAYACI */
-  useEffect(() => {
-    if (aramaDurumu === 'gorusmede') {
-      setSureSn(0);
-      timerRef.current = setInterval(() => {
-        setSureSn(s => s + 1);
-      }, 1000);
-    } else {
-      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+  /* CEVAPLA - CRM'DE ARA + CRM-YENİ AÇ */
+  const cevapla = async () => {
+    if (!MR.webrtcTelefon) return;
+    MR.webrtcTelefon.cevapla();
+
+    /* CRM'de arayan numarayı ara */
+    var numara = karsiTaraf || '';
+    var ad = karsiTarafAdi || '';
+
+    /* Eşleştirme zaten yapıldıysa oradan al */
+    if (!ad && eslestirme && eslestirme.kayitlar && eslestirme.kayitlar.length > 0) {
+      var k = eslestirme.kayitlar[0];
+      ad = k.ad_soyad || k.magdur_ad_soyad || '';
     }
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [aramaDurumu]);
 
-  /* SÜRE FORMATLAMA */
-  const fmtSure = (sn) => {
-    var dk = Math.floor(sn / 60);
-    var s = sn % 60;
-    return (dk < 10 ? '0' : '') + dk + ':' + (s < 10 ? '0' : '') + s;
-  };
-
-  /* ARAMA YAP (WIDGET'TAN) */
-  const aramaYap = () => {
-    var num = numInput.trim();
-    if (!num) return;
-    MR.webrtcAra(num);
-    setNumInput('');
-  };
-
-  /* CEVAPLA - GELEN ÇAĞRI CEVAPLANINCA CRM-YENİ SAYFASINA YÖNLENDİR */
-  const cevapla = () => {
-    if (MR.webrtcTelefon) {
-      MR.webrtcTelefon.cevapla();
-      /* localStorage'a telefon + isim yaz, crm-yeni sayfası okuyacak */
-      localStorage.setItem('webrtc_new_call_phone', karsiTaraf || '');
-      var ad = karsiTarafAdi || '';
-      if (!ad && eslestirme && eslestirme.kayitlar && eslestirme.kayitlar.length > 0) {
-        var k = eslestirme.kayitlar[0];
-        ad = k.ad_soyad || k.magdur_ad_soyad || '';
-      }
-      localStorage.setItem('webrtc_new_call_name', ad);
-      setPage('crm-yeni');
+    /* Eşleştirme henüz gelmemişse tekrar dene */
+    if (!ad && numara && MR.api) {
+      try {
+        var r = await MR._musteriEslestir(numara);
+        if (r && r.kayitlar && r.kayitlar.length > 0) {
+          var kk = r.kayitlar[0];
+          ad = kk.ad_soyad || kk.magdur_ad_soyad || '';
+        }
+      } catch(e) {}
     }
+
+    /* localStorage'a yaz - crm-yeni okuyacak */
+    localStorage.setItem('webrtc_new_call_phone', numara);
+    localStorage.setItem('webrtc_new_call_name', ad);
+    setPage('crm-yeni');
   };
 
   /* REDDET */
   const reddet = () => {
-    if (MR.webrtcTelefon) {
-      MR.webrtcTelefon.reddet();
-    }
-  };
-
-  /* KAPAT */
-  const kapat = () => {
-    if (MR.webrtcTelefon) MR.webrtcTelefon.kapat();
-  };
-
-  /* SESSİZ TOGGLE */
-  const sesizToggle = () => {
-    if (MR.webrtcTelefon) MR.webrtcTelefon.sesizToggle();
-  };
-
-  /* MÜŞTERİ KARTINA GİT */
-  const musteriGit = (kayit, kaynak) => {
-    if (kaynak === 'CRM' && kayit.id) {
-      setPage('crm-detay-' + kayit.id);
-    }
+    if (MR.webrtcTelefon) MR.webrtcTelefon.reddet();
   };
 
   const isK = MR.tema === 'koyu';
-  const aktif = aramaDurumu !== 'bos';
-  const gelen = aramaDurumu === 'gelen';
 
   /* ═══════════════════════════════════════
-     MODE_INCOMING: SAĞ ÜST KÖŞE - GELEN ÇAĞRI BİLDİRİMİ
-     320px genişlik, kompakt popup
+     SADECE GELEN ÇAĞRI POPUP'I - SAĞ ÜST KÖŞE
+     Boşta veya aktif görüşmede: HİÇBİR ŞEY RENDER ETME
      ═══════════════════════════════════════ */
-  if (gelen) {
-    return (
-      <div style={{
-        position: 'fixed', top: 20, right: 20, zIndex: 99999,
-        width: 320,
-        background: isK ? '#1e293b' : '#fff',
-        border: '2px solid #10b981',
-        borderRadius: 16, overflow: 'hidden',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.25), 0 0 40px rgba(16,185,129,0.15)',
-        animation: 'fadeIn .3s ease'
-      }}>
-        {/* HEADER - GELEN ÇAĞRI */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05))',
-          padding: '12px 16px',
-          borderBottom: '1px solid rgba(16,185,129,0.2)',
-          display: 'flex', alignItems: 'center', gap: 10
-        }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: '50%',
-            background: 'rgba(16,185,129,0.15)', border: '2px solid #10b981',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            animation: 'pulse 1.5s infinite', flexShrink: 0
-          }}>
-            <LIcon name="PhoneIncoming" size={18} color="#10b981"/>
-          </div>
-          <div style={{flex: 1, minWidth: 0}}>
-            <div style={{fontSize: 10, fontWeight: 700, color: '#10b981', letterSpacing: 1.5, marginBottom: 2}}>
-              GELEN ÇAĞRI
-            </div>
-            <div style={{fontSize: 18, fontWeight: 800, color: C.text, letterSpacing: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
-              {karsiTaraf || 'BİLİNMEYEN'}
-            </div>
-            {karsiTarafAdi && (
-              <div style={{fontSize: 12, color: C.textSec, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{karsiTarafAdi}</div>
-            )}
-          </div>
-        </div>
+  if (aramaDurumu !== 'gelen') return null;
 
-        {/* MÜŞTERİ EŞLEŞTIRME */}
-        {eslestirme && (
-          <div style={{padding: '8px 14px', borderBottom: '1px solid ' + C.border}}>
-            <div style={{fontSize: 9, fontWeight: 700, color: C.accent, marginBottom: 4, letterSpacing: 1}}>
-              <LIcon name="UserCheck" size={10} color={C.accent}/> {eslestirme.kaynak} EŞLEŞME
-            </div>
-            {eslestirme.kayitlar.slice(0, 1).map((k, i) => (
-              <div key={i} style={{
-                background: C.accent + '0a', border: '1px solid ' + C.accent + '22',
-                borderRadius: 6, padding: '5px 8px',
-                display: 'flex', alignItems: 'center', gap: 6
-              }}>
-                <LIcon name="User" size={12} color={C.accent}/>
-                <div>
-                  <div style={{fontSize: 11, fontWeight: 700, color: C.text}}>{k.ad_soyad || k.magdur_ad_soyad || '-'}</div>
-                  <div style={{fontSize: 9, color: C.textMuted}}>{k.telefon || k.magdur_telefon || ''} {k.il ? '| ' + k.il : ''}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* BUTONLAR - REDDET + CEVAPLA */}
-        <div style={{padding: '10px 14px', display: 'flex', gap: 8}}>
-          <button onClick={reddet} style={{
-            flex: 1, padding: '10px', borderRadius: 10, border: 'none',
-            background: 'linear-gradient(180deg, #f87171, #dc2626)',
-            color: '#fff', fontSize: 12, fontWeight: 800, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            boxShadow: '0 3px 10px rgba(220,38,38,0.3)'
-          }}>
-            <LIcon name="PhoneOff" size={15} color="#fff"/> REDDET
-          </button>
-          <button onClick={cevapla} style={{
-            flex: 1, padding: '10px', borderRadius: 10, border: 'none',
-            background: 'linear-gradient(180deg, #34d399, #059669)',
-            color: '#fff', fontSize: 12, fontWeight: 800, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            boxShadow: '0 3px 10px rgba(5,150,105,0.3)',
-            animation: 'pulse 1.5s infinite'
-          }}>
-            <LIcon name="Phone" size={15} color="#fff"/> CEVAPLA
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  /* ═══════════════════════════════════════
-     MODE_ACTIVE_MINIMIZED: SAĞ ALT KÖŞE - MİNİ BAR
-     Aktif görüşme sırasında (araniyor/caliyor/gorusmede)
-     280px genişlik, kompakt
-     ═══════════════════════════════════════ */
-  if (aktif) {
-    return (
-      <div style={{
-        position: 'fixed', bottom: 20, right: 20, zIndex: 9990,
-        width: 280,
-        background: isK ? '#1e293b' : '#fff',
-        border: '1px solid ' + (aramaDurumu === 'gorusmede' ? '#10b981' : C.border),
-        borderRadius: 14, overflow: 'hidden',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-        animation: 'fadeIn .2s ease'
-      }}>
-        {/* ÜST BAR - NUMARA + DURUM */}
-        <div style={{
-          padding: '10px 14px',
-          background: aramaDurumu === 'gorusmede'
-            ? 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.03))'
-            : 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.03))',
-          display: 'flex', alignItems: 'center', gap: 10
-        }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-            background: aramaDurumu === 'gorusmede' ? 'rgba(16,185,129,0.15)' : 'rgba(59,130,246,0.15)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            animation: (aramaDurumu === 'araniyor' || aramaDurumu === 'caliyor') ? 'pulse 2s infinite' : 'none'
-          }}>
-            <LIcon name="PhoneCall" size={16} color={aramaDurumu === 'gorusmede' ? '#10b981' : C.accent}/>
-          </div>
-          <div style={{flex: 1, minWidth: 0}}>
-            <div style={{fontSize: 14, fontWeight: 800, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
-              {karsiTaraf || 'BİLİNMEYEN'}
-            </div>
-            {karsiTarafAdi && (
-              <div style={{fontSize: 10, color: C.textSec, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{karsiTarafAdi}</div>
-            )}
-            <div style={{
-              fontSize: 10, fontWeight: 700, marginTop: 2, letterSpacing: 0.5,
-              color: aramaDurumu === 'gorusmede' ? '#10b981' : '#f59e0b'
-            }}>
-              {aramaDurumu === 'araniyor' ? 'ARANIYOR...' :
-               aramaDurumu === 'caliyor' ? 'ÇALIYOR...' :
-               aramaDurumu === 'gorusmede' ? fmtSure(sureSn) : ''}
-            </div>
-          </div>
-        </div>
-
-        {/* HATA */}
-        {hata && (
-          <div style={{
-            padding: '6px 14px', fontSize: 9, fontWeight: 600,
-            background: C.danger + '12', color: C.danger,
-            display: 'flex', alignItems: 'center', gap: 4
-          }}>
-            <LIcon name="AlertCircle" size={10} color={C.danger}/> {hata}
-          </div>
-        )}
-
-        {/* KONTROL BUTONLARI */}
-        <div style={{padding: '8px 14px', display: 'flex', gap: 6, justifyContent: 'center'}}>
-          {/* SESSİZ (sadece görüşmede) */}
-          {aramaDurumu === 'gorusmede' && (
-            <button onClick={sesizToggle} style={{
-              width: 36, height: 36, borderRadius: 8, border: 'none',
-              background: mute ? (C.warning + '22') : (C.textMuted + '15'),
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }} title={mute ? 'SESİ AÇ' : 'SESSİZE AL'}>
-              <LIcon name={mute ? 'MicOff' : 'Mic'} size={16} color={mute ? C.warning : C.textSec}/>
-            </button>
-          )}
-          {/* KAPAT */}
-          <button onClick={kapat} style={{
-            flex: 1, padding: '8px', borderRadius: 8, border: 'none',
-            background: 'linear-gradient(180deg, #f87171, #dc2626)',
-            color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            boxShadow: '0 3px 8px rgba(220,38,38,0.3)'
-          }}>
-            <LIcon name="PhoneOff" size={14} color="#fff"/> KAPAT
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  /* ═══════════════════════════════════════
-     MODE_IDLE: SAĞ ALT KÖŞE - KÜÇÜK İKON / PANEL
-     Boşta durumda - tıklanınca numara girme paneli açılır
-     ═══════════════════════════════════════ */
-
-  /* FLOATING BUTON (KAPALI) */
-  if (!panelAcik) {
-    return (
-      <div onClick={() => setPanelAcik(true)} style={{
-        position: 'fixed', bottom: 24, right: 24, zIndex: 9990,
-        width: 54, height: 54, borderRadius: '50%',
-        background: kayitli
-          ? ('linear-gradient(135deg, ' + C.accent + ', #1d4ed8)')
-          : ('linear-gradient(135deg, ' + C.textMuted + ', #475569)'),
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-        transition: 'all .3s'
-      }}
-        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; }}
-        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-      >
-        <LIcon name="Phone" size={22} color="#fff"/>
-        {kayitli && (
-          <div style={{
-            position: 'absolute', top: -2, right: -2,
-            width: 14, height: 14, borderRadius: '50%',
-            background: '#10b981',
-            border: '2px solid ' + (isK ? '#1e293b' : '#fff')
-          }}/>
-        )}
-      </div>
-    );
-  }
-
-  /* AÇIK PANEL - NUMARA GİRME */
   return (
     <div style={{
-      position: 'fixed', bottom: 24, right: 24, zIndex: 9990,
-      width: 300, maxHeight: 'calc(100vh - 100px)',
+      position: 'fixed', top: 20, right: 20, zIndex: 99999,
+      width: 320,
       background: isK ? '#1e293b' : '#fff',
-      border: '1px solid ' + C.border,
+      border: '2px solid #10b981',
       borderRadius: 16, overflow: 'hidden',
-      boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
-      animation: 'fadeIn .2s ease'
+      boxShadow: '0 8px 32px rgba(0,0,0,0.25), 0 0 40px rgba(16,185,129,0.15)',
+      animation: 'fadeIn .3s ease'
     }}>
-      {/* HEADER */}
+      {/* HEADER - GELEN ÇAĞRI */}
       <div style={{
-        background: kayitli
-          ? ('linear-gradient(135deg, ' + C.accent + '18, ' + C.accent + '08)')
-          : ('linear-gradient(135deg, ' + C.textMuted + '15, ' + C.textMuted + '05)'),
-        padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '1px solid ' + C.border
+        background: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05))',
+        padding: '12px 16px',
+        borderBottom: '1px solid rgba(16,185,129,0.2)',
+        display: 'flex', alignItems: 'center', gap: 10
       }}>
-        <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
-          <div style={{
-            width: 10, height: 10, borderRadius: '50%',
-            background: kayitli ? '#10b981' : C.danger,
-            boxShadow: kayitli ? '0 0 8px rgba(16,185,129,0.4)' : 'none'
-          }}/>
-          <span style={{fontSize: 11, fontWeight: 800, color: C.text}}>
-            {kayitli ? 'NETSANTRAL HAZIR' : 'BAĞLANTI YOK'}
-          </span>
-        </div>
-        <div onClick={() => setPanelAcik(false)} style={{
-          width: 26, height: 26, borderRadius: 6, cursor: 'pointer',
+        <div style={{
+          width: 36, height: 36, borderRadius: '50%',
+          background: 'rgba(16,185,129,0.15)', border: '2px solid #10b981',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: C.textMuted + '15'
+          animation: 'pulse 1.5s infinite', flexShrink: 0
         }}>
-          <LIcon name="Minus" size={14} color={C.textMuted}/>
+          <LIcon name="PhoneIncoming" size={18} color="#10b981"/>
+        </div>
+        <div style={{flex: 1, minWidth: 0}}>
+          <div style={{fontSize: 10, fontWeight: 700, color: '#10b981', letterSpacing: 1.5, marginBottom: 2}}>
+            GELEN ÇAĞRI
+          </div>
+          <div style={{fontSize: 18, fontWeight: 800, color: C.text, letterSpacing: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+            {karsiTaraf || 'BİLİNMEYEN'}
+          </div>
+          {karsiTarafAdi && (
+            <div style={{fontSize: 12, color: C.textSec, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{karsiTarafAdi}</div>
+          )}
         </div>
       </div>
 
-      {/* HATA */}
-      {hata && (
-        <div style={{
-          padding: '6px 14px', fontSize: 10, fontWeight: 600,
-          background: C.danger + '12', color: C.danger,
-          display: 'flex', alignItems: 'center', gap: 6
-        }}>
-          <LIcon name="AlertCircle" size={12} color={C.danger}/> {hata}
-        </div>
-      )}
-
-      {/* NUMARA GİRİŞ */}
-      {kayitli && (
-        <div style={{padding: 14}}>
-          <div style={{display: 'flex', gap: 6, marginBottom: 10}}>
-            <input
-              value={numInput} onChange={e => setNumInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') aramaYap(); }}
-              placeholder="NUMARA GİRİN..."
-              style={{
-                flex: 1, padding: '10px 12px', fontSize: 13, fontWeight: 700,
-                background: isK ? '#0f172a' : '#f1f5f9',
-                border: '1px solid ' + C.border, borderRadius: 8,
-                color: C.text, outline: 'none', letterSpacing: 1
-              }}
-            />
-            <button onClick={aramaYap} disabled={!numInput.trim()} style={{
-              width: 42, height: 42, borderRadius: 8, border: 'none',
-              background: numInput.trim() ? 'linear-gradient(180deg, #34d399, #059669)' : (C.textMuted + '15'),
-              cursor: numInput.trim() ? 'pointer' : 'default',
-              display: 'flex', alignItems: 'center', justifyContent: 'center'
+      {/* MÜŞTERİ EŞLEŞTIRME */}
+      {eslestirme && (
+        <div style={{padding: '8px 14px', borderBottom: '1px solid ' + C.border}}>
+          <div style={{fontSize: 9, fontWeight: 700, color: C.accent, marginBottom: 4, letterSpacing: 1}}>
+            <LIcon name="UserCheck" size={10} color={C.accent}/> {eslestirme.kaynak} EŞLEŞME
+          </div>
+          {eslestirme.kayitlar.slice(0, 1).map((k, i) => (
+            <div key={i} style={{
+              background: C.accent + '0a', border: '1px solid ' + C.accent + '22',
+              borderRadius: 6, padding: '5px 8px',
+              display: 'flex', alignItems: 'center', gap: 6
             }}>
-              <LIcon name="Phone" size={18} color={numInput.trim() ? '#fff' : C.textMuted}/>
-            </button>
-          </div>
-
-          {/* TUŞTAKIMI */}
-          <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4}}>
-            {['1','2','3','4','5','6','7','8','9','*','0','#'].map(key => (
-              <button key={key} onClick={() => setNumInput(p => p + key)} style={{
-                padding: '10px', borderRadius: 8, border: 'none',
-                background: C.textMuted + '10', color: C.text,
-                fontSize: 16, fontWeight: 700, cursor: 'pointer',
-                transition: 'all .1s'
-              }}
-                onMouseEnter={e => e.currentTarget.style.background = C.accent + '20'}
-                onMouseLeave={e => e.currentTarget.style.background = C.textMuted + '10'}
-              >
-                {key}
-              </button>
-            ))}
-          </div>
-
-          {numInput && (
-            <div style={{display: 'flex', justifyContent: 'center', marginTop: 6}}>
-              <button onClick={() => setNumInput(p => p.slice(0, -1))} style={{
-                padding: '4px 16px', borderRadius: 6, border: 'none',
-                background: C.textMuted + '10', color: C.textMuted,
-                fontSize: 10, fontWeight: 700, cursor: 'pointer'
-              }}>
-                <LIcon name="Delete" size={14} color={C.textMuted}/> SİL
-              </button>
+              <LIcon name="User" size={12} color={C.accent}/>
+              <div>
+                <div style={{fontSize: 11, fontWeight: 700, color: C.text}}>{k.ad_soyad || k.magdur_ad_soyad || '-'}</div>
+                <div style={{fontSize: 9, color: C.textMuted}}>{k.telefon || k.magdur_telefon || ''} {k.il ? '| ' + k.il : ''}</div>
+              </div>
             </div>
-          )}
+          ))}
         </div>
       )}
 
-      {/* KAYITLI DEĞİL */}
-      {!kayitli && (
-        <div style={{padding: 16, textAlign: 'center'}}>
-          <LIcon name="WifiOff" size={28} color={C.textMuted} style={{opacity: 0.5, marginBottom: 8}}/>
-          <div style={{fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 6}}>
-            NETSANTRAL'E BAĞLI DEĞİL
-          </div>
-          <div style={{fontSize: 10, color: C.textMuted, lineHeight: 1.6}}>
-            SİSTEM AYARLARINDAN NETSANTRAL BİLGİLERİNİZİ GİRDİĞİNİZDEN EMİN OLUN
-          </div>
-          {user && (
-            <button onClick={() => MR.webrtcOtoBaslat(user)} style={{
-              marginTop: 10, padding: '8px 16px', borderRadius: 8, border: 'none',
-              background: C.accent + '22', color: C.accent,
-              fontSize: 10, fontWeight: 700, cursor: 'pointer'
-            }}>
-              <LIcon name="RefreshCw" size={12} color={C.accent}/> TEKRAR BAĞLAN
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* ALT BAR */}
-      <div style={{
-        padding: '8px 14px', borderTop: '1px solid ' + C.border,
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        fontSize: 9, color: C.textMuted
-      }}>
-        <span>{MR._webrtcConfig ? 'DAHİLİ: ' + (MR._webrtcConfig.dahili || '-') : 'YAPILANDIRILMAMIŞ'}</span>
-        <span style={{color: kayitli ? '#10b981' : C.danger}}>
-          {kayitli ? 'KAYITLI' : 'KAYITSIZ'}
-        </span>
+      {/* BUTONLAR - REDDET + CEVAPLA */}
+      <div style={{padding: '10px 14px', display: 'flex', gap: 8}}>
+        <button onClick={reddet} style={{
+          flex: 1, padding: '10px', borderRadius: 10, border: 'none',
+          background: 'linear-gradient(180deg, #f87171, #dc2626)',
+          color: '#fff', fontSize: 12, fontWeight: 800, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          boxShadow: '0 3px 10px rgba(220,38,38,0.3)'
+        }}>
+          <LIcon name="PhoneOff" size={15} color="#fff"/> REDDET
+        </button>
+        <button onClick={cevapla} style={{
+          flex: 1, padding: '10px', borderRadius: 10, border: 'none',
+          background: 'linear-gradient(180deg, #34d399, #059669)',
+          color: '#fff', fontSize: 12, fontWeight: 800, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          boxShadow: '0 3px 10px rgba(5,150,105,0.3)',
+          animation: 'pulse 1.5s infinite'
+        }}>
+          <LIcon name="Phone" size={15} color="#fff"/> CEVAPLA
+        </button>
       </div>
     </div>
   );

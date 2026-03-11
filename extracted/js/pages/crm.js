@@ -1139,6 +1139,34 @@ MR._CRMYeniInner = ({setPage}) => {
   const timerDisplayRef = useRef(null);
   const prevCallActiveRef = useRef(false);
 
+  /* ── WEBRTC DURUM DİNLEYİCİ - callActive SENKRONİZASYONU ── */
+  useEffect(() => {
+    const webrtcHandler = (e) => {
+      const d = e.detail || {};
+      switch(d.durum) {
+        case 'araniyor':
+        case 'caliyor':
+        case 'gorusmede':
+          setCallActive(true);
+          break;
+        case 'kapandi':
+        case 'reddedildi':
+          /* ÇAĞRI SONA ERDİ */
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+          setCallActive(false);
+          setHangupLoading(false);
+          window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
+          break;
+        case 'baglanti-koptu':
+        case 'durduruldu':
+          setCallActive(false);
+          break;
+      }
+    };
+    window.addEventListener('mr-webrtc-durum', webrtcHandler);
+    return () => window.removeEventListener('mr-webrtc-durum', webrtcHandler);
+  }, []);
+
   useEffect(() => {
     if (callActive) {
       callSecondsRef.current = 0;
