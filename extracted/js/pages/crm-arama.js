@@ -574,11 +574,13 @@ MR.CrmAramaPage = ({setPage, user}) => {
                   <th style={thSt}>KAZA</th>
                   <th style={thSt}>AD SOYAD</th>
                   <th style={thSt}>TELEFON</th>
-                  <th style={{...thSt, width:40}}>İL</th>
+                  <th style={thSt}>İL</th>
+                  <th style={thSt}>İLÇE</th>
                   <th style={thSt}>GÖRÜŞME</th>
                   <th style={thSt}>DURUM</th>
                   <th style={thSt}>NEDEN</th>
                   <th style={thSt}>SON DURUM</th>
+                  <th style={thSt}>TC</th>
                   <th style={{...thSticky, textAlign:'center'}}>İŞLEM</th>
                 </tr>
               </thead>
@@ -603,6 +605,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
                     <td style={{...tdTrunc, fontWeight:600, maxWidth:130}}>{item.magdur_ad_soyad || '-'}</td>
                     <td style={{...tdSt, fontSize:10}}>{item.magdur_telefon || '-'}</td>
                     <td style={{...tdSt, fontSize:10}}>{item.magdur_il || '-'}</td>
+                    <td style={{...tdSt, fontSize:10}}>{item.magdur_ilce || '-'}</td>
                     <td style={{...tdSt, color:C.textMuted, fontSize:10}}>{item.gorusme_tarihi ? item.gorusme_tarihi.slice(0,10) : '-'}</td>
                     <td style={tdSt}>
                       <span style={durumChip(item.durum)}>
@@ -620,6 +623,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
                         }}>{item.son_durum}</span>
                       ) : '-'}
                     </td>
+                    <td style={{...tdSt, color:C.textMuted, fontFamily:'monospace', fontSize:9}}>{item.magdur_tc || '-'}</td>
                     <td style={tdSticky}>
                       <div style={{display:'flex', gap:3, justifyContent:'center'}}>
                         <button style={iconBtn(C.cyan)} title="NOT EKLE / GÖRÜNTÜLE" onClick={() => openNot(item)}>
