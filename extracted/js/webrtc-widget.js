@@ -44,6 +44,9 @@ MR.webrtcOtoBaslat = async (user) => {
       return;
     }
 
+    /* API ŞİFRESİ (Netsantral originate için) */
+    var apiSifre = localStorage.getItem('mr_netsantral_api_sifre') || '';
+
     /* TURN SUNUCU AYARLARI (opsiyonel - boşsa varsayılan Metered OpenRelay kullanılır) */
     var turnUrl = localStorage.getItem('mr_webrtc_turn_url') || '';
     var turnUser = localStorage.getItem('mr_webrtc_turn_user') || '';
@@ -56,6 +59,7 @@ MR.webrtcOtoBaslat = async (user) => {
       sipSifre: sipSifre,
       santralNo: santralNo,
       kullanici: kullanici,
+      apiSifre: apiSifre,
       turnUrl: turnUrl,
       turnUser: turnUser,
       turnPass: turnPass
@@ -794,6 +798,7 @@ MR.NetsantralAyarlari = () => {
   const [sipSifre, setSipSifre] = useState(localStorage.getItem('mr_netsantral_sip_sifre') || def.sipSifre);
   const [santralNo, setSantralNo] = useState(localStorage.getItem('mr_netsantral_no') || def.santralNo);
   const [kullanici, setKullanici] = useState(localStorage.getItem('mr_netsantral_kullanici') || def.kullanici);
+  const [apiSifre, setApiSifre] = useState(localStorage.getItem('mr_netsantral_api_sifre') || '');
   const [turnUrl, setTurnUrl] = useState(localStorage.getItem('mr_webrtc_turn_url') || '');
   const [turnUser, setTurnUser] = useState(localStorage.getItem('mr_webrtc_turn_user') || '');
   const [turnPass, setTurnPass] = useState(localStorage.getItem('mr_webrtc_turn_pass') || '');
@@ -816,6 +821,7 @@ MR.NetsantralAyarlari = () => {
     localStorage.setItem('mr_netsantral_sip_sifre', sipSifre);
     localStorage.setItem('mr_netsantral_no', santralNo);
     localStorage.setItem('mr_netsantral_kullanici', kullanici);
+    localStorage.setItem('mr_netsantral_api_sifre', apiSifre);
     localStorage.setItem('mr_webrtc_turn_url', turnUrl);
     localStorage.setItem('mr_webrtc_turn_user', turnUser);
     localStorage.setItem('mr_webrtc_turn_pass', turnPass);
@@ -863,6 +869,20 @@ MR.NetsantralAyarlari = () => {
             <input style={S.input} value={kullanici} onChange={e => setKullanici(e.target.value)} placeholder="102-3625026502"/>
           </FormGroup>
         </div>
+        <div style={{marginTop:14, padding:14, borderRadius:10, background:`${C.accent}08`, border:`1px solid ${C.accent}20`}}>
+          <div style={{fontSize:11, fontWeight:700, color:C.accent, marginBottom:10}}>
+            <LIcon name="Key" size={12} color={C.accent}/> NETSANTRAL API (ÇAĞRI BAŞLATMA)
+          </div>
+          <div style={{fontSize:10, color:C.textSec, marginBottom:10, lineHeight:1.6}}>
+            CRM ÜZERİNDEN ARAMA YAPMAK İÇİN NETGSM API ŞİFRENİZİ GİRİN.
+            BU ŞİFRE SIP ŞİFRESİNDEN FARKLIDIR - NETGSM PANELİNDEN ALT KULLANICI API ŞİFRESİ.
+          </div>
+          <div style={{display:'grid', gridTemplateColumns:'1fr', gap:10}}>
+            <FormGroup label="API ŞİFRESİ *">
+              <input type="password" style={{...S.input, textTransform:'none'}} value={apiSifre} onChange={e => setApiSifre(e.target.value)} placeholder="NETGSM API ŞİFRENİZ"/>
+            </FormGroup>
+          </div>
+        </div>
         <div style={{marginTop:16, padding:14, borderRadius:10, background:`${C.warning}08`, border:`1px solid ${C.warning}20`}}>
           <div style={{fontSize:11, fontWeight:700, color:C.warning, marginBottom:10}}>
             <LIcon name="Shield" size={12} color={C.warning}/> TURN SUNUCU (MEDYA RELAY - OPSİYONEL)
@@ -901,11 +921,14 @@ MR.NetsantralAyarlari = () => {
           <div style={{fontWeight:700, color:C.accent, marginBottom:4}}>
             <LIcon name="Info" size={12} color={C.accent}/> BAĞLANTI BİLGİLERİ
           </div>
-          <div>WSS URL: NETSANTRAL PANELINDEN ALINIR (WSS://...)</div>
+          <div>WSS URL: NETSANTRAL PANELİNDEN ALINIR (WSS://...)</div>
           <div>DAHİLİ: NETSIPP UYGULAMASINDA KULLANDIĞINIZ DAHİLİ NUMARA</div>
-          <div>SIP ŞİFRESİ: NETSANTRAL PANELINDEN ALINAN SIP/WEBRTC ŞİFRESİ</div>
+          <div>SIP ŞİFRESİ: NETSANTRAL PANELİNDEN ALINAN SIP/WEBRTC ŞİFRESİ</div>
           <div>SANTRAL NO: 10 HANELİ MÜŞTERİ SANTRAL NUMARASI</div>
-          <div>TURN: MEDYA BAĞLANTISI İÇİN (VARSAYILAN: METERED OPENRELAY ÜCRETSİZ)</div>
+          <div>API ŞİFRESİ: NETGSM ALT KULLANICI API ŞİFRESİ (ARAMA BAŞLATMAK İÇİN)</div>
+          <div style={{marginTop:6, fontWeight:700, color:C.warning}}>
+            <LIcon name="AlertTriangle" size={12} color={C.warning}/> ÖNEMLİ: DAHİLİ BAĞLANTI TİPİ NETSANTRAL PANELİNDE "WSS" OLMALI (UDP DEĞİL)
+          </div>
         </div>
       </div>
     </div>
