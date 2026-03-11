@@ -1,13 +1,13 @@
 /* ============================================================
-   MR HASAR DANIŞMANLIK – WEBRTC TELEFON MODÜLÜ v6.0
-   JsSIP 3.10.0 + NETSANTRAL HTTP API HİBRİT SOFTPHONE
+   MR HASAR DANIŞMANLIK – WEBRTC TELEFON MODÜLÜ v7.0
+   JsSIP 3.10.0 İLE TARAYICI İÇİ SOFTPHONE
 
-   v6.0 DEĞİŞİKLİKLER:
-   - ARAMA BAŞLATMA: Netsantral HTTP API originate (JsSIP ua.call değil)
-   - AKIŞ: API → Dahili çalar → WebRTC cevaplar → Müşteri aranır → Köprü
-   - JsSIP SADECE DAHİLİ KAYDI + GELEN ÇAĞRI İÇİN KULLANILIYOR
-   - OTOMATİK CEVAPLAMA: API originate sonrası dahili çaldığında otomatik aç
-   - API HANGUP: Çağrı sonlandırma hem SIP hem HTTP API üzerinden
+   v7.0 - DİREKT SIP ARAMA:
+   - ARA → direkt SIP üzerinden arar (tek tıkla)
+   - KAPAT → direkt kapatır
+   - GELEN ÇAĞRI → cevapla/reddet
+   - getUserMedia ÖN-ALINIR (JsSIP hatasını önler)
+   - DAHİLİ WSS MODUNDA BAĞLI OLMALI (Netsantral panelinden)
    ============================================================ */
 
 const MR = window.MR || (window.MR = {});
@@ -31,10 +31,6 @@ MR.webrtcTelefon = {
   _relayCandidateFound: false,
   _reconnectTimer: null,
   _turnCachedCreds: null,
-  _originateUniqueId: null,  /* HTTP API originate sonucu unique_id */
-  _originateCrmId: null,     /* HTTP API originate sonucu crm_id */
-  _originatePending: false,  /* API originate sonrası dahili çalmasını bekliyoruz */
-  _originateTarget: '',      /* Originate ile aranan numara */
 
   /* ═══ SES YÖNETİMİ ═══ */
   _sesAyarlari: {
@@ -64,7 +60,6 @@ MR.webrtcTelefon = {
     kullanici: '',
     apiSifre: '',
     santralNo: '',
-    apiSifre: '',       /* Netgsm API şifresi (originate için) */
     turnUrl: '',
     turnUser: '',
     turnPass: '',
@@ -479,7 +474,7 @@ MR.webrtcTelefon = {
     }
   },
 
-  /* ═══ GİDEN ARAMA (NETSANTRAL HTTP API ORIGINATE) ═══ */
+  /* ═══ GİDEN ARAMA (DİREKT SIP) ═══ */
   ara: async function(numara) {
     if (!this._ua || !this._kayitli) {
       this._durumBildir('hata', 'WEBRTC TELEFON PBX\'E KAYITLI DEĞİL');
@@ -497,58 +492,51 @@ MR.webrtcTelefon = {
       cleanNum = '0' + cleanNum;
     }
 
-    console.log('[WEBRTC] ARAMA BAŞLATILIYOR (API ORIGINATE):', cleanNum);
+    var targetUri = 'sip:' + cleanNum + '@' + this._config.domain;
+    console.log('[WEBRTC] ARAMA BAŞLATILIYOR:', cleanNum, '| URI:', targetUri);
 
     this._aramaDurumu = 'araniyor';
     this._iceRestartCount = 0;
-    this._originateTarget = cleanNum;
-    this._originatePending = true;
     this._durumBildir('araniyor', cleanNum);
-    this._ringbackBaslat();
 
     try {
-      /* NETSANTRAL HTTP API İLE ÇAĞRI BAŞLAT */
-      var apiData = {
-        numara: cleanNum,
-        dahili: this._config.dahili,
-        kullanici: this._config.santralNo || this._config.kullanici,
-        apiSifre: this._config.apiSifre,
-        santralNo: this._config.santralNo
-      };
-
-      console.log('[WEBRTC] API ORIGINATE İSTEĞİ GÖNDERİLİYOR...', {
-        numara: cleanNum,
-        dahili: this._config.dahili,
-        kullanici: apiData.kullanici
-      });
-
-      var result = await MR.api.netsantralOriginate(apiData);
-
-      if (result && result.success) {
-        /* API BAŞARILI - UNIQUE ID'Yİ SAKLA */
-        this._originateUniqueId = (result.data && result.data.unique_id) || null;
-        this._originateCrmId = (result.data && result.data.crm_id) || null;
-        console.log('[WEBRTC] API ORIGINATE BAŞARILI ✓ unique_id:', this._originateUniqueId);
-        console.log('[WEBRTC] DAHİLİ ÇALMASI BEKLENİYOR... (otomatik cevaplanacak)');
-        /* Dahili çaldığında _gelenCagri() otomatik cevaplar (_originatePending = true) */
-        return true;
-      } else {
-        /* API HATASI */
-        var errorMsg = (result && result.error) ? result.error : 'BİLİNMEYEN API HATASI';
-        console.error('[WEBRTC] API ORIGINATE HATASI:', errorMsg);
-        if (result && result.raw_response) console.error('[WEBRTC] RAW:', result.raw_response);
-        this._originatePending = false;
-        this._originateTarget = '';
-        this._ringbackDurdur();
+      /* MİKROFON AKIŞI AL */
+      console.log('[WEBRTC] getUserMedia ÇAĞRILIYOR...');
+      var stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        console.log('[WEBRTC] getUserMedia BAŞARILI ✓ track:', stream.getAudioTracks().length);
+      } catch(mediaErr) {
+        console.error('[WEBRTC] getUserMedia HATASI:', mediaErr.name, mediaErr.message);
         this._temizle();
-        this._durumBildir('hata', 'ÇAĞRI BAŞLATILAMADI: ' + errorMsg);
+        this._durumBildir('hata', 'MİKROFON ERİŞİMİ BAŞARISIZ: ' + (mediaErr.name || '') + ' - ' + (mediaErr.message || ''));
         return false;
       }
 
+      var iceServers = this._getIceServers();
+      var self = this;
+
+      var callOptions = {
+        mediaStream: stream,
+        pcConfig: {
+          iceServers: iceServers,
+          iceTransportPolicy: 'all'
+        },
+        rtcOfferConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false }
+      };
+
+      console.log('[WEBRTC] SIP ARAMA GÖNDERİLİYOR... ICE:', iceServers.length);
+      var session = this._ua.call(targetUri, callOptions);
+
+      this._session = session;
+      this._sessionOlaylariBagla(session);
+      this._ringbackBaslat();
+
+      console.log('[WEBRTC] ÇAĞRI GÖNDERİLDİ:', cleanNum);
+      return true;
+
     } catch(e) {
       console.error('[WEBRTC] ARAMA HATASI:', e, e.stack || '');
-      this._originatePending = false;
-      this._originateTarget = '';
       this._ringbackDurdur();
       this._temizle();
       this._durumBildir('hata', 'ARAMA BAŞLATILAMADI: ' + (e && e.message ? e.message : ''));
@@ -568,34 +556,9 @@ MR.webrtcTelefon = {
     }
 
     this._session = session;
+    this._aramaDurumu = 'gelen';
     this._iceRestartCount = 0;
     this._sessionOlaylariBagla(session);
-
-    /* ═══ OTOMATİK CEVAPLAMA: API ORIGINATE SONRASI DAHİLİ ÇALDIĞINDA ═══ */
-    if (this._originatePending) {
-      console.log('[WEBRTC] ═══ ORIGINATE CALLBACK: DAHİLİ ÇALIYOR → OTOMATİK CEVAPLANIYOR ═══');
-      this._originatePending = false;
-      this._aramaDurumu = 'araniyor'; /* GİDEN ARAMA durumunu koru */
-      this._ringbackDurdur();
-
-      /* OTOMATİK CEVAPLA */
-      var self = this;
-      setTimeout(function() {
-        self.cevapla().then(function(ok) {
-          if (ok) {
-            console.log('[WEBRTC] ORIGINATE: OTOMATİK CEVAPLAMA BAŞARILI ✓ MÜŞTERİ ARANIYOR...');
-          } else {
-            console.error('[WEBRTC] ORIGINATE: OTOMATİK CEVAPLAMA BAŞARISIZ');
-          }
-        }).catch(function(e) {
-          console.error('[WEBRTC] ORIGINATE: OTOMATİK CEVAPLAMA HATASI:', e);
-        });
-      }, 500); /* KISA BEKLEME - SESSION'IN STABİLLEŞMESİ İÇİN */
-      return;
-    }
-
-    /* NORMAL GELEN ÇAĞRI (API originate değil) */
-    this._aramaDurumu = 'gelen';
     this._zilCaldir();
 
     this._durumBildir('gelen-cagri', { arayan: arayanNum, arayanAdi: arayanAdi });
@@ -694,30 +657,6 @@ MR.webrtcTelefon = {
   kapat: function() {
     this._zilDurdur();
     this._ringbackDurdur();
-
-    /* ORIGINATE BEKLIYOR İSE İPTAL ET */
-    if (this._originatePending) {
-      this._originatePending = false;
-      this._originateTarget = '';
-    }
-
-    /* API HANGUP (ORIGINATE İLE BAŞLATILAN ÇAĞRI İÇİN) */
-    if (this._originateUniqueId && MR.api) {
-      var hangupData = {
-        kullanici: this._config.santralNo || this._config.kullanici,
-        apiSifre: this._config.apiSifre,
-        unique_id: this._originateUniqueId,
-        crm_id: this._originateCrmId
-      };
-      MR.api.netsantralHangup(hangupData).then(function(r) {
-        console.log('[WEBRTC] API HANGUP:', r && r.success ? 'BAŞARILI ✓' : 'HATA', r);
-      }).catch(function(e) {
-        console.warn('[WEBRTC] API HANGUP HATASI:', e);
-      });
-      this._originateUniqueId = null;
-      this._originateCrmId = null;
-    }
-
     if (!this._session) {
       if (this._aramaDurumu !== 'bos') {
         this._temizle();
@@ -1052,8 +991,6 @@ MR.webrtcTelefon = {
     this._muteState = false;
     this._iceRestartCount = 0;
     this._relayCandidateFound = false;
-    this._originatePending = false;
-    this._originateTarget = '';
 
     /* ICE ZAMANAŞIMI SAYAÇLARINI TEMİZLE */
     if (this._iceGatherTimer) { clearTimeout(this._iceGatherTimer); this._iceGatherTimer = null; }
