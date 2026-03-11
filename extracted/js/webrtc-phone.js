@@ -72,16 +72,37 @@ MR.webrtcTelefon = {
       { urls: 'stun:stun1.l.google.com:19302' }
     ];
 
-    /* KULLANICI TURN SUNUCUSU VARSA EKLE */
+    /* KULLANICI TURN SUNUCUSU VARSA ONU EKLE */
     if (this._config.turnUrl) {
       servers.push({
         urls: this._config.turnUrl,
         username: this._config.turnUser || '',
         credential: this._config.turnPass || ''
       });
+      /* TCP FALLBACK - AYNI SUNUCU İÇİN TCP ÜZERİNDEN DE DENE */
+      if (this._config.turnUrl.indexOf('?transport=') === -1) {
+        servers.push({
+          urls: this._config.turnUrl + '?transport=tcp',
+          username: this._config.turnUser || '',
+          credential: this._config.turnPass || ''
+        });
+      }
+    } else {
+      /* VARSAYILAN TURN SUNUCULARI - Metered OpenRelay (Ücretsiz - 20GB/ay) */
+      /* Simetrik NAT, VPN, kurumsal firewall arkasında medya bağlantısı için GEREKLİ */
+      var turnUser = 'openrelayproject';
+      var turnPass = 'openrelayproject';
+      servers.push(
+        { urls: 'turn:openrelay.metered.ca:80', username: turnUser, credential: turnPass },
+        { urls: 'turn:openrelay.metered.ca:80?transport=tcp', username: turnUser, credential: turnPass },
+        { urls: 'turn:openrelay.metered.ca:443', username: turnUser, credential: turnPass },
+        { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: turnUser, credential: turnPass },
+        { urls: 'turns:openrelay.metered.ca:443', username: turnUser, credential: turnPass }
+      );
+      console.log('[WEBRTC] VARSAYILAN TURN SUNUCULARI EKLENDİ (Metered OpenRelay)');
     }
 
-    console.log('[WEBRTC] ICE SUNUCU SAYISI:', servers.length);
+    console.log('[WEBRTC] ICE SUNUCU SAYISI:', servers.length, '(TURN:', servers.filter(function(s) { return (s.urls || '').indexOf('turn') === 0; }).length, ')');
     return servers;
   },
 

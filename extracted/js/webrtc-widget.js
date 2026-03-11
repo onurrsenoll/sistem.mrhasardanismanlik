@@ -44,13 +44,21 @@ MR.webrtcOtoBaslat = async (user) => {
       return;
     }
 
+    /* TURN SUNUCU AYARLARI (opsiyonel - boşsa varsayılan Metered OpenRelay kullanılır) */
+    var turnUrl = localStorage.getItem('mr_webrtc_turn_url') || '';
+    var turnUser = localStorage.getItem('mr_webrtc_turn_user') || '';
+    var turnPass = localStorage.getItem('mr_webrtc_turn_pass') || '';
+
     config = {
       wssUrl: wssUrl,
       domain: domain || wssUrl.replace('wss://', '').replace(/:\d+.*/, '').replace(/\/.*/, ''),
       dahili: dahili,
       sipSifre: sipSifre,
       santralNo: santralNo,
-      kullanici: kullanici
+      kullanici: kullanici,
+      turnUrl: turnUrl,
+      turnUser: turnUser,
+      turnPass: turnPass
     };
     MR._webrtcConfig = config;
   }
@@ -786,6 +794,9 @@ MR.NetsantralAyarlari = () => {
   const [sipSifre, setSipSifre] = useState(localStorage.getItem('mr_netsantral_sip_sifre') || def.sipSifre);
   const [santralNo, setSantralNo] = useState(localStorage.getItem('mr_netsantral_no') || def.santralNo);
   const [kullanici, setKullanici] = useState(localStorage.getItem('mr_netsantral_kullanici') || def.kullanici);
+  const [turnUrl, setTurnUrl] = useState(localStorage.getItem('mr_webrtc_turn_url') || '');
+  const [turnUser, setTurnUser] = useState(localStorage.getItem('mr_webrtc_turn_user') || '');
+  const [turnPass, setTurnPass] = useState(localStorage.getItem('mr_webrtc_turn_pass') || '');
   const [kayitDurumu, setKayitDurumu] = useState('');
   const [bagli, setBagli] = useState(false);
 
@@ -805,6 +816,9 @@ MR.NetsantralAyarlari = () => {
     localStorage.setItem('mr_netsantral_sip_sifre', sipSifre);
     localStorage.setItem('mr_netsantral_no', santralNo);
     localStorage.setItem('mr_netsantral_kullanici', kullanici);
+    localStorage.setItem('mr_webrtc_turn_url', turnUrl);
+    localStorage.setItem('mr_webrtc_turn_user', turnUser);
+    localStorage.setItem('mr_webrtc_turn_pass', turnPass);
     setKayitDurumu('KAYDEDİLDİ');
     setTimeout(() => setKayitDurumu(''), 3000);
     MR.webrtcYenidenBaslat();
@@ -849,6 +863,26 @@ MR.NetsantralAyarlari = () => {
             <input style={S.input} value={kullanici} onChange={e => setKullanici(e.target.value)} placeholder="102-3625026502"/>
           </FormGroup>
         </div>
+        <div style={{marginTop:16, padding:14, borderRadius:10, background:`${C.warning}08`, border:`1px solid ${C.warning}20`}}>
+          <div style={{fontSize:11, fontWeight:700, color:C.warning, marginBottom:10}}>
+            <LIcon name="Shield" size={12} color={C.warning}/> TURN SUNUCU (MEDYA RELAY - OPSİYONEL)
+          </div>
+          <div style={{fontSize:10, color:C.textSec, marginBottom:10, lineHeight:1.6}}>
+            BOŞ BIRAKILIRSA ÜCRETSİZ METERED OPENRELAY KULLANILIR (20GB/AY).
+            ÖZEL TURN SUNUCUNUZ VARSA BURAYA GİRİN.
+          </div>
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10}}>
+            <FormGroup label="TURN URL">
+              <input style={{...S.input, fontSize:11}} value={turnUrl} onChange={e => setTurnUrl(e.target.value)} placeholder="turn:sunucu:3478"/>
+            </FormGroup>
+            <FormGroup label="TURN KULLANICI">
+              <input style={{...S.input, fontSize:11}} value={turnUser} onChange={e => setTurnUser(e.target.value)} placeholder="kullanici"/>
+            </FormGroup>
+            <FormGroup label="TURN ŞİFRE">
+              <input type="password" style={{...S.input, fontSize:11, textTransform:'none'}} value={turnPass} onChange={e => setTurnPass(e.target.value)} placeholder="sifre"/>
+            </FormGroup>
+          </div>
+        </div>
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:16}}>
           <button onClick={kaydet} style={{...S.btn, ...S.btnP}}>
             <LIcon name="Save" size={14} color="#fff"/> KAYDET & BAĞLAN
@@ -871,6 +905,7 @@ MR.NetsantralAyarlari = () => {
           <div>DAHİLİ: NETSIPP UYGULAMASINDA KULLANDIĞINIZ DAHİLİ NUMARA</div>
           <div>SIP ŞİFRESİ: NETSANTRAL PANELINDEN ALINAN SIP/WEBRTC ŞİFRESİ</div>
           <div>SANTRAL NO: 10 HANELİ MÜŞTERİ SANTRAL NUMARASI</div>
+          <div>TURN: MEDYA BAĞLANTISI İÇİN (VARSAYILAN: METERED OPENRELAY ÜCRETSİZ)</div>
         </div>
       </div>
     </div>
