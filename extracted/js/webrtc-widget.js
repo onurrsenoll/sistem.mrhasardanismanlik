@@ -791,9 +791,6 @@ MR.NetsantralAyarlari = () => {
   const [santralNo, setSantralNo] = useState(localStorage.getItem('mr_netsantral_no') || def.santralNo);
   const [kullanici, setKullanici] = useState(localStorage.getItem('mr_netsantral_kullanici') || def.kullanici);
   const [apiSifre, setApiSifre] = useState(localStorage.getItem('mr_netsantral_api_sifre') || '');
-  const [turnUrl, setTurnUrl] = useState(localStorage.getItem('mr_webrtc_turn_url') || '');
-  const [turnUser, setTurnUser] = useState(localStorage.getItem('mr_webrtc_turn_user') || '');
-  const [turnPass, setTurnPass] = useState(localStorage.getItem('mr_webrtc_turn_pass') || '');
   const [kayitDurumu, setKayitDurumu] = useState('');
   const [bagli, setBagli] = useState(false);
 
@@ -814,9 +811,6 @@ MR.NetsantralAyarlari = () => {
     localStorage.setItem('mr_netsantral_no', santralNo);
     localStorage.setItem('mr_netsantral_kullanici', kullanici);
     localStorage.setItem('mr_netsantral_api_sifre', apiSifre);
-    localStorage.setItem('mr_webrtc_turn_url', turnUrl);
-    localStorage.setItem('mr_webrtc_turn_user', turnUser);
-    localStorage.setItem('mr_webrtc_turn_pass', turnPass);
     setKayitDurumu('KAYDEDİLDİ');
     setTimeout(() => setKayitDurumu(''), 3000);
     MR.webrtcYenidenBaslat();
@@ -872,26 +866,6 @@ MR.NetsantralAyarlari = () => {
           <div style={{display:'grid', gridTemplateColumns:'1fr', gap:10}}>
             <FormGroup label="API ŞİFRESİ *">
               <input type="password" style={{...S.input, textTransform:'none'}} value={apiSifre} onChange={e => setApiSifre(e.target.value)} placeholder="NETGSM API ŞİFRENİZ"/>
-            </FormGroup>
-          </div>
-        </div>
-        <div style={{marginTop:16, padding:14, borderRadius:10, background:`${C.warning}08`, border:`1px solid ${C.warning}20`}}>
-          <div style={{fontSize:11, fontWeight:700, color:C.warning, marginBottom:10}}>
-            <LIcon name="Shield" size={12} color={C.warning}/> TURN SUNUCU (MEDYA RELAY - OPSİYONEL)
-          </div>
-          <div style={{fontSize:10, color:C.textSec, marginBottom:10, lineHeight:1.6}}>
-            BOŞ BIRAKILIRSA ÜCRETSİZ METERED OPENRELAY KULLANILIR (20GB/AY).
-            ÖZEL TURN SUNUCUNUZ VARSA BURAYA GİRİN.
-          </div>
-          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10}}>
-            <FormGroup label="TURN URL">
-              <input style={{...S.input, fontSize:11}} value={turnUrl} onChange={e => setTurnUrl(e.target.value)} placeholder="turn:sunucu:3478"/>
-            </FormGroup>
-            <FormGroup label="TURN KULLANICI">
-              <input style={{...S.input, fontSize:11}} value={turnUser} onChange={e => setTurnUser(e.target.value)} placeholder="kullanici"/>
-            </FormGroup>
-            <FormGroup label="TURN ŞİFRE">
-              <input type="password" style={{...S.input, fontSize:11, textTransform:'none'}} value={turnPass} onChange={e => setTurnPass(e.target.value)} placeholder="sifre"/>
             </FormGroup>
           </div>
         </div>
