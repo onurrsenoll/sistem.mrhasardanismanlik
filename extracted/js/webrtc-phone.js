@@ -380,7 +380,7 @@ MR.webrtcTelefon = {
   },
 
   /* ═══ GİDEN ARAMA ═══ */
-  ara: function(numara) {
+  ara: async function(numara) {
     if (!this._ua || !this._kayitli) {
       this._durumBildir('hata', 'WEBRTC TELEFON PBX\'E KAYITLI DEĞİL');
       return false;
@@ -405,36 +405,41 @@ MR.webrtcTelefon = {
     this._durumBildir('araniyor', cleanNum);
 
     try {
+      /* ÖNCELİKLE MİKROFON AKIŞI AL - JsSIP'E BIRAKMIYORUZ (GERÇEK HATAYI GÖRMEK İÇİN) */
+      console.log('[WEBRTC] GİDEN ARAMA: getUserMedia ÇAĞRILIYOR...');
+      var stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        console.log('[WEBRTC] GİDEN ARAMA: getUserMedia BAŞARILI ✓ track:', stream.getAudioTracks().length);
+      } catch(mediaErr) {
+        console.error('[WEBRTC] GİDEN ARAMA: getUserMedia HATASI:', mediaErr.name, mediaErr.message);
+        this._temizle();
+        this._durumBildir('hata', 'MİKROFON ERİŞİMİ BAŞARISIZ: ' + (mediaErr.name || '') + ' - ' + (mediaErr.message || ''));
+        return false;
+      }
+
       var iceServers = this._getIceServers();
       var self = this;
 
-      /* EN BASİT YAKLAŞIM: JsSIP KENDİ getUserMedia'SINI KULLANSIN */
+      /* MEDIASTREAM OLARAK GEÇ - JsSIP getUserMedia ÇAĞIRMASIN */
       var callOptions = {
-        mediaConstraints: { audio: true, video: false },
+        mediaStream: stream,
         pcConfig: {
           iceServers: iceServers,
           iceTransportPolicy: 'all'
         },
         rtcOfferConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false },
-        /* JsSIP SESSİON OLAY DİNLEYİCİLERİ - ua.call()'DAN ÖNCE BAĞLANIR (RACE CONDITION ÖNLEME) */
         eventHandlers: {
           peerconnection: function(data) {
             console.log('[WEBRTC] GİDEN ARAMA: PeerConnection OLUŞTU');
           },
           sending: function(data) {
             console.log('[WEBRTC] GİDEN ARAMA: SIP INVITE GÖNDERİLİYOR...');
-            if (data && data.request) {
-              console.log('[WEBRTC] SIP INVITE METHOD:', data.request.method, '| URI:', data.request.ruri ? data.request.ruri.toString() : '');
-            }
           },
           failed: function(e) {
             var cause = e && e.cause ? e.cause : 'BİLİNMEYEN';
             var originator = e && e.originator ? e.originator : '';
-            var msg = e && e.message;
             console.error('[WEBRTC] GİDEN ARAMA BAŞARISIZ (eventHandlers) - CAUSE:', cause, '| ORIGINATOR:', originator);
-            if (msg && msg.status_code) {
-              console.error('[WEBRTC] SIP YANIT KODU:', msg.status_code, msg.reason_phrase || '');
-            }
           }
         }
       };
@@ -450,7 +455,7 @@ MR.webrtcTelefon = {
       return true;
 
     } catch(e) {
-      console.error('[WEBRTC] ARAMA HATASI:', e);
+      console.error('[WEBRTC] ARAMA HATASI:', e, e.stack || '');
       this._ringbackDurdur();
       this._temizle();
       this._durumBildir('hata', 'ARAMA BAŞLATILAMADI: ' + (e && e.message ? e.message : ''));
@@ -483,7 +488,7 @@ MR.webrtcTelefon = {
   },
 
   /* ═══ CEVAPLA ═══ */
-  cevapla: function() {
+  cevapla: async function() {
     var session = this._session;
     if (!session) {
       console.error('[WEBRTC] CEVAPLA: SESSION YOK');
@@ -505,13 +510,24 @@ MR.webrtcTelefon = {
     this._zilDurdur();
 
     try {
+      /* ÖNCELİKLE MİKROFON AKIŞI AL - JsSIP'E BIRAKMIYORUZ (GERÇEK HATAYI GÖRMEK İÇİN) */
+      console.log('[WEBRTC] CEVAPLA: getUserMedia ÇAĞRILIYOR...');
+      var stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        console.log('[WEBRTC] CEVAPLA: getUserMedia BAŞARILI ✓ track:', stream.getAudioTracks().length);
+      } catch(mediaErr) {
+        console.error('[WEBRTC] CEVAPLA: getUserMedia HATASI:', mediaErr.name, '-', mediaErr.message);
+        this._durumBildir('hata', 'MİKROFON ERİŞİMİ BAŞARISIZ: ' + (mediaErr.name || '') + ' - ' + (mediaErr.message || ''));
+        return false;
+      }
+
       var iceServers = this._getIceServers();
       this._iceRestartCount = 0;
 
-      /* EN BASİT YAKLAŞIM: JsSIP KENDİ getUserMedia'SINI KULLANSIN */
-      /* CUSTOM mediaStream VE rtcAnswerConstraints KULLANMA - UYUMLULUK SORUNU YARATIYORDU */
+      /* MEDIASTREAM OLARAK GEÇ - JsSIP getUserMedia ÇAĞIRMASIN */
       var answerOptions = {
-        mediaConstraints: { audio: true, video: false },
+        mediaStream: stream,
         pcConfig: {
           iceServers: iceServers
         }
