@@ -394,7 +394,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
   return (
     <div className="fade-in">
 
-      {/* ═══ İSTATİSTİK KARTLARI - KOMPAKT ═══ */}
+      {/* ═══ İSTATİSTİK KARTLARI - TAM GENİŞLİK 5 EŞİT KART ═══ */}
       <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:8, marginBottom:12}}>
         {[
           {icon:'Users', label:'TOPLAM', value:stats.toplam, c:C.accent},
@@ -403,59 +403,18 @@ MR.CrmAramaPage = ({setPage, user}) => {
           {icon:'X', label:'OLUMSUZ', value:stats.olumsuz, c:C.danger},
           {icon:'PhoneCall', label:'BUGÜN', value:data.filter(d => d.sonraki_arama && new Date(d.sonraki_arama).toDateString() === new Date().toDateString()).length, c:C.cyan}
         ].map((s,i) => (
-          <div key={i} style={{...S.card, padding:'8px 12px', display:'flex', alignItems:'center', gap:8, marginBottom:0}}>
-            <div style={{width:28, height:28, minWidth:28, borderRadius:6, background:`${s.c}18`, display:'flex', alignItems:'center', justifyContent:'center'}}>
-              <LIcon name={s.icon} size={13} color={s.c}/>
-            </div>
-            <div style={{fontSize:18, fontWeight:800, lineHeight:1, color:s.c}}>{s.value}</div>
-            <div style={{fontSize:9, color:C.textMuted, fontWeight:600}}>{s.label}</div>
+          <div key={i} style={{
+            background:`${s.c}0a`, border:`1px solid ${s.c}20`,
+            borderRadius:8, padding:'10px 6px', textAlign:'center'
+          }}>
+            <div style={{fontSize:20, fontWeight:800, color:s.c, lineHeight:1}}>{s.value}</div>
+            <div style={{fontSize:8, color:C.textMuted, marginTop:3, fontWeight:600}}>{s.label}</div>
           </div>
         ))}
       </div>
 
-      {/* ═══ EXCEL YÜKLEME & GÜNLÜK ÖZET - KOMPAKT ═══ */}
-      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12}}>
-
-        {/* EXCEL YÜKLEME */}
-        <div style={S.card}>
-          <div style={{...S.cardHead, padding:'8px 14px'}}>
-            <LIcon name="FileSpreadsheet" size={13} color={C.accent}/>
-            <span style={{fontSize:11, fontWeight:700}}>DATA YÜKLEME (EXCEL)</span>
-          </div>
-          <div style={{padding:12}}>
-            <div onClick={() => fileRef.current?.click()} style={{
-              border:`2px dashed ${C.borderLight}`, borderRadius:8, padding:12,
-              textAlign:'center', cursor:'pointer', transition:'all .3s',
-              background:`${C.accent}05`, display:'flex', alignItems:'center', justifyContent:'center', gap:10
-            }}
-              onMouseEnter={e => {e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.background = `${C.accent}10`;}}
-              onMouseLeave={e => {e.currentTarget.style.borderColor = C.borderLight; e.currentTarget.style.background = `${C.accent}05`;}}
-              onDragOver={e => {e.preventDefault(); e.currentTarget.style.borderColor = C.accent;}}
-              onDrop={e => {e.preventDefault(); e.currentTarget.style.borderColor = C.borderLight; if(e.dataTransfer.files[0]) {const dt = new DataTransfer(); dt.items.add(e.dataTransfer.files[0]); fileRef.current.files = dt.files; handleFileSelect({target:{files:e.dataTransfer.files}});}}}
-            >
-              <LIcon name="Upload" size={20} color={C.textMuted} style={{opacity:0.5}}/>
-              <div>
-                <div style={{fontSize:11, fontWeight:700, color:C.textSec}}>EXCEL SÜRÜKLE VEYA TIKLA</div>
-                <div style={{fontSize:9, color:C.textMuted}}>.XLSX / .XLS / .CSV</div>
-              </div>
-              <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" style={{display:'none'}} onChange={handleFileSelect}/>
-            </div>
-            <div style={{marginTop:8, display:'flex', gap:6, alignItems:'center', justifyContent:'space-between'}}>
-              <button style={{...S.btn, ...S.btnP, fontSize:9, padding:'5px 10px'}} onClick={sablonIndir}>
-                <LIcon name="Download" size={12} color="#fff"/> ŞABLON
-              </button>
-              <button style={{...S.btn, ...S.btnS, fontSize:9, padding:'5px 10px'}} onClick={excelYukle}
-                disabled={!excelData || excelLoading}>
-                <LIcon name="Upload" size={12} color="#fff"/> {excelLoading ? 'YÜKLENİYOR...' : 'YÜKLE'}
-              </button>
-              <span style={{fontSize:9, color: excelMsg.includes('BAŞARI') ? C.success : excelMsg.includes('HATA') || excelMsg.includes('BOŞ') ? C.danger : C.textMuted}}>
-                {excelFile ? excelFile.name + (excelMsg ? ' - ' + excelMsg : '') : ''}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* GÜNLÜK ARAMA ÖZETİ + OTOMATİK ARAMA */}
+      {/* ═══ GÜNLÜK ARAMA ÖZETİ + OTOMATİK ARAMA ═══ */}
+      <div style={{marginBottom:12}}>
         <div style={S.card}>
           <div style={{...S.cardHead, padding:'8px 14px', justifyContent:'space-between'}}>
             <div style={{display:'flex', alignItems:'center', gap:6}}>
@@ -500,6 +459,21 @@ MR.CrmAramaPage = ({setPage, user}) => {
         </div>
       </div>
 
+      {/* GİZLİ EXCEL INPUT */}
+      <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" style={{display:'none'}} onChange={handleFileSelect}/>
+      {/* EXCEL DURUM MESAJI */}
+      {(excelFile || excelMsg) && (
+        <div style={{marginBottom:8, padding:'6px 14px', background:`${excelMsg.includes('BAŞARI') ? C.success : excelMsg.includes('HATA') || excelMsg.includes('BOŞ') ? C.danger : C.accent}10`, borderRadius:8, fontSize:10, fontWeight:600, color: excelMsg.includes('BAŞARI') ? C.success : excelMsg.includes('HATA') || excelMsg.includes('BOŞ') ? C.danger : C.textSec, display:'flex', alignItems:'center', gap:6}}>
+          <LIcon name="FileSpreadsheet" size={12} color={excelMsg.includes('BAŞARI') ? C.success : C.accent}/>
+          {excelFile ? excelFile.name : ''}{excelMsg ? ' - ' + excelMsg : ''}
+          {excelData && !excelLoading && (
+            <button style={{...S.btn, ...S.btnS, fontSize:8, padding:'3px 8px', marginLeft:6}} onClick={excelYukle}>
+              <LIcon name="Upload" size={10} color="#fff"/> YÜKLE
+            </button>
+          )}
+        </div>
+      )}
+
       {/* ═══ ANA LİSTE KARTI ═══ */}
       <div style={S.card}>
         {/* BAŞLIK */}
@@ -510,6 +484,12 @@ MR.CrmAramaPage = ({setPage, user}) => {
             <Badge text={toplamKayit + ' KAYIT'} color={C.accent}/>
           </div>
           <div style={{display:'flex', gap:6, alignItems:'center'}}>
+            <button style={{...S.btn, ...S.btnG, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4}} onClick={sablonIndir}>
+              <LIcon name="Download" size={11} color={C.textSec}/> ŞABLON İNDİR
+            </button>
+            <button style={{...S.btn, ...S.btnP, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4}} onClick={() => fileRef.current?.click()}>
+              <LIcon name="Upload" size={11} color="#fff"/> EXCEL YÜKLE
+            </button>
             <input placeholder="AD, TELEFON, TC ARA..." value={search} onChange={e => {setSearch(e.target.value); setSayfa(1);}}
               style={{...S.input, width:200, fontSize:10, padding:'6px 10px'}}/>
           </div>
