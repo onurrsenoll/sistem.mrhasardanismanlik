@@ -482,7 +482,7 @@ MR._CRMListesiInner = ({setPage, user}) => {
                       {c.telefon || '-'}
                       {c.telefon && (
                         <button style={{...iconBtn(C.success), width:24, height:24}} title="ARA"
-                          onClick={(e) => { e.stopPropagation(); if (MR.webrtcAra) { MR.webrtcAra(c.telefon, {ad: c.ad_soyad || ''}); } else { MR._gelenCagriTelefon = c.telefon; MR._gelenCagriAdi = c.ad_soyad || ''; setPage('crm-yeni'); } }}>
+                          onClick={(e) => { e.stopPropagation(); if (MR.webrtcAra) { MR.webrtcAra(c.telefon, {ad: c.ad_soyad || '', id: c.id, kaynak: 'CRM'}); } else { MR._gelenCagriTelefon = c.telefon; MR._gelenCagriAdi = c.ad_soyad || ''; setPage('crm-yeni'); } }}>
                           <LIcon name="Phone" size={12} color={C.success}/>
                         </button>
                       )}
@@ -1204,7 +1204,7 @@ MR._CRMYeniInner = ({setPage}) => {
     }
     if (!f.telefon || f.telefon.length < 10) { setError('GEÇERLİ BİR TELEFON NUMARASI GİRİN'); return; }
     if (MR.webrtcAra) {
-      MR.webrtcAra(f.telefon, {ad: f.ad_soyad || ''});
+      MR.webrtcAra(f.telefon, {ad: f.ad_soyad || '', id: f.id, kaynak: 'CRM'});
     } else {
       setError('ARAMA SİSTEMİ DEVRE DIŞI');
     }
