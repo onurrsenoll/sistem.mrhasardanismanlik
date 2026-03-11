@@ -195,10 +195,10 @@ MR.WebrtcWidget = ({user, setPage}) => {
       if (d.bilgi) {
         setKarsiTarafAdi(d.bilgi.ad || d.bilgi.ad_soyad || '');
         aramaBilgiRef.current = d.bilgi;
-        /* CRM/ARAMA LİSTESİNDEN ARAMA YAPILIYORSA KİŞİ KARTINA YÖNLENDİR */
-        if (d.bilgi.id && d.bilgi.kaynak === 'CRM') {
-          setPage('crm-detay-' + d.bilgi.id);
-        }
+        /* CRM/ARAMA LİSTESİNDEN ARAMA → localStorage'a yaz + crm-yeni aç */
+        localStorage.setItem('webrtc_new_call_phone', d.numara || '');
+        localStorage.setItem('webrtc_new_call_name', d.bilgi.ad || d.bilgi.ad_soyad || '');
+        setPage('crm-yeni');
       }
     };
     window.addEventListener('mr-webrtc-arama-basla', handler);
@@ -233,17 +233,19 @@ MR.WebrtcWidget = ({user, setPage}) => {
     setNumInput('');
   };
 
-  /* CEVAPLA - GELEN ÇAĞRI CEVAPLANINCA KİŞİ KARTINA YÖNLENDİR */
+  /* CEVAPLA - GELEN ÇAĞRI CEVAPLANINCA CRM-YENİ SAYFASINA YÖNLENDİR */
   const cevapla = () => {
     if (MR.webrtcTelefon) {
       MR.webrtcTelefon.cevapla();
-      /* Eşleştirme varsa kişi kartına yönlendir */
-      if (eslestirme && eslestirme.kayitlar && eslestirme.kayitlar.length > 0) {
-        var kayit = eslestirme.kayitlar[0];
-        if (eslestirme.kaynak === 'CRM' && kayit.id) {
-          setPage('crm-detay-' + kayit.id);
-        }
+      /* localStorage'a telefon + isim yaz, crm-yeni sayfası okuyacak */
+      localStorage.setItem('webrtc_new_call_phone', karsiTaraf || '');
+      var ad = karsiTarafAdi || '';
+      if (!ad && eslestirme && eslestirme.kayitlar && eslestirme.kayitlar.length > 0) {
+        var k = eslestirme.kayitlar[0];
+        ad = k.ad_soyad || k.magdur_ad_soyad || '';
       }
+      localStorage.setItem('webrtc_new_call_name', ad);
+      setPage('crm-yeni');
     }
   };
 

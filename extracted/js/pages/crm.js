@@ -482,7 +482,7 @@ MR._CRMListesiInner = ({setPage, user}) => {
                       {c.telefon || '-'}
                       {c.telefon && (
                         <button style={{...iconBtn(C.success), width:24, height:24}} title="ARA"
-                          onClick={(e) => { e.stopPropagation(); if (MR.webrtcAra) { MR.webrtcAra(c.telefon, {ad: c.ad_soyad || '', id: c.id, kaynak: 'CRM'}); } else { MR._gelenCagriTelefon = c.telefon; MR._gelenCagriAdi = c.ad_soyad || ''; setPage('crm-yeni'); } }}>
+                          onClick={(e) => { e.stopPropagation(); if (MR.webrtcAra) { MR.webrtcAra(c.telefon, {ad: c.ad_soyad || ''}); } else { MR._gelenCagriTelefon = c.telefon; MR._gelenCagriAdi = c.ad_soyad || ''; setPage('crm-yeni'); } }}>
                           <LIcon name="Phone" size={12} color={C.success}/>
                         </button>
                       )}
@@ -1117,9 +1117,15 @@ MR._CRMYeniInner = ({setPage}) => {
 
   /* ── GELEN ÇAĞRI / ARA BUTONUNDAN OTOMATİK DOLDURMA ── */
   useEffect(() => {
-    if (MR._gelenCagriTelefon) {
+    /* ÖNCE localStorage'DAN KONTROL ET (WEBRTC WIDGET TARAFINDAN SET EDİLİR) */
+    var lsTel = localStorage.getItem('webrtc_new_call_phone');
+    var lsAd = localStorage.getItem('webrtc_new_call_name');
+    if (lsTel) {
+      sF(p => ({...p, telefon: lsTel, ad_soyad: lsAd || p.ad_soyad || ''}));
+      localStorage.removeItem('webrtc_new_call_phone');
+      localStorage.removeItem('webrtc_new_call_name');
+    } else if (MR._gelenCagriTelefon) {
       sF(p => ({...p, telefon: MR._gelenCagriTelefon, ad_soyad: MR._gelenCagriAdi || ''}));
-      /* FORMU DOLDUR AMA ÇAĞRIYI OTOMATİK BAŞLATMA - KULLANICI ÇAĞRI BAŞLAT BUTONUNA BASSIN */
       MR._gelenCagriTelefon = null;
       MR._gelenCagriAdi = null;
     }
@@ -1204,7 +1210,7 @@ MR._CRMYeniInner = ({setPage}) => {
     }
     if (!f.telefon || f.telefon.length < 10) { setError('GEÇERLİ BİR TELEFON NUMARASI GİRİN'); return; }
     if (MR.webrtcAra) {
-      MR.webrtcAra(f.telefon, {ad: f.ad_soyad || '', id: f.id, kaynak: 'CRM'});
+      MR.webrtcAra(f.telefon, {ad: f.ad_soyad || ''});
     } else {
       setError('ARAMA SİSTEMİ DEVRE DIŞI');
     }

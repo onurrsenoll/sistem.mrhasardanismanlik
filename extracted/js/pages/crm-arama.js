@@ -360,7 +360,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
   const aramaYap = (item) => {
     if (!item.magdur_telefon) return;
     if (MR.webrtcAra) {
-      MR.webrtcAra(item.magdur_telefon, {ad: item.magdur_ad_soyad || '', id: item.id, kaynak: 'CRM'});
+      MR.webrtcAra(item.magdur_telefon, {ad: item.magdur_ad_soyad || ''});
       setAramaMsg('WEBRTC ARAMA BAŞLATILIYOR...');
       setAramaAktif(item.id);
       setTimeout(() => { setAramaMsg(''); setAramaAktif(null); }, 4000);
