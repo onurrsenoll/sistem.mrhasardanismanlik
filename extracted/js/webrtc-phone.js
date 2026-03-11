@@ -66,11 +66,21 @@ MR.webrtcTelefon = {
     turnPass: ''
   },
 
-  /* ═══ TURN KİMLİK BİLGİLERİ OLUŞTUR (Metered OpenRelay Static Auth - HMAC-SHA1) ═══ */
+  /* ═══ TURN KİMLİK BİLGİLERİ OLUŞTUR ═══ */
   _turnKimlikOlustur: async function() {
+    /* SIP sağlayıcısının TURN sunucusunu SIP kimlik bilgileriyle kullan */
+    if (this._config.domain && this._config.dahili && this._config.sipSifre) {
+      this._turnSipCreds = {
+        username: this._config.dahili,
+        credential: this._config.sipSifre
+      };
+      console.log('[WEBRTC] TURN: SIP sağlayıcı kimlik bilgileri hazır (dahili:', this._config.dahili, ')');
+    }
+
+    /* Metered.ca static auth kimlik bilgilerini de hazırla (yedek) */
     try {
       var secret = 'openrelayprojectsecret';
-      var timestamp = Math.floor(Date.now() / 1000) + 86400; /* 24 SAAT GEÇERLİ */
+      var timestamp = Math.floor(Date.now() / 1000) + 86400;
       var username = timestamp.toString();
 
       var enc = new TextEncoder();
@@ -83,33 +93,71 @@ MR.webrtcTelefon = {
       var credential = btoa(String.fromCharCode.apply(null, new Uint8Array(sig)));
 
       this._turnCachedCreds = { username: username, credential: credential };
-      console.log('[WEBRTC] TURN KİMLİK BİLGİLERİ OLUŞTURULDU (Static Auth HMAC-SHA1) - KULLANICI:', username);
+      console.log('[WEBRTC] TURN: Metered.ca yedek kimlik bilgileri hazır');
       return true;
     } catch(e) {
-      console.warn('[WEBRTC] TURN KİMLİK OLUŞTURMA HATASI (crypto.subtle):', e);
-      /* FALLBACK: LEGACY KİMLİK BİLGİLERİNİ DENE */
+      console.warn('[WEBRTC] TURN: Metered.ca kimlik oluşturulamadı:', e.message);
       this._turnCachedCreds = { username: 'openrelayproject', credential: 'openrelayproject' };
-      console.log('[WEBRTC] TURN FALLBACK: LEGACY KİMLİK BİLGİLERİ KULLANILIYOR');
       return false;
     }
+  },
+
+  /* ═══ TURN BAĞLANTI TESTİ ═══ */
+  _turnTest: async function(turnUrl, username, credential, timeout) {
+    timeout = timeout || 5000;
+    return new Promise(function(resolve) {
+      try {
+        var pc = new RTCPeerConnection({
+          iceServers: [{ urls: turnUrl, username: username, credential: credential }],
+          iceTransportPolicy: 'relay'
+        });
+        var found = false;
+        var timer = setTimeout(function() {
+          if (!found) { pc.close(); resolve(false); }
+        }, timeout);
+
+        pc.onicecandidate = function(e) {
+          if (e.candidate && e.candidate.type === 'relay') {
+            found = true;
+            clearTimeout(timer);
+            pc.close();
+            resolve(true);
+          }
+          if (!e.candidate && !found) {
+            clearTimeout(timer);
+            pc.close();
+            resolve(false);
+          }
+        };
+
+        pc.createDataChannel('test');
+        pc.createOffer().then(function(offer) {
+          return pc.setLocalDescription(offer);
+        }).catch(function() {
+          clearTimeout(timer);
+          pc.close();
+          resolve(false);
+        });
+      } catch(e) {
+        resolve(false);
+      }
+    });
   },
 
   /* ═══ ICE SUNUCULARI ═══ */
   _getIceServers: function() {
     var servers = [
       { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'stun:stun.stunprotocol.org:3478' }
+      { urls: 'stun:stun1.l.google.com:19302' }
     ];
 
-    /* KULLANICI TURN SUNUCUSU VARSA ONU EKLE */
+    /* KULLANICI TURN SUNUCUSU VARSA ONU EKLE (EN YÜKSEK ÖNCELİK) */
     if (this._config.turnUrl) {
       servers.push({
         urls: this._config.turnUrl,
         username: this._config.turnUser || '',
         credential: this._config.turnPass || ''
       });
-      /* TCP FALLBACK */
       if (this._config.turnUrl.indexOf('?transport=') === -1) {
         servers.push({
           urls: this._config.turnUrl + '?transport=tcp',
@@ -117,26 +165,100 @@ MR.webrtcTelefon = {
           credential: this._config.turnPass || ''
         });
       }
-      console.log('[WEBRTC] KULLANICI TURN SUNUCUSU EKLENDİ:', this._config.turnUrl);
-    } else if (this._turnCachedCreds) {
-      /* METERED OPENRELAY STATIC AUTH TURN SUNUCULARI */
+      console.log('[WEBRTC] TURN: Kullanıcı TURN sunucusu eklendi:', this._config.turnUrl);
+    }
+
+    /* SIP SAĞLAYICININ TURN SUNUCUSU (SIP domain üzerinde) */
+    if (this._config.domain && this._turnSipCreds) {
+      var sipDomain = this._config.domain;
+      var su = this._turnSipCreds.username;
+      var sc = this._turnSipCreds.credential;
+      servers.push(
+        { urls: 'turn:' + sipDomain + ':3478', username: su, credential: sc },
+        { urls: 'turn:' + sipDomain + ':3478?transport=tcp', username: su, credential: sc },
+        { urls: 'turns:' + sipDomain + ':5349', username: su, credential: sc },
+        { urls: 'turn:turn.' + sipDomain.replace(/^sip\d*\./, '') + ':3478', username: su, credential: sc },
+        { urls: 'turn:turn.' + sipDomain.replace(/^sip\d*\./, '') + ':3478?transport=tcp', username: su, credential: sc },
+        { urls: 'turns:turn.' + sipDomain.replace(/^sip\d*\./, '') + ':5349', username: su, credential: sc }
+      );
+      console.log('[WEBRTC] TURN: SIP sağlayıcı TURN sunucuları eklendi (domain:', sipDomain, ')');
+    }
+
+    /* _workingTurnUrl varsa onu da ekle (test sonucu çalışan TURN) */
+    if (this._workingTurnUrl) {
+      /* Zaten listedeyse tekrar ekleme */
+      var wtUrl = this._workingTurnUrl;
+      var alreadyExists = servers.some(function(s) { return s.urls === wtUrl.urls; });
+      if (!alreadyExists) {
+        servers.push(this._workingTurnUrl);
+        console.log('[WEBRTC] TURN: Test edilmiş çalışan TURN eklendi:', wtUrl.urls);
+      }
+    }
+
+    /* METERED OPENRELAY YEDEK TURN SUNUCULARI */
+    if (this._turnCachedCreds && !this._config.turnUrl) {
       var u = this._turnCachedCreds.username;
       var c = this._turnCachedCreds.credential;
       servers.push(
-        { urls: 'turn:staticauth.openrelay.metered.ca:80', username: u, credential: c },
-        { urls: 'turn:staticauth.openrelay.metered.ca:80?transport=tcp', username: u, credential: c },
-        { urls: 'turn:staticauth.openrelay.metered.ca:443', username: u, credential: c },
         { urls: 'turn:staticauth.openrelay.metered.ca:443?transport=tcp', username: u, credential: c },
-        { urls: 'turns:staticauth.openrelay.metered.ca:443', username: u, credential: c }
+        { urls: 'turns:staticauth.openrelay.metered.ca:443', username: u, credential: c },
+        { urls: 'turn:staticauth.openrelay.metered.ca:80', username: u, credential: c },
+        { urls: 'turn:staticauth.openrelay.metered.ca:80?transport=tcp', username: u, credential: c }
       );
-      console.log('[WEBRTC] METERED STATIC AUTH TURN SUNUCULARI EKLENDİ (5 ADET)');
-    } else {
+      console.log('[WEBRTC] TURN: Metered.ca yedek sunucuları eklendi');
+    }
+
+    if (servers.length <= 2) {
       console.warn('[WEBRTC] ⚠ HİÇ TURN SUNUCUSU YOK! MEDYA BAĞLANTISI BAŞARISIZ OLABİLİR.');
     }
 
     var turnCount = servers.filter(function(s) { return (s.urls || '').indexOf('turn') === 0; }).length;
     console.log('[WEBRTC] ICE SUNUCU SAYISI:', servers.length, '(TURN:', turnCount, ')');
     return servers;
+  },
+
+  /* ═══ TURN SUNUCU TESTİ (ARKA PLAN) ═══ */
+  _turnTestBaslat: async function() {
+    var self = this;
+    var servers = this._getIceServers();
+    var turnServers = servers.filter(function(s) { return (s.urls || '').indexOf('turn') === 0; });
+
+    if (turnServers.length === 0) {
+      console.warn('[WEBRTC] TURN TEST: Hiç TURN sunucusu yok!');
+      return;
+    }
+
+    console.log('[WEBRTC] TURN TEST: ' + turnServers.length + ' TURN sunucusu test ediliyor (arka planda)...');
+
+    /* Her TURN sunucusunu paralel test et */
+    var testPromises = turnServers.map(function(srv) {
+      return self._turnTest(srv.urls, srv.username, srv.credential, 5000).then(function(ok) {
+        return { urls: srv.urls, username: srv.username, credential: srv.credential, ok: ok };
+      });
+    });
+
+    try {
+      var results = await Promise.all(testPromises);
+      var working = results.filter(function(r) { return r.ok; });
+      var failed = results.filter(function(r) { return !r.ok; });
+
+      if (working.length > 0) {
+        console.log('[WEBRTC] TURN TEST SONUÇLARI: ✓ ' + working.length + ' ÇALIŞIYOR, ✗ ' + failed.length + ' BAŞARISIZ');
+        working.forEach(function(r) {
+          console.log('[WEBRTC] TURN ✓ ÇALIŞIYOR:', r.urls);
+        });
+        self._workingTurnUrl = working[0];
+      } else {
+        console.error('[WEBRTC] TURN TEST: ⚠ HİÇBİR TURN SUNUCUSU ÇALIŞMIYOR! (' + failed.length + ' test edildi)');
+        failed.forEach(function(r) {
+          console.error('[WEBRTC] TURN ✗ BAŞARISIZ:', r.urls);
+        });
+        console.error('[WEBRTC] ⚠ TURN OLMADAN SİMETRİK NAT ARKASINDA ARAMALAR BAŞARISIZ OLACAKTIR');
+        console.error('[WEBRTC] ⚠ ÇÖZÜM: Cloudflare WARP/VPN kapatın VEYA çalışan TURN sunucusu ayarlayın');
+      }
+    } catch(e) {
+      console.warn('[WEBRTC] TURN TEST HATASI:', e.message);
+    }
   },
 
   /* ═══ CİHAZLARI LİSTELE ═══ */
@@ -218,10 +340,8 @@ MR.webrtcTelefon = {
       return;
     }
 
-    /* TURN KİMLİK BİLGİLERİNİ ÖN-OLUŞTUR (KULLANICI TURN GİRMEMİŞSE) */
-    if (!this._config.turnUrl && !this._turnCachedCreds) {
-      await this._turnKimlikOlustur();
-    }
+    /* TURN KİMLİK BİLGİLERİNİ ÖN-OLUŞTUR */
+    await this._turnKimlikOlustur();
 
     this._remoteAudioOlustur();
     this.cihazlariListele();
@@ -233,7 +353,10 @@ MR.webrtcTelefon = {
 
     console.log('[WEBRTC] OTOMATİK BAŞLATILIYOR - DAHİLİ:', this._config.dahili, '| KULLANICI:', this._config.kullanici, '| SANTRAL:', this._config.santralNo);
     console.log('[WEBRTC] BAĞLANIYOR:', sipUri, '| AUTH:', authUser, '| WSS:', this._config.wssUrl);
-    console.log('[WEBRTC] TURN DURUMU:', this._turnCachedCreds ? 'HAZIR (Static Auth)' : (this._config.turnUrl ? 'KULLANICI TURN' : 'YOK'));
+    console.log('[WEBRTC] TURN DURUMU:', this._turnSipCreds ? 'SIP TURN + Metered Yedek' : (this._config.turnUrl ? 'KULLANICI TURN' : 'Sadece Metered'));
+
+    /* ARKA PLANDA TURN SUNUCULARINI TEST ET */
+    this._turnTestBaslat();
 
     /* JsSIP SIP MESAJLARINI GÖRMEK İÇİN DEBUG MODU */
     try { JsSIP.debug.enable('JsSIP:RTCSession*'); } catch(e) { console.log('[WEBRTC] JsSIP debug etkinleştirilemedi (normal)'); }
