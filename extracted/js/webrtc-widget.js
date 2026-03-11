@@ -145,9 +145,13 @@ MR.WebrtcWidget = ({user, setPage}) => {
           setTimeout(() => setHata(''), 8000);
           break;
         case 'araniyor':
-        case 'caliyor':
-          setAramaDurumu(d.durum === 'araniyor' ? 'araniyor' : 'caliyor');
+          setAramaDurumu('araniyor');
           if (d.detay && typeof d.detay === 'string') setKarsiTaraf(d.detay);
+          setPanelAcik(true);
+          break;
+        case 'caliyor':
+          /* GELEN ÇAĞRI İÇİN: aramaDurumu 'gelen' İSE DEĞİŞTİRME - CEVAPLA BUTONU KAYBOLMASIN */
+          setAramaDurumu(prev => prev === 'gelen' ? 'gelen' : 'caliyor');
           setPanelAcik(true);
           break;
         case 'gelen-cagri':

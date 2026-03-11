@@ -72,45 +72,13 @@ MR.webrtcTelefon = {
       { urls: 'stun:stun1.l.google.com:19302' }
     ];
 
-    /* KULLANICI TURN SUNUCUSU VARSA EN BAŞA EKLE */
+    /* KULLANICI TURN SUNUCUSU VARSA EKLE */
     if (this._config.turnUrl) {
-      servers.unshift({
+      servers.push({
         urls: this._config.turnUrl,
         username: this._config.turnUser || '',
         credential: this._config.turnPass || ''
       });
-    }
-
-    var santralNo = (this._config.santralNo || '').replace(/^0+/, '');
-    var sipSifre = this._config.sipSifre || '';
-    var kullanici = this._config.kullanici || '';
-    var authUser = this._config.dahili + (santralNo ? '-' + santralNo : '');
-
-    /* NETSANTRAL TURN SUNUCULARI */
-    var domain = this._config.domain || 'sip6.netsantral.com';
-    var turnHost = domain.replace(/^sip\d*\./, '');
-    var turnUrls = [
-      'turn:' + turnHost + ':3478',
-      'turn:' + domain + ':3478'
-    ];
-    var turnsUrls = [
-      'turns:' + turnHost + ':5349',
-      'turns:' + domain + ':5349'
-    ];
-
-    /* FORMAT 1: kullanici (telefon numarası) */
-    if (kullanici) {
-      servers.push({ urls: turnUrls, username: kullanici, credential: sipSifre });
-      servers.push({ urls: turnsUrls, username: kullanici, credential: sipSifre });
-    }
-
-    /* FORMAT 2: dahili-santralNo */
-    servers.push({ urls: turnUrls, username: authUser, credential: sipSifre });
-    servers.push({ urls: turnsUrls, username: authUser, credential: sipSifre });
-
-    /* FORMAT 3: sadece dahili */
-    if (santralNo) {
-      servers.push({ urls: turnUrls, username: this._config.dahili, credential: sipSifre });
     }
 
     console.log('[WEBRTC] ICE SUNUCU SAYISI:', servers.length);
