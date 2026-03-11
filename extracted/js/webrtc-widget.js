@@ -47,12 +47,6 @@ MR.webrtcOtoBaslat = async (user) => {
     /* API ŞİFRESİ (Netsantral originate için) */
     var apiSifre = localStorage.getItem('mr_netsantral_api_sifre') || '';
 
-    /* TURN SUNUCU AYARLARI (opsiyonel - boşsa varsayılan Metered OpenRelay kullanılır) */
-    var turnUrl = localStorage.getItem('mr_webrtc_turn_url') || '';
-    var turnUser = localStorage.getItem('mr_webrtc_turn_user') || '';
-    var turnPass = localStorage.getItem('mr_webrtc_turn_pass') || '';
-    var meteredApiKey = localStorage.getItem('mr_metered_api_key') || '';
-
     config = {
       wssUrl: wssUrl,
       domain: domain || wssUrl.replace('wss://', '').replace(/:\d+.*/, '').replace(/\/.*/, ''),
@@ -60,11 +54,7 @@ MR.webrtcOtoBaslat = async (user) => {
       sipSifre: sipSifre,
       santralNo: santralNo,
       kullanici: kullanici,
-      apiSifre: apiSifre,
-      turnUrl: turnUrl,
-      turnUser: turnUser,
-      turnPass: turnPass,
-      meteredApiKey: meteredApiKey
+      apiSifre: apiSifre
     };
     MR._webrtcConfig = config;
   }

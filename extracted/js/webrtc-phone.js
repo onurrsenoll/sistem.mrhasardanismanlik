@@ -24,13 +24,7 @@ MR.webrtcTelefon = {
   _ringtoneCtx: null,
   _ringbackCtx: null,
   _ringbackTimer: null,
-  _iceRestartCount: 0,
-  _iceMaxRestart: 3,
-  _iceGatherTimer: null,
-  _iceConnectTimer: null,
-  _relayCandidateFound: false,
   _reconnectTimer: null,
-  _turnCachedCreds: null,
 
   /* ═══ SES YÖNETİMİ ═══ */
   _sesAyarlari: {
@@ -59,183 +53,12 @@ MR.webrtcTelefon = {
     sipSifre: '',
     kullanici: '',
     apiSifre: '',
-    santralNo: '',
-    turnUrl: '',
-    turnUser: '',
-    turnPass: '',
-    meteredApiKey: '' /* metered.ca ücretsiz TURN API anahtarı */
+    santralNo: ''
   },
 
-  /* ═══ TURN KİMLİK BİLGİLERİ OLUŞTUR ═══ */
-  _turnKimlikOlustur: async function() {
-    /* 1. Metered.ca API ile dinamik TURN credentials al */
-    /* localStorage'dan API key kontrolü (config'de yoksa) */
-    if (!this._config.meteredApiKey) {
-      this._config.meteredApiKey = localStorage.getItem('mr_metered_api_key') || '';
-    }
-    if (this._config.meteredApiKey) {
-      try {
-        var resp = await fetch('https://mrhasar.metered.live/api/v1/turn/credentials?apiKey=' + this._config.meteredApiKey);
-        if (resp.ok) {
-          var creds = await resp.json();
-          if (Array.isArray(creds) && creds.length > 0) {
-            this._meteredServers = creds;
-            console.log('[WEBRTC] TURN: Metered API BAŞARILI ✓', creds.length, 'sunucu alındı');
-            return true;
-          }
-        }
-        console.warn('[WEBRTC] TURN: Metered API yanıt hatası:', resp.status);
-      } catch(e) {
-        console.warn('[WEBRTC] TURN: Metered API erişilemedi:', e.message);
-      }
-    }
-
-    /* 2. Metered.ca static auth (yedek) */
-    try {
-      var secret = 'openrelayproject';
-      var timestamp = Math.floor(Date.now() / 1000) + 86400;
-      var username = timestamp.toString();
-      var enc = new TextEncoder();
-      var key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
-      var sig = await crypto.subtle.sign('HMAC', key, enc.encode(username));
-      var credential = btoa(String.fromCharCode.apply(null, new Uint8Array(sig)));
-      this._turnCachedCreds = { username: username, credential: credential };
-    } catch(e) {
-      this._turnCachedCreds = { username: 'openrelayproject', credential: 'openrelayproject' };
-    }
-    return false;
-  },
-
-  /* ═══ TURN BAĞLANTI TESTİ ═══ */
-  _turnTest: function(turnUrl, username, credential, timeout) {
-    timeout = timeout || 5000;
-    return new Promise(function(resolve) {
-      try {
-        var pc = new RTCPeerConnection({
-          iceServers: [{ urls: turnUrl, username: username, credential: credential }],
-          iceTransportPolicy: 'relay'
-        });
-        var found = false;
-        var timer = setTimeout(function() { if (!found) { pc.close(); resolve(false); } }, timeout);
-        pc.onicecandidate = function(e) {
-          if (e.candidate && e.candidate.type === 'relay') {
-            found = true; clearTimeout(timer); pc.close(); resolve(true);
-          }
-          if (!e.candidate && !found) {
-            clearTimeout(timer); pc.close(); resolve(false);
-          }
-        };
-        pc.createDataChannel('t');
-        pc.createOffer().then(function(o) { return pc.setLocalDescription(o); }).catch(function() { clearTimeout(timer); pc.close(); resolve(false); });
-      } catch(e) { resolve(false); }
-    });
-  },
-
-  /* ═══ ICE SUNUCULARI ═══ */
+  /* ═══ ICE SUNUCULARI (WSS BAĞLANTI - PBX MEDYA RELAY YAPAR) ═══ */
   _getIceServers: function() {
-    var servers = [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' }
-    ];
-
-    /* 1. KULLANICI TURN SUNUCUSU (EN YÜKSEK ÖNCELİK) */
-    if (this._config.turnUrl) {
-      servers.push({
-        urls: this._config.turnUrl,
-        username: this._config.turnUser || '',
-        credential: this._config.turnPass || ''
-      });
-      if (this._config.turnUrl.indexOf('?transport=') === -1) {
-        servers.push({
-          urls: this._config.turnUrl + '?transport=tcp',
-          username: this._config.turnUser || '',
-          credential: this._config.turnPass || ''
-        });
-      }
-      console.log('[WEBRTC] TURN: Kullanıcı TURN sunucusu eklendi:', this._config.turnUrl);
-    }
-
-    /* 2. METERED API TURN SUNUCULARI (dinamik credentials) */
-    if (this._meteredServers && this._meteredServers.length > 0) {
-      var self = this;
-      this._meteredServers.forEach(function(s) {
-        servers.push({
-          urls: s.urls || s.url,
-          username: s.username || '',
-          credential: s.credential || ''
-        });
-      });
-      console.log('[WEBRTC] TURN: Metered API sunucuları eklendi (' + this._meteredServers.length + ' adet)');
-    }
-
-    /* 3. ÇALIŞAN TURN (test sonucu) */
-    if (this._workingTurnUrl) {
-      var wtUrl = this._workingTurnUrl;
-      var exists = servers.some(function(s) { return s.urls === wtUrl.urls; });
-      if (!exists) servers.push(this._workingTurnUrl);
-    }
-
-    /* 4. METERED STATIC AUTH YEDEK */
-    if (this._turnCachedCreds && !this._meteredServers) {
-      var u = this._turnCachedCreds.username;
-      var c = this._turnCachedCreds.credential;
-      servers.push(
-        { urls: 'turn:openrelay.metered.ca:443', username: u, credential: c },
-        { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: u, credential: c },
-        { urls: 'turns:openrelay.metered.ca:443', username: u, credential: c },
-        { urls: 'turn:openrelay.metered.ca:80', username: u, credential: c },
-        { urls: 'turn:openrelay.metered.ca:80?transport=tcp', username: u, credential: c }
-      );
-    }
-
-    var turnCount = servers.filter(function(s) { return (s.urls || '').indexOf('turn') === 0; }).length;
-    console.log('[WEBRTC] ICE SUNUCU SAYISI:', servers.length, '(TURN:', turnCount, ')');
-    return servers;
-  },
-
-  /* ═══ TURN SUNUCU TESTİ (ARKA PLAN) ═══ */
-  _turnTestBaslat: async function() {
-    var self = this;
-    var servers = this._getIceServers();
-    var turnServers = servers.filter(function(s) { return (s.urls || '').indexOf('turn') === 0; });
-
-    if (turnServers.length === 0) {
-      console.warn('[WEBRTC] TURN TEST: Hiç TURN sunucusu yok!');
-      return;
-    }
-
-    console.log('[WEBRTC] TURN TEST: ' + turnServers.length + ' TURN sunucusu test ediliyor...');
-
-    var testPromises = turnServers.map(function(srv) {
-      return self._turnTest(srv.urls, srv.username, srv.credential, 5000).then(function(ok) {
-        return { urls: srv.urls, username: srv.username, credential: srv.credential, ok: ok };
-      });
-    });
-
-    try {
-      var results = await Promise.all(testPromises);
-      var working = results.filter(function(r) { return r.ok; });
-      var failed = results.filter(function(r) { return !r.ok; });
-
-      if (working.length > 0) {
-        console.log('%c[WEBRTC] TURN TEST: ✓ ' + working.length + ' ÇALIŞIYOR', 'color: lime; font-weight: bold');
-        working.forEach(function(r) { console.log('[WEBRTC] TURN ✓', r.urls); });
-        self._workingTurnUrl = working[0];
-      } else {
-        console.error('[WEBRTC] ═══════════════════════════════════════════════════');
-        console.error('[WEBRTC] ⚠ HİÇBİR TURN SUNUCUSU ÇALIŞMIYOR! (' + failed.length + ' test edildi)');
-        console.error('[WEBRTC] ═══════════════════════════════════════════════════');
-        console.error('[WEBRTC] ÇÖZÜM 1: Metered.ca API key ayarlayın (50GB/ay ücretsiz):');
-        console.error('[WEBRTC]   → Konsolda: MR.webrtcTelefon.setTurnApiKey("API_KEY_BURAYA")');
-        console.error('[WEBRTC]   → API key almak için: https://www.metered.ca/stun-turn');
-        console.error('[WEBRTC] ÇÖZÜM 2: Cloudflare WARP / VPN kapatın');
-        console.error('[WEBRTC] ÇÖZÜM 3: Docker Desktop kapatıp tekrar deneyin');
-        console.error('[WEBRTC] ⚠ TURN OLMADAN SİMETRİK NAT ARKASINDA ARAMALAR BAŞARISIZ OLACAKTIR');
-        console.error('[WEBRTC] ═══════════════════════════════════════════════════');
-      }
-    } catch(e) {
-      console.warn('[WEBRTC] TURN TEST HATASI:', e.message);
-    }
+    return [];
   },
 
   /* ═══ CİHAZLARI LİSTELE ═══ */
@@ -317,9 +140,6 @@ MR.webrtcTelefon = {
       return;
     }
 
-    /* TURN KİMLİK BİLGİLERİNİ ÖN-OLUŞTUR */
-    await this._turnKimlikOlustur();
-
     this._remoteAudioOlustur();
     this.cihazlariListele();
 
@@ -328,12 +148,7 @@ MR.webrtcTelefon = {
     var sipUri = 'sip:' + authUser + '@' + this._config.domain;
     var self = this;
 
-    console.log('[WEBRTC] OTOMATİK BAŞLATILIYOR - DAHİLİ:', this._config.dahili, '| KULLANICI:', this._config.kullanici, '| SANTRAL:', this._config.santralNo);
-    console.log('[WEBRTC] BAĞLANIYOR:', sipUri, '| AUTH:', authUser, '| WSS:', this._config.wssUrl);
-    console.log('[WEBRTC] TURN DURUMU:', this._turnSipCreds ? 'SIP TURN + Metered Yedek' : (this._config.turnUrl ? 'KULLANICI TURN' : 'Sadece Metered'));
-
-    /* ARKA PLANDA TURN SUNUCULARINI TEST ET */
-    this._turnTestBaslat();
+    console.log('[WEBRTC] BAŞLATILIYOR - DAHİLİ:', this._config.dahili, '| WSS:', this._config.wssUrl);
 
     /* JsSIP SIP MESAJLARINI GÖRMEK İÇİN DEBUG MODU */
     try { JsSIP.debug.enable('JsSIP:RTCSession*'); } catch(e) { console.log('[WEBRTC] JsSIP debug etkinleştirilemedi (normal)'); }
@@ -501,7 +316,7 @@ MR.webrtcTelefon = {
     console.log('[WEBRTC] ARAMA BAŞLATILIYOR:', cleanNum, '| URI:', targetUri);
 
     this._aramaDurumu = 'araniyor';
-    this._iceRestartCount = 0;
+
     this._durumBildir('araniyor', cleanNum);
 
     try {
@@ -562,7 +377,7 @@ MR.webrtcTelefon = {
 
     this._session = session;
     this._aramaDurumu = 'gelen';
-    this._iceRestartCount = 0;
+
     this._sessionOlaylariBagla(session);
     this._zilCaldir();
 
@@ -609,7 +424,7 @@ MR.webrtcTelefon = {
       }
 
       var iceServers = this._getIceServers();
-      this._iceRestartCount = 0;
+  
 
       /* MEDIASTREAM OLARAK GEÇ - JsSIP getUserMedia ÇAĞIRMASIN */
       var answerOptions = {
@@ -794,32 +609,8 @@ MR.webrtcTelefon = {
       }
     });
 
-    /* SDP FİLTRE - DOCKER/WSL ADAYLARINI SDP'DEN ÇIKAR */
-    session.on('sdp', function(event) {
-      if (event.originator === 'local') {
-        var originalLines = event.sdp.split('\r\n');
-        var filteredLines = [];
-        var removedCount = 0;
-        for (var i = 0; i < originalLines.length; i++) {
-          var line = originalLines[i];
-          /* Docker/WSL 172.16-31.x.x adreslerini içeren candidate satırlarını çıkar */
-          if (line.indexOf('a=candidate:') === 0 && /172\.(1[6-9]|2\d|3[01])\.\d+\.\d+/.test(line)) {
-            removedCount++;
-            continue;
-          }
-          filteredLines.push(line);
-        }
-        if (removedCount > 0) {
-          event.sdp = filteredLines.join('\r\n');
-          console.log('[WEBRTC] SDP FİLTRE: ' + removedCount + ' Docker/WSL aday çıkarıldı');
-        }
-      }
-    });
-
     session.on('peerconnection', function(data) {
       var pc = data.peerconnection;
-      self._relayCandidateFound = false;
-      var _hostCount = 0, _srflxCount = 0, _relayCount = 0;
 
       pc.ontrack = function(event) {
         if (event.track.kind === 'audio' && self._remoteAudio) {
@@ -827,156 +618,48 @@ MR.webrtcTelefon = {
           self._remoteAudio.srcObject = stream;
           self._remoteAudio.volume = self._sesAyarlari.volume;
 
-          /* HOPARLÖR SEÇİMİ UYGULA */
           if (self._sesAyarlari.hoparlörId && self._remoteAudio.setSinkId) {
             self._remoteAudio.setSinkId(self._sesAyarlari.hoparlörId).catch(function() {});
           }
 
-          /* TARAYICI AUTOPLAY KISITLAMASINI AŞMAK İÇİN KULLANICI ETKİLEŞİMİNDEN SONRA OYNAT */
           var playPromise = self._remoteAudio.play();
           if (playPromise !== undefined) {
             playPromise.then(function() {
-              console.log('[WEBRTC] UZAK SES OYNATIYOR ✓ VOLUME:', self._sesAyarlari.volume);
+              console.log('[WEBRTC] SES OYNATIYOR ✓');
             }).catch(function(err) {
-              console.warn('[WEBRTC] AUTOPLAY ENGELLENDİ - KULLANICI ETKİLEŞİMİ BEKLENİYOR:', err);
-              /* KULLANICI ETKİLEŞİMİNDE TEKRAR DENE */
+              console.warn('[WEBRTC] AUTOPLAY ENGELLENDİ:', err);
               var resumePlay = function() {
                 self._remoteAudio.play().then(function() {
-                  console.log('[WEBRTC] SES ETKİLEŞİM SONRASI BAŞLADI ✓');
+                  console.log('[WEBRTC] SES BAŞLADI ✓');
                   document.removeEventListener('click', resumePlay);
                   document.removeEventListener('touchstart', resumePlay);
-                  document.removeEventListener('keydown', resumePlay);
                 }).catch(function() {});
               };
               document.addEventListener('click', resumePlay, { once: false });
               document.addEventListener('touchstart', resumePlay, { once: false });
-              document.addEventListener('keydown', resumePlay, { once: false });
             });
           }
 
           _sesAyarlandi = true;
           self._ringbackDurdur();
-          console.log('[WEBRTC] UZAK SES BAĞLANDI (ontrack) | VOLUME:', self._sesAyarlari.volume);
+          console.log('[WEBRTC] UZAK SES BAĞLANDI');
         }
       };
 
-      /* ICE ADAYLARINI LOGLA VE FİLTRELE */
-      pc.onicecandidate = function(event) {
-        if (event.candidate) {
-          var c = event.candidate;
-          var addr = c.address || c.ip || '';
-
-          /* İSTATİSTİK */
-          if (c.type === 'host') _hostCount++;
-          else if (c.type === 'srflx') _srflxCount++;
-          else if (c.type === 'relay') {
-            _relayCount++;
-            self._relayCandidateFound = true;
-            console.log('[WEBRTC] ✓ RELAY (TURN) ADAY BULUNDU:', c.protocol, addr);
-          }
-
-          /* DOCKER/WSL/SANAL AĞ ADAYLARINI FİLTRELE (172.16-31.x.x) */
-          if (addr && /^172\.(1[6-9]|2\d|3[01])\./.test(addr)) {
-            console.log('[WEBRTC] ICE ADAY FİLTRELENDİ (Docker/WSL):', c.type, c.protocol, addr);
-            return; /* BU ADAYI GÖNDERMİYORUZ - ICE karışıklığı önlenir */
-          }
-
-          console.log('[WEBRTC] ICE ADAY:', c.type, c.protocol, addr);
-        } else {
-          /* ICE TOPLAMA TAMAMLANDI */
-          if (self._iceGatherTimer) { clearTimeout(self._iceGatherTimer); self._iceGatherTimer = null; }
-          console.log('[WEBRTC] ICE ADAY TOPLAMA TAMAMLANDI - host:', _hostCount, 'srflx:', _srflxCount, 'relay:', _relayCount);
-          if (_relayCount === 0) {
-            console.warn('[WEBRTC] ⚠ RELAY (TURN) ADAY BULUNAMADI! NAT/VPN/GÜVENLIK DUVARI SORUNU OLABİLİR.');
-            console.warn('[WEBRTC] ⚠ Cloudflare WARP veya VPN kullanıyorsanız DEVRE DIŞI BIRAKIN.');
-            console.warn('[WEBRTC] ⚠ Sadece STUN srflx adayları var (' + _srflxCount + ' adet) - simetrik NAT varsa çalışmaz.');
-          }
-        }
-      };
-
-      /* ICE TOPLAMA ZAMANAŞIMI - 8 SANİYE İÇİNDE TAMAMLANMAZSA UYAR */
-      self._iceGatherTimer = setTimeout(function() {
-        if (pc.iceGatheringState === 'gathering') {
-          console.warn('[WEBRTC] ⚠ ICE TOPLAMA 8 SANİYEDİR DEVAM EDİYOR - TURN sunucularına erişilemiyor olabilir');
-          console.log('[WEBRTC] Mevcut adaylar - host:', _hostCount, 'srflx:', _srflxCount, 'relay:', _relayCount);
-        }
-      }, 8000);
-
-      /* ICE TOPLAMA DURUMUNU İZLE */
-      pc.onicegatheringstatechange = function() {
-        console.log('[WEBRTC] ICE TOPLAMA DURUMU:', pc.iceGatheringState);
-      };
-
-      /* ICE BAĞLANTI ZAMANAŞIMI - 15 SANİYE İÇİNDE BAĞLANMAZSA UYAR */
-      self._iceConnectTimer = setTimeout(function() {
-        if (pc.iceConnectionState === 'checking' || pc.iceConnectionState === 'new') {
-          console.error('[WEBRTC] ⚠ ICE BAĞLANTISI 15 SANİYEDİR KURULAMIYOR!');
-          console.error('[WEBRTC] ⚠ MUHTEMEL NEDENLER:');
-          console.error('[WEBRTC]   1. Cloudflare WARP / VPN aktif → DEVRE DIŞI BIRAKIN');
-          console.error('[WEBRTC]   2. Güvenlik duvarı UDP trafiğini engelliyor');
-          console.error('[WEBRTC]   3. Simetrik NAT - TURN relay gerekli ama TURN sunucusu çalışmıyor');
-          console.error('[WEBRTC]   4. Docker Desktop / WSL ağ arayüzleri karışıklık yaratıyor');
-          self._durumBildir('hata', 'MEDYA BAĞLANTISI KURULAMIYOR - VPN/WARP KAPATIN VEYA FARKLI AĞ DENEYİN');
-        }
-      }, 15000);
-
-      /* ICE BAĞLANTI DURUMUNU İZLE */
       pc.oniceconnectionstatechange = function() {
         console.log('[WEBRTC] ICE DURUMU:', pc.iceConnectionState);
 
-        if (pc.iceConnectionState === 'disconnected') {
-          /* DISCONNECTED DURUMU - HEMEN ÖLMEDEN ÖNCE BİRAZ BEKLE, RECOVER OLABİLİR */
-          console.warn('[WEBRTC] ICE DISCONNECTED - 3 SANİYE SONRA KONTROL EDİLECEK...');
-          setTimeout(function() {
-            if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
-              if (self._iceRestartCount < self._iceMaxRestart) {
-                self._iceRestartCount++;
-                console.log('[WEBRTC] ICE RESTART DENENİYOR (' + self._iceRestartCount + '/' + self._iceMaxRestart + ')');
-                try {
-                  pc.restartIce();
-                } catch(e) {
-                  console.error('[WEBRTC] ICE RESTART HATASI:', e);
-                }
-              } else {
-                console.error('[WEBRTC] ICE RESTART LİMİTİNE ULAŞILDI - MEDYA BAĞLANTISI KURULAMADI');
-                self._durumBildir('hata', 'MEDYA BAĞLANTISI KOPTU - VPN/WARP KAPATIN');
-              }
-            } else {
-              console.log('[WEBRTC] ICE KENDILIĞINDEN DÜZELDI:', pc.iceConnectionState);
-            }
-          }, 3000);
-        }
-
-        if (pc.iceConnectionState === 'failed') {
-          console.error('[WEBRTC] ICE TAMAMEN BAŞARISIZ! relay aday:', self._relayCandidateFound ? 'VAR' : 'YOK');
-          if (self._iceRestartCount < self._iceMaxRestart) {
-            self._iceRestartCount++;
-            console.log('[WEBRTC] ICE FAILED - RESTART DENENİYOR (' + self._iceRestartCount + '/' + self._iceMaxRestart + ')');
-            try {
-              pc.restartIce();
-            } catch(e) {
-              console.error('[WEBRTC] ICE RESTART HATASI:', e);
-            }
-          } else {
-            console.error('[WEBRTC] ICE TAMAMEN BAŞARISIZ - TURN SUNUCUSU GEREKLİ VEYA AĞ SORUNU VAR.');
-            if (!self._relayCandidateFound) {
-              console.error('[WEBRTC] ⚠ HİÇ RELAY ADAY BULUNAMADI - TURN SUNUCUSU ÇALIŞMIYOR VEYA KİMLİK DOĞRULAMA HATASI');
-            }
-            self._durumBildir('hata', 'MEDYA BAĞLANTISI KURULAMADI - AĞ SORUNU (VPN/WARP KAPATIN)');
-          }
-        }
-
         if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
-          /* BAŞARILI - ZAMANAŞIMI SAYAÇLARINI TEMİZLE */
-          if (self._iceConnectTimer) { clearTimeout(self._iceConnectTimer); self._iceConnectTimer = null; }
-          if (self._iceGatherTimer) { clearTimeout(self._iceGatherTimer); self._iceGatherTimer = null; }
-          self._iceRestartCount = 0;
           self._ringbackDurdur();
-          console.log('[WEBRTC] ICE BAĞLANTI BAŞARILI ✓ (relay kullanıldı:', self._relayCandidateFound, ')');
-          /* BAĞLANTI BAŞARILI - SES AKIŞINI TEKRAR KONTROL ET */
+          console.log('[WEBRTC] MEDYA BAĞLANTISI KURULDU ✓');
           if (self._remoteAudio && !self._remoteAudio.srcObject) {
             self._sesAyarla(session);
           }
+        }
+
+        if (pc.iceConnectionState === 'failed') {
+          console.error('[WEBRTC] MEDYA BAĞLANTISI BAŞARISIZ');
+          self._durumBildir('hata', 'MEDYA BAĞLANTISI KURULAMADI');
         }
       };
     });
@@ -1017,12 +700,6 @@ MR.webrtcTelefon = {
     this._session = null;
     this._aramaDurumu = 'bos';
     this._muteState = false;
-    this._iceRestartCount = 0;
-    this._relayCandidateFound = false;
-
-    /* ICE ZAMANAŞIMI SAYAÇLARINI TEMİZLE */
-    if (this._iceGatherTimer) { clearTimeout(this._iceGatherTimer); this._iceGatherTimer = null; }
-    if (this._iceConnectTimer) { clearTimeout(this._iceConnectTimer); this._iceConnectTimer = null; }
 
     /* ÖN-HAZIRLANMIŞ MİKROFON AKIŞINI DURDUR */
     if (this._preStream) {
@@ -1242,46 +919,5 @@ MR.webrtcTelefon = {
       sesAyarlari: this.getSesAyarlari(),
       cihazlar: this._cihazlar
     };
-  },
-
-  /* ═══ TURN API KEY AYARLA (KONSOL YARDIMCISI) ═══ */
-  setTurnApiKey: function(apiKey) {
-    if (!apiKey) {
-      console.error('[WEBRTC] API key boş olamaz! Metered.ca hesabınızdan API key alın.');
-      console.log('[WEBRTC] → https://www.metered.ca/stun-turn → Hesap açın → API Key kopyalayın');
-      return;
-    }
-    localStorage.setItem('mr_metered_api_key', apiKey);
-    this._config.meteredApiKey = apiKey;
-    console.log('[WEBRTC] ✓ Metered API key kaydedildi. Sayfa yenilenince aktif olacak.');
-    console.log('[WEBRTC] Hemen test etmek için: MR.webrtcTelefon.turnTesti()');
-  },
-
-  /* ═══ TURN TESTİ (KONSOL YARDIMCISI) ═══ */
-  turnTesti: async function() {
-    console.log('[WEBRTC] TURN TESTİ BAŞLATILIYOR...');
-
-    /* Metered API credentials yenile */
-    if (this._config.meteredApiKey) {
-      try {
-        var resp = await fetch('https://mrhasar.metered.live/api/v1/turn/credentials?apiKey=' + this._config.meteredApiKey);
-        if (resp.ok) {
-          var creds = await resp.json();
-          if (Array.isArray(creds) && creds.length > 0) {
-            this._meteredServers = creds;
-            console.log('[WEBRTC] ✓ Metered API: ' + creds.length + ' sunucu alındı');
-          }
-        } else {
-          console.error('[WEBRTC] ✗ Metered API hatası:', resp.status, '- API key geçersiz olabilir');
-        }
-      } catch(e) {
-        console.error('[WEBRTC] ✗ Metered API erişilemedi:', e.message);
-      }
-    } else {
-      console.warn('[WEBRTC] Metered API key ayarlanmamış. Ayarlamak için: MR.webrtcTelefon.setTurnApiKey("KEY")');
-    }
-
-    /* TURN testini çalıştır */
-    await this._turnTestBaslat();
   }
 };
