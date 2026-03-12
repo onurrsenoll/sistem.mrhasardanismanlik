@@ -687,7 +687,7 @@ const SahaBekleyen = ({setPage, user}) => {
               <thead>
                 <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['PERSONEL','PLAKA','MARKA','MODEL','YILI','KM','KUSUR','KAZA TARİHİ','HASAR TUTARI','İŞLEM'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color:'#fff',borderBottom:`2px solid ${C.border}`,whiteSpace:'nowrap'}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`2px solid ${C.border}`,whiteSpace:'nowrap'}}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -697,16 +697,16 @@ const SahaBekleyen = ({setPage, user}) => {
                     onClick={()=>setDetayItem(item)}
                     onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
                     onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
-                    <td style={{padding:'10px 12px',fontWeight:600,whiteSpace:'nowrap'}}>{item.personel_adi||'-'}</td>
-                    <td style={{padding:'10px 12px',fontWeight:700,color:C.accent}}>{item.arac_plaka||'-'}</td>
-                    <td style={{padding:'10px 12px'}}>{item.arac_marka||'-'}</td>
-                    <td style={{padding:'10px 12px'}}>{item.arac_model||'-'}</td>
-                    <td style={{padding:'10px 12px'}}>{item.arac_model_yili||'-'}</td>
-                    <td style={{padding:'10px 12px'}}>{item.arac_km ? Number(item.arac_km).toLocaleString('tr-TR') : '-'}</td>
-                    <td style={{padding:'10px 12px',fontSize:10}}>{item.arac_kusur_durumu||'-'}</td>
-                    <td style={{padding:'10px 12px',whiteSpace:'nowrap'}}>{fmtTarih(item.hasar_tarihi)}</td>
-                    <td style={{padding:'10px 12px',fontWeight:600,color:C.warning,whiteSpace:'nowrap'}}>{item.hasar_tutari ? fmtTL(item.hasar_tutari) + ' ₺' : '-'}</td>
-                    <td style={{padding:'10px 12px'}} onClick={e=>e.stopPropagation()}>
+                    <td style={{padding:'10px 12px',fontWeight:600,whiteSpace:'nowrap',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px'}}>{item.personel_adi||'-'}</td>
+                    <td style={{padding:'10px 12px',fontWeight:700,color:C.accent,fontSize:'12px'}}>{item.arac_plaka||'-'}</td>
+                    <td style={{padding:'10px 12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{item.arac_marka||'-'}</td>
+                    <td style={{padding:'10px 12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{item.arac_model||'-'}</td>
+                    <td style={{padding:'10px 12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{item.arac_model_yili||'-'}</td>
+                    <td style={{padding:'10px 12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{item.arac_km ? Number(item.arac_km).toLocaleString('tr-TR') : '-'}</td>
+                    <td style={{padding:'10px 12px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{item.arac_kusur_durumu||'-'}</td>
+                    <td style={{padding:'10px 12px',whiteSpace:'nowrap',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{fmtTarih(item.hasar_tarihi)}</td>
+                    <td style={{padding:'10px 12px',fontWeight:600,color:C.warning,whiteSpace:'nowrap',fontSize:'12px'}}>{item.hasar_tutari ? fmtTL(item.hasar_tutari) + ' ₺' : '-'}</td>
+                    <td style={{padding:'10px 12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}} onClick={e=>e.stopPropagation()}>
                       <div style={{display:'flex',gap:6}}>
                         {MR.hasYetki(user,'crm','saha-onay') ? (<>
                           <button style={{...S.btn,...S.btnS,padding:'6px 12px',fontSize:10}} onClick={()=>{setOnayModal(item);setOnayNotu('');}}>
@@ -897,7 +897,7 @@ const SahaOnaylanan = ({setPage, user}) => {
               <thead>
                 <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['PERSONEL','MÜŞTERİ','TELEFON','PLAKA','ONAY TARİHİ','KALAN SÜRE','İŞLEM'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color:'#fff',borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`2px solid ${C.border}`}}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -964,7 +964,7 @@ const SahaOnaylanan = ({setPage, user}) => {
               <thead>
                 <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['PERSONEL','MÜŞTERİ','PLAKA','ONAY TARİHİ','DURUM','İŞLEM'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color:'#fff',borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`2px solid ${C.border}`}}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1258,7 +1258,7 @@ const SahaReddedilen = ({setPage, user}) => {
               <thead>
                 <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['PERSONEL','MÜŞTERİ','PLAKA','RED TARİHİ','RED NEDENİ','İŞLEM'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color:'#fff',borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`2px solid ${C.border}`}}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1444,7 +1444,7 @@ const SahaDosyayaDonusen = ({setPage, user}) => {
               <thead>
                 <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['PERSONEL','MÜŞTERİ','PLAKA','DOSYA NO','DÖNÜŞME TARİHİ','İŞLEM'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color:'#fff',borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`2px solid ${C.border}`}}>{h}</th>
                   ))}
                 </tr>
               </thead>

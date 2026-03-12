@@ -2614,10 +2614,10 @@ const TopluAktarimTab = () => {
                   <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                     <thead>
                       <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF'}}>SATIR</th>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF'}}>DOSYA NO</th>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF'}}>ADI SOYADI</th>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF'}}>TÜR</th>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`1px solid ${C.border}`}}>SATIR</th>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`1px solid ${C.border}`}}>DOSYA NO</th>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`1px solid ${C.border}`}}>ADI SOYADI</th>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`1px solid ${C.border}`}}>TÜR</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2952,7 +2952,7 @@ const PortalTab = () => {
                     <thead>
                       <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['DOSYA NO','MÜŞTERİ','TELEFON','GİRİŞ','DURUM','SON GİRİŞ','MESAJ','İŞLEMLER'].map(h => (
-                          <th key={h} style={{padding:'10px 8px', textAlign:'left', fontWeight:800, fontSize:'12px', color:'#FFFFFF', letterSpacing:.5}}>{h}</th>
+                          <th key={h} style={{padding:'10px 8px', textAlign:'left', fontWeight:800, fontSize:'12px', color:'#FFFFFF', borderBottom:`1px solid ${C.border}`}}>{h}</th>
                         ))}
                       </tr>
                     </thead>
