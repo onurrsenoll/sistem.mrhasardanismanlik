@@ -3026,21 +3026,23 @@ const PortalTab = () => {
                     <thead>
                       <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['TARİH','MÜŞTERİ','DOSYA NO','İŞLEM','DETAY','IP ADRESİ'].map(h => (
-                          <th key={h} style={{padding:'8px 6px', textAlign:'left', fontWeight:800, fontSize:'12px', color:'#FFFFFF'}}>{h}</th>
+                          <th key={h} style={{padding:'8px 6px', textAlign:'left', fontWeight:800, fontSize:'12px', color:'#FFFFFF', borderBottom:`1px solid ${C.border}`}}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {loglar.map((l, i) => (
-                        <tr key={l.id} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #111827 0%, #0d1321 100%)':'linear-gradient(90deg, #0d1321 0%, #090e1a 100%)'):'none', borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}>
-                          <td style={{padding:'8px 6px', fontSize:10, color:C.textSec}}>{formatTS(l.created_at)}</td>
-                          <td style={{padding:'8px 6px', fontWeight:600}}>{l.ad_soyad || '-'}</td>
-                          <td style={{padding:'8px 6px', color:C.accent, fontWeight:600}}>{l.dosya_no || '-'}</td>
-                          <td style={{padding:'8px 6px'}}>
+                        <tr key={l.id} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                          onMouseEnter={e2 => {if(MR.tema==='koyu'){e2.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e2.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e2.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e2.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e2.currentTarget.style.transform='translateY(-1px)';}}
+                          onMouseLeave={e2 => {e2.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e2.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e2.currentTarget.style.transform='translateY(0)';}}>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{formatTS(l.created_at)}</td>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{l.ad_soyad || '-'}</td>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{l.dosya_no || '-'}</td>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             <span style={{...S.badge(LOG_ISLEM_RENK(l.islem))}}>{l.islem}</span>
                           </td>
-                          <td style={{padding:'8px 6px', color:C.textSec, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{l.detay || '-'}</td>
-                          <td style={{padding:'8px 6px', fontSize:10, color:C.textMuted, fontFamily:'monospace'}}>{l.ip_adresi || '-'}</td>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{l.detay || '-'}</td>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, fontFamily:'monospace'}}>{l.ip_adresi || '-'}</td>
                         </tr>
                       ))}
                     </tbody>

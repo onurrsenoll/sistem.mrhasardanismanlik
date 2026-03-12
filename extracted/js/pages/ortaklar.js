@@ -373,12 +373,12 @@ const IsOrtaklari = ({setPage, user}) => {
                   <thead>
                     <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                       {MR.hasYetki(user,'paydaslar','ortaklar-toplu-sil') && (
-                        <th style={{padding:'10px 6px',textAlign:'center',borderBottom:`1px solid ${C.border}`,width:32,color:'#FFFFFF',fontWeight:800,fontSize:'12px'}}>
+                        <th style={{padding:'10px 6px',textAlign:'center',width:32,color:'#FFFFFF',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                           <input type="checkbox" checked={ortaklar.length > 0 && secililer.length === ortaklar.length} onChange={tumunuSec} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                         </th>
                       )}
                       {['AD SOYAD','FİRMA','BARO','SİCİL NO','ÖDEME ORANI','İL','DURUM','İŞLEMLER'].map(h =>
-                        <th key={h} style={{padding:'10px 10px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                        <th key={h} style={{padding:'10px 10px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>{h}</th>
                       )}
                     </tr>
                   </thead>
@@ -388,11 +388,11 @@ const IsOrtaklari = ({setPage, user}) => {
                         onMouseEnter={e => { if(!secililer.includes(ortak.id)){if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #1a2744 0%, #111827 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';}e.currentTarget.style.transform='translateY(-1px)';} }}
                         onMouseLeave={e => { if(!secililer.includes(ortak.id)){e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #111827 0%, #0d1321 100%)':'linear-gradient(90deg, #0d1321 0%, #090e1a 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.transform='translateY(0)';} }}>
                         {MR.hasYetki(user,'paydaslar','ortaklar-toplu-sil') && (
-                          <td style={{padding:'10px 6px',textAlign:'center',width:32}}>
+                          <td style={{padding:'10px 6px',textAlign:'center',width:32,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                             <input type="checkbox" checked={secililer.includes(ortak.id)} onChange={() => toggleSecim(ortak.id)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                           </td>
                         )}
-                        <td style={{padding:'10px 10px',fontWeight:600}}>
+                        <td style={{padding:'10px 10px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px'}}>
                           <div style={{display:'flex',alignItems:'center',gap:8}}>
                             <div style={{width:32,height:32,borderRadius:8,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                               <LIcon name="User" size={14} color={C.accent}/>
@@ -403,19 +403,19 @@ const IsOrtaklari = ({setPage, user}) => {
                             </div>
                           </div>
                         </td>
-                        <td style={{padding:'10px 10px',color:C.textSec}}>{ortak.firma || '-'}</td>
-                        <td style={{padding:'10px 10px',color:C.textSec}}>{ortak.baro || '-'}</td>
-                        <td style={{padding:'10px 10px',color:C.textMuted,fontFamily:'monospace'}}>{ortak.sicil_no || '-'}</td>
-                        <td style={{padding:'10px 10px'}}>
+                        <td style={{padding:'10px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{ortak.firma || '-'}</td>
+                        <td style={{padding:'10px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{ortak.baro || '-'}</td>
+                        <td style={{padding:'10px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600,fontFamily:'monospace'}}>{ortak.sicil_no || '-'}</td>
+                        <td style={{padding:'10px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                           {ortak.odeme_orani ? (
                             <span style={{...S.badge(C.purple),fontSize:12,fontWeight:800}}>%{ortak.odeme_orani}</span>
                           ) : <span style={{color:C.textMuted}}>-</span>}
                         </td>
-                        <td style={{padding:'10px 10px',color:C.textSec}}>{ortak.il || '-'}</td>
-                        <td style={{padding:'10px 10px'}}>
+                        <td style={{padding:'10px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{ortak.il || '-'}</td>
+                        <td style={{padding:'10px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                           <Badge text={ortak.durum === 'aktif' ? 'AKTİF' : 'PASİF'} color={ortak.durum === 'aktif' ? C.success : C.danger}/>
                         </td>
-                        <td style={{padding:'10px 10px'}}>
+                        <td style={{padding:'10px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                           <div style={{display:'flex',gap:4}}>
                             <div onClick={() => detayAc(ortak)} style={{width:28,height:28,borderRadius:7,background:'linear-gradient(180deg, #22d3ee 0%, #06b6d4 40%, #0891b2 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(6,182,212,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',borderBottom:'1px solid #0e7490'}} title="DETAY VE HAREKETLER">
                               <LIcon name="Eye" size={13} color="#fff"/>

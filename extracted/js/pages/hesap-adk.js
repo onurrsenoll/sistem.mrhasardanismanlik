@@ -214,15 +214,22 @@ MR.HesapADKPage = ({setPage, user}) => {
     const kararlar = emsalData?.kararlar || [];
 
     // ═══ İLAN SATIRLARI ═══
+    const isKoyu = MR.tema === 'koyu';
     let ilanRows = '';
     ilanlar.forEach((il, i) => {
-      ilanRows += '<tr style="background:'+(i%2===0?'#f8fafc':'#fff')+';"><td style="padding:2px 4px;font-size:6.5px;color:#94a3b8;">'+(i+1)+'</td><td style="padding:2px 4px;font-size:6.5px;">'+((il.kaynak||'').replace('.com','').replace('sahibinden','sahib.').replace('araban','araban'))+'</td><td style="padding:2px 4px;font-size:6.5px;max-width:120px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">'+((il.baslik||'').substring(0,40))+'</td><td style="padding:2px 4px;font-size:6.5px;font-weight:700;color:#2563eb;text-align:right;">'+fmtM(il.fiyat)+'</td><td style="padding:2px 4px;font-size:6.5px;text-align:right;color:#64748b;">'+((il.km||0)/1000).toFixed(0)+'K</td><td style="padding:2px 4px;font-size:6.5px;color:#64748b;">'+((il.sehir||'').substring(0,8))+'</td></tr>';
+      const rowBg = isKoyu ? (i%2===0?'#111827':'#0d1321') : (i%2===0?'#ffffff':'#f0f4ff');
+      const rowBorder = isKoyu ? 'border-left:3px solid rgba(6,182,212,0.5);border-bottom:1px solid rgba(6,182,212,0.1);box-shadow:0 2px 8px rgba(0,0,0,0.3);' : 'border-left:3px solid rgba(99,102,241,0.4);border-bottom:1px solid rgba(99,102,241,0.1);box-shadow:0 1px 4px rgba(99,102,241,0.08);';
+      const tdColor = isKoyu ? '#e2e8f0' : '#1e293b';
+      ilanRows += '<tr style="background:'+rowBg+';border-radius:8px;'+rowBorder+'"><td style="padding:2px 4px;font-size:12px;font-weight:600;color:'+tdColor+';">'+(i+1)+'</td><td style="padding:2px 4px;font-size:12px;font-weight:600;color:'+tdColor+';">'+((il.kaynak||'').replace('.com','').replace('sahibinden','sahib.').replace('araban','araban'))+'</td><td style="padding:2px 4px;font-size:12px;font-weight:600;color:'+tdColor+';max-width:120px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">'+((il.baslik||'').substring(0,40))+'</td><td style="padding:2px 4px;font-size:12px;font-weight:600;color:#2563eb;text-align:right;">'+fmtM(il.fiyat)+'</td><td style="padding:2px 4px;font-size:12px;font-weight:600;text-align:right;color:'+tdColor+';">'+((il.km||0)/1000).toFixed(0)+'K</td><td style="padding:2px 4px;font-size:12px;font-weight:600;color:'+tdColor+';">'+((il.sehir||'').substring(0,8))+'</td></tr>';
     });
 
     // ═══ EMSAL SATIRLARI ═══
     let emsalRows = '';
     kararlar.forEach((k, i) => {
-      emsalRows += '<tr style="background:'+(i%2===0?'#fffbeb':'#fff')+';"><td style="padding:2px 4px;font-size:6.5px;font-weight:600;color:#b45309;">'+(k.dosya_no||'-')+'</td><td style="padding:2px 4px;font-size:6.5px;">'+((k.marka||'')+' '+(k.model||'')+' ('+(k.yil||'')+')').substring(0,25)+'</td><td style="padding:2px 4px;font-size:6.5px;text-align:right;">'+fmtM(k.rayic)+'</td><td style="padding:2px 4px;font-size:6.5px;font-weight:700;color:#2563eb;text-align:right;">'+fmtM(k.deger_kaybi)+'</td></tr>';
+      const rowBg = isKoyu ? (i%2===0?'#111827':'#0d1321') : (i%2===0?'#ffffff':'#f0f4ff');
+      const rowBorder = isKoyu ? 'border-left:3px solid rgba(6,182,212,0.5);border-bottom:1px solid rgba(6,182,212,0.1);box-shadow:0 2px 8px rgba(0,0,0,0.3);' : 'border-left:3px solid rgba(99,102,241,0.4);border-bottom:1px solid rgba(99,102,241,0.1);box-shadow:0 1px 4px rgba(99,102,241,0.08);';
+      const tdColor = isKoyu ? '#e2e8f0' : '#1e293b';
+      emsalRows += '<tr style="background:'+rowBg+';border-radius:8px;'+rowBorder+'"><td style="padding:2px 4px;font-size:12px;font-weight:600;color:'+tdColor+';">'+(k.dosya_no||'-')+'</td><td style="padding:2px 4px;font-size:12px;font-weight:600;color:'+tdColor+';">'+((k.marka||'')+' '+(k.model||'')+' ('+(k.yil||'')+')').substring(0,25)+'</td><td style="padding:2px 4px;font-size:12px;font-weight:600;color:'+tdColor+';text-align:right;">'+fmtM(k.rayic)+'</td><td style="padding:2px 4px;font-size:12px;font-weight:600;color:#2563eb;text-align:right;">'+fmtM(k.deger_kaybi)+'</td></tr>';
     });
 
     // html2pdf flex desteklemez, TABLE kullan
@@ -297,7 +304,7 @@ MR.HesapADKPage = ({setPage, user}) => {
       + (kararlar.length > 0 ? '<td style="vertical-align:top;width:'+(ilanlar.length>0?'42':'100')+'%;border:1px solid #fcd34d;border-radius:5px;overflow:hidden;">'
         + '<div style="background:#d97706;color:#fff;padding:3px 6px;font-size:7px;font-weight:700;">TAHKIM EMSAL ('+kararlar.length+' KARAR)</div>'
         + '<table style="width:100%;border-collapse:collapse;">'
-        + '<tr style="background:#fef3c7;"><th style="padding:2px 4px;font-size:6px;text-align:left;">DOSYA</th><th style="padding:2px 4px;font-size:6px;text-align:left;">ARAC</th><th style="padding:2px 4px;font-size:6px;text-align:right;">RAYIC</th><th style="padding:2px 4px;font-size:6px;text-align:right;">DK</th></tr>'
+        + '<tr style="background:'+(isKoyu?'#0f2342':'#1e40af')+';"><th style="padding:2px 4px;font-size:12px;font-weight:800;color:#FFFFFF;text-align:left;">DOSYA</th><th style="padding:2px 4px;font-size:12px;font-weight:800;color:#FFFFFF;text-align:left;">ARAC</th><th style="padding:2px 4px;font-size:12px;font-weight:800;color:#FFFFFF;text-align:right;">RAYIC</th><th style="padding:2px 4px;font-size:12px;font-weight:800;color:#FFFFFF;text-align:right;">DK</th></tr>'
         + emsalRows+'</table>'
         + '<div style="background:#fef3c7;padding:3px 6px;text-align:center;font-size:7px;font-weight:700;color:#b45309;">EMSAL ORT: '+fmtM(emsalData?.ortalama_dk||0)+'</div>'
         + '</td>' : '')
