@@ -1407,12 +1407,14 @@ const PoliceRapor = ({setPage, user}) => {
               <SectionTitle icon="RefreshCw" title="YENİLEME BEKLEYEN (60 GÜN)" sub={yenileme.length + ' POLİÇE'}/>
               <div style={{overflowX:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
-                  <thead><tr style={{background:C.bgHover}}>
-                    {['POLİÇE NO','MÜŞTERİ','BRANŞ','BİTİŞ','KALAN GÜN','PRİM'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:C.textMuted,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
+                  <thead><tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                    {['POLİÇE NO','MÜŞTERİ','BRANŞ','BİTİŞ','KALAN GÜN','PRİM'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:'#fff',fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
                   </tr></thead>
                   <tbody>
                     {yenileme.map((y,i)=>(
-                      <tr key={i} style={{borderBottom:`1px solid ${C.border}`,borderLeft:`3px solid ${(y.kalan_gun<=30)?C.danger:C.warning}`}}>
+                      <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
+                        onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                        onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
                         <td style={{padding:8,fontWeight:700,color:C.accent}}>{y.police_no}</td>
                         <td style={{padding:8}}>{y.musteri_adi}</td>
                         <td style={{padding:8}}><Badge text={y.brans} color={C.cyan}/></td>
@@ -1523,16 +1525,18 @@ const PoliceKazanc = ({setPage, user}) => {
         ) : (
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:800}}>
-              <thead><tr style={{background:C.bgHover}}>
+              <thead><tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
                 {['DÖNEM','ÜRETİM ADEDİ','TOPLAM PRİM','KOMİSYON TUTARI','TAHSİL EDİLEN','CARİ BAKİYE','İŞLEM'].map(h=>
-                  <th key={h} style={{padding:'10px 8px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                  <th key={h} style={{padding:'10px 8px',textAlign:'left',color:'#fff',fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
                 )}
               </tr></thead>
               <tbody>
                 {aylikData.map((a,i)=>{
                   const cari = a.komisyon - a.tahsil_edilen;
                   return (
-                    <tr key={i} style={{borderBottom:`1px solid ${C.border}`}}>
+                    <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
+                      onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                      onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
                       <td style={{padding:'10px 8px',fontWeight:700,color:C.accent}}>{a.donem}</td>
                       <td style={{padding:'10px 8px',fontWeight:600}}>{a.adet}</td>
                       <td style={{padding:'10px 8px'}}>{fmt(a.toplam_prim)}</td>

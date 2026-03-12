@@ -670,9 +670,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             {dosya.masraflar?.length > 0 ? (
               <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                 <thead>
-                  <tr style={{background:C.bgHover}}>
+                  <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
                     {((!hasYetki('dosya','dosya-masraf-ode') && !hasYetki('dosya','dosya-masraf-sil')) ? ['#','MASRAF KALEMİ','TUTAR','DURUM','TARİH'] : ['#','MASRAF KALEMİ','TUTAR','DURUM','KASA','TARİH','KULLANICI','İŞLEM']).map(h =>
-                      <th key={h} style={{padding:'8px 10px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                      <th key={h} style={{padding:'8px 10px',textAlign:'left',color:'#fff',fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
                     )}
                   </tr>
                 </thead>
@@ -680,7 +680,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                   {dosya.masraflar.map((m, i) => {
                     const odenmedi = (m.odeme_durumu || 'odendi') === 'odenmedi';
                     return (
-                      <tr key={i} style={{borderBottom:`1px solid ${C.border}22`, background: odenmedi ? `${C.warning}06` : 'transparent'}}>
+                      <tr key={i} style={{backgroundColor: odenmedi ? `${C.warning}06` : (MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff')), backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none', borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8', borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)', boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)', transition:'all .2s', borderRadius:6}}>
                         <td style={{padding:'8px 10px',color:C.textMuted,fontSize:10}}>{i+1}</td>
                         <td style={{padding:'8px 10px',fontWeight:600,fontSize:11}}>{m.masraf_kalemi}</td>
                         <td style={{padding:'8px 10px',fontWeight:700,color:C.danger,fontSize:11}}>{fmt(m.tutar)}</td>

@@ -685,18 +685,18 @@ const SahaBekleyen = ({setPage, user}) => {
           {data.length === 0 ? <EmptyState icon="Inbox" title="BEKLEYEN KAYIT YOK" desc="ONAY BEKLEYEN SAHA DOSYASI BULUNMUYOR"/> : (
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
               <thead>
-                <tr style={{background:`${C.accent}08`}}>
+                <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
                   {['PERSONEL','PLAKA','MARKA','MODEL','YILI','KM','KUSUR','KAZA TARİHİ','HASAR TUTARI','İŞLEM'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,borderBottom:`2px solid ${C.border}`,whiteSpace:'nowrap'}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color:'#fff',borderBottom:`2px solid ${C.border}`,whiteSpace:'nowrap'}}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {data.map(item=>(
-                  <tr key={item.id} style={{borderBottom:`1px solid ${C.border}22`,cursor:'pointer'}}
+                {data.map((item,i)=>(
+                  <tr key={item.id} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6,cursor:'pointer'}}
                     onClick={()=>setDetayItem(item)}
-                    onMouseEnter={e=>e.currentTarget.style.background=C.bgHover}
-                    onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                    onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                    onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
                     <td style={{padding:'10px 12px',fontWeight:600,whiteSpace:'nowrap'}}>{item.personel_adi||'-'}</td>
                     <td style={{padding:'10px 12px',fontWeight:700,color:C.accent}}>{item.arac_plaka||'-'}</td>
                     <td style={{padding:'10px 12px'}}>{item.arac_marka||'-'}</td>
@@ -895,21 +895,21 @@ const SahaOnaylanan = ({setPage, user}) => {
           {aktifler.length === 0 ? <EmptyState icon="CheckCircle" title="ONAYLANAN KAYIT YOK" desc="HENÜZ ONAYLANMIŞ SAHA DOSYASI BULUNMUYOR"/> : (
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
               <thead>
-                <tr style={{background:`${C.accent}08`}}>
+                <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
                   {['PERSONEL','MÜŞTERİ','TELEFON','PLAKA','ONAY TARİHİ','KALAN SÜRE','İŞLEM'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color:'#fff',borderBottom:`2px solid ${C.border}`}}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {aktifler.map(item=>{
+                {aktifler.map((item,i)=>{
                   const kalan = kalanSure(item.onay_tarihi);
                   const kRenk = sureRenk(kalan);
                   return (
-                    <tr key={item.id} style={{borderBottom:`1px solid ${C.border}22`,cursor:'pointer'}}
+                    <tr key={item.id} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6,cursor:'pointer'}}
                       onClick={()=>setDetayItem(item)}
-                      onMouseEnter={e=>e.currentTarget.style.background=C.bgHover}
-                      onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                      onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                      onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
                       <td style={{padding:'10px 12px',fontWeight:600}}>{item.personel_adi||'-'}</td>
                       <td style={{padding:'10px 12px',fontWeight:600,color:C.accent}}>{item.musteri_adi}</td>
                       <td style={{padding:'10px 12px'}}>{item.musteri_telefon||'-'}</td>
@@ -962,18 +962,18 @@ const SahaOnaylanan = ({setPage, user}) => {
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
               <thead>
-                <tr style={{background:`${C.accent}08`}}>
+                <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
                   {['PERSONEL','MÜŞTERİ','PLAKA','ONAY TARİHİ','DURUM','İŞLEM'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color:'#fff',borderBottom:`2px solid ${C.border}`}}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {suresiDolanlar.map(item=>(
-                  <tr key={item.id} style={{borderBottom:`1px solid ${C.border}22`,cursor:'pointer'}}
+                {suresiDolanlar.map((item,i)=>(
+                  <tr key={item.id} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6,cursor:'pointer'}}
                     onClick={()=>setDetayItem(item)}
-                    onMouseEnter={e=>e.currentTarget.style.background=C.bgHover}
-                    onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                    onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                    onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
                     <td style={{padding:'10px 12px',fontWeight:600}}>{item.personel_adi||'-'}</td>
                     <td style={{padding:'10px 12px',color:C.textMuted}}>{item.musteri_adi}</td>
                     <td style={{padding:'10px 12px'}}>{item.arac_plaka||'-'}</td>
@@ -1256,18 +1256,18 @@ const SahaReddedilen = ({setPage, user}) => {
           {data.length === 0 ? <EmptyState icon="XCircle" title="REDDEDİLEN KAYIT YOK" desc="REDDEDİLMİŞ SAHA DOSYASI BULUNMUYOR"/> : (
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
               <thead>
-                <tr style={{background:`${C.accent}08`}}>
+                <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
                   {['PERSONEL','MÜŞTERİ','PLAKA','RED TARİHİ','RED NEDENİ','İŞLEM'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color:'#fff',borderBottom:`2px solid ${C.border}`}}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {data.map(item=>(
-                  <tr key={item.id} style={{borderBottom:`1px solid ${C.border}22`,cursor:'pointer'}}
+                {data.map((item,i)=>(
+                  <tr key={item.id} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6,cursor:'pointer'}}
                     onClick={()=>setDetayItem(item)}
-                    onMouseEnter={e=>e.currentTarget.style.background=C.bgHover}
-                    onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                    onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                    onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
                     <td style={{padding:'10px 12px',fontWeight:600}}>{item.personel_adi||'-'}</td>
                     <td style={{padding:'10px 12px',fontWeight:600,color:C.accent}}>{item.musteri_adi}</td>
                     <td style={{padding:'10px 12px',fontWeight:600}}>{item.arac_plaka||'-'}</td>
@@ -1442,18 +1442,18 @@ const SahaDosyayaDonusen = ({setPage, user}) => {
           {data.length === 0 ? <EmptyState icon="FolderOpen" title="DÖNÜŞEN KAYIT YOK" desc="DOSYAYA DÖNÜŞMÜŞ SAHA DOSYASI BULUNMUYOR"/> : (
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
               <thead>
-                <tr style={{background:`${C.accent}08`}}>
+                <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
                   {['PERSONEL','MÜŞTERİ','PLAKA','DOSYA NO','DÖNÜŞME TARİHİ','İŞLEM'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px',textAlign:'left',fontWeight:800,fontSize:12,color:'#fff',borderBottom:`2px solid ${C.border}`}}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {data.map(item=>(
-                  <tr key={item.id} style={{borderBottom:`1px solid ${C.border}22`,cursor:'pointer'}}
+                {data.map((item,i)=>(
+                  <tr key={item.id} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6,cursor:'pointer'}}
                     onClick={()=>setDetayItem(item)}
-                    onMouseEnter={e=>e.currentTarget.style.background=C.bgHover}
-                    onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                    onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                    onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
                     <td style={{padding:'10px 12px',fontWeight:600}}>{item.personel_adi||'-'}</td>
                     <td style={{padding:'10px 12px',fontWeight:600,color:C.accent}}>{item.musteri_adi}</td>
                     <td style={{padding:'10px 12px',fontWeight:600}}>{item.arac_plaka||'-'}</td>
