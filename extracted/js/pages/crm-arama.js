@@ -376,9 +376,9 @@ MR.CrmAramaPage = ({setPage, user}) => {
   const thSt = {padding:'7px 6px', textAlign:'left', color:'#fff', fontWeight:800, fontSize:FS, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:isKoyu?'#1a3f8a':'#1a56db', zIndex:2, letterSpacing:0.3};
   const tdSt = {padding:'6px 6px', fontSize:FS, fontWeight:600, borderBottom:'none', whiteSpace:'nowrap', color:isKoyu?'#f1f5f9':C.text};
   const tdTrunc = {...tdSt, maxWidth:90, overflow:'hidden', textOverflow:'ellipsis'};
-  const thSticky = {...thSt, position:'sticky', right:0, zIndex:3, background:isKoyu?'#1a3f8a':'#1a56db', boxShadow:'-3px 0 8px rgba(0,0,0,0.3)'};
+  const thSticky = {...thSt, position:'sticky', right:0, zIndex:3, background:isKoyu?'#1a3f8a':'#1a56db', borderLeft:isKoyu?'1px solid rgba(255,255,255,0.1)':'1px solid rgba(255,255,255,0.2)'};
   const rowBgFn = (i, selected) => selected ? `${C.accent}18` : isKoyu ? (i%2===0?'#1e3a78':'#172e5e') : (i%2===0?'#ffffff':'#f4f7ff');
-  const tdStickyBgFn = (i, selected) => selected ? `${C.accent}18` : isKoyu ? (i%2===0?'#1e3a78':'#172e5e') : (i%2===0?'#ffffff':'#f4f7ff');
+  const tdStickyBgFn = (i, selected) => selected ? `${C.accent}18` : isKoyu ? (i%2===0?'#172e5e':'#0f2347') : (i%2===0?'#ffffff':'#f4f7ff');
   const rowSt = (i, selected) => ({
     background: rowBgFn(i, selected),
     backgroundImage: !selected && isKoyu ? (i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)') : 'none',
@@ -632,7 +632,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
                       ) : '-'}
                     </td>
                     <td style={{...tdSt, fontFamily:'monospace'}} title={item.magdur_tc || ''}>{item.magdur_tc || '-'}</td>
-                    <td style={{...tdSt,position:'sticky',right:0,background:tdStickyBgFn(i,sel),boxShadow:'-3px 0 8px rgba(0,0,0,0.15)',textAlign:'center'}}>
+                    <td style={{...tdSt,position:'sticky',right:0,background:tdStickyBgFn(i,sel),borderLeft:isKoyu?'1px solid rgba(59,130,246,0.15)':'1px solid rgba(26,86,219,0.06)',textAlign:'center'}}>
                       <div style={{display:'flex', gap:3, justifyContent:'center'}}>
                         <button style={iconBtn(C.cyan)} title="NOT EKLE / GÖRÜNTÜLE" onClick={() => openNot(item)}>
                           <LIcon name="MessageSquare" size={12} color={C.cyan}/>

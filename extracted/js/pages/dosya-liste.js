@@ -396,15 +396,15 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
     ? 'linear-gradient(135deg, rgba(26,86,219,0.8) 0%, rgba(30,58,138,0.9) 100%)'
     : 'linear-gradient(135deg, #1a56db 0%, #1e3a8a 100%)';
   const thS = {padding:'8px 6px',textAlign:'left',fontWeight:800,fontSize:'12px',whiteSpace:'nowrap',color:'#FFFFFF',position:'sticky',top:0,background:isKoyu?'#1a3f8a':'#1a56db',zIndex:2,letterSpacing:0.4,borderBottom:'none'};
-  const thSticky = {...thS,position:'sticky',right:0,zIndex:3,background:isKoyu?'#1a3f8a':'#1a56db',boxShadow:'-3px 0 8px rgba(0,0,0,0.3)',textAlign:'center'};
+  const thSticky = {...thS,position:'sticky',right:0,zIndex:3,background:isKoyu?'#1a3f8a':'#1a56db',borderLeft:isKoyu?'1px solid rgba(255,255,255,0.1)':'1px solid rgba(255,255,255,0.2)',textAlign:'center'};
 
   /* ── TD STİLLERİ ── */
   const tdS = {padding:'7px 6px',fontSize:'12px',fontWeight:600,whiteSpace:'nowrap',color:isKoyu?'#f1f5f9':C.text,borderBottom:'none',opacity:1};
   const tdTrunc = {...tdS,overflow:'hidden',textOverflow:'ellipsis'};
-  /* Sticky sütun OPAK arka plan kullanmalı - inherit transparan rengi alır ve ikonlar kaybolur */
+  /* Sticky sütun - satırla aynı renk, gölge yok → kopuk görünmez */
   const tdStickyBg = (i) => isKoyu
-    ? (i % 2 === 0 ? '#1e3a78' : '#142d64')
-    : (i % 2 === 0 ? '#ffffff' : '#f0f5ff');
+    ? (i % 2 === 0 ? '#172e5e' : '#0f2347')
+    : (i % 2 === 0 ? '#ffffff' : '#f4f7ff');
 
   /* ── SATIR STİLLERİ ── */
   /* OPAK renkler - sticky sütun inherit sorununu çözer */
@@ -612,7 +612,7 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                         </span>
                       </td>
                       {/* İŞLEM - STICKY */}
-                      <td style={{...tdS,position:'sticky',right:0,background:tdStickyBg(i),boxShadow:'-3px 0 8px rgba(0,0,0,0.15)',textAlign:'center'}}>
+                      <td style={{...tdS,position:'sticky',right:0,background:tdStickyBg(i),borderLeft:isKoyu?'1px solid rgba(59,130,246,0.15)':'1px solid rgba(26,86,219,0.06)',textAlign:'center'}}>
                         <div style={{display:'flex',gap:6,justifyContent:'center',alignItems:'center'}}>
                           <a href={'#/dosya-detay-'+d.id} onClick={e=>{if(!e.ctrlKey&&!e.metaKey){e.preventDefault();onSelect(d.id);}}}
                             title="GÖRÜNTÜLE" style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.accent}11`,textDecoration:'none'}}>
