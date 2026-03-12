@@ -263,8 +263,11 @@ const PersonelListesi = ({setPage, user}) => {
 
   const ef = (key, val) => setEditForm(p => ({...p, [key]: val}));
 
-  const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:11,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,position:'sticky',top:0,background:C.bgCard,zIndex:1,letterSpacing:0.3};
-  const tdS = {padding:'8px 8px',fontSize:12,fontWeight:600,whiteSpace:'nowrap',borderBottom:`1px solid ${C.border}`,color: MR.tema==='koyu' ? '#cbd5e1' : C.text};
+  const isKoyu = MR.tema === 'koyu';
+  const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:11,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color:'#fff',position:'sticky',top:0,background:isKoyu?'#1a3f8a':'#1a56db',zIndex:1,letterSpacing:0.3};
+  const tdS = {padding:'8px 8px',fontSize:12,fontWeight:600,whiteSpace:'nowrap',borderBottom:isKoyu?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',color: isKoyu ? '#f1f5f9' : C.text};
+  const pRowBg = (i) => isKoyu ? (i%2===0?'#1e3a78':'#172e5e') : (i%2===0?'#ffffff':'#f4f7ff');
+  const pRowSt = (i) => ({cursor:'pointer',backgroundColor:pRowBg(i),backgroundImage:isKoyu?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:isKoyu?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:isKoyu?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:isKoyu?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6});
 
   return (
     <div>
@@ -336,10 +339,10 @@ const PersonelListesi = ({setPage, user}) => {
               <tbody>
                 {data.map((d, i) => (
                   <tr key={d.id || i}
-                    style={{cursor:'pointer',background:i%2===1?`${C.bgHover}66`:'transparent',transition:'background .15s'}}
+                    style={pRowSt(i)}
                     onClick={() => duzenleAc(d)}
-                    onMouseEnter={e => e.currentTarget.style.background=`${C.accent}0a`}
-                    onMouseLeave={e => e.currentTarget.style.background=i%2===1?`${C.bgHover}66`:'transparent'}>
+                    onMouseEnter={e => {if(isKoyu){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                    onMouseLeave={e => {e.currentTarget.style.backgroundColor=pRowBg(i);e.currentTarget.style.backgroundImage=isKoyu?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=isKoyu?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
                     {MR.hasYetki(user,'muhasebe','personel-toplu-sil') && <td style={{...tdS,textAlign:'center',padding:'6px 4px'}} onClick={e => e.stopPropagation()}>
                       <input type="checkbox" checked={secililer.includes(d.id)} onChange={() => toggleSecim(d.id)}
                         style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
@@ -822,8 +825,11 @@ const HakedisTakibi = ({setPage, user}) => {
     return d;
   };
 
-  const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:11,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,position:'sticky',top:0,background:C.bgCard,zIndex:1,letterSpacing:0.3};
-  const tdS = {padding:'8px 8px',fontSize:12,fontWeight:600,whiteSpace:'nowrap',borderBottom:`1px solid ${C.border}`,color: MR.tema==='koyu' ? '#cbd5e1' : C.text};
+  const isKoyu2 = MR.tema === 'koyu';
+  const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:11,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color:'#fff',position:'sticky',top:0,background:isKoyu2?'#1a3f8a':'#1a56db',zIndex:1,letterSpacing:0.3};
+  const tdS = {padding:'8px 8px',fontSize:12,fontWeight:600,whiteSpace:'nowrap',borderBottom:isKoyu2?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',color: isKoyu2 ? '#f1f5f9' : C.text};
+  const hRowBg = (i) => isKoyu2 ? (i%2===0?'#1e3a78':'#172e5e') : (i%2===0?'#ffffff':'#f4f7ff');
+  const hRowSt = (i) => ({backgroundColor:hRowBg(i),backgroundImage:isKoyu2?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:isKoyu2?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:isKoyu2?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:isKoyu2?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6});
 
   return (
     <div>
@@ -896,9 +902,9 @@ const HakedisTakibi = ({setPage, user}) => {
               <tbody>
                 {hakedisler.map((h, i) => (
                   <tr key={h.id || i}
-                    style={{background:i%2===1?`${C.bgHover}66`:'transparent',transition:'background .15s'}}
-                    onMouseEnter={e => e.currentTarget.style.background=`${C.accent}0a`}
-                    onMouseLeave={e => e.currentTarget.style.background=i%2===1?`${C.bgHover}66`:'transparent'}>
+                    style={hRowSt(i)}
+                    onMouseEnter={e => {if(isKoyu2){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                    onMouseLeave={e => {e.currentTarget.style.backgroundColor=hRowBg(i);e.currentTarget.style.backgroundImage=isKoyu2?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=isKoyu2?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
                     <td style={{...tdS,fontWeight:700,color:C.accent}}>{h.personel_adi || h.ad_soyad || '-'}</td>
                     <td style={tdS}>{donemEtiket(h.donem)}</td>
                     <td style={{...tdS,textAlign:'center',fontFamily:'monospace'}}>{h.calisan_gun || '-'}</td>

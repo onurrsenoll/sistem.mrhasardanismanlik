@@ -395,29 +395,36 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
   const theadBg = isKoyu
     ? 'linear-gradient(135deg, rgba(26,86,219,0.8) 0%, rgba(30,58,138,0.9) 100%)'
     : 'linear-gradient(135deg, #1a56db 0%, #1e3a8a 100%)';
-  const thS = {padding:'8px 6px',textAlign:'left',fontWeight:800,fontSize:'12px',whiteSpace:'nowrap',color:'#FFFFFF',position:'sticky',top:0,background:isKoyu?'rgba(26,86,219,0.85)':'#1a56db',zIndex:2,letterSpacing:0.4,borderBottom:'none'};
-  const thSticky = {...thS,position:'sticky',right:0,zIndex:3,boxShadow:'-3px 0 8px rgba(0,0,0,0.2)',textAlign:'center'};
+  const thS = {padding:'8px 6px',textAlign:'left',fontWeight:800,fontSize:'12px',whiteSpace:'nowrap',color:'#FFFFFF',position:'sticky',top:0,background:isKoyu?'#1a3f8a':'#1a56db',zIndex:2,letterSpacing:0.4,borderBottom:'none'};
+  const thSticky = {...thS,position:'sticky',right:0,zIndex:3,background:isKoyu?'#1a3f8a':'#1a56db',boxShadow:'-3px 0 8px rgba(0,0,0,0.3)',textAlign:'center'};
 
   /* ── TD STİLLERİ ── */
   const tdS = {padding:'7px 6px',fontSize:'12px',fontWeight:600,whiteSpace:'nowrap',color:isKoyu?'#f1f5f9':C.text,borderBottom:'none',opacity:1};
   const tdTrunc = {...tdS,overflow:'hidden',textOverflow:'ellipsis'};
-  const tdSticky = {...tdS,position:'sticky',right:0,background:'inherit',boxShadow:'-3px 0 8px rgba(0,0,0,0.15)',textAlign:'center'};
+  /* Sticky sütun OPAK arka plan kullanmalı - inherit transparan rengi alır ve ikonlar kaybolur */
+  const tdStickyBg = (i) => isKoyu
+    ? (i % 2 === 0 ? '#1e3a78' : '#142d64')
+    : (i % 2 === 0 ? '#ffffff' : '#f0f5ff');
 
   /* ── SATIR STİLLERİ ── */
+  /* OPAK renkler - sticky sütun inherit sorununu çözer */
   const rowBg = (i) => isKoyu
-    ? (i % 2 === 0 ? 'rgba(30,58,120,0.6)' : 'rgba(20,45,100,0.5)')
-    : (i % 2 === 0 ? '#ffffff' : '#f0f5ff');
+    ? (i % 2 === 0 ? '#1e3a78' : '#172e5e')
+    : (i % 2 === 0 ? '#ffffff' : '#f4f7ff');
+  const rowGrad = (i) => isKoyu
+    ? (i % 2 === 0 ? 'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)' : 'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)')
+    : 'none';
   const rowSt = (i) => ({
     cursor:'pointer',
     backgroundColor:rowBg(i),
-    backgroundImage:isKoyu ? 'linear-gradient(90deg, rgba(59,130,246,0.15) 0%, transparent 100%)' : 'none',
-    borderBottom:isKoyu ? '1px solid rgba(59,130,246,0.2)' : '1px solid rgba(26,86,219,0.08)',
-    borderLeft:isKoyu ? '3px solid rgba(59,130,246,0.4)' : '3px solid rgba(26,86,219,0.3)',
+    backgroundImage:rowGrad(i),
+    borderBottom:isKoyu ? '1px solid rgba(59,130,246,0.25)' : '1px solid #e8edf8',
+    borderLeft:isKoyu ? '3px solid rgba(59,130,246,0.5)' : '3px solid rgba(26,86,219,0.35)',
     boxShadow:isKoyu
-      ? '0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)'
-      : '0 1px 4px rgba(26,86,219,0.08)',
+      ? '0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)'
+      : '0 1px 3px rgba(26,86,219,0.06)',
     transition:'all .2s ease',
-    borderRadius:4
+    borderRadius:6
   });
 
   return (
@@ -551,18 +558,18 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                       style={rowSt(i)}
                       onMouseEnter={e => {
                         if(isKoyu){
-                          e.currentTarget.style.backgroundColor='rgba(59,130,246,0.25)';
-                          e.currentTarget.style.boxShadow='0 4px 20px rgba(59,130,246,0.3), inset 0 1px 0 rgba(255,255,255,0.08)';
+                          e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';
+                          e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';
                         } else {
-                          e.currentTarget.style.backgroundImage='linear-gradient(90deg, rgba(59,130,246,0.08) 0%, #ffffff 100%)';
-                          e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.15)';
+                          e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';
+                          e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';
                         }
                         e.currentTarget.style.transform='translateY(-1px)';
                       }}
                       onMouseLeave={e => {
                         e.currentTarget.style.backgroundColor=rowBg(i);
-                        e.currentTarget.style.backgroundImage=isKoyu?'linear-gradient(90deg, rgba(59,130,246,0.15) 0%, transparent 100%)':'none';
-                        e.currentTarget.style.boxShadow=isKoyu?'0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)':'0 1px 4px rgba(26,86,219,0.08)';
+                        e.currentTarget.style.backgroundImage=rowGrad(i);
+                        e.currentTarget.style.boxShadow=isKoyu?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';
                         e.currentTarget.style.transform='translateY(0)';
                       }}>
                       {MR.hasYetki(user,'dosya','dosya-toplu-sil') && <td style={{...tdS,textAlign:'center',padding:'6px 4px'}} onClick={e => e.stopPropagation()}>
@@ -605,7 +612,7 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                         </span>
                       </td>
                       {/* İŞLEM - STICKY */}
-                      <td style={tdSticky}>
+                      <td style={{...tdS,position:'sticky',right:0,background:tdStickyBg(i),boxShadow:'-3px 0 8px rgba(0,0,0,0.15)',textAlign:'center'}}>
                         <div style={{display:'flex',gap:6,justifyContent:'center',alignItems:'center'}}>
                           <a href={'#/dosya-detay-'+d.id} onClick={e=>{if(!e.ctrlKey&&!e.metaKey){e.preventDefault();onSelect(d.id);}}}
                             title="GÖRÜNTÜLE" style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.accent}11`,textDecoration:'none'}}>

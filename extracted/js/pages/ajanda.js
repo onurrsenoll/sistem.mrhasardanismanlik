@@ -509,22 +509,22 @@ MR.AjandaPage = ({setPage, user}) => {
               ) : (
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:700}}>
                   <thead>
-                    <tr style={{background:C.bgHover}}>
+                    <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
                       {MR.hasYetki(user,'ajanda','ajanda-toplu-sil') && (
-                        <th style={{padding:'10px 8px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`,width:36}}>
+                        <th style={{padding:'10px 8px',textAlign:'left',color:'#fff',fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`,width:36}}>
                           <input type="checkbox" checked={filtrelenmis.length > 0 && filtrelenmis.every(g => secililer.includes(g.id))} onChange={() => tumunuSec(filtrelenmis)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                         </th>
                       )}
                       {['', 'BAŞLIK', 'TARİH', 'BİTİŞ TARİHİ', 'ÖNCELİK', 'DURUM', 'İŞLEMLER'].map(h =>
-                        <th key={h||'chk'} style={{padding:'10px 8px',textAlign:'left',color:C.textMuted,fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                        <th key={h||'chk'} style={{padding:'10px 8px',textAlign:'left',color:'#fff',fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
                       )}
                     </tr>
                   </thead>
                   <tbody>
                     {filtrelenmis.map((g, i) => (
-                      <tr key={i} style={{borderBottom:`1px solid ${C.border}`}}
-                        onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
+                        onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                        onMouseLeave={e => {e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
                         {/* SEÇİM CHECKBOX */}
                         {MR.hasYetki(user,'ajanda','ajanda-toplu-sil') && (
                           <td style={{padding:'10px 8px',width:36}}>
