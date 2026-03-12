@@ -1065,26 +1065,26 @@ const IsPaydaslari = ({setPage, user}) => {
                   <thead>
                     <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                       {MR.hasYetki(user,'paydaslar','paydaslar-toplu-sil') && (
-                        <th style={{padding:'10px 6px',textAlign:'center',borderBottom:'none',width:32,color:'#FFFFFF'}}>
+                        <th style={{padding:'10px 6px',textAlign:'center',width:32,color:'#FFFFFF',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                           <input type="checkbox" checked={paydaslar.length > 0 && secililerP.length === paydaslar.length} onChange={tumunuSecP} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                         </th>
                       )}
                       {['AD','TÜR','YETKİLİ','TELEFON','İL','ADK PRİM','BH PRİM','DURUM','İŞLEMLER'].map(h =>
-                        <th key={h} style={{padding:'10px 10px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:'none'}}>{h}</th>
+                        <th key={h} style={{padding:'10px 10px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>{h}</th>
                       )}
                     </tr>
                   </thead>
                   <tbody>
                     {paydaslar.map((paydas, i) => (
-                      <tr key={paydas.id || i} style={{borderBottom:`1px solid ${C.border}`,background: secililerP.includes(paydas.id) ? `${C.accent}11` : 'transparent'}}
-                        onMouseEnter={e => { if(!secililerP.includes(paydas.id)) e.currentTarget.style.background = C.bgHover; }}
-                        onMouseLeave={e => { if(!secililerP.includes(paydas.id)) e.currentTarget.style.background = 'transparent'; }}>
+                      <tr key={paydas.id || i} style={{borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',background: secililerP.includes(paydas.id) ? `${C.accent}18` : MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',borderRadius:8,transition:'all .2s ease'}}
+                        onMouseEnter={e => { if(!secililerP.includes(paydas.id)){if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';} }}
+                        onMouseLeave={e => { if(!secililerP.includes(paydas.id)){e.currentTarget.style.background=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.transform='translateY(0)';} }}>
                         {MR.hasYetki(user,'paydaslar','paydaslar-toplu-sil') && (
-                          <td style={{padding:'10px 6px',textAlign:'center',width:32}}>
+                          <td style={{padding:'10px 6px',textAlign:'center',width:32,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                             <input type="checkbox" checked={secililerP.includes(paydas.id)} onChange={() => toggleSecimP(paydas.id)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                           </td>
                         )}
-                        <td style={{padding:'10px 10px',fontWeight:600}}>
+                        <td style={{padding:'10px 10px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px'}}>
                           <div style={{display:'flex',alignItems:'center',gap:8}}>
                             <div style={{width:32,height:32,borderRadius:8,background:`${turRenk(paydas.tur)}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                               <LIcon name={turIcon(paydas.tur)} size={14} color={turRenk(paydas.tur)}/>
@@ -1095,24 +1095,24 @@ const IsPaydaslari = ({setPage, user}) => {
                             </div>
                           </div>
                         </td>
-                        <td style={{padding:'10px 10px'}}><Badge text={turLabel(paydas.tur)} color={turRenk(paydas.tur)}/></td>
-                        <td style={{padding:'10px 10px',color:C.textSec}}>{paydas.yetkili || '-'}</td>
-                        <td style={{padding:'10px 10px',color:C.textSec}}>{paydas.telefon || '-'}</td>
-                        <td style={{padding:'10px 10px',color:C.textSec}}>{paydas.il || '-'}</td>
-                        <td style={{padding:'10px 10px'}}>
+                        <td style={{padding:'10px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}><Badge text={turLabel(paydas.tur)} color={turRenk(paydas.tur)}/></td>
+                        <td style={{padding:'10px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{paydas.yetkili || '-'}</td>
+                        <td style={{padding:'10px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{paydas.telefon || '-'}</td>
+                        <td style={{padding:'10px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{paydas.il || '-'}</td>
+                        <td style={{padding:'10px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                           {paydas.prim_adk ? (
                             <span style={{...S.badge(C.cyan),fontSize:11,fontWeight:700}}>₺{paydas.prim_adk}</span>
                           ) : <span style={{color:C.textMuted}}>-</span>}
                         </td>
-                        <td style={{padding:'10px 10px'}}>
+                        <td style={{padding:'10px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                           {paydas.prim_bh ? (
                             <span style={{...S.badge(C.purple),fontSize:11,fontWeight:700}}>₺{paydas.prim_bh}</span>
                           ) : <span style={{color:C.textMuted}}>-</span>}
                         </td>
-                        <td style={{padding:'10px 10px'}}>
+                        <td style={{padding:'10px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                           <Badge text={paydas.durum === 'aktif' ? 'AKTİF' : 'PASİF'} color={paydas.durum === 'aktif' ? C.success : C.danger}/>
                         </td>
-                        <td style={{padding:'10px 10px'}}>
+                        <td style={{padding:'10px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                           <div style={{display:'flex',gap:4}}>
                             <div onClick={() => komisyonAc(paydas)} style={{width:28,height:28,borderRadius:7,background:'linear-gradient(180deg, #fcd34d 0%, #f59e0b 40%, #d97706 100%)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 2px 8px -1px rgba(245,158,11,0.4), inset 0 1px 0 rgba(255,255,255,0.25)',borderBottom:'1px solid #b45309'}} title="KOMİSYON TAKİP">
                               <LIcon name="Banknote" size={13} color="#000"/>
