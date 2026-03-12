@@ -1333,9 +1333,9 @@ const IsPaydaslari = ({setPage, user}) => {
                 <div style={{overflowX:'auto'}}>
                   <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                     <thead>
-                      <tr style={{background:`${C.gold}08`}}>
+                      <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['TARİH','TUTAR','DURUM','DOSYA NO','AÇIKLAMA','İŞLEM'].map(h =>
-                          <th key={h} style={{padding:'8px 12px',textAlign:'left',color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted,fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                          <th key={h} style={{padding:'8px 12px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>{h}</th>
                         )}
                       </tr>
                     </thead>
@@ -1344,17 +1344,17 @@ const IsPaydaslari = ({setPage, user}) => {
                         const tutar = parseFloat(k.tutar) || 0;
                         const bekliyor = k.durum !== 'odendi';
                         return (
-                          <tr key={k.id || i} style={{borderBottom:`1px solid ${C.border}`,background: bekliyor ? `${C.warning}06` : 'transparent'}}
-                            onMouseEnter={e => e.currentTarget.style.background = bekliyor ? `${C.warning}0a` : C.bgCard}
-                            onMouseLeave={e => e.currentTarget.style.background = bekliyor ? `${C.warning}06` : 'transparent'}>
-                            <td style={{padding:'8px 12px',color:C.textSec}}>{k.tarih || k.created_at?.split(' ')[0] || '-'}</td>
-                            <td style={{padding:'8px 12px',fontWeight:700,color:C.gold}}>{fmt(tutar)}</td>
-                            <td style={{padding:'8px 12px'}}>
+                          <tr key={k.id || i} style={{borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',background:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',borderRadius:8,transition:'all .2s ease'}}
+                            onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                            onMouseLeave={e => {e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                            <td style={{padding:'8px 12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{k.tarih || k.created_at?.split(' ')[0] || '-'}</td>
+                            <td style={{padding:'8px 12px',fontWeight:700,fontSize:'12px',color:C.gold}}>{fmt(tutar)}</td>
+                            <td style={{padding:'8px 12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                               <Badge text={k.durum === 'odendi' ? 'ÖDENDİ' : 'BEKLİYOR'} color={k.durum === 'odendi' ? C.success : C.warning}/>
                             </td>
-                            <td style={{padding:'8px 12px',color:C.accent,fontWeight:600}}>{k.dosya_id ? `#${k.dosya_id}` : '-'}</td>
-                            <td style={{padding:'8px 12px',color:C.textSec,maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{k.aciklama || '-'}</td>
-                            <td style={{padding:'8px 12px'}}>
+                            <td style={{padding:'8px 12px',color:C.accent,fontWeight:600,fontSize:'12px'}}>{k.dosya_id ? `#${k.dosya_id}` : '-'}</td>
+                            <td style={{padding:'8px 12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600,maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{k.aciklama || '-'}</td>
+                            <td style={{padding:'8px 12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                               {bekliyor ? (
                                 <span style={{cursor:'pointer',display:'inline-flex',padding:'4px 10px',borderRadius:6,background:`${C.success}18`,alignItems:'center',gap:4}}
                                   onClick={() => { setKomisyonOdeItem(k); setKomisyonOdeKasa(''); setKomisyonOdeModal(true); }}>
