@@ -1543,13 +1543,13 @@ const PoliceKazanc = ({setPage, user}) => {
                     <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),backgroundImage:'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
                       onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
                       onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
-                      <td style={{padding:'10px 8px',fontWeight:700,color:C.accent}}>{a.donem}</td>
-                      <td style={{padding:'10px 8px',fontWeight:600}}>{a.adet}</td>
-                      <td style={{padding:'10px 8px'}}>{fmt(a.toplam_prim)}</td>
-                      <td style={{padding:'10px 8px',fontWeight:600,color:C.purple}}>{fmt(a.komisyon)}</td>
-                      <td style={{padding:'10px 8px',color:C.success}}>{fmt(a.tahsil_edilen)}</td>
-                      <td style={{padding:'10px 8px',fontWeight:700,color:cari>0?C.warning:C.success}}>{fmt(cari)}</td>
-                      <td style={{padding:'10px 8px'}}>
+                      <td style={{padding:'10px 8px',fontWeight:700,color:C.accent,fontSize:'12px'}}>{a.donem}</td>
+                      <td style={{padding:'10px 8px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px'}}>{a.adet}</td>
+                      <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{fmt(a.toplam_prim)}</td>
+                      <td style={{padding:'10px 8px',fontWeight:600,color:C.purple,fontSize:'12px'}}>{fmt(a.komisyon)}</td>
+                      <td style={{padding:'10px 8px',color:C.success,fontSize:'12px',fontWeight:600}}>{fmt(a.tahsil_edilen)}</td>
+                      <td style={{padding:'10px 8px',fontWeight:700,color:cari>0?C.warning:C.success,fontSize:'12px'}}>{fmt(cari)}</td>
+                      <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                         {a.tahsil_edilen > 0 && (
                           <button style={{...S.btn,...S.btnS,fontSize:9,padding:'4px 8px'}}
                             onClick={()=>setKazancModal({donem:a.donem,tutar:a.tahsil_edilen,kasa_id:''})}>

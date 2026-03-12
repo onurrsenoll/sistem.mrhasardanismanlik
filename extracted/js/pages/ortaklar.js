@@ -647,7 +647,7 @@ const IsOrtaklari = ({setPage, user}) => {
                     <thead>
                       <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['TARİH','TÜR','TUTAR','DOSYA NO','AÇIKLAMA'].map(h =>
-                          <th key={h} style={{padding:'8px 12px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:'none'}}>{h}</th>
+                          <th key={h} style={{padding:'8px 12px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>{h}</th>
                         )}
                       </tr>
                     </thead>
@@ -655,21 +655,21 @@ const IsOrtaklari = ({setPage, user}) => {
                       {hareketler.map((h, i) => {
                         const tutar = parseFloat(h.tutar) || 0;
                         return (
-                          <tr key={h.id || i} style={{borderBottom:`1px solid ${C.border}`}}
-                            onMouseEnter={e => e.currentTarget.style.background = `${C.bgCard}`}
-                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                            <td style={{padding:'8px 12px',color:C.textSec}}>{h.tarih || h.created_at?.split(' ')[0] || '-'}</td>
-                            <td style={{padding:'8px 12px'}}>
+                          <tr key={h.id || i} style={{borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',background:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',borderRadius:8,transition:'all .2s ease'}}
+                            onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                            onMouseLeave={e => {e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                            <td style={{padding:'8px 12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{h.tarih || h.created_at?.split(' ')[0] || '-'}</td>
+                            <td style={{padding:'8px 12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                               <div style={{display:'flex',alignItems:'center',gap:4}}>
                                 <LIcon name={hareketTurIcon(h.tur)} size={12} color={hareketTurRenk(h.tur)}/>
                                 <Badge text={hareketTurLabel(h.tur)} color={hareketTurRenk(h.tur)}/>
                               </div>
                             </td>
-                            <td style={{padding:'8px 12px',fontWeight:700,color: h.tur === 'tahsilat' ? C.success : C.danger}}>
+                            <td style={{padding:'8px 12px',fontWeight:700,fontSize:'12px',color: h.tur === 'tahsilat' ? C.success : C.danger}}>
                               {h.tur === 'tahsilat' ? '+' : '-'}{fmt(tutar)}
                             </td>
-                            <td style={{padding:'8px 12px',color:C.accent,fontWeight:600}}>{h.dosya_id ? `#${h.dosya_id}` : '-'}</td>
-                            <td style={{padding:'8px 12px',color:C.textSec,maxWidth:250,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{h.aciklama || '-'}</td>
+                            <td style={{padding:'8px 12px',color:C.accent,fontWeight:600,fontSize:'12px'}}>{h.dosya_id ? `#${h.dosya_id}` : '-'}</td>
+                            <td style={{padding:'8px 12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600,maxWidth:250,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{h.aciklama || '-'}</td>
                           </tr>
                         );
                       })}
