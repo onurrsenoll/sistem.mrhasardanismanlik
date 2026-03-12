@@ -261,17 +261,17 @@ const GelirYonetimi = ({setPage, user}) => {
             <>
               <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:800}}>
                 <thead>
-                  <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                  <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                     {['TARİH','KASA','DOSYA NO','TÜR','TUTAR','AÇIKLAMA'].map(h =>
-                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#fff',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                     )}
                   </tr>
                 </thead>
                 <tbody>
                   {filtrelenmis.map((g, i) => (
-                    <tr key={g.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
-                      onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                      onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                    <tr key={g.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                      onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                      onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
                       <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{g.tarih || g.created_at?.split(' ')[0] || '-'}</td>
                       <td style={{padding:'10px 12px',fontWeight:600}}>{g.kasa_adi || kasaAdi(g.kasa_id)}</td>
                       <td style={{padding:'10px 12px'}}>
@@ -524,17 +524,17 @@ const GiderYonetimi = ({setPage, user}) => {
             <>
               <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:800}}>
                 <thead>
-                  <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                  <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                     {['TARİH','KASA','DOSYA NO','KATEGORİ','TUTAR','AÇIKLAMA'].map(h =>
-                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#fff',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                     )}
                   </tr>
                 </thead>
                 <tbody>
                   {giderler.map((g, i) => (
-                    <tr key={g.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
-                      onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                      onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                    <tr key={g.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                      onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                      onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
                       <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{g.tarih || g.created_at?.split(' ')[0] || '-'}</td>
                       <td style={{padding:'10px 12px',fontWeight:600}}>{g.kasa_adi || kasaAdi(g.kasa_id)}</td>
                       <td style={{padding:'10px 12px'}}>
@@ -804,17 +804,17 @@ const KomisyonPrim = ({setPage, user}) => {
           ) : (
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:900}}>
               <thead>
-                <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['İLGİLİ','TİP','DOSYA NO','TUTAR','ORAN','DURUM','ÖDEME TARİHİ','İŞLEM'].map(h =>
-                    <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#fff',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                    <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                   )}
                 </tr>
               </thead>
               <tbody>
                 {komisyonlar.map((k, i) => (
-                  <tr key={k.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
-                    onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                    onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                  <tr key={k.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                    onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                    onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
                     <td style={{padding:'10px 12px',fontWeight:600}}>{k.ilgili_adi || k.ilgili_id || '-'}</td>
                     <td style={{padding:'10px 12px'}}>
                       <Badge text={k.ilgili_tip === 'ortak' ? 'ORTAK' : 'PAYDAŞ'} color={k.ilgili_tip === 'ortak' ? C.purple : C.cyan}/>
@@ -1234,9 +1234,9 @@ const KasaBanka = ({setPage, user}) => {
           ) : (
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:800}}>
               <thead>
-                <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['TARİH','KASA','TÜR','TUTAR','AÇIKLAMA','DOSYA NO', ...((MR.hasYetki(user,'muhasebe','muhasebe-hareket-duzenle') || MR.hasYetki(user,'muhasebe','muhasebe-hareket-sil')) ? ['İŞLEM'] : [])].map(h =>
-                    <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#fff',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                    <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                   )}
                 </tr>
               </thead>
@@ -1245,9 +1245,9 @@ const KasaBanka = ({setPage, user}) => {
                   const tutar = parseFloat(h.tutar) || 0;
                   const giris = h.tur === 'gelir' || h.tur === 'komisyon' || h.tur === 'duzeltme';
                   return (
-                    <tr key={h.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
-                      onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                      onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                    <tr key={h.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                      onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                      onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
                       <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{h.tarih || h.created_at?.split(' ')[0] || '-'}</td>
                       <td style={{padding:'10px 12px',fontWeight:600}}>{h.kasa_adi || kasaAdi(h.kasa_id)}</td>
                       <td style={{padding:'10px 12px'}}><Badge text={turLabel(h.tur)} color={turRenk(h.tur)}/></td>
@@ -1604,9 +1604,9 @@ const MaliyetAnalizi = ({setPage, user}) => {
             <>
               <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:900}}>
                 <thead>
-                  <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                  <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                     {['DOSYA NO','MÜŞTERİ','GELİR','GİDER','KOMİSYON','NET KAR','KAR MARJI %'].map(h =>
-                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#fff',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                     )}
                   </tr>
                 </thead>
@@ -1619,9 +1619,9 @@ const MaliyetAnalizi = ({setPage, user}) => {
                     const marj = gelir > 0 ? ((net / gelir) * 100).toFixed(1) : '0.0';
                     const pozitif = net >= 0;
                     return (
-                      <tr key={d.dosya_id || i} style={{backgroundColor:pozitif?(MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff')):(MR.tema==='koyu'?'#3b1a1a':'#fff0f0'),backgroundImage:pozitif?(MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
-                        onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                        onMouseLeave={e=>{e.currentTarget.style.backgroundColor=pozitif?(MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff')):(MR.tema==='koyu'?'#3b1a1a':'#fff0f0');e.currentTarget.style.backgroundImage=pozitif?(MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                      <tr key={d.dosya_id || i} style={{backgroundColor:pozitif?(MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff')):(MR.tema==='koyu'?'#3b1a1a':'#fff0f0'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                        onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                        onMouseLeave={e=>{e.currentTarget.style.backgroundColor=pozitif?(MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff')):(MR.tema==='koyu'?'#3b1a1a':'#fff0f0');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
                         <td style={{padding:'10px 12px'}}>
                           <span style={{color:C.accent,fontWeight:600,cursor:'pointer'}} onClick={() => d.dosya_id && setPage('dosya-detay-' + d.dosya_id)}>
                             {d.dosya_no || d.dosya_id || '-'}
@@ -1647,7 +1647,7 @@ const MaliyetAnalizi = ({setPage, user}) => {
                   })}
                 </tbody>
                 <tfoot>
-                  <tr style={{background:`${C.accent}08`,borderTop:`2px solid ${C.border}`}}>
+                  <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af22',borderTop:`2px solid ${C.border}`}}>
                     <td style={{padding:'12px',fontWeight:800,fontSize:12}} colSpan={2}>GENEL TOPLAM</td>
                     <td style={{padding:'12px',fontWeight:800,color:C.success,fontSize:12}}>{fmt(istatistik.topGelir)}</td>
                     <td style={{padding:'12px',fontWeight:800,color:C.danger,fontSize:12}}>{fmt(istatistik.topGider)}</td>
@@ -1912,9 +1912,9 @@ const FinansalRaporlar = ({setPage, user}) => {
               <div style={{overflowX:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                   <thead>
-                    <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                    <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                       {['DÖNEM','GELİR','GİDER','KOMİSYON','NET','DOSYA SAYISI'].map(h =>
-                        <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#fff',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                        <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                       )}
                     </tr>
                   </thead>
@@ -1925,9 +1925,9 @@ const FinansalRaporlar = ({setPage, user}) => {
                       const komisyon = parseFloat(d.komisyon) || 0;
                       const net = gelir - gider - komisyon;
                       return (
-                        <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
-                          onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                          onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                        <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                          onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                          onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
                           <td style={{padding:'10px 12px',fontWeight:600}}>{d.donem || d.ay || '-'}</td>
                           <td style={{padding:'10px 12px',color:C.success,fontWeight:600}}>{fmt(gelir)}</td>
                           <td style={{padding:'10px 12px',color:C.danger,fontWeight:600}}>{fmt(gider)}</td>
@@ -1939,7 +1939,7 @@ const FinansalRaporlar = ({setPage, user}) => {
                     })}
                   </tbody>
                   <tfoot>
-                    <tr style={{background:`${C.accent}08`,borderTop:`2px solid ${C.border}`}}>
+                    <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af22',borderTop:`2px solid ${C.border}`}}>
                       <td style={{padding:'12px',fontWeight:800,fontSize:12}}>TOPLAM</td>
                       <td style={{padding:'12px',fontWeight:800,color:C.success,fontSize:12}}>{fmt(toplamGelir)}</td>
                       <td style={{padding:'12px',fontWeight:800,color:C.danger,fontSize:12}}>{fmt(toplamGider)}</td>
@@ -2125,17 +2125,17 @@ const KapanisRaporu = ({setPage, user}) => {
                       <div style={{overflowX:'auto'}}>
                         <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                           <thead>
-                            <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                            <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                               {['DOSYA NO','MÜVEKKİL','TÜR','TAHSİLAT','MASRAF','YÖN. ÜCRET','NET KAR','PAY (%50)'].map(h =>
-                                <th key={h} style={{padding:'10px 12px',textAlign:'left',color:'#fff',fontWeight:700,fontSize:10,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                                <th key={h} style={{padding:'10px 12px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                               )}
                             </tr>
                           </thead>
                           <tbody>
                             {(g.dosyalar || []).map((d, di) => (
-                              <tr key={di} style={{backgroundColor:MR.tema==='koyu'?(di%2===0?'#1e3a78':'#172e5e'):(di%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(di%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
-                                onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                                onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(di%2===0?'#1e3a78':'#172e5e'):(di%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(di%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                              <tr key={di} style={{backgroundColor:MR.tema==='koyu'?(di%2===0?'#111827':'#0d1321'):(di%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                                onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                                onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(di%2===0?'#111827':'#0d1321'):(di%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
                                 <td style={{padding:'8px 12px',fontWeight:600,color:C.accent}}>{d.dosya_no}</td>
                                 <td style={{padding:'8px 12px'}}>{d.muvekkil}</td>
                                 <td style={{padding:'8px 12px'}}><Badge text={d.dosya_turu} color={d.dosya_turu==='ADK'?C.accent:d.dosya_turu==='BH'?C.danger:d.dosya_turu==='MDK'?'#f59e0b':C.textMuted}/></td>
@@ -2148,7 +2148,7 @@ const KapanisRaporu = ({setPage, user}) => {
                             ))}
                           </tbody>
                           <tfoot>
-                            <tr style={{background:`${C.accent}08`,borderTop:`2px solid ${C.border}`}}>
+                            <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af22',borderTop:`2px solid ${C.border}`}}>
                               <td colSpan={3} style={{padding:'10px 12px',fontWeight:800,fontSize:11}}>TOPLAM ({g.dosya_sayisi} DOSYA)</td>
                               <td style={{padding:'10px 12px',fontWeight:800,color:C.success}}>{fmt(g.toplam_tahsilat)}</td>
                               <td style={{padding:'10px 12px',fontWeight:800,color:C.danger}}>{fmt(g.toplam_masraf)}</td>
@@ -2178,17 +2178,17 @@ const KapanisRaporu = ({setPage, user}) => {
                 <div style={{overflowX:'auto'}}>
                   <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                     <thead>
-                      <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                      <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['#','DOSYA NO','MÜVEKKİL','TÜR','AVUKAT','TAHSİLAT','MASRAF','YÖN. ÜCRET','NET KAR','PAY (%50)'].map(h =>
-                          <th key={h} style={{padding:'10px 12px',textAlign:'left',color:'#fff',fontWeight:700,fontSize:10,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                          <th key={h} style={{padding:'10px 12px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                         )}
                       </tr>
                     </thead>
                     <tbody>
                       {tumDosyalar.map((d, i) => (
-                        <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
-                          onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                          onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                        <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                          onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                          onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
                           <td style={{padding:'8px 12px',color:C.textMuted}}>{i+1}</td>
                           <td style={{padding:'8px 12px',fontWeight:600,color:C.accent}}>{d.dosya_no}</td>
                           <td style={{padding:'8px 12px'}}>{d.muvekkil}</td>
@@ -2203,7 +2203,7 @@ const KapanisRaporu = ({setPage, user}) => {
                       ))}
                     </tbody>
                     <tfoot>
-                      <tr style={{background:`${C.accent}08`,borderTop:`2px solid ${C.border}`}}>
+                      <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af22',borderTop:`2px solid ${C.border}`}}>
                         <td colSpan={5} style={{padding:'10px 12px',fontWeight:800,fontSize:11}}>GENEL TOPLAM ({genelToplam.dosya_sayisi} DOSYA)</td>
                         <td style={{padding:'10px 12px',fontWeight:800,color:C.success}}>{fmt(genelToplam.toplam_tahsilat)}</td>
                         <td style={{padding:'10px 12px',fontWeight:800,color:C.danger}}>{fmt(genelToplam.toplam_masraf)}</td>
@@ -2446,9 +2446,9 @@ const OrtakKasa = ({setPage, user}) => {
                         <div style={{overflowX:'auto'}}>
                           <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                             <thead>
-                              <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                              <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                                 {['TARİH','İŞLEM TÜRÜ','TUTAR','BAKİYE SONRASI','AÇIKLAMA'].map(h =>
-                                  <th key={h} style={{padding:'8px 12px',textAlign:'left',color:'#fff',fontWeight:800,fontSize:10,borderBottom:'2px solid '+C.border}}>{h}</th>
+                                  <th key={h} style={{padding:'8px 12px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:'2px solid '+C.border}}>{h}</th>
                                 )}
                               </tr>
                             </thead>
@@ -2457,9 +2457,9 @@ const OrtakKasa = ({setPage, user}) => {
                                 const tutar = parseFloat(h.tutar)||0;
                                 const isGelir = h.islem_turu === 'gelir' || h.islem_turu === 'transfer_giris';
                                 return (
-                                  <tr key={h.id||i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
-                                    onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                                    onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                                  <tr key={h.id||i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                                    onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                                    onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
                                     <td style={{padding:'8px 12px',color:C.textSec}}>{h.created_at?.split(' ')[0] || '-'}</td>
                                     <td style={{padding:'8px 12px'}}>
                                       <Badge text={(h.islem_turu||'').toUpperCase()} color={isGelir ? C.success : C.danger}/>
@@ -2713,19 +2713,19 @@ const AySonuRaporu = ({setPage, user}) => {
             React.createElement('div', {style:{fontSize:11,color:C.textSec,fontWeight:600,marginBottom:8}}, 'AY İÇİNDE ' + data.ortak.ad_soyad + '\'DAN ALINAN ÖDEME'),
             React.createElement('table', {style:{width:'100%',borderCollapse:'collapse'}},
               React.createElement('thead', null,
-                React.createElement('tr', {style:{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}},
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA'),
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'TUTAR')
+                React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA'),
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TUTAR')
                 )
               ),
               React.createElement('tbody', null,
                 b1.ortak_odemeleri.map(function(o,i){
-                  return React.createElement('tr', {key:i, style:{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}},
+                  return React.createElement('tr', {key:i, style:{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}},
                     React.createElement('td', {style:{padding:'8px 12px',fontSize:11,borderBottom:'1px solid '+C.border+'22'}}, o.aciklama || (data.ortak.ad_soyad + ' - ' + (o.tur||'').toUpperCase())),
                     React.createElement('td', {style:{padding:'8px 12px',fontSize:12,fontWeight:700,textAlign:'right',color:C.success,borderBottom:'1px solid '+C.border+'22'}}, fmt(o.tutar))
                   );
                 }),
-                React.createElement('tr', {style:{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}},
+                React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
                   React.createElement('td', {style:{padding:'10px 12px',fontSize:12,fontWeight:800,color:'#fff'}}, 'TOPLAM ALINAN'),
                   React.createElement('td', {style:{padding:'10px 12px',fontSize:14,fontWeight:900,textAlign:'right',color:C.success}}, fmt(b1.ortak_toplam_odeme))
                 )
@@ -2741,17 +2741,17 @@ const AySonuRaporu = ({setPage, user}) => {
             React.createElement('div', {style:{overflowX:'auto'}},
               React.createElement('table', {style:{width:'100%',borderCollapse:'collapse',minWidth:600}},
                 React.createElement('thead', null,
-                  React.createElement('tr', {style:{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}},
-                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'TARİH'),
-                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'MAĞDUR ADI SOYADI'),
-                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'center',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'DOSYA TÜRÜ'),
-                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'center',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'KAYNAK'),
-                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'MASRAF')
+                  React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TARİH'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MAĞDUR ADI SOYADI'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'center',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'DOSYA TÜRÜ'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'center',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'KAYNAK'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MASRAF')
                   )
                 ),
                 React.createElement('tbody', null,
                   (b1.dosyalar||[]).map(function(d,i){
-                    return React.createElement('tr', {key:i, style:{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}},
+                    return React.createElement('tr', {key:i, style:{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}},
                       React.createElement('td', {style:{padding:'6px 10px',fontSize:11,borderBottom:'1px solid '+C.border+'22'}},
                         d.acilis_tarihi ? new Date(d.acilis_tarihi).toLocaleDateString('tr-TR') : '-'
                       ),
@@ -2765,7 +2765,7 @@ const AySonuRaporu = ({setPage, user}) => {
                       React.createElement('td', {style:{padding:'6px 10px',fontSize:12,fontWeight:700,textAlign:'right',borderBottom:'1px solid '+C.border+'22',color:C.danger}}, fmt(d.toplam_masraf))
                     );
                   }),
-                  React.createElement('tr', {style:{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}},
+                  React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
                     React.createElement('td', {colSpan:4, style:{padding:'10px 12px',fontSize:12,fontWeight:800,color:'#fff'}}, 'TOPLAM DOSYA MASRAFLARI'),
                     React.createElement('td', {style:{padding:'10px 12px',fontSize:14,fontWeight:900,textAlign:'right',color:C.danger}}, fmt(b1.toplam_dosya_masraf))
                   )
@@ -2779,21 +2779,21 @@ const AySonuRaporu = ({setPage, user}) => {
             React.createElement('div', {style:{fontSize:11,color:C.textSec,fontWeight:600,marginBottom:8}}, 'DOSYA TÜRÜ DAĞILIMI'),
             React.createElement('table', {style:{width:'100%',borderCollapse:'collapse',maxWidth:400}},
               React.createElement('thead', null,
-                React.createElement('tr', {style:{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}},
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'DOSYA TÜRÜ'),
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'ADET')
+                React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'DOSYA TÜRÜ'),
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'ADET')
                 )
               ),
               React.createElement('tbody', null,
                 Object.entries(b1.tur_dagilimi).map(function(e,i){
                   var tur=e[0], adet=e[1];
                   var turAdi = tur==='ADK' ? 'Araç Değer Kaybı (ADK)' : tur==='BH' ? 'Bedeni Hasar (BH)' : tur==='MDK' ? 'Maddi Hasar (MDK)' : tur;
-                  return React.createElement('tr', {key:tur, style:{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}},
+                  return React.createElement('tr', {key:tur, style:{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}},
                     React.createElement('td', {style:{padding:'6px 12px',fontSize:11,borderBottom:'1px solid '+C.border+'22'}}, turAdi),
                     React.createElement('td', {style:{padding:'6px 12px',fontSize:12,fontWeight:700,textAlign:'right',borderBottom:'1px solid '+C.border+'22'}}, adet)
                   );
                 }),
-                React.createElement('tr', {style:{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}},
+                React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
                   React.createElement('td', {style:{padding:'8px 12px',fontSize:12,fontWeight:800,color:'#fff'}}, 'TOPLAM DOSYA'),
                   React.createElement('td', {style:{padding:'8px 12px',fontSize:14,fontWeight:900,textAlign:'right'}}, b1.dosya_sayisi)
                 )
@@ -2838,19 +2838,19 @@ const AySonuRaporu = ({setPage, user}) => {
             React.createElement('div', {style:{fontSize:11,color:C.textSec,fontWeight:600,marginBottom:8}}, 'DİĞER MASRAFLAR'),
             React.createElement('table', {style:{width:'100%',borderCollapse:'collapse'}},
               React.createElement('thead', null,
-                React.createElement('tr', {style:{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}},
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA'),
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'TUTAR')
+                React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA'),
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TUTAR')
                 )
               ),
               React.createElement('tbody', null,
                 b2.diger_masraflar.map(function(m,i){
-                  return React.createElement('tr', {key:i, style:{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}},
+                  return React.createElement('tr', {key:i, style:{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}},
                     React.createElement('td', {style:{padding:'6px 12px',fontSize:11,borderBottom:'1px solid '+C.border+'22'}}, m.aciklama || m.gider_turu),
                     React.createElement('td', {style:{padding:'6px 12px',fontSize:12,fontWeight:700,textAlign:'right',color:C.danger,borderBottom:'1px solid '+C.border+'22'}}, fmt(m.tutar))
                   );
                 }),
-                React.createElement('tr', {style:{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}},
+                React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
                   React.createElement('td', {style:{padding:'10px 12px',fontSize:12,fontWeight:800,color:'#fff'}}, 'DİĞER MASRAFLAR TOPLAMI'),
                   React.createElement('td', {style:{padding:'10px 12px',fontSize:14,fontWeight:900,textAlign:'right',color:C.danger}}, fmt(b2.toplam_diger_masraf))
                 )
@@ -2868,17 +2868,17 @@ const AySonuRaporu = ({setPage, user}) => {
                   React.createElement('div', {style:{overflowX:'auto'}},
                     React.createElement('table', {style:{width:'100%',borderCollapse:'collapse',minWidth:500}},
                       React.createElement('thead', null,
-                        React.createElement('tr', {style:{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}},
-                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'DOSYA NO'),
-                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'MAĞDUR'),
-                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'GELİR'),
-                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'MASRAF'),
-                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:10,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'NET')
+                        React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'DOSYA NO'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MAĞDUR'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'GELİR'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MASRAF'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'NET')
                         )
                       ),
                       React.createElement('tbody', null,
                         b2.kapanan_dosyalar.map(function(kd,i){
-                          return React.createElement('tr', {key:i, style:{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}},
+                          return React.createElement('tr', {key:i, style:{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}},
                             React.createElement('td', {style:{padding:'6px 10px',fontSize:11,fontWeight:600,borderBottom:'1px solid '+C.border+'22'}}, kd.dosya_no),
                             React.createElement('td', {style:{padding:'6px 10px',fontSize:11,borderBottom:'1px solid '+C.border+'22'}}, kd.magdur_adi || '-'),
                             React.createElement('td', {style:{padding:'6px 10px',fontSize:11,fontWeight:700,textAlign:'right',color:C.success,borderBottom:'1px solid '+C.border+'22'}}, fmt(kd.toplam_gelir)),
@@ -2964,17 +2964,17 @@ const AySonuRaporu = ({setPage, user}) => {
               ),
               ok.hareketler && ok.hareketler.length > 0 && React.createElement('table', {style:{width:'100%',borderCollapse:'collapse'}},
                 React.createElement('thead', null,
-                  React.createElement('tr', {style:{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}},
-                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:9,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'TARİH'),
-                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:9,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'TÜR'),
-                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'right',fontSize:9,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'TUTAR'),
-                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:9,color:'#fff',fontWeight:700,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA')
+                  React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TARİH'),
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TÜR'),
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TUTAR'),
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA')
                   )
                 ),
                 React.createElement('tbody', null,
                   ok.hareketler.map(function(h,i){
                     var isGelir = h.islem_turu==='gelir'||h.islem_turu==='transfer_giris';
-                    return React.createElement('tr', {key:i, style:{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}},
+                    return React.createElement('tr', {key:i, style:{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}},
                       React.createElement('td', {style:{padding:'5px 10px',fontSize:10,borderBottom:'1px solid '+C.border+'22'}}, (h.created_at||'').split(' ')[0]||'-'),
                       React.createElement('td', {style:{padding:'5px 10px',fontSize:10,borderBottom:'1px solid '+C.border+'22',color:isGelir?C.success:C.danger,fontWeight:600}}, (h.islem_turu||'').toUpperCase()),
                       React.createElement('td', {style:{padding:'5px 10px',fontSize:11,fontWeight:700,textAlign:'right',borderBottom:'1px solid '+C.border+'22',color:isGelir?C.success:C.danger}}, (isGelir?'+':'-')+fmt(h.tutar)),

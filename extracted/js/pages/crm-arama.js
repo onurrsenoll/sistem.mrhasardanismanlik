@@ -373,20 +373,19 @@ MR.CrmAramaPage = ({setPage, user}) => {
   /* ── STİLLER ── */
   const FS = 11; /* TÜM HÜCRELER AYNI FONT BOYUTU */
   const isKoyu = MR.tema === 'koyu';
-  const thSt = {padding:'7px 6px', textAlign:'left', color:'#fff', fontWeight:800, fontSize:FS, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:isKoyu?'#1a3f8a':'#1a56db', zIndex:2, letterSpacing:0.3};
-  const tdSt = {padding:'6px 6px', fontSize:FS, fontWeight:600, borderBottom:'none', whiteSpace:'nowrap', color:isKoyu?'#f1f5f9':C.text};
+  const thSt = {padding:'7px 6px', textAlign:'left', color:'#FFFFFF', fontWeight:800, fontSize:FS, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:isKoyu?'#0f2342':'#1e40af', backgroundImage:isKoyu?'linear-gradient(135deg, #1e3a5f 0%, #0f2342 100%)':'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)', zIndex:2, letterSpacing:0.3};
+  const tdSt = {padding:'6px 6px', fontSize:FS, fontWeight:600, borderBottom:'none', whiteSpace:'nowrap', color:isKoyu?'#e2e8f0':'#1e293b'};
   const tdTrunc = {...tdSt, maxWidth:90, overflow:'hidden', textOverflow:'ellipsis'};
-  const thSticky = {...thSt, position:'sticky', right:0, zIndex:3, background:isKoyu?'#1a3f8a':'#1a56db', borderLeft:isKoyu?'1px solid rgba(255,255,255,0.1)':'1px solid rgba(255,255,255,0.2)'};
-  const rowBgFn = (i, selected) => selected ? `${C.accent}18` : isKoyu ? (i%2===0?'#1e3a78':'#172e5e') : (i%2===0?'#ffffff':'#f4f7ff');
-  const tdStickyBgFn = (i, selected) => selected ? `${C.accent}18` : isKoyu ? (i%2===0?'#172e5e':'#0f2347') : (i%2===0?'#ffffff':'#f4f7ff');
+  const thSticky = {...thSt, position:'sticky', right:0, zIndex:3, background:isKoyu?'#0f2342':'#1e40af', backgroundImage:isKoyu?'linear-gradient(135deg, #1e3a5f 0%, #0f2342 100%)':'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)', borderLeft:isKoyu?'1px solid rgba(6,182,212,0.2)':'1px solid rgba(99,102,241,0.2)'};
+  const rowBgFn = (i, selected) => selected ? `${C.accent}18` : isKoyu ? (i%2===0?'#111827':'#0d1321') : (i%2===0?'#ffffff':'#f0f4ff');
+  const tdStickyBgFn = (i, selected) => selected ? `${C.accent}18` : isKoyu ? (i%2===0?'#111827':'#0d1321') : (i%2===0?'#ffffff':'#f0f4ff');
   const rowSt = (i, selected) => ({
     background: rowBgFn(i, selected),
-    backgroundImage: !selected && isKoyu ? (i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)') : 'none',
     transition:'all .2s ease',
-    borderLeft:`3px solid ${selected ? C.accent : isKoyu ? 'rgba(59,130,246,0.5)' : 'rgba(26,86,219,0.35)'}`,
-    borderBottom: isKoyu ? '1px solid rgba(59,130,246,0.25)' : '1px solid #e8edf8',
-    borderRadius:6,
-    boxShadow: isKoyu ? '0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)' : '0 1px 3px rgba(26,86,219,0.06)'
+    borderLeft:`3px solid ${selected ? C.accent : isKoyu ? 'rgba(6,182,212,0.5)' : 'rgba(99,102,241,0.4)'}`,
+    borderBottom: isKoyu ? '1px solid rgba(6,182,212,0.1)' : '1px solid rgba(99,102,241,0.1)',
+    borderRadius:8,
+    boxShadow: isKoyu ? '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)' : '0 1px 4px rgba(99,102,241,0.08)'
   });
   const iconBtn = (bg) => ({
     width:26, height:26, borderRadius:6, border:'none', cursor:'pointer',
@@ -575,7 +574,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
                 <col style={{width:88}}/>{/* İŞLEM */}
               </colgroup>
               <thead>
-                <tr style={{background:C.bgHover}}>
+                <tr style={{background:isKoyu?'#0f2342':'#1e40af', backgroundImage:isKoyu?'linear-gradient(135deg, #1e3a5f 0%, #0f2342 100%)':'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)'}}>
                   <th style={thSt}><input type="checkbox" checked={secili.length === data.length && data.length > 0} onChange={toggleAll}/></th>
                   <th style={thSt}>NO</th>
                   <th style={thSt}>YÖNLENDİREN</th>
@@ -598,8 +597,8 @@ MR.CrmAramaPage = ({setPage, user}) => {
                   const sel = secili.includes(item.id);
                   return (
                   <tr key={item.id} style={rowSt(i, sel)}
-                    onMouseEnter={e => {if(!sel) {if(isKoyu){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}}
-                    onMouseLeave={e => {if(!sel) {e.currentTarget.style.backgroundColor=rowBgFn(i,false);e.currentTarget.style.backgroundImage=isKoyu?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=isKoyu?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}}
+                    onMouseEnter={e => {if(!sel) {if(isKoyu){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}}
+                    onMouseLeave={e => {if(!sel) {e.currentTarget.style.backgroundColor=rowBgFn(i,false);e.currentTarget.style.borderLeft=isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=isKoyu?'0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}}
                   >
                     <td style={tdSt}><input type="checkbox" checked={sel} onChange={() => toggleSecili(item.id)}/></td>
                     <td style={{...tdSt, fontWeight:700, color:C.accent}}>{item.sira_no || item.id}</td>
@@ -632,7 +631,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
                       ) : '-'}
                     </td>
                     <td style={{...tdSt, fontFamily:'monospace'}} title={item.magdur_tc || ''}>{item.magdur_tc || '-'}</td>
-                    <td style={{...tdSt,position:'sticky',right:0,background:tdStickyBgFn(i,sel),borderLeft:isKoyu?'1px solid rgba(59,130,246,0.15)':'1px solid rgba(26,86,219,0.06)',textAlign:'center'}}>
+                    <td style={{...tdSt,position:'sticky',right:0,background:tdStickyBgFn(i,sel),borderLeft:isKoyu?'1px solid rgba(6,182,212,0.2)':'1px solid rgba(99,102,241,0.2)',textAlign:'center'}}>
                       <div style={{display:'flex', gap:3, justifyContent:'center'}}>
                         <button style={iconBtn(C.cyan)} title="NOT EKLE / GÖRÜNTÜLE" onClick={() => openNot(item)}>
                           <LIcon name="MessageSquare" size={12} color={C.cyan}/>

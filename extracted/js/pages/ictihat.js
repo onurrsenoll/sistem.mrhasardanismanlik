@@ -609,24 +609,24 @@ const PoliceLimitPage = ({user, setPage}) => {
               </div>
               <table style={{width: '100%', borderCollapse: 'collapse', fontSize: 13}}>
                 <thead>
-                  <tr style={{background: isK ? '#1a3f8a' : '#1a56db'}}>
-                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: '#fff', fontSize: 12}}>POLİÇE TÜRÜ</th>
-                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: '#fff', fontSize: 12}}>TEMİNAT</th>
-                    <th style={{padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#fff', fontSize: 12}}>LİMİT (₺)</th>
-                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: '#fff', fontSize: 12}}>AÇIKLAMA</th>
+                  <tr style={{background: isK ? '#0f2342' : '#1e40af'}}>
+                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>POLİÇE TÜRÜ</th>
+                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>TEMİNAT</th>
+                    <th style={{padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>LİMİT (₺)</th>
+                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>AÇIKLAMA</th>
                   </tr>
                 </thead>
                 <tbody>
                   {limitData.limitler.map((l, i) => (
-                    <tr key={i} style={{backgroundColor:isK?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'), backgroundImage:isK?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none', borderBottom:isK?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8', borderLeft:isK?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)', boxShadow:isK?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)', transition:'all .2s', borderRadius:6}}
-                      onMouseEnter={e => {if(isK){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                      onMouseLeave={e => {e.currentTarget.style.backgroundColor=isK?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=isK?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=isK?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
-                      <td style={{padding: '12px 16px', fontWeight: 700, color: C.text}}>{l.police_turu}</td>
-                      <td style={{padding: '12px 16px', color: C.textSec}}>{l.teminat}</td>
-                      <td style={{padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: C.success}}>
+                    <tr key={i} style={{backgroundColor:isK?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:isK?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:isK?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:isK?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                      onMouseEnter={e => {if(isK){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                      onMouseLeave={e => {e.currentTarget.style.borderLeft=isK?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=isK?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                      <td style={{padding: '12px 16px', fontWeight: 600, color: isK?'#e2e8f0':'#1e293b', fontSize:'12px'}}>{l.police_turu}</td>
+                      <td style={{padding: '12px 16px', color: isK?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{l.teminat}</td>
+                      <td style={{padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: C.success, fontSize:'12px'}}>
                         {l.limit ? `₺${Number(l.limit).toLocaleString('tr-TR')}` : '-'}
                       </td>
-                      <td style={{padding: '12px 16px', color: C.textMuted, fontSize: 12}}>{l.aciklama || '-'}</td>
+                      <td style={{padding: '12px 16px', color: isK?'#e2e8f0':'#1e293b', fontSize: '12px', fontWeight:600}}>{l.aciklama || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -643,18 +643,18 @@ const PoliceLimitPage = ({user, setPage}) => {
               </div>
               <table style={{width: '100%', borderCollapse: 'collapse', fontSize: 13}}>
                 <thead>
-                  <tr style={{background: isK ? '#1a3f8a' : '#1a56db'}}>
-                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: '#fff', fontSize: 12}}>YIL</th>
-                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: '#fff', fontSize: 12}}>POLİÇE TÜRÜ</th>
-                    <th style={{padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#fff', fontSize: 12}}>LİMİT (₺)</th>
-                    <th style={{padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#fff', fontSize: 12}}>DEĞİŞİM</th>
+                  <tr style={{background: isK ? '#0f2342' : '#1e40af'}}>
+                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>YIL</th>
+                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>POLİÇE TÜRÜ</th>
+                    <th style={{padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>LİMİT (₺)</th>
+                    <th style={{padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>DEĞİŞİM</th>
                   </tr>
                 </thead>
                 <tbody>
                   {limitData.yillik_karsilastirma.map((y, i) => (
-                    <tr key={i} style={{backgroundColor:isK?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'), backgroundImage:isK?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none', borderBottom:isK?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8', borderLeft:isK?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)', boxShadow:isK?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)', transition:'all .2s', borderRadius:6}}
-                      onMouseEnter={e => {if(isK){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                      onMouseLeave={e => {e.currentTarget.style.backgroundColor=isK?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=isK?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=isK?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                    <tr key={i} style={{backgroundColor:isK?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), backgroundImage:isK?(i%2===0?'linear-gradient(90deg, #111827 0%, #0d1321 100%)':'linear-gradient(90deg, #0d1321 0%, #090e1a 100%)'):'none', borderBottom:isK?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:isK?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:isK?'0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                      onMouseEnter={e => {if(isK){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #1a2744 0%, #111827 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                      onMouseLeave={e => {e.currentTarget.style.backgroundColor=isK?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.backgroundImage=isK?(i%2===0?'linear-gradient(90deg, #111827 0%, #0d1321 100%)':'linear-gradient(90deg, #0d1321 0%, #090e1a 100%)'):'none';e.currentTarget.style.boxShadow=isK?'0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.borderLeft=isK?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.transform='translateY(0)';}}>
                       <td style={{padding: '12px 16px', fontWeight: 800, color: C.accent}}>{y.yil}</td>
                       <td style={{padding: '12px 16px', color: C.textSec}}>{y.police_turu}</td>
                       <td style={{padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: C.success}}>

@@ -347,9 +347,9 @@ const KullaniciTab = () => {
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%', borderCollapse:'collapse', fontSize:11, minWidth:800}}>
               <thead>
-                <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['AD SOYAD', 'E-POSTA', 'TELEFON', 'ROL', 'DURUM', 'İŞLEMLER'].map(h =>
-                    <th key={h} style={{padding:'10px 12px', textAlign:'left', color:'#fff', fontWeight:600, fontSize:9, borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px', textAlign:'left', color:'#FFFFFF', fontWeight:800, fontSize:'12px', borderBottom:`1px solid ${C.border}`}}>{h}</th>
                   )}
                 </tr>
               </thead>
@@ -358,10 +358,10 @@ const KullaniciTab = () => {
                   const aktif = u.aktif !== 0 && u.aktif !== false;
                   const rolRenk = ROL_RENK[u.rol] || C.textSec;
                   return (
-                    <tr key={u.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'), backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none', borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8', borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)', boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)', transition:'all .2s', borderRadius:6}}
-                      onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                      onMouseLeave={e => {e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
-                      <td style={{padding:'12px', fontWeight:600}}>
+                    <tr key={u.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                      onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                      onMouseLeave={e => {e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                      <td style={{padding:'12px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px'}}>
                         <div style={{display:'flex', alignItems:'center', gap:10}}>
                           <div style={{width:32, height:32, borderRadius:8, background:`${rolRenk}22`,
                             display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:800, color:rolRenk}}>
@@ -370,15 +370,15 @@ const KullaniciTab = () => {
                           {u.ad_soyad}
                         </div>
                       </td>
-                      <td style={{padding:'12px', color:C.textSec}}>{u.email}</td>
-                      <td style={{padding:'12px', color:C.textSec}}>{u.telefon || '-'}</td>
-                      <td style={{padding:'12px'}}>
+                      <td style={{padding:'12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{u.email}</td>
+                      <td style={{padding:'12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{u.telefon || '-'}</td>
+                      <td style={{padding:'12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                         <Badge text={ROL_LABEL[u.rol] || (u.rol || '').toUpperCase()} color={rolRenk}/>
                       </td>
-                      <td style={{padding:'12px'}}>
+                      <td style={{padding:'12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                         <Badge text={aktif ? 'AKTİF' : 'PASİF'} color={aktif ? C.success : C.danger}/>
                       </td>
-                      <td style={{padding:'12px'}}>
+                      <td style={{padding:'12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                         <div style={{display:'flex', gap:6}}>
                           <div onClick={() => duzenle(u)} style={{cursor:'pointer', padding:6, borderRadius:6, transition:'all .2s'}}
                             onMouseEnter={e => e.currentTarget.style.background = `${C.accent}22`}
@@ -1750,9 +1750,9 @@ const LogTab = () => {
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%', borderCollapse:'collapse', fontSize:11, minWidth:900}}>
               <thead>
-                <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['TARİH', 'KULLANICI', 'İŞLEM', 'DETAY', 'MODÜL', 'KAYIT ID'].map(h =>
-                    <th key={h} style={{padding:'10px 12px', textAlign:'left', color:'#fff', fontWeight:600, fontSize:9, borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px', textAlign:'left', color:'#FFFFFF', fontWeight:800, fontSize:'12px', borderBottom:`1px solid ${C.border}`}}>{h}</th>
                   )}
                 </tr>
               </thead>
@@ -1760,25 +1760,25 @@ const LogTab = () => {
                 {loglar.map((log, i) => {
                   const islemRenk = LOG_ISLEM_RENK(log.islem);
                   return (
-                    <tr key={log.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'), backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none', borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8', borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)', boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)', transition:'all .2s', borderRadius:6}}
-                      onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                      onMouseLeave={e => {e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
-                      <td style={{padding:'10px 12px', color:C.textMuted, fontSize:10, whiteSpace:'nowrap'}}>
+                    <tr key={log.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                      onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                      onMouseLeave={e => {e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                      <td style={{padding:'10px 12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, whiteSpace:'nowrap'}}>
                         {log.created_at || log.tarih || '-'}
                       </td>
-                      <td style={{padding:'10px 12px', fontWeight:600}}>
+                      <td style={{padding:'10px 12px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px'}}>
                         {log.kullanici_adi || log.kullanici || '-'}
                       </td>
-                      <td style={{padding:'10px 12px'}}>
+                      <td style={{padding:'10px 12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                         <Badge text={log.islem || '-'} color={islemRenk}/>
                       </td>
-                      <td style={{padding:'10px 12px', color:C.textSec, maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                      <td style={{padding:'10px 12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
                         {log.detay || '-'}
                       </td>
-                      <td style={{padding:'10px 12px'}}>
+                      <td style={{padding:'10px 12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                         <Badge text={log.modul || '-'} color={C.purple}/>
                       </td>
-                      <td style={{padding:'10px 12px', color:C.textMuted, fontFamily:'monospace', fontSize:10}}>
+                      <td style={{padding:'10px 12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, fontFamily:'monospace'}}>
                         {log.kayit_id || '-'}
                       </td>
                     </tr>
@@ -2173,29 +2173,31 @@ const SmsTab = () => {
                 <div>
                   <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
                     <thead>
-                      <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                      <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['TARİH','TELEFON','DOSYA NO','DURUM','MESAJ','KULLANICI'].map(h =>
-                          <th key={h} style={{padding:'8px 10px', textAlign:'left', color:'#fff', fontWeight:600, fontSize:9, borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                          <th key={h} style={{padding:'8px 10px', textAlign:'left', color:'#FFFFFF', fontWeight:800, fontSize:'12px', borderBottom:`1px solid ${C.border}`}}>{h}</th>
                         )}
                       </tr>
                     </thead>
                     <tbody>
                       {loglar.map((log, i) => (
-                        <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'), backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none', borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8', borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)', boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)', transition:'all .2s', borderRadius:6}}>
-                          <td style={{padding:'8px 10px', fontSize:10, color:C.textMuted, whiteSpace:'nowrap'}}>
+                        <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                          onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                          onMouseLeave={e => {e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                          <td style={{padding:'8px 10px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, whiteSpace:'nowrap'}}>
                             {log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-'}
                           </td>
-                          <td style={{padding:'8px 10px', fontFamily:'monospace', fontSize:11, fontWeight:600}}>{log.telefon || '-'}</td>
-                          <td style={{padding:'8px 10px'}}>
+                          <td style={{padding:'8px 10px', fontFamily:'monospace', fontSize:'12px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{log.telefon || '-'}</td>
+                          <td style={{padding:'8px 10px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             {log.dosya_no ? <Badge text={log.dosya_no} color={C.accent}/> : '-'}
                           </td>
-                          <td style={{padding:'8px 10px'}}>
+                          <td style={{padding:'8px 10px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             <Badge text={log.durum === 'gonderildi' ? 'GÖNDERİLDİ' : log.durum === 'hata' ? 'HATA' : (log.durum || '').toUpperCase()} color={durumRenk(log.durum)}/>
                           </td>
-                          <td style={{padding:'8px 10px', fontSize:10, color:C.textSec, maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                          <td style={{padding:'8px 10px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
                             {log.sonuc_mesaj || log.mesaj || '-'}
                           </td>
-                          <td style={{padding:'8px 10px', fontSize:10, color:C.textMuted}}>{log.kullanici_adi || '-'}</td>
+                          <td style={{padding:'8px 10px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{log.kullanici_adi || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -2611,20 +2613,22 @@ const TopluAktarimTab = () => {
                 <div style={{maxHeight:300,overflowY:'auto',borderRadius:8,border:`1px solid ${C.border}`}}>
                   <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                     <thead>
-                      <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:'#fff'}}>SATIR</th>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:'#fff'}}>DOSYA NO</th>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:'#fff'}}>ADI SOYADI</th>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:'#fff'}}>TÜR</th>
+                      <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF'}}>SATIR</th>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF'}}>DOSYA NO</th>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF'}}>ADI SOYADI</th>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF'}}>TÜR</th>
                       </tr>
                     </thead>
                     <tbody>
                       {sonuc.olusturulan.map((d,i) => (
-                        <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'), backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none', borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8', borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)', boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)', transition:'all .2s', borderRadius:6}}>
-                          <td style={{padding:'6px 10px',fontSize:10,color:C.textMuted}}>{d.satir}</td>
-                          <td style={{padding:'6px 10px',fontSize:11,fontWeight:700,color:C.accent}}>{d.dosya_no}</td>
-                          <td style={{padding:'6px 10px',fontSize:11,color:C.text}}>{d.ad_soyad}</td>
-                          <td style={{padding:'6px 10px'}}><span style={{fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:4,background:d.dosya_turu==='ADK'?`${C.accent}18`:`${C.gold}18`,color:d.dosya_turu==='ADK'?C.accent:C.gold}}>{d.dosya_turu}</span></td>
+                        <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                          onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                          onMouseLeave={e => {e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                          <td style={{padding:'6px 10px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.satir}</td>
+                          <td style={{padding:'6px 10px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.dosya_no}</td>
+                          <td style={{padding:'6px 10px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.ad_soyad}</td>
+                          <td style={{padding:'6px 10px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}><span style={{fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:4,background:d.dosya_turu==='ADK'?`${C.accent}18`:`${C.gold}18`,color:d.dosya_turu==='ADK'?C.accent:C.gold}}>{d.dosya_turu}</span></td>
                         </tr>
                       ))}
                     </tbody>
@@ -2946,30 +2950,32 @@ const PortalTab = () => {
                 <div style={{overflowX:'auto'}}>
                   <table style={{width:'100%', borderCollapse:'collapse', fontSize:12}}>
                     <thead>
-                      <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                      <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['DOSYA NO','MÜŞTERİ','TELEFON','GİRİŞ','DURUM','SON GİRİŞ','MESAJ','İŞLEMLER'].map(h => (
-                          <th key={h} style={{padding:'10px 8px', textAlign:'left', fontWeight:700, fontSize:10, color:'#fff', letterSpacing:.5}}>{h}</th>
+                          <th key={h} style={{padding:'10px 8px', textAlign:'left', fontWeight:800, fontSize:'12px', color:'#FFFFFF', letterSpacing:.5}}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {erisimler.map((e, i) => (
-                        <tr key={e.id} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'), backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none', borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8', borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)', boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)', transition:'all .2s', borderRadius:6}}>
-                          <td style={{padding:'10px 8px', fontWeight:700, color:C.accent}}>{e.dosya_no}</td>
-                          <td style={{padding:'10px 8px', fontWeight:600}}>{e.ad_soyad}</td>
-                          <td style={{padding:'10px 8px', color:C.textSec, fontSize:11}}>{e.telefon}</td>
-                          <td style={{padding:'10px 8px'}}>
+                        <tr key={e.id} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                          onMouseEnter={e2 => {if(MR.tema==='koyu'){e2.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e2.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e2.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e2.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e2.currentTarget.style.transform='translateY(-1px)';}}
+                          onMouseLeave={e2 => {e2.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e2.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e2.currentTarget.style.transform='translateY(0)';}}>
+                          <td style={{padding:'10px 8px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px'}}>{e.dosya_no}</td>
+                          <td style={{padding:'10px 8px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px'}}>{e.ad_soyad}</td>
+                          <td style={{padding:'10px 8px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{e.telefon}</td>
+                          <td style={{padding:'10px 8px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             <span style={{...S.badge(e.giris_yontemi === 'sms_otp' ? C.accent : C.purple)}}>
                               {e.giris_yontemi === 'sms_otp' ? 'SMS OTP' : 'LİNK'}
                             </span>
                           </td>
-                          <td style={{padding:'10px 8px'}}>
+                          <td style={{padding:'10px 8px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             <span style={{...S.badge(e.aktif == 1 ? C.success : C.danger)}}>
                               {e.aktif == 1 ? 'AKTİF' : 'PASİF'}
                             </span>
                           </td>
-                          <td style={{padding:'10px 8px', fontSize:11, color:C.textSec}}>{formatTS(e.son_giris)}</td>
-                          <td style={{padding:'10px 8px'}}>
+                          <td style={{padding:'10px 8px', fontSize:'12px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{formatTS(e.son_giris)}</td>
+                          <td style={{padding:'10px 8px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             {e.okunmamis_mesaj > 0 && (
                               <span onClick={() => mesajlariAc(e.dosya_id, e.dosya_no)} style={{background:C.danger, color:'#fff', padding:'2px 8px', borderRadius:10, fontSize:10, fontWeight:700, cursor:'pointer'}}>
                                 {e.okunmamis_mesaj} YENİ
@@ -2979,7 +2985,7 @@ const PortalTab = () => {
                               <span onClick={() => mesajlariAc(e.dosya_id, e.dosya_no)} style={{color:C.textMuted, fontSize:10, cursor:'pointer', textDecoration:'underline'}}>MESAJLAR</span>
                             )}
                           </td>
-                          <td style={{padding:'10px 8px'}}>
+                          <td style={{padding:'10px 8px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             <div style={{display:'flex', gap:4}}>
                               <button onClick={() => smsYenidenGonder(e.id)} title="SMS YENİDEN GÖNDER" style={{...S.btn, padding:'4px 8px', fontSize:10, ...S.btnP}}>
                                 <LIcon name="MessageSquare" size={12}/>
@@ -3018,15 +3024,15 @@ const PortalTab = () => {
                 <div style={{overflowX:'auto'}}>
                   <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
                     <thead>
-                      <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                      <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['TARİH','MÜŞTERİ','DOSYA NO','İŞLEM','DETAY','IP ADRESİ'].map(h => (
-                          <th key={h} style={{padding:'8px 6px', textAlign:'left', fontWeight:700, fontSize:10, color:'#fff'}}>{h}</th>
+                          <th key={h} style={{padding:'8px 6px', textAlign:'left', fontWeight:800, fontSize:'12px', color:'#FFFFFF'}}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {loglar.map((l, i) => (
-                        <tr key={l.id} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'), backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none', borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8', borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)', boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)', transition:'all .2s', borderRadius:6}}>
+                        <tr key={l.id} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #111827 0%, #0d1321 100%)':'linear-gradient(90deg, #0d1321 0%, #090e1a 100%)'):'none', borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}>
                           <td style={{padding:'8px 6px', fontSize:10, color:C.textSec}}>{formatTS(l.created_at)}</td>
                           <td style={{padding:'8px 6px', fontWeight:600}}>{l.ad_soyad || '-'}</td>
                           <td style={{padding:'8px 6px', color:C.accent, fontWeight:600}}>{l.dosya_no || '-'}</td>

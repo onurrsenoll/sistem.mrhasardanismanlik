@@ -266,6 +266,7 @@ MR.CrmPage = ({setPage, user, view, crmId}) => {
    ═══════════════════════════════════════════ */
 MR._CRMListesiInner = ({setPage, user}) => {
   const {C, S, LIcon, Badge, StatCard, Loading, EmptyState, Modal, FormGroup, Confirm, api, ILLER} = MR;
+  const isKoyu = MR.tema === 'koyu';
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
@@ -397,7 +398,7 @@ MR._CRMListesiInner = ({setPage, user}) => {
   };
 
   const cellSt = {padding: '10px 8px'};
-  const thSt = {padding: '12px 10px', textAlign: 'left', color:'#fff', fontWeight: 800, fontSize: 11, borderBottom: `2px solid ${C.border}`, letterSpacing: 0.3};
+  const thSt = {padding: '12px 10px', textAlign: 'left', color:'#FFFFFF', fontWeight: 800, fontSize: '12px', borderBottom: `2px solid ${C.border}`, letterSpacing: 0.3};
   const iconBtn = (bg) => ({
     width: 28, height: 28, borderRadius: 6, border: 'none', cursor: 'pointer',
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -456,7 +457,7 @@ MR._CRMListesiInner = ({setPage, user}) => {
           <div style={{overflowX: 'auto'}}>
             <table style={{width: '100%', borderCollapse: 'collapse', fontSize: 11, minWidth: 1000}}>
               <thead>
-                <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                <tr style={{background:isKoyu?'#0f2342':'#1e40af'}}>
                   {MR.hasYetki(user,'crm','crm-toplu-sil') && <th style={{...thSt,minWidth:35,textAlign:'center',padding:'8px 4px'}}>
                     <input type="checkbox" checked={data.length > 0 && secililer.length === data.length}
                       onChange={tumunuSec} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
@@ -470,9 +471,9 @@ MR._CRMListesiInner = ({setPage, user}) => {
                 {data.length === 0 ? (
                   <tr><td colSpan={MR.hasYetki(user,'crm','crm-toplu-sil') ? 9 : 8}><EmptyState icon="Users" title="CRM KAYDI BULUNAMADI" desc="YENİ CRM KAYDI OLUŞTURUN"/></td></tr>
                 ) : data.map((c, i) => (
-                  <tr key={c.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6, position: 'relative'}}
-                    onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                    onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                  <tr key={c.id || i} style={{backgroundColor:isKoyu?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderBottom:isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:isKoyu?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8,position:'relative',color:isKoyu?'#e2e8f0':'#1e293b'}}
+                    onMouseEnter={e=>{if(isKoyu){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                    onMouseLeave={e=>{e.currentTarget.style.backgroundColor=isKoyu?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=isKoyu?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
                     {MR.hasYetki(user,'crm','crm-toplu-sil') && <td style={{...cellSt,textAlign:'center',padding:'6px 4px'}} onClick={e => e.stopPropagation()}>
                       <input type="checkbox" checked={secililer.includes(c.id)} onChange={() => toggleSecim(c.id)}
                         style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>

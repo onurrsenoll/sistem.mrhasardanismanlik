@@ -258,35 +258,35 @@ const PoliceListe = ({setPage, user}) => {
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:1100}}>
               <thead>
-                <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
-                  {MR.hasYetki(user,'police','police-toplu-sil') && <th style={{padding:'12px 10px',textAlign:'center',borderBottom:`2px solid ${C.border}`,width:30}}>
+                <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
+                  {MR.hasYetki(user,'police','police-toplu-sil') && <th style={{padding:'12px 10px',textAlign:'center',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`2px solid ${C.border}`,width:30}}>
                     <input type="checkbox" checked={policeler.length > 0 && secililer.length === policeler.length} onChange={tumunuSec} style={{cursor:'pointer',width:15,height:15,accentColor:C.accent}}/>
                   </th>}
                   {['POLİÇE NO','MÜŞTERİ','SİGORTA ŞİRKETİ','BRANŞ','BRÜT PRİM','KOMİSYON','BAŞLANGIÇ','BİTİŞ','TAHSİLAT','DURUM','İŞLEM'].map(h=>
-                    <th key={h} style={{padding:'12px 10px',textAlign:'left',color:'#fff',fontWeight:800,fontSize:11,borderBottom:`2px solid ${C.border}`,letterSpacing:.4}}>{h}</th>
+                    <th key={h} style={{padding:'12px 10px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`2px solid ${C.border}`,letterSpacing:.4}}>{h}</th>
                   )}
                 </tr>
               </thead>
               <tbody>
                 {policeler.map((p,i)=>(
-                  <tr key={p.id||i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6,cursor:'pointer'}}
+                  <tr key={p.id||i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),backgroundImage:'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8,cursor:'pointer'}}
                     onClick={()=>detayAc(p)}
-                    onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                    onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
-                    {MR.hasYetki(user,'police','police-toplu-sil') && <td style={{padding:'10px 8px',textAlign:'center'}} onClick={e=>e.stopPropagation()}>
+                    onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                    onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                    {MR.hasYetki(user,'police','police-toplu-sil') && <td style={{padding:'10px 8px',textAlign:'center',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}} onClick={e=>e.stopPropagation()}>
                       <input type="checkbox" checked={secililer.includes(p.id)} onChange={()=>toggleSecim(p.id)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                     </td>}
-                    <td style={{padding:'10px 8px',fontWeight:700,color:C.accent,fontSize:12}}>{p.police_no}</td>
-                    <td style={{padding:'10px 8px',fontWeight:600}}>{p.musteri_adi}</td>
-                    <td style={{padding:'10px 8px',fontSize:10,color:C.textSec}}>{p.sigorta_sirketi}</td>
-                    <td style={{padding:'10px 8px'}}><Badge text={p.brans} color={C.cyan}/></td>
-                    <td style={{padding:'10px 8px',fontWeight:600}}>{fmt(p.brut_prim)}</td>
-                    <td style={{padding:'10px 8px',color:C.success}}>{fmt(p.komisyon_tutari)}</td>
-                    <td style={{padding:'10px 8px',fontSize:10,color:C.textMuted}}>{fmtTarih(p.baslangic_tarihi)}</td>
-                    <td style={{padding:'10px 8px',fontSize:10,color:C.textMuted}}>{fmtTarih(p.bitis_tarihi)}</td>
-                    <td style={{padding:'10px 8px'}}><Badge text={TAHSILAT_LABEL[p.tahsilat_durumu]||p.tahsilat_durumu} color={TAHSILAT_RENK(p.tahsilat_durumu,C)}/></td>
-                    <td style={{padding:'10px 8px'}}><Badge text={DURUM_LABEL[p.durum]||p.durum} color={DURUM_RENK(p.durum,C)}/></td>
-                    <td style={{padding:'10px 8px'}} onClick={e=>e.stopPropagation()}>
+                    <td style={{padding:'10px 8px',fontWeight:700,color:C.accent,fontSize:'12px'}}>{p.police_no}</td>
+                    <td style={{padding:'10px 8px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px'}}>{p.musteri_adi}</td>
+                    <td style={{padding:'10px 8px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{p.sigorta_sirketi}</td>
+                    <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}><Badge text={p.brans} color={C.cyan}/></td>
+                    <td style={{padding:'10px 8px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px'}}>{fmt(p.brut_prim)}</td>
+                    <td style={{padding:'10px 8px',color:C.success,fontSize:'12px',fontWeight:600}}>{fmt(p.komisyon_tutari)}</td>
+                    <td style={{padding:'10px 8px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{fmtTarih(p.baslangic_tarihi)}</td>
+                    <td style={{padding:'10px 8px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{fmtTarih(p.bitis_tarihi)}</td>
+                    <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}><Badge text={TAHSILAT_LABEL[p.tahsilat_durumu]||p.tahsilat_durumu} color={TAHSILAT_RENK(p.tahsilat_durumu,C)}/></td>
+                    <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}><Badge text={DURUM_LABEL[p.durum]||p.durum} color={DURUM_RENK(p.durum,C)}/></td>
+                    <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}} onClick={e=>e.stopPropagation()}>
                       <div style={{display:'flex',gap:4}}>
                         <button style={{...S.btn,...S.btnP,fontSize:9,padding:'4px 8px'}} onClick={()=>detayAc(p)}>
                           <LIcon name="Eye" size={10} color="#fff"/>
@@ -398,17 +398,19 @@ const PoliceListe = ({setPage, user}) => {
                 </div>
                 {(p.tahsilatlar && p.tahsilatlar.length > 0) ? (
                   <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
-                    <thead><tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
-                      {['TARİH','TUTAR','ÖDEME ŞEKLİ','KASA','AÇIKLAMA'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:'#fff',fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
+                    <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
+                      {['TARİH','TUTAR','ÖDEME ŞEKLİ','KASA','AÇIKLAMA'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
                     </tr></thead>
                     <tbody>
                       {p.tahsilatlar.map((t,i)=>(
-                        <tr key={t.id||i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}>
-                          <td style={{padding:8}}>{fmtTarih(t.tahsilat_tarihi)}</td>
-                          <td style={{padding:8,fontWeight:700,color:C.success}}>{fmt(t.tutar)}</td>
-                          <td style={{padding:8}}>{ODEME_SEKILLERI.find(o=>o.v===t.odeme_sekli)?.l||t.odeme_sekli}</td>
-                          <td style={{padding:8}}>{t.kasa_adi||'-'}</td>
-                          <td style={{padding:8,color:C.textMuted}}>{t.aciklama||'-'}</td>
+                        <tr key={t.id||i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),backgroundImage:'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                          onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                          onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                          <td style={{padding:8,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{fmtTarih(t.tahsilat_tarihi)}</td>
+                          <td style={{padding:8,fontWeight:700,color:C.success,fontSize:'12px'}}>{fmt(t.tutar)}</td>
+                          <td style={{padding:8,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{ODEME_SEKILLERI.find(o=>o.v===t.odeme_sekli)?.l||t.odeme_sekli}</td>
+                          <td style={{padding:8,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{t.kasa_adi||'-'}</td>
+                          <td style={{padding:8,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{t.aciklama||'-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -809,25 +811,27 @@ const PoliceYenileme = ({setPage, user}) => {
 
   // Tablo satırı render
   const renderRow = (p, i, renk) => (
-    <tr key={p.id||i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}>
-      <td style={{padding:'10px 8px',fontWeight:700,color:C.accent,fontSize:11}}>{p.police_no}</td>
-      <td style={{padding:'10px 8px',fontWeight:600,fontSize:11}}>{p.musteri_adi}</td>
-      <td style={{padding:'10px 8px'}}><Badge text={p.brans} color={C.cyan}/></td>
-      <td style={{padding:'10px 8px',fontSize:10,color:C.textSec}}>{p.sigorta_sirketi}</td>
-      <td style={{padding:'10px 8px',fontSize:10}}>{p.plaka||'-'}</td>
-      <td style={{padding:'10px 8px',fontSize:10,fontWeight:600}}>{fmtTarih(p.bitis_tarihi)}</td>
-      <td style={{padding:'10px 8px'}}>
+    <tr key={p.id||i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),backgroundImage:'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+      onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+      onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+      <td style={{padding:'10px 8px',fontWeight:700,color:C.accent,fontSize:'12px'}}>{p.police_no}</td>
+      <td style={{padding:'10px 8px',fontWeight:600,fontSize:'12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{p.musteri_adi}</td>
+      <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}><Badge text={p.brans} color={C.cyan}/></td>
+      <td style={{padding:'10px 8px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{p.sigorta_sirketi}</td>
+      <td style={{padding:'10px 8px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{p.plaka||'-'}</td>
+      <td style={{padding:'10px 8px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{fmtTarih(p.bitis_tarihi)}</td>
+      <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
         <span style={{padding:'4px 10px',borderRadius:12,fontSize:11,fontWeight:800,
           background:`${renk}22`,color:renk,border:`1px solid ${renk}44`}}>
           {p.kalan_gun} GÜN
         </span>
       </td>
-      <td style={{padding:'10px 8px',fontWeight:600,fontSize:11}}>{fmt(p.brut_prim)}</td>
-      <td style={{padding:'10px 8px'}}>
+      <td style={{padding:'10px 8px',fontWeight:600,fontSize:'12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{fmt(p.brut_prim)}</td>
+      <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
         {p.hatirlatma_gonderildi >= 2 && <Badge text="15 GÜN \u2713" color={C.danger}/>}
         {p.hatirlatma_gonderildi === 1 && <Badge text="20 GÜN \u2713" color={C.warning}/>}
       </td>
-      <td style={{padding:'10px 8px'}}>
+      <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
         <button style={{...S.btn,...S.btnP,fontSize:9,padding:'5px 10px'}} onClick={()=>setPage('police-yeni')}>
           <LIcon name="RefreshCw" size={10} color="#fff"/> YENİLE
         </button>
@@ -842,9 +846,9 @@ const PoliceYenileme = ({setPage, user}) => {
         <SectionTitle icon={icon} title={label} sub={data.length + ' POLİÇE - ' + desc}/>
         <div style={{overflowX:'auto'}}>
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:1050}}>
-            <thead><tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+            <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
               {['POLİÇE NO','MÜŞTERİ','BRANŞ','ŞİRKET','PLAKA','BİTİŞ','KALAN GÜN','PRİM','HATIRLATMA','İŞLEM'].map(h=>
-                <th key={h} style={{padding:'10px 8px',textAlign:'left',color:'#fff',fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`,letterSpacing:.5}}>{h}</th>
+                <th key={h} style={{padding:'10px 8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`,letterSpacing:.5}}>{h}</th>
               )}
             </tr></thead>
             <tbody>
@@ -893,24 +897,26 @@ const PoliceYenileme = ({setPage, user}) => {
           <SectionTitle icon="FileSpreadsheet" title="EXCEL ÖNİZLEME" sub={importData.length + ' KAYIT OKUNDU'}/>
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:10,minWidth:900}}>
-              <thead><tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+              <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                 {['PERSONEL','BRANŞ','POLİÇE NO','MÜŞTERİ','YENİLEME TARİHİ','TC VERGİ NO','DOĞUM TARİHİ','PLAKA','BELGE SERİ','TELEFON'].map(h=>
-                  <th key={h} style={{padding:'8px 6px',textAlign:'left',color:'#fff',fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                  <th key={h} style={{padding:'8px 6px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
                 )}
               </tr></thead>
               <tbody>
                 {importData.slice(0,50).map((d,i)=>(
-                  <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}>
-                    <td style={{padding:'6px',fontSize:10}}>{d.personel}</td>
-                    <td style={{padding:'6px'}}><Badge text={d.brans} color={C.cyan}/></td>
-                    <td style={{padding:'6px',fontWeight:600,color:C.accent,fontSize:10}}>{d.police_no}</td>
-                    <td style={{padding:'6px',fontWeight:600,fontSize:10}}>{d.musteri_adi}</td>
-                    <td style={{padding:'6px',fontSize:10}}>{d.bitis_tarihi ? fmtTarih(d.bitis_tarihi) : '-'}</td>
-                    <td style={{padding:'6px',fontSize:10}}>{d.musteri_tc||'-'}</td>
-                    <td style={{padding:'6px',fontSize:10}}>{d.dogum_tarihi ? fmtTarih(d.dogum_tarihi) : '-'}</td>
-                    <td style={{padding:'6px',fontSize:10}}>{d.plaka||'-'}</td>
-                    <td style={{padding:'6px',fontSize:10}}>{d.belge_seri||'-'}</td>
-                    <td style={{padding:'6px',fontSize:10}}>{d.musteri_telefon||'-'}</td>
+                  <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),backgroundImage:'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                    onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                    onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.personel}</td>
+                    <td style={{padding:'6px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}><Badge text={d.brans} color={C.cyan}/></td>
+                    <td style={{padding:'6px',fontWeight:600,color:C.accent,fontSize:'12px'}}>{d.police_no}</td>
+                    <td style={{padding:'6px',fontWeight:600,fontSize:'12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.musteri_adi}</td>
+                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.bitis_tarihi ? fmtTarih(d.bitis_tarihi) : '-'}</td>
+                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.musteri_tc||'-'}</td>
+                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.dogum_tarihi ? fmtTarih(d.dogum_tarihi) : '-'}</td>
+                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.plaka||'-'}</td>
+                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.belge_seri||'-'}</td>
+                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.musteri_telefon||'-'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1124,16 +1130,16 @@ const PoliceTahsilat = ({setPage, user}) => {
         ) : (
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:950}}>
-              <thead><tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+              <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                 {['POLİÇE NO','MÜŞTERİ','BRANŞ','KOMİSYON','TAHSİL EDİLEN','CARİ BAKİYE','TAHSİLAT DURUM','İŞLEM'].map(h=>
-                  <th key={h} style={{padding:'10px 8px',textAlign:'left',color:'#fff',fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                  <th key={h} style={{padding:'10px 8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
                 )}
               </tr></thead>
               <tbody>
                 {cariler.map((p,i)=>(
-                  <tr key={p.id||i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
-                    onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                    onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                  <tr key={p.id||i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),backgroundImage:'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                    onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                    onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
                     <td style={{padding:'10px 8px',fontWeight:700,color:C.accent}}>{p.police_no}</td>
                     <td style={{padding:'10px 8px',fontWeight:600}}>{p.musteri_adi}</td>
                     <td style={{padding:'10px 8px'}}><Badge text={p.brans} color={C.cyan}/></td>
@@ -1361,14 +1367,14 @@ const PoliceRapor = ({setPage, user}) => {
               <SectionTitle icon="Building" title="SİGORTA ŞİRKETİ ANALİZİ" sub={sirketler.length + ' ŞİRKET'}/>
               <div style={{overflowX:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
-                  <thead><tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
-                    {['ŞİRKET','POLİÇE','PRİM'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:'#fff',fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
+                  <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
+                    {['ŞİRKET','POLİÇE','PRİM'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
                   </tr></thead>
                   <tbody>
                     {sirketler.map((s,i)=>(
-                      <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
-                        onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                        onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                      <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),backgroundImage:'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                        onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                        onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
                         <td style={{padding:8,fontWeight:600}}>{s.sigorta_sirketi}</td>
                         <td style={{padding:8}}>{s.police_sayisi}</td>
                         <td style={{padding:8,fontWeight:700,color:C.accent}}>{fmt(s.toplam_prim)}</td>
@@ -1407,14 +1413,14 @@ const PoliceRapor = ({setPage, user}) => {
               <SectionTitle icon="RefreshCw" title="YENİLEME BEKLEYEN (60 GÜN)" sub={yenileme.length + ' POLİÇE'}/>
               <div style={{overflowX:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
-                  <thead><tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
-                    {['POLİÇE NO','MÜŞTERİ','BRANŞ','BİTİŞ','KALAN GÜN','PRİM'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:'#fff',fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
+                  <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
+                    {['POLİÇE NO','MÜŞTERİ','BRANŞ','BİTİŞ','KALAN GÜN','PRİM'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
                   </tr></thead>
                   <tbody>
                     {yenileme.map((y,i)=>(
-                      <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
-                        onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                        onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                      <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),backgroundImage:'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                        onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                        onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
                         <td style={{padding:8,fontWeight:700,color:C.accent}}>{y.police_no}</td>
                         <td style={{padding:8}}>{y.musteri_adi}</td>
                         <td style={{padding:8}}><Badge text={y.brans} color={C.cyan}/></td>
@@ -1525,18 +1531,18 @@ const PoliceKazanc = ({setPage, user}) => {
         ) : (
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:800}}>
-              <thead><tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+              <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                 {['DÖNEM','ÜRETİM ADEDİ','TOPLAM PRİM','KOMİSYON TUTARI','TAHSİL EDİLEN','CARİ BAKİYE','İŞLEM'].map(h=>
-                  <th key={h} style={{padding:'10px 8px',textAlign:'left',color:'#fff',fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                  <th key={h} style={{padding:'10px 8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
                 )}
               </tr></thead>
               <tbody>
                 {aylikData.map((a,i)=>{
                   const cari = a.komisyon - a.tahsil_edilen;
                   return (
-                    <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
-                      onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                      onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                    <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),backgroundImage:'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                      onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                      onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
                       <td style={{padding:'10px 8px',fontWeight:700,color:C.accent}}>{a.donem}</td>
                       <td style={{padding:'10px 8px',fontWeight:600}}>{a.adet}</td>
                       <td style={{padding:'10px 8px'}}>{fmt(a.toplam_prim)}</td>

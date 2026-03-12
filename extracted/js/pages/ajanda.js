@@ -509,30 +509,30 @@ MR.AjandaPage = ({setPage, user}) => {
               ) : (
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:700}}>
                   <thead>
-                    <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                    <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                       {MR.hasYetki(user,'ajanda','ajanda-toplu-sil') && (
-                        <th style={{padding:'10px 8px',textAlign:'left',color:'#fff',fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`,width:36}}>
+                        <th style={{padding:'10px 8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`,width:36}}>
                           <input type="checkbox" checked={filtrelenmis.length > 0 && filtrelenmis.every(g => secililer.includes(g.id))} onChange={() => tumunuSec(filtrelenmis)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                         </th>
                       )}
                       {['', 'BAŞLIK', 'TARİH', 'BİTİŞ TARİHİ', 'ÖNCELİK', 'DURUM', 'İŞLEMLER'].map(h =>
-                        <th key={h||'chk'} style={{padding:'10px 8px',textAlign:'left',color:'#fff',fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                        <th key={h||'chk'} style={{padding:'10px 8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`,letterSpacing:.4}}>{h}</th>
                       )}
                     </tr>
                   </thead>
                   <tbody>
                     {filtrelenmis.map((g, i) => (
-                      <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff'),backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8',borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)',boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)',transition:'all .2s ease',borderRadius:6}}
-                        onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.backgroundImage='linear-gradient(90deg, #2d4fa8 0%, #1e3a78 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(59,130,246,0.25)';}else{e.currentTarget.style.backgroundImage='linear-gradient(90deg, #eef2ff 0%, #f8faff 100%)';e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.12)';}e.currentTarget.style.transform='translateY(-1px)';}}
-                        onMouseLeave={e => {e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff');e.currentTarget.style.backgroundImage=MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)';e.currentTarget.style.transform='translateY(0)';}}>
+                      <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),backgroundImage:'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
+                        onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                        onMouseLeave={e => {e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
                         {/* SEÇİM CHECKBOX */}
                         {MR.hasYetki(user,'ajanda','ajanda-toplu-sil') && (
-                          <td style={{padding:'10px 8px',width:36}}>
+                          <td style={{padding:'10px 8px',width:36,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                             <input type="checkbox" checked={secililer.includes(g.id)} onChange={() => toggleSecim(g.id)} onClick={e => e.stopPropagation()} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                           </td>
                         )}
                         {/* TAMAMLANDI CHECKBOX */}
-                        <td style={{padding:'10px 8px',width:36}}>
+                        <td style={{padding:'10px 8px',width:36,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                           <div onClick={() => tamamlaToggle(g)}
                             style={{
                               width:20,height:20,borderRadius:4,cursor:'pointer',
@@ -544,7 +544,7 @@ MR.AjandaPage = ({setPage, user}) => {
                           </div>
                         </td>
                         {/* BAŞLIK */}
-                        <td style={{padding:'10px 8px'}}>
+                        <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                           <div style={{
                             fontWeight:600,
                             textDecoration: g.tamamlandi ? 'line-through' : 'none',
@@ -557,23 +557,23 @@ MR.AjandaPage = ({setPage, user}) => {
                           )}
                         </td>
                         {/* TARİH */}
-                        <td style={{padding:'10px 8px',color:C.textSec,fontSize:10}}>
+                        <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                           {g.tarih ? new Date(g.tarih).toLocaleString('tr-TR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-'}
                         </td>
                         {/* BİTİŞ TARİHİ */}
-                        <td style={{padding:'10px 8px',color:C.textMuted,fontSize:10}}>
+                        <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                           {g.bitis_tarihi ? new Date(g.bitis_tarihi).toLocaleString('tr-TR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-'}
                         </td>
                         {/* ÖNCELİK */}
-                        <td style={{padding:'10px 8px'}}>
+                        <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                           <Badge text={oncelikLabel(g.oncelik)} color={oncelikRenk(g.oncelik)}/>
                         </td>
                         {/* DURUM */}
-                        <td style={{padding:'10px 8px'}}>
+                        <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                           <Badge text={g.tamamlandi ? 'TAMAMLANDI' : 'BEKLEYEN'} color={g.tamamlandi ? C.success : C.warning}/>
                         </td>
                         {/* İŞLEMLER */}
-                        <td style={{padding:'10px 8px'}}>
+                        <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                           <div style={{display:'flex',gap:4}}>
                             <button style={{...S.btn,...S.btnG,fontSize:9,padding:'5px 10px'}} onClick={() => modalAc(g)}>
                               <LIcon name="Edit3" size={10} color={C.textSec}/> DÜZENLE

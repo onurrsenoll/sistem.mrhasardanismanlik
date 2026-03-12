@@ -670,9 +670,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             {dosya.masraflar?.length > 0 ? (
               <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                 <thead>
-                  <tr style={{background:MR.tema==='koyu'?'#1a3f8a':'#1a56db'}}>
+                  <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                     {((!hasYetki('dosya','dosya-masraf-ode') && !hasYetki('dosya','dosya-masraf-sil')) ? ['#','MASRAF KALEMİ','TUTAR','DURUM','TARİH'] : ['#','MASRAF KALEMİ','TUTAR','DURUM','KASA','TARİH','KULLANICI','İŞLEM']).map(h =>
-                      <th key={h} style={{padding:'8px 10px',textAlign:'left',color:'#fff',fontWeight:600,fontSize:9,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                      <th key={h} style={{padding:'8px 10px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
                     )}
                   </tr>
                 </thead>
@@ -680,10 +680,10 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                   {dosya.masraflar.map((m, i) => {
                     const odenmedi = (m.odeme_durumu || 'odendi') === 'odenmedi';
                     return (
-                      <tr key={i} style={{backgroundColor: odenmedi ? `${C.warning}06` : (MR.tema==='koyu'?(i%2===0?'#1e3a78':'#172e5e'):(i%2===0?'#ffffff':'#f4f7ff')), backgroundImage:MR.tema==='koyu'?(i%2===0?'linear-gradient(90deg, #1e3a78 0%, #172e5e 100%)':'linear-gradient(90deg, #172e5e 0%, #0f2347 100%)'):'none', borderBottom:MR.tema==='koyu'?'1px solid rgba(59,130,246,0.25)':'1px solid #e8edf8', borderLeft:MR.tema==='koyu'?'3px solid rgba(59,130,246,0.5)':'3px solid rgba(26,86,219,0.35)', boxShadow:MR.tema==='koyu'?'0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)':'0 1px 3px rgba(26,86,219,0.06)', transition:'all .2s', borderRadius:6}}>
-                        <td style={{padding:'8px 10px',color:C.textMuted,fontSize:10}}>{i+1}</td>
-                        <td style={{padding:'8px 10px',fontWeight:600,fontSize:11}}>{m.masraf_kalemi}</td>
-                        <td style={{padding:'8px 10px',fontWeight:700,color:C.danger,fontSize:11}}>{fmt(m.tutar)}</td>
+                      <tr key={i} style={{backgroundColor: odenmedi ? `${C.warning}06` : (MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff')), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}>
+                        <td style={{padding:'8px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{i+1}</td>
+                        <td style={{padding:'8px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{m.masraf_kalemi}</td>
+                        <td style={{padding:'8px 10px',fontWeight:700,color:C.danger,fontSize:'12px'}}>{fmt(m.tutar)}</td>
                         <td style={{padding:'8px 10px'}}>
                           {odenmedi ? (
                             <span style={{...S.btnMini,...S.btnMiniW, padding:'4px 12px', fontSize:9, cursor:hasYetki('dosya','dosya-masraf-ode')?'pointer':'default'}}
@@ -697,10 +697,10 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                             </span>
                           )}
                         </td>
-                        {(hasYetki('dosya','dosya-masraf-ode') || hasYetki('dosya','dosya-masraf-sil')) && <td style={{padding:'8px 10px'}}><Badge text={m.kasa_adi || (odenmedi ? 'BEKLİYOR' : '-')} color={odenmedi ? C.warning : C.cyan}/></td>}
-                        <td style={{padding:'8px 10px',color:C.textMuted,fontSize:10}}>{m.islem_tarihi}</td>
-                        {(hasYetki('dosya','dosya-masraf-ode') || hasYetki('dosya','dosya-masraf-sil')) && <td style={{padding:'8px 10px',color:C.textSec,fontSize:10}}>{m.kullanici_adi || '-'}</td>}
-                        {(hasYetki('dosya','dosya-masraf-ode') || hasYetki('dosya','dosya-masraf-sil')) && <td style={{padding:'8px 10px'}}>
+                        {(hasYetki('dosya','dosya-masraf-ode') || hasYetki('dosya','dosya-masraf-sil')) && <td style={{padding:'8px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}><Badge text={m.kasa_adi || (odenmedi ? 'BEKLİYOR' : '-')} color={odenmedi ? C.warning : C.cyan}/></td>}
+                        <td style={{padding:'8px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{m.islem_tarihi}</td>
+                        {(hasYetki('dosya','dosya-masraf-ode') || hasYetki('dosya','dosya-masraf-sil')) && <td style={{padding:'8px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>{m.kullanici_adi || '-'}</td>}
+                        {(hasYetki('dosya','dosya-masraf-ode') || hasYetki('dosya','dosya-masraf-sil')) && <td style={{padding:'8px 10px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
                           <div style={{display:'flex',gap:4}}>
                             {odenmedi && hasYetki('dosya','dosya-masraf-ode') && (
                               <span style={{cursor:'pointer',display:'flex',padding:'3px 8px',borderRadius:4,background:`${C.success}18`,alignItems:'center',gap:3}}
@@ -717,9 +717,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                       </tr>
                     );
                   })}
-                  <tr style={{background:`${C.accent}06`}}>
-                    <td colSpan={2} style={{padding:'10px 12px',fontWeight:800,textAlign:'right',fontSize:11}}>TOPLAM:</td>
-                    <td style={{padding:'10px 12px',fontWeight:800,fontSize:13,color:C.danger}}>{fmt(dosya.toplam_masraf || 0)}</td>
+                  <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af',borderRadius:8}}>
+                    <td colSpan={2} style={{padding:'10px 12px',fontWeight:800,textAlign:'right',fontSize:'12px',color:'#FFFFFF'}}>TOPLAM:</td>
+                    <td style={{padding:'10px 12px',fontWeight:800,fontSize:13,color:'#FFFFFF'}}>{fmt(dosya.toplam_masraf || 0)}</td>
                     <td colSpan={(!hasYetki('dosya','dosya-masraf-ode') && !hasYetki('dosya','dosya-masraf-sil')) ? 2 : 5}/>
                   </tr>
                 </tbody>
