@@ -635,7 +635,61 @@ MR._stilGuncelle();
 /* Body tema sınıfı — CSS hover kuralları için */
 document.body.classList.add(MR.tema === 'koyu' ? 'tema-koyu' : 'tema-acik');
 
-// ═══ SUNUCUDAN TEMA CONFIG YÜKLE VE UYGULA ═══
+// ═══ SUNUCUDAN TEMA CONFIG YÜKLE VE UYGULA — GENİŞLETİLMİŞ MOTOR ═══
+MR._cssVarGuncelle = (cfg) => {
+  if (!cfg) return;
+  const root = document.documentElement;
+  const p = cfg.palet || {};
+  const e = cfg.efekt || {};
+  const a = cfg.animasyon || {};
+  const t = cfg.tablo || {};
+  const n = cfg.navigasyon || {};
+  const inp = cfg.input || {};
+  const scr = cfg.scrollbar || {};
+
+  /* CSS DEĞİŞKENLERİ */
+  if (p.accent) root.style.setProperty('--mr-accent', p.accent);
+  if (p.accentLight) root.style.setProperty('--mr-accent-light', p.accentLight);
+
+  /* ANİMASYON */
+  const hizMap = {yok: '0s', yavas: '0.5s', normal: '0.3s', hizli: '0.15s'};
+  root.style.setProperty('--mr-transition-speed', hizMap[a.gecis_hizi] || '0.2s');
+  root.style.setProperty('--page-anim', a.sayfa_gecis || 'fadeIn');
+  root.style.setProperty('--page-anim-speed', hizMap[a.gecis_hizi] === '0s' ? '0s' : (a.sayfa_gecis_sure || '0.4s'));
+  root.style.setProperty('--page-anim-ease', 'cubic-bezier(.22,1,.36,1)');
+
+  /* TABLO */
+  const isK = MR.tema === 'koyu';
+  if (t.header_renk) {
+    root.style.setProperty('--mr-thead-koyu', t.header_renk);
+    root.style.setProperty('--mr-thead-acik', t.header_renk_acik || '#f1f5f9');
+  }
+  if (t.hover_renk) {
+    root.style.setProperty('--mr-row-hover-koyu', t.hover_renk);
+    root.style.setProperty('--mr-row-hover-acik', t.hover_renk_acik || '#e2e8f0');
+  }
+  if (t.zebra_renk) root.style.setProperty('--mr-zebra-bg', t.zebra_renk);
+  root.style.setProperty('--mr-border', isK ? '#334155' : '#e2e8f0');
+
+  /* INPUT */
+  if (inp.focus_renk) root.style.setProperty('--mr-focus-shadow', inp.focus_renk + '25');
+
+  /* SCROLLBAR */
+  if (scr.genislik) root.style.setProperty('--mr-scrollbar-width', scr.genislik + 'px');
+  if (scr.renk) root.style.setProperty('--mr-scrollbar-thumb', scr.renk);
+  if (scr.hover_renk) root.style.setProperty('--mr-scrollbar-thumb-hover', scr.hover_renk);
+  if (scr.track_renk) root.style.setProperty('--mr-scrollbar-track', scr.track_renk);
+  if (scr.radius !== undefined) root.style.setProperty('--mr-scrollbar-radius', scr.radius + 'px');
+
+  /* BODY SINIFI — TABLO STİLLERİ */
+  document.body.classList.remove('zebra-rows', 'row-border-dashed', 'row-border-dotted', 'row-border-none', 'input-underline');
+  if (t.zebra) document.body.classList.add('zebra-rows');
+  if (t.border_stili === 'dashed') document.body.classList.add('row-border-dashed');
+  if (t.border_stili === 'dotted') document.body.classList.add('row-border-dotted');
+  if (t.border_stili === 'none') document.body.classList.add('row-border-none');
+  if (inp.stil === 'underline') document.body.classList.add('input-underline');
+};
+
 MR._temaConfigUygula = (cfg) => {
   if (!cfg) return;
   const isK = MR.tema === 'koyu';
@@ -699,6 +753,32 @@ MR._temaConfigUygula = (cfg) => {
   }
 
   MR._stilGuncelle();
+  MR._cssVarGuncelle(cfg);
+};
+
+/* SAYFA GEÇİŞ ANİMASYONU SINIFINI BELİRLE */
+MR.getPageAnimClass = () => {
+  const cfg = MR._temaConfig;
+  if (!cfg?.animasyon) return 'fade-in';
+  const a = cfg.animasyon;
+  if (a.gecis_hizi === 'yok') return '';
+  const map = {
+    fadeIn: 'fade-in', fadeInUp: 'fade-in-up', fadeInDown: 'fade-in-down',
+    fadeInLeft: 'fade-in-left', fadeInRight: 'fade-in-right', fadeInScale: 'fade-in-scale',
+    slideInUp: 'slide-in-up', slideInDown: 'slide-in-down',
+    slideInLeft: 'slide-in-left', slideInRight: 'slide-in-right',
+    zoomIn: 'zoom-in', zoomOut: 'zoom-out',
+    flipInX: 'flip-in-x', flipInY: 'flip-in-y',
+    bounceIn: 'bounce-in', rotateIn: 'rotate-in'
+  };
+  return map[a.sayfa_gecis] || 'fade-in';
+};
+
+/* KART ANİMASYON SINIFI */
+MR.getCardAnimClass = () => {
+  const cfg = MR._temaConfig;
+  if (!cfg?.animasyon || cfg.animasyon.gecis_hizi === 'yok') return '';
+  return 'card-entrance';
 };
 
 /* SAYFA YÜKLENDİĞİNDE TEMA CONFIG'İ SUNUCUDAN ÇEK VE UYGULA */
@@ -707,8 +787,8 @@ MR._temaConfigUygula = (cfg) => {
     const r = await fetch('/api/v1/sistem/tema-config.php');
     const j = await r.json();
     if (j?.success && j.data) {
-      MR._temaConfigUygula(j.data);
       MR._temaConfig = j.data;
+      MR._temaConfigUygula(j.data);
     }
   } catch(e) { /* sessiz hata — varsayılan tema kullanılır */ }
 })();

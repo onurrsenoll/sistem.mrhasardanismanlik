@@ -30,26 +30,120 @@ select option{background:#1e293b;color:#f1f5f9}
 ::-webkit-scrollbar-track{background:rgba(15,23,42,.8)}
 ::-webkit-scrollbar-thumb{background:rgba(26,86,219,.35);border-radius:4px}
 ::-webkit-scrollbar-thumb:hover{background:rgba(26,86,219,.55)}
+/* ═══ TEMEL ANİMASYONLAR ═══ */
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInLeft{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes fadeInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes fadeInScale{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}
+@keyframes slideInUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideInDown{from{opacity:0;transform:translateY(-40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideInLeft{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideInRight{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes zoomIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+@keyframes zoomOut{from{opacity:0;transform:scale(1.1)}to{opacity:1;transform:scale(1)}}
+@keyframes flipInX{from{opacity:0;transform:perspective(400px) rotateX(90deg)}to{opacity:1;transform:perspective(400px) rotateX(0)}}
+@keyframes flipInY{from{opacity:0;transform:perspective(400px) rotateY(90deg)}to{opacity:1;transform:perspective(400px) rotateY(0)}}
+@keyframes bounceIn{0%{opacity:0;transform:scale(0.3)}50%{opacity:1;transform:scale(1.05)}70%{transform:scale(0.95)}100%{transform:scale(1)}}
+@keyframes rotateIn{from{opacity:0;transform:rotate(-200deg) scale(0.7)}to{opacity:1;transform:rotate(0) scale(1)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes glowPulse{0%,100%{box-shadow:0 0 5px var(--mr-accent,#1a56db),0 0 10px transparent}50%{box-shadow:0 0 10px var(--mr-accent,#1a56db),0 0 20px var(--mr-accent,#1a56db)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes staggerFadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes cardEntrance{from{opacity:0;transform:translateY(20px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes tableRowIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+@keyframes loginSlideIn{from{opacity:0;transform:translateY(30px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes breadcrumbSlide{from{opacity:0;transform:translateX(-15px)}to{opacity:1;transform:translateX(0)}}
+@keyframes statPop{0%{opacity:0;transform:scale(0.8) translateY(10px)}60%{transform:scale(1.02) translateY(-2px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes menuDropdown{from{opacity:0;transform:translateY(-8px) scaleY(0.95)}to{opacity:1;transform:translateY(0) scaleY(1)}}
+@keyframes badgePop{0%{transform:scale(0)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes progressFill{from{width:0}to{width:var(--progress,100%)}}
+@keyframes typewriter{from{width:0}to{width:100%}}
+@keyframes ripple{0%{transform:scale(0);opacity:0.5}100%{transform:scale(4);opacity:0}}
+
+/* ═══ ANİMASYON SINIFLARI ═══ */
 .fade-in{animation:fadeIn .3s ease}
+.fade-in-down{animation:fadeInDown .4s ease}
+.fade-in-up{animation:fadeInUp .4s ease}
+.fade-in-left{animation:fadeInLeft .4s ease}
+.fade-in-right{animation:fadeInRight .4s ease}
+.fade-in-scale{animation:fadeInScale .35s ease}
+.slide-in-up{animation:slideInUp .45s cubic-bezier(.22,1,.36,1)}
+.slide-in-down{animation:slideInDown .45s cubic-bezier(.22,1,.36,1)}
+.slide-in-left{animation:slideInLeft .45s cubic-bezier(.22,1,.36,1)}
+.slide-in-right{animation:slideInRight .45s cubic-bezier(.22,1,.36,1)}
+.zoom-in{animation:zoomIn .35s cubic-bezier(.22,1,.36,1)}
+.zoom-out{animation:zoomOut .35s ease}
+.flip-in-x{animation:flipInX .5s ease}
+.flip-in-y{animation:flipInY .5s ease}
+.bounce-in{animation:bounceIn .6s ease}
+.rotate-in{animation:rotateIn .5s ease}
+.card-entrance{animation:cardEntrance .4s cubic-bezier(.22,1,.36,1) both}
+.stat-pop{animation:statPop .5s cubic-bezier(.22,1,.36,1) both}
+.login-slide{animation:loginSlideIn .6s cubic-bezier(.22,1,.36,1)}
+.breadcrumb-slide{animation:breadcrumbSlide .3s ease}
+.menu-dropdown{animation:menuDropdown .2s cubic-bezier(.22,1,.36,1)}
+.badge-pop{animation:badgePop .3s cubic-bezier(.22,1,.36,1)}
+.table-row-in{animation:tableRowIn .25s ease both}
+.glow-pulse{animation:glowPulse 2s ease-in-out infinite}
+.float-anim{animation:float 3s ease-in-out infinite}
+.shimmer{background:linear-gradient(90deg,transparent 25%,rgba(255,255,255,.08) 50%,transparent 75%);background-size:200% 100%;animation:shimmer 2s infinite}
+
+/* KADEMELI ANİMASYON GECİKMELERİ */
+.stagger-1{animation-delay:.05s}.stagger-2{animation-delay:.1s}.stagger-3{animation-delay:.15s}.stagger-4{animation-delay:.2s}
+.stagger-5{animation-delay:.25s}.stagger-6{animation-delay:.3s}.stagger-7{animation-delay:.35s}.stagger-8{animation-delay:.4s}
+
+/* SAYFA GEÇİŞ ANİMASYONLARI */
+.page-transition{animation:var(--page-anim, fadeIn) var(--page-anim-speed, 0.3s) var(--page-anim-ease, ease) both}
 
 /* ═══ MR FİNANS BLUE TEMA — HOVER EFEKTLERİ ═══ */
 
 /* BUTON */
-button{transition:all 0.2s ease}
+button{transition:all var(--mr-transition-speed, 0.2s) ease}
 button:hover:not(:disabled){filter:brightness(1.08)}
 button:active:not(:disabled){transform:scale(0.97)!important;filter:brightness(0.95)}
+/* BUTON RİPPLE EFEKTİ */
+.btn-ripple{position:relative;overflow:hidden}
+.btn-ripple::after{content:'';position:absolute;inset:0;background:radial-gradient(circle,rgba(255,255,255,.3) 10%,transparent 60%);transform:scale(0);opacity:0;transition:all .4s}
+.btn-ripple:active::after{transform:scale(4);opacity:1;transition:0s}
 
 /* TABLO SATIRI */
-tbody tr{transition:all 0.15s ease}
-.tema-koyu tbody tr:hover{background:#334155!important}
-.tema-acik tbody tr:hover{background:#e2e8f0!important}
-.tema-koyu thead th{background:#334155!important}
-.tema-acik thead th{background:#f1f5f9!important}
+tbody tr{transition:all var(--mr-transition-speed, 0.15s) ease}
+.tema-koyu tbody tr:hover{background:var(--mr-row-hover-koyu, #334155)!important}
+.tema-acik tbody tr:hover{background:var(--mr-row-hover-acik, #e2e8f0)!important}
+.tema-koyu thead th{background:var(--mr-thead-koyu, #334155)!important}
+.tema-acik thead th{background:var(--mr-thead-acik, #f1f5f9)!important}
+/* ZEBRA DESEN */
+.zebra-rows tbody tr:nth-child(even){background:var(--mr-zebra-bg, rgba(100,116,139,0.05))}
+/* SATIR AYIRICI */
+.row-border-dashed tbody tr{border-bottom-style:dashed!important}
+.row-border-dotted tbody tr{border-bottom-style:dotted!important}
+.row-border-none tbody tr{border-bottom:none!important}
 
 /* INPUT: Focus */
-input:focus,select:focus,textarea:focus{border-color:#1a56db!important;box-shadow:0 0 0 3px rgba(26,86,219,.15)!important;outline:none!important}
+input:focus,select:focus,textarea:focus{border-color:var(--mr-accent,#1a56db)!important;box-shadow:0 0 0 3px var(--mr-focus-shadow, rgba(26,86,219,.15))!important;outline:none!important}
+/* INPUT UNDERLINE STİLİ */
+.input-underline input,.input-underline select,.input-underline textarea{border:none!important;border-bottom:2px solid var(--mr-border,#334155)!important;border-radius:0!important;padding-left:4px!important}
+.input-underline input:focus,.input-underline select:focus,.input-underline textarea:focus{border-bottom-color:var(--mr-accent,#1a56db)!important;box-shadow:0 2px 0 var(--mr-accent,#1a56db)!important}
+
+/* KART ANİMASYON */
+.card-hover-lift:hover{transform:translateY(-2px);box-shadow:0 12px 24px -4px rgba(0,0,0,.15)!important}
+.card-hover-glow:hover{box-shadow:0 0 20px var(--mr-accent,#1a56db)22!important}
+.card-hover-scale:hover{transform:scale(1.01)}
+.card-hover-border:hover{border-color:var(--mr-accent,#1a56db)!important}
+
+/* SCROLLBAR TEMATİK */
+::-webkit-scrollbar{width:var(--mr-scrollbar-width,6px);height:var(--mr-scrollbar-width,6px)}
+::-webkit-scrollbar-track{background:var(--mr-scrollbar-track,rgba(15,23,42,.8))}
+::-webkit-scrollbar-thumb{background:var(--mr-scrollbar-thumb,rgba(26,86,219,.35));border-radius:var(--mr-scrollbar-radius,4px)}
+::-webkit-scrollbar-thumb:hover{background:var(--mr-scrollbar-thumb-hover,rgba(26,86,219,.55))}
+
+/* GRADIENT ANİMASYONLU HEADER */
+.gradient-header{background-size:200% 200%!important;animation:gradientShift 5s ease infinite}
 
 @media print{body{background:#fff!important;color:#000!important;text-transform:none!important}.no-print{display:none!important}}
 </style>
@@ -86,6 +180,7 @@ var MR_VERSION = 'v4.' + Date.now();
 <script type="text/babel" data-type="module" src="js/pages/mesajlar.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/bildirim.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/sistem.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/tema-ayarlari.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/police.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/saha.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/konum-takip.js"></script>

@@ -840,8 +840,10 @@ const App = () => {
   const [sozFade, setSozFade] = useState(true);
 
   /* URL HASH ROUTING - SAYFA DEĞİŞİNCE URL GÜNCELLENİR */
+  const [pageAnimKey, setPageAnimKey] = useState(0);
   const setPage = useCallback((p) => {
     setPageState(p);
+    setPageAnimKey(k => k + 1);
     const hash = p === 'home' ? '/' : '/' + p;
     window.history.pushState({page: p}, '', '#' + hash);
     window.scrollTo(0, 0);
@@ -1212,7 +1214,7 @@ const App = () => {
     );
   }
 
-  if (!user) return <LoginScreen onLogin={handleLogin}/>;
+  if (!user) return <div className="login-slide"><LoginScreen onLogin={handleLogin}/></div>;
 
   return (
     <div style={{minHeight: '100vh', background: C.bg, color: C.text, position: 'relative', overflow: 'hidden'}}>
@@ -1236,8 +1238,12 @@ const App = () => {
       )}
 
       <div style={{maxWidth: 1400, margin: '0 auto', padding: '0 24px 40px', position: 'relative', zIndex: 1}}>
-        <Breadcrumb page={page} setPage={setPage}/>
-        <PageRouter page={page} setPage={setPage} user={user} setUser={setUser}/>
+        <div className="breadcrumb-slide">
+          <Breadcrumb page={page} setPage={setPage}/>
+        </div>
+        <div key={pageAnimKey} className={MR.getPageAnimClass ? MR.getPageAnimClass() : 'fade-in'}>
+          <PageRouter page={page} setPage={setPage} user={user} setUser={setUser}/>
+        </div>
       </div>
 
       {/* MOTİVASYON SÖZÜ + SLOGAN - ALT KISIMDA SABİT */}

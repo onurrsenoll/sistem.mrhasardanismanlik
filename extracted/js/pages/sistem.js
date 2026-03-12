@@ -1570,14 +1570,8 @@ const AyarlarTab = () => {
   );
 };
 
-/* ════════════════════════════════════════════════════════════════
-   TAB - TEMA AYARLARI
-   RENK PALETİ | GÖRÜNÜM EFEKTLERİ | TİPOGRAFİ | KART/SAYFA DÜZENİ | BUTON STİLLERİ
-   SADECE ADMİN ERİŞEBİLİR - TÜM KULLANICILARA YANSIR
-   ════════════════════════════════════════════════════════════════ */
-
-const TEMA_VARSAYILAN = {
-  /* RENK PALETİ */
+/* TEMA AYARLARI — AYRI DOSYADA: js/pages/tema-ayarlari.js → MR.TemaAyarlariTab */
+/* ESKİ_TEMA_BASLANGIC
   palet: {
     accent: '#1a56db', accentLight: '#3b82f6',
     success: '#10b981', warning: '#f59e0b', danger: '#ef4444',
@@ -2316,7 +2310,7 @@ const TemaAyarlariTab = () => {
       )
     )
   );
-};
+ESKİ_TEMA_SONU */
 
 /* ════════════════════════════════════════════════════════════════
    TAB 4 - LOG KAYITLARI
@@ -4329,7 +4323,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
         {subPage === 'aktarim' && isAdmin && <TopluAktarimTab/>}
         {subPage === 'veri' && isAdmin && <VeriYonetimiTab/>}
         {subPage === 'log' && isAdmin && <LogTab/>}
-        {subPage === 'tema' && isAdmin && <TemaAyarlariTab/>}
+        {subPage === 'tema' && isAdmin && MR.TemaAyarlariTab && React.createElement(MR.TemaAyarlariTab)}
       </div>
     </div>
   );
