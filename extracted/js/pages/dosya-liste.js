@@ -389,13 +389,36 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
     }
   }, [data, turF, asamaF, search, adkDosya, bhDosya, acikDosya]);
 
-  const thS = {padding:'7px 6px',textAlign:'left',fontWeight:800,fontSize:'12px',whiteSpace:'nowrap',color:'#FFFFFF',position:'sticky',top:0,background:'#1a2744',zIndex:2,letterSpacing:0.3,borderBottom:'2px solid rgba(255,255,255,0.1)'};
-  const thSticky = {...thS,position:'sticky',right:0,zIndex:3,background:'#1a2744',boxShadow:'-3px 0 8px rgba(0,0,0,0.15)',textAlign:'center'};
-  const tdS = {padding:'6px 6px',fontSize:'12px',fontWeight:600,whiteSpace:'nowrap',color:'#FFFFFF',borderBottom:'none',opacity:1};
+  const isKoyu = MR.tema === 'koyu';
+
+  /* ── THEAD STİLLERİ ── */
+  const theadBg = isKoyu
+    ? 'linear-gradient(135deg, rgba(26,86,219,0.8) 0%, rgba(30,58,138,0.9) 100%)'
+    : 'linear-gradient(135deg, #1a56db 0%, #1e3a8a 100%)';
+  const thS = {padding:'8px 6px',textAlign:'left',fontWeight:800,fontSize:'12px',whiteSpace:'nowrap',color:'#FFFFFF',position:'sticky',top:0,background:isKoyu?'rgba(26,86,219,0.85)':'#1a56db',zIndex:2,letterSpacing:0.4,borderBottom:'none'};
+  const thSticky = {...thS,position:'sticky',right:0,zIndex:3,boxShadow:'-3px 0 8px rgba(0,0,0,0.2)',textAlign:'center'};
+
+  /* ── TD STİLLERİ ── */
+  const tdS = {padding:'7px 6px',fontSize:'12px',fontWeight:600,whiteSpace:'nowrap',color:isKoyu?'#f1f5f9':C.text,borderBottom:'none',opacity:1};
   const tdTrunc = {...tdS,overflow:'hidden',textOverflow:'ellipsis'};
   const tdSticky = {...tdS,position:'sticky',right:0,background:'inherit',boxShadow:'-3px 0 8px rgba(0,0,0,0.15)',textAlign:'center'};
-  const rowBg = (i) => i % 2 === 1 ? '#1a3050' : '#1e3a5f';
-  const rowSt = (i) => ({cursor:'pointer',backgroundColor:rowBg(i),borderBottom:'1px solid rgba(255,255,255,0.1)',boxShadow:'0 1px 3px rgba(0,0,0,0.3)',transition:'all .15s'});
+
+  /* ── SATIR STİLLERİ ── */
+  const rowBg = (i) => isKoyu
+    ? (i % 2 === 0 ? 'rgba(30,58,120,0.6)' : 'rgba(20,45,100,0.5)')
+    : (i % 2 === 0 ? '#ffffff' : '#f0f5ff');
+  const rowSt = (i) => ({
+    cursor:'pointer',
+    backgroundColor:rowBg(i),
+    backgroundImage:isKoyu ? 'linear-gradient(90deg, rgba(59,130,246,0.15) 0%, transparent 100%)' : 'none',
+    borderBottom:isKoyu ? '1px solid rgba(59,130,246,0.2)' : '1px solid rgba(26,86,219,0.08)',
+    borderLeft:isKoyu ? '3px solid rgba(59,130,246,0.4)' : '3px solid rgba(26,86,219,0.3)',
+    boxShadow:isKoyu
+      ? '0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)'
+      : '0 1px 4px rgba(26,86,219,0.08)',
+    transition:'all .2s ease',
+    borderRadius:4
+  });
 
   return (
     <div className="fade-in">
@@ -476,7 +499,14 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
         {loading ? <Loading/> : data.length === 0 ? (
           <EmptyState icon="FolderOpen" title="DOSYA BULUNAMADI" desc="FİLTRELERİ KONTROL EDİN VEYA YENİ DOSYA OLUŞTURUN"/>
         ) : (
-          <div style={{overflowX:'auto',maxHeight:'calc(100vh - 300px)',width:'100%',position:'relative'}}>
+          <div style={{overflowX:'auto',maxHeight:'calc(100vh - 300px)',width:'100%',position:'relative',
+            borderRadius:12,
+            border:isKoyu ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(26,86,219,0.1)',
+            boxShadow:isKoyu ? 'none' : '0 8px 32px rgba(26,86,219,0.12)',
+            backdropFilter:isKoyu ? 'blur(10px)' : 'none',
+            WebkitBackdropFilter:isKoyu ? 'blur(10px)' : 'none',
+            background:isKoyu ? 'rgba(15,23,42,0.6)' : '#ffffff'
+          }}>
             <table style={{width:'100%',borderCollapse:'separate',borderSpacing:'0 3px',fontSize:'12px',tableLayout:'fixed'}}>
               <colgroup>
                 {MR.hasYetki(user,'dosya','dosya-toplu-sil') && <col style={{width:35}}/>}
@@ -494,7 +524,7 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                 <col style={{width:90}}/>{/* İŞLEM */}
               </colgroup>
               <thead>
-                <tr style={{background:'#1a2744'}}>
+                <tr style={{backgroundImage:theadBg,borderRadius:'12px 12px 0 0'}}>
                   {MR.hasYetki(user,'dosya','dosya-toplu-sil') && <th style={{...thS,textAlign:'center',padding:'7px 4px'}}>
                     <input type="checkbox" checked={data.length > 0 && secililer.length === data.length}
                       onChange={tumunuSec} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
@@ -519,8 +549,22 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                   return (
                     <tr key={d.id || i}
                       style={rowSt(i)}
-                      onMouseEnter={e => {e.currentTarget.style.backgroundColor='#243d6b';e.currentTarget.style.boxShadow='0 2px 6px rgba(0,0,0,0.4)';}}
-                      onMouseLeave={e => {e.currentTarget.style.backgroundColor=rowBg(i);e.currentTarget.style.boxShadow='0 1px 3px rgba(0,0,0,0.3)';}}>
+                      onMouseEnter={e => {
+                        if(isKoyu){
+                          e.currentTarget.style.backgroundColor='rgba(59,130,246,0.25)';
+                          e.currentTarget.style.boxShadow='0 4px 20px rgba(59,130,246,0.3), inset 0 1px 0 rgba(255,255,255,0.08)';
+                        } else {
+                          e.currentTarget.style.backgroundImage='linear-gradient(90deg, rgba(59,130,246,0.08) 0%, #ffffff 100%)';
+                          e.currentTarget.style.boxShadow='0 4px 12px rgba(26,86,219,0.15)';
+                        }
+                        e.currentTarget.style.transform='translateY(-1px)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.backgroundColor=rowBg(i);
+                        e.currentTarget.style.backgroundImage=isKoyu?'linear-gradient(90deg, rgba(59,130,246,0.15) 0%, transparent 100%)':'none';
+                        e.currentTarget.style.boxShadow=isKoyu?'0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)':'0 1px 4px rgba(26,86,219,0.08)';
+                        e.currentTarget.style.transform='translateY(0)';
+                      }}>
                       {MR.hasYetki(user,'dosya','dosya-toplu-sil') && <td style={{...tdS,textAlign:'center',padding:'6px 4px'}} onClick={e => e.stopPropagation()}>
                         <input type="checkbox" checked={secililer.includes(d.id)} onChange={() => toggleSecim(d.id)}
                           style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
