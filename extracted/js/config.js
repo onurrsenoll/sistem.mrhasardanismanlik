@@ -634,3 +634,81 @@ MR.S = {
 MR._stilGuncelle();
 /* Body tema sınıfı — CSS hover kuralları için */
 document.body.classList.add(MR.tema === 'koyu' ? 'tema-koyu' : 'tema-acik');
+
+// ═══ SUNUCUDAN TEMA CONFIG YÜKLE VE UYGULA ═══
+MR._temaConfigUygula = (cfg) => {
+  if (!cfg) return;
+  const isK = MR.tema === 'koyu';
+  const p = cfg.palet || {};
+  const e = cfg.efekt || {};
+  const b = cfg.buton || {};
+
+  /* RENK PALETİ */
+  ['accent','accentLight','success','warning','danger','purple','cyan','pink'].forEach(k => {
+    if (p[k]) { MR.C[k] = p[k]; MR.TEMALAR.koyu[k] = p[k]; MR.TEMALAR.acik[k] = p[k]; }
+  });
+  if (p.bg_koyu) { MR.TEMALAR.koyu.bg = p.bg_koyu; MR.TEMALAR.koyu.bgGradient = p.bg_koyu; }
+  if (p.bgCard_koyu) MR.TEMALAR.koyu.bgCard = p.bgCard_koyu;
+  if (p.bg_acik) { MR.TEMALAR.acik.bg = p.bg_acik; MR.TEMALAR.acik.bgGradient = p.bg_acik; }
+  if (p.bgCard_acik) MR.TEMALAR.acik.bgCard = p.bgCard_acik;
+  if (isK) {
+    if (p.bg_koyu) { MR.C.bg = p.bg_koyu; MR.C.bgGradient = p.bg_koyu; }
+    if (p.bgCard_koyu) MR.C.bgCard = p.bgCard_koyu;
+  } else {
+    if (p.bg_acik) { MR.C.bg = p.bg_acik; MR.C.bgGradient = p.bg_acik; }
+    if (p.bgCard_acik) MR.C.bgCard = p.bgCard_acik;
+  }
+  if (MR.C.accent && MR.C.accentLight) {
+    MR.C.accentGradient = `linear-gradient(135deg, ${MR.C.accentLight} 0%, ${MR.C.accent} 50%, ${MR.C.accent} 100%)`;
+  }
+
+  /* EFEKTLER */
+  const shadowMul = (e.shadow_yogunluk ?? 50) / 50;
+  const bRad = e.border_radius ?? 16;
+  const bWid = e.border_kalinlik ?? 1;
+  if (MR.S.card) { MR.S.card.borderRadius = bRad; MR.S.card.border = `${bWid}px solid ${MR.C.border}`; }
+  if (MR.S.stat) { MR.S.stat.borderRadius = bRad; MR.S.stat.border = `${bWid}px solid ${MR.C.border}`; }
+  if (MR.S.input) MR.S.input.borderRadius = Math.min(bRad, 12);
+  if (MR.S.select) MR.S.select.borderRadius = Math.min(bRad, 12);
+  if (shadowMul === 0) { MR.C.cardShadow = 'none'; MR.C.statShadow = 'none'; }
+  else {
+    const a1 = Math.round(0.2 * shadowMul * 100) / 100;
+    const a2 = Math.round(0.1 * shadowMul * 100) / 100;
+    MR.C.cardShadow = `0 ${Math.round(10*shadowMul)}px ${Math.round(15*shadowMul)}px -3px rgba(0,0,0,${a1}), 0 4px 6px -4px rgba(0,0,0,${a2})`;
+    MR.C.statShadow = `0 ${Math.round(4*shadowMul)}px ${Math.round(6*shadowMul)}px -1px rgba(0,0,0,${a1}), 0 2px 4px -2px rgba(0,0,0,${a2})`;
+  }
+  if (MR.S.card) MR.S.card.boxShadow = MR.C.cardShadow;
+  if (MR.S.stat) MR.S.stat.boxShadow = MR.C.statShadow;
+
+  /* BUTON STİLLERİ */
+  if (b.radius !== undefined && MR.S.btn) MR.S.btn.borderRadius = b.radius;
+  if (b.stil === 'duz') {
+    MR.S.btnP = { background: MR.C.accent, color: '#fff', fontWeight: 800, border: 'none', boxShadow: 'none' };
+    MR.S.btnS = { ...MR.S.btnP };
+  } else if (b.stil === 'cam') {
+    MR.S.btnP = { background: `${MR.C.accent}cc`, color: '#fff', fontWeight: 800, border: 'none', boxShadow: `0 8px 32px ${MR.C.accent}44`, backdropFilter: 'blur(8px)' };
+    MR.S.btnS = { ...MR.S.btnP };
+  } else if (b.stil === 'threed') {
+    MR.S.btnP = {
+      background: `linear-gradient(180deg, ${MR.C.accentLight} 0%, ${MR.C.accent} 40%, ${MR.C.accent} 100%)`,
+      color: '#fff', fontWeight: 800, border: 'none',
+      boxShadow: `0 6px 20px -2px ${MR.C.accent}66, 0 3px 6px -1px rgba(0,0,0,0.15), inset 0 2px 0 rgba(255,255,255,0.3)`,
+      borderBottom: `3px solid ${MR.C.accent}`, textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+    };
+    MR.S.btnS = { ...MR.S.btnP };
+  }
+
+  MR._stilGuncelle();
+};
+
+/* SAYFA YÜKLENDİĞİNDE TEMA CONFIG'İ SUNUCUDAN ÇEK VE UYGULA */
+(async () => {
+  try {
+    const r = await fetch('/api/v1/sistem/tema-config.php');
+    const j = await r.json();
+    if (j?.success && j.data) {
+      MR._temaConfigUygula(j.data);
+      MR._temaConfig = j.data;
+    }
+  } catch(e) { /* sessiz hata — varsayılan tema kullanılır */ }
+})();

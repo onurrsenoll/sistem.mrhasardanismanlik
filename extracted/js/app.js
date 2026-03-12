@@ -69,7 +69,8 @@ const MENU = [
     {id:'tanimlamalar-finansal', label:'FİNANSAL TANIMLAMALAR', icon:'Wallet'},
     {id:'tanimlamalar-sablon', label:'MATBU EVRAK / SÖZLEŞME', icon:'FileSignature'},
     {id:'tanimlamalar-genel', label:'GENEL TANIMLAMALAR', icon:'Settings'},
-    {id:'sistem-konum', label:'KONUM TAKİBİ', icon:'MapPin'}
+    {id:'sistem-konum', label:'KONUM TAKİBİ', icon:'MapPin'},
+    {id:'sistem-tema', label:'TEMA AYARLARI', icon:'Palette'}
   ]}
 ];
 

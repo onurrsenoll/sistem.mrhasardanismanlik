@@ -1571,6 +1571,754 @@ const AyarlarTab = () => {
 };
 
 /* ════════════════════════════════════════════════════════════════
+   TAB - TEMA AYARLARI
+   RENK PALETİ | GÖRÜNÜM EFEKTLERİ | TİPOGRAFİ | KART/SAYFA DÜZENİ | BUTON STİLLERİ
+   SADECE ADMİN ERİŞEBİLİR - TÜM KULLANICILARA YANSIR
+   ════════════════════════════════════════════════════════════════ */
+
+const TEMA_VARSAYILAN = {
+  /* RENK PALETİ */
+  palet: {
+    accent: '#1a56db', accentLight: '#3b82f6',
+    success: '#10b981', warning: '#f59e0b', danger: '#ef4444',
+    purple: '#8b5cf6', cyan: '#06b6d4', pink: '#ec4899',
+    bg_koyu: '#0f172a', bgCard_koyu: '#1e293b',
+    bg_acik: '#f8fafc', bgCard_acik: '#ffffff'
+  },
+  /* GÖRÜNÜM EFEKTLERİ */
+  efekt: {
+    shadow_yogunluk: 50,   /* 0-100 */
+    border_radius: 16,      /* 0-30 */
+    border_kalinlik: 1,     /* 0-4 */
+    kabartma: 0,            /* 0=düz, 1=hafif, 2=belirgin, 3=3D */
+    cam_efekt: 0            /* 0=kapalı, 1=hafif, 2=belirgin */
+  },
+  /* TİPOGRAFİ */
+  tipografi: {
+    font_olcek: 100,       /* 80-130 yüzde */
+    font_agirlik: 600,     /* 300,400,500,600,700,800 */
+    satir_yukseklik: 150   /* 120-200 yüzde */
+  },
+  /* KART VE SAYFA DÜZENİ */
+  layout: {
+    kart_boyut: 'orta',    /* kucuk, orta, buyuk */
+    grid_sutun: 3,         /* 2,3,4 */
+    ikon_boyut: 18,        /* 14-28 */
+    ikon_stil: 'outline',  /* outline, filled */
+    kart_aralik: 16        /* 8-32 */
+  },
+  /* BUTON STİLLERİ */
+  buton: {
+    stil: 'gradient',      /* duz, gradient, threed, cam */
+    radius: 10,            /* 0-25 */
+    hover: 'scale'         /* scale, glow, slide */
+  }
+};
+
+/* RENK PALETLERİ — HAZIR TEMALAR */
+const HAZIR_PALETLER = [
+  {ad: 'VARSAYILAN MAVİ', accent: '#1a56db', accentLight: '#3b82f6', bg_koyu: '#0f172a', bgCard_koyu: '#1e293b', bg_acik: '#f8fafc', bgCard_acik: '#ffffff'},
+  {ad: 'OKYANUS', accent: '#0891b2', accentLight: '#22d3ee', bg_koyu: '#0c1222', bgCard_koyu: '#162032', bg_acik: '#f0fdfa', bgCard_acik: '#ffffff'},
+  {ad: 'ZÜMRÜT', accent: '#059669', accentLight: '#34d399', bg_koyu: '#0a1f1a', bgCard_koyu: '#132d25', bg_acik: '#f0fdf4', bgCard_acik: '#ffffff'},
+  {ad: 'MOR RÜYA', accent: '#7c3aed', accentLight: '#a78bfa', bg_koyu: '#13082a', bgCard_koyu: '#1e1340', bg_acik: '#faf5ff', bgCard_acik: '#ffffff'},
+  {ad: 'GÜNBATIMI', accent: '#ea580c', accentLight: '#fb923c', bg_koyu: '#1a0f08', bgCard_koyu: '#2a1a10', bg_acik: '#fff7ed', bgCard_acik: '#ffffff'},
+  {ad: 'GÜL KURUSU', accent: '#be185d', accentLight: '#f472b6', bg_koyu: '#1a0a14', bgCard_koyu: '#2a1222', bg_acik: '#fdf2f8', bgCard_acik: '#ffffff'},
+  {ad: 'ALTTIN', accent: '#b45309', accentLight: '#fbbf24', bg_koyu: '#1a1408', bgCard_koyu: '#2a2210', bg_acik: '#fffbeb', bgCard_acik: '#ffffff'},
+  {ad: 'GECE MAVISI', accent: '#1e40af', accentLight: '#60a5fa', bg_koyu: '#020617', bgCard_koyu: '#0f172a', bg_acik: '#eff6ff', bgCard_acik: '#f8fafc'}
+];
+
+const TemaAyarlariTab = () => {
+  const {C, S, LIcon, Badge, Loading, api} = MR;
+  const [config, setConfig] = useState(JSON.parse(JSON.stringify(TEMA_VARSAYILAN)));
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [mesaj, setMesaj] = useState({type: '', text: ''});
+  const [aktifSekme, setAktifSekme] = useState('palet');
+
+  /* MEVCUT TEMA CONFİG'İ YÜKLE */
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const r = await api.req('/sistem/tema-config.php');
+      if (r?.success && r.data) {
+        setConfig(prev => {
+          const merged = JSON.parse(JSON.stringify(TEMA_VARSAYILAN));
+          if (r.data.palet) Object.assign(merged.palet, r.data.palet);
+          if (r.data.efekt) Object.assign(merged.efekt, r.data.efekt);
+          if (r.data.tipografi) Object.assign(merged.tipografi, r.data.tipografi);
+          if (r.data.layout) Object.assign(merged.layout, r.data.layout);
+          if (r.data.buton) Object.assign(merged.buton, r.data.buton);
+          return merged;
+        });
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  /* GÜNCELLEME YARDIMCILARI */
+  const upPalet = (k, v) => setConfig(p => ({...p, palet: {...p.palet, [k]: v}}));
+  const upEfekt = (k, v) => setConfig(p => ({...p, efekt: {...p.efekt, [k]: Number(v)}}));
+  const upTipo = (k, v) => setConfig(p => ({...p, tipografi: {...p.tipografi, [k]: Number(v)}}));
+  const upLayout = (k, v) => setConfig(p => ({...p, layout: {...p.layout, [k]: v}}));
+  const upButon = (k, v) => setConfig(p => ({...p, buton: {...p.buton, [k]: v}}));
+
+  /* KAYDET */
+  const kaydet = async () => {
+    setSaving(true);
+    setMesaj({type: '', text: ''});
+    const r = await api.ayarlarGuncelle({tema_config: JSON.stringify(config)});
+    if (r?.success) {
+      setMesaj({type: 'success', text: 'TEMA AYARLARI BAŞARIYLA KAYDEDİLDİ — TÜM KULLANICILAR İÇİN UYGULANACAK'});
+      /* CANLI UYGULA */
+      temaUygula(config);
+    } else {
+      setMesaj({type: 'error', text: r?.error || 'TEMA AYARLARI KAYDEDİLİRKEN HATA OLUŞTU'});
+    }
+    setSaving(false);
+    setTimeout(() => setMesaj({type: '', text: ''}), 6000);
+  };
+
+  /* SIFIRLA */
+  const sifirla = () => {
+    setConfig(JSON.parse(JSON.stringify(TEMA_VARSAYILAN)));
+    setMesaj({type: 'success', text: 'AYARLAR VARSAYILANA DÖNDÜRÜLDÜ — KAYDETMEDEN UYGULANMAZ'});
+    setTimeout(() => setMesaj({type: '', text: ''}), 4000);
+  };
+
+  /* TEMAY CANLI UYGULA */
+  const temaUygula = (cfg) => {
+    if (!cfg) return;
+    const isK = MR.tema === 'koyu';
+    const p = cfg.palet || {};
+    const e = cfg.efekt || {};
+    const t = cfg.tipografi || {};
+    const l = cfg.layout || {};
+    const b = cfg.buton || {};
+
+    /* RENK PALETİ UYGULA */
+    if (p.accent) { MR.C.accent = p.accent; MR.TEMALAR.koyu.accent = p.accent; MR.TEMALAR.acik.accent = p.accent; }
+    if (p.accentLight) { MR.C.accentLight = p.accentLight; MR.TEMALAR.koyu.accentLight = p.accentLight; MR.TEMALAR.acik.accentLight = p.accentLight; }
+    if (p.success) { MR.C.success = p.success; MR.TEMALAR.koyu.success = p.success; MR.TEMALAR.acik.success = p.success; }
+    if (p.warning) { MR.C.warning = p.warning; MR.TEMALAR.koyu.warning = p.warning; MR.TEMALAR.acik.warning = p.warning; }
+    if (p.danger) { MR.C.danger = p.danger; MR.TEMALAR.koyu.danger = p.danger; MR.TEMALAR.acik.danger = p.danger; }
+    if (p.purple) { MR.C.purple = p.purple; MR.TEMALAR.koyu.purple = p.purple; MR.TEMALAR.acik.purple = p.purple; }
+    if (p.cyan) { MR.C.cyan = p.cyan; MR.TEMALAR.koyu.cyan = p.cyan; MR.TEMALAR.acik.cyan = p.cyan; }
+    if (p.pink) { MR.C.pink = p.pink; MR.TEMALAR.koyu.pink = p.pink; MR.TEMALAR.acik.pink = p.pink; }
+    if (p.bg_koyu) { MR.TEMALAR.koyu.bg = p.bg_koyu; MR.TEMALAR.koyu.bgGradient = p.bg_koyu; }
+    if (p.bgCard_koyu) { MR.TEMALAR.koyu.bgCard = p.bgCard_koyu; }
+    if (p.bg_acik) { MR.TEMALAR.acik.bg = p.bg_acik; MR.TEMALAR.acik.bgGradient = p.bg_acik; }
+    if (p.bgCard_acik) { MR.TEMALAR.acik.bgCard = p.bgCard_acik; }
+    /* MEVCUT TEMAYA YANSIT */
+    if (isK) {
+      if (p.bg_koyu) { MR.C.bg = p.bg_koyu; MR.C.bgGradient = p.bg_koyu; }
+      if (p.bgCard_koyu) MR.C.bgCard = p.bgCard_koyu;
+    } else {
+      if (p.bg_acik) { MR.C.bg = p.bg_acik; MR.C.bgGradient = p.bg_acik; }
+      if (p.bgCard_acik) MR.C.bgCard = p.bgCard_acik;
+    }
+    MR.C.accentGradient = `linear-gradient(135deg, ${MR.C.accentLight} 0%, ${MR.C.accent} 50%, ${p.accent || MR.C.accent} 100%)`;
+
+    /* EFEKT UYGULA */
+    const shadowMul = (e.shadow_yogunluk || 50) / 50;
+    const bRad = e.border_radius ?? 16;
+    const bWid = e.border_kalinlik ?? 1;
+
+    MR.S.card.borderRadius = bRad;
+    MR.S.card.border = `${bWid}px solid ${MR.C.border}`;
+    MR.S.stat.borderRadius = bRad;
+    MR.S.stat.border = `${bWid}px solid ${MR.C.border}`;
+    MR.S.input.borderRadius = Math.min(bRad, 12);
+    MR.S.select.borderRadius = Math.min(bRad, 12);
+
+    /* GÖLGE YOĞUNLUĞU */
+    if (shadowMul === 0) {
+      MR.C.cardShadow = 'none';
+      MR.C.statShadow = 'none';
+    } else {
+      const a1 = Math.round(0.2 * shadowMul * 100) / 100;
+      const a2 = Math.round(0.1 * shadowMul * 100) / 100;
+      MR.C.cardShadow = `0 ${Math.round(10 * shadowMul)}px ${Math.round(15 * shadowMul)}px -3px rgba(0,0,0,${a1}), 0 4px 6px -4px rgba(0,0,0,${a2})`;
+      MR.C.statShadow = `0 ${Math.round(4 * shadowMul)}px ${Math.round(6 * shadowMul)}px -1px rgba(0,0,0,${a1}), 0 2px 4px -2px rgba(0,0,0,${a2})`;
+    }
+    MR.S.card.boxShadow = MR.C.cardShadow;
+    MR.S.stat.boxShadow = MR.C.statShadow;
+
+    /* BUTON STİLLERİ */
+    const btnRad = b.radius ?? 10;
+    MR.S.btn.borderRadius = btnRad;
+
+    if (b.stil === 'duz') {
+      MR.S.btnP = { background: MR.C.accent, color: '#fff', fontWeight: 800, border: 'none', boxShadow: 'none' };
+      MR.S.btnS = { background: MR.C.accent, color: '#fff', fontWeight: 800, border: 'none', boxShadow: 'none' };
+    } else if (b.stil === 'cam') {
+      MR.S.btnP = {
+        background: `${MR.C.accent}cc`, color: '#fff', fontWeight: 800, border: 'none',
+        boxShadow: `0 8px 32px ${MR.C.accent}44`, backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)'
+      };
+      MR.S.btnS = { ...MR.S.btnP };
+    } else if (b.stil === 'threed') {
+      const acHex = MR.C.accent;
+      MR.S.btnP = {
+        background: `linear-gradient(180deg, ${MR.C.accentLight} 0%, ${acHex} 40%, ${acHex} 100%)`,
+        color: '#fff', fontWeight: 800, border: 'none',
+        boxShadow: `0 6px 20px -2px ${acHex}66, 0 3px 6px -1px rgba(0,0,0,0.15), inset 0 2px 0 rgba(255,255,255,0.3)`,
+        borderBottom: `3px solid ${acHex}`, textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+      };
+      MR.S.btnS = { ...MR.S.btnP };
+    }
+    /* gradient zaten varsayılan */
+
+    MR._stilGuncelle();
+  };
+
+  /* CANLI ÖNİZLEME STİLLERİ OLUŞTUR */
+  const onizlemeStilleri = () => {
+    const p = config.palet;
+    const e = config.efekt;
+    const t = config.tipografi;
+    const l = config.layout;
+    const b = config.buton;
+    const isK = MR.tema === 'koyu';
+    const bgColor = isK ? (p.bg_koyu || '#0f172a') : (p.bg_acik || '#f8fafc');
+    const cardBg = isK ? (p.bgCard_koyu || '#1e293b') : (p.bgCard_acik || '#ffffff');
+    const textColor = isK ? '#f1f5f9' : '#1e293b';
+    const textSec = isK ? '#cbd5e1' : '#475569';
+    const border = isK ? '#334155' : '#e2e8f0';
+    const shadowMul = (e.shadow_yogunluk || 50) / 50;
+    const bRad = e.border_radius ?? 16;
+    const bWid = e.border_kalinlik ?? 1;
+    const fontScale = (t.font_olcek || 100) / 100;
+    const lineH = (t.satir_yukseklik || 150) / 100;
+
+    let btnBg = `linear-gradient(180deg, ${p.accentLight || '#3b82f6'} 0%, ${p.accent || '#1a56db'} 100%)`;
+    let btnShadow = `0 4px 14px -2px ${p.accent || '#1a56db'}55`;
+    let btnBorder = 'none';
+    let btnExtra = {};
+    if (b.stil === 'duz') { btnBg = p.accent || '#1a56db'; btnShadow = 'none'; }
+    if (b.stil === 'threed') {
+      btnBg = `linear-gradient(180deg, ${p.accentLight || '#3b82f6'} 0%, ${p.accent || '#1a56db'} 40%, ${p.accent || '#1a56db'} 100%)`;
+      btnShadow = `0 6px 20px -2px ${p.accent || '#1a56db'}66, inset 0 2px 0 rgba(255,255,255,0.3)`;
+      btnBorder = `3px solid ${p.accent || '#1a56db'}`;
+    }
+    if (b.stil === 'cam') {
+      btnBg = `${p.accent || '#1a56db'}cc`;
+      btnShadow = `0 8px 32px ${p.accent || '#1a56db'}44`;
+      btnExtra = {backdropFilter: 'blur(8px)'};
+    }
+
+    const cardShadow = shadowMul === 0 ? 'none' :
+      `0 ${Math.round(10*shadowMul)}px ${Math.round(15*shadowMul)}px -3px rgba(0,0,0,${Math.round(0.2*shadowMul*100)/100})`;
+
+    const kabartmaStyle = e.kabartma === 1
+      ? {boxShadow: `${cardShadow}, inset 0 1px 0 rgba(255,255,255,0.08)`}
+      : e.kabartma === 2
+      ? {boxShadow: `${cardShadow}, inset 0 2px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.1)`}
+      : e.kabartma >= 3
+      ? {boxShadow: `${cardShadow}, inset 0 3px 0 rgba(255,255,255,0.15), inset 0 -2px 0 rgba(0,0,0,0.15)`, borderTop: `1px solid rgba(255,255,255,0.1)`}
+      : {boxShadow: cardShadow};
+
+    const camStyle = e.cam_efekt === 1
+      ? {background: `${cardBg}ee`, backdropFilter: 'blur(4px)'}
+      : e.cam_efekt >= 2
+      ? {background: `${cardBg}cc`, backdropFilter: 'blur(12px)'}
+      : {};
+
+    return {bgColor, cardBg, textColor, textSec, border, bRad, bWid, fontScale, lineH,
+      btnBg, btnShadow, btnBorder, btnExtra, cardShadow, kabartmaStyle, camStyle,
+      accentColor: p.accent || '#1a56db', accentLightColor: p.accentLight || '#3b82f6',
+      kartPadding: l.kart_boyut === 'kucuk' ? 12 : l.kart_boyut === 'buyuk' ? 28 : 20,
+      kartGap: l.kart_aralik || 16, iconSize: l.ikon_boyut || 18,
+      gridCols: l.grid_sutun || 3, btnRadius: b.radius ?? 10
+    };
+  };
+
+  if (loading) return React.createElement(Loading);
+
+  const os = onizlemeStilleri();
+
+  /* SEKME YAPISI */
+  const sekmeler = [
+    {id: 'palet', label: 'RENK PALETİ', icon: 'Palette'},
+    {id: 'efekt', label: 'GÖRÜNÜM EFEKTLERİ', icon: 'Sparkles'},
+    {id: 'tipografi', label: 'TİPOGRAFİ', icon: 'Type'},
+    {id: 'layout', label: 'SAYFA DÜZENİ', icon: 'LayoutGrid'},
+    {id: 'buton', label: 'BUTON STİLLERİ', icon: 'SquareMousePointer'},
+    {id: 'onizleme', label: 'CANLI ÖNİZLEME', icon: 'Eye'}
+  ];
+
+  /* SLIDER BİLEŞENİ */
+  const Slider = ({label, value, min, max, step, onChange, suffix, color}) => (
+    React.createElement('div', {style: {marginBottom: 16}},
+      React.createElement('div', {style: {display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6}},
+        React.createElement('label', {style: {...S.label, margin: 0}}, label),
+        React.createElement('span', {style: {fontSize: 12, fontWeight: 800, color: color || C.accent, background: `${color || C.accent}18`, padding: '2px 10px', borderRadius: 6}}, value + (suffix || ''))
+      ),
+      React.createElement('input', {type: 'range', min, max, step: step || 1, value, onChange: e => onChange(e.target.value), style: {width: '100%', accentColor: color || C.accent, height: 6, cursor: 'pointer'}})
+    )
+  );
+
+  /* RENK SEÇİCİ BİLEŞENİ */
+  const RenkSecici = ({label, value, onChange, altText}) => (
+    React.createElement('div', {style: {marginBottom: 14}},
+      React.createElement('label', {style: {...S.label, fontSize: 11}}, label),
+      React.createElement('div', {style: {display: 'flex', alignItems: 'center', gap: 8}},
+        React.createElement('div', {style: {position: 'relative', width: 40, height: 36, borderRadius: 8, overflow: 'hidden', border: `2px solid ${C.border}`, cursor: 'pointer', flexShrink: 0}},
+          React.createElement('input', {type: 'color', value: value || '#1a56db', onChange: e => onChange(e.target.value), style: {position: 'absolute', top: -8, left: -8, width: 56, height: 52, cursor: 'pointer', border: 'none', padding: 0}})
+        ),
+        React.createElement('input', {style: {...S.input, flex: 1, fontFamily: 'monospace', fontSize: 11, padding: '8px 12px'}, value: value || '', onChange: e => onChange(e.target.value), placeholder: '#000000'}),
+        React.createElement('div', {style: {width: 24, height: 24, borderRadius: 6, background: value || '#1a56db', border: `1px solid ${C.border}`, flexShrink: 0}})
+      ),
+      altText && React.createElement('div', {style: {fontSize: 9, color: C.textMuted, marginTop: 3}}, altText)
+    )
+  );
+
+  /* SEÇİM BUTONLARI */
+  const SecimButonlari = ({label, secenekler, value, onChange}) => (
+    React.createElement('div', {style: {marginBottom: 16}},
+      React.createElement('label', {style: {...S.label}}, label),
+      React.createElement('div', {style: {display: 'flex', gap: 6, flexWrap: 'wrap'}},
+        secenekler.map(s =>
+          React.createElement('button', {key: s.value, onClick: () => onChange(s.value), style: {
+            ...S.btn, padding: '8px 16px', fontSize: 11, fontWeight: value === s.value ? 800 : 500,
+            background: value === s.value ? `${C.accent}22` : C.bgHover,
+            color: value === s.value ? C.accent : C.textSec,
+            border: value === s.value ? `2px solid ${C.accent}` : `1px solid ${C.border}`,
+            borderRadius: 8, transition: 'all .2s'
+          }},
+            s.icon && React.createElement(LIcon, {name: s.icon, size: 14, color: value === s.value ? C.accent : C.textMuted, style: {marginRight: 4}}),
+            s.label
+          )
+        )
+      )
+    )
+  );
+
+  return (
+    React.createElement('div', null,
+      /* MESAJ */
+      mesaj.text && React.createElement('div', {style: {
+        padding: '12px 16px', borderRadius: 8, marginBottom: 16, fontSize: 12, fontWeight: 600,
+        background: mesaj.type === 'success' ? `${C.success}22` : `${C.danger}22`,
+        border: `1px solid ${mesaj.type === 'success' ? C.success + '44' : C.danger + '44'}`,
+        color: mesaj.type === 'success' ? C.success : C.danger,
+        display: 'flex', alignItems: 'center', gap: 8
+      }},
+        React.createElement(LIcon, {name: mesaj.type === 'success' ? 'CheckCircle' : 'AlertCircle', size: 16, color: mesaj.type === 'success' ? C.success : C.danger}),
+        mesaj.text
+      ),
+
+      /* BİLGİ BANNERI */
+      React.createElement('div', {style: {
+        padding: 16, background: `${C.accent}08`, borderRadius: 12, border: `1px solid ${C.accent}22`,
+        marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14
+      }},
+        React.createElement('div', {style: {width: 44, height: 44, borderRadius: 12, background: `${C.accent}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0}},
+          React.createElement(LIcon, {name: 'Palette', size: 22, color: C.accent})
+        ),
+        React.createElement('div', {style: {flex: 1}},
+          React.createElement('div', {style: {fontSize: 14, fontWeight: 800, color: C.accent}}, 'TEMA AYARLARI PANELİ'),
+          React.createElement('div', {style: {fontSize: 11, color: C.textSec, marginTop: 2}},
+            'BURADA YAPACAĞINIZ DEĞİŞİKLİKLER KAYDETTİĞİNİZDE TÜM KULLANICILARA YANSIYACAKTIR. SADECE SİSTEM YÖNETİCİSİ BU SAYFAYA ERİŞEBİLİR. HİÇBİR VERİ DEĞİŞMEZ, SADECE GÖRÜNÜM ETKİLENİR.'
+          )
+        ),
+        React.createElement(Badge, {text: 'SADECE ADMİN', color: C.danger})
+      ),
+
+      /* SEKMELER */
+      React.createElement('div', {style: {display: 'flex', gap: 4, padding: 4, background: C.bgHover, borderRadius: 10, marginBottom: 16, flexWrap: 'wrap'}},
+        sekmeler.map(s =>
+          React.createElement('div', {key: s.id, onClick: () => setAktifSekme(s.id), style: {
+            flex: 1, minWidth: 120, padding: '10px 12px', borderRadius: 8, cursor: 'pointer', textAlign: 'center',
+            background: aktifSekme === s.id ? C.bgCard : 'transparent',
+            border: aktifSekme === s.id ? `1px solid ${C.border}` : '1px solid transparent',
+            boxShadow: aktifSekme === s.id ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
+            transition: 'all .2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+          }},
+            React.createElement(LIcon, {name: s.icon, size: 14, color: aktifSekme === s.id ? C.accent : C.textMuted}),
+            React.createElement('span', {style: {fontSize: 10, fontWeight: aktifSekme === s.id ? 700 : 500, color: aktifSekme === s.id ? C.text : C.textMuted}}, s.label)
+          )
+        )
+      ),
+
+      /* ═══ BÖLÜM 1: RENK PALETİ ═══ */
+      aktifSekme === 'palet' && React.createElement('div', {style: {display: 'flex', flexDirection: 'column', gap: 16}},
+        /* HAZIR PALETLER */
+        React.createElement('div', {style: S.card},
+          React.createElement('div', {style: {...S.cardHead, padding: '12px 16px'}},
+            React.createElement(LIcon, {name: 'Layers', size: 14, color: C.accent}),
+            React.createElement('span', {style: {fontSize: 12, fontWeight: 700}}, 'HAZIR RENK PALETLERİ')
+          ),
+          React.createElement('div', {style: {padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10}},
+            HAZIR_PALETLER.map((hp, i) =>
+              React.createElement('div', {key: i, onClick: () => {
+                upPalet('accent', hp.accent); upPalet('accentLight', hp.accentLight);
+                upPalet('bg_koyu', hp.bg_koyu); upPalet('bgCard_koyu', hp.bgCard_koyu);
+                upPalet('bg_acik', hp.bg_acik); upPalet('bgCard_acik', hp.bgCard_acik);
+              }, style: {
+                padding: 12, borderRadius: 10, cursor: 'pointer', border: config.palet.accent === hp.accent ? `2px solid ${hp.accent}` : `1px solid ${C.border}`,
+                background: config.palet.accent === hp.accent ? `${hp.accent}15` : C.bgHover,
+                transition: 'all .2s', display: 'flex', alignItems: 'center', gap: 10
+              }},
+                React.createElement('div', {style: {display: 'flex', gap: 3}},
+                  [hp.accent, hp.accentLight, hp.bg_koyu, hp.bgCard_koyu].map((c, ci) =>
+                    React.createElement('div', {key: ci, style: {width: 16, height: 16, borderRadius: 4, background: c, border: '1px solid rgba(0,0,0,0.1)'}})
+                  )
+                ),
+                React.createElement('span', {style: {fontSize: 10, fontWeight: 700, color: config.palet.accent === hp.accent ? hp.accent : C.textSec}}, hp.ad)
+              )
+            )
+          )
+        ),
+
+        /* ÖZEL RENKLER */
+        React.createElement('div', {style: {...S.card}},
+          React.createElement('div', {style: {...S.cardHead, padding: '12px 16px'}},
+            React.createElement(LIcon, {name: 'Pipette', size: 14, color: C.accent}),
+            React.createElement('span', {style: {fontSize: 12, fontWeight: 700}}, 'ÖZEL RENK AYARLARI')
+          ),
+          React.createElement('div', {style: {padding: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}},
+            /* SOL KOLON - ANA RENKLER */
+            React.createElement('div', null,
+              React.createElement('div', {style: {fontSize: 11, fontWeight: 700, marginBottom: 12, color: C.text, padding: '6px 10px', background: `${C.accent}11`, borderRadius: 6}}, 'ANA RENKLER'),
+              React.createElement(RenkSecici, {label: 'ANA RENK (ACCENT)', value: config.palet.accent, onChange: v => upPalet('accent', v), altText: 'BUTONLAR, LİNKLER, SEÇİLİ ÖĞELER'}),
+              React.createElement(RenkSecici, {label: 'AÇIK ACCENT', value: config.palet.accentLight, onChange: v => upPalet('accentLight', v), altText: 'HOVER EFEKTLERİ, GRADIENT'}),
+              React.createElement(RenkSecici, {label: 'BAŞARI RENGİ', value: config.palet.success, onChange: v => upPalet('success', v)}),
+              React.createElement(RenkSecici, {label: 'UYARI RENGİ', value: config.palet.warning, onChange: v => upPalet('warning', v)}),
+              React.createElement(RenkSecici, {label: 'TEHLİKE RENGİ', value: config.palet.danger, onChange: v => upPalet('danger', v)})
+            ),
+            /* SAĞ KOLON - EK RENKLER VE ARKAPLAN */
+            React.createElement('div', null,
+              React.createElement('div', {style: {fontSize: 11, fontWeight: 700, marginBottom: 12, color: C.text, padding: '6px 10px', background: `${C.purple}11`, borderRadius: 6}}, 'EK RENKLER VE ARKAPLAN'),
+              React.createElement(RenkSecici, {label: 'MOR', value: config.palet.purple, onChange: v => upPalet('purple', v)}),
+              React.createElement(RenkSecici, {label: 'TURKUAZ', value: config.palet.cyan, onChange: v => upPalet('cyan', v)}),
+              React.createElement(RenkSecici, {label: 'PEMBE', value: config.palet.pink, onChange: v => upPalet('pink', v)}),
+              React.createElement('div', {style: {height: 1, background: C.border, margin: '12px 0'}}),
+              React.createElement(RenkSecici, {label: 'KOYU TEMA ARKAPLAN', value: config.palet.bg_koyu, onChange: v => upPalet('bg_koyu', v)}),
+              React.createElement(RenkSecici, {label: 'KOYU TEMA KART', value: config.palet.bgCard_koyu, onChange: v => upPalet('bgCard_koyu', v)}),
+              React.createElement(RenkSecici, {label: 'AÇIK TEMA ARKAPLAN', value: config.palet.bg_acik, onChange: v => upPalet('bg_acik', v)}),
+              React.createElement(RenkSecici, {label: 'AÇIK TEMA KART', value: config.palet.bgCard_acik, onChange: v => upPalet('bgCard_acik', v)})
+            )
+          )
+        )
+      ),
+
+      /* ═══ BÖLÜM 2: GÖRÜNÜM EFEKTLERİ ═══ */
+      aktifSekme === 'efekt' && React.createElement('div', {style: S.card},
+        React.createElement('div', {style: {...S.cardHead, padding: '12px 16px'}},
+          React.createElement(LIcon, {name: 'Sparkles', size: 14, color: C.warning}),
+          React.createElement('span', {style: {fontSize: 12, fontWeight: 700}}, 'GÖRÜNÜM EFEKTLERİ')
+        ),
+        React.createElement('div', {style: {padding: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20}},
+          React.createElement('div', null,
+            React.createElement(Slider, {label: 'GÖLGE YOĞUNLUĞU', value: config.efekt.shadow_yogunluk, min: 0, max: 100, onChange: v => upEfekt('shadow_yogunluk', v), suffix: '%', color: C.accent}),
+            React.createElement(Slider, {label: 'BORDER RADIUS (KÖŞE YUVARLAMASI)', value: config.efekt.border_radius, min: 0, max: 30, onChange: v => upEfekt('border_radius', v), suffix: 'PX', color: C.cyan}),
+            React.createElement(Slider, {label: 'BORDER KALINLIĞI', value: config.efekt.border_kalinlik, min: 0, max: 4, onChange: v => upEfekt('border_kalinlik', v), suffix: 'PX', color: C.purple})
+          ),
+          React.createElement('div', null,
+            React.createElement(SecimButonlari, {label: 'KABARTMA EFEKTİ', value: config.efekt.kabartma, onChange: v => upEfekt('kabartma', v), secenekler: [
+              {value: 0, label: 'DÜZ', icon: 'Minus'},
+              {value: 1, label: 'HAFİF', icon: 'Layers'},
+              {value: 2, label: 'BELİRGİN', icon: 'Box'},
+              {value: 3, label: '3D', icon: 'Boxes'}
+            ]}),
+            React.createElement(SecimButonlari, {label: 'CAM EFEKTİ (GLASSMORPHISM)', value: config.efekt.cam_efekt, onChange: v => upEfekt('cam_efekt', v), secenekler: [
+              {value: 0, label: 'KAPALI', icon: 'X'},
+              {value: 1, label: 'HAFİF', icon: 'Droplets'},
+              {value: 2, label: 'BELİRGİN', icon: 'GlassWater'}
+            ]}),
+
+            /* EFEKTLERİN MİNİ ÖNİZLEMESİ */
+            React.createElement('div', {style: {marginTop: 16}},
+              React.createElement('label', {style: S.label}, 'ÖNİZLEME'),
+              React.createElement('div', {style: {
+                padding: os.kartPadding, borderRadius: os.bRad, border: `${os.bWid}px solid ${os.border}`,
+                background: os.cardBg, ...os.kabartmaStyle, ...os.camStyle,
+                transition: 'all .3s ease'
+              }},
+                React.createElement('div', {style: {fontSize: 12, fontWeight: 700, color: os.textColor, marginBottom: 8}}, 'ÖRNEK KART'),
+                React.createElement('div', {style: {fontSize: 10, color: os.textSec, lineHeight: 1.6}}, 'Bu kart mevcut efekt ayarlarınızın nasıl göründüğünü gösteriyor. Gölge, köşe, kabartma ve cam efektlerinin kombinasyonunu buradan kontrol edebilirsiniz.'),
+                React.createElement('div', {style: {display: 'flex', gap: 8, marginTop: 12}},
+                  React.createElement('div', {style: {padding: '6px 12px', borderRadius: os.btnRadius, background: os.btnBg, color: '#fff', fontSize: 10, fontWeight: 700, boxShadow: os.btnShadow, borderBottom: os.btnBorder, ...os.btnExtra}}, 'BUTON'),
+                  React.createElement('div', {style: {padding: '6px 12px', borderRadius: os.btnRadius, background: C.bgHover, color: os.textSec, fontSize: 10, fontWeight: 600, border: `1px solid ${os.border}`}}, 'İKİNCİL')
+                )
+              )
+            )
+          )
+        )
+      ),
+
+      /* ═══ BÖLÜM 3: TİPOGRAFİ ═══ */
+      aktifSekme === 'tipografi' && React.createElement('div', {style: S.card},
+        React.createElement('div', {style: {...S.cardHead, padding: '12px 16px'}},
+          React.createElement(LIcon, {name: 'Type', size: 14, color: C.purple}),
+          React.createElement('span', {style: {fontSize: 12, fontWeight: 700}}, 'TİPOGRAFİ AYARLARI')
+        ),
+        React.createElement('div', {style: {padding: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20}},
+          React.createElement('div', null,
+            React.createElement(Slider, {label: 'FONT BOYUT ÖLÇEĞİ', value: config.tipografi.font_olcek, min: 80, max: 130, onChange: v => upTipo('font_olcek', v), suffix: '%', color: C.purple}),
+            React.createElement(Slider, {label: 'SATIR YÜKSEKLİĞİ', value: config.tipografi.satir_yukseklik, min: 120, max: 200, onChange: v => upTipo('satir_yukseklik', v), suffix: '%', color: C.cyan}),
+            React.createElement(SecimButonlari, {label: 'FONT AĞIRLIĞI', value: config.tipografi.font_agirlik, onChange: v => upTipo('font_agirlik', v), secenekler: [
+              {value: 300, label: 'İNCE'},
+              {value: 400, label: 'NORMAL'},
+              {value: 600, label: 'ORTA'},
+              {value: 800, label: 'KALIN'}
+            ]})
+          ),
+          /* TİPOGRAFİ ÖNİZLEME */
+          React.createElement('div', null,
+            React.createElement('label', {style: S.label}, 'ÖNİZLEME'),
+            React.createElement('div', {style: {padding: 20, borderRadius: os.bRad, background: os.bgColor, border: `1px solid ${os.border}`}},
+              React.createElement('div', {style: {fontSize: 18 * os.fontScale, fontWeight: config.tipografi.font_agirlik, color: os.textColor, lineHeight: os.lineH, marginBottom: 12}}, 'BAŞLIK METNİ'),
+              React.createElement('div', {style: {fontSize: 13 * os.fontScale, fontWeight: Math.max(config.tipografi.font_agirlik - 200, 300), color: os.textSec, lineHeight: os.lineH, marginBottom: 8}}, 'Alt başlık metni — bu metin ikincil renkte gösterilir'),
+              React.createElement('div', {style: {fontSize: 11 * os.fontScale, fontWeight: Math.max(config.tipografi.font_agirlik - 300, 300), color: os.textSec, lineHeight: os.lineH}}, 'Gövde metni örneği. Bu paragraf metnin gövde kısmını temsil eder. Font ölçeği, ağırlık ve satır yüksekliği burada uygulanmış olarak gösterilmektedir.'),
+              React.createElement('div', {style: {marginTop: 12, display: 'flex', gap: 12}},
+                React.createElement('span', {style: {fontSize: 9 * os.fontScale, fontWeight: 700, color: os.accentColor}}, 'BADGE ÖRNEĞİ'),
+                React.createElement('span', {style: {fontSize: 9 * os.fontScale, fontWeight: 600, color: C.textMuted}}, 'KÜÇÜK METİN')
+              )
+            )
+          )
+        )
+      ),
+
+      /* ═══ BÖLÜM 4: SAYFA DÜZENİ ═══ */
+      aktifSekme === 'layout' && React.createElement('div', {style: S.card},
+        React.createElement('div', {style: {...S.cardHead, padding: '12px 16px'}},
+          React.createElement(LIcon, {name: 'LayoutGrid', size: 14, color: C.success}),
+          React.createElement('span', {style: {fontSize: 12, fontWeight: 700}}, 'KART VE SAYFA DÜZENİ')
+        ),
+        React.createElement('div', {style: {padding: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20}},
+          React.createElement('div', null,
+            React.createElement(SecimButonlari, {label: 'KART BOYUTU', value: config.layout.kart_boyut, onChange: v => upLayout('kart_boyut', v), secenekler: [
+              {value: 'kucuk', label: 'KÜÇÜK', icon: 'Minimize2'},
+              {value: 'orta', label: 'ORTA', icon: 'Square'},
+              {value: 'buyuk', label: 'BÜYÜK', icon: 'Maximize2'}
+            ]}),
+            React.createElement(SecimButonlari, {label: 'GRİD SÜTUN SAYISI', value: config.layout.grid_sutun, onChange: v => upLayout('grid_sutun', Number(v)), secenekler: [
+              {value: 2, label: '2 SÜTUN'},
+              {value: 3, label: '3 SÜTUN'},
+              {value: 4, label: '4 SÜTUN'}
+            ]}),
+            React.createElement(Slider, {label: 'İKON BOYUTU', value: config.layout.ikon_boyut, min: 14, max: 28, onChange: v => upLayout('ikon_boyut', Number(v)), suffix: 'PX', color: C.success}),
+            React.createElement(Slider, {label: 'KART ARALIĞI (GAP)', value: config.layout.kart_aralik, min: 8, max: 32, onChange: v => upLayout('kart_aralik', Number(v)), suffix: 'PX', color: C.warning}),
+            React.createElement(SecimButonlari, {label: 'İKON STİLİ', value: config.layout.ikon_stil, onChange: v => upLayout('ikon_stil', v), secenekler: [
+              {value: 'outline', label: 'ÇİZGİ (OUTLINE)', icon: 'Circle'},
+              {value: 'filled', label: 'DOLU (FİLLED)', icon: 'CircleDot'}
+            ]})
+          ),
+          /* LAYOUT ÖNİZLEME */
+          React.createElement('div', null,
+            React.createElement('label', {style: S.label}, 'ÖNİZLEME'),
+            React.createElement('div', {style: {padding: 16, borderRadius: os.bRad, background: os.bgColor, border: `1px solid ${os.border}`}},
+              React.createElement('div', {style: {display: 'grid', gridTemplateColumns: `repeat(${os.gridCols}, 1fr)`, gap: os.kartGap}},
+                ['DOSYA', 'CRM', 'MUHASEBE', 'POLİÇE', 'AJANDA', 'HESAP'].slice(0, os.gridCols * 2).map((ad, i) =>
+                  React.createElement('div', {key: i, style: {
+                    padding: os.kartPadding, borderRadius: os.bRad, background: os.cardBg, border: `${os.bWid}px solid ${os.border}`,
+                    boxShadow: os.cardShadow, textAlign: 'center', ...os.kabartmaStyle
+                  }},
+                    React.createElement('div', {style: {
+                      width: os.iconSize + 12, height: os.iconSize + 12, borderRadius: os.bRad > 12 ? '50%' : 8,
+                      background: `${os.accentColor}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px'
+                    }},
+                      React.createElement(LIcon, {name: ['FolderOpen', 'Users', 'Landmark', 'FileCheck', 'CalendarDays', 'Calculator'][i], size: os.iconSize, color: os.accentColor})
+                    ),
+                    React.createElement('div', {style: {fontSize: 9 * os.fontScale, fontWeight: 700, color: os.textColor}}, ad)
+                  )
+                )
+              )
+            )
+          )
+        )
+      ),
+
+      /* ═══ BÖLÜM 5: BUTON STİLLERİ ═══ */
+      aktifSekme === 'buton' && React.createElement('div', {style: S.card},
+        React.createElement('div', {style: {...S.cardHead, padding: '12px 16px'}},
+          React.createElement(LIcon, {name: 'SquareMousePointer', size: 14, color: C.pink}),
+          React.createElement('span', {style: {fontSize: 12, fontWeight: 700}}, 'BUTON STİLLERİ')
+        ),
+        React.createElement('div', {style: {padding: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20}},
+          React.createElement('div', null,
+            React.createElement(SecimButonlari, {label: 'BUTON TİPİ', value: config.buton.stil, onChange: v => upButon('stil', v), secenekler: [
+              {value: 'duz', label: 'DÜZ (FLAT)', icon: 'Minus'},
+              {value: 'gradient', label: 'GRADİENT', icon: 'Blend'},
+              {value: 'threed', label: '3D', icon: 'Box'},
+              {value: 'cam', label: 'CAM', icon: 'GlassWater'}
+            ]}),
+            React.createElement(Slider, {label: 'BUTON KÖŞE YUVARLAMASI', value: config.buton.radius, min: 0, max: 25, onChange: v => upButon('radius', Number(v)), suffix: 'PX', color: C.pink}),
+            React.createElement(SecimButonlari, {label: 'HOVER EFEKTİ', value: config.buton.hover, onChange: v => upButon('hover', v), secenekler: [
+              {value: 'scale', label: 'BÜYÜTME', icon: 'Maximize2'},
+              {value: 'glow', label: 'IŞILDAMA', icon: 'Sun'},
+              {value: 'slide', label: 'KAYMA', icon: 'ArrowRight'}
+            ]})
+          ),
+          /* BUTON ÖNİZLEME */
+          React.createElement('div', null,
+            React.createElement('label', {style: S.label}, 'ÖNİZLEME'),
+            React.createElement('div', {style: {padding: 20, borderRadius: os.bRad, background: os.bgColor, border: `1px solid ${os.border}`}},
+              React.createElement('div', {style: {fontSize: 11, fontWeight: 700, color: os.textColor, marginBottom: 14}}, 'BUTON ÇEŞİTLERİ'),
+              React.createElement('div', {style: {display: 'flex', flexDirection: 'column', gap: 10}},
+                /* PRIMARY */
+                React.createElement('div', {style: {display: 'flex', gap: 8, flexWrap: 'wrap'}},
+                  React.createElement('button', {style: {
+                    padding: '10px 20px', borderRadius: os.btnRadius, background: os.btnBg, color: '#fff',
+                    fontSize: 11, fontWeight: 700, border: 'none', borderBottom: os.btnBorder,
+                    boxShadow: os.btnShadow, cursor: 'pointer', ...os.btnExtra
+                  }}, 'ANA BUTON'),
+                  React.createElement('button', {style: {
+                    padding: '10px 20px', borderRadius: os.btnRadius, background: `linear-gradient(180deg, #34d399 0%, #10b981 100%)`,
+                    color: '#fff', fontSize: 11, fontWeight: 700, border: 'none',
+                    boxShadow: config.buton.stil !== 'duz' ? '0 4px 12px -2px rgba(16,185,129,0.4)' : 'none', cursor: 'pointer'
+                  }}, 'BAŞARI'),
+                  React.createElement('button', {style: {
+                    padding: '10px 20px', borderRadius: os.btnRadius, background: config.buton.stil === 'duz' ? C.danger : `linear-gradient(180deg, #f87171 0%, #ef4444 100%)`,
+                    color: '#fff', fontSize: 11, fontWeight: 700, border: 'none',
+                    boxShadow: config.buton.stil !== 'duz' ? '0 4px 12px -2px rgba(239,68,68,0.4)' : 'none', cursor: 'pointer'
+                  }}, 'TEHLİKE'),
+                  React.createElement('button', {style: {
+                    padding: '10px 20px', borderRadius: os.btnRadius, background: config.buton.stil === 'duz' ? C.warning : `linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%)`,
+                    color: '#000', fontSize: 11, fontWeight: 700, border: 'none',
+                    boxShadow: config.buton.stil !== 'duz' ? '0 4px 12px -2px rgba(245,158,11,0.4)' : 'none', cursor: 'pointer'
+                  }}, 'UYARI')
+                ),
+                /* GHOST */
+                React.createElement('div', {style: {display: 'flex', gap: 8}},
+                  React.createElement('button', {style: {
+                    padding: '10px 20px', borderRadius: os.btnRadius, background: C.bgHover,
+                    color: os.textSec, fontSize: 11, fontWeight: 600, border: `1px solid ${os.border}`, cursor: 'pointer'
+                  }}, 'GHOST BUTON'),
+                  React.createElement('button', {style: {
+                    padding: '6px 10px', borderRadius: Math.min(os.btnRadius, 7), background: os.btnBg, color: '#fff',
+                    fontSize: 9, fontWeight: 700, border: 'none', boxShadow: os.btnShadow, cursor: 'pointer', ...os.btnExtra
+                  }}, 'MİNİ')
+                )
+              )
+            )
+          )
+        )
+      ),
+
+      /* ═══ BÖLÜM 6: CANLI ÖNİZLEME ═══ */
+      aktifSekme === 'onizleme' && React.createElement('div', {style: S.card},
+        React.createElement('div', {style: {...S.cardHead, padding: '12px 16px'}},
+          React.createElement(LIcon, {name: 'Eye', size: 14, color: C.accent}),
+          React.createElement('span', {style: {fontSize: 12, fontWeight: 700}}, 'CANLI ÖNİZLEME — TÜM AYARLAR KOMBİNE')
+        ),
+        React.createElement('div', {style: {padding: 16}},
+          /* TAM SAYFA ÖNİZLEME */
+          React.createElement('div', {style: {
+            padding: 24, borderRadius: os.bRad, background: os.bgColor, border: `1px solid ${os.border}`, minHeight: 400
+          }},
+            /* ÜST BAR */
+            React.createElement('div', {style: {
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px',
+              background: os.cardBg, borderRadius: os.bRad, marginBottom: os.kartGap,
+              border: `${os.bWid}px solid ${os.border}`, ...os.kabartmaStyle, ...os.camStyle
+            }},
+              React.createElement('div', {style: {display: 'flex', alignItems: 'center', gap: 10}},
+                React.createElement('div', {style: {width: 28, height: 28, borderRadius: 8, background: `${os.accentColor}22`, display: 'flex', alignItems: 'center', justifyContent: 'center'}},
+                  React.createElement(LIcon, {name: 'Shield', size: 16, color: os.accentColor})
+                ),
+                React.createElement('span', {style: {fontSize: 14 * os.fontScale, fontWeight: config.tipografi.font_agirlik, color: os.textColor}}, 'SİSTEM PANELİ')
+              ),
+              React.createElement('div', {style: {display: 'flex', gap: 6}},
+                React.createElement('div', {style: {padding: '4px 10px', borderRadius: 6, background: `${os.accentColor}18`, color: os.accentColor, fontSize: 9 * os.fontScale, fontWeight: 700}}, 'ADMİN'),
+                React.createElement('div', {style: {padding: '4px 10px', borderRadius: 6, background: `${config.palet.success}18`, color: config.palet.success, fontSize: 9 * os.fontScale, fontWeight: 700}}, 'AKTİF')
+              )
+            ),
+
+            /* STAT KARTLARI */
+            React.createElement('div', {style: {display: 'grid', gridTemplateColumns: `repeat(${os.gridCols}, 1fr)`, gap: os.kartGap, marginBottom: os.kartGap}},
+              [{label: 'TOPLAM DOSYA', val: '1.248', renk: os.accentColor, icon: 'FolderOpen'},
+               {label: 'AKTİF CRM', val: '86', renk: config.palet.success, icon: 'Users'},
+               {label: 'BU AY GELİR', val: '₺124.500', renk: config.palet.warning, icon: 'TrendingUp'}
+              ].slice(0, os.gridCols).map((stat, i) =>
+                React.createElement('div', {key: i, style: {
+                  padding: os.kartPadding, borderRadius: os.bRad, background: os.cardBg,
+                  border: `${os.bWid}px solid ${os.border}`, ...os.kabartmaStyle, ...os.camStyle
+                }},
+                  React.createElement('div', {style: {display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8}},
+                    React.createElement('div', {style: {width: os.iconSize + 8, height: os.iconSize + 8, borderRadius: 8, background: `${stat.renk}18`, display: 'flex', alignItems: 'center', justifyContent: 'center'}},
+                      React.createElement(LIcon, {name: stat.icon, size: os.iconSize, color: stat.renk})
+                    ),
+                    React.createElement('span', {style: {fontSize: 10 * os.fontScale, fontWeight: 600, color: os.textSec}}, stat.label)
+                  ),
+                  React.createElement('div', {style: {fontSize: 22 * os.fontScale, fontWeight: 800, color: stat.renk}}, stat.val)
+                )
+              )
+            ),
+
+            /* TABLO ÖNİZLEME */
+            React.createElement('div', {style: {
+              borderRadius: os.bRad, background: os.cardBg, border: `${os.bWid}px solid ${os.border}`,
+              overflow: 'hidden', ...os.kabartmaStyle, ...os.camStyle
+            }},
+              React.createElement('div', {style: {
+                padding: '12px 16px', borderBottom: `1px solid ${os.border}`, display: 'flex', alignItems: 'center', gap: 8
+              }},
+                React.createElement(LIcon, {name: 'List', size: os.iconSize, color: os.accentColor}),
+                React.createElement('span', {style: {fontSize: 12 * os.fontScale, fontWeight: 700, color: os.textColor}}, 'SON İŞLEMLER')
+              ),
+              [
+                {dosya: 'DSY-2024-001', durum: 'AKTİF', tarih: '12.03.2026', renk: config.palet.success},
+                {dosya: 'DSY-2024-002', durum: 'BEKLİYOR', tarih: '11.03.2026', renk: config.palet.warning},
+                {dosya: 'DSY-2024-003', durum: 'KAPALI', tarih: '10.03.2026', renk: config.palet.danger}
+              ].map((row, i) =>
+                React.createElement('div', {key: i, style: {
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: `${os.kartPadding * 0.6}px 16px`,
+                  borderBottom: i < 2 ? `1px solid ${os.border}` : 'none',
+                  fontSize: 11 * os.fontScale, lineHeight: os.lineH
+                }},
+                  React.createElement('span', {style: {fontWeight: 600, color: os.textColor}}, row.dosya),
+                  React.createElement('span', {style: {
+                    padding: '3px 10px', borderRadius: 999, fontSize: 9 * os.fontScale, fontWeight: 700,
+                    background: `${row.renk}18`, color: row.renk
+                  }}, row.durum),
+                  React.createElement('span', {style: {color: os.textSec, fontSize: 10 * os.fontScale}}, row.tarih),
+                  React.createElement('button', {style: {
+                    padding: '5px 12px', borderRadius: Math.min(os.btnRadius, 7), background: os.btnBg,
+                    color: '#fff', fontSize: 9, fontWeight: 700, border: 'none', cursor: 'pointer',
+                    boxShadow: os.btnShadow, ...os.btnExtra
+                  }}, 'GÖRÜNTÜLE')
+                )
+              )
+            )
+          )
+        )
+      ),
+
+      /* ═══ KAYDET / SIFIRLA BUTONLARI ═══ */
+      React.createElement('div', {style: {
+        ...S.card, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16
+      }},
+        React.createElement('div', {style: {display: 'flex', gap: 8}},
+          React.createElement('button', {style: {
+            ...S.btn, ...S.btnG, fontSize: 12, padding: '10px 20px'
+          }, onClick: sifirla},
+            React.createElement(LIcon, {name: 'RotateCcw', size: 14, color: C.textSec}),
+            'VARSAYILANA DÖN'
+          )
+        ),
+        React.createElement('div', {style: {display: 'flex', alignItems: 'center', gap: 12}},
+          React.createElement('div', {style: {fontSize: 10, color: C.textMuted}},
+            React.createElement(LIcon, {name: 'Info', size: 12, color: C.textMuted, style: {verticalAlign: 'middle'}}),
+            ' KAYDETTİĞİNİZDE TÜM KULLANICILARA ANINDA YANSIR'
+          ),
+          React.createElement('button', {style: {
+            ...S.btn, ...S.btnP, fontSize: 13, padding: '12px 32px', fontWeight: 700,
+            opacity: saving ? 0.7 : 1
+          }, onClick: kaydet, disabled: saving},
+            React.createElement(LIcon, {name: 'Save', size: 16, color: '#fff'}),
+            saving ? 'KAYDEDİLİYOR...' : 'TEMA AYARLARINI KAYDET'
+          )
+        )
+      )
+    )
+  );
+};
+
+/* ════════════════════════════════════════════════════════════════
    TAB 4 - LOG KAYITLARI
    ════════════════════════════════════════════════════════════════ */
 const LogTab = () => {
@@ -3526,7 +4274,8 @@ MR.SistemPage = ({setPage, user, subPage}) => {
     guvenlik: {label: 'CİHAZ GÜVENLİĞİ VE OTURUM YÖNETİMİ', icon: 'ShieldCheck'},
     aktarim: {label: 'TOPLU AKTARIM', icon: 'FileSpreadsheet'},
     veri: {label: 'VERİ YÖNETİMİ', icon: 'DatabaseBackup'},
-    log: {label: 'LOG KAYITLARI', icon: 'Activity'}
+    log: {label: 'LOG KAYITLARI', icon: 'Activity'},
+    tema: {label: 'TEMA AYARLARI', icon: 'Palette'}
   };
   const baslik = modulBasliklar[subPage] || {label: 'SİSTEM', icon: 'Settings'};
 
@@ -3580,6 +4329,7 @@ MR.SistemPage = ({setPage, user, subPage}) => {
         {subPage === 'aktarim' && isAdmin && <TopluAktarimTab/>}
         {subPage === 'veri' && isAdmin && <VeriYonetimiTab/>}
         {subPage === 'log' && isAdmin && <LogTab/>}
+        {subPage === 'tema' && isAdmin && <TemaAyarlariTab/>}
       </div>
     </div>
   );
