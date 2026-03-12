@@ -593,6 +593,16 @@ $GLOBALS['YETKI_MAP'] = array(
     'ictihat/police-limit.php' => array('ictihat', 'ictihat-police-limit'),
     'ictihat/kusur-emsal-ara.php' => array('ictihat', 'ictihat-kusur-emsal'),
 
+    // ─── NETSANTRAL ───
+    'netsantral/arama-list.php' => array('netsantral', 'goruntule'),
+    'netsantral/arama-log.php' => array('netsantral', 'goruntule'),
+    'netsantral/test.php' => array('sistem', 'sistem-ayarlar'),
+    'netsantral/originate.php' => array('netsantral', 'goruntule'),
+    'netsantral/hangup.php' => array('netsantral', 'goruntule'),
+    'netsantral/autocall-liste-olustur.php' => array('netsantral', 'goruntule'),
+    'netsantral/autocall-listeler.php' => array('netsantral', 'goruntule'),
+    'netsantral/autocall-rapor.php' => array('netsantral', 'goruntule'),
+    'netsantral/autocall-durdur.php' => array('netsantral', 'goruntule'),
 
     // ─── BİLDİRİM ───
     'bildirim/create.php' => array('bildirim', 'bildirim-goruntule'),

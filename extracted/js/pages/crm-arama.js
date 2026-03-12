@@ -359,8 +359,41 @@ MR.CrmAramaPage = ({setPage, user}) => {
 
   const aramaYap = (item) => {
     if (!item.magdur_telefon) return;
-    setAramaMsg('ARAMA SİSTEMİ DEVRE DIŞI');
-    setTimeout(() => { setAramaMsg(''); }, 3000);
+    setAramaAktif(item.id);
+    setAramaMsg(item.magdur_ad_soyad + ' ARANIYOR...');
+
+    /* WebRTC telefon varsa önce onu dene */
+    if (MR.webrtcTelefon && typeof MR.webrtcTelefon.ara === 'function') {
+      try {
+        MR.webrtcTelefon.ara(item.magdur_telefon);
+        setAramaMsg(item.magdur_ad_soyad + ' - WEBRTC İLE ARANIYOR...');
+        setTimeout(() => { setAramaMsg(''); setAramaAktif(null); }, 8000);
+        return;
+      } catch(e) {
+        console.warn('[CRM-ARAMA] WebRTC arama hatası, Netsantral deneniyor:', e);
+      }
+    }
+
+    /* WebRTC yoksa Netsantral originate ile ara */
+    api.netsantralOriginate(item.magdur_telefon).then(r => {
+      if (r?.success && r.data?.success_api) {
+        setAramaMsg(item.magdur_ad_soyad + ' - ÇAĞRI BAŞLATILDI');
+        /* Arama log kaydı oluştur */
+        api.netsantralAramaLogCreate({
+          numara: item.magdur_telefon,
+          yonlendirme_id: item.id,
+          ad_soyad: item.magdur_ad_soyad || '',
+          yon: 'giden'
+        }).catch(() => {});
+      } else {
+        const hataMesaj = r?.data?.response?.hata_mesaj || r?.error || 'ARAMA BAŞLATILAMADI';
+        setAramaMsg('HATA: ' + hataMesaj);
+      }
+      setTimeout(() => { setAramaMsg(''); setAramaAktif(null); }, 6000);
+    }).catch(e => {
+      setAramaMsg('BAĞLANTI HATASI: ' + (e?.message || ''));
+      setTimeout(() => { setAramaMsg(''); setAramaAktif(null); }, 5000);
+    });
   };
 
   /* ── STİLLER ── */

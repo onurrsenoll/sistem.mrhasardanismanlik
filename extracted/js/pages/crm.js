@@ -1,14 +1,66 @@
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect, useCallback, useMemo, useRef} = React;
 
-MR._NetsippDurum = () => null;
+/* ═══════════════════════════════════════════
+   NETSIPP DURUM GÖSTERGESİ (DİNAMİK)
+   ═══════════════════════════════════════════ */
+MR._NetsippDurum = () => {
+  const {C, LIcon, api} = MR;
+  const [durum, setDurum] = useState('kontrol'); // kontrol, bagli, hata
+  const [mesaj, setMesaj] = useState('KONTROL EDİLİYOR...');
 
-MR._SesAyarlariPaneli = () => null;
+  /* YETKİ KONTROLÜ: ADMIN VEYA netsipp_goruntule İZNİ GEREKLİ */
+  const user = MR._currentUser;
+  const isAdmin = user?.rol === 'admin';
+  const netsippIzin = isAdmin || user?.yetkiler?.netsipp_goruntule === 1;
 
-const _SesAyarlariPaneli_DEVRE_DISI = () => {
+  useEffect(() => {
+    if (!netsippIzin) return;
+    let mounted = true;
+    const kontrol = async () => {
+      try {
+        const r = await api.netsantralTest();
+        if (!mounted) return;
+        if (r?.success && r.data?.success_api) {
+          setDurum('bagli');
+          setMesaj('NETSANTRAL BAĞLI');
+        } else {
+          setDurum('hata');
+          const resp = r?.data?.response || {};
+          setMesaj(resp.hata_mesaj || 'BAĞLANTI HATASI');
+        }
+      } catch(e) {
+        if (!mounted) return;
+        setDurum('hata');
+        setMesaj('BAĞLANTI HATASI');
+      }
+    };
+    kontrol();
+    return () => { mounted = false; };
+  }, [netsippIzin]);
+
+  /* YETKİ YOKSA HİÇ RENDER ETME */
+  if (!netsippIzin) return null;
+
+  const renk = durum === 'bagli' ? C.success : durum === 'hata' ? C.danger : C.warning;
+
+  return (
+    <div style={{marginTop:8, display:'flex', alignItems:'center', gap:6, fontSize:10, color: renk}}>
+      <span style={{width:6, height:6, borderRadius:'50%', background: renk, display:'inline-block',
+        animation: durum === 'kontrol' ? 'pulse 1s infinite' : 'none'
+      }}/>
+      {mesaj}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════
+   SES & MİKROFON AYARLARI PANELİ (GELİŞMİŞ)
+   ═══════════════════════════════════════════ */
+MR._SesAyarlariPaneli = () => {
   const {C, S, LIcon} = MR;
   const [acik, setAcik] = useState(false);
-  const [ayarlar, setAyarlar] = useState({});
+  const [ayarlar, setAyarlar] = useState(MR.webrtcTelefon ? MR.webrtcTelefon.getSesAyarlari() : {});
   const [cihazlar, setCihazlar] = useState({mikrofonlar: [], hoparlorler: []});
   const [mikTest, setMikTest] = useState(false);
   const [mikLevel, setMikLevel] = useState(0);
@@ -1127,6 +1179,36 @@ MR._CRMYeniInner = ({setPage}) => {
     }
   }, []);
 
+  /* ── NETSANTRAL PANELİNDEN VEYA WEBRTC'DEN ÇAĞRI SONLANDIRILINCA DİNLE ── */
+  useEffect(() => {
+    const handler = () => {
+      /* STALE CLOSURE SORUNUNU ÖNLEMEK İÇİN DOĞRUDAN set KULLAN */
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      setCallActive(false);
+      pbxOriginatedRef.current = false;
+    };
+    /* WEBRTC DURUM DİNLEYİCİSİ - ÇAĞRI BİTTİĞİNDE UI'I GÜNCELLE */
+    const webrtcHandler = (e) => {
+      const d = e.detail || {};
+      if (d.durum === 'kapandi' || d.durum === 'hata' || d.durum === 'reddedildi') {
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+        setCallActive(false);
+        pbxOriginatedRef.current = false;
+      } else if (d.durum === 'gorusmede') {
+        /* GÖRÜŞME BAŞLADI */
+        setCallActive(true);
+      } else if (d.durum === 'araniyor' || d.durum === 'caliyor') {
+        /* GİDEN ARAMA ÇALIYOR */
+        setCallActive(true);
+      }
+    };
+    window.addEventListener('mr-arama-sonlandi', handler);
+    window.addEventListener('mr-webrtc-durum', webrtcHandler);
+    return () => {
+      window.removeEventListener('mr-arama-sonlandi', handler);
+      window.removeEventListener('mr-webrtc-durum', webrtcHandler);
+    };
+  }, []); /* BOŞ DEP ARRAY - STALE CLOSURE SORUNU DÜZELTİLDİ */
 
   /* ── ÇAĞRI ZAMANLAYICI (REF BAZLI - RE-RENDER ENGELLER) ── */
   const [callActive, setCallActive] = useState(false);
@@ -1198,7 +1280,100 @@ MR._CRMYeniInner = ({setPage}) => {
   const pbxOriginatedRef = useRef(false);
 
   const toggleCall = async () => {
-    setError('ARAMA SİSTEMİ DEVRE DIŞI');
+    if (callActive) {
+      /* ÇAĞRIYI SONLANDIR */
+      setHangupLoading(true);
+      setError('');
+
+      /* PBX ÜZERİNDEN BAŞLATILDIYSA PBX HANGUP DENEİ SONRA PBX OLMASA DA UI KAPAT */
+      let hangupOk = false;
+
+      if (pbxOriginatedRef.current) {
+        /* PBX ÇAĞRISI - HANGUP API İLE SONLANDIR */
+        const maxRetry = 3;
+        for (let attempt = 1; attempt <= maxRetry; attempt++) {
+          try {
+            const r = await api.netsantralHangup(MR._netsantralDahili || undefined);
+            if (r?.success && r.data?.success_api) {
+              hangupOk = true;
+              break;
+            } else if (r?.success && !r.data?.success_api) {
+              const hataMesaj = r.data?.response?.hata_mesaj || r.data?.response?.raw_response || 'NETSANTRAL YANIT HATASI';
+              const hataKodu = r.data?.response?.hata_kodu || '';
+              /* 70 = Geçersiz Parametre (çağrı aktif değil = zaten bitmiş) */
+              if (hataKodu === '70' || (hataMesaj && (hataMesaj.includes('70') || hataMesaj.includes('GEÇERSİZ') || hataMesaj.includes('PARAMETRE') || hataMesaj.includes('AKTİF DEĞİL')))) {
+                hangupOk = true;
+                break;
+              }
+              setError(`DENEME ${attempt}/${maxRetry}: ${hataMesaj}`);
+            } else {
+              setError(`DENEME ${attempt}/${maxRetry}: ${r?.error || 'ÇAĞRI SONLANDIRMA HATASI'}`);
+            }
+          } catch(e) {
+            setError(`DENEME ${attempt}/${maxRetry}: BAĞLANTI HATASI`);
+          }
+          if (attempt < maxRetry) await new Promise(ok => setTimeout(ok, 1500));
+        }
+      } else {
+        /* SIP/WEBRTC ÇAĞRISI - WEBRTC TELEFON İLE SONLANDIR */
+        if (MR.webrtcTelefon && MR.webrtcTelefon._session) {
+          try {
+            MR.webrtcTelefon.kapat();
+            console.log('[CRM] WEBRTC SIP ÇAĞRI SONLANDIRILDI');
+          } catch(e) {
+            console.warn('[CRM] WEBRTC KAPAT HATASI:', e);
+          }
+        }
+        hangupOk = true;
+      }
+
+      setHangupLoading(false);
+
+      /* HANGUP BAŞARILI VEYA BAŞARISIZ - HER DURUMDA UI'I KAPAT
+         PBX TARAFINDA ÇAĞRI ZATEN DÜŞMÜŞ OLABİLİR, UI TAKILMASIN */
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      setCallActive(false);
+      pbxOriginatedRef.current = false;
+      if (!hangupOk) setError('ÇAĞRI SONLANDIRILDI (PBX YANIT VEREMEDİ)');
+      else setError('');
+      window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
+    } else {
+      /* ÇAĞRI BAŞLAT */
+      if (!f.telefon || f.telefon.length < 10) {
+        setError('GEÇERLİ BİR TELEFON NUMARASI GİRİN');
+        return;
+      }
+      setError('');
+      pbxOriginatedRef.current = false;
+      /* ORIGINATE API İÇİN 90 FORMATINA ÇEVİR */
+      let cleanNum = f.telefon.replace(/[\s\-\(\)]/g, '');
+      if (cleanNum.startsWith('0') && cleanNum.length === 11) { cleanNum = '9' + cleanNum; }
+      else if (cleanNum.length === 10 && !cleanNum.startsWith('0')) { cleanNum = '90' + cleanNum; }
+      /* cleanNum artık 905550984254 formatında */
+
+      /* PBX ÜZERİNDEN ÇAĞRI BAŞLAT (ORIGINATE API - TEK YÖNTEM) */
+      try {
+        const r = await api.netsantralOriginate(cleanNum, MR._netsantralDahili || undefined);
+        if (r?.success && r.data?.success_api) {
+          /* PBX BAŞARIYLA ÇAĞRIYI BAŞLATTI */
+          pbxOriginatedRef.current = true;
+          callSecondsRef.current = 0;
+          if (timerDisplayRef.current) timerDisplayRef.current.textContent = fmtTime(0);
+          setCallActive(true);
+          /* WIDGET'I BİLGİLENDİR */
+          window.dispatchEvent(new CustomEvent('mr-arama-baslat', {
+            detail: { telefon: f.telefon, ad: f.ad_soyad || '', yon: 'giden', timestamp: Date.now() }
+          }));
+          console.log('[CRM] PBX ORIGINATE ÇAĞRI BAŞLATILDI:', cleanNum);
+        } else {
+          setError('ARAMA YAPILAMADI - PBX ORIGINATE BAŞARISIZ: ' + (r?.data?.response?.hata_mesaj || 'BİLİNMEYEN HATA'));
+          console.warn('[CRM] PBX ORIGINATE BAŞARISIZ:', r?.data);
+        }
+      } catch(e) {
+        console.error('[CRM] PBX ORIGINATE HATASI:', e);
+        setError('ARAMA YAPILAMADI - BAĞLANTI HATASI');
+      }
+    }
   };
 
   /* ZORLA ÇAĞRI SONLANDIR */
