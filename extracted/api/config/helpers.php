@@ -595,12 +595,10 @@ $GLOBALS['YETKI_MAP'] = array(
 
 
     // ─── ARAMA LOG ───
+    // create, update, kayit-yukle: Yetki gerektirmez - her kullanıcı kendi aramasını loglar
     'arama-log/list.php' => array('sistem', 'arama-gecmis'),
-    'arama-log/create.php' => array('sistem', 'arama-gecmis'),
-    'arama-log/update.php' => array('sistem', 'arama-gecmis-not'),
     'arama-log/delete.php' => array('sistem', 'arama-gecmis-sil'),
     'arama-log/istatistik.php' => array('sistem', 'arama-gecmis-istatistik'),
-    'arama-log/kayit-yukle.php' => array('sistem', 'arama-gecmis'),
     'arama-log/kayit-indir.php' => array('sistem', 'arama-gecmis-kayit-dinle'),
 
     // ─── BİLDİRİM ───
