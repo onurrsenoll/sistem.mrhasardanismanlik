@@ -292,9 +292,6 @@ MR.api = {
   ictihatTahkimAra(d) { return this.req('/ictihat/tahkim-ara.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
   ictihatPoliceLimitAra(d) { return this.req('/ictihat/police-limit.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
   ictihatKusurEmsalAra(d) { return this.req('/ictihat/kusur-emsal-ara.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
-  // NETSANTRAL (ÇAĞRI YÖNETİMİ)
-  netsantralOriginate(d) { return this.req('/netsantral/originate.php', { method: 'POST', body: JSON.stringify(d) }, 15000); },
-  netsantralHangup(d) { return this.req('/netsantral/hangup.php', { method: 'POST', body: JSON.stringify(d) }, 10000); },
 };
 
 // ═══ TEMA SİSTEMİ — MR FİNANS BLUE ═══
