@@ -594,6 +594,15 @@ $GLOBALS['YETKI_MAP'] = array(
     'ictihat/kusur-emsal-ara.php' => array('ictihat', 'ictihat-kusur-emsal'),
 
 
+    // ─── ARAMA LOG ───
+    'arama-log/list.php' => array('sistem', 'arama-gecmis'),
+    'arama-log/create.php' => array('sistem', 'arama-gecmis'),
+    'arama-log/update.php' => array('sistem', 'arama-gecmis-not'),
+    'arama-log/delete.php' => array('sistem', 'arama-gecmis-sil'),
+    'arama-log/istatistik.php' => array('sistem', 'arama-gecmis-istatistik'),
+    'arama-log/kayit-yukle.php' => array('sistem', 'arama-gecmis'),
+    'arama-log/kayit-indir.php' => array('sistem', 'arama-gecmis-kayit-dinle'),
+
     // ─── BİLDİRİM ───
     'bildirim/create.php' => array('bildirim', 'bildirim-goruntule'),
     'bildirim/delete.php' => array('bildirim', 'bildirim-sil'),

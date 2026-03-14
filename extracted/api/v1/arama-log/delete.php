@@ -11,7 +11,7 @@ require_once __DIR__ . '/setup.php';
 setup_headers();
 require_method('DELETE');
 
-$user = auth_required(['admin']);
+$user = auth_required();
 
 ensure_arama_log_table();
 

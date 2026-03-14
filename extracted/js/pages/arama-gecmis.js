@@ -5,11 +5,19 @@
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect, useCallback, useRef, useMemo} = React;
 
-MR.AramaGecmisPage = ({setPage, user}) => {
+MR.AramaGecmisPage = ({setPage, user, defaultTab}) => {
   const {C, S, LIcon, api, StatCard, FormGroup} = MR;
 
+  /* ═══ YETKİ KONTROL ═══ */
+  const yetkiGecmis = user?.rol === 'admin' || MR.hasYetki(user, 'sistem', 'arama-gecmis');
+  const yetkiIstatistik = user?.rol === 'admin' || MR.hasYetki(user, 'sistem', 'arama-gecmis-istatistik');
+  const yetkiCevapsiz = user?.rol === 'admin' || MR.hasYetki(user, 'sistem', 'arama-gecmis-cevapsiz');
+  const yetkiKayitDinle = user?.rol === 'admin' || MR.hasYetki(user, 'sistem', 'arama-gecmis-kayit-dinle');
+  const yetkiNot = user?.rol === 'admin' || MR.hasYetki(user, 'sistem', 'arama-gecmis-not');
+  const yetkiSil = user?.rol === 'admin' || MR.hasYetki(user, 'sistem', 'arama-gecmis-sil');
+
   /* ═══ STATE ═══ */
-  const [tab, setTab] = useState('gecmis'); /* gecmis | istatistik | cevapsiz */
+  const [tab, setTab] = useState(defaultTab || 'gecmis'); /* gecmis | istatistik | cevapsiz */
   const [loglar, setLoglar] = useState([]);
   const [toplam, setToplam] = useState(0);
   const [sayfa, setSayfa] = useState(1);
@@ -268,10 +276,10 @@ MR.AramaGecmisPage = ({setPage, user}) => {
     /* ═══ TAB BUTONLARI ═══ */
     React.createElement('div', {style:{display:'flex', gap:8, marginBottom:16}},
       [
-        {id:'gecmis', icon:'List', label:'ARAMA GEÇMİŞİ'},
-        {id:'istatistik', icon:'BarChart3', label:'İSTATİSTİKLER'},
-        {id:'cevapsiz', icon:'PhoneMissed', label:'CEVAPSIZ ÇAĞRILAR'}
-      ].map(t => React.createElement('button', {
+        yetkiGecmis && {id:'gecmis', icon:'List', label:'ARAMA GEÇMİŞİ'},
+        yetkiIstatistik && {id:'istatistik', icon:'BarChart3', label:'İSTATİSTİKLER'},
+        yetkiCevapsiz && {id:'cevapsiz', icon:'PhoneMissed', label:'CEVAPSIZ ÇAĞRILAR'}
+      ].filter(Boolean).map(t => React.createElement('button', {
         key: t.id,
         onClick: () => setTab(t.id),
         style: {
@@ -285,7 +293,7 @@ MR.AramaGecmisPage = ({setPage, user}) => {
     /* ═══ TAB İÇERİĞİ ═══ */
 
     /* ── GEÇMİŞ TAB ── */
-    tab === 'gecmis' && React.createElement('div', null,
+    tab === 'gecmis' && yetkiGecmis && React.createElement('div', null,
       /* FİLTRELER */
       React.createElement('div', {style:{...S.card, marginBottom:16}},
         React.createElement('div', {style:{padding:16, display:'flex', flexWrap:'wrap', gap:10, alignItems:'flex-end'}},
@@ -398,7 +406,7 @@ MR.AramaGecmisPage = ({setPage, user}) => {
                         ),
                         /* KAYIT */
                         React.createElement('td', {style:{padding:'10px 12px'}},
-                          log.kayit_dosya
+                          log.kayit_dosya && yetkiKayitDinle
                             ? React.createElement('button', {
                                 onClick: () => kayitOynat(log.id),
                                 style:{...S.btnMini, ...(oynatilan === log.id ? S.btnMiniD : S.btnMiniS)}
@@ -406,18 +414,24 @@ MR.AramaGecmisPage = ({setPage, user}) => {
                               React.createElement(LIcon, {name: oynatilan === log.id ? 'Square' : 'Play', size:10, color:'#fff'}),
                               oynatilan === log.id ? ' DURDUR' : ' OYNAT'
                             )
-                            : React.createElement('span', {style:{fontSize:9, color:C.textMuted}}, '-')
+                            : log.kayit_dosya && !yetkiKayitDinle
+                              ? React.createElement('span', {style:{...S.badge(C.textMuted), fontSize:9}}, 'KAYIT VAR')
+                              : React.createElement('span', {style:{fontSize:9, color:C.textMuted}}, '-')
                         ),
                         /* NOT */
                         React.createElement('td', {style:{padding:'10px 12px'}},
-                          React.createElement('button', {
-                            onClick: () => { setNotModal(log); setNotText(log.notlar || ''); },
-                            style:{...S.btnMini, ...S.btnMiniG},
-                            title: log.notlar || 'NOT EKLE'
-                          },
-                            React.createElement(LIcon, {name: log.notlar ? 'FileText' : 'Plus', size:10, color:C.textSec}),
-                            log.notlar ? ' VAR' : ' EKLE'
-                          )
+                          yetkiNot
+                            ? React.createElement('button', {
+                                onClick: () => { setNotModal(log); setNotText(log.notlar || ''); },
+                                style:{...S.btnMini, ...S.btnMiniG},
+                                title: log.notlar || 'NOT EKLE'
+                              },
+                                React.createElement(LIcon, {name: log.notlar ? 'FileText' : 'Plus', size:10, color:C.textSec}),
+                                log.notlar ? ' VAR' : ' EKLE'
+                              )
+                            : log.notlar
+                              ? React.createElement('span', {style:{fontSize:9, color:C.textSec}}, 'VAR')
+                              : React.createElement('span', {style:{fontSize:9, color:C.textMuted}}, '-')
                         ),
                         /* İŞLEM */
                         React.createElement('td', {style:{padding:'10px 12px'}},
@@ -427,7 +441,7 @@ MR.AramaGecmisPage = ({setPage, user}) => {
                               style:{...S.btnMini, ...S.btnMiniP},
                               title: 'GERİ ARA'
                             }, React.createElement(LIcon, {name:'Phone', size:10, color:'#fff'})),
-                            user?.rol === 'admin' && React.createElement('button', {
+                            yetkiSil && React.createElement('button', {
                               onClick: () => logSil(log.id),
                               style:{...S.btnMini, ...S.btnMiniD},
                               title: 'SİL'
@@ -457,7 +471,7 @@ MR.AramaGecmisPage = ({setPage, user}) => {
     ),
 
     /* ── İSTATİSTİK TAB ── */
-    tab === 'istatistik' && React.createElement('div', null,
+    tab === 'istatistik' && yetkiIstatistik && React.createElement('div', null,
       /* DÖNEM SEÇİCİ */
       React.createElement('div', {style:{display:'flex', gap:8, marginBottom:16}},
         ['gunluk','haftalik','aylik'].map(d => React.createElement('button', {
@@ -535,7 +549,7 @@ MR.AramaGecmisPage = ({setPage, user}) => {
     ),
 
     /* ── CEVAPSIZ TAB ── */
-    tab === 'cevapsiz' && React.createElement('div', null,
+    tab === 'cevapsiz' && yetkiCevapsiz && React.createElement('div', null,
       React.createElement('div', {style:S.card},
         React.createElement('div', {style:{...S.cardHead, justifyContent:'space-between'}},
           React.createElement('div', {style:{display:'flex', alignItems:'center', gap:8}},

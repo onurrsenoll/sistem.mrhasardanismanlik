@@ -187,7 +187,14 @@ const MODUL_YETKILERI = [
     {key: 'tanimlamalar-sablon-ekle', label: 'ŞABLON EKLE'},
     {key: 'tanimlamalar-sablon-duzenle', label: 'ŞABLON DÜZENLE'},
     {key: 'sistem-konum', label: 'KONUM TAKİBİ'},
-    {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'}
+    {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'},
+    {key: 'sistem-netsantral', label: 'NETSANTRAL AYARLARI'},
+    {key: 'arama-gecmis', label: 'ARAMA GEÇMİŞİ'},
+    {key: 'arama-gecmis-istatistik', label: 'ARAMA İSTATİSTİKLERİ'},
+    {key: 'arama-gecmis-cevapsiz', label: 'CEVAPSIZ ÇAĞRILAR'},
+    {key: 'arama-gecmis-kayit-dinle', label: 'GÖRÜŞME KAYDI DİNLE'},
+    {key: 'arama-gecmis-not', label: 'GÖRÜŞME NOTU EKLE/DÜZENLE'},
+    {key: 'arama-gecmis-sil', label: 'ARAMA KAYDI SİL'}
   ]},
 ];
 

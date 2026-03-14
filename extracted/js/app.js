@@ -15,7 +15,6 @@ const MENU = [
     {id:'crm-liste', label:'CRM LİSTESİ', icon:'List'},
     {id:'crm-yeni', label:'YENİ KAYIT', icon:'UserPlus'},
     {id:'crm-arama', label:'ARAMA LİSTESİ', icon:'PhoneCall'},
-    {id:'arama-gecmis', label:'ARAMA GEÇMİŞİ', icon:'History'},
     {id:'saha-liste', label:'SAHA DOSYALARI', icon:'MapPin'},
     {id:'saha-yeni', label:'YENİ SAHA KAYDI', icon:'PlusCircle'}
   ]},
@@ -71,7 +70,10 @@ const MENU = [
     {id:'tanimlamalar-sablon', label:'MATBU EVRAK / SÖZLEŞME', icon:'FileSignature'},
     {id:'tanimlamalar-genel', label:'GENEL TANIMLAMALAR', icon:'Settings'},
     {id:'sistem-konum', label:'KONUM TAKİBİ', icon:'MapPin'},
-    {id:'sistem-netsantral', label:'NETSANTRAL AYARLARI', icon:'Phone'}
+    {id:'sistem-netsantral', label:'NETSANTRAL AYARLARI', icon:'Phone'},
+    {id:'arama-gecmis', label:'ARAMA GEÇMİŞİ', icon:'History'},
+    {id:'arama-gecmis-istatistik', label:'ARAMA İSTATİSTİKLERİ', icon:'BarChart3'},
+    {id:'arama-gecmis-cevapsiz', label:'CEVAPSIZ ÇAĞRILAR', icon:'PhoneMissed'}
   ]}
 ];
 
@@ -760,7 +762,6 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   if (page === 'crm-liste') return <MR.CrmPage setPage={setPage} user={user} view="liste"/>;
   if (page === 'crm-yeni') return <MR.CrmPage setPage={setPage} user={user} view="yeni"/>;
   if (page === 'crm-arama') return <MR.CrmAramaPage setPage={setPage} user={user}/>;
-  if (page === 'arama-gecmis') return <MR.AramaGecmisPage setPage={setPage} user={user}/>;
   if (crmIdMatch) return <MR.CrmPage setPage={setPage} user={user} view="detay" crmId={parseInt(crmIdMatch[1])}/>;
 
   /* SAHA DOSYALARI */
@@ -820,6 +821,15 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   /* NETSANTRAL AYARLARI */
   if (page === 'sistem-netsantral') {
     return <MR.NetsantralAyarlariPage setPage={setPage} user={user}/>;
+  }
+
+  /* ARAMA GEÇMİŞİ / İSTATİSTİK / CEVAPSIZ */
+  if (page === 'arama-gecmis' || page === 'arama-gecmis-istatistik' || page === 'arama-gecmis-cevapsiz') {
+    if (user?.rol !== 'admin' && !MR.hasYetki(user, 'sistem', page)) {
+      return <div style={{padding:40,textAlign:'center',color:MR.C.danger,fontWeight:800}}>YETKİSİZ ERİŞİM</div>;
+    }
+    const defaultTab = page === 'arama-gecmis-istatistik' ? 'istatistik' : page === 'arama-gecmis-cevapsiz' ? 'cevapsiz' : 'gecmis';
+    return <MR.AramaGecmisPage setPage={setPage} user={user} defaultTab={defaultTab}/>;
   }
 
   /* KONUM TAKİBİ (ADMIN ONLY) */
