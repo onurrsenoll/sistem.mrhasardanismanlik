@@ -437,6 +437,14 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
   const {C, S, LIcon, FormGroup} = MR;
   const def = MR._netsantralVarsayilan;
 
+  /* ═══ YETKİ KONTROL ═══ */
+  const yetkiGoruntule = user?.rol === 'admin' || MR.hasYetki(user, 'netsantral', 'netsantral-goruntule');
+  const yetkiDuzenle = user?.rol === 'admin' || MR.hasYetki(user, 'netsantral', 'netsantral-duzenle');
+  const yetkiSifreGor = user?.rol === 'admin' || MR.hasYetki(user, 'netsantral', 'netsantral-sifre-gor');
+  const yetkiApiDuzenle = user?.rol === 'admin' || MR.hasYetki(user, 'netsantral', 'netsantral-api-duzenle');
+  const yetkiTest = user?.rol === 'admin' || MR.hasYetki(user, 'netsantral', 'netsantral-test');
+  const yetkiYenidenBaslat = user?.rol === 'admin' || MR.hasYetki(user, 'netsantral', 'netsantral-yeniden-baslat');
+
   /* FORM STATE */
   const [wss, setWss] = useState(localStorage.getItem('mr_netsantral_wss') || def.wssUrl);
   const [domain, setDomain] = useState(localStorage.getItem('mr_netsantral_domain') || def.domain);
@@ -526,6 +534,14 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
     MR.webrtcYenidenBaslat();
   };
 
+  /* YETKİSİZ ERİŞİM GUARD */
+  if (!yetkiGoruntule) {
+    return <div style={{padding:40,textAlign:'center',color:C.danger,fontWeight:800,fontSize:16}}>
+      <LIcon name="ShieldAlert" size={48} color={C.danger}/>
+      <div style={{marginTop:12}}>BU SAYFAYI GÖRÜNTÜLEME YETKİNİZ BULUNMAMAKTADIR</div>
+    </div>;
+  }
+
   return (
     <div className="fade-in">
 
@@ -543,12 +559,12 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
           </div>
           <div style={{display:'flex', alignItems:'center', gap:10}}>
             {sonKontrol && <span style={{fontSize:9, color:C.textMuted}}>SON KONTROL: {sonKontrol}</span>}
-            <button onClick={baglantiTest} disabled={testYapiliyor} style={{
+            {yetkiTest && <button onClick={baglantiTest} disabled={testYapiliyor} style={{
               ...S.btn, ...S.btnP, fontSize:11, padding:'8px 16px',
               opacity: testYapiliyor ? 0.6 : 1
             }}>
               <LIcon name="Wifi" size={14} color="#fff"/> {testYapiliyor ? 'TEST EDİLİYOR...' : 'BAGLANTIYI TEST ET'}
-            </button>
+            </button>}
           </div>
         </div>
         <div style={{padding:20}}>
@@ -594,33 +610,33 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
           <div style={{padding:20}}>
             <div style={{display:'grid', gap:14}}>
               <FormGroup label="WSS URL *">
-                <input style={S.input} value={wss} onChange={e => setWss(e.target.value)} placeholder="wss://sip6.netsantral.com:8089/ws"/>
+                <input style={{...S.input, opacity: yetkiDuzenle ? 1 : 0.6}} value={wss} onChange={e => setWss(e.target.value)} placeholder="wss://sip6.netsantral.com:8089/ws" readOnly={!yetkiDuzenle}/>
               </FormGroup>
               <FormGroup label="SIP ALAN ADI / DOMAIN">
-                <input style={S.input} value={domain} onChange={e => setDomain(e.target.value)} placeholder="sip6.netsantral.com"/>
+                <input style={{...S.input, opacity: yetkiDuzenle ? 1 : 0.6}} value={domain} onChange={e => setDomain(e.target.value)} placeholder="sip6.netsantral.com" readOnly={!yetkiDuzenle}/>
               </FormGroup>
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
                 <FormGroup label="SIP KULLANICI ADI (DAHİLİ) *">
-                  <input style={S.input} value={dahili} onChange={e => setDahili(e.target.value)} placeholder="102"/>
+                  <input style={{...S.input, opacity: yetkiDuzenle ? 1 : 0.6}} value={dahili} onChange={e => setDahili(e.target.value)} placeholder="102" readOnly={!yetkiDuzenle}/>
                 </FormGroup>
                 <FormGroup label="SIP ŞİFRESİ *">
-                  <input type="password" style={{...S.input, textTransform:'none'}} value={sipSifre} onChange={e => setSipSifre(e.target.value)} placeholder="SIP ŞİFRENİZ"/>
+                  <input type={yetkiSifreGor ? 'password' : 'text'} style={{...S.input, textTransform:'none', opacity: yetkiDuzenle ? 1 : 0.6}} value={yetkiSifreGor ? sipSifre : (sipSifre ? '••••••••' : '')} onChange={e => { if(yetkiDuzenle) setSipSifre(e.target.value); }} placeholder="SIP ŞİFRENİZ" readOnly={!yetkiDuzenle || !yetkiSifreGor}/>
                 </FormGroup>
               </div>
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
                 <FormGroup label="KAYIT SÜRESİ (SANİYE)">
-                  <input style={S.input} value={kayitSuresi} onChange={e => setKayitSuresi(e.target.value.replace(/[^0-9]/g,''))} placeholder="300"/>
+                  <input style={{...S.input, opacity: yetkiDuzenle ? 1 : 0.6}} value={kayitSuresi} onChange={e => setKayitSuresi(e.target.value.replace(/[^0-9]/g,''))} placeholder="300" readOnly={!yetkiDuzenle}/>
                 </FormGroup>
                 <FormGroup label="SIP PORT">
-                  <input style={S.input} value={sipPort} onChange={e => setSipPort(e.target.value.replace(/[^0-9]/g,''))} placeholder="5060"/>
+                  <input style={{...S.input, opacity: yetkiDuzenle ? 1 : 0.6}} value={sipPort} onChange={e => setSipPort(e.target.value.replace(/[^0-9]/g,''))} placeholder="5060" readOnly={!yetkiDuzenle}/>
                 </FormGroup>
               </div>
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
                 <FormGroup label="SANTRAL NO">
-                  <input style={S.input} value={santralNo} onChange={e => setSantralNo(e.target.value)} placeholder="3625026502"/>
+                  <input style={{...S.input, opacity: yetkiDuzenle ? 1 : 0.6}} value={santralNo} onChange={e => setSantralNo(e.target.value)} placeholder="3625026502" readOnly={!yetkiDuzenle}/>
                 </FormGroup>
                 <FormGroup label="KULLANICI ADI (TAM)">
-                  <input style={S.input} value={kullanici} onChange={e => setKullanici(e.target.value)} placeholder="102-3625026502"/>
+                  <input style={{...S.input, opacity: yetkiDuzenle ? 1 : 0.6}} value={kullanici} onChange={e => setKullanici(e.target.value)} placeholder="102-3625026502" readOnly={!yetkiDuzenle}/>
                 </FormGroup>
               </div>
             </div>
@@ -638,7 +654,7 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
             </div>
             <div style={{padding:20}}>
               <FormGroup label="OUTBOUND PROXY (OPSİYONEL)">
-                <input style={S.input} value={outboundProxy} onChange={e => setOutboundProxy(e.target.value)} placeholder="BOŞ BIRAKILABILIR"/>
+                <input style={{...S.input, opacity: yetkiDuzenle ? 1 : 0.6}} value={outboundProxy} onChange={e => setOutboundProxy(e.target.value)} placeholder="BOŞ BIRAKILABILIR" readOnly={!yetkiDuzenle}/>
               </FormGroup>
               <div style={{
                 marginTop:14, padding:12, borderRadius:10,
@@ -667,7 +683,7 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
                 BU ŞİFRE SIP ŞİFRESİNDEN FARKLIDIR.
               </div>
               <FormGroup label="API ŞİFRESİ *">
-                <input type="password" style={{...S.input, textTransform:'none'}} value={apiSifre} onChange={e => setApiSifre(e.target.value)} placeholder="NETGSM API ŞİFRENİZ"/>
+                <input type="password" style={{...S.input, textTransform:'none', opacity: yetkiApiDuzenle ? 1 : 0.6}} value={yetkiApiDuzenle ? apiSifre : (apiSifre ? '••••••••' : '')} onChange={e => { if(yetkiApiDuzenle) setApiSifre(e.target.value); }} placeholder="NETGSM API ŞİFRENİZ" readOnly={!yetkiApiDuzenle}/>
               </FormGroup>
             </div>
           </div>
@@ -677,9 +693,12 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
       {/* ═══ KAYDET BUTONU ═══ */}
       <div style={{...S.card, padding:16, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
         <div style={{display:'flex', gap:12, alignItems:'center'}}>
-          <button onClick={kaydet} style={{...S.btn, ...S.btnP, fontSize:13, padding:'12px 24px'}}>
+          {yetkiDuzenle && <button onClick={kaydet} style={{...S.btn, ...S.btnP, fontSize:13, padding:'12px 24px'}}>
             <LIcon name="Save" size={16} color="#fff"/> KAYDET & BAĞLAN
-          </button>
+          </button>}
+          {!yetkiDuzenle && yetkiYenidenBaslat && <button onClick={() => MR.webrtcYenidenBaslat()} style={{...S.btn, ...S.btnP, fontSize:13, padding:'12px 24px', background:C.cyan}}>
+            <LIcon name="RefreshCw" size={16} color="#fff"/> YENİDEN BAŞLAT
+          </button>}
           {kayitDurumu && (
             <span style={{fontSize:12, fontWeight:700, color:C.success}}>
               <LIcon name="CheckCircle" size={16} color={C.success}/> {kayitDurumu}

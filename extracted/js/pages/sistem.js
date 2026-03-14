@@ -165,6 +165,14 @@ const MODUL_YETKILERI = [
     {key: 'ictihat-police-limit', label: 'POLİÇE LİMİT TABLOLARI'},
     {key: 'ictihat-kusur-emsal', label: 'KUSUR EMSAL DOSYALARI'}
   ]},
+  {modul: 'netsantral', label: 'NETSANTRAL / WEBRTC TELEFON', icon: 'Phone', islemler: [
+    {key: 'netsantral-goruntule', label: 'AYARLARI GÖRÜNTÜLE'},
+    {key: 'netsantral-duzenle', label: 'SIP / WSS AYARLARINI DÜZENLE'},
+    {key: 'netsantral-sifre-gor', label: 'SIP ŞİFRESİNİ GÖR'},
+    {key: 'netsantral-api-duzenle', label: 'NETGSM API AYARLARI'},
+    {key: 'netsantral-test', label: 'BAĞLANTI TESTİ YAP'},
+    {key: 'netsantral-yeniden-baslat', label: 'BAĞLANTIYI YENİDEN BAŞLAT'}
+  ]},
   {modul: 'sistem', label: 'SİSTEM', icon: 'Shield', islemler: [
     {key: 'sistem-kullanici', label: 'KULLANICI YÖNETİMİ'},
     {key: 'sistem-yetki', label: 'YETKİ YÖNETİMİ'},

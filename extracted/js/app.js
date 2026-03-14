@@ -838,6 +838,14 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     return <MR.KonumTakipPage setPage={setPage} user={user}/>;
   }
 
+  /* NETSANTRAL AYARLARI */
+  if (page === 'sistem-netsantral') {
+    if (user?.rol !== 'admin' && !MR.hasYetki(user, 'netsantral', 'netsantral-goruntule')) {
+      return <div style={{padding:40,textAlign:'center',color:MR.C.danger,fontWeight:800}}>YETKİSİZ ERİŞİM</div>;
+    }
+    return <MR.NetsantralAyarlariPage setPage={setPage} user={user}/>;
+  }
+
   /* SİSTEM */
   if (page.startsWith('sistem')) {
     const sub = page.replace('sistem-', '') || 'kullanici';
