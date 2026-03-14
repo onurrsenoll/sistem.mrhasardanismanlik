@@ -14,6 +14,17 @@ function ensure_arama_log_table() {
     try {
         $db = getDB();
 
+        // Tablo zaten var mi kontrol et
+        $stmt = $db->query("SHOW TABLES LIKE 'arama_loglari'");
+        if ($stmt->rowCount() > 0) return;
+
+        // Collation kontrolu - turkish yoksa unicode kullan
+        $collation = 'utf8mb4_unicode_ci';
+        try {
+            $coll = $db->query("SHOW COLLATION WHERE Collation = 'utf8mb4_turkish_ci'")->fetchAll();
+            if (!empty($coll)) $collation = 'utf8mb4_turkish_ci';
+        } catch (\Exception $e) {}
+
         $db->exec("CREATE TABLE IF NOT EXISTS arama_loglari (
             id INT AUTO_INCREMENT PRIMARY KEY,
             kullanici_id INT NOT NULL,
@@ -38,9 +49,9 @@ function ensure_arama_log_table() {
             INDEX idx_durum (durum),
             INDEX idx_baslangic (baslangic_zamani),
             INDEX idx_tarih_kullanici (baslangic_zamani, kullanici_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=$collation");
 
     } catch (\Exception $e) {
-        // Migration hatasi sessiz gec
+        error_log('[ARAMA-LOG] Tablo olusturma hatasi: ' . $e->getMessage());
     }
 }

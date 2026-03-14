@@ -14,9 +14,20 @@ require_method('GET');
 
 $user = auth_required();
 
-ensure_arama_log_table();
+try {
+    ensure_arama_log_table();
+} catch (\Exception $e) {
+    error_log('[ARAMA-LOG] Setup hatasi: ' . $e->getMessage());
+}
 
 $db = getDB();
+
+// Tablo var mi kontrol et
+try {
+    $db->query("SELECT 1 FROM arama_loglari LIMIT 1");
+} catch (\Exception $e) {
+    json_error('Arama log tablosu bulunamadi. Hata: ' . $e->getMessage(), 500);
+}
 
 $where = [];
 $params = [];
