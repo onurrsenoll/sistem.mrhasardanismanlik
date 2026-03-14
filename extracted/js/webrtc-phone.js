@@ -26,6 +26,16 @@ MR.webrtcTelefon = {
   _ringbackTimer: null,
   _reconnectTimer: null,
 
+  /* ═══ ARAMA LOG & KAYIT ═══ */
+  _aktifLogId: null,
+  _aramaBaslangic: null,
+  _aramaCevaplanma: null,
+  _aramaYon: null,
+  _aramaNumara: null,
+  _mediaRecorder: null,
+  _recordedChunks: [],
+  _kayitAktif: false,
+
   /* ═══ SES YÖNETİMİ ═══ */
   _sesAyarlari: {
     volume: parseFloat(localStorage.getItem('mr_webrtc_volume') || '1.0'),
@@ -352,6 +362,10 @@ MR.webrtcTelefon = {
       this._sessionOlaylariBagla(session);
       this._ringbackBaslat();
 
+      /* ARAMA LOGU OLUŞTUR */
+      var musteriAdi = (MR._sonAramaBilgi && (MR._sonAramaBilgi.ad || MR._sonAramaBilgi.ad_soyad)) || '';
+      this._aramaLogOlustur('giden', cleanNum, musteriAdi);
+
       console.log('[WEBRTC] ÇAĞRI GÖNDERİLDİ:', cleanNum);
       return true;
 
@@ -385,6 +399,10 @@ MR.webrtcTelefon = {
     window.dispatchEvent(new CustomEvent('mr-webrtc-gelen-cagri', {
       detail: { arayan: arayanNum, arayanAdi: arayanAdi, timestamp: Date.now() }
     }));
+
+    /* GELEN ARAMA LOGU OLUŞTUR */
+    this._aramaLogOlustur('gelen', arayanNum, arayanAdi);
+
     console.log('[WEBRTC] GELEN ÇAĞRI:', arayanNum, arayanAdi);
   },
 
@@ -557,6 +575,14 @@ MR.webrtcTelefon = {
       self._aramaDurumu = 'gorusmede';
       if (!_sesAyarlandi) { self._sesAyarla(session); _sesAyarlandi = true; }
       self._durumBildir('gorusmede');
+      /* ARAMA LOGU: CEVAPLANDI */
+      self._aramaLogGuncelle('cevaplandi');
+      /* GÖRÜŞME KAYDI BAŞLAT (1.5sn gecikmeyle - ses bağlantısının oturması için) */
+      setTimeout(function() {
+        if (self._session === session && self._aramaDurumu === 'gorusmede') {
+          self._gorusmeKaydiBaslat(session);
+        }
+      }, 1500);
     });
 
     session.on('confirmed', function() {
@@ -569,6 +595,14 @@ MR.webrtcTelefon = {
       console.log('[WEBRTC] GÖRÜŞME BİTTİ');
       self._zilDurdur();
       self._ringbackDurdur();
+      /* GÖRÜŞME KAYDINI DURDUR */
+      self._gorusmeKaydiDurdur();
+      /* ARAMA LOGU: GÖRÜŞME BİTTİ */
+      if (self._aramaCevaplanma) {
+        self._aramaLogGuncelle('cevaplandi');
+      } else {
+        self._aramaLogGuncelle('cevapsiz');
+      }
       self._temizle();
       self._durumBildir('kapandi');
       /* TÜM DİNLEYİCİLERİ BİLGİLENDİR (SOL PANEL, WİDGET vs.) */
@@ -589,6 +623,14 @@ MR.webrtcTelefon = {
       }));
       self._zilDurdur();
       self._ringbackDurdur();
+      /* GÖRÜŞME KAYDINI DURDUR */
+      self._gorusmeKaydiDurdur();
+      /* ARAMA LOGU: BAŞARISIZ */
+      var logDurum = 'hata';
+      if (cause === 'Rejected' || cause === 'Busy') logDurum = 'reddedildi';
+      else if (cause === 'No Answer' || cause === 'Canceled') logDurum = 'cevapsiz';
+      else if (statusCode === 486) logDurum = 'mesgul';
+      self._aramaLogGuncelle(logDurum);
       self._temizle();
       self._durumBildir('hata', 'ÇAĞRI BAŞARISIZ: ' + cause + ' (' + originator + ')');
       window.dispatchEvent(new CustomEvent('mr-arama-sonlandi'));
@@ -700,6 +742,11 @@ MR.webrtcTelefon = {
     this._session = null;
     this._aramaDurumu = 'bos';
     this._muteState = false;
+    this._aktifLogId = null;
+    this._aramaBaslangic = null;
+    this._aramaCevaplanma = null;
+    this._aramaYon = null;
+    this._aramaNumara = null;
 
     /* ÖN-HAZIRLANMIŞ MİKROFON AKIŞINI DURDUR */
     if (this._preStream) {
@@ -907,6 +954,243 @@ MR.webrtcTelefon = {
         mute: this._muteState,
         timestamp: Date.now()
       }
+    }));
+  },
+
+  /* ═══ GÖRÜŞME KAYDI BAŞLAT (MediaRecorder) ═══ */
+  _gorusmeKaydiBaslat: function(session) {
+    if (this._mediaRecorder) return;
+    var self = this;
+
+    try {
+      var pc = session.connection;
+      if (!pc) { console.warn('[WEBRTC] KAYIT: PeerConnection YOK'); return; }
+
+      /* Hem gelen hem giden sesi kaydetmek için AudioContext ile birleştir */
+      var ac = new (window.AudioContext || window.webkitAudioContext)();
+      var dest = ac.createMediaStreamDestination();
+
+      /* UZAK SES (karşı taraf) */
+      var receivers = pc.getReceivers();
+      for (var i = 0; i < receivers.length; i++) {
+        if (receivers[i].track && receivers[i].track.kind === 'audio') {
+          var remoteStream = new MediaStream([receivers[i].track]);
+          var remoteSource = ac.createMediaStreamSource(remoteStream);
+          remoteSource.connect(dest);
+        }
+      }
+
+      /* YEREL SES (mikrofon) */
+      var senders = pc.getSenders();
+      for (var j = 0; j < senders.length; j++) {
+        if (senders[j].track && senders[j].track.kind === 'audio') {
+          var localStream = new MediaStream([senders[j].track]);
+          var localSource = ac.createMediaStreamSource(localStream);
+          /* Mikrofon seviyesini biraz düşür kayıtta */
+          var localGain = ac.createGain();
+          localGain.gain.value = 0.7;
+          localSource.connect(localGain);
+          localGain.connect(dest);
+        }
+      }
+
+      /* MediaRecorder başlat */
+      var mimeType = 'audio/webm;codecs=opus';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'audio/webm';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'audio/ogg;codecs=opus';
+        }
+      }
+
+      self._recordedChunks = [];
+      var recorder = new MediaRecorder(dest.stream, { mimeType: mimeType, audioBitsPerSecond: 64000 });
+
+      recorder.ondataavailable = function(e) {
+        if (e.data && e.data.size > 0) {
+          self._recordedChunks.push(e.data);
+        }
+      };
+
+      recorder.onstop = function() {
+        console.log('[WEBRTC] KAYIT DURDURULDU - PARÇA SAYISI:', self._recordedChunks.length);
+        if (ac.state !== 'closed') ac.close().catch(function(){});
+        /* Kayıt dosyasını yükle */
+        self._gorusmeKaydiYukle();
+      };
+
+      recorder.start(1000); /* Her 1 saniyede bir chunk */
+      self._mediaRecorder = recorder;
+      self._kayitAktif = true;
+      self._kayitAudioContext = ac;
+      console.log('[WEBRTC] GÖRÜŞME KAYDI BAŞLADI ✓ FORMAT:', mimeType);
+
+    } catch(e) {
+      console.error('[WEBRTC] KAYIT BAŞLATMA HATASI:', e);
+    }
+  },
+
+  /* ═══ GÖRÜŞME KAYDINI DURDUR ═══ */
+  _gorusmeKaydiDurdur: function() {
+    if (this._mediaRecorder && this._mediaRecorder.state !== 'inactive') {
+      try { this._mediaRecorder.stop(); } catch(e) {}
+    }
+    this._mediaRecorder = null;
+    this._kayitAktif = false;
+    if (this._kayitAudioContext && this._kayitAudioContext.state !== 'closed') {
+      try { this._kayitAudioContext.close(); } catch(e) {}
+    }
+    this._kayitAudioContext = null;
+  },
+
+  /* ═══ GÖRÜŞME KAYDINI SUNUCUYA YÜKLE ═══ */
+  _gorusmeKaydiYukle: function() {
+    if (!this._recordedChunks.length || !this._aktifLogId) {
+      this._recordedChunks = [];
+      return;
+    }
+
+    var blob = new Blob(this._recordedChunks, { type: 'audio/webm' });
+    this._recordedChunks = [];
+
+    if (blob.size < 1000) {
+      console.log('[WEBRTC] KAYIT ÇOK KISA - YÜKLEME ATLANDI');
+      return;
+    }
+
+    var fd = new FormData();
+    fd.append('arama_log_id', this._aktifLogId);
+    fd.append('file', blob, 'gorusme_' + this._aktifLogId + '.webm');
+
+    var headers = {};
+    if (MR.api && MR.api.token) headers['Authorization'] = 'Bearer ' + MR.api.token;
+
+    fetch('/api/v1/arama-log/kayit-yukle.php', {
+      method: 'POST',
+      headers: headers,
+      body: fd
+    }).then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res && res.success) {
+        console.log('[WEBRTC] GÖRÜŞME KAYDI YÜKLENDİ ✓ ID:', res.data.id);
+      } else {
+        console.error('[WEBRTC] KAYIT YÜKLEME HATASI:', res && res.error);
+      }
+    }).catch(function(e) {
+      console.error('[WEBRTC] KAYIT YÜKLEME BAĞLANTI HATASI:', e);
+    });
+  },
+
+  /* ═══ ARAMA LOGU OLUŞTUR ═══ */
+  _aramaLogOlustur: function(yon, numara, musteriAdi) {
+    var self = this;
+    self._aramaBaslangic = new Date();
+    self._aramaCevaplanma = null;
+    self._aramaYon = yon;
+    self._aramaNumara = numara;
+    self._aktifLogId = null;
+
+    if (!MR.api || !MR.api.token) return;
+
+    var body = {
+      yon: yon,
+      numara: numara,
+      musteri_adi: musteriAdi || '',
+      durum: 'cevapsiz',
+      baslangic_zamani: self._aramaBaslangic.toISOString().replace('T', ' ').substring(0, 19)
+    };
+
+    /* Müşteri eşleştirme bilgisi */
+    if (MR._sonAramaBilgi) {
+      body.musteri_adi = MR._sonAramaBilgi.ad || MR._sonAramaBilgi.ad_soyad || musteriAdi || '';
+      body.musteri_kaynak = MR._sonAramaBilgi.kaynak || '';
+      body.musteri_kaynak_id = MR._sonAramaBilgi.id || null;
+    }
+
+    MR.api.req('/arama-log/create.php', {
+      method: 'POST',
+      body: JSON.stringify(body)
+    }).then(function(res) {
+      if (res && res.success && res.data) {
+        self._aktifLogId = res.data.id;
+        console.log('[WEBRTC] ARAMA LOGU OLUŞTURULDU ID:', res.data.id);
+      }
+    }).catch(function(e) {
+      console.error('[WEBRTC] ARAMA LOG OLUŞTURMA HATASI:', e);
+    });
+  },
+
+  /* ═══ ARAMA LOGUNU GÜNCELLE ═══ */
+  _aramaLogGuncelle: function(durum) {
+    var self = this;
+    if (!self._aktifLogId || !MR.api) return;
+
+    var now = new Date();
+    var body = { id: self._aktifLogId, durum: durum };
+
+    if (durum === 'cevaplandi' && !self._aramaCevaplanma) {
+      self._aramaCevaplanma = now;
+      body.cevaplanma_zamani = now.toISOString().replace('T', ' ').substring(0, 19);
+    }
+
+    if (durum === 'cevaplandi' || durum === 'cevapsiz' || durum === 'reddedildi') {
+      body.bitis_zamani = now.toISOString().replace('T', ' ').substring(0, 19);
+      if (self._aramaCevaplanma) {
+        body.sure_saniye = Math.round((now - self._aramaCevaplanma) / 1000);
+      }
+    }
+
+    MR.api.req('/arama-log/update.php', {
+      method: 'PUT',
+      body: JSON.stringify(body)
+    }).then(function(res) {
+      if (res && res.success) {
+        console.log('[WEBRTC] ARAMA LOGU GÜNCELLENDİ:', durum, 'ID:', self._aktifLogId);
+      }
+    }).catch(function(e) {
+      console.error('[WEBRTC] ARAMA LOG GÜNCELLEME HATASI:', e);
+    });
+
+    /* Cevapsız gelen arama bildirimi */
+    if (durum === 'cevapsiz' && self._aramaYon === 'gelen') {
+      self._cevapsizBildirimGonder(self._aramaNumara);
+    }
+  },
+
+  /* ═══ CEVAPSIZ ÇAĞRI BİLDİRİMİ ═══ */
+  _cevapsizBildirimGonder: function(numara) {
+    /* Tarayıcı bildirimi */
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification('CEVAPSIZ ÇAĞRI', {
+          body: 'Cevapsız çağrı: ' + (numara || 'BİLİNMEYEN'),
+          icon: 'favicon.svg',
+          tag: 'cevapsiz-' + Date.now(),
+          requireInteraction: true
+        });
+      } catch(e) {}
+    }
+
+    /* Sistem bildirimi (veritabanına) */
+    if (MR.api && MR.api.token) {
+      /* Kendi kullanıcısına bildirim gönder */
+      try {
+        MR.api.me().then(function(res) {
+          if (res && res.success && res.data) {
+            MR.api.bildirimCreate({
+              hedef_id: res.data.id,
+              baslik: 'CEVAPSIZ ÇAĞRI: ' + (numara || 'BİLİNMEYEN'),
+              mesaj: new Date().toLocaleString('tr-TR') + ' tarihinde ' + (numara || 'bilinmeyen numara') + ' numarasından cevapsız çağrı',
+              tur: 'uyari'
+            });
+          }
+        });
+      } catch(e) {}
+    }
+
+    /* Dispatch event - widget gösterebilsin */
+    window.dispatchEvent(new CustomEvent('mr-cevapsiz-cagri', {
+      detail: { numara: numara, zaman: Date.now() }
     }));
   },
 

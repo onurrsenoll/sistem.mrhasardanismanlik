@@ -229,6 +229,18 @@ MR.api = {
   smsGonder(d) { return this.req('/sms/gonder.php', { method: 'POST', body: JSON.stringify(d) }); },
   smsGelenList(p = {}) { return this.req('/sms/gelen-list.php?' + new URLSearchParams(p)); },
   smsGelenOkundu(d) { return this.req('/sms/gelen-okundu.php', { method: 'POST', body: JSON.stringify(d) }); },
+  // ARAMA LOG
+  aramaLogList(p = {}) { return this.req('/arama-log/list.php?' + new URLSearchParams(p)); },
+  aramaLogCreate(d) { return this.req('/arama-log/create.php', { method: 'POST', body: JSON.stringify(d) }); },
+  aramaLogUpdate(d) { return this.req('/arama-log/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  aramaLogDelete(id) { return this.req('/arama-log/delete.php?id=' + id, { method: 'DELETE' }); },
+  aramaLogIstatistik(p = {}) { return this.req('/arama-log/istatistik.php?' + new URLSearchParams(p)); },
+  aramaLogKayitUrl(id) { return API_BASE + '/arama-log/kayit-indir.php?id=' + id; },
+  async aramaLogKayitYukle(logId, file) {
+    const fd = new FormData(); fd.append('arama_log_id', logId); fd.append('file', file);
+    const h = {}; if (this.token) h['Authorization'] = 'Bearer ' + this.token;
+    return (await fetch(API_BASE + '/arama-log/kayit-yukle.php', { method: 'POST', headers: h, body: fd })).json();
+  },
   // ARAÇ KATALOG
   aracMarkaList() { return this.req('/tanim/arac-marka-list.php'); },
   aracModelList(marka) { return this.req('/tanim/arac-model-list.php?marka=' + encodeURIComponent(marka)); },
