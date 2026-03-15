@@ -5,6 +5,9 @@
  * Body: { "id": 1, "durum": "cevaplandi", "sure_saniye": 120, "notlar": "...", "kayit_dosya": "..." }
  */
 
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/setup.php';
