@@ -5,6 +5,9 @@
  * Params: ?yon=gelen|giden &durum=cevaplandi|cevapsiz &q=arama &tarih_bas=2025-01-01 &tarih_son=2025-12-31 &sayfa=1 &limit=50 &kullanici_id=1
  */
 
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/setup.php';
@@ -14,19 +17,27 @@ require_method('GET');
 
 $user = auth_required();
 
-try {
-    ensure_arama_log_table();
-} catch (\Exception $e) {
-    error_log('[ARAMA-LOG] Setup hatasi: ' . $e->getMessage());
-}
+ensure_arama_log_table();
 
 $db = getDB();
 
-// Tablo var mi kontrol et
+// Tablo var mi kontrol et - yoksa bos veri don
+$tabloVar = false;
 try {
     $db->query("SELECT 1 FROM arama_loglari LIMIT 1");
+    $tabloVar = true;
 } catch (\Exception $e) {
-    json_error('Arama log tablosu bulunamadi. Hata: ' . $e->getMessage(), 500);
+    error_log('[ARAMA-LOG] Tablo bulunamadi: ' . $e->getMessage());
+}
+
+if (!$tabloVar) {
+    json_success([
+        'items' => [],
+        'toplam' => 0,
+        'sayfa' => 1,
+        'limit' => 50,
+        'toplam_sayfa' => 0
+    ]);
 }
 
 $where = [];
