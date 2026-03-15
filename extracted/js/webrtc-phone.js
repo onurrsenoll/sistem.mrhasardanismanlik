@@ -1032,6 +1032,8 @@ MR.webrtcTelefon = {
 
   /* ═══ GÖRÜŞME KAYDINI DURDUR ═══ */
   _gorusmeKaydiDurdur: function() {
+    /* _aktifLogId'yi kaydet - _temizle() null yapacak ama onstop async gelecek */
+    this._kayitIcinLogId = this._aktifLogId;
     if (this._mediaRecorder && this._mediaRecorder.state !== 'inactive') {
       try { this._mediaRecorder.stop(); } catch(e) {}
     }
@@ -1045,7 +1047,10 @@ MR.webrtcTelefon = {
 
   /* ═══ GÖRÜŞME KAYDINI SUNUCUYA YÜKLE ═══ */
   _gorusmeKaydiYukle: function() {
-    if (!this._recordedChunks.length || !this._aktifLogId) {
+    /* _aktifLogId temizlenmiş olabilir, _kayitIcinLogId'yi kullan */
+    var logId = this._kayitIcinLogId || this._aktifLogId;
+    if (!this._recordedChunks.length || !logId) {
+      console.warn('[WEBRTC] KAYIT YÜKLEME ATLANDI - chunks:', this._recordedChunks.length, 'logId:', logId);
       this._recordedChunks = [];
       return;
     }
@@ -1059,12 +1064,13 @@ MR.webrtcTelefon = {
     }
 
     var fd = new FormData();
-    fd.append('arama_log_id', this._aktifLogId);
-    fd.append('file', blob, 'gorusme_' + this._aktifLogId + '.webm');
+    fd.append('arama_log_id', logId);
+    fd.append('file', blob, 'gorusme_' + logId + '.webm');
 
     var headers = {};
     if (MR.api && MR.api.token) headers['Authorization'] = 'Bearer ' + MR.api.token;
 
+    var self = this;
     fetch('/api/v1/arama-log/kayit-yukle.php', {
       method: 'POST',
       headers: headers,
@@ -1076,8 +1082,10 @@ MR.webrtcTelefon = {
       } else {
         console.error('[WEBRTC] KAYIT YÜKLEME HATASI:', res && res.error);
       }
+      self._kayitIcinLogId = null;
     }).catch(function(e) {
       console.error('[WEBRTC] KAYIT YÜKLEME BAĞLANTI HATASI:', e);
+      self._kayitIcinLogId = null;
     });
   },
 
