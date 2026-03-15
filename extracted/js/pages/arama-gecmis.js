@@ -17,7 +17,7 @@ MR.AramaGecmisPage = ({setPage, user, defaultTab}) => {
   const yetkiSil = user?.rol === 'admin' || MR.hasYetki(user, 'sistem', 'arama-gecmis-sil');
 
   /* ═══ STATE ═══ */
-  const [tab, setTab] = useState(defaultTab || 'gecmis'); /* gecmis | istatistik | cevapsiz */
+  const [tab, setTab] = useState(defaultTab || 'gecmis'); /* gecmis | istatistik | cevapsiz | kayitlar */
   const [loglar, setLoglar] = useState([]);
   const [toplam, setToplam] = useState(0);
   const [sayfa, setSayfa] = useState(1);
@@ -278,7 +278,8 @@ MR.AramaGecmisPage = ({setPage, user, defaultTab}) => {
       [
         yetkiGecmis && {id:'gecmis', icon:'List', label:'ARAMA GEÇMİŞİ'},
         yetkiIstatistik && {id:'istatistik', icon:'BarChart3', label:'İSTATİSTİKLER'},
-        yetkiCevapsiz && {id:'cevapsiz', icon:'PhoneMissed', label:'CEVAPSIZ ÇAĞRILAR'}
+        yetkiCevapsiz && {id:'cevapsiz', icon:'PhoneMissed', label:'CEVAPSIZ ÇAĞRILAR'},
+        {id:'kayitlar', icon:'Mic', label:'GÖRÜŞME KAYITLARI'}
       ].filter(Boolean).map(t => React.createElement('button', {
         key: t.id,
         onClick: () => setTab(t.id),
@@ -604,6 +605,9 @@ MR.AramaGecmisPage = ({setPage, user, defaultTab}) => {
       )
     ),
 
+    /* ── GÖRÜŞME KAYITLARI TAB ── */
+    tab === 'kayitlar' && React.createElement(MR.GorusmeKayitlariPage, {setPage, user}),
+
     /* ═══ GİZLİ SES ELEMENTİ ═══ */
     React.createElement('audio', {
       ref: audioRef,
@@ -648,3 +652,6 @@ MR.AramaGecmisPage = ({setPage, user, defaultTab}) => {
     )
   );
 };
+
+/* CRM ANALİZ menüsü için alias - AramaGecmisPage'i kullanır */
+MR.CrmAnalizPage = (props) => React.createElement(MR.AramaGecmisPage, {...props, defaultTab: props.defaultTab || 'gecmis'});
