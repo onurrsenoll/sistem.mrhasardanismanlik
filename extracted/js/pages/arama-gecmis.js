@@ -147,7 +147,7 @@ MR.AramaGecmisPage = ({setPage, user, defaultTab}) => {
     setOynatilan(logId);
     setTimeout(() => {
       if (audioRef.current) {
-        audioRef.current.src = api.aramaLogKayitUrl(logId) + '&token=' + encodeURIComponent(api.token || '');
+        audioRef.current.src = api.aramaLogKayitUrl(logId) + '&auth=' + encodeURIComponent(api.token || '');
         audioRef.current.play().catch(() => {});
       }
     }, 100);
