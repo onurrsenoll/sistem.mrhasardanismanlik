@@ -1107,6 +1107,7 @@ MR.webrtcTelefon = {
       body.musteri_kaynak_id = MR._sonAramaBilgi.id || null;
     }
 
+    console.log('[WEBRTC] ARAMA LOG CREATE GÖNDERİLİYOR:', JSON.stringify(body));
     MR.api.req('/arama-log/create.php', {
       method: 'POST',
       body: JSON.stringify(body)
@@ -1114,6 +1115,8 @@ MR.webrtcTelefon = {
       if (res && res.success && res.data) {
         self._aktifLogId = res.data.id;
         console.log('[WEBRTC] ARAMA LOGU OLUŞTURULDU ID:', res.data.id);
+      } else {
+        console.error('[WEBRTC] ARAMA LOG CREATE HATA YANITI:', JSON.stringify(res));
       }
     }).catch(function(e) {
       console.error('[WEBRTC] ARAMA LOG OLUŞTURMA HATASI:', e);
