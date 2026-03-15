@@ -1009,12 +1009,16 @@ MR.webrtcTelefon = {
       recorder.ondataavailable = function(e) {
         if (e.data && e.data.size > 0) {
           self._recordedChunks.push(e.data);
+          console.log('[WEBRTC] KAYIT CHUNK:', e.data.size, 'byte - TOPLAM:', self._recordedChunks.length);
         }
       };
 
       recorder.onstop = function() {
-        console.log('[WEBRTC] KAYIT DURDURULDU - PARÇA SAYISI:', self._recordedChunks.length);
-        if (ac.state !== 'closed') ac.close().catch(function(){});
+        console.log('[WEBRTC] KAYIT DURDURULDU - PARÇA SAYISI:', self._recordedChunks.length, 'LOG_ID:', self._kayitIcinLogId);
+        /* AudioContext'i kapat (sadece onstop'ta, erken kapatma data kaybına neden olur) */
+        if (ac && ac.state !== 'closed') {
+          try { ac.close(); } catch(e2) {}
+        }
         /* Kayıt dosyasını yükle */
         self._gorusmeKaydiYukle();
       };
@@ -1023,7 +1027,9 @@ MR.webrtcTelefon = {
       self._mediaRecorder = recorder;
       self._kayitAktif = true;
       self._kayitAudioContext = ac;
-      console.log('[WEBRTC] GÖRÜŞME KAYDI BAŞLADI ✓ FORMAT:', mimeType);
+      /* LogId'yi kayıt başladığında kaydet - en güvenilir zaman */
+      self._kayitIcinLogId = self._aktifLogId;
+      console.log('[WEBRTC] GÖRÜŞME KAYDI BAŞLADI ✓ FORMAT:', mimeType, 'LOG_ID:', self._aktifLogId);
 
     } catch(e) {
       console.error('[WEBRTC] KAYIT BAŞLATMA HATASI:', e);
@@ -1032,34 +1038,66 @@ MR.webrtcTelefon = {
 
   /* ═══ GÖRÜŞME KAYDINI DURDUR ═══ */
   _gorusmeKaydiDurdur: function() {
-    /* _aktifLogId'yi kaydet - _temizle() null yapacak ama onstop async gelecek */
-    this._kayitIcinLogId = this._aktifLogId;
-    if (this._mediaRecorder && this._mediaRecorder.state !== 'inactive') {
-      try { this._mediaRecorder.stop(); } catch(e) {}
+    /* _aktifLogId'yi yedekle - _temizle() null yapacak ama onstop async gelecek */
+    if (this._aktifLogId) {
+      this._kayitIcinLogId = this._aktifLogId;
+    }
+    console.log('[WEBRTC] KAYIT DURDURULUYOR - LOG_ID:', this._kayitIcinLogId, 'RECORDER_STATE:', this._mediaRecorder ? this._mediaRecorder.state : 'YOK');
+
+    if (this._mediaRecorder) {
+      if (this._mediaRecorder.state === 'recording' || this._mediaRecorder.state === 'paused') {
+        try { this._mediaRecorder.stop(); } catch(e) { console.warn('[WEBRTC] RECORDER STOP HATASI:', e); }
+      } else if (this._mediaRecorder.state === 'inactive') {
+        /* Recorder zaten durmuş (PeerConnection kapandığında otomatik durabilir).
+           onstop zaten çalışmış veya sırada olabilir.
+           Eğer chunks varsa ve onstop henüz yüklemediyse, manuel yükle. */
+        console.log('[WEBRTC] RECORDER ZATEN INACTIVE - CHUNKS:', this._recordedChunks.length);
+        if (this._recordedChunks.length > 0) {
+          var self = this;
+          setTimeout(function() {
+            /* onstop zaten çalıştıysa chunks boş olur, tekrar yükleme olmaz */
+            if (self._recordedChunks.length > 0) {
+              console.log('[WEBRTC] ONSTOP ÇALIŞMADI - MANUEL YÜKLEME');
+              self._gorusmeKaydiYukle();
+            }
+          }, 500);
+        }
+      }
     }
     this._mediaRecorder = null;
     this._kayitAktif = false;
-    if (this._kayitAudioContext && this._kayitAudioContext.state !== 'closed') {
-      try { this._kayitAudioContext.close(); } catch(e) {}
-    }
-    this._kayitAudioContext = null;
+    /* AudioContext'i KAPATMA - onstop handler kapatacak.
+       Erken kapatmak MediaRecorder'ın son veriyi flush etmesini engelleyebilir. */
+    /* this._kayitAudioContext burada null yapılmaz, onstop temizler */
   },
 
   /* ═══ GÖRÜŞME KAYDINI SUNUCUYA YÜKLE ═══ */
   _gorusmeKaydiYukle: function() {
     /* _aktifLogId temizlenmiş olabilir, _kayitIcinLogId'yi kullan */
     var logId = this._kayitIcinLogId || this._aktifLogId;
+    console.log('[WEBRTC] KAYIT YÜKLEME BAŞLIYOR - chunks:', this._recordedChunks.length, 'logId:', logId, '_kayitIcinLogId:', this._kayitIcinLogId, '_aktifLogId:', this._aktifLogId);
+
     if (!this._recordedChunks.length || !logId) {
       console.warn('[WEBRTC] KAYIT YÜKLEME ATLANDI - chunks:', this._recordedChunks.length, 'logId:', logId);
       this._recordedChunks = [];
+      /* AudioContext temizle */
+      if (this._kayitAudioContext && this._kayitAudioContext.state !== 'closed') {
+        try { this._kayitAudioContext.close(); } catch(e) {}
+      }
+      this._kayitAudioContext = null;
       return;
     }
 
     var blob = new Blob(this._recordedChunks, { type: 'audio/webm' });
     this._recordedChunks = [];
+    console.log('[WEBRTC] KAYIT BLOB BOYUTU:', blob.size, 'byte');
 
     if (blob.size < 1000) {
-      console.log('[WEBRTC] KAYIT ÇOK KISA - YÜKLEME ATLANDI');
+      console.log('[WEBRTC] KAYIT ÇOK KISA (' + blob.size + ' byte) - YÜKLEME ATLANDI');
+      if (this._kayitAudioContext && this._kayitAudioContext.state !== 'closed') {
+        try { this._kayitAudioContext.close(); } catch(e) {}
+      }
+      this._kayitAudioContext = null;
       return;
     }
 
@@ -1078,14 +1116,23 @@ MR.webrtcTelefon = {
     }).then(function(r) { return r.json(); })
     .then(function(res) {
       if (res && res.success) {
-        console.log('[WEBRTC] GÖRÜŞME KAYDI YÜKLENDİ ✓ ID:', res.data.id);
+        console.log('[WEBRTC] GÖRÜŞME KAYDI YÜKLENDİ ✓ ID:', res.data.id, 'DOSYA:', res.data.kayit_dosya, 'BOYUT:', res.data.kayit_boyut);
       } else {
-        console.error('[WEBRTC] KAYIT YÜKLEME HATASI:', res && res.error);
+        console.error('[WEBRTC] KAYIT YÜKLEME HATASI:', JSON.stringify(res));
       }
       self._kayitIcinLogId = null;
+      /* AudioContext temizle */
+      if (self._kayitAudioContext && self._kayitAudioContext.state !== 'closed') {
+        try { self._kayitAudioContext.close(); } catch(e) {}
+      }
+      self._kayitAudioContext = null;
     }).catch(function(e) {
       console.error('[WEBRTC] KAYIT YÜKLEME BAĞLANTI HATASI:', e);
       self._kayitIcinLogId = null;
+      if (self._kayitAudioContext && self._kayitAudioContext.state !== 'closed') {
+        try { self._kayitAudioContext.close(); } catch(e2) {}
+      }
+      self._kayitAudioContext = null;
     });
   },
 
