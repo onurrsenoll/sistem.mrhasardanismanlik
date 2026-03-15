@@ -2,6 +2,7 @@
 /**
  * ARAMA LOG TABLOSU OLUŞTURMA / MİGRASYON
  * Bu dosya ilk çağrıda tabloyu otomatik oluşturur
+ * Eski/eksik tablo varsa DROP edip yeniden oluşturur
  */
 
 require_once __DIR__ . '/../../config/database.php';
@@ -14,9 +15,33 @@ function ensure_arama_log_table() {
     try {
         $db = getDB();
 
-        // Tablo zaten var mi kontrol et
+        // Tablo var mi kontrol et
         $stmt = $db->query("SHOW TABLES LIKE 'arama_loglari'");
-        if ($stmt->rowCount() > 0) return;
+        $tabloVar = $stmt->rowCount() > 0;
+
+        if ($tabloVar) {
+            // Tablo var - gerekli kolonlar var mi kontrol et
+            $kolonlar = [];
+            $cols = $db->query("SHOW COLUMNS FROM arama_loglari")->fetchAll();
+            foreach ($cols as $col) {
+                $kolonlar[] = $col['Field'];
+            }
+
+            $gerekliKolonlar = ['numara', 'yon', 'durum', 'musteri_adi', 'musteri_kaynak',
+                                'musteri_kaynak_id', 'baslangic_zamani', 'cevaplanma_zamani',
+                                'bitis_zamani', 'sure_saniye', 'kayit_dosya', 'kayit_boyut', 'notlar'];
+
+            $eksikKolonlar = array_diff($gerekliKolonlar, $kolonlar);
+
+            if (empty($eksikKolonlar)) {
+                // Tum kolonlar mevcut, sorun yok
+                return;
+            }
+
+            // Eksik kolon var - eski/yanlis tablo, sil ve yeniden olustur
+            error_log('[ARAMA-LOG] Eksik kolonlar tespit edildi: ' . implode(', ', $eksikKolonlar) . ' - Tablo yeniden olusturuluyor');
+            $db->exec("DROP TABLE arama_loglari");
+        }
 
         // Collation kontrolu - turkish yoksa unicode kullan
         $collation = 'utf8mb4_unicode_ci';
@@ -50,6 +75,8 @@ function ensure_arama_log_table() {
             INDEX idx_baslangic (baslangic_zamani),
             INDEX idx_tarih_kullanici (baslangic_zamani, kullanici_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=$collation");
+
+        error_log('[ARAMA-LOG] Tablo basariyla olusturuldu');
 
     } catch (\Exception $e) {
         error_log('[ARAMA-LOG] Tablo olusturma hatasi: ' . $e->getMessage());
