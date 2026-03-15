@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MR Hasar Danismanlik - Calisma Modeli Teklifi</title>
+<title>MR Hasar Danışmanlık - Çalışma Modeli Mimarisi</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap');
@@ -11,169 +11,248 @@
 
   :root{
     --bg:#fafbfe;--surface:#ffffff;--glass:rgba(255,255,255,0.7);
-    --dark:#111827;--navy:#1e293b;--slate:#475569;--muted:#94a3b8;
-    --blue:#2563eb;--indigo:#4f46e5;--violet:#7c3aed;
+    --dark:#0f172a;--navy:#1e293b;--slate:#475569;--muted:#94a3b8;
+    --blue:#2563eb;--indigo:#4f46e5;--violet:#7c3aed;--cyan:#06b6d4;
     --emerald:#059669;--teal:#0d9488;--amber:#d97706;--rose:#e11d48;
-    --border:rgba(148,163,184,0.2);
+    --lime:#65a30d;
+    --border:rgba(148,163,184,0.18);
     --shadow:0 1px 3px rgba(0,0,0,0.04),0 4px 12px rgba(0,0,0,0.06);
     --shadow-lg:0 4px 24px rgba(0,0,0,0.08);
     --gradient-brand:linear-gradient(135deg,#2563eb 0%,#7c3aed 50%,#06b6d4 100%);
     --gradient-dark:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
     --gradient-warm:linear-gradient(135deg,#f59e0b 0%,#ef4444 100%);
+    --gradient-green:linear-gradient(135deg,#059669 0%,#10b981 100%);
+    --gradient-rose:linear-gradient(135deg,#e11d48 0%,#f43f5e 100%);
   }
 
-  body{font-family:'Inter',sans-serif;color:var(--dark);background:#e2e8f0;padding:20px}
+  body{font-family:'Inter',sans-serif;color:var(--dark);background:#cbd5e1;padding:20px}
   #report{max-width:210mm;margin:0 auto;background:var(--bg)}
 
   .page{padding:0;page-break-after:always;min-height:297mm;position:relative;overflow:hidden;background:var(--bg)}
   .page:last-child{page-break-after:avoid}
 
-  /* ============ PAGE 1: COVER + SUMMARY ============ */
-  .cover{position:relative;min-height:297mm;display:flex;flex-direction:column}
+  /* ============ PAGE 1: KAPAK ============ */
+  .cover{display:flex;flex-direction:column;min-height:297mm}
 
-  .cover-top{
+  .cover-hero{
     background:var(--gradient-brand);
-    padding:60px 40px 50px;
-    position:relative;
-    overflow:hidden;
+    padding:50px 44px 40px;position:relative;overflow:hidden;
   }
-  .cover-top::before{
-    content:'';position:absolute;top:-60%;right:-20%;width:500px;height:500px;
-    background:radial-gradient(circle,rgba(255,255,255,0.08) 0%,transparent 70%);
-    border-radius:50%;
+  .cover-hero::before{
+    content:'';position:absolute;top:-80px;right:-60px;width:400px;height:400px;
+    background:radial-gradient(circle,rgba(255,255,255,0.07) 0%,transparent 70%);border-radius:50%;
   }
-  .cover-top::after{
-    content:'';position:absolute;bottom:-40%;left:-10%;width:400px;height:400px;
-    background:radial-gradient(circle,rgba(255,255,255,0.05) 0%,transparent 70%);
-    border-radius:50%;
+  .cover-hero::after{
+    content:'';position:absolute;bottom:-100px;left:-40px;width:350px;height:350px;
+    background:radial-gradient(circle,rgba(255,255,255,0.04) 0%,transparent 70%);border-radius:50%;
   }
 
   .cover-badge{
-    display:inline-block;background:rgba(255,255,255,0.15);
+    display:inline-block;background:rgba(255,255,255,0.12);
     backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.2);
-    padding:6px 16px;border-radius:20px;font-size:10px;font-weight:600;
-    color:rgba(255,255,255,0.9);letter-spacing:2px;text-transform:uppercase;
-    margin-bottom:20px;
+    padding:5px 14px;border-radius:20px;font-size:9px;font-weight:700;
+    color:rgba(255,255,255,0.85);letter-spacing:2.5px;text-transform:uppercase;
+    margin-bottom:16px;
   }
 
   .cover-title{
-    font-family:'Playfair Display',serif;font-size:32px;font-weight:800;
-    color:white;line-height:1.2;margin-bottom:8px;position:relative;z-index:1;
+    font-family:'Playfair Display',serif;font-size:34px;font-weight:900;
+    color:white;line-height:1.15;margin-bottom:6px;position:relative;z-index:1;
   }
-
   .cover-subtitle{
-    font-size:14px;font-weight:400;color:rgba(255,255,255,0.75);
-    margin-bottom:24px;position:relative;z-index:1;letter-spacing:0.5px;
+    font-size:13px;font-weight:400;color:rgba(255,255,255,0.7);
+    position:relative;z-index:1;letter-spacing:0.3px;margin-bottom:24px;
   }
 
-  .cover-info{
-    display:flex;gap:20px;position:relative;z-index:1;
+  .cover-stats{display:flex;gap:14px;position:relative;z-index:1}
+  .cover-stat{
+    background:rgba(255,255,255,0.1);backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,0.15);border-radius:12px;
+    padding:14px 18px;flex:1;text-align:center;
   }
-  .cover-info-item{
-    background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);
-    border:1px solid rgba(255,255,255,0.15);border-radius:10px;
-    padding:12px 18px;flex:1;
-  }
-  .cover-info-item .label{font-size:9px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1.5px;font-weight:600}
-  .cover-info-item .value{font-size:16px;font-weight:700;color:white;margin-top:3px}
+  .cover-stat .cs-icon{font-size:20px;margin-bottom:4px}
+  .cover-stat .cs-val{font-size:18px;font-weight:800;color:white}
+  .cover-stat .cs-lbl{font-size:8px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-top:2px}
 
-  /* SUMMARY SECTION */
-  .cover-body{flex:1;padding:30px 40px 40px;display:flex;flex-direction:column;gap:20px}
+  /* COVER BODY */
+  .cover-body{flex:1;padding:28px 44px 20px;display:flex;flex-direction:column;gap:18px}
 
   .section-label{
-    font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;
-    color:var(--indigo);margin-bottom:10px;
+    font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;
+    color:var(--indigo);margin-bottom:8px;
     display:flex;align-items:center;gap:8px;
   }
   .section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--indigo),transparent)}
 
-  .summary-grid{display:flex;gap:12px}
+  /* MODEL FLOW - VISUAL ARCHITECTURE */
+  .model-flow{
+    display:flex;align-items:stretch;gap:0;margin-bottom:4px;
+  }
+  .flow-step{
+    flex:1;position:relative;padding:14px 12px 12px;
+    background:var(--surface);border:1px solid var(--border);
+    text-align:center;
+  }
+  .flow-step:first-child{border-radius:10px 0 0 10px}
+  .flow-step:last-child{border-radius:0 10px 10px 0}
+  .flow-step::after{
+    content:'';position:absolute;right:-8px;top:50%;transform:translateY(-50%);
+    width:0;height:0;border-left:8px solid var(--surface);
+    border-top:8px solid transparent;border-bottom:8px solid transparent;
+    z-index:2;
+  }
+  .flow-step:last-child::after{display:none}
+  .flow-step .fs-amount{font-size:17px;font-weight:800;color:var(--dark);margin-bottom:2px}
+  .flow-step .fs-label{font-size:7.5px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+  .flow-step.negative .fs-amount{color:var(--rose)}
+  .flow-step.positive .fs-amount{color:var(--emerald)}
 
-  .s-card{
+  /* SUMMARY CARDS */
+  .sum-grid{display:flex;gap:10px}
+  .sum-card{
     flex:1;background:var(--surface);border:1px solid var(--border);
-    border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;
-    box-shadow:var(--shadow);
+    border-radius:10px;padding:14px 14px;box-shadow:var(--shadow);
+    position:relative;overflow:hidden;
   }
-  .s-card::before{
-    content:'';position:absolute;top:0;left:0;right:0;height:3px;
-    border-radius:12px 12px 0 0;
+  .sum-card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:10px 10px 0 0;
   }
-  .s-card:nth-child(1)::before{background:var(--blue)}
-  .s-card:nth-child(2)::before{background:var(--emerald)}
-  .s-card:nth-child(3)::before{background:var(--violet)}
+  .sum-card:nth-child(1)::before{background:var(--blue)}
+  .sum-card:nth-child(2)::before{background:var(--emerald)}
+  .sum-card:nth-child(3)::before{background:var(--violet)}
+  .sum-card:nth-child(4)::before{background:var(--amber)}
+  .sum-card .sc-lbl{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted)}
+  .sum-card .sc-val{font-size:18px;font-weight:800;margin-top:3px;color:var(--dark)}
+  .sum-card .sc-unit{font-size:9px;font-weight:400;color:var(--muted)}
+  .sum-card .sc-note{font-size:7.5px;color:var(--slate);margin-top:3px;line-height:1.4;font-style:italic}
 
-  .s-card .s-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted)}
-  .s-card .s-value{font-size:22px;font-weight:800;margin-top:4px;color:var(--dark)}
-  .s-card .s-unit{font-size:10px;font-weight:400;color:var(--muted)}
-  .s-card .s-note{font-size:8px;color:var(--slate);margin-top:4px;line-height:1.4;font-style:italic}
-
-  /* GLASS NOTE */
-  .glass-note{
+  /* INFO BOX */
+  .info-box{
     background:rgba(79,70,229,0.04);border:1px solid rgba(79,70,229,0.12);
-    border-radius:10px;padding:14px 18px;font-size:9.5px;line-height:1.6;
+    border-radius:10px;padding:14px 18px;font-size:9.5px;line-height:1.7;
     color:var(--navy);position:relative;
   }
-  .glass-note::before{
+  .info-box::before{
     content:'i';position:absolute;top:12px;left:-8px;width:16px;height:16px;
     background:var(--indigo);color:white;border-radius:50%;font-size:9px;
     font-weight:800;display:flex;align-items:center;justify-content:center;
     font-style:italic;
   }
-  .glass-note strong{color:var(--indigo)}
+  .info-box strong{color:var(--indigo)}
 
-  .cover-footer{
-    padding:12px 40px;border-top:1px solid var(--border);
+  /* FOOTER */
+  .pg-footer{
+    position:absolute;bottom:14px;left:36px;right:36px;
     display:flex;justify-content:space-between;align-items:center;
-    font-size:8px;color:var(--muted);
+    padding-top:8px;border-top:1px solid var(--border);font-size:7px;color:var(--muted);
   }
-  .cover-footer .pg{
-    background:var(--gradient-brand);color:white;width:22px;height:22px;
+  .pg-footer .pg{
+    background:var(--gradient-brand);color:white;width:20px;height:20px;
     border-radius:50%;display:flex;align-items:center;justify-content:center;
-    font-weight:700;font-size:9px;
+    font-weight:700;font-size:8px;
   }
 
-  /* ============ PAGE 2+: CONTENT PAGES ============ */
-  .content{padding:28px 36px 40px}
+  /* ============ PAGE 2: MODEL MİMARİSİ ============ */
+  .content{padding:26px 36px 40px}
 
   .page-header{
     display:flex;justify-content:space-between;align-items:center;
-    padding-bottom:10px;border-bottom:2px solid var(--dark);margin-bottom:20px;
+    padding-bottom:10px;border-bottom:2px solid var(--dark);margin-bottom:18px;
   }
   .page-header h2{font-size:13px;font-weight:800;color:var(--dark);letter-spacing:-0.3px}
   .page-header .tag{
     background:var(--gradient-brand);color:white;padding:4px 12px;
-    border-radius:5px;font-size:9px;font-weight:600;letter-spacing:1px;
+    border-radius:5px;font-size:8px;font-weight:700;letter-spacing:1px;
   }
+
+  /* ARCHITECTURE DIAGRAM */
+  .arch-container{margin-bottom:16px}
+
+  .arch-row{
+    display:flex;align-items:stretch;gap:8px;margin-bottom:8px;
+  }
+  .arch-block{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:10px;padding:14px 16px;box-shadow:var(--shadow);
+    position:relative;
+  }
+  .arch-block.full{flex:1}
+  .arch-block.half{flex:1}
+
+  .arch-block .ab-tag{
+    font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+    color:var(--muted);margin-bottom:4px;
+  }
+  .arch-block .ab-title{font-size:11px;font-weight:800;color:var(--dark);margin-bottom:2px}
+  .arch-block .ab-value{font-size:20px;font-weight:900}
+  .arch-block .ab-desc{font-size:8px;color:var(--slate);line-height:1.5;margin-top:4px}
+
+  .arch-block.input{border-left:3px solid var(--blue)}
+  .arch-block.input .ab-value{color:var(--blue)}
+  .arch-block.cost{border-left:3px solid var(--rose)}
+  .arch-block.cost .ab-value{color:var(--rose)}
+  .arch-block.result{border-left:3px solid var(--emerald)}
+  .arch-block.result .ab-value{color:var(--emerald)}
+
+  /* ARROW CONNECTOR */
+  .arch-arrow{
+    text-align:center;padding:4px 0;color:var(--muted);font-size:14px;
+  }
+
+  /* BREAKDOWN VISUAL */
+  .breakdown-bar{
+    display:flex;height:36px;border-radius:8px;overflow:hidden;
+    margin-bottom:6px;box-shadow:var(--shadow);
+  }
+  .bb-seg{
+    display:flex;align-items:center;justify-content:center;
+    color:white;font-weight:700;font-size:9px;
+    position:relative;
+  }
+  .bb-seg .bb-label{font-size:7px;font-weight:600;opacity:0.85;margin-right:4px}
+  .bb-legend{display:flex;gap:14px;justify-content:center;margin-bottom:14px}
+  .bb-legend-item{display:flex;align-items:center;gap:4px;font-size:8px;color:var(--slate)}
+  .bb-legend-item .dot{width:8px;height:8px;border-radius:2px}
+
+  /* TIER VISUAL STAIRS */
+  .tier-stairs{display:flex;align-items:flex-end;gap:6px;margin-bottom:14px;padding:0 10px}
+  .stair{
+    flex:1;border-radius:8px 8px 0 0;position:relative;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    padding:10px 4px 8px;color:white;
+    transition:all 0.3s;
+  }
+  .stair .st-range{font-size:7px;font-weight:600;opacity:0.8;margin-bottom:4px;text-align:center}
+  .stair .st-amount{font-size:14px;font-weight:900;text-align:center}
+  .stair .st-label{font-size:7px;font-weight:500;opacity:0.7;text-align:center}
+  .stair-1{height:80px;background:linear-gradient(180deg,#94a3b8,#64748b)}
+  .stair-2{height:120px;background:linear-gradient(180deg,#3b82f6,#2563eb)}
+  .stair-3{height:160px;background:linear-gradient(180deg,#8b5cf6,#7c3aed)}
+  .stair-4{height:200px;background:linear-gradient(180deg,#f59e0b,#d97706)}
 
   /* TIER CARDS */
   .tier{
     background:var(--surface);border:1px solid var(--border);border-radius:12px;
-    margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow);
-    transition:transform 0.2s;
+    margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow);
   }
-
   .tier-header{
     display:flex;align-items:center;justify-content:space-between;
-    padding:12px 18px;border-bottom:1px solid var(--border);
+    padding:11px 16px;border-bottom:1px solid var(--border);
   }
-  .tier-header .tier-badge{
-    display:flex;align-items:center;gap:8px;
-  }
+  .tier-badge{display:flex;align-items:center;gap:8px}
   .tier-num{
-    width:28px;height:28px;border-radius:8px;display:flex;align-items:center;
-    justify-content:center;font-weight:800;font-size:12px;color:white;
+    width:26px;height:26px;border-radius:7px;display:flex;align-items:center;
+    justify-content:center;font-weight:800;font-size:11px;color:white;
   }
-  .tier-title{font-size:11px;font-weight:700;color:var(--dark)}
-  .tier-range{font-size:9px;color:var(--muted);font-weight:500}
-  .tier-amount{
-    font-size:16px;font-weight:800;
-  }
-  .tier-per{font-size:8px;color:var(--muted);font-weight:500}
+  .tier-title{font-size:10.5px;font-weight:700;color:var(--dark)}
+  .tier-range{font-size:8px;color:var(--muted);font-weight:500}
+  .tier-amount{font-size:15px;font-weight:800}
+  .tier-per{font-size:7.5px;color:var(--muted);font-weight:500}
 
-  .tier-body{padding:10px 18px 12px;background:rgba(248,250,252,0.5)}
+  .tier-body{padding:9px 16px 10px;background:rgba(248,250,252,0.5)}
   .tier-desc{
-    font-size:9px;line-height:1.6;color:var(--slate);
-    padding-left:12px;border-left:2px solid var(--border);
+    font-size:8.5px;line-height:1.6;color:var(--slate);
+    padding-left:10px;border-left:2px solid var(--border);
   }
   .tier-desc strong{color:var(--dark)}
 
@@ -186,51 +265,7 @@
   .tier-4 .tier-num{background:linear-gradient(135deg,#f59e0b,#d97706)}
   .tier-4 .tier-amount{color:var(--amber)}
 
-  /* BEDENI HASAR */
-  .bh-card{
-    background:linear-gradient(135deg,rgba(225,29,72,0.03),rgba(225,29,72,0.06));
-    border:1px solid rgba(225,29,72,0.15);border-radius:12px;
-    padding:16px 20px;margin-bottom:12px;
-  }
-  .bh-card h3{font-size:11px;font-weight:700;color:var(--rose);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
-  .bh-row{display:flex;justify-content:space-between;padding:4px 0;font-size:10px;border-bottom:1px dashed rgba(225,29,72,0.12)}
-  .bh-row:last-child{border-bottom:none}
-  .bh-row .bl{color:var(--slate);font-weight:500}
-  .bh-row .bv{font-weight:700;color:var(--dark)}
-  .bh-note{
-    font-size:8.5px;line-height:1.6;color:var(--slate);
-    margin-top:8px;padding:8px 12px;background:rgba(225,29,72,0.03);
-    border-radius:6px;border-left:2px solid var(--rose);
-  }
-
-  /* RULES */
-  .rule{
-    background:var(--surface);border:1px solid var(--border);
-    border-radius:10px;padding:12px 16px;margin-bottom:8px;
-    box-shadow:var(--shadow);display:flex;gap:12px;align-items:flex-start;
-  }
-  .rule-num{
-    min-width:26px;height:26px;border-radius:6px;
-    background:var(--gradient-dark);color:white;display:flex;
-    align-items:center;justify-content:center;font-weight:800;font-size:11px;
-    flex-shrink:0;
-  }
-  .rule-content{flex:1}
-  .rule-title{font-size:10px;font-weight:700;color:var(--dark);margin-bottom:3px}
-  .rule-text{font-size:8.5px;line-height:1.6;color:var(--slate)}
-  .rule-text strong{color:var(--dark)}
-  .rule-warn{
-    display:inline-block;background:rgba(245,158,11,0.1);color:var(--amber);
-    padding:1px 6px;border-radius:3px;font-size:7px;font-weight:700;
-    text-transform:uppercase;letter-spacing:.5px;margin-top:3px;
-  }
-  .rule-danger{
-    display:inline-block;background:rgba(225,29,72,0.08);color:var(--rose);
-    padding:1px 6px;border-radius:3px;font-size:7px;font-weight:700;
-    text-transform:uppercase;letter-spacing:.5px;margin-top:3px;
-  }
-
-  /* TABLE */
+  /* DATA TABLE */
   .data-tbl{
     width:100%;border-collapse:separate;border-spacing:0;font-size:9px;
     margin-bottom:12px;border-radius:10px;overflow:hidden;
@@ -247,22 +282,89 @@
   .data-tbl .r{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
   .data-tbl .c{text-align:center}
   .hi{color:var(--emerald);font-weight:800}
-  .lo{color:var(--rose);font-weight:700}
 
-  /* FOOTER */
-  .pg-footer{
-    position:absolute;bottom:16px;left:36px;right:36px;
-    display:flex;justify-content:space-between;align-items:center;
-    padding-top:8px;border-top:1px solid var(--border);font-size:7px;color:var(--muted);
+  /* EARNING BAR CHART */
+  .earn-chart{margin-bottom:14px}
+  .earn-row{
+    display:flex;align-items:center;gap:10px;margin-bottom:6px;
   }
-  .pg-footer .pg{
-    background:var(--gradient-brand);color:white;width:20px;height:20px;
-    border-radius:50%;display:flex;align-items:center;justify-content:center;
-    font-weight:700;font-size:8px;
+  .earn-label{width:58px;font-size:9px;font-weight:700;color:var(--dark);text-align:right}
+  .earn-bar-wrap{flex:1;background:rgba(148,163,184,0.1);border-radius:6px;height:28px;position:relative;overflow:hidden}
+  .earn-bar{
+    height:100%;border-radius:6px;display:flex;align-items:center;
+    padding-left:10px;color:white;font-weight:700;font-size:9px;
+    transition:width 0.5s ease;
+  }
+  .earn-bar .eb-maas{opacity:0.7;font-size:8px;margin-right:6px}
+  .earn-bar .eb-total{font-weight:800}
+
+  /* BEDENI HASAR */
+  .bh-card{
+    background:linear-gradient(135deg,rgba(225,29,72,0.03),rgba(225,29,72,0.07));
+    border:1px solid rgba(225,29,72,0.15);border-radius:12px;
+    padding:16px 18px;margin-bottom:12px;
+  }
+  .bh-card h3{font-size:10.5px;font-weight:700;color:var(--rose);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+  .bh-row{display:flex;justify-content:space-between;padding:4px 0;font-size:9.5px;border-bottom:1px dashed rgba(225,29,72,0.12)}
+  .bh-row:last-child{border-bottom:none}
+  .bh-row .bl{color:var(--slate);font-weight:500}
+  .bh-row .bv{font-weight:700;color:var(--dark)}
+  .bh-note{
+    font-size:8.5px;line-height:1.6;color:var(--slate);
+    margin-top:8px;padding:8px 12px;background:rgba(225,29,72,0.03);
+    border-radius:6px;border-left:2px solid var(--rose);
+  }
+
+  /* RULES */
+  .rule{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:10px;padding:11px 14px;margin-bottom:7px;
+    box-shadow:var(--shadow);display:flex;gap:10px;align-items:flex-start;
+  }
+  .rule-num{
+    min-width:24px;height:24px;border-radius:6px;
+    background:var(--gradient-dark);color:white;display:flex;
+    align-items:center;justify-content:center;font-weight:800;font-size:10px;
+    flex-shrink:0;
+  }
+  .rule-content{flex:1}
+  .rule-title{font-size:9.5px;font-weight:700;color:var(--dark);margin-bottom:2px}
+  .rule-text{font-size:8px;line-height:1.6;color:var(--slate)}
+  .rule-text strong{color:var(--dark)}
+  .rule-warn{
+    display:inline-block;background:rgba(245,158,11,0.1);color:var(--amber);
+    padding:1px 6px;border-radius:3px;font-size:6.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.5px;margin-top:2px;
+  }
+  .rule-danger{
+    display:inline-block;background:rgba(225,29,72,0.08);color:var(--rose);
+    padding:1px 6px;border-radius:3px;font-size:6.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.5px;margin-top:2px;
   }
 
   /* DIVIDER */
-  .divider{height:2px;background:var(--gradient-brand);border-radius:1px;margin:16px 0}
+  .divider{height:2px;background:var(--gradient-brand);border-radius:1px;margin:14px 0}
+
+  /* DOSYA TYPES */
+  .file-types{display:flex;gap:10px;margin-bottom:4px}
+  .file-type{
+    flex:1;background:var(--surface);border-radius:10px;
+    padding:12px 14px;box-shadow:var(--shadow);
+    border:1px solid var(--border);
+  }
+  .file-type .ft-icon{font-size:22px;margin-bottom:4px}
+  .file-type .ft-name{font-size:10px;font-weight:700;color:var(--dark)}
+  .file-type .ft-detail{font-size:8px;color:var(--slate);line-height:1.5;margin-top:3px}
+
+  /* HIGHLIGHT BOX */
+  .highlight-box{
+    background:linear-gradient(135deg,rgba(5,150,105,0.05),rgba(16,185,129,0.08));
+    border:1px solid rgba(5,150,105,0.2);border-radius:10px;
+    padding:14px 18px;text-align:center;
+  }
+  .highlight-box .hb-title{font-size:9px;font-weight:700;color:var(--emerald);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px}
+  .highlight-box .hb-value{font-size:28px;font-weight:900;color:var(--dark)}
+  .highlight-box .hb-sub{font-size:9px;color:var(--slate);margin-top:2px}
 
   /* BTN */
   .btn-dl{
@@ -282,34 +384,34 @@
 </head>
 <body>
 
-<button class="btn-dl" onclick="downloadPDF()">PDF OLARAK INDIR</button>
+<button class="btn-dl" onclick="downloadPDF()">PDF OLARAK İNDİR</button>
 
 <div id="report">
 
-<!-- ===================== SAYFA 1: KAPAK + OZET ===================== -->
+<!-- ===================== SAYFA 1: KAPAK ===================== -->
 <div class="page cover">
 
-  <div class="cover-top">
-    <div class="cover-badge">Calisma Modeli Teklifi</div>
-    <div class="cover-title">Uretim Performans<br>Kazanc Sistemi</div>
-    <div class="cover-subtitle">MR Hasar Danismanlik ve Filo Yonetimi</div>
+  <div class="cover-hero">
+    <div class="cover-badge">Çalışma Modeli Mimarisi</div>
+    <div class="cover-title">Üretim Performans<br>Kazanç Sistemi</div>
+    <div class="cover-subtitle">MR Hasar Danışmanlık ve Filo Yönetimi — Saha Operasyon Personeli Teklifi</div>
 
-    <div class="cover-info">
-      <div class="cover-info-item">
-        <div class="label">Pozisyon</div>
-        <div class="value">Saha Operasyon</div>
+    <div class="cover-stats">
+      <div class="cover-stat">
+        <div class="cs-val">40.000 TL</div>
+        <div class="cs-lbl">Sabit Maaş</div>
       </div>
-      <div class="cover-info-item">
-        <div class="label">Sabit Maas</div>
-        <div class="value">40.000 TL</div>
+      <div class="cover-stat">
+        <div class="cs-val">Aktif</div>
+        <div class="cs-lbl">SGK Tescil</div>
       </div>
-      <div class="cover-info-item">
-        <div class="label">SGK</div>
-        <div class="value">Aktif</div>
+      <div class="cover-stat">
+        <div class="cs-val">Tahsisli</div>
+        <div class="cs-lbl">Şirket Aracı</div>
       </div>
-      <div class="cover-info-item">
-        <div class="label">Arac + Yakit</div>
-        <div class="value">Sirket</div>
+      <div class="cover-stat">
+        <div class="cs-val">Şirket</div>
+        <div class="cs-lbl">Yakıt Gideri</div>
       </div>
     </div>
   </div>
@@ -317,72 +419,273 @@
   <div class="cover-body">
 
     <div>
-      <div class="section-label">Calisma Modeli Ozeti</div>
-      <div class="summary-grid">
-        <div class="s-card">
-          <div class="s-label">Sabit Maas</div>
-          <div class="s-value">40.000 <span class="s-unit">TL/ay</span></div>
-          <div class="s-note">SGK tescilli, sirket araci ve yakit dahil</div>
+      <div class="section-label">Dosya Ekonomisi — Tek Dosya Yapısı</div>
+      <div class="model-flow">
+        <div class="flow-step input">
+          <div class="fs-amount">22.000 TL</div>
+          <div class="fs-label">Dosya Başı Bütçe</div>
         </div>
-        <div class="s-card">
-          <div class="s-label">Uretim Primi</div>
-          <div class="s-value">Kademeli</div>
-          <div class="s-note">Dosya adedine gore artan prim sistemi</div>
+        <div class="flow-step negative">
+          <div class="fs-amount">-15.000 TL</div>
+          <div class="fs-label">Yönlendirme (Servise)</div>
         </div>
-        <div class="s-card">
-          <div class="s-label">Yonlendirme Ucreti</div>
-          <div class="s-value">15.000 <span class="s-unit">TL</span></div>
-          <div class="s-note">Arac deger kaybi dosyalari icin sabit yonlendirme bedeli</div>
+        <div class="flow-step negative">
+          <div class="fs-amount">-1.500 TL</div>
+          <div class="fs-label">Vekalet Ücreti</div>
+        </div>
+        <div class="flow-step positive">
+          <div class="fs-amount">5.500 TL</div>
+          <div class="fs-label">Net Marj / Dosya</div>
+        </div>
+      </div>
+      <div class="breakdown-bar">
+        <div class="bb-seg" style="width:68.2%;background:linear-gradient(90deg,#ef4444,#f87171)">
+          <span class="bb-label">YÖNLENDİRME</span> 15.000
+        </div>
+        <div class="bb-seg" style="width:6.8%;background:#f59e0b;font-size:7px">
+          1.500
+        </div>
+        <div class="bb-seg" style="width:25%;background:linear-gradient(90deg,#059669,#10b981)">
+          <span class="bb-label">NET MARJ</span> 5.500
+        </div>
+      </div>
+      <div class="bb-legend">
+        <div class="bb-legend-item"><div class="dot" style="background:#ef4444"></div>Yönlendirme Ücreti (Servise)</div>
+        <div class="bb-legend-item"><div class="dot" style="background:#f59e0b"></div>Vekalet Ücreti</div>
+        <div class="bb-legend-item"><div class="dot" style="background:#059669"></div>Net Marj</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Haklar ve Güvenceler</div>
+      <div class="sum-grid">
+        <div class="sum-card">
+          <div class="sc-lbl">Sabit Maaş</div>
+          <div class="sc-val">40.000 <span class="sc-unit">TL</span></div>
+          <div class="sc-note">Her ay garantili ödeme</div>
+        </div>
+        <div class="sum-card">
+          <div class="sc-lbl">SGK Tescil</div>
+          <div class="sc-val">Aktif</div>
+          <div class="sc-note">Tam zamanlı sigortalı çalışma</div>
+        </div>
+        <div class="sum-card">
+          <div class="sc-lbl">Şirket Aracı</div>
+          <div class="sc-val">Tahsis</div>
+          <div class="sc-note">Saha operasyonları için araç tahsisi</div>
+        </div>
+        <div class="sum-card">
+          <div class="sc-lbl">Yakıt</div>
+          <div class="sc-val">Şirket</div>
+          <div class="sc-note">Yakıt giderleri şirket tarafından karşılanır</div>
         </div>
       </div>
     </div>
 
     <div>
-      <div class="section-label">Model Aciklamasi</div>
-      <div class="glass-note" style="margin-left:10px">
-        MR Hasar Danismanlik ve Filo Yonetimi, saha operasyon personeli icin <strong>uretim bazli kademeli kazanc modeli</strong> uygulamaktadir.
-        Bu modelde personele sabit maas guvencesi saglanirken, dosya uretim performansi arttikca ek prim kazanci elde edilmesi hedeflenmektedir.
-        Sistem, hem personelin motivasyonunu yuksek tutmayi hem de sirketin operasyonel sureclerini surdurulebilir kilmayi amaclamaktadir.
-        <br><br>
-        <strong>Arac destegi:</strong> Sirket araci tahsis edilecek olup, yakit giderleri sirket tarafindan karsilanacaktir.
+      <div class="section-label">Dosya Türleri</div>
+      <div class="file-types">
+        <div class="file-type" style="border-left:3px solid var(--blue)">
+          <div class="ft-name">Araç Değer Kaybı</div>
+          <div class="ft-detail">Yönlendirme: 15.000 TL sabit<br>Kademeli prim sistemi uygulanır</div>
+        </div>
+        <div class="file-type" style="border-left:3px solid var(--rose)">
+          <div class="ft-name">Bedeni Hasar</div>
+          <div class="ft-detail">Yönlendirme: 25.000 TL sabit<br>Azil riski sebebiyle sabit bedel</div>
+        </div>
       </div>
     </div>
 
-    <div>
-      <div class="section-label">Dosya Turleri</div>
-      <div class="summary-grid">
-        <div class="s-card" style="border-left:3px solid var(--blue)">
-          <div class="s-label">Arac Deger Kaybi</div>
-          <div class="s-value" style="font-size:16px">Dosya Turu 1</div>
-          <div class="s-note">Yonlendirme: 15.000 TL | Kademeli prim sistemi uygulanir</div>
-        </div>
-        <div class="s-card" style="border-left:3px solid var(--rose)">
-          <div class="s-label">Bedeni Hasar</div>
-          <div class="s-value" style="font-size:16px">Dosya Turu 2</div>
-          <div class="s-note">Yonlendirme: 25.000 TL | Azil riski ve uzun surec sebebiyle sabit</div>
-        </div>
-      </div>
+    <div class="info-box" style="margin-left:8px">
+      Bu belge, MR Hasar Danışmanlık ve Filo Yönetimi'nin saha operasyon personeli için hazırladığı <strong>üretim bazlı kademeli kazanç modelini</strong> içermektedir. Model, sabit maaş güvencesi ile birlikte performansa dayalı prim kazancını bir arada sunmaktadır.
     </div>
 
   </div>
 
-  <div class="cover-footer">
-    <span>MR Hasar Danismanlik ve Filo Yonetimi | Samsun | Gizli ve Ozeldir</span>
+  <div class="pg-footer">
+    <span>MR Hasar Danışmanlık ve Filo Yönetimi | Samsun | Gizli ve Özeldir</span>
     <div class="pg">1</div>
   </div>
 </div>
 
-<!-- ===================== SAYFA 2: ARAC DEGER KAYBI PRiM SiSTEMi ===================== -->
+<!-- ===================== SAYFA 2: MODEL MİMARİSİ ===================== -->
 <div class="page">
   <div class="content">
 
     <div class="page-header">
-      <h2>Arac Deger Kaybi Dosyalari &mdash; Uretim Prim Sistemi</h2>
-      <div class="tag">DOSYA TURU 1</div>
+      <h2>Çalışma Modeli Mimarisi — Dosya Akış Yapısı</h2>
+      <div class="tag">MİMARİ</div>
     </div>
 
-    <div class="glass-note" style="margin-bottom:16px;margin-left:0">
-      <strong>Yonlendirme Ucreti:</strong> Her arac deger kaybi dosyasi icin <strong>15.000 TL</strong> sabit yonlendirme bedeli uygulanmaktadir. Bu bedel dosya adedinden bagimsiz olup, tum kademelerde degismez. MR Hasar Danismanlik, uretim artisini tesvik etmek amaciyla asagidaki kademeli prim modelini uygulamaktadir.
+    <!-- ARCHITECTURE DIAGRAM -->
+    <div class="arch-container">
+      <div class="section-label">Aşama 1 — Dosya Girişi ve Maliyet Yapısı</div>
+
+      <div class="arch-row">
+        <div class="arch-block full input">
+          <div class="ab-tag">Giriş</div>
+          <div class="ab-title">Dosya Başı Toplam Bütçe</div>
+          <div class="ab-value">22.000 TL</div>
+          <div class="ab-desc">Her araç değer kaybı dosyası için ayrılan toplam operasyonel bütçe</div>
+        </div>
+      </div>
+
+      <div class="arch-arrow">▼</div>
+
+      <div class="arch-row">
+        <div class="arch-block half cost">
+          <div class="ab-tag">Zorunlu Gider</div>
+          <div class="ab-title">Yönlendirme Ücreti</div>
+          <div class="ab-value">15.000 TL</div>
+          <div class="ab-desc">Dosyanın alındığı servise ödenen sabit yönlendirme bedeli. Tüm dosyalarda değişmez.</div>
+        </div>
+        <div class="arch-block half cost">
+          <div class="ab-tag">Zorunlu Gider</div>
+          <div class="ab-title">Vekalet Ücreti</div>
+          <div class="ab-value">1.500 TL</div>
+          <div class="ab-desc">Hukuki süreç için zorunlu noter ve vekalet masrafı</div>
+        </div>
+      </div>
+
+      <div class="arch-arrow">▼</div>
+
+      <div class="arch-row">
+        <div class="arch-block full result">
+          <div class="ab-tag">Sonuç</div>
+          <div class="ab-title">Dosya Başı Net Operasyonel Marj</div>
+          <div class="ab-value">5.500 TL</div>
+          <div class="ab-desc">22.000 — 15.000 — 1.500 = 5.500 TL. Her dosya, şirkete 5.500 TL net gelir bırakır. Personel maliyeti bu marjdan karşılanır.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- AŞAMA 2: PRİM MİMARİSİ GÖRSEL -->
+    <div class="section-label">Aşama 2 — Kademeli Prim Mimarisi</div>
+
+    <div class="tier-stairs">
+      <div class="stair stair-1">
+        <div class="st-range">1–10<br>Dosya</div>
+        <div class="st-amount">0 TL</div>
+        <div class="st-label">Adaptasyon</div>
+      </div>
+      <div class="stair stair-2">
+        <div class="st-range">11–15<br>Dosya</div>
+        <div class="st-amount">2.500 TL</div>
+        <div class="st-label">Dosya Başı</div>
+      </div>
+      <div class="stair stair-3">
+        <div class="st-range">16–20<br>Dosya</div>
+        <div class="st-amount">3.500 TL</div>
+        <div class="st-label">Dosya Başı</div>
+      </div>
+      <div class="stair stair-4">
+        <div class="st-range">21+<br>Dosya</div>
+        <div class="st-amount">5.000 TL</div>
+        <div class="st-label">Dosya Başı</div>
+      </div>
+    </div>
+
+    <div class="info-box" style="margin-left:8px;margin-bottom:16px">
+      <strong>Nasıl çalışır?</strong> İlk 10 dosya, adaptasyon dönemi olarak değerlendirilir ve prim uygulanmaz. 10 dosyayı aşan her dosya için bulunduğu kademenin prim tutarı uygulanır. Kademeler kümülatiftir: 20 dosya üretildiğinde ilk 10 dosya için 0 TL, 11-15 arası 5 dosya için 2.500 TL, 16-20 arası 5 dosya için 3.500 TL hesaplanır.
+    </div>
+
+    <!-- KAZANÇ SİMÜLASYONU GÖRSEL -->
+    <div class="section-label">Aşama 3 — Kazanç Simülasyonu</div>
+
+    <div class="earn-chart">
+      <div class="earn-row">
+        <div class="earn-label">10 Dosya</div>
+        <div class="earn-bar-wrap">
+          <div class="earn-bar" style="width:42%;background:linear-gradient(90deg,#64748b,#94a3b8)">
+            <span class="eb-total">40.000 TL</span>
+          </div>
+        </div>
+      </div>
+      <div class="earn-row">
+        <div class="earn-label">15 Dosya</div>
+        <div class="earn-bar-wrap">
+          <div class="earn-bar" style="width:55%;background:linear-gradient(90deg,#2563eb,#3b82f6)">
+            <span class="eb-total">52.500 TL</span>
+          </div>
+        </div>
+      </div>
+      <div class="earn-row">
+        <div class="earn-label">20 Dosya</div>
+        <div class="earn-bar-wrap">
+          <div class="earn-bar" style="width:74%;background:linear-gradient(90deg,#7c3aed,#8b5cf6)">
+            <span class="eb-total">70.000 TL</span>
+          </div>
+        </div>
+      </div>
+      <div class="earn-row">
+        <div class="earn-label">25 Dosya</div>
+        <div class="earn-bar-wrap">
+          <div class="earn-bar" style="width:100%;background:linear-gradient(90deg,#d97706,#f59e0b)">
+            <span class="eb-total">95.000 TL</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <table class="data-tbl">
+      <thead>
+        <tr>
+          <th>Aylık Dosya</th>
+          <th style="text-align:right">Sabit Maaş</th>
+          <th style="text-align:right">Prim Hesabı</th>
+          <th style="text-align:right">Toplam Prim</th>
+          <th style="text-align:right">Toplam Kazanç</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>10 Dosya</td>
+          <td class="r">40.000 TL</td>
+          <td class="r" style="color:var(--muted)">10 × 0 TL</td>
+          <td class="r" style="color:var(--muted)">0 TL</td>
+          <td class="r" style="font-weight:800">40.000 TL</td>
+        </tr>
+        <tr>
+          <td>15 Dosya</td>
+          <td class="r">40.000 TL</td>
+          <td class="r" style="color:var(--blue)">5 × 2.500 TL</td>
+          <td class="r" style="color:var(--blue)">12.500 TL</td>
+          <td class="r hi" style="font-weight:800">52.500 TL</td>
+        </tr>
+        <tr>
+          <td>20 Dosya</td>
+          <td class="r">40.000 TL</td>
+          <td class="r" style="color:var(--violet);font-size:8px">5×2.500 + 5×3.500</td>
+          <td class="r" style="color:var(--violet)">30.000 TL</td>
+          <td class="r hi" style="font-weight:800">70.000 TL</td>
+        </tr>
+        <tr>
+          <td>25 Dosya</td>
+          <td class="r">40.000 TL</td>
+          <td class="r" style="color:var(--amber);font-size:7px">5×2.5K+5×3.5K+5×5K</td>
+          <td class="r" style="color:var(--amber)">55.000 TL</td>
+          <td class="r hi" style="font-weight:800;font-size:11px">95.000 TL</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+  <div class="pg-footer"><span>MR Hasar Danışmanlık ve Filo Yönetimi | Samsun | Gizli ve Özeldir</span><div class="pg">2</div></div>
+</div>
+
+<!-- ===================== SAYFA 3: KADEME DETAYLARI ===================== -->
+<div class="page">
+  <div class="content">
+
+    <div class="page-header">
+      <h2>Araç Değer Kaybı — Kademe Detayları</h2>
+      <div class="tag">PRİM SİSTEMİ</div>
+    </div>
+
+    <div class="info-box" style="margin-bottom:14px;margin-left:0">
+      <strong>Yönlendirme Ücreti:</strong> Her araç değer kaybı dosyası için <strong>15.000 TL</strong> sabit yönlendirme bedeli uygulanmaktadır. Bu bedel dosya adedinden bağımsız olup tüm kademelerde değişmez. Aşağıdaki kademeler, personelin dosya üretim adedine göre hak ettiği <strong>ek prim tutarlarını</strong> göstermektedir.
     </div>
 
     <!-- KADEME 1 -->
@@ -391,18 +694,18 @@
         <div class="tier-badge">
           <div class="tier-num">1</div>
           <div>
-            <div class="tier-title">Baslangic Kademesi</div>
-            <div class="tier-range">1. &mdash; 10. Dosya</div>
+            <div class="tier-title">Başlangıç Kademesi</div>
+            <div class="tier-range">1. — 10. Dosya</div>
           </div>
         </div>
         <div style="text-align:right">
           <div class="tier-amount">0 TL</div>
-          <div class="tier-per">dosya basi prim</div>
+          <div class="tier-per">dosya başı prim</div>
         </div>
       </div>
       <div class="tier-body">
         <div class="tier-desc">
-          Ilk 10 dosya, <strong>uyum ve adaptasyon sureci</strong> olarak degerlendirilmektedir. Bu asamada personel, sirket isleyisini, dosya kabul kriterlerini ve operasyonel surecleri ogrenir. MR Hasar bu evreyi yatirim donemi olarak kabul etmekte olup, sabit maas guvencesi bu surecte tam olarak saglanmaktadir. Prim hesabi 10. dosyanin uzerinde baslamaktadir.
+          İlk 10 dosya, <strong>uyum ve adaptasyon süreci</strong> olarak değerlendirilmektedir. Bu aşamada personel, şirket işleyişini, dosya kabul kriterlerini ve operasyonel süreçleri öğrenir. Sabit maaş güvencesi bu süreçte tam olarak sağlanmaktadır. Prim hesabı 10. dosyanın üzerinde başlamaktadır.
         </div>
       </div>
     </div>
@@ -413,18 +716,18 @@
         <div class="tier-badge">
           <div class="tier-num">2</div>
           <div>
-            <div class="tier-title">Uretim Kademesi</div>
-            <div class="tier-range">11. &mdash; 15. Dosya</div>
+            <div class="tier-title">Üretim Kademesi</div>
+            <div class="tier-range">11. — 15. Dosya</div>
           </div>
         </div>
         <div style="text-align:right">
           <div class="tier-amount">2.500 TL</div>
-          <div class="tier-per">dosya basi prim</div>
+          <div class="tier-per">dosya başı prim</div>
         </div>
       </div>
       <div class="tier-body">
         <div class="tier-desc">
-          10 dosya esigini asan personel, <strong>aktif uretim kademesine</strong> gecmektedir. Bu kademede her dosya icin 2.500 TL prim kazanci baslar. MR Hasar, bu asamayi personelin uretim ritmini yakaladigi ve stabil performansa ulastigi donem olarak degerlendirmektedir. Ornek: 15 dosya uretildiginde <strong>toplam prim 12.500 TL</strong> (5 dosya x 2.500 TL) olarak hesaplanir.
+          10 dosya eşiğini aşan personel, <strong>aktif üretim kademesine</strong> geçmektedir. Bu kademede her dosya için 2.500 TL prim kazancı başlar. Bu aşama, personelin üretim ritmini yakaladığı ve stabil performansa ulaştığı dönem olarak değerlendirilmektedir. Örnek: 15 dosya üretildiğinde <strong>toplam prim 12.500 TL</strong> (5 dosya × 2.500 TL) olarak hesaplanır.
         </div>
       </div>
     </div>
@@ -435,18 +738,18 @@
         <div class="tier-badge">
           <div class="tier-num">3</div>
           <div>
-            <div class="tier-title">Yuksek Performans Kademesi</div>
-            <div class="tier-range">16. &mdash; 20. Dosya</div>
+            <div class="tier-title">Yüksek Performans Kademesi</div>
+            <div class="tier-range">16. — 20. Dosya</div>
           </div>
         </div>
         <div style="text-align:right">
           <div class="tier-amount">3.500 TL</div>
-          <div class="tier-per">dosya basi prim</div>
+          <div class="tier-per">dosya başı prim</div>
         </div>
       </div>
       <div class="tier-body">
         <div class="tier-desc">
-          16. dosya ve uzerinde <strong>yuksek performans primi</strong> devreye girmektedir. MR Hasar, bu kademeye ulasan personelin sahada etkin ve verimli calistigini degerlendirerek prim oranini artirmaktadir. Bu kademe, uretkenligin odullendirilmesi ilkesine dayanmaktadir. Ornek: 20 dosya uretildiginde toplam prim <strong>12.500 + 17.500 = 30.000 TL</strong> olarak hesaplanir.
+          16. dosya ve üzerinde <strong>yüksek performans primi</strong> devreye girmektedir. Bu kademeye ulaşan personelin sahada etkin ve verimli çalıştığı değerlendirilerek prim oranı artırılmaktadır. Örnek: 20 dosya üretildiğinde toplam prim <strong>12.500 + 17.500 = 30.000 TL</strong> olarak hesaplanır.
         </div>
       </div>
     </div>
@@ -458,81 +761,69 @@
           <div class="tier-num">4</div>
           <div>
             <div class="tier-title">Elit Performans Kademesi</div>
-            <div class="tier-range">21. Dosya ve Sonrasi</div>
+            <div class="tier-range">21. Dosya ve Sonrası</div>
           </div>
         </div>
         <div style="text-align:right">
           <div class="tier-amount">5.000 TL</div>
-          <div class="tier-per">dosya basi prim</div>
+          <div class="tier-per">dosya başı prim</div>
         </div>
       </div>
       <div class="tier-body">
         <div class="tier-desc">
-          21 ve uzeri dosya ureten personel, <strong>elit performans kategorisine</strong> dahil olmaktadir. MR Hasar, bu seviyeye ulasmayi istisnai basari olarak nitelendirmekte ve en yuksek prim oranini bu kademeye tahsis etmektedir. Ornek: 25 dosya uretildiginde toplam prim <strong>12.500 + 17.500 + 25.000 = 55.000 TL</strong>, maas dahil toplam kazanc <strong>95.000 TL</strong> olacaktir.
+          21 ve üzeri dosya üreten personel, <strong>elit performans kategorisine</strong> dahil olmaktadır. MR Hasar, bu seviyeye ulaşmayı istisnai başarı olarak nitelendirmekte ve en yüksek prim oranını bu kademeye tahsis etmektedir. Örnek: 25 dosya üretildiğinde toplam prim <strong>12.500 + 17.500 + 25.000 = 55.000 TL</strong>, maaş dahil toplam kazanç <strong>95.000 TL</strong> olacaktır.
         </div>
       </div>
     </div>
 
-    <!-- OZET TABLO -->
-    <div class="section-label" style="margin-top:14px">Kazanc Simulasyonu &mdash; Arac Deger Kaybi</div>
+    <div class="divider"></div>
 
-    <table class="data-tbl">
-      <thead>
-        <tr>
-          <th>Aylik Dosya</th>
-          <th style="text-align:right">Sabit Maas</th>
-          <th style="text-align:right">Prim</th>
-          <th style="text-align:right">Toplam Kazanc</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>10 Dosya</td><td class="r">40.000 TL</td><td class="r" style="color:var(--muted)">0 TL</td><td class="r" style="font-weight:800">40.000 TL</td></tr>
-        <tr><td>15 Dosya</td><td class="r">40.000 TL</td><td class="r" style="color:var(--blue)">12.500 TL</td><td class="r hi" style="font-weight:800">52.500 TL</td></tr>
-        <tr><td>20 Dosya</td><td class="r">40.000 TL</td><td class="r" style="color:var(--violet)">30.000 TL</td><td class="r hi" style="font-weight:800">70.000 TL</td></tr>
-        <tr><td>25 Dosya</td><td class="r">40.000 TL</td><td class="r" style="color:var(--amber)">55.000 TL</td><td class="r hi" style="font-weight:800;font-size:11px">95.000 TL</td></tr>
-      </tbody>
-    </table>
+    <div class="highlight-box">
+      <div class="hb-title">Maksimum Kazanç Potansiyeli (25 Dosya)</div>
+      <div class="hb-value">95.000 TL</div>
+      <div class="hb-sub">40.000 TL Sabit Maaş + 55.000 TL Üretim Primi</div>
+    </div>
 
   </div>
-  <div class="pg-footer"><span>MR Hasar Danismanlik ve Filo Yonetimi | Samsun | Gizli ve Ozeldir</span><div class="pg">2</div></div>
+  <div class="pg-footer"><span>MR Hasar Danışmanlık ve Filo Yönetimi | Samsun | Gizli ve Özeldir</span><div class="pg">3</div></div>
 </div>
 
-<!-- ===================== SAYFA 3: BEDENi HASAR + KURALLAR ===================== -->
+<!-- ===================== SAYFA 4: BEDENİ HASAR + KURALLAR ===================== -->
 <div class="page">
   <div class="content">
 
     <div class="page-header">
-      <h2>Bedeni Hasar Dosyalari &amp; Sirket Isleyis Kurallari</h2>
-      <div class="tag">DOSYA TURU 2 + KURALLAR</div>
+      <h2>Bedeni Hasar Dosyaları ve Şirket İşleyiş Kuralları</h2>
+      <div class="tag">DOSYA TÜRÜ 2 + KURALLAR</div>
     </div>
 
-    <!-- BEDENI HASAR -->
-    <div class="section-label">Bedeni Hasar Dosyalari &mdash; Yonlendirme Modeli</div>
+    <!-- BEDENİ HASAR -->
+    <div class="section-label">Bedeni Hasar Dosyaları — Yönlendirme Modeli</div>
 
     <div class="bh-card">
-      <h3>Bedeni Hasar Yonlendirme Ucreti</h3>
-      <div class="bh-row"><span class="bl">Yonlendirme Ucreti</span><span class="bv" style="color:var(--rose);font-size:14px">25.000 TL (Sabit)</span></div>
-      <div class="bh-row"><span class="bl">Degiskenlik</span><span class="bv">Degismez &mdash; tum dosyalarda sabit</span></div>
-      <div class="bh-row"><span class="bl">Prim Sistemi</span><span class="bv">Arac deger kaybi prim modeli aynen gecerlidir</span></div>
+      <h3>Bedeni Hasar Yönlendirme Ücreti</h3>
+      <div class="bh-row"><span class="bl">Yönlendirme Ücreti</span><span class="bv" style="color:var(--rose);font-size:13px">25.000 TL (Sabit)</span></div>
+      <div class="bh-row"><span class="bl">Değişkenlik</span><span class="bv">Değişmez — tüm dosyalarda sabit</span></div>
+      <div class="bh-row"><span class="bl">Prim Sistemi</span><span class="bv">Araç değer kaybı prim modeli aynen geçerlidir</span></div>
       <div class="bh-note">
-        <strong>Neden 25.000 TL sabit?</strong> Bedeni hasar dosyalari, dogasi geregi uzun surecli davalari kapsamaktadir. Dosya acilmasindan sonuclanmasina kadar gecen surede <strong>azil riski</strong> her an mevcut olup, vekaletname iptali durumunda yapilan tum operasyonel yatirim karsilanamamaktadir. Ayrica dosya surecinin uzunlugu, sonuclanma belirsizligi ve hukuki karmasikligi goz onune alindiginda, MR Hasar Danismanlik ve Filo Yonetimi bu dosya turu icin sabit ve degismeyen yonlendirme bedeli uygulamaktadir.
+        <strong>Neden 25.000 TL sabit?</strong> Bedeni hasar dosyaları, doğası gereği uzun süreçli davaları kapsamaktadır. Dosya açılmasından sonuçlanmasına kadar geçen sürede <strong>azil riski</strong> her an mevcut olup, vekaletname iptali durumunda yapılan tüm operasyonel yatırım karşılanamamaktadır. Sürecin uzunluğu, sonuçlanma belirsizliği ve hukuki karmaşıklığı göz önüne alınarak sabit ve değişmeyen yönlendirme bedeli uygulanmaktadır.
       </div>
     </div>
 
     <div class="divider"></div>
 
     <!-- KURALLAR -->
-    <div class="section-label">MR Hasar Isleyis Kurallari &mdash; Degistirilemez Prensipler</div>
+    <div class="section-label">MR Hasar İşleyiş Kuralları — Değiştirilemez Prensipler</div>
 
     <!-- KURAL 1 -->
     <div class="rule">
       <div class="rule-num">1</div>
       <div class="rule-content">
-        <div class="rule-title">SBM Sorgusu ve Vekalet Onay Sureci</div>
+        <div class="rule-title">SBM Sorgusu ve Vekalet Onay Süreci</div>
         <div class="rule-text">
-          Arac deger kaybi dosyasi icin oncelikle <strong>SBM sorgusu</strong> yapilir. Dosya olumlu onayi alinmadan vekaletname duzenlenemez. Vekaletname alim sorumlulugu ve bu surece iliskin tum yukumlulukler, <strong>vekaleti alan kisiye aittir</strong>.
+          Araç değer kaybı dosyası için öncelikle <strong>SBM sorgusu</strong> yapılır. Dosya olumlu onayı alınmadan vekaletname düzenlenemez. Vekaletname alım sorumluluğu ve bu sürece ilişkin tüm yükümlülükler, <strong>vekaleti alan kişiye aittir</strong>.
         </div>
-        <span class="rule-warn">Onayi olmayan dosya isleme alinamaz</span>
+        <span class="rule-warn">Onayı olmayan dosya işleme alınamaz</span>
       </div>
     </div>
 
@@ -540,11 +831,11 @@
     <div class="rule">
       <div class="rule-num">2</div>
       <div class="rule-content">
-        <div class="rule-title">Evrak Temin Suresi ve Sorumluluk Takibi</div>
+        <div class="rule-title">Evrak Temin Süresi ve Sorumluluk Takibi</div>
         <div class="rule-text">
-          Alinan dosyanin evrak temin sureci ve sorumluluk takibi, <strong>operasyon birimine gerekli verinin aktarilmasina kadar dosya sorumlusuna aittir</strong>. Vekaletname alinmasinin ardindan <strong>7 is gunu</strong> icinde evrak temini saglanamayan dosyalar icin iptal islemi uygulanir.
+          Alınan dosyanın evrak temin süreci ve sorumluluk takibi, <strong>operasyon birimine gerekli verinin aktarılmasına kadar dosya sorumlusuna aittir</strong>. Vekaletname alınmasının ardından <strong>7 iş günü</strong> içinde evrak temini sağlanamayan dosyalar için iptal işlemi uygulanır.
         </div>
-        <span class="rule-danger">7 gun sonunda evrak tamamlanmazsa masraf dosya sorumlusuna yazilir</span>
+        <span class="rule-danger">7 gün sonunda evrak tamamlanmazsa masraf dosya sorumlusuna yazılır</span>
       </div>
     </div>
 
@@ -552,11 +843,11 @@
     <div class="rule">
       <div class="rule-num">3</div>
       <div class="rule-content">
-        <div class="rule-title">Hak Mahrumiyeti / Ticari Kazanc Kaybi Dosyalari</div>
+        <div class="rule-title">Hak Mahrumiyeti / Ticari Kazanç Kaybı Dosyaları</div>
         <div class="rule-text">
-          Bu dosya turleri icin <strong>riza beyani ve/veya rucu sozlesmesi</strong> alinmadan islem saglanamaz. Sozlesme alinarak islem saglanan dosyalarda iptal veya feragat talep edilmesi durumunda, <strong>avukat vekalet ucreti odenmeden</strong> iptal/feragat islemleri gerceklestirilemez. Bu ucret mahsup edilemez ve devam eden baska bir dosyadan dusulemez.
+          Bu dosya türleri için <strong>rıza beyanı ve/veya rücu sözleşmesi</strong> alınmadan işlem sağlanamaz. Sözleşme alınarak işlem sağlanan dosyalarda iptal veya feragat talep edilmesi durumunda, <strong>avukat vekalet ücreti ödenmeden</strong> iptal/feragat işlemleri gerçekleştirilemez.
         </div>
-        <span class="rule-danger">Vekalet ucreti odenmeden iptal/feragat uygulanamaz</span>
+        <span class="rule-danger">Vekalet ücreti ödenmeden iptal/feragat uygulanamaz</span>
       </div>
     </div>
 
@@ -564,23 +855,21 @@
     <div class="rule">
       <div class="rule-num">4</div>
       <div class="rule-content">
-        <div class="rule-title">Azilname Surec Yonetimi</div>
+        <div class="rule-title">Azilname Süreç Yönetimi</div>
         <div class="rule-text">
-          Azilname gelmesi durumunda, dosyanin <strong>sistemde acildigi gunden azilname tarihine kadar</strong> olan surec degerlendirilir.
-          <br><br>
-          <strong>MR Hasar kaynakli gerekce varsa:</strong> MR Hasar Danismanlik ve Filo Yonetimi, kendi ic isleyisinde belirledigi cozum yolunu izler.
-          <br><br>
-          <strong>MR Hasar kaynakli gerekce yoksa:</strong> Dosya sorumlusu, ilgili dosyayi <strong>2 is gunu</strong> icinde geri almakla yukumludur. Geri alinmasi halinde noter vekalet ucreti MR Hasar tarafindan karsilanir. Geri alinamayan dosyalarda, dosya icin yapilan masraflar haric olmak uzere, <strong>dosya icin odenen prim hesabina borc yazilir</strong>.
+          Azilname gelmesi durumunda, dosyanın <strong>sistemde açıldığı günden azilname tarihine kadar</strong> olan süreç değerlendirilir.
+          <strong>MR Hasar kaynaklı gerekçe varsa:</strong> MR Hasar kendi iç işleyişinde belirlediği çözüm yolunu izler.
+          <strong>MR Hasar kaynaklı gerekçe yoksa:</strong> Dosya sorumlusu, ilgili dosyayı <strong>2 iş günü</strong> içinde geri almakla yükümlüdür. Geri alınması halinde noter vekalet ücreti MR Hasar tarafından karşılanır. Geri alınamayan dosyalarda, dosya için ödenen prim hesabına <strong>borç yazılır</strong>.
         </div>
-        <div class="rule-text" style="margin-top:6px;padding:6px 10px;background:rgba(225,29,72,0.04);border-radius:4px">
-          <strong>Bedeni hasar dosyalarinda ozel durum:</strong> Basvuru saglanmasi ardindan azilname gelmesi ve MR Hasar veya dosya sorumlusundan kaynaklanan bir durum olmamasi halinde, kisiye yonelik <strong>haksiz azil dosyasi islemi</strong> saglanir.
+        <div class="rule-text" style="margin-top:4px;padding:5px 10px;background:rgba(225,29,72,0.04);border-radius:4px">
+          <strong>Bedeni hasar dosyalarında özel durum:</strong> Başvuru sağlanması ardından azilname gelmesi ve MR Hasar veya dosya sorumlusundan kaynaklanan bir durum olmaması halinde, kişiye yönelik <strong>haksız azil dosyası işlemi</strong> sağlanır.
         </div>
-        <span class="rule-danger">2 is gunu iade suresi kesindir</span>
+        <span class="rule-danger">2 iş günü iade süresi kesindir</span>
       </div>
     </div>
 
   </div>
-  <div class="pg-footer"><span>MR Hasar Danismanlik ve Filo Yonetimi | Samsun | Gizli ve Ozeldir</span><div class="pg">3</div></div>
+  <div class="pg-footer"><span>MR Hasar Danışmanlık ve Filo Yönetimi | Samsun | Gizli ve Özeldir</span><div class="pg">4</div></div>
 </div>
 
 </div><!-- /report -->
@@ -590,7 +879,7 @@ function downloadPDF(){
   const el=document.getElementById('report');
   html2pdf().set({
     margin:0,
-    filename:'MR_Hasar_Calisma_Modeli_Teklifi.pdf',
+    filename:'MR_Hasar_Calisma_Modeli_Mimarisi.pdf',
     image:{type:'jpeg',quality:0.98},
     html2canvas:{scale:2,useCORS:true,letterRendering:true},
     jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
