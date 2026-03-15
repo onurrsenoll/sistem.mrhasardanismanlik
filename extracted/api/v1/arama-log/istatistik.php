@@ -41,6 +41,7 @@ if (!$tabloVar) {
         'donem' => $_GET['donem'] ?? 'gunluk',
         'en_cok_aranan' => []
     ]);
+    exit;
 }
 
 $where = [];

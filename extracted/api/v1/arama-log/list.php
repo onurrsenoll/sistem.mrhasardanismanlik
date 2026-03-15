@@ -38,6 +38,7 @@ if (!$tabloVar) {
         'limit' => 50,
         'toplam_sayfa' => 0
     ]);
+    exit;
 }
 
 $where = [];
