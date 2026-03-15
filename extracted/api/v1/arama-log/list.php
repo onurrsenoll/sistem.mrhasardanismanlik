@@ -73,6 +73,11 @@ if (!empty($_GET['q'])) {
     $params[] = $q;
 }
 
+// Sadece kayitli gorusmeler
+if (!empty($_GET['sadece_kayitli'])) {
+    $where[] = "a.kayit_dosya IS NOT NULL AND a.kayit_dosya != ''";
+}
+
 // Tarih aralik
 if (!empty($_GET['tarih_bas'])) {
     $where[] = 'a.baslangic_zamani >= ?';

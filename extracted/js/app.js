@@ -16,7 +16,9 @@ const MENU = [
     {id:'crm-yeni', label:'YENİ KAYIT', icon:'UserPlus'},
     {id:'crm-arama', label:'ARAMA LİSTESİ', icon:'PhoneCall'},
     {id:'saha-liste', label:'SAHA DOSYALARI', icon:'MapPin'},
-    {id:'saha-yeni', label:'YENİ SAHA KAYDI', icon:'PlusCircle'}
+    {id:'saha-yeni', label:'YENİ SAHA KAYDI', icon:'PlusCircle'},
+    {id:'crm-analiz', label:'CRM ANALİZ', icon:'BarChart3'},
+    {id:'crm-gorusme-kayitlari', label:'GÖRÜŞME KAYITLARI', icon:'Mic'}
   ]},
   {id:'hesap', label:'HESAPLAMALAR', icon:'Calculator', sub:[
     {id:'hesap-adk', label:'ARAÇ DEĞER KAYBI', icon:'Car'},
@@ -71,9 +73,7 @@ const MENU = [
     {id:'tanimlamalar-genel', label:'GENEL TANIMLAMALAR', icon:'Settings'},
     {id:'sistem-konum', label:'KONUM TAKİBİ', icon:'MapPin'},
     {id:'sistem-netsantral', label:'NETSANTRAL AYARLARI', icon:'Phone'},
-    {id:'arama-gecmis', label:'ARAMA GEÇMİŞİ', icon:'History'},
-    {id:'arama-gecmis-istatistik', label:'ARAMA İSTATİSTİKLERİ', icon:'BarChart3'},
-    {id:'arama-gecmis-cevapsiz', label:'CEVAPSIZ ÇAĞRILAR', icon:'PhoneMissed'}
+    {id:'arama-gecmis', label:'ARAMA GEÇMİŞİ', icon:'History'}
   ]}
 ];
 
@@ -823,13 +823,15 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     return <MR.NetsantralAyarlariPage setPage={setPage} user={user}/>;
   }
 
-  /* ARAMA GEÇMİŞİ / İSTATİSTİK / CEVAPSIZ */
-  if (page === 'arama-gecmis' || page === 'arama-gecmis-istatistik' || page === 'arama-gecmis-cevapsiz') {
-    if (user?.rol !== 'admin' && !MR.hasYetki(user, 'sistem', page)) {
-      return <div style={{padding:40,textAlign:'center',color:MR.C.danger,fontWeight:800}}>YETKİSİZ ERİŞİM</div>;
-    }
+  /* CRM ANALİZ (Arama Geçmişi + İstatistik + Cevapsız tek sayfada) */
+  if (page === 'crm-analiz' || page === 'arama-gecmis' || page === 'arama-gecmis-istatistik' || page === 'arama-gecmis-cevapsiz') {
     const defaultTab = page === 'arama-gecmis-istatistik' ? 'istatistik' : page === 'arama-gecmis-cevapsiz' ? 'cevapsiz' : 'gecmis';
     return <MR.AramaGecmisPage setPage={setPage} user={user} defaultTab={defaultTab}/>;
+  }
+
+  /* GÖRÜŞME KAYITLARI */
+  if (page === 'crm-gorusme-kayitlari') {
+    return <MR.GorusmeKayitlariPage setPage={setPage} user={user}/>;
   }
 
   /* KONUM TAKİBİ (ADMIN ONLY) */
