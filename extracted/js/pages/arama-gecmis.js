@@ -760,7 +760,9 @@ MR.GorusmeKayitlariPage = ({setPage, user}) => {
     }
     setAktifKayit(logId);
     setSure(0);
-    setToplamSure(0);
+    /* DB'deki sure_saniye'yi fallback olarak kullan (WebM duration Infinity olabilir) */
+    const aktifLog = loglar.find(l => l.id === logId);
+    setToplamSure(aktifLog && aktifLog.sure_saniye > 0 ? aktifLog.sure_saniye : 0);
     setOynatiliyor(false);
     setTimeout(() => {
       if (audioRef.current) {
@@ -786,8 +788,10 @@ MR.GorusmeKayitlariPage = ({setPage, user}) => {
   const progressSeek = (e, bar) => {
     const audio = audioRef.current;
     if (!audio) return;
-    const dur = audio.duration;
-    if (!dur || !isFinite(dur) || dur <= 0) return;
+    /* audio.duration geçersizse (WebM Infinity sorunu) DB'deki toplamSure fallback */
+    const rawDur = audio.duration;
+    const dur = (rawDur && isFinite(rawDur) && rawDur > 0) ? rawDur : toplamSure;
+    if (!dur || dur <= 0) return;
     const rect = bar.getBoundingClientRect();
     const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
     const pct = x / rect.width;
@@ -802,14 +806,20 @@ MR.GorusmeKayitlariPage = ({setPage, user}) => {
     e.preventDefault();
     const bar = progressRef.current;
     if (!bar) return;
-    progressSeek(e, bar);
-    const onMove = (ev) => { progressSeek(ev, bar); };
+    /* Touch event ise clientX'i touches'tan al */
+    const getEvt = (ev) => (ev.touches && ev.touches.length) ? ev.touches[0] : ev;
+    progressSeek(getEvt(e), bar);
+    const onMove = (ev) => { progressSeek(getEvt(ev), bar); };
     const onUp = () => {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
     };
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, {passive: false});
+    document.addEventListener('touchend', onUp);
   };
 
   const indir = (logId, dosyaAdi) => {
@@ -996,8 +1006,9 @@ MR.GorusmeKayitlariPage = ({setPage, user}) => {
                       ref: progressRef,
                       onClick: progressTikla,
                       onMouseDown: progressSuruklemeBasla,
+                      onTouchStart: progressSuruklemeBasla,
                       style:{
-                        flex:1, height:8, borderRadius:4, cursor:'pointer', position:'relative',
+                        flex:1, height:8, borderRadius:4, cursor:'pointer', position:'relative', touchAction:'none',
                         background: MR.tema === 'koyu' ? 'rgba(100,116,139,0.3)' : 'rgba(148,163,184,0.3)',
                         userSelect:'none'
                       }
@@ -1012,8 +1023,9 @@ MR.GorusmeKayitlariPage = ({setPage, user}) => {
                       }),
                       React.createElement('div', {
                         onMouseDown: progressSuruklemeBasla,
+                        onTouchStart: progressSuruklemeBasla,
                         style:{
-                          position:'absolute', top:-5, borderRadius:'50%',
+                          position:'absolute', top:-5, borderRadius:'50%', touchAction:'none',
                           left: 'calc(' + (toplamSure > 0 ? (sure / toplamSure * 100) : 0) + '% - 8px)',
                           width:16, height:16, background:C.purple, border:'2px solid #fff',
                           boxShadow:'0 1px 4px rgba(0,0,0,0.3)', transition: 'left 0.1s linear', cursor:'grab'
