@@ -106,8 +106,8 @@ MR.api = {
     return (await fetch(API_BASE + '/crm/dosya-yukle.php', { method: 'POST', headers: h, body: fd })).json();
   },
   // CRM ARAMA LOG
-  aramaLogList(p = {}) { return this.req('/crm/arama-log-list.php?' + new URLSearchParams(p)); },
-  aramaLogIstatistik(p = {}) { return this.req('/crm/arama-log-istatistik.php?' + new URLSearchParams(p)); },
+  aramaLogList(p = {}) { return this.req('/arama-log/list.php?' + new URLSearchParams(p)); },
+  aramaLogIstatistik(p = {}) { return this.req('/arama-log/istatistik.php?' + new URLSearchParams(p)); },
   // MUHASEBE
   kasaList() { return this.req('/muhasebe/kasa-list.php'); },
   kasaCreate(d) { return this.req('/muhasebe/kasa-create.php', { method: 'POST', body: JSON.stringify(d) }); },

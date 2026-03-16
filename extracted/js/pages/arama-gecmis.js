@@ -16,9 +16,11 @@ MR.AramaGecmisPage = ({setPage, user}) => {
     {id:'kayitlar', label:'GÖRÜŞME KAYITLARI', icon:'Mic'}
   ];
 
-  /* İSTATİSTİKLER */
-  const [stats, setStats] = useState({toplam:0, gelen:0, giden:0, cevapsiz:0, ort_sure:0, kayitli:0});
+  /* İSTATİSTİKLER - Backend genel.toplam_arama formatında döner */
+  const [stats, setStats] = useState({toplam_arama:0, gelen_arama:0, giden_arama:0, cevaplanan:0, cevapsiz:0, reddedilen:0, ort_sure:0, en_uzun_gorusme:0, toplam_sure:0, kayitli_gorusme:0});
   const [statsLoading, setStatsLoading] = useState(true);
+  const [grafik, setGrafik] = useState([]);
+  const [enCokAranan, setEnCokAranan] = useState([]);
 
   /* ARAMA LİSTESİ */
   const [data, setData] = useState([]);
@@ -36,10 +38,26 @@ MR.AramaGecmisPage = ({setPage, user}) => {
   const loadStats = useCallback(async () => {
     setStatsLoading(true);
     const p = {};
-    if (tarihBas) p.baslangic = tarihBas;
-    if (tarihBit) p.bitis = tarihBit;
+    if (tarihBas) p.tarih_bas = tarihBas;
+    if (tarihBit) p.tarih_son = tarihBit;
     const r = await api.aramaLogIstatistik(p);
-    if (r?.success && r.data) setStats(r.data);
+    if (r?.success && r.data) {
+      const g = r.data.genel || r.data;
+      setStats({
+        toplam_arama: g.toplam_arama || g.toplam || 0,
+        gelen_arama: g.gelen_arama || g.gelen || 0,
+        giden_arama: g.giden_arama || g.giden || 0,
+        cevaplanan: g.cevaplanan || 0,
+        cevapsiz: g.cevapsiz || 0,
+        reddedilen: g.reddedilen || 0,
+        ort_sure: g.ort_sure || 0,
+        en_uzun_gorusme: g.en_uzun_gorusme || 0,
+        toplam_sure: g.toplam_sure || 0,
+        kayitli_gorusme: g.kayitli_gorusme || g.kayitli || 0
+      });
+      if (r.data.grafik) setGrafik(r.data.grafik);
+      if (r.data.en_cok_aranan) setEnCokAranan(r.data.en_cok_aranan);
+    }
     setStatsLoading(false);
   }, [tarihBas, tarihBit]);
 
@@ -51,14 +69,14 @@ MR.AramaGecmisPage = ({setPage, user}) => {
     if (yonF) p.yon = yonF;
     const d = durumOverride !== undefined ? durumOverride : durumF;
     if (d) p.durum = d;
-    if (tarihBas) p.baslangic = tarihBas;
-    if (tarihBit) p.bitis = tarihBit;
+    if (tarihBas) p.tarih_bas = tarihBas;
+    if (tarihBit) p.tarih_son = tarihBit;
     const r = await api.aramaLogList(p);
     if (r?.success) {
-      setData(r.data?.items || []);
+      setData(r.data?.items || r.data?.aramalar || []);
       if (r.data?.pagination) {
-        setToplamSayfa(r.data.pagination.totalPages || 1);
-        setToplamKayit(r.data.pagination.total || 0);
+        setToplamSayfa(r.data.pagination.totalPages || r.data.pagination.toplam_sayfa || 1);
+        setToplamKayit(r.data.pagination.total || r.data.pagination.toplam || 0);
       }
     }
     setLoading(false);
@@ -110,12 +128,12 @@ MR.AramaGecmisPage = ({setPage, user}) => {
     <div className="fade-in">
       {/* İSTATİSTİK KARTLARI */}
       <div style={{display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:10, marginBottom:16}}>
-        <StatCard icon="Phone" label="TOPLAM ARAMA" value={stats.toplam} color={C.accent}/>
-        <StatCard icon="PhoneIncoming" label="GELEN" value={stats.gelen} color={C.success}/>
-        <StatCard icon="PhoneOutgoing" label="GİDEN" value={stats.giden} color={C.accent}/>
+        <StatCard icon="Phone" label="TOPLAM ARAMA" value={stats.toplam_arama} color={C.accent}/>
+        <StatCard icon="PhoneIncoming" label="GELEN" value={stats.gelen_arama} color={C.success}/>
+        <StatCard icon="PhoneOutgoing" label="GİDEN" value={stats.giden_arama} color={C.accent}/>
         <StatCard icon="PhoneMissed" label="CEVAPSIZ" value={stats.cevapsiz} color={C.danger}/>
         <StatCard icon="Clock" label="ORT. SÜRE" value={sureFmt(stats.ort_sure)} color={C.warning}/>
-        <StatCard icon="UserCheck" label="KAYITLI" value={stats.kayitli} color={C.cyan}/>
+        <StatCard icon="UserCheck" label="KAYITLI" value={stats.kayitli_gorusme} color={C.cyan}/>
       </div>
 
       {/* TABS */}
@@ -276,28 +294,54 @@ MR.AramaGecmisPage = ({setPage, user}) => {
         {tab === 'istatistik' && (
           <div style={{padding:20}}>
             {statsLoading ? <Loading/> : (
-              <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16}}>
-                {[
-                  {label:'TOPLAM ARAMA', value:stats.toplam, icon:'Phone', c:C.accent},
-                  {label:'GELEN ÇAĞRI', value:stats.gelen, icon:'PhoneIncoming', c:C.success},
-                  {label:'GİDEN ÇAĞRI', value:stats.giden, icon:'PhoneOutgoing', c:C.accent},
-                  {label:'CEVAPSIZ', value:stats.cevapsiz, icon:'PhoneMissed', c:C.danger},
-                  {label:'ORT. GÖRÜŞME SÜRESİ', value:sureFmt(stats.ort_sure), icon:'Clock', c:C.warning},
-                  {label:'CRM KAYITLI', value:stats.kayitli, icon:'UserCheck', c:C.cyan},
-                  {label:'CEVAPLANMA ORANI', value: stats.toplam > 0 ? '%' + ((1 - stats.cevapsiz / stats.toplam) * 100).toFixed(1) : '%0', icon:'TrendingUp', c:C.success},
-                  {label:'GELEN / GİDEN ORANI', value: stats.giden > 0 ? (stats.gelen / stats.giden).toFixed(2) : '-', icon:'ArrowLeftRight', c:C.purple},
-                  {label:'KAYIT ORANI', value: stats.toplam > 0 ? '%' + ((stats.kayitli / stats.toplam) * 100).toFixed(1) : '%0', icon:'Database', c:C.accent}
-                ].map((item, i) => (
-                  <div key={i} style={{
-                    background:`${item.c}08`, border:`1px solid ${item.c}20`,
-                    borderRadius:14, padding:20, textAlign:'center'
-                  }}>
-                    <LIcon name={item.icon} size={24} color={item.c} style={{opacity:0.7, marginBottom:8}}/>
-                    <div style={{fontSize:28, fontWeight:800, color:item.c}}>{item.value}</div>
-                    <div style={{fontSize:10, color:C.textMuted, marginTop:6, fontWeight:600, letterSpacing:0.5}}>{item.label}</div>
+              <>
+                <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:20}}>
+                  {[
+                    {label:'TOPLAM ARAMA', value:stats.toplam_arama, icon:'Phone', c:C.accent},
+                    {label:'GELEN ÇAĞRI', value:stats.gelen_arama, icon:'PhoneIncoming', c:C.success},
+                    {label:'GİDEN ÇAĞRI', value:stats.giden_arama, icon:'PhoneOutgoing', c:C.accent},
+                    {label:'CEVAPLANAN', value:stats.cevaplanan, icon:'PhoneCall', c:C.success},
+                    {label:'CEVAPSIZ', value:stats.cevapsiz, icon:'PhoneMissed', c:C.danger},
+                    {label:'REDDEDİLEN', value:stats.reddedilen, icon:'PhoneOff', c:C.warning},
+                    {label:'ORT. GÖRÜŞME SÜRESİ', value:sureFmt(stats.ort_sure), icon:'Clock', c:C.warning},
+                    {label:'EN UZUN GÖRÜŞME', value:sureFmt(stats.en_uzun_gorusme), icon:'Timer', c:C.purple},
+                    {label:'KAYITLI GÖRÜŞME', value:stats.kayitli_gorusme, icon:'UserCheck', c:C.cyan},
+                    {label:'CEVAPLANMA ORANI', value: stats.toplam_arama > 0 ? '%' + ((stats.cevaplanan / stats.toplam_arama) * 100).toFixed(1) : '%0', icon:'TrendingUp', c:C.success},
+                    {label:'TOPLAM SÜRE', value:sureFmt(stats.toplam_sure), icon:'Hourglass', c:C.accent},
+                    {label:'GELEN / GİDEN', value: stats.giden_arama > 0 ? (stats.gelen_arama / stats.giden_arama).toFixed(2) : '-', icon:'ArrowLeftRight', c:C.purple}
+                  ].map((item, i) => (
+                    <div key={i} style={{
+                      background:`${item.c}08`, border:`1px solid ${item.c}20`,
+                      borderRadius:14, padding:20, textAlign:'center'
+                    }}>
+                      <LIcon name={item.icon} size={24} color={item.c} style={{opacity:0.7, marginBottom:8}}/>
+                      <div style={{fontSize:28, fontWeight:800, color:item.c}}>{item.value}</div>
+                      <div style={{fontSize:10, color:C.textMuted, marginTop:6, fontWeight:600, letterSpacing:0.5}}>{item.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* EN ÇOK ARANAN NUMARALAR */}
+                {enCokAranan.length > 0 && (
+                  <div style={{...S.card, marginTop:16}}>
+                    <div style={{...S.cardHead, padding:'10px 16px'}}>
+                      <LIcon name="TrendingUp" size={14} color={C.accent}/>
+                      <span style={{fontSize:12, fontWeight:700}}>EN ÇOK ARANAN NUMARALAR</span>
+                    </div>
+                    <div style={{padding:16}}>
+                      {enCokAranan.map((n, i) => (
+                        <div key={i} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom: i < enCokAranan.length - 1 ? `1px solid ${C.border}` : 'none'}}>
+                          <div>
+                            <span style={{fontWeight:700, fontSize:12}}>{n.numara || n.arayan || n.aranan || '-'}</span>
+                            {n.ad && <span style={{fontSize:10, color:C.textMuted, marginLeft:8}}>{n.ad}</span>}
+                          </div>
+                          <Badge text={(n.adet || n.sayi || 0) + ' ARAMA'} color={C.accent}/>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         )}
