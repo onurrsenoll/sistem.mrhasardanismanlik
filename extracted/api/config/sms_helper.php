@@ -10,6 +10,7 @@
  */
 
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/helpers.php';
 
 /**
  * NetGSM SMS API üzerinden SMS gönder
