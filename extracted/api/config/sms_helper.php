@@ -309,6 +309,294 @@ function sms_ayarlari_oku($db = null) {
 /**
  * SMS log kaydı oluştur
  */
+/**
+ * NetGSM SMS kredi (bakiye) sorgulama
+ * @return array ['basarili' => bool, 'kredi' => string, 'mesaj' => string]
+ */
+function sms_kredi_sorgula() {
+    $db = getDB();
+    $ayarlar = sms_ayarlari_oku($db);
+
+    if (empty($ayarlar['sms_kullanici']) || empty($ayarlar['sms_sifre'])) {
+        return ['basarili' => false, 'kredi' => '0', 'mesaj' => 'SMS AYARLARI EKSİK'];
+    }
+
+    $params = [
+        'usercode' => $ayarlar['sms_kullanici'],
+        'password' => $ayarlar['sms_sifre'],
+        'stip'     => '1'
+    ];
+
+    $url = 'https://api.netgsm.com.tr/balance/list/get?' . http_build_query($params);
+    $response = sms_api_get($url);
+
+    if ($response['hata']) {
+        return ['basarili' => false, 'kredi' => '0', 'mesaj' => 'BAĞLANTI HATASI: ' . $response['hata']];
+    }
+
+    $yanit = trim($response['yanit']);
+    $hatalar = ['30' => 'GEÇERSİZ KULLANICI ADI VEYA ŞİFRE', '40' => 'MESAJ BAŞLIĞI TANIMLI DEĞİL', '100' => 'SİSTEM HATASI'];
+    if (isset($hatalar[$yanit])) {
+        return ['basarili' => false, 'kredi' => '0', 'mesaj' => $hatalar[$yanit]];
+    }
+
+    return ['basarili' => true, 'kredi' => $yanit, 'mesaj' => 'Kalan kredi: ' . $yanit];
+}
+
+/**
+ * NetGSM SMS başlıklarını listele
+ * @return array ['basarili' => bool, 'basliklar' => array, 'mesaj' => string]
+ */
+function sms_baslik_listele() {
+    $db = getDB();
+    $ayarlar = sms_ayarlari_oku($db);
+
+    if (empty($ayarlar['sms_kullanici']) || empty($ayarlar['sms_sifre'])) {
+        return ['basarili' => false, 'basliklar' => [], 'mesaj' => 'SMS AYARLARI EKSİK'];
+    }
+
+    $params = [
+        'usercode' => $ayarlar['sms_kullanici'],
+        'password' => $ayarlar['sms_sifre']
+    ];
+
+    $url = 'https://api.netgsm.com.tr/sms/header?' . http_build_query($params);
+    $response = sms_api_get($url);
+
+    if ($response['hata']) {
+        return ['basarili' => false, 'basliklar' => [], 'mesaj' => 'BAĞLANTI HATASI: ' . $response['hata']];
+    }
+
+    $yanit = trim($response['yanit']);
+    $hatalar = ['30' => 'GEÇERSİZ KULLANICI ADI VEYA ŞİFRE', '40' => 'BAŞLIK TANIMLI DEĞİL', '100' => 'SİSTEM HATASI'];
+    if (isset($hatalar[$yanit])) {
+        return ['basarili' => false, 'basliklar' => [], 'mesaj' => $hatalar[$yanit]];
+    }
+
+    $basliklar = array_values(array_filter(array_map('trim', explode('<br>', $yanit))));
+    return ['basarili' => true, 'basliklar' => $basliklar, 'mesaj' => count($basliklar) . ' adet başlık bulundu'];
+}
+
+/**
+ * SMS iletim raporu sorgula
+ * @param string $bulkId NetGSM bulk ID
+ * @param int $tip 0=tümü, 1=iletildi, 2=iletilmedi
+ * @return array
+ */
+function sms_rapor_sorgula($bulkId, $tip = 0) {
+    $db = getDB();
+    $ayarlar = sms_ayarlari_oku($db);
+
+    if (empty($ayarlar['sms_kullanici']) || empty($ayarlar['sms_sifre'])) {
+        return ['basarili' => false, 'raporlar' => [], 'mesaj' => 'SMS AYARLARI EKSİK'];
+    }
+
+    $params = [
+        'usercode' => $ayarlar['sms_kullanici'],
+        'password' => $ayarlar['sms_sifre'],
+        'bulkid'   => $bulkId,
+        'type'     => $tip,
+        'version'  => '2'
+    ];
+
+    $url = 'https://api.netgsm.com.tr/sms/report?' . http_build_query($params);
+    $response = sms_api_get($url);
+
+    if ($response['hata']) {
+        return ['basarili' => false, 'raporlar' => [], 'mesaj' => 'BAĞLANTI HATASI: ' . $response['hata']];
+    }
+
+    $yanit = trim($response['yanit']);
+    $hatalar = ['30','40','50','60','70','100','101'];
+    $netgsmKodlari = [
+        '30' => 'GEÇERSİZ KULLANICI ADI VEYA ŞİFRE', '40' => 'BAŞLIK TANIMLI DEĞİL',
+        '50' => 'ÜYELİK SONLANMIŞ', '60' => 'HATA - TEKRAR DENEYİN', '70' => 'GEÇERSİZ PARAMETRE',
+        '100' => 'SİSTEM HATASI', '101' => 'SİSTEMDE KAYITLI DEĞİL'
+    ];
+    if (in_array($yanit, $hatalar)) {
+        return ['basarili' => false, 'raporlar' => [], 'mesaj' => $netgsmKodlari[$yanit] ?? 'HATA KODU: ' . $yanit];
+    }
+
+    $satirlar = explode('<br>', $yanit);
+    $raporlar = [];
+    $durumAciklama = ['0'=>'İletildi','1'=>'İletilmedi','2'=>'Zaman aşımı','3'=>'Hatalı numara','4'=>'Operatör hatası','5'=>'Telefon kapalı','6'=>'Bilinmiyor','11'=>'Bekliyor','12'=>'Bekliyor'];
+    foreach ($satirlar as $satir) {
+        $satir = trim($satir);
+        if (empty($satir)) continue;
+        $parcalar = explode(' ', $satir);
+        if (count($parcalar) >= 2) {
+            $raporlar[] = [
+                'telefon' => $parcalar[0],
+                'durum'   => $durumAciklama[$parcalar[1] ?? ''] ?? 'Durum kodu: ' . ($parcalar[1] ?? ''),
+                'kod'     => $parcalar[1] ?? '',
+                'tarih'   => $parcalar[2] ?? '',
+                'operator' => $parcalar[3] ?? ''
+            ];
+        }
+    }
+
+    return ['basarili' => true, 'raporlar' => $raporlar, 'mesaj' => count($raporlar) . ' adet rapor bulundu'];
+}
+
+/**
+ * Zamanlanmış SMS iptal et
+ * @param string $bulkId NetGSM bulk ID
+ * @return array
+ */
+function sms_iptal($bulkId) {
+    $db = getDB();
+    $ayarlar = sms_ayarlari_oku($db);
+
+    if (empty($ayarlar['sms_kullanici']) || empty($ayarlar['sms_sifre'])) {
+        return ['basarili' => false, 'mesaj' => 'SMS AYARLARI EKSİK'];
+    }
+
+    $params = [
+        'usercode' => $ayarlar['sms_kullanici'],
+        'password' => $ayarlar['sms_sifre'],
+        'bulkid'   => $bulkId
+    ];
+
+    $url = 'https://api.netgsm.com.tr/sms/cancel?' . http_build_query($params);
+    $response = sms_api_get($url);
+
+    if ($response['hata']) {
+        return ['basarili' => false, 'mesaj' => 'BAĞLANTI HATASI: ' . $response['hata']];
+    }
+
+    $yanit = trim($response['yanit']);
+    if (in_array($yanit, ['00', '01'])) {
+        return ['basarili' => true, 'mesaj' => 'SMS GÖNDERİMİ İPTAL EDİLDİ'];
+    }
+
+    $netgsmKodlari = [
+        '30' => 'GEÇERSİZ KULLANICI ADI VEYA ŞİFRE', '60' => 'HATA - TEKRAR DENEYİN',
+        '70' => 'GEÇERSİZ PARAMETRE', '100' => 'SİSTEM HATASI'
+    ];
+    return ['basarili' => false, 'mesaj' => $netgsmKodlari[$yanit] ?? 'İPTAL BAŞARISIZ, HATA KODU: ' . $yanit];
+}
+
+/**
+ * Toplu SMS gönder (birden fazla numaraya aynı mesaj)
+ * @param array $telefonlar
+ * @param string $mesaj
+ * @param int|null $kullaniciId
+ * @return array
+ */
+function sms_toplu_gonder($telefonlar, $mesaj, $kullaniciId = null) {
+    $db = getDB();
+    $ayarlar = sms_ayarlari_oku($db);
+
+    if (empty($ayarlar['sms_aktif']) || $ayarlar['sms_aktif'] !== '1') {
+        return ['basarili' => 0, 'basarisiz' => count($telefonlar), 'sonuclar' => [], 'hata' => 'SMS SİSTEMİ AKTİF DEĞİL'];
+    }
+    if (empty($ayarlar['sms_kullanici']) || empty($ayarlar['sms_sifre']) || empty($ayarlar['sms_baslik'])) {
+        return ['basarili' => 0, 'basarisiz' => count($telefonlar), 'sonuclar' => [], 'hata' => 'SMS AYARLARI EKSİK'];
+    }
+
+    $normalTelefonlar = [];
+    $gecersizler = [];
+    foreach ($telefonlar as $tel) {
+        $normal = sms_telefon_normalize($tel);
+        if ($normal) {
+            $normalTelefonlar[] = $normal;
+        } else {
+            $gecersizler[] = $tel;
+        }
+    }
+
+    if (empty($normalTelefonlar)) {
+        return ['basarili' => 0, 'basarisiz' => count($telefonlar), 'sonuclar' => [], 'hata' => 'GEÇERLİ TELEFON NUMARASI BULUNAMADI'];
+    }
+
+    // XML oluştur
+    $numaralar = '';
+    foreach ($normalTelefonlar as $tel) {
+        $numaralar .= '<no>' . htmlspecialchars($tel, ENT_XML1) . '</no>';
+    }
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>
+<mainbody>
+    <header>
+        <company dession="0">Netgsm</company>
+        <usercode>' . htmlspecialchars($ayarlar['sms_kullanici'], ENT_XML1) . '</usercode>
+        <password>' . htmlspecialchars($ayarlar['sms_sifre'], ENT_XML1) . '</password>
+        <type>1:n</type>
+        <msgheader>' . htmlspecialchars($ayarlar['sms_baslik'], ENT_XML1) . '</msgheader>
+    </header>
+    <body>
+        <msg><![CDATA[' . $mesaj . ']]></msg>
+        ' . $numaralar . '
+    </body>
+</mainbody>';
+
+    // POST ile gönder
+    $result = http_post('https://api.netgsm.com.tr/sms/send/xml', $xml, ['Content-Type: application/xml'], 30);
+
+    $basarili = 0;
+    $basarisiz = count($gecersizler);
+    $sonuclar = [];
+
+    if ($result['body'] === false || !empty($result['error'])) {
+        $basarisiz += count($normalTelefonlar);
+        $sonuclar[] = ['hata' => $result['error'] ?: 'API bağlantı hatası'];
+    } else {
+        $parts = explode(' ', trim($result['body']), 2);
+        $kod = $parts[0] ?? '';
+
+        if (in_array($kod, ['00', '01', '02'])) {
+            $basarili = count($normalTelefonlar);
+            $bulkId = $parts[1] ?? '';
+            $sonuclar[] = ['kod' => $kod, 'bulk_id' => $bulkId, 'mesaj' => 'TOPLU SMS GÖNDERİLDİ'];
+            foreach ($normalTelefonlar as $tel) {
+                sms_logla($db, $tel, $mesaj, null, $kullaniciId, 'gonderildi', 'Toplu SMS gönderildi', $bulkId);
+            }
+        } else {
+            $basarisiz += count($normalTelefonlar);
+            $netgsmKodlari = [
+                '20'=>'MESAJ METNİ BULUNAMADI','30'=>'GEÇERSİZ KULLANICI ADI VEYA ŞİFRE',
+                '40'=>'BAŞLIK TANIMLI DEĞİL','50'=>'ÜYELİK SONLANMIŞ','70'=>'GEÇERSİZ PARAMETRE','100'=>'SİSTEM HATASI'
+            ];
+            $hataMesaj = $netgsmKodlari[$kod] ?? 'HATA KODU: ' . $kod;
+            $sonuclar[] = ['kod' => $kod, 'mesaj' => $hataMesaj];
+            foreach ($normalTelefonlar as $tel) {
+                sms_logla($db, $tel, $mesaj, null, $kullaniciId, 'hata', $hataMesaj);
+            }
+        }
+    }
+
+    foreach ($gecersizler as $tel) {
+        $sonuclar[] = ['telefon' => $tel, 'mesaj' => 'GEÇERSİZ NUMARA'];
+        sms_logla($db, $tel, $mesaj, null, $kullaniciId, 'hata', 'Geçersiz telefon numarası');
+    }
+
+    return ['basarili' => $basarili, 'basarisiz' => $basarisiz, 'sonuclar' => $sonuclar];
+}
+
+/**
+ * NetGSM API GET isteği gönder (kredi, başlık, rapor, iptal için)
+ */
+function sms_api_get($url) {
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL            => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 30,
+        CURLOPT_CONNECTTIMEOUT => 15,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
+        CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+        CURLOPT_HTTPHEADER     => ['User-Agent: MR-Hasar-CRM/1.0', 'Accept: text/plain']
+    ]);
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    curl_close($ch);
+    return ['yanit' => $response ?: '', 'hata' => $error ?: null];
+}
+
+/**
+ * SMS log kaydı oluştur
+ */
 function sms_logla($db, $telefon, $mesaj, $dosyaId, $kullaniciId, $durum, $sonucMesaj, $bulkId = null) {
     try {
         $stmt = $db->prepare("

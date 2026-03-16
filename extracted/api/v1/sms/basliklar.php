@@ -6,14 +6,13 @@
 
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
-require_once __DIR__ . '/../../../../netgsm-sms-module/NetgsmSms.php';
+require_once __DIR__ . '/../../config/sms_helper.php';
 
 setup_headers();
 require_method('GET');
 
 $user = auth_required(['admin']);
 
-$sms = new NetgsmSms();
-$sonuc = $sms->baslikListele();
+$sonuc = sms_baslik_listele();
 
 json_success($sonuc, $sonuc['basarili'] ? 'BAŞLIKLAR LİSTELENDİ' : 'BAŞLIKLAR LİSTELENEMEDİ');

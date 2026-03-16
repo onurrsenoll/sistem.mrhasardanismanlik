@@ -8,7 +8,7 @@
 
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
-require_once __DIR__ . '/../../../../netgsm-sms-module/NetgsmSms.php';
+require_once __DIR__ . '/../../config/sms_helper.php';
 
 setup_headers();
 require_method('GET');
@@ -22,7 +22,6 @@ if (empty($_GET['bulk_id'])) {
 $bulkId = $_GET['bulk_id'];
 $tip = isset($_GET['tip']) ? (int)$_GET['tip'] : 0;
 
-$sms = new NetgsmSms();
-$sonuc = $sms->raporSorgula($bulkId, $tip);
+$sonuc = sms_rapor_sorgula($bulkId, $tip);
 
 json_success($sonuc, $sonuc['basarili'] ? 'RAPOR SORGULAMASI BAŞARILI' : 'RAPOR SORGULANAMADI');

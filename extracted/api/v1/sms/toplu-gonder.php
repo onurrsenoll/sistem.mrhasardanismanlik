@@ -7,7 +7,7 @@
 
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
-require_once __DIR__ . '/../../../../netgsm-sms-module/NetgsmSms.php';
+require_once __DIR__ . '/../../config/sms_helper.php';
 
 setup_headers();
 require_method('POST');
@@ -24,8 +24,7 @@ if (count($body['telefonlar']) > 500) {
     json_error('TEK SEFERDEKİ TOPLAM SMS SINIRI 500 ADETTIR', 422);
 }
 
-$sms = new NetgsmSms();
-$sonuc = $sms->topluGonder($body['telefonlar'], $body['mesaj'], $user['id']);
+$sonuc = sms_toplu_gonder($body['telefonlar'], $body['mesaj'], $user['id']);
 
 log_action($user['id'], 'sms_toplu_gonder', "Toplu SMS: " . count($body['telefonlar']) . " numara - Başarılı: {$sonuc['basarili']}, Başarısız: {$sonuc['basarisiz']}", 'sms_loglari');
 
