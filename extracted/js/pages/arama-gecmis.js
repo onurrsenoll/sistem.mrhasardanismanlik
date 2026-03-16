@@ -717,19 +717,31 @@ MR.GorusmeKayitlariPage = ({setPage, user}) => {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    const onTime = () => { setSure(audio.currentTime); };
-    const onMeta = () => { setToplamSure(audio.duration || 0); };
+    const getDuration = () => {
+      const d = audio.duration;
+      return (d && isFinite(d) && d > 0) ? d : 0;
+    };
+    const onTime = () => {
+      setSure(audio.currentTime);
+      /* WebM dosyalarında duration geç gelebilir, her timeupdate'de kontrol et */
+      const d = getDuration();
+      if (d > 0) setToplamSure(d);
+    };
+    const onMeta = () => { const d = getDuration(); if (d > 0) setToplamSure(d); };
+    const onDurChange = () => { const d = getDuration(); if (d > 0) setToplamSure(d); };
     const onPlay = () => setOynatiliyor(true);
     const onPause = () => setOynatiliyor(false);
     const onEnd = () => { setOynatiliyor(false); setSure(0); };
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('loadedmetadata', onMeta);
+    audio.addEventListener('durationchange', onDurChange);
     audio.addEventListener('play', onPlay);
     audio.addEventListener('pause', onPause);
     audio.addEventListener('ended', onEnd);
     return () => {
       audio.removeEventListener('timeupdate', onTime);
       audio.removeEventListener('loadedmetadata', onMeta);
+      audio.removeEventListener('durationchange', onDurChange);
       audio.removeEventListener('play', onPlay);
       audio.removeEventListener('pause', onPause);
       audio.removeEventListener('ended', onEnd);
@@ -765,16 +777,21 @@ MR.GorusmeKayitlariPage = ({setPage, user}) => {
   };
 
   const ileriGeri = (sn) => {
-    if (!audioRef.current) return;
-    audioRef.current.currentTime = Math.max(0, Math.min(audioRef.current.currentTime + sn, toplamSure));
+    const audio = audioRef.current;
+    if (!audio) return;
+    const dur = audio.duration && isFinite(audio.duration) ? audio.duration : toplamSure;
+    audio.currentTime = Math.max(0, Math.min(audio.currentTime + sn, dur));
   };
 
   const progressSeek = (e, bar) => {
-    if (!audioRef.current || !toplamSure) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    const dur = audio.duration;
+    if (!dur || !isFinite(dur) || dur <= 0) return;
     const rect = bar.getBoundingClientRect();
     const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
     const pct = x / rect.width;
-    audioRef.current.currentTime = pct * toplamSure;
+    audio.currentTime = pct * dur;
   };
 
   const progressTikla = (e) => {
