@@ -606,7 +606,7 @@ MR.AramaGecmisPage = ({setPage, user, defaultTab}) => {
     ),
 
     /* ── GÖRÜŞME KAYITLARI TAB ── */
-    tab === 'kayitlar' && React.createElement(MR.GorusmeKayitlariPage, {setPage, user}),
+    tab === 'kayitlar' && MR.GorusmeKayitlariPage && React.createElement(MR.GorusmeKayitlariPage, {setPage, user}),
 
     /* ═══ GİZLİ SES ELEMENTİ ═══ */
     React.createElement('audio', {
@@ -652,6 +652,3 @@ MR.AramaGecmisPage = ({setPage, user, defaultTab}) => {
     )
   );
 };
-
-/* CRM ANALİZ menüsü için alias - AramaGecmisPage'i kullanır */
-MR.CrmAnalizPage = (props) => React.createElement(MR.AramaGecmisPage, {...props, defaultTab: props.defaultTab || 'gecmis'});

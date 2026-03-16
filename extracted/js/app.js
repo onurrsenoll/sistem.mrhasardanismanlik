@@ -823,7 +823,7 @@ const PageRouter = ({page, setPage, user, setUser}) => {
 
   /* CRM ANALİZ (Arama Geçmişi + İstatistik + Cevapsız + Görüşme Kayıtları tek menüde) */
   if (page === 'crm-analiz') {
-    return <MR.CrmAnalizPage setPage={setPage} user={user}/>;
+    return <MR.AramaGecmisPage setPage={setPage} user={user}/>;
   }
 
   /* KONUM TAKİBİ (ADMIN ONLY) */
