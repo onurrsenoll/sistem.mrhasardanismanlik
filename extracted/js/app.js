@@ -15,6 +15,7 @@ const MENU = [
     {id:'crm-liste', label:'CRM LİSTESİ', icon:'List'},
     {id:'crm-yeni', label:'YENİ KAYIT', icon:'UserPlus'},
     {id:'crm-arama', label:'ARAMA LİSTESİ', icon:'PhoneCall'},
+    {id:'crm-analiz', label:'CRM ANALİZ', icon:'BarChart3'},
     {id:'saha-liste', label:'SAHA DOSYALARI', icon:'MapPin'},
     {id:'saha-yeni', label:'YENİ SAHA KAYDI', icon:'PlusCircle'}
   ]},
@@ -750,6 +751,7 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   if (page === 'crm-liste') return <MR.CrmPage setPage={setPage} user={user} view="liste"/>;
   if (page === 'crm-yeni') return <MR.CrmPage setPage={setPage} user={user} view="yeni"/>;
   if (page === 'crm-arama') return <MR.CrmAramaPage setPage={setPage} user={user}/>;
+  if (page === 'crm-analiz') return <MR.AramaGecmisPage setPage={setPage} user={user}/>;
   if (crmIdMatch) return <MR.CrmPage setPage={setPage} user={user} view="detay" crmId={parseInt(crmIdMatch[1])}/>;
 
   /* SAHA DOSYALARI */
