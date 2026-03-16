@@ -1851,7 +1851,7 @@ const LogTab = () => {
 const SmsTab = () => {
   const {C, S, LIcon, Badge, FormGroup, Loading, api, fmt} = MR;
   const [smsAltTab, setSmsAltTab] = useState('ayarlar');
-  const [ayarlar, setAyarlar] = useState({sms_aktif:'0',sms_kullanici:'',sms_sifre:'',sms_baslik:''});
+  const [ayarlar, setAyarlar] = useState({sms_aktif:'0',sms_kullanici:'',sms_sifre:'',sms_baslik:'',site_url:''});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [mesaj, setMesaj] = useState(null);
@@ -1890,11 +1890,11 @@ const SmsTab = () => {
       if (r?.success && r.data) {
         const a = {};
         (Array.isArray(r.data) ? r.data : []).forEach(item => {
-          if (item.anahtar && item.anahtar.startsWith('sms_')) a[item.anahtar] = item.deger || '';
+          if (item.anahtar && (item.anahtar.startsWith('sms_') || item.anahtar === 'site_url')) a[item.anahtar] = item.deger || '';
         });
         if (Object.keys(a).length === 0 && typeof r.data === 'object' && !Array.isArray(r.data)) {
           Object.keys(r.data).forEach(k => {
-            if (k.startsWith('sms_')) a[k] = r.data[k] || '';
+            if (k.startsWith('sms_') || k === 'site_url') a[k] = r.data[k] || '';
           });
         }
         setAyarlar(prev => ({...prev, ...a}));
