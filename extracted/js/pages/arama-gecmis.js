@@ -727,7 +727,21 @@ MR.GorusmeKayitlariPage = ({setPage, user}) => {
       const d = getDuration();
       if (d > 0) setToplamSure(d);
     };
-    const onMeta = () => { const d = getDuration(); if (d > 0) setToplamSure(d); };
+    const onMeta = () => {
+      const d = getDuration();
+      if (d > 0) { setToplamSure(d); return; }
+      /* Duration Infinity/NaN ise → sona seek yaparak gerçek süreyi keşfet */
+      audio.currentTime = 1e10; /* çok büyük değere seek et */
+      const onSeeked = () => {
+        audio.removeEventListener('seeked', onSeeked);
+        const realDur = audio.duration;
+        if (realDur && isFinite(realDur) && realDur > 0) {
+          setToplamSure(realDur);
+        }
+        audio.currentTime = 0; /* başa dön */
+      };
+      audio.addEventListener('seeked', onSeeked);
+    };
     const onDurChange = () => { const d = getDuration(); if (d > 0) setToplamSure(d); };
     const onPlay = () => setOynatiliyor(true);
     const onPause = () => setOynatiliyor(false);
