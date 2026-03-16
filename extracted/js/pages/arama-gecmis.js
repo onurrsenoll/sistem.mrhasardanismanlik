@@ -769,12 +769,30 @@ MR.GorusmeKayitlariPage = ({setPage, user}) => {
     audioRef.current.currentTime = Math.max(0, Math.min(audioRef.current.currentTime + sn, toplamSure));
   };
 
-  const progressTikla = (e) => {
+  const progressSeek = (e, bar) => {
     if (!audioRef.current || !toplamSure) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
+    const rect = bar.getBoundingClientRect();
+    const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
     const pct = x / rect.width;
     audioRef.current.currentTime = pct * toplamSure;
+  };
+
+  const progressTikla = (e) => {
+    progressSeek(e, e.currentTarget);
+  };
+
+  const progressSuruklemeBasla = (e) => {
+    e.preventDefault();
+    const bar = progressRef.current;
+    if (!bar) return;
+    progressSeek(e, bar);
+    const onMove = (ev) => { progressSeek(ev, bar); };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
   };
 
   const indir = (logId, dosyaAdi) => {
@@ -960,25 +978,28 @@ MR.GorusmeKayitlariPage = ({setPage, user}) => {
                     React.createElement('div', {
                       ref: progressRef,
                       onClick: progressTikla,
+                      onMouseDown: progressSuruklemeBasla,
                       style:{
-                        flex:1, height:6, borderRadius:3, cursor:'pointer', position:'relative',
-                        background: MR.tema === 'koyu' ? 'rgba(100,116,139,0.3)' : 'rgba(148,163,184,0.3)'
+                        flex:1, height:8, borderRadius:4, cursor:'pointer', position:'relative',
+                        background: MR.tema === 'koyu' ? 'rgba(100,116,139,0.3)' : 'rgba(148,163,184,0.3)',
+                        userSelect:'none'
                       }
                     },
                       React.createElement('div', {
                         style:{
-                          position:'absolute', top:0, left:0, height:'100%', borderRadius:3,
+                          position:'absolute', top:0, left:0, height:'100%', borderRadius:4,
                           width: (toplamSure > 0 ? (sure / toplamSure * 100) : 0) + '%',
                           background: 'linear-gradient(90deg, ' + C.purple + ', ' + (C.accent || '#3b82f6') + ')',
                           transition: 'width 0.1s linear'
                         }
                       }),
                       React.createElement('div', {
+                        onMouseDown: progressSuruklemeBasla,
                         style:{
-                          position:'absolute', top:-4, borderRadius:'50%',
-                          left: 'calc(' + (toplamSure > 0 ? (sure / toplamSure * 100) : 0) + '% - 7px)',
-                          width:14, height:14, background:C.purple, border:'2px solid #fff',
-                          boxShadow:'0 1px 4px rgba(0,0,0,0.3)', transition: 'left 0.1s linear'
+                          position:'absolute', top:-5, borderRadius:'50%',
+                          left: 'calc(' + (toplamSure > 0 ? (sure / toplamSure * 100) : 0) + '% - 8px)',
+                          width:16, height:16, background:C.purple, border:'2px solid #fff',
+                          boxShadow:'0 1px 4px rgba(0,0,0,0.3)', transition: 'left 0.1s linear', cursor:'grab'
                         }
                       })
                     ),

@@ -173,7 +173,14 @@ MR.ICONS = {
   Loader:'M12 2v4 M12 18v4 M4.93 4.93l2.83 2.83 M16.24 16.24l2.83 2.83 M2 12h4 M18 12h4 M4.93 19.07l2.83-2.83 M16.24 7.76l2.83-2.83',
   UserCircle:'M12 12m-10 0a10 10 0 1020 0 10 10 0 10-20 0z M12 12m-3 0a3 3 0 106 0 3 3 0 10-6 0z M18.6 19.5a8.2 8.2 0 00-13.2 0',
   Steering:'M12 12m-10 0a10 10 0 1020 0 10 10 0 10-20 0z M12 12m-4 0a4 4 0 108 0 4 4 0 10-8 0z M12 2v6 M2 12h6 M22 12h-6',
-  PersonStanding:'M12 4m-1 0a1 1 0 102 0 1 1 0 10-2 0z M12 7v5 M9 12l3 5 3-5 M9 22l3-10 M15 22l-3-10'
+  PersonStanding:'M12 4m-1 0a1 1 0 102 0 1 1 0 10-2 0z M12 7v5 M9 12l3 5 3-5 M9 22l3-10 M15 22l-3-10',
+  Play:'M5 3l14 9-14 9V3z',
+  Pause:'M6 4h4v16H6z M14 4h4v16h-4z',
+  Square:'M3 3h18v18H3z',
+  RotateCw:'M23 4v6h-6 M20.49 15a9 9 0 11-2.12-9.36L23 10',
+  SkipBack:'M19 20L9 12l10-8v16z M5 19V5',
+  SkipForward:'M5 4l10 8-10 8V4z M19 5v14',
+  Volume2:'M11 5L6 9H2v6h4l5 4V5z M19.07 4.93a10 10 0 010 14.14 M15.54 8.46a5 5 0 010 7.07'
 };
 
 MR.LIcon = ({ name, size = 16, color = 'currentColor', style: st = {}, ...p }) => (
