@@ -1278,7 +1278,7 @@ INSERT IGNORE INTO ayarlar (anahtar, deger, tip) VALUES
 ('openai_api_key', '', 'text'),
 ('ai_api_key', '', 'text'),
 ('sms_aktif', '0', 'text'),
-('sms_kullanici', '5550984254', 'text'),
+('sms_kullanici', '3625026502', 'text'),
 ('sms_sifre', '', 'text'),
 ('sms_baslik', 'MR HASAR', 'text'),
 ('sms_webhook_api_key', 'mr_hasar_2026', 'text'),

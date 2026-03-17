@@ -2396,7 +2396,7 @@ const SmsTab = () => {
 
             <FormGroup label="NETGSM KULLANICI ADI (USERCODE)">
               <input value={ayarlar.sms_kullanici||''} onChange={e => u('sms_kullanici', e.target.value)}
-                placeholder="5550984254" style={{...S.input, fontSize:12}}/>
+                placeholder="3625026502" style={{...S.input, fontSize:12}}/>
               <div style={{fontSize:9, color:C.textMuted, marginTop:4}}>
                 NETGSM PANELİNDEKİ "KULLANICI ADI" (TELEFON NUMARANIZ). NETSANTRAL İLE AYNI BİLGİLERDİR.
               </div>
