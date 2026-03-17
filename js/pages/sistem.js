@@ -2346,11 +2346,24 @@ const SmsTab = () => {
               </div>
             </div>
 
-            {/* NETSANTRAL BİLGİLERİNİ KULLAN BUTONU */}
+            {/* NETSANTRAL BİLGİLERİNİ OTOMATİK AKTAR - SMS ŞİFRESİ BOŞSA */}
             {(() => {
               const nsKullanici = localStorage.getItem('mr_netsantral_kullanici');
               const nsSifre = localStorage.getItem('mr_netsantral_api_sifre');
               if (!nsKullanici && !nsSifre) return null;
+
+              // SMS şifresi boşsa NetSantral bilgilerini otomatik aktar
+              if ((!ayarlar.sms_sifre || !ayarlar.sms_kullanici) && (nsKullanici || nsSifre)) {
+                setTimeout(() => {
+                  let degisti = false;
+                  if (!ayarlar.sms_kullanici && nsKullanici) { u('sms_kullanici', nsKullanici); degisti = true; }
+                  if (!ayarlar.sms_sifre && nsSifre) { u('sms_sifre', nsSifre); degisti = true; }
+                  if (degisti) {
+                    setMesaj({type:'success', text:'NETSANTRAL BİLGİLERİ SMS ALANLARINA OTOMATİK AKTARILDI. KAYDET BUTONUNA BASMAYI UNUTMAYIN.'});
+                  }
+                }, 300);
+              }
+
               const zatenAyni = ayarlar.sms_kullanici === nsKullanici && ayarlar.sms_sifre === nsSifre;
               return (
                 <div style={{padding:12, background:`${C.info || '#3b82f6'}11`, borderRadius:10,
