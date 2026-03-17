@@ -550,12 +550,21 @@ MR.webrtcTelefon = {
 
       var arayanAdi = (session.remote_identity && session.remote_identity.display_name) ? session.remote_identity.display_name : '';
 
+      var now = new Date();
+      var baslangic = now.getFullYear() + '-' +
+        String(now.getMonth()+1).padStart(2,'0') + '-' +
+        String(now.getDate()).padStart(2,'0') + ' ' +
+        String(now.getHours()).padStart(2,'0') + ':' +
+        String(now.getMinutes()).padStart(2,'0') + ':' +
+        String(now.getSeconds()).padStart(2,'0');
+
       api.aramaLogCreate({
         numara: numara,
         yon: yon,
         durum: durum,
-        sure: sure,
-        arayan_adi: arayanAdi || undefined
+        sure_saniye: sure,
+        baslangic_zamani: baslangic,
+        musteri_adi: arayanAdi || ''
       }).then(function(r) {
         if (r && r.success) {
           console.log('[WEBRTC] ARAMA LOG KAYDI OLUŞTURULDU:', r.data);

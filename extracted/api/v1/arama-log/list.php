@@ -1,9 +1,12 @@
 <?php
 /**
  * GET /api/v1/arama-log/list.php
- * Arama geçmişi listesi
- * Params: q, yon, durum, tarih_bas, tarih_son, page, limit, kullanici_id
+ * Arama loglarini listele
+ * Params: ?yon=gelen|giden &durum=cevaplandi|cevapsiz &q=arama &tarih_bas=2025-01-01 &tarih_son=2025-12-31 &sayfa=1 &limit=50 &kullanici_id=1
  */
+
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
@@ -13,116 +16,102 @@ setup_headers();
 require_method('GET');
 
 $user = auth_required();
+
+ensure_arama_log_table();
+
 $db = getDB();
 
-// Tablo migration
-ensure_arama_loglari_table();
+// Tablo var mi kontrol et - yoksa bos veri don
+$tabloVar = false;
+try {
+    $db->query("SELECT 1 FROM arama_loglari LIMIT 1");
+    $tabloVar = true;
+} catch (\Exception $e) {
+    error_log('[ARAMA-LOG] Tablo bulunamadi: ' . $e->getMessage());
+}
 
-$pag = get_pagination();
-
-// Parametreleri al - hem eski hem yeni format destekle
-$q = clean($_GET['q'] ?? '');
-$yon = clean($_GET['yon'] ?? '');
-$durum = clean($_GET['durum'] ?? '');
-$tarih_bas = clean($_GET['tarih_bas'] ?? $_GET['baslangic'] ?? '');
-$tarih_son = clean($_GET['tarih_son'] ?? $_GET['bitis'] ?? '');
-$kullanici_id = clean($_GET['kullanici_id'] ?? '');
-
-// Kolon adlarını al
-$tarih_col = get_tarih_column();
-$sure_col = get_sure_column();
-$numara_col = get_numara_column();
-$isim_col = get_isim_column();
-$cols = get_table_columns();
+if (!$tabloVar) {
+    json_success([
+        'items' => [],
+        'toplam' => 0,
+        'sayfa' => 1,
+        'limit' => 50,
+        'toplam_sayfa' => 0
+    ]);
+    exit;
+}
 
 $where = [];
 $params = [];
 
-// Arama filtresi
-if ($q !== '') {
-    $search = "%$q%";
-    $searchWhere = [];
-    if (in_array('arayan', $cols)) $searchWhere[] = 'a.arayan LIKE ?';
-    if (in_array('aranan', $cols)) $searchWhere[] = 'a.aranan LIKE ?';
-    if (in_array('numara', $cols)) $searchWhere[] = 'a.numara LIKE ?';
-    if (in_array('arayan_adi', $cols)) $searchWhere[] = 'a.arayan_adi LIKE ?';
-    if (in_array('musteri_adi', $cols)) $searchWhere[] = 'a.musteri_adi LIKE ?';
-    if (!empty($searchWhere)) {
-        $where[] = '(' . implode(' OR ', $searchWhere) . ')';
-        $params = array_merge($params, array_fill(0, count($searchWhere), $search));
-    }
+// Admin tum kullanicilari gorebilir, diger kullanicilar sadece kendilerini
+if ($user['rol'] !== 'admin') {
+    $where[] = 'a.kullanici_id = ?';
+    $params[] = $user['id'];
+} else if (!empty($_GET['kullanici_id'])) {
+    $where[] = 'a.kullanici_id = ?';
+    $params[] = (int)$_GET['kullanici_id'];
 }
 
-// Yön filtresi
-if ($yon !== '') {
+// Yon filtresi
+if (!empty($_GET['yon']) && in_array($_GET['yon'], ['gelen', 'giden'])) {
     $where[] = 'a.yon = ?';
-    $params[] = $yon;
+    $params[] = $_GET['yon'];
 }
 
 // Durum filtresi
-if ($durum !== '') {
+if (!empty($_GET['durum'])) {
     $where[] = 'a.durum = ?';
-    $params[] = $durum;
+    $params[] = $_GET['durum'];
 }
 
-// Tarih filtresi
-if ($tarih_bas !== '') {
-    $where[] = "a.$tarih_col >= ?";
-    $params[] = $tarih_bas . ' 00:00:00';
+// Arama (numara veya musteri adi)
+if (!empty($_GET['q'])) {
+    $q = '%' . $_GET['q'] . '%';
+    $where[] = '(a.numara LIKE ? OR a.musteri_adi LIKE ?)';
+    $params[] = $q;
+    $params[] = $q;
 }
 
-if ($tarih_son !== '') {
-    $where[] = "a.$tarih_col <= ?";
-    $params[] = $tarih_son . ' 23:59:59';
+// Tarih aralik
+if (!empty($_GET['tarih_bas'])) {
+    $where[] = 'a.baslangic_zamani >= ?';
+    $params[] = $_GET['tarih_bas'] . ' 00:00:00';
 }
-
-// Kullanıcı filtresi (admin değilse sadece kendi kayıtlarını görsün)
-if ($kullanici_id !== '' && $user['rol'] === 'admin') {
-    $where[] = 'a.kullanici_id = ?';
-    $params[] = (int)$kullanici_id;
+if (!empty($_GET['tarih_son'])) {
+    $where[] = 'a.baslangic_zamani <= ?';
+    $params[] = $_GET['tarih_son'] . ' 23:59:59';
 }
 
 $whereSQL = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
-try {
-    // Toplam kayıt sayısı
-    $stmt = $db->prepare("SELECT COUNT(*) as total FROM arama_loglari a $whereSQL");
-    $stmt->execute($params);
-    $total = (int)$stmt->fetch()['total'];
+// Sayfalama
+$limit = min((int)($_GET['limit'] ?? 50), 200);
+$sayfa = max((int)($_GET['sayfa'] ?? 1), 1);
+$offset = ($sayfa - 1) * $limit;
 
-    // SELECT - tüm kolonları al + kullanıcı adı
-    $sql = "SELECT a.*, u.ad_soyad as kullanici_adi
-        FROM arama_loglari a
-        LEFT JOIN users u ON u.id = a.kullanici_id
-        $whereSQL
-        ORDER BY a.$tarih_col DESC
-        LIMIT ? OFFSET ?";
+// Toplam kayit
+$countSQL = "SELECT COUNT(*) FROM arama_loglari a $whereSQL";
+$stmt = $db->prepare($countSQL);
+$stmt->execute($params);
+$toplam = (int)$stmt->fetchColumn();
 
-    $queryParams = array_merge($params, [(int)$pag['limit'], (int)$pag['offset']]);
-    $stmt = $db->prepare($sql);
-    $stmt->execute($queryParams);
-    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Liste
+$listSQL = "SELECT a.*, u.ad_soyad as kullanici_adi
+            FROM arama_loglari a
+            LEFT JOIN users u ON a.kullanici_id = u.id
+            $whereSQL
+            ORDER BY a.baslangic_zamani DESC
+            LIMIT $limit OFFSET $offset";
 
-    // Response'u frontend'in beklediği formata dönüştür
-    $mapped = [];
-    foreach ($items as $item) {
-        $mapped[] = [
-            'id' => $item['id'] ?? null,
-            'arama_tarihi' => $item['arama_tarihi'] ?? $item['baslangic_zamani'] ?? $item['created_at'] ?? null,
-            'yon' => $item['yon'] ?? 'gelen',
-            'arayan' => $item['arayan'] ?? $item['numara'] ?? null,
-            'aranan' => $item['aranan'] ?? null,
-            'arayan_adi' => $item['arayan_adi'] ?? $item['musteri_adi'] ?? null,
-            'durum' => $item['durum'] ?? 'cevapsiz',
-            'sure' => (int)($item['sure'] ?? $item['sure_saniye'] ?? 0),
-            'kullanici_adi' => $item['kullanici_adi'] ?? null,
-            'notlar' => $item['notlar'] ?? null,
-            'crm_id' => $item['crm_id'] ?? $item['musteri_kaynak_id'] ?? null,
-            'kayit_dosya' => $item['kayit_dosya'] ?? null,
-        ];
-    }
+$stmt = $db->prepare($listSQL);
+$stmt->execute($params);
+$items = $stmt->fetchAll();
 
-    paginated_response($mapped, $total, $pag);
-} catch (Exception $e) {
-    json_error('Arama kayıtları yüklenemedi: ' . $e->getMessage(), 500);
-}
+json_success([
+    'items' => $items,
+    'toplam' => $toplam,
+    'sayfa' => $sayfa,
+    'limit' => $limit,
+    'toplam_sayfa' => ceil($toplam / $limit)
+]);

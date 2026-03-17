@@ -1,13 +1,13 @@
 <?php
 /**
- * ARAMA LOG - TABLO KURULUMU & MİGRASYON
- * Tabloyu oluşturur veya eksik kolonları ekler.
- * Her endpoint başında require edilir.
+ * ARAMA LOG TABLOSU OLUŞTURMA / MİGRASYON
+ * Bu dosya ilk çağrıda tabloyu otomatik oluşturur
+ * Eski/eksik tablo varsa DROP edip yeniden oluşturur
  */
 
 require_once __DIR__ . '/../../config/database.php';
 
-function ensure_arama_loglari_table() {
+function ensure_arama_log_table() {
     static $checked = false;
     if ($checked) return;
     $checked = true;
@@ -15,139 +15,70 @@ function ensure_arama_loglari_table() {
     try {
         $db = getDB();
 
-        // Tablo var mı kontrol et
+        // Tablo var mi kontrol et
         $stmt = $db->query("SHOW TABLES LIKE 'arama_loglari'");
-        if ($stmt->rowCount() === 0) {
-            // Tablo yok - oluştur
-            $db->exec("CREATE TABLE arama_loglari (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                kullanici_id INT NOT NULL DEFAULT 0,
-                yon ENUM('gelen','giden') DEFAULT 'gelen',
-                arayan VARCHAR(50) DEFAULT NULL,
-                aranan VARCHAR(50) DEFAULT NULL,
-                numara VARCHAR(50) DEFAULT NULL,
-                arayan_adi VARCHAR(150) DEFAULT NULL,
-                musteri_adi VARCHAR(150) DEFAULT NULL,
-                musteri_kaynak VARCHAR(30) DEFAULT NULL,
-                musteri_kaynak_id INT DEFAULT NULL,
-                crm_id INT DEFAULT NULL,
-                durum VARCHAR(30) DEFAULT 'cevapsiz',
-                arama_tarihi DATETIME DEFAULT NULL,
-                baslangic_zamani DATETIME DEFAULT NULL,
-                cevaplanma_zamani DATETIME DEFAULT NULL,
-                bitis_zamani DATETIME DEFAULT NULL,
-                sure INT DEFAULT 0,
-                sure_saniye INT DEFAULT 0,
-                kayit_dosya VARCHAR(255) DEFAULT NULL,
-                kayit_boyut INT DEFAULT 0,
-                notlar TEXT DEFAULT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                INDEX idx_kullanici (kullanici_id),
-                INDEX idx_numara (numara),
-                INDEX idx_arayan (arayan),
-                INDEX idx_yon (yon),
-                INDEX idx_durum (durum),
-                INDEX idx_arama_tarihi (arama_tarihi),
-                INDEX idx_baslangic (baslangic_zamani)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
-            return;
-        }
+        $tabloVar = $stmt->rowCount() > 0;
 
-        // Tablo var - eksik kolonları ekle
-        $cols = [];
-        $stmt = $db->query("SHOW COLUMNS FROM arama_loglari");
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-            $cols[] = $row['Field'];
-        }
-
-        $migrations = [
-            'arayan' => "ALTER TABLE arama_loglari ADD COLUMN arayan VARCHAR(50) DEFAULT NULL",
-            'aranan' => "ALTER TABLE arama_loglari ADD COLUMN aranan VARCHAR(50) DEFAULT NULL",
-            'numara' => "ALTER TABLE arama_loglari ADD COLUMN numara VARCHAR(50) DEFAULT NULL",
-            'arayan_adi' => "ALTER TABLE arama_loglari ADD COLUMN arayan_adi VARCHAR(150) DEFAULT NULL",
-            'musteri_adi' => "ALTER TABLE arama_loglari ADD COLUMN musteri_adi VARCHAR(150) DEFAULT NULL",
-            'crm_id' => "ALTER TABLE arama_loglari ADD COLUMN crm_id INT DEFAULT NULL",
-            'arama_tarihi' => "ALTER TABLE arama_loglari ADD COLUMN arama_tarihi DATETIME DEFAULT NULL",
-            'baslangic_zamani' => "ALTER TABLE arama_loglari ADD COLUMN baslangic_zamani DATETIME DEFAULT NULL",
-            'cevaplanma_zamani' => "ALTER TABLE arama_loglari ADD COLUMN cevaplanma_zamani DATETIME DEFAULT NULL",
-            'bitis_zamani' => "ALTER TABLE arama_loglari ADD COLUMN bitis_zamani DATETIME DEFAULT NULL",
-            'sure' => "ALTER TABLE arama_loglari ADD COLUMN sure INT DEFAULT 0",
-            'sure_saniye' => "ALTER TABLE arama_loglari ADD COLUMN sure_saniye INT DEFAULT 0",
-            'kayit_dosya' => "ALTER TABLE arama_loglari ADD COLUMN kayit_dosya VARCHAR(255) DEFAULT NULL",
-            'kayit_boyut' => "ALTER TABLE arama_loglari ADD COLUMN kayit_boyut INT DEFAULT 0",
-            'notlar' => "ALTER TABLE arama_loglari ADD COLUMN notlar TEXT DEFAULT NULL",
-            'musteri_kaynak' => "ALTER TABLE arama_loglari ADD COLUMN musteri_kaynak VARCHAR(30) DEFAULT NULL",
-            'musteri_kaynak_id' => "ALTER TABLE arama_loglari ADD COLUMN musteri_kaynak_id INT DEFAULT NULL",
-            'kullanici_id' => "ALTER TABLE arama_loglari ADD COLUMN kullanici_id INT NOT NULL DEFAULT 0",
-            'updated_at' => "ALTER TABLE arama_loglari ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
-        ];
-
-        foreach ($migrations as $col => $sql) {
-            if (!in_array($col, $cols)) {
-                try { $db->exec($sql); } catch (Exception $e) { /* kolon zaten var */ }
+        if ($tabloVar) {
+            // Tablo var - gerekli kolonlar var mi kontrol et
+            $kolonlar = [];
+            $cols = $db->query("SHOW COLUMNS FROM arama_loglari")->fetchAll();
+            foreach ($cols as $col) {
+                $kolonlar[] = $col['Field'];
             }
+
+            $gerekliKolonlar = ['numara', 'yon', 'durum', 'musteri_adi', 'musteri_kaynak',
+                                'musteri_kaynak_id', 'baslangic_zamani', 'cevaplanma_zamani',
+                                'bitis_zamani', 'sure_saniye', 'kayit_dosya', 'kayit_boyut', 'notlar'];
+
+            $eksikKolonlar = array_diff($gerekliKolonlar, $kolonlar);
+
+            if (empty($eksikKolonlar)) {
+                // Tum kolonlar mevcut, sorun yok
+                return;
+            }
+
+            // Eksik kolon var - eski/yanlis tablo, sil ve yeniden olustur
+            error_log('[ARAMA-LOG] Eksik kolonlar tespit edildi: ' . implode(', ', $eksikKolonlar) . ' - Tablo yeniden olusturuluyor');
+            $db->exec("DROP TABLE arama_loglari");
         }
-    } catch (Exception $e) {
-        // Sessiz geç - tablo yoksa ilk sorgu zaten hata verecek
+
+        // Collation kontrolu - turkish yoksa unicode kullan
+        $collation = 'utf8mb4_unicode_ci';
+        try {
+            $coll = $db->query("SHOW COLLATION WHERE Collation = 'utf8mb4_turkish_ci'")->fetchAll();
+            if (!empty($coll)) $collation = 'utf8mb4_turkish_ci';
+        } catch (\Exception $e) {}
+
+        $db->exec("CREATE TABLE IF NOT EXISTS arama_loglari (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            kullanici_id INT NOT NULL,
+            yon ENUM('gelen','giden') NOT NULL DEFAULT 'giden',
+            numara VARCHAR(20) NOT NULL,
+            musteri_adi VARCHAR(100) DEFAULT NULL,
+            musteri_kaynak VARCHAR(20) DEFAULT NULL COMMENT 'CRM, YONLENDIRME',
+            musteri_kaynak_id INT DEFAULT NULL,
+            durum ENUM('cevaplandi','cevapsiz','reddedildi','mesgul','hata') NOT NULL DEFAULT 'cevapsiz',
+            baslangic_zamani DATETIME NOT NULL,
+            cevaplanma_zamani DATETIME DEFAULT NULL,
+            bitis_zamani DATETIME DEFAULT NULL,
+            sure_saniye INT DEFAULT 0,
+            kayit_dosya VARCHAR(255) DEFAULT NULL COMMENT 'Gorusme kaydi dosya yolu',
+            kayit_boyut INT DEFAULT 0 COMMENT 'Kayit dosya boyutu (byte)',
+            notlar TEXT DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_kullanici (kullanici_id),
+            INDEX idx_numara (numara),
+            INDEX idx_yon (yon),
+            INDEX idx_durum (durum),
+            INDEX idx_baslangic (baslangic_zamani),
+            INDEX idx_tarih_kullanici (baslangic_zamani, kullanici_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=$collation");
+
+        error_log('[ARAMA-LOG] Tablo basariyla olusturuldu');
+
+    } catch (\Exception $e) {
+        error_log('[ARAMA-LOG] Tablo olusturma hatasi: ' . $e->getMessage());
     }
-}
-
-/**
- * Tablodaki mevcut kolonları döndürür
- */
-function get_table_columns() {
-    static $cols = null;
-    if ($cols !== null) return $cols;
-    try {
-        $db = getDB();
-        $stmt = $db->query("SHOW COLUMNS FROM arama_loglari");
-        $cols = [];
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-            $cols[] = $row['Field'];
-        }
-    } catch (Exception $e) {
-        $cols = [];
-    }
-    return $cols;
-}
-
-/**
- * Tarih kolonu adını döndürür (uyumlu)
- */
-function get_tarih_column() {
-    $cols = get_table_columns();
-    if (in_array('arama_tarihi', $cols)) return 'arama_tarihi';
-    if (in_array('baslangic_zamani', $cols)) return 'baslangic_zamani';
-    return 'created_at';
-}
-
-/**
- * Süre kolonu adını döndürür (uyumlu)
- */
-function get_sure_column() {
-    $cols = get_table_columns();
-    if (in_array('sure', $cols)) return 'sure';
-    if (in_array('sure_saniye', $cols)) return 'sure_saniye';
-    return 'sure';
-}
-
-/**
- * Numara/arayan kolonu adını döndürür (uyumlu)
- */
-function get_numara_column() {
-    $cols = get_table_columns();
-    if (in_array('arayan', $cols)) return 'arayan';
-    if (in_array('numara', $cols)) return 'numara';
-    return 'arayan';
-}
-
-/**
- * İsim kolonu adını döndürür (uyumlu)
- */
-function get_isim_column() {
-    $cols = get_table_columns();
-    if (in_array('arayan_adi', $cols)) return 'arayan_adi';
-    if (in_array('musteri_adi', $cols)) return 'musteri_adi';
-    return 'arayan_adi';
 }

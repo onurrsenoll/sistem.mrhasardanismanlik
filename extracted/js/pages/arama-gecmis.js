@@ -64,7 +64,7 @@ MR.AramaGecmisPage = ({setPage, user}) => {
   /* LİSTE YÜKLE */
   const loadList = useCallback(async (durumOverride) => {
     setLoading(true);
-    const p = {page: sayfa, limit: 50};
+    const p = {sayfa: sayfa, limit: 50};
     if (search) p.q = search;
     if (yonF) p.yon = yonF;
     const d = durumOverride !== undefined ? durumOverride : durumF;
@@ -72,11 +72,23 @@ MR.AramaGecmisPage = ({setPage, user}) => {
     if (tarihBas) p.tarih_bas = tarihBas;
     if (tarihBit) p.tarih_son = tarihBit;
     const r = await api.aramaLogList(p);
-    if (r?.success) {
-      setData(r.data?.items || r.data?.aramalar || []);
+    if (r?.success && r.data) {
+      /* Backend kolon adlarını frontend formatına dönüştür */
+      const rawItems = r.data?.items || r.data?.aramalar || [];
+      setData(rawItems.map(item => ({
+        ...item,
+        arama_tarihi: item.arama_tarihi || item.baslangic_zamani || item.created_at || '-',
+        arayan: item.arayan || item.numara || '-',
+        arayan_adi: item.arayan_adi || item.musteri_adi || '',
+        sure: item.sure ?? item.sure_saniye ?? 0,
+      })));
+      /* Pagination: hem {pagination:{totalPages}} hem de {toplam_sayfa} formatı destekle */
       if (r.data?.pagination) {
         setToplamSayfa(r.data.pagination.totalPages || r.data.pagination.toplam_sayfa || 1);
         setToplamKayit(r.data.pagination.total || r.data.pagination.toplam || 0);
+      } else {
+        setToplamSayfa(r.data.toplam_sayfa || 1);
+        setToplamKayit(r.data.toplam || 0);
       }
     }
     setLoading(false);
@@ -333,9 +345,9 @@ MR.AramaGecmisPage = ({setPage, user}) => {
                         <div key={i} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom: i < enCokAranan.length - 1 ? `1px solid ${C.border}` : 'none'}}>
                           <div>
                             <span style={{fontWeight:700, fontSize:12}}>{n.numara || n.arayan || n.aranan || '-'}</span>
-                            {n.ad && <span style={{fontSize:10, color:C.textMuted, marginLeft:8}}>{n.ad}</span>}
+                            {(n.ad || n.musteri_adi) && <span style={{fontSize:10, color:C.textMuted, marginLeft:8}}>{n.ad || n.musteri_adi}</span>}
                           </div>
-                          <Badge text={(n.adet || n.sayi || 0) + ' ARAMA'} color={C.accent}/>
+                          <Badge text={(n.adet || n.arama_sayisi || n.sayi || 0) + ' ARAMA'} color={C.accent}/>
                         </div>
                       ))}
                     </div>
