@@ -453,6 +453,43 @@ try {
         // Portal hatası dosya oluşturmayı engellemez
     }
 
+    // ═══ 7. AVUKATA SMS BİLDİRİMİ ═══
+    $avukatSmsBilgi = null;
+    try {
+        $avukatId = !empty($body['avukat_id']) ? (int)$body['avukat_id'] : null;
+        if ($avukatId) {
+            $stmtAv = $db->prepare("SELECT id, ad_soyad, telefon FROM users WHERE id = ? AND rol = 'avukat'");
+            $stmtAv->execute([$avukatId]);
+            $avukat = $stmtAv->fetch();
+
+            if ($avukat && !empty($avukat['telefon'])) {
+                require_once __DIR__ . '/../../config/sms_helper.php';
+
+                $firmaAdiAv = 'MR HASAR DANISMANLIK';
+                try {
+                    $stmtFav = $db->query("SELECT deger FROM ayarlar WHERE anahtar = 'firma_adi' LIMIT 1");
+                    $favRow = $stmtFav->fetch();
+                    if ($favRow && !empty($favRow['deger'])) $firmaAdiAv = $favRow['deger'];
+                } catch (\Exception $e) {}
+
+                $musteriAdi = clean($body['ad_soyad']);
+                $dosyaTuruTam = $dosyaTuru === 'ADK' ? 'Arac Deger Kaybi' : ($dosyaTuru === 'BH' ? 'Bedeni Hasar' : $dosyaTuru);
+                $sigortaSirket = clean($body['sigorta_sirket'] ?? '-');
+
+                $avukatMesaj = "Sayin {$avukat['ad_soyad']}, tarafiniza yeni bir dosya atanmistir. Dosya No: {$dosyaNo} | Tur: {$dosyaTuruTam} | Musteri: {$musteriAdi} | Sigorta: {$sigortaSirket} | Asama: Dosya Acik - {$firmaAdiAv}";
+
+                $avukatSms = sms_gonder($avukat['telefon'], $avukatMesaj, $dosyaId, $user['id']);
+
+                $avukatSmsBilgi = [
+                    'avukat_adi' => $avukat['ad_soyad'],
+                    'sms_gonderildi' => $avukatSms['basarili'] ?? false
+                ];
+            }
+        }
+    } catch (\Exception $e) {
+        // Avukat SMS hatası dosya oluşturmayı engellemez
+    }
+
     $mesaj = 'Dosya başarıyla oluşturuldu';
     if (!empty($otoPrimBilgi['personel_prim'])) {
         $mesaj .= ' | PERSONEL PRİMİ: ₺' . number_format($otoPrimBilgi['personel_prim'], 2, ',', '.') . ' HAKEDİŞE YAZILDI';
@@ -467,13 +504,17 @@ try {
     if ($portalBilgi) {
         $mesaj .= ' | PORTAL ERİŞİMİ OTOMATİK OLUŞTURULDU';
     }
+    if (!empty($avukatSmsBilgi['sms_gonderildi'])) {
+        $mesaj .= ' | AVUKATA SMS BİLDİRİMİ GÖNDERİLDİ (' . $avukatSmsBilgi['avukat_adi'] . ')';
+    }
 
     json_success([
         'dosya_id' => $dosyaId,
         'dosya_no' => $dosyaNo,
         'hasar_no' => $hasar_no,
         'oto_prim' => $otoPrimBilgi,
-        'portal' => $portalBilgi
+        'portal' => $portalBilgi,
+        'avukat_sms' => $avukatSmsBilgi
     ], $mesaj, 201);
 
 } catch (\Exception $e) {
