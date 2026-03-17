@@ -108,6 +108,7 @@ MR.api = {
   // CRM ARAMA LOG
   aramaLogList(p = {}) { return this.req('/arama-log/list.php?' + new URLSearchParams(p)); },
   aramaLogIstatistik(p = {}) { return this.req('/arama-log/istatistik.php?' + new URLSearchParams(p)); },
+  aramaLogCreate(d) { return this.req('/arama-log/create.php', { method: 'POST', body: JSON.stringify(d) }); },
   // MUHASEBE
   kasaList() { return this.req('/muhasebe/kasa-list.php'); },
   kasaCreate(d) { return this.req('/muhasebe/kasa-create.php', { method: 'POST', body: JSON.stringify(d) }); },

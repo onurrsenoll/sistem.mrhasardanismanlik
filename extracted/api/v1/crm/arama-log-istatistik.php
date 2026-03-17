@@ -14,8 +14,8 @@ require_method('GET');
 $user = auth_required();
 $db = getDB();
 
-$baslangic = clean($_GET['baslangic'] ?? '');
-$bitis = clean($_GET['bitis'] ?? '');
+$baslangic = clean($_GET['tarih_bas'] ?? $_GET['baslangic'] ?? '');
+$bitis = clean($_GET['tarih_son'] ?? $_GET['bitis'] ?? '');
 
 $where = [];
 $params = [];
@@ -62,17 +62,55 @@ try {
     $stmt->execute($params);
     $kayitli = (int)$stmt->fetch()['sayi'];
 
+    // CEVAPLANAN
+    $stmt = $db->prepare("SELECT COUNT(*) as sayi FROM arama_loglari $whereSQL" . ($whereSQL ? ' AND' : ' WHERE') . " durum IN ('cevaplandi','gorusme')");
+    $stmt->execute($params);
+    $cevaplanan = (int)$stmt->fetch()['sayi'];
+
+    // REDDEDİLEN
+    $stmt = $db->prepare("SELECT COUNT(*) as sayi FROM arama_loglari $whereSQL" . ($whereSQL ? ' AND' : ' WHERE') . " durum = 'reddedildi'");
+    $stmt->execute($params);
+    $reddedilen = (int)$stmt->fetch()['sayi'];
+
+    // EN UZUN GÖRÜŞME
+    $stmt = $db->prepare("SELECT COALESCE(MAX(sure), 0) as maks FROM arama_loglari $whereSQL");
+    $stmt->execute($params);
+    $enUzun = (int)$stmt->fetch()['maks'];
+
+    // TOPLAM SÜRE
+    $stmt = $db->prepare("SELECT COALESCE(SUM(sure), 0) as toplam FROM arama_loglari $whereSQL");
+    $stmt->execute($params);
+    $toplamSure = (int)$stmt->fetch()['toplam'];
+
+    // EN ÇOK ARANAN
+    $enCokSQL = "SELECT arayan as numara, arayan_adi as ad, COUNT(*) as adet FROM arama_loglari $whereSQL GROUP BY arayan ORDER BY adet DESC LIMIT 10";
+    $stmt = $db->prepare($enCokSQL);
+    $stmt->execute($params);
+    $enCokAranan = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
     json_success([
-        'toplam' => $toplam,
-        'gelen' => $gelen,
-        'giden' => $giden,
-        'cevapsiz' => $cevapsiz,
-        'ort_sure' => $ortSure,
-        'kayitli' => $kayitli
+        'genel' => [
+            'toplam_arama' => $toplam,
+            'gelen_arama' => $gelen,
+            'giden_arama' => $giden,
+            'cevaplanan' => $cevaplanan,
+            'cevapsiz' => $cevapsiz,
+            'reddedilen' => $reddedilen,
+            'ort_sure' => $ortSure,
+            'en_uzun_gorusme' => $enUzun,
+            'toplam_sure' => $toplamSure,
+            'kayitli_gorusme' => $kayitli,
+        ],
+        'en_cok_aranan' => $enCokAranan,
     ]);
 } catch (Exception $e) {
     json_success([
-        'toplam' => 0, 'gelen' => 0, 'giden' => 0,
-        'cevapsiz' => 0, 'ort_sure' => 0, 'kayitli' => 0
+        'genel' => [
+            'toplam_arama' => 0, 'gelen_arama' => 0, 'giden_arama' => 0,
+            'cevaplanan' => 0, 'cevapsiz' => 0, 'reddedilen' => 0,
+            'ort_sure' => 0, 'en_uzun_gorusme' => 0, 'toplam_sure' => 0,
+            'kayitli_gorusme' => 0,
+        ],
+        'en_cok_aranan' => [],
     ]);
 }

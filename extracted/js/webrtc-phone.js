@@ -455,6 +455,8 @@ MR.webrtcTelefon = {
   reddet: function() {
     if (!this._session) return;
     console.log('[WEBRTC] REDDET: ÇAĞRI REDDEDİLİYOR... direction:', this._session.direction, 'durum:', this._aramaDurumu);
+    /* ARAMA LOG KAYDI */
+    this._aramaLogKaydet(this._session, 'reddedildi');
     this._zilDurdur();
     this._ringbackDurdur();
     try {
@@ -527,10 +529,50 @@ MR.webrtcTelefon = {
     }
   },
 
+  /* ═══ ARAMA LOG KAYDI OLUŞTUR ═══ */
+  _aramaLogKaydet: function(session, durum) {
+    try {
+      var api = MR.api;
+      if (!api || !api.aramaLogCreate) return;
+
+      var yon = session.direction === 'incoming' ? 'gelen' : 'giden';
+      var numara = '';
+      if (yon === 'gelen') {
+        numara = (session.remote_identity && session.remote_identity.uri) ? session.remote_identity.uri.user : '';
+      } else {
+        numara = (session.remote_identity && session.remote_identity.uri) ? session.remote_identity.uri.user : '';
+      }
+
+      var sure = 0;
+      if (this._aramaBaslangic) {
+        sure = Math.round((Date.now() - this._aramaBaslangic) / 1000);
+      }
+
+      var arayanAdi = (session.remote_identity && session.remote_identity.display_name) ? session.remote_identity.display_name : '';
+
+      api.aramaLogCreate({
+        numara: numara,
+        yon: yon,
+        durum: durum,
+        sure: sure,
+        arayan_adi: arayanAdi || undefined
+      }).then(function(r) {
+        if (r && r.success) {
+          console.log('[WEBRTC] ARAMA LOG KAYDI OLUŞTURULDU:', r.data);
+        }
+      }).catch(function(e) {
+        console.error('[WEBRTC] ARAMA LOG KAYIT HATASI:', e);
+      });
+    } catch(e) {
+      console.error('[WEBRTC] ARAMA LOG HATA:', e);
+    }
+  },
+
   /* ═══ SESSION OLAYLARI ═══ */
   _sessionOlaylariBagla: function(session) {
     var self = this;
     var _sesAyarlandi = false;
+    var _gorusmeCevaplandi = false;
 
     session.on('progress', function() {
       console.log('[WEBRTC] ÇALIYOR... direction:', session.direction, 'mevcut durum:', self._aramaDurumu);
@@ -550,6 +592,8 @@ MR.webrtcTelefon = {
       self._zilDurdur();
       self._ringbackDurdur();
       self._aramaDurumu = 'gorusmede';
+      self._aramaBaslangic = Date.now();
+      _gorusmeCevaplandi = true;
       if (!_sesAyarlandi) { self._sesAyarla(session); _sesAyarlandi = true; }
       self._durumBildir('gorusmede');
     });
@@ -562,6 +606,8 @@ MR.webrtcTelefon = {
 
     session.on('ended', function() {
       console.log('[WEBRTC] GÖRÜŞME BİTTİ');
+      /* ARAMA LOG KAYDI */
+      self._aramaLogKaydet(session, _gorusmeCevaplandi ? 'cevaplandi' : 'cevapsiz');
       self._zilDurdur();
       self._ringbackDurdur();
       self._temizle();
@@ -582,6 +628,11 @@ MR.webrtcTelefon = {
         direction: session.direction,
         status: session.status
       }));
+      /* ARAMA LOG KAYDI - Reddedildi mi, cevapsız mı? */
+      var logDurum = 'cevapsiz';
+      if (cause === 'Rejected' || statusCode === 486 || statusCode === 603) logDurum = 'reddedildi';
+      else if (cause === 'Busy' || statusCode === 486) logDurum = 'mesgul';
+      self._aramaLogKaydet(session, logDurum);
       self._zilDurdur();
       self._ringbackDurdur();
       self._temizle();
@@ -806,6 +857,7 @@ MR.webrtcTelefon = {
     this._muteState = false;
     this._iceRestartCount = 0;
     this._relayCandidateFound = false;
+    this._aramaBaslangic = null;
 
     /* ICE ZAMANAŞIMI SAYAÇLARINI TEMİZLE */
     if (this._iceGatherTimer) { clearTimeout(this._iceGatherTimer); this._iceGatherTimer = null; }

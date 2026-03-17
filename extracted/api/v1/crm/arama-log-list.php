@@ -18,8 +18,8 @@ $pag = get_pagination();
 $q = clean($_GET['q'] ?? '');
 $yon = clean($_GET['yon'] ?? '');
 $durum = clean($_GET['durum'] ?? '');
-$baslangic = clean($_GET['baslangic'] ?? '');
-$bitis = clean($_GET['bitis'] ?? '');
+$baslangic = clean($_GET['tarih_bas'] ?? $_GET['baslangic'] ?? '');
+$bitis = clean($_GET['tarih_son'] ?? $_GET['bitis'] ?? '');
 
 $where = [];
 $params = [];
