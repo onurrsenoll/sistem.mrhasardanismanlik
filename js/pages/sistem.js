@@ -2346,11 +2346,46 @@ const SmsTab = () => {
               </div>
             </div>
 
+            {/* NETSANTRAL BİLGİLERİNİ KULLAN BUTONU */}
+            {(() => {
+              const nsKullanici = localStorage.getItem('mr_netsantral_kullanici');
+              const nsSifre = localStorage.getItem('mr_netsantral_api_sifre');
+              if (!nsKullanici && !nsSifre) return null;
+              const zatenAyni = ayarlar.sms_kullanici === nsKullanici && ayarlar.sms_sifre === nsSifre;
+              return (
+                <div style={{padding:12, background:`${C.info || '#3b82f6'}11`, borderRadius:10,
+                  border:`1px solid ${C.info || '#3b82f6'}33`, display:'flex', alignItems:'center', gap:12}}>
+                  <div style={{width:36, height:36, borderRadius:10, background:`${C.info || '#3b82f6'}22`,
+                    display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+                    <LIcon name="Phone" size={18} color={C.info || '#3b82f6'}/>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:11, fontWeight:700, color:C.text}}>NETSANTRAL HESABI ALGILANDI</div>
+                    <div style={{fontSize:10, color:C.textMuted, marginTop:2}}>
+                      {zatenAyni ? 'SMS AYARLARI NETSANTRAL BİLGİLERİYLE EŞLEŞİYOR' : 'AYNI NETGSM HESAP BİLGİLERİNİ SMS İÇİN DE KULLANABİLİRSİNİZ'}
+                    </div>
+                  </div>
+                  {!zatenAyni && (
+                    <button onClick={() => {
+                      if (nsKullanici) u('sms_kullanici', nsKullanici);
+                      if (nsSifre) u('sms_sifre', nsSifre);
+                      setMesaj({type:'success', text:'NETSANTRAL BİLGİLERİ SMS ALANLARINA AKTARILDI. KAYDET BUTONUNA BASMAYI UNUTMAYIN.'});
+                    }} style={{...S.btn, ...S.btnP, fontSize:10, padding:'8px 14px', whiteSpace:'nowrap'}}>
+                      <LIcon name="Copy" size={12} color="#fff"/> BİLGİLERİ KULLAN
+                    </button>
+                  )}
+                  {zatenAyni && (
+                    <Badge color={C.success} label="EŞLEŞIYOR"/>
+                  )}
+                </div>
+              );
+            })()}
+
             <FormGroup label="NETGSM KULLANICI ADI (USERCODE)">
               <input value={ayarlar.sms_kullanici||''} onChange={e => u('sms_kullanici', e.target.value)}
                 placeholder="5550984254" style={{...S.input, fontSize:12}}/>
               <div style={{fontSize:9, color:C.textMuted, marginTop:4}}>
-                NETGSM PANELİNDEKİ "KULLANICI ADI" (TELEFON NUMARANIZ). ABONELİK BİLGİLERİ SAYFASINDAN KONTROL EDİN.
+                NETGSM PANELİNDEKİ "KULLANICI ADI" (TELEFON NUMARANIZ). NETSANTRAL İLE AYNI BİLGİLERDİR.
               </div>
             </FormGroup>
 
@@ -2358,7 +2393,7 @@ const SmsTab = () => {
               <input type="password" value={ayarlar.sms_sifre||''} onChange={e => u('sms_sifre', e.target.value)}
                 placeholder="••••••••" style={{...S.input, fontSize:12}}/>
               <div style={{fontSize:9, color:C.textMuted, marginTop:4}}>
-                NETGSM PANELİNE GİRİŞ ŞİFRENİZ
+                NETGSM API ŞİFRENİZ (NETSANTRAL İLE AYNI)
               </div>
             </FormGroup>
 
