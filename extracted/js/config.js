@@ -238,6 +238,16 @@ MR.api = {
   smsRapor(p = {}) { return this.req('/sms/rapor.php?' + new URLSearchParams(p)); },
   smsBasliklar() { return this.req('/sms/basliklar.php'); },
   smsIptal(d) { return this.req('/sms/iptal.php', { method: 'POST', body: JSON.stringify(d) }); },
+  // MAIL (E-POSTA)
+  mailHesaplar() { return this.req('/mail/hesaplar.php'); },
+  mailHesapKaydet(d) { return this.req('/mail/hesaplar.php', { method: 'POST', body: JSON.stringify(d) }); },
+  mailHesapSil(d) { return this.req('/mail/hesaplar.php', { method: 'DELETE', body: JSON.stringify(d) }); },
+  mailList(p = {}) { return this.req('/mail/list.php?' + new URLSearchParams(p)); },
+  mailGet(id) { return this.req('/mail/get.php?id=' + id); },
+  mailGonder(d) { return this.req('/mail/gonder.php', { method: 'POST', body: JSON.stringify(d) }); },
+  mailSync(d) { return this.req('/mail/sync.php', { method: 'POST', body: JSON.stringify(d) }, 60000); },
+  mailIslem(d) { return this.req('/mail/islem.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  mailTest(d) { return this.req('/mail/test.php', { method: 'POST', body: JSON.stringify(d) }, 30000); },
   // ARAÇ KATALOG
   aracMarkaList() { return this.req('/tanim/arac-marka-list.php'); },
   aracModelList(marka) { return this.req('/tanim/arac-model-list.php?marka=' + encodeURIComponent(marka)); },

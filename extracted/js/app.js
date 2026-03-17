@@ -19,6 +19,7 @@ const MENU = [
     {id:'saha-liste', label:'SAHA DOSYALARI', icon:'MapPin'},
     {id:'saha-yeni', label:'YENİ SAHA KAYDI', icon:'PlusCircle'}
   ]},
+  {id:'eposta', label:'E-POSTA', icon:'Mail'},
   {id:'hesap', label:'HESAPLAMALAR', icon:'Calculator', sub:[
     {id:'hesap-adk', label:'ARAÇ DEĞER KAYBI', icon:'Car'},
     {id:'hesap-bh', label:'BEDENİ HASAR', icon:'Heart'}
@@ -78,6 +79,7 @@ const MENU = [
 const MENU_MODUL = {
   dosya: 'dosya',
   crm: 'crm',
+  eposta: 'eposta',
   hesap: 'hesaplamalar',
   paydaslar: 'paydaslar',
   muhasebe: 'muhasebe',
@@ -446,6 +448,9 @@ const Breadcrumb = ({page, setPage}) => {
     parts.push({label: 'SİSTEM', id: 'sistem'});
     parts.push({label: tanimLabels[page] || 'TANIMLAMALAR', id: page});
   }
+  if (page === 'eposta' && parts.length <= 1) {
+    parts.push({label: 'E-POSTA', id: 'eposta'});
+  }
   if (page === 'mesajlar-sistem' && parts.length <= 1) {
     parts.push({label: 'SİSTEM', id: 'sistem'});
     parts.push({label: 'SİSTEM BİLDİRİMLERİ', id: page});
@@ -799,6 +804,9 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     const sub = page.replace('ictihat-', '') || 'yargitay';
     return <MR.IctihatPage setPage={setPage} user={user} subPage={sub === 'ictihat' ? 'yargitay' : sub}/>;
   }
+
+  /* E-POSTA */
+  if (page === 'eposta') return <MR.MailPage setPage={setPage} user={user}/>;
 
   /* AJANDA */
   if (page === 'ajanda') return <MR.AjandaPage setPage={setPage} user={user}/>;
