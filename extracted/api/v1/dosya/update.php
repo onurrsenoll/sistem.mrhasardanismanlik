@@ -259,13 +259,13 @@ try {
         }
     }
 
-    // ═══ AVUKAT DEĞİŞTİĞİNDE SMS BİLDİRİMİ ═══
+    // ═══ AVUKAT (İŞ ORTAĞI) DEĞİŞTİĞİNDE SMS BİLDİRİMİ ═══
     $avukatSmsBilgi = null;
-    if (array_key_exists('avukat_id', $body) && (int)($body['avukat_id'] ?? 0) !== (int)($dosya['avukat_id'] ?? 0) && !empty($body['avukat_id'])) {
+    if (array_key_exists('ortak_id', $body) && (int)($body['ortak_id'] ?? 0) !== (int)($dosya['ortak_id'] ?? 0) && !empty($body['ortak_id'])) {
         try {
-            $yeniAvukatId = (int)$body['avukat_id'];
-            $stmtAv = $db->prepare("SELECT id, ad_soyad, telefon FROM users WHERE id = ? AND rol = 'avukat'");
-            $stmtAv->execute([$yeniAvukatId]);
+            $yeniOrtakId = (int)$body['ortak_id'];
+            $stmtAv = $db->prepare("SELECT id, ad_soyad, telefon, firma FROM ortaklar WHERE id = ? AND durum = 'aktif'");
+            $stmtAv->execute([$yeniOrtakId]);
             $avukat = $stmtAv->fetch();
 
             if ($avukat && !empty($avukat['telefon'])) {
@@ -287,9 +287,10 @@ try {
                 $sigortaSirket = $dosya['sigorta_sirket'] ?? '-';
                 $mevcutAsama = $body['asama'] ?? $dosya['asama'] ?? 'Dosya Acik';
 
+                $avTelNorm = sms_telefon_normalize($avukat['telefon']);
                 $avukatMesaj = "Sayin {$avukat['ad_soyad']}, tarafiniza yeni bir dosya atanmistir. Dosya No: {$dosya['dosya_no']} | Tur: {$dosyaTuruTam} | Musteri: {$musteriAdi} | Sigorta: {$sigortaSirket} | Asama: {$mevcutAsama} - {$firmaAdiAv}";
 
-                $avukatSms = sms_gonder($avukat['telefon'], $avukatMesaj, $id, $user['id']);
+                $avukatSms = sms_gonder($avTelNorm ?: $avukat['telefon'], $avukatMesaj, $id, $user['id']);
 
                 $avukatSmsBilgi = [
                     'avukat_adi' => $avukat['ad_soyad'],

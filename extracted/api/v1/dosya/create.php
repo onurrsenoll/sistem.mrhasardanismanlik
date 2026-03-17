@@ -453,13 +453,13 @@ try {
         // Portal hatası dosya oluşturmayı engellemez
     }
 
-    // ═══ 7. AVUKATA SMS BİLDİRİMİ ═══
+    // ═══ 7. AVUKATA (İŞ ORTAĞI) SMS BİLDİRİMİ ═══
     $avukatSmsBilgi = null;
     try {
-        $avukatId = !empty($body['avukat_id']) ? (int)$body['avukat_id'] : null;
-        if ($avukatId) {
-            $stmtAv = $db->prepare("SELECT id, ad_soyad, telefon FROM users WHERE id = ? AND rol = 'avukat'");
-            $stmtAv->execute([$avukatId]);
+        $ortakId = !empty($body['ortak_id']) ? (int)$body['ortak_id'] : null;
+        if ($ortakId) {
+            $stmtAv = $db->prepare("SELECT id, ad_soyad, telefon, firma FROM ortaklar WHERE id = ? AND durum = 'aktif'");
+            $stmtAv->execute([$ortakId]);
             $avukat = $stmtAv->fetch();
 
             if ($avukat && !empty($avukat['telefon'])) {
@@ -476,9 +476,10 @@ try {
                 $dosyaTuruTam = $dosyaTuru === 'ADK' ? 'Arac Deger Kaybi' : ($dosyaTuru === 'BH' ? 'Bedeni Hasar' : $dosyaTuru);
                 $sigortaSirket = clean($body['sigorta_sirket'] ?? '-');
 
+                $avTelNorm = sms_telefon_normalize($avukat['telefon']);
                 $avukatMesaj = "Sayin {$avukat['ad_soyad']}, tarafiniza yeni bir dosya atanmistir. Dosya No: {$dosyaNo} | Tur: {$dosyaTuruTam} | Musteri: {$musteriAdi} | Sigorta: {$sigortaSirket} | Asama: Dosya Acik - {$firmaAdiAv}";
 
-                $avukatSms = sms_gonder($avukat['telefon'], $avukatMesaj, $dosyaId, $user['id']);
+                $avukatSms = sms_gonder($avTelNorm ?: $avukat['telefon'], $avukatMesaj, $dosyaId, $user['id']);
 
                 $avukatSmsBilgi = [
                     'avukat_adi' => $avukat['ad_soyad'],
