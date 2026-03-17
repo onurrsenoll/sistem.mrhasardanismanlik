@@ -88,7 +88,9 @@ function mail_tablo_olustur($db = null) {
             INDEX idx_mail (mail_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
     } catch (Exception $e) {
-        error_log('MAIL_TABLO_HATA: ' . $e->getMessage());
+        error_log('MAIL_TABLO_HATA: ' . $e->getMessage() . ' - ' . $e->getTraceAsString());
+        // Tablo oluşturulamazsa hata fırlat ki çağıran taraf bilgilensin
+        throw new Exception('MAIL TABLOLARI OLUSTURULAMADI: ' . $e->getMessage());
     }
 }
 
