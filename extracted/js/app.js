@@ -919,6 +919,74 @@ const App = () => {
     MR._currentUser = user;
   }, [user]);
 
+  /* ═══ ARAMA LOG — WEBRTC ÇAĞRI BİTTİĞİNDE OTOMATİK KAYIT ═══ */
+  useEffect(() => {
+    if (!user) return;
+    var aramaBaslangic = null;
+    var aramaNumara = '';
+    var aramaAdi = '';
+    var aramaYon = 'giden';
+    var gorusmeCevaplandi = false;
+
+    const durumHandler = (e) => {
+      const d = e.detail;
+      if (!d) return;
+
+      if (d.durum === 'araniyor') {
+        aramaBaslangic = Date.now();
+        aramaNumara = d.detay || '';
+        aramaYon = 'giden';
+        gorusmeCevaplandi = false;
+      }
+      if (d.durum === 'gelen-cagri') {
+        aramaBaslangic = Date.now();
+        aramaYon = 'gelen';
+        gorusmeCevaplandi = false;
+        if (d.detay) {
+          aramaNumara = d.detay.arayan || '';
+          aramaAdi = d.detay.arayanAdi || '';
+        }
+      }
+      if (d.durum === 'gorusmede') {
+        gorusmeCevaplandi = true;
+        aramaBaslangic = Date.now();
+      }
+      if (d.durum === 'kapandi' || d.durum === 'reddedildi' || (d.durum === 'hata' && aramaBaslangic)) {
+        var sure = aramaBaslangic ? Math.round((Date.now() - aramaBaslangic) / 1000) : 0;
+        var durum = gorusmeCevaplandi ? 'cevaplandi' : (d.durum === 'reddedildi' ? 'reddedildi' : 'cevapsiz');
+        if (d.durum === 'hata') {
+          var detayStr = (d.detay || '').toLowerCase();
+          if (detayStr.indexOf('rejected') >= 0 || detayStr.indexOf('busy') >= 0) durum = 'reddedildi';
+          else durum = 'cevapsiz';
+        }
+        if (aramaNumara) {
+          var now = new Date();
+          var baslangic = now.getFullYear() + '-' +
+            String(now.getMonth()+1).padStart(2,'0') + '-' +
+            String(now.getDate()).padStart(2,'0') + ' ' +
+            String(now.getHours()).padStart(2,'0') + ':' +
+            String(now.getMinutes()).padStart(2,'0') + ':' +
+            String(now.getSeconds()).padStart(2,'0');
+          api.aramaLogCreate({
+            numara: aramaNumara,
+            yon: aramaYon,
+            durum: durum,
+            sure_saniye: sure,
+            baslangic_zamani: baslangic,
+            musteri_adi: aramaAdi || ''
+          }).catch(() => {});
+        }
+        aramaBaslangic = null;
+        aramaNumara = '';
+        aramaAdi = '';
+        gorusmeCevaplandi = false;
+      }
+    };
+
+    window.addEventListener('mr-webrtc-durum', durumHandler);
+    return () => window.removeEventListener('mr-webrtc-durum', durumHandler);
+  }, [user]);
+
   /* ═══ SESSİZ KONUM TAKİP SERVİSİ — TÜM KULLANICILAR ═══ */
   useEffect(() => {
     if (!user) return;
