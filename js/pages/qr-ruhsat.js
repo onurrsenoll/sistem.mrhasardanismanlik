@@ -1,8 +1,10 @@
 /**
- * MR HASAR DANIŞMANLIK - QR RUHSAT OKUYUCU v2.0
+ * MR HASAR DANIŞMANLIK - QR RUHSAT OKUYUCU v3.0
  * Gelişmiş OCR + QR + Gemini AI hibrit ruhsat okuma sistemi
- * Sıra: 1) Tesseract OCR (gelişmiş ön işleme + bölge bazlı) → 2) QR Kod → 3) Gemini AI (son çare)
- * Özellikler: Adaptif kontrast, Otsu eşikleme, median filtre, bölge bazlı OCR, özel API key
+ * Sıra: 1) Gemini AI (birincil) → 2) QR Kod → 3) Tesseract OCR (tam metin, yedek)
+ * v3.0: Sabit bölge bazlı OCR kaldırıldı - gerçek ruhsat fotoğrafları standart
+ * boyut/açıda olmadığından sabit koordinatlar yanlış sonuç üretiyordu.
+ * Artık Tesseract sadece tam metin OCR + regex ile alan çıkarma kullanır.
  */
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect, useCallback, useRef, useMemo} = React;
@@ -281,29 +283,14 @@ const preprocessForOcr = (sourceCanvas) => {
    BÖLÜM 3: TESSERACT OCR (GELİŞMİŞ + BÖLGE BAZLI)
    ═══════════════════════════════════════════════════════════════ */
 
-// Türk ruhsatı bölge haritası (% olarak x, y, genişlik, yükseklik)
-const RUHSAT_REGIONS = {
-  plaka:     { x: 0.00, y: 0.00, w: 0.55, h: 0.18, label: '(A) PLAKA' },
-  marka:     { x: 0.00, y: 0.10, w: 0.55, h: 0.15, label: '(D.1) MARKASI' },
-  modelYili: { x: 0.45, y: 0.10, w: 0.55, h: 0.15, label: '(D.4) MODEL YILI' },
-  sase:      { x: 0.00, y: 0.22, w: 0.75, h: 0.14, label: '(E) ŞASE NO' },
-  tc:        { x: 0.00, y: 0.50, w: 0.55, h: 0.15, label: '(Y.4) TC/VERGİ NO' },
-  soyad:     { x: 0.00, y: 0.62, w: 0.65, h: 0.12, label: '(C.1.1) SOYADI' },
-  ad:        { x: 0.00, y: 0.72, w: 0.65, h: 0.12, label: '(C.1.2) ADI' },
-  belgeSeri: { x: 0.40, y: 0.00, w: 0.60, h: 0.14, label: 'BELGE SERİ NO' }
-};
+// v3.0 NOT: Sabit bölge haritası (RUHSAT_REGIONS) kaldırıldı.
+// Neden: Gerçek ruhsat fotoğrafları farklı açı, kırpma, eğim, boyut ve
+// perspektifle çekildiğinden sabit yüzde koordinatları yanlış bölgeleri
+// okuyordu (ör: "KOLTUK SAYISI" soyad olarak, "TOKAT" marka olarak).
+// Artık tam metin OCR + regex tabanlı akıllı alan çıkarma kullanılıyor.
 
-// Alan bazlı regex doğrulama
-const FIELD_VALIDATORS = {
-  plaka:     (t) => { const m = t.match(/(\d{2}\s?[A-ZÇĞİÖŞÜ]{1,4}\s?\d{1,4})/); return m ? m[1].replace(/\s+/g,'').toUpperCase() : ''; },
-  marka:     (t) => { const m = t.match(/(?:MARKA(?:SI)?[:\s-]*)?([A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü\s\-]{1,24})/i); return m ? m[1].trim().toUpperCase().replace(/\s+/g,' ') : ''; },
-  modelYili: (t) => { const m = t.match(/((?:19|20)\d{2})/); return m ? m[1] : ''; },
-  sase:      (t) => { const m = t.match(/([A-HJ-NPR-Z0-9]{17})/i); return m ? m[1].toUpperCase().replace(/[OQ]/g,'0').replace(/[IL]/g,'1') : ''; },
-  tc:        (t) => { const m = t.match(/(\d{10,11})/); return m ? m[1] : ''; },
-  soyad:     (t) => { const m = t.match(/(?:SOYAD[IİÎ]?|T[İI]CAR[İI]\s*[ÜU]NVAN[IİÎ]?)?[:\s-]*([A-ZÇĞİÖŞÜ\s]{2,50})/i); return m ? m[1].trim().toUpperCase().replace(/\s+/g,' ') : ''; },
-  ad:        (t) => { const m = t.match(/(?:ADI)?[:\s-]*([A-ZÇĞİÖŞÜ\s]{2,30})/i); return m ? m[1].trim().toUpperCase().replace(/\s+/g,' ') : ''; },
-  belgeSeri: (t) => { const m = t.match(/([A-Z]{2})\s*(?:NO|№)?\s*[:\-]?\s*(\d{5,7})/); return m ? m[1]+' '+m[2] : ''; }
-};
+// v3.0 NOT: FIELD_VALIDATORS kaldırıldı - bölge bazlı OCR artık kullanılmıyor.
+// Tüm alan doğrulama parseOcrText() içindeki regex'ler tarafından yapılıyor.
 
 // Singleton Tesseract worker
 let _tesseractWorker = null;
@@ -322,72 +309,106 @@ const initTesseractWorker = async (onProgress) => {
   return _tesseractWorker;
 };
 
-// Bölge bazlı OCR - tek bir bölgeyi oku
-const _ocrRegion = async (worker, preprocessedCanvas, regionDef, fieldName) => {
-  try {
-    const cw = preprocessedCanvas.width;
-    const ch = preprocessedCanvas.height;
-    const rx = Math.floor(regionDef.x * cw);
-    const ry = Math.floor(regionDef.y * ch);
-    const rw = Math.floor(regionDef.w * cw);
-    const rh = Math.floor(regionDef.h * ch);
+// v3.0 NOT: _ocrRegion fonksiyonu kaldırıldı - sabit koordinat tabanlı
+// bölge okuma, standart olmayan görüntülerde güvenilir değil.
 
-    // Bölgeyi crop
-    const regionCanvas = document.createElement('canvas');
-    const minW = 400;
-    const scale = rw < minW ? minW / rw : 1;
-    regionCanvas.width = Math.floor(rw * scale);
-    regionCanvas.height = Math.floor(rh * scale);
-    const rCtx = regionCanvas.getContext('2d');
-    rCtx.drawImage(preprocessedCanvas, rx, ry, rw, rh, 0, 0, regionCanvas.width, regionCanvas.height);
+// Ruhsat alan etiketleri - bunlar veri değil etiket, OCR sonuçlarından filtrelenmeli
+const RUHSAT_LABEL_WORDS = [
+  'PLAKA', 'MARKASI', 'MARKA', 'MODEL', 'YILI', 'ŞASE', 'SASE', 'NUMARASI',
+  'SOYADI', 'SOYADLARI', 'ADI', 'ADLARI', 'TİCARİ', 'ÜNVANI', 'UNVANI',
+  'BELGE', 'SERİ', 'SERI', 'TESCIL', 'TARİHİ', 'TARIHI', 'KİMLİK', 'KIMLIK',
+  'VERGİ', 'VERGI', 'KOLTUK', 'SAYISI', 'RENK', 'RENGİ', 'RENGI', 'CİNSİ',
+  'CINSI', 'TİPİ', 'TIPI', 'MOTOR', 'GÜCÜ', 'GUCU', 'SİLİNDİR', 'SILINDIR',
+  'HACİM', 'HACIM', 'NET', 'AĞIRLIK', 'AGIRLIK', 'AZAMI', 'YÜKLÜ', 'YUKLU',
+  'İLK', 'ILK', 'ÖRN', 'ORN', 'ÖRNEK', 'ORNEK', 'NO'
+];
 
-    const { data: result } = await worker.recognize(regionCanvas);
-    const text = (result.text || '').toUpperCase().trim();
-    if (!text || result.confidence < 20) return '';
-
-    // Alan spesifik regex ile doğrula
-    const validator = FIELD_VALIDATORS[fieldName];
-    return validator ? validator(text) : text;
-  } catch (e) {
-    return '';
-  }
+// OCR sonucundaki alan etiketlerini temizle
+const cleanOcrValue = (val) => {
+  if (!val) return '';
+  let cleaned = val.trim().toUpperCase().replace(/\s+/g, ' ');
+  // Tamamen etiket kelimelerinden oluşuyorsa boş döndür
+  const words = cleaned.split(/\s+/);
+  const nonLabelWords = words.filter(w => !RUHSAT_LABEL_WORDS.includes(w.replace(/[:\-\(\)\.]/g, '')));
+  if (nonLabelWords.length === 0) return '';
+  return nonLabelWords.join(' ').trim();
 };
 
-// Tam metin OCR'dan 8 alanı çıkar
+// Bilinen araç markaları (OCR doğrulama için)
+const KNOWN_BRANDS = [
+  'TOYOTA', 'HONDA', 'FORD', 'FIAT', 'RENAULT', 'PEUGEOT', 'CITROEN', 'VOLKSWAGEN',
+  'VW', 'BMW', 'MERCEDES', 'AUDI', 'OPEL', 'HYUNDAI', 'KIA', 'NISSAN', 'MAZDA',
+  'SUZUKI', 'MITSUBISHI', 'SUBARU', 'VOLVO', 'SKODA', 'SEAT', 'DACIA', 'CHEVROLET',
+  'JEEP', 'LAND ROVER', 'RANGE ROVER', 'PORSCHE', 'MINI', 'ALFA ROMEO', 'LANCIA',
+  'CHRYSLER', 'DODGE', 'CADILLAC', 'LEXUS', 'INFINITI', 'ACURA', 'ISUZU', 'MAN',
+  'IVECO', 'SCANIA', 'DAF', 'TEMSA', 'OTOKAR', 'BMC', 'KARSAN', 'TOFAŞ', 'TOFAS',
+  'TOGG', 'TESLA', 'BYD', 'CHERY', 'MG', 'GEELY', 'HAVAL', 'GREAT WALL', 'SSANGYONG',
+  'CUPRA', 'DS', 'SMART', 'JAGUAR', 'BENTLEY', 'MASERATI', 'FERRARI', 'LAMBORGHINI',
+  'ASTON MARTIN', 'LOTUS', 'MCLAREN', 'BUGATTI', 'ROLLS ROYCE', 'LINCOLN',
+  'CITROEN', 'CITROËN', 'MERCEDES BENZ', 'MERCEDES-BENZ'
+];
+
+// Tam metin OCR'dan 8 alanı çıkar (v3.0 - gelişmiş regex + etiket filtreleme)
 const parseOcrText = (text) => {
   if (!text) return {};
   const t = text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
   let plaka='', marka='', modelYili='', sase='', tc='', soyad='', ad='', belgeSeri='';
 
+  // PLAKA: (A) etiketi veya XX YYY ZZZZ formatı
   const plakaM = t.match(/\(?A\)?\s*(?:PLAKA)?\s*[:\-]?\s*(\d{2}\s?[A-ZÇĞİÖŞÜ]{1,4}\s?\d{1,4})/i) || t.match(/PLAKA\s*[:\-]?\s*(\d{2}\s?[A-ZÇĞİÖŞÜ]{1,4}\s?\d{1,4})/i) || t.match(/(\d{2}\s?[A-ZÇĞİÖŞÜ]{1,4}\s?\d{2,4})/);
   if (plakaM) plaka = plakaM[1].replace(/\s+/g,'').toUpperCase();
 
+  // MARKA: (D.1) etiketi ile, alan etiketlerini filtrele
   const markaM = t.match(/\(?D[\.\s]?1\)?\s*[:\-]?\s*(?:MARKA(?:SI)?)?[:\-]?\s*([A-ZÇĞİÖŞÜa-zçğıöşü\s\-]{2,25}?)(?=\s*\(?[A-Z][\.\s]?\d|\s{2,}|\d{4}|$)/i) || t.match(/MARKA(?:SI)?\s*[:\-]?\s*([A-ZÇĞİÖŞÜ\s\-]{2,25}?)(?=\s*\(?[A-Z][\.\s]?\d|\s{2,}|\d{4}|$)/i);
-  if (markaM) marka = markaM[1].trim().toUpperCase().replace(/\s+/g,' ');
+  if (markaM) {
+    let raw = markaM[1].trim().toUpperCase().replace(/\s+/g,' ');
+    // Etiket kelimelerini temizle
+    raw = cleanOcrValue(raw);
+    // Bilinen marka ile eşleşme kontrolü
+    if (raw) {
+      const matchedBrand = KNOWN_BRANDS.find(b => raw.includes(b));
+      marka = matchedBrand || raw;
+    }
+  }
 
-  const modelM = t.match(/\(?D[\.\s]?4\)?\s*[:\-]?\s*(?:MODEL\s*Y[İI]L[İI]?)?\s*[:\-]?\s*((?:19|20)\d{2})/i) || t.match(/MODEL\s*Y[İI]L[İI]?\s*[:\-]?\s*((?:19|20)\d{2})/i);
+  // MODEL YILI: (D.4) etiketi veya "MODEL YILI" + 4 haneli yıl
+  // "ÖRN:" gibi örnek metinlerini filtrele
+  const modelM = t.match(/\(?D[\.\s]?4\)?\s*[:\-]?\s*(?:MODEL\s*Y[İI]L[İI]?)?\s*[:\-]?\s*(?:ÖRN[:\s]*)?((?:19|20)\d{2})/i) || t.match(/MODEL\s*Y[İI]L[İI]?\s*[:\-]?\s*(?:ÖRN[:\s]*)?((?:19|20)\d{2})/i);
   if (modelM) modelYili = modelM[1];
 
+  // ŞASE NO: (E) etiketi + 17 haneli VIN
   const saseM = t.match(/\(?E\)?\s*[:\-]?\s*(?:ŞASE|SASE)?\s*(?:NO|NUMARASI)?\s*[:\-]?\s*([A-HJ-NPR-Z0-9]{17})/i) || t.match(/(?:ŞASE|SASE)\s*(?:NO|NUMARASI)?\s*[:\-]?\s*([A-HJ-NPR-Z0-9]{17})/i) || t.match(/([A-HJ-NPR-Z0-9]{17})/i);
   if (saseM) { let vin = saseM[1].toUpperCase(); sase = vin.replace(/[OQ]/g,'0').replace(/[IL]/g,'1'); }
 
+  // TC / VERGİ NO: (Y.4) etiketi + 10-11 haneli numara
   const tcM = t.match(/\(?Y[\.\s]?4\)?\s*[:\-]?\s*(?:T\.?C\.?\s*K[İI]ML[İI]K|VERG[İI])\s*(?:NO|NUMARASI)?\s*[:\-]?\s*(\d{10,11})/i) || t.match(/(?:T\.?C\.?\s*(?:K[İI]ML[İI]K)?|VERG[İI])\s*(?:NO|NUMARASI)?\s*[:\-]?\s*(\d{10,11})/i) || t.match(/(\d{11})/);
-  if (tcM) tc = tcM[1];
+  if (tcM) tc = tcM[1] || tcM[2] || '';
   if (!tc) { const vknM = t.match(/(\d{10})/); if (vknM) tc = vknM[1]; }
 
+  // SOYADI: (C.1.1) etiketi, alan etiketlerini filtrele
   const soyadM = t.match(/\(?C[\.\s]?1[\.\s]?1\)?\s*[:\-]?\s*(?:SOYADI?|T[İI]CAR[İI]\s*[ÜU]NVANI?)\s*[:\-]?\s*([A-ZÇĞİÖŞÜ\s]{2,50}?)(?=\s*\(?[A-Z][\.\s]?\d|\s{2,}|$)/i);
-  if (soyadM) soyad = soyadM[1].trim().toUpperCase().replace(/\s+/g,' ');
+  if (soyadM) {
+    soyad = cleanOcrValue(soyadM[1]);
+  }
 
+  // ADI: (C.1.2) etiketi, alan etiketlerini filtrele
   const adM = t.match(/\(?C[\.\s]?1[\.\s]?2\)?\s*[:\-]?\s*(?:ADI)?\s*[:\-]?\s*([A-ZÇĞİÖŞÜ\s]{2,30}?)(?=\s*\(?[A-Z][\.\s]?\d|\s{2,}|$)/i);
-  if (adM) ad = adM[1].trim().toUpperCase().replace(/\s+/g,' ');
+  if (adM) {
+    ad = cleanOcrValue(adM[1]);
+  }
 
+  // BELGE SERİ NO: XX + 5-7 haneli numara
   const belgeM = t.match(/(?:BELGE\s*)?SER[İI]\s*(?:NO)?\s*[:\-]?\s*([A-Z]{2})\s*(?:NO|№)?\s*[:\-]?\s*(\d{5,7})/i) || t.match(/([A-Z]{2})\s*(\d{6})/);
   if (belgeM) belgeSeri = belgeM[1].toUpperCase() + ' ' + belgeM[2];
 
   return { plaka, marka, modelYili, sase, tc, soyad, ad, belgeSeri };
 };
 
-// Gelişmiş OCR: ön işleme + bölge bazlı + tam metin
+// Gelişmiş OCR: ön işleme + TAM METİN TABANLI alan çıkarma
+// NOT: v3.0'da bölge bazlı OCR kaldırıldı. Gerçek ruhsat fotoğrafları standart
+// boyut/açıda olmadığından sabit koordinatlar (%x, %y) yanlış bölgeleri okuyordu.
+// Örn: "KOLTUK SAYISI" soyadı olarak, "TOKAT" marka olarak okunuyordu.
+// Artık tüm metin okunup regex ile alanlar çıkarılıyor.
 const runEnhancedOcrOnImage = async (imgElement, onProgress) => {
   const worker = await initTesseractWorker(onProgress);
 
@@ -401,26 +422,10 @@ const runEnhancedOcrOnImage = async (imgElement, onProgress) => {
   // Gelişmiş ön işleme uygula
   if (onProgress) onProgress(0.05);
   const preprocessed = preprocessForOcr(srcCanvas);
-  if (onProgress) onProgress(0.15);
+  if (onProgress) onProgress(0.20);
 
-  // 1. BÖLGE BAZLI OCR (kritik 4 alan öncelikli)
-  const regionResult = {};
-  const criticalFields = ['plaka', 'tc', 'sase', 'belgeSeri'];
-  const secondaryFields = ['marka', 'modelYili', 'soyad', 'ad'];
-  const allRegionFields = [...criticalFields, ...secondaryFields];
-
-  let regionStep = 0;
-  for (const fieldName of allRegionFields) {
-    const regionDef = RUHSAT_REGIONS[fieldName];
-    if (!regionDef) continue;
-    const val = await _ocrRegion(worker, preprocessed, regionDef, fieldName);
-    if (val) regionResult[fieldName] = val;
-    regionStep++;
-    if (onProgress) onProgress(0.15 + (regionStep / allRegionFields.length) * 0.45);
-  }
-
-  // 2. TAM GÖRÜNTÜ OCR (yedek + eksik alanları doldurma)
-  if (onProgress) onProgress(0.65);
+  // TAM GÖRÜNTÜ OCR + REGEX TABANLI ALAN ÇIKARMA
+  // Bölge bazlı yerine tüm metni okuyup akıllı regex ile alanları çıkar
   let fullResult = {};
   let fullText = '';
   let confidence = 0;
@@ -428,19 +433,19 @@ const runEnhancedOcrOnImage = async (imgElement, onProgress) => {
     const { data: fullOcr } = await worker.recognize(preprocessed);
     fullText = (fullOcr.text || '').toUpperCase();
     confidence = fullOcr.confidence || 0;
-    if (confidence >= 25) {
+    if (onProgress) onProgress(0.80);
+    if (confidence >= 20) {
       fullResult = parseOcrText(fullText);
     }
   } catch (e) {
     console.warn('TAM OCR HATASI:', e.message);
   }
-  if (onProgress) onProgress(0.9);
+  if (onProgress) onProgress(0.95);
 
-  // 3. BİRLEŞTİR: Bölge bazlı öncelikli, tam metin yedek
   const merged = {};
   const allFields = ['plaka','marka','modelYili','sase','tc','soyad','ad','belgeSeri'];
   allFields.forEach(k => {
-    merged[k] = regionResult[k] || fullResult[k] || '';
+    merged[k] = fullResult[k] || '';
   });
 
   if (onProgress) onProgress(1);
@@ -449,7 +454,7 @@ const runEnhancedOcrOnImage = async (imgElement, onProgress) => {
     ...merged,
     rawText: fullText,
     confidence: confidence,
-    regionFields: Object.keys(regionResult),
+    regionFields: [],
     source: 'tesseract'
   };
 };
