@@ -569,7 +569,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
   const onDragLeave = useCallback(() => setDragOver(false), []);
   const onDrop = useCallback((e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }, [handleFiles]);
 
-  /* ═══ ANA İŞLEM AKIŞI: OCR → QR → GEMİNİ ═══ */
+  /* ═══ ANA İŞLEM AKIŞI: GEMİNİ (birincil) → QR → OCR (yedek) ═══ */
   const processAll = useCallback(async () => {
     const pending = files.filter(f => f.status === 'pending' || f.status === 'error');
     if (!pending.length) { toast('İŞLENECEK RUHSAT BULUNMUYOR', 'warning'); return; }
@@ -577,91 +577,113 @@ MR.QrRuhsatPage = ({setPage, user}) => {
     setProcessing(true);
 
     for (const item of pending) {
-      setFiles(prev => prev.map(f => f.id === item.id ? {...f, status: 'processing', substatus: 'ocr', ocrProgress: 0} : f));
+      const hasApiKey = !!(ruhsatApiKey && ruhsatApiKey.trim());
+      const initSubstatus = hasApiKey ? 'ai' : 'ocr';
+      setFiles(prev => prev.map(f => f.id === item.id ? {...f, status: 'processing', substatus: initSubstatus, ocrProgress: 0} : f));
 
       try {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = item.preview; });
 
-        // ═══ ADIM 1: GELİŞMİŞ TESSERACT OCR (ÖN İŞLEME + BÖLGE BAZLI) ═══
-        let ocrResult = null;
-        let ocrText = '';
-        let ocrConfidence = 0;
-
-        try {
-          ocrResult = await Promise.race([
-            runEnhancedOcrOnImage(img, (progress) => {
-              setFiles(prev => prev.map(f => f.id === item.id ? {...f, ocrProgress: progress} : f));
-            }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('OCR ZAMAN AŞIMI')), 60000))
-          ]);
-          ocrText = ocrResult.rawText || '';
-          ocrConfidence = ocrResult.confidence || 0;
-        } catch (ocrErr) {
-          console.warn('TESSERACT OCR HATASI:', ocrErr.message);
-        }
-
-        // ═══ ADIM 2: QR KOD TARAMA ═══
-        setFiles(prev => prev.map(f => f.id === item.id ? {...f, substatus: 'qr', ocrProgress: 0.95} : f));
-        const qrResult = await readQrFromImage(img);
-        let qrParsed = null;
-        if (qrResult.success) {
-          qrParsed = parseQrData(qrResult.data);
-        }
-
-        // ═══ ADIM 3: SONUÇLARI BİRLEŞTİR VE EKSİK ALAN KONTROLÜ ═══
         const merged = {
           plaka: '', marka: '', modelYili: '', sase: '', tc: '', soyad: '', ad: '', belgeSeri: '',
-          raw: qrParsed?.raw || '', ocrText: ocrText, ocrConfidence: ocrConfidence, source: {}
+          raw: '', ocrText: '', ocrConfidence: 0, source: {}
         };
+        const allFields = ['plaka','marka','modelYili','sase','tc','soyad','ad','belgeSeri'];
 
-        // OCR sonuçları (temel katman)
-        if (ocrResult) {
-          ['plaka','marka','modelYili','sase','tc','soyad','ad','belgeSeri'].forEach(k => {
-            if (ocrResult[k]) { merged[k] = ocrResult[k]; merged.source[k] = 'ocr'; }
-          });
-        }
-
-        // QR sonuçları (üst katman - kritik alanlar QR'dan gelirse override)
-        if (qrParsed) {
-          ['plaka','sase','tc','belgeSeri'].forEach(k => {
-            if (qrParsed[k]) { merged[k] = qrParsed[k]; merged.source[k] = 'qr'; }
-          });
-        }
-
-        // ═══ ADIM 4: GEMİNİ AI (SADECE YETERSİZ ALAN VARSA - SON ÇARE) ═══
-        const fieldCount = ['plaka','marka','modelYili','sase','tc','soyad','ad','belgeSeri'].filter(k => merged[k]).length;
-
-        if (fieldCount < 4) {
-          setFiles(prev => prev.map(f => f.id === item.id ? {...f, substatus: 'ai', ocrProgress: 0} : f));
+        // ═══ ADIM 1: GEMİNİ AI (API KEY VARSA - BİRİNCİL YÖNTEM) ═══
+        let geminiUsed = false;
+        if (hasApiKey) {
           try {
             const geminiResult = await Promise.race([
               runGeminiOcr(item.file, (progress) => {
                 setFiles(prev => prev.map(f => f.id === item.id ? {...f, ocrProgress: progress} : f));
-              }, ruhsatApiKey || null),
+              }, ruhsatApiKey),
               new Promise((_, reject) => setTimeout(() => reject(new Error('AI ZAMAN AŞIMI')), 45000))
             ]);
 
             if (geminiResult.success) {
-              // Gemini sonuçlarıyla eksik alanları doldur (mevcut OCR/QR verilerini ezmez)
-              ['plaka','marka','modelYili','sase','tc','soyad','ad','belgeSeri'].forEach(k => {
-                if (!merged[k] && geminiResult[k]) {
-                  merged[k] = geminiResult[k];
-                  merged.source[k] = 'gemini';
-                }
+              allFields.forEach(k => {
+                if (geminiResult[k]) { merged[k] = geminiResult[k]; merged.source[k] = 'gemini'; }
               });
-              merged.ocrConfidence = Math.max(ocrConfidence, geminiResult.confidence || 0);
+              merged.ocrConfidence = geminiResult.confidence || 85;
+              geminiUsed = true;
             }
           } catch (geminiErr) {
             console.warn('GEMİNİ HATASI:', geminiErr.message);
           }
         }
 
+        // ═══ ADIM 2: QR KOD TARAMA (her zaman - QR kritik alanları override eder) ═══
+        setFiles(prev => prev.map(f => f.id === item.id ? {...f, substatus: 'qr', ocrProgress: 0.95} : f));
+        const qrResult = await readQrFromImage(img);
+        let qrParsed = null;
+        if (qrResult.success) {
+          qrParsed = parseQrData(qrResult.data);
+          merged.raw = qrResult.data;
+        }
+        if (qrParsed) {
+          ['plaka','sase','tc','belgeSeri'].forEach(k => {
+            if (qrParsed[k]) { merged[k] = qrParsed[k]; merged.source[k] = 'qr'; }
+          });
+        }
+
+        // ═══ ADIM 3: TESSERACT OCR (API KEY YOKSA veya Gemini başarısızsa) ═══
+        let ocrText = '';
+        let ocrConfidence = 0;
+        const fieldCountAfterGemini = allFields.filter(k => merged[k]).length;
+        const needsOcr = !geminiUsed || fieldCountAfterGemini < 4;
+
+        if (needsOcr) {
+          setFiles(prev => prev.map(f => f.id === item.id ? {...f, substatus: 'ocr', ocrProgress: 0} : f));
+          try {
+            const ocrResult = await Promise.race([
+              runEnhancedOcrOnImage(img, (progress) => {
+                setFiles(prev => prev.map(f => f.id === item.id ? {...f, ocrProgress: progress} : f));
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('OCR ZAMAN AŞIMI')), 60000))
+            ]);
+            ocrText = ocrResult.rawText || '';
+            ocrConfidence = ocrResult.confidence || 0;
+            // OCR sadece boş alanları doldurur (Gemini/QR verilerini ezmez)
+            allFields.forEach(k => {
+              if (!merged[k] && ocrResult[k]) { merged[k] = ocrResult[k]; merged.source[k] = 'ocr'; }
+            });
+            if (!merged.ocrConfidence) merged.ocrConfidence = ocrConfidence;
+          } catch (ocrErr) {
+            console.warn('TESSERACT OCR HATASI:', ocrErr.message);
+          }
+        }
+
+        // ═══ ADIM 4: API KEY YOKSA ve OCR yetersizse Gemini dene ═══
+        if (!geminiUsed) {
+          const fcAfterOcr = allFields.filter(k => merged[k]).length;
+          if (fcAfterOcr < 6 || ocrConfidence < 65) {
+            setFiles(prev => prev.map(f => f.id === item.id ? {...f, substatus: 'ai', ocrProgress: 0} : f));
+            try {
+              const geminiResult = await Promise.race([
+                runGeminiOcr(item.file, (progress) => {
+                  setFiles(prev => prev.map(f => f.id === item.id ? {...f, ocrProgress: progress} : f));
+                }, null),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('AI ZAMAN AŞIMI')), 45000))
+              ]);
+              if (geminiResult.success) {
+                allFields.forEach(k => {
+                  if (!merged[k] && geminiResult[k]) { merged[k] = geminiResult[k]; merged.source[k] = 'gemini'; }
+                });
+                merged.ocrConfidence = Math.max(ocrConfidence, geminiResult.confidence || 0);
+              }
+            } catch (geminiErr) {
+              console.warn('GEMİNİ HATASI:', geminiErr.message);
+            }
+          }
+        }
+
         // ═══ SONUÇ KAYDET ═══
         merged.qrRaw = qrResult.success ? qrResult.data : '';
         merged.ocrText = ocrText;
-        const finalFieldCount = ['plaka','marka','modelYili','sase','tc','soyad','ad','belgeSeri'].filter(k => merged[k]).length;
+        const finalFieldCount = allFields.filter(k => merged[k]).length;
 
         if (finalFieldCount > 0) {
           setFiles(prev => prev.map(f => f.id === item.id ? {
@@ -773,7 +795,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
         }}, React.createElement(LIcon, {name:'QrCode', size:26, color:'#fff'})),
         React.createElement('div', null,
           React.createElement('h1', {style: {fontSize: 22, fontWeight: 900, color: C.text, margin: 0}}, 'QR RUHSAT OKUYUCU'),
-          React.createElement('p', {style: {fontSize: 12, color: C.textMuted, margin: 0, fontWeight: 600}}, 'OCR + QR + AI RUHSAT BİLGİ ÇIKARMA')
+          React.createElement('p', {style: {fontSize: 12, color: C.textMuted, margin: 0, fontWeight: 600}}, 'GEMİNİ AI + QR + OCR RUHSAT BİLGİ ÇIKARMA')
         )
       ),
 
