@@ -701,25 +701,18 @@ const PoliceYenileme = ({setPage, user}) => {
 
   // Excel şablon indir / Mevcut listeyi dışa aktar
   const downloadExcel = (policelerData) => {
-    const headers = ['PERSONEL','TRF','KSK','TSS','DSK','KNT','İMM','POLİÇE','MÜŞTERİ','YENİLEME TARİHİ','TC VERGİ NO','DOĞUM TARİHİ','PLAKA','BELGE SERİ','TELEFON','AÇIKLAMA'];
+    const headers = ['YENİLEME TARİHİ','MÜŞTERİ ADI SOYADI','DOĞUM TARİHİ','VERGİ NO / T.C. NO','PLAKA','BELGE SERİ NO','ŞASE NUMARASI','TELEFON','POLİÇE TÜRÜ','AÇIKLAMA'];
     const rows = policelerData.map(p => {
-      const b = (p.brans||'').toUpperCase();
       return [
-        p.olusturan_adi||p.personel||'',
-        b.includes('TRAFİK')||b==='TRF'?'\u2713':'',
-        b.includes('KASKO')||b==='KSK'?'\u2713':'',
-        b.includes('SAĞLIK')||b.includes('TSS')?'\u2713':'',
-        b.includes('DASK')||b==='DSK'?'\u2713':'',
-        b.includes('KONUT')||b==='KNT'?'\u2713':'',
-        b.includes('İMM')||b==='IMM'?'\u2713':'',
-        p.police_no||'',
-        p.musteri_adi||'',
         fmtTarih(p.bitis_tarihi),
-        p.musteri_tc||'',
+        p.musteri_adi||'',
         p.dogum_tarihi ? fmtTarih(p.dogum_tarihi) : '',
+        p.musteri_tc||'',
         p.plaka||'',
         p.belge_seri||'',
+        p.sase_numarasi||'',
         p.musteri_telefon||'',
+        p.police_turu ? ({yeni:'YENİ',yenileme:'YENİLEME',zeyil:'ZEYİL'}[p.police_turu]||p.police_turu) : '',
         p.notlar||''
       ];
     });
@@ -740,27 +733,19 @@ const PoliceYenileme = ({setPage, user}) => {
         const wb = XLSX.read(evt.target.result, {type:'array'});
         const ws = wb.Sheets[wb.SheetNames[0]];
         const data = XLSX.utils.sheet_to_json(ws, {header:1});
-        const rows = data.slice(1).filter(r => r.length > 1 && (r[7]||r[8]));
+        const rows = data.slice(1).filter(r => r.length > 1 && (r[0]||r[1]));
         const mapped = rows.map(r => {
-          const branslar = [];
-          if (r[1]) branslar.push('TRAFİK');
-          if (r[2]) branslar.push('KASKO');
-          if (r[3]) branslar.push('TSS');
-          if (r[4]) branslar.push('DASK');
-          if (r[5]) branslar.push('KONUT');
-          if (r[6]) branslar.push('İMM');
           return {
-            personel: String(r[0]||''),
-            brans: branslar.join(', ') || 'DİĞER',
-            police_no: String(r[7]||''),
-            musteri_adi: String(r[8]||''),
-            bitis_tarihi: parseExcelDate(r[9]),
-            musteri_tc: String(r[10]||''),
-            dogum_tarihi: parseExcelDate(r[11]),
-            plaka: String(r[12]||''),
-            belge_seri: String(r[13]||''),
-            musteri_telefon: String(r[14]||''),
-            notlar: String(r[15]||'')
+            bitis_tarihi: parseExcelDate(r[0]),
+            musteri_adi: String(r[1]||''),
+            dogum_tarihi: parseExcelDate(r[2]),
+            musteri_tc: String(r[3]||''),
+            plaka: String(r[4]||''),
+            belge_seri: String(r[5]||''),
+            sase_numarasi: String(r[6]||''),
+            musteri_telefon: String(r[7]||''),
+            police_turu: String(r[8]||''),
+            notlar: String(r[9]||'')
           };
         });
         if (mapped.length === 0) {
@@ -786,7 +771,7 @@ const PoliceYenileme = ({setPage, user}) => {
     setLoading(true);
     const policelerPayload = importData.map(d => ({
       ...d,
-      sigorta_sirketi: d.personel || '-',
+      sigorta_sirketi: '-',
       baslangic_tarihi: d.bitis_tarihi ? (() => {
         const dt = new Date(d.bitis_tarihi);
         dt.setFullYear(dt.getFullYear()-1);
@@ -898,7 +883,7 @@ const PoliceYenileme = ({setPage, user}) => {
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:10,minWidth:900}}>
               <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                {['PERSONEL','BRANŞ','POLİÇE NO','MÜŞTERİ','YENİLEME TARİHİ','TC VERGİ NO','DOĞUM TARİHİ','PLAKA','BELGE SERİ','TELEFON'].map(h=>
+                {['YENİLEME TARİHİ','MÜŞTERİ ADI SOYADI','DOĞUM TARİHİ','VERGİ NO / T.C. NO','PLAKA','BELGE SERİ NO','ŞASE NUMARASI','TELEFON','POLİÇE TÜRÜ','AÇIKLAMA'].map(h=>
                   <th key={h} style={{padding:'8px 6px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
                 )}
               </tr></thead>
@@ -907,16 +892,16 @@ const PoliceYenileme = ({setPage, user}) => {
                   <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),backgroundImage:'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
                     onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
                     onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
-                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.personel}</td>
-                    <td style={{padding:'6px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}><Badge text={d.brans} color={C.cyan}/></td>
-                    <td style={{padding:'6px',fontWeight:600,color:C.accent,fontSize:'12px'}}>{d.police_no}</td>
-                    <td style={{padding:'6px',fontWeight:600,fontSize:'12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.musteri_adi}</td>
                     <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.bitis_tarihi ? fmtTarih(d.bitis_tarihi) : '-'}</td>
-                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.musteri_tc||'-'}</td>
+                    <td style={{padding:'6px',fontWeight:600,fontSize:'12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.musteri_adi||'-'}</td>
                     <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.dogum_tarihi ? fmtTarih(d.dogum_tarihi) : '-'}</td>
+                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.musteri_tc||'-'}</td>
                     <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.plaka||'-'}</td>
                     <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.belge_seri||'-'}</td>
+                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.sase_numarasi||'-'}</td>
                     <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.musteri_telefon||'-'}</td>
+                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.police_turu||'-'}</td>
+                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.notlar||'-'}</td>
                   </tr>
                 ))}
               </tbody>
