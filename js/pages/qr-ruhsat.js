@@ -178,6 +178,140 @@ const enhanceImage = (ctx, w, h) => {
   return imgData;
 };
 
+/* ═══ TESSERACT OCR FONKSİYONLARI ═══ */
+
+// Singleton Tesseract worker (Türkçe)
+let _tesseractWorker = null;
+let _tesseractReady = false;
+
+const initTesseractWorker = async (onProgress) => {
+  if (_tesseractReady && _tesseractWorker) return _tesseractWorker;
+  if (typeof Tesseract === 'undefined') throw new Error('TESSERACT KÜTÜPHANESİ BULUNAMADI');
+  _tesseractWorker = await Tesseract.createWorker('tur', 1, {
+    logger: (m) => {
+      if (m.status === 'recognizing text' && onProgress) onProgress(m.progress);
+      if (m.status === 'loading language traineddata' && onProgress) onProgress(m.progress * 0.5);
+    }
+  });
+  _tesseractReady = true;
+  return _tesseractWorker;
+};
+
+// Görüntü üzerinde OCR çalıştır
+const runOcrOnImage = async (imgElement, onProgress) => {
+  const worker = await initTesseractWorker(onProgress);
+  // Kontrast artırılmış canvas oluştur (OCR doğruluğu için)
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = imgElement.naturalWidth || imgElement.width;
+  canvas.height = imgElement.naturalHeight || imgElement.height;
+  ctx.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
+  // Grayscale + kontrast artır
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imgData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    let gray = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
+    gray = gray < 128 ? Math.max(0, gray * 0.5) : Math.min(255, gray * 1.3 + 30);
+    data[i] = data[i+1] = data[i+2] = gray;
+  }
+  ctx.putImageData(imgData, 0, 0);
+  const { data: result } = await worker.recognize(canvas);
+  return { text: (result.text || '').toUpperCase(), confidence: result.confidence || 0 };
+};
+
+// OCR metninden 8 alanı çıkar
+const parseOcrText = (text) => {
+  if (!text) return {};
+  const t = text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+
+  let plaka = '', marka = '', modelYili = '', sase = '', tc = '', soyad = '', ad = '', belgeSeri = '';
+
+  // PLAKA (A)
+  const plakaM = t.match(/\(?A\)?\s*(?:PLAKA)?\s*[:\-]?\s*(\d{2}\s?[A-ZÇĞİÖŞÜ]{1,4}\s?\d{1,4})/i)
+    || t.match(/PLAKA\s*[:\-]?\s*(\d{2}\s?[A-ZÇĞİÖŞÜ]{1,4}\s?\d{1,4})/i)
+    || t.match(/(\d{2}\s?[A-ZÇĞİÖŞÜ]{1,4}\s?\d{2,4})/);
+  if (plakaM) plaka = plakaM[1].replace(/\s+/g, '').toUpperCase();
+
+  // MARKASI (D.1)
+  const markaM = t.match(/\(?D[\.\s]?1\)?\s*[:\-]?\s*(?:MARKA(?:SI)?)?[:\-]?\s*([A-ZÇĞİÖŞÜa-zçğıöşü\s\-]{2,25}?)(?=\s*\(?[A-Z][\.\s]?\d|\s{2,}|\d{4}|$)/i)
+    || t.match(/MARKA(?:SI)?\s*[:\-]?\s*([A-ZÇĞİÖŞÜ\s\-]{2,25}?)(?=\s*\(?[A-Z][\.\s]?\d|\s{2,}|\d{4}|$)/i);
+  if (markaM) marka = markaM[1].trim().toUpperCase().replace(/\s+/g, ' ');
+
+  // MODEL YILI (D.4)
+  const modelM = t.match(/\(?D[\.\s]?4\)?\s*[:\-]?\s*(?:MODEL\s*Y[İI]L[İI]?)?\s*[:\-]?\s*((?:19|20)\d{2})/i)
+    || t.match(/MODEL\s*Y[İI]L[İI]?\s*[:\-]?\s*((?:19|20)\d{2})/i);
+  if (modelM) modelYili = modelM[1];
+
+  // ŞASE NO (E) — 17 karakter VIN
+  const saseM = t.match(/\(?E\)?\s*[:\-]?\s*(?:ŞASE|SASE)?\s*(?:NO|NUMARASI)?\s*[:\-]?\s*([A-HJ-NPR-Z0-9]{17})/i)
+    || t.match(/(?:ŞASE|SASE)\s*(?:NO|NUMARASI)?\s*[:\-]?\s*([A-HJ-NPR-Z0-9]{17})/i)
+    || t.match(/([A-HJ-NPR-Z0-9]{17})/i);
+  if (saseM) {
+    let vin = saseM[1].toUpperCase();
+    // Yaygın OCR hataları düzelt: O->0 sayısal pozisyonlarda
+    vin = vin.replace(/[OQ]/g, '0').replace(/[IL]/g, '1');
+    sase = vin;
+  }
+
+  // T.C. / VERGİ NO (Y.4)
+  const tcM = t.match(/\(?Y[\.\s]?4\)?\s*[:\-]?\s*(?:T\.?C\.?\s*K[İI]ML[İI]K|VERG[İI])\s*(?:NO|NUMARASI)?\s*[:\-]?\s*(\d{10,11})/i)
+    || t.match(/(?:T\.?C\.?\s*(?:K[İI]ML[İI]K)?|VERG[İI])\s*(?:NO|NUMARASI)?\s*[:\-]?\s*(\d{10,11})/i)
+    || t.match(/(\d{11})/);
+  if (tcM) tc = tcM[1];
+  if (!tc) {
+    const vknM = t.match(/(\d{10})/);
+    if (vknM) tc = vknM[1];
+  }
+
+  // SOYADI / TİCARİ ÜNVANI (C.1.1)
+  const soyadM = t.match(/\(?C[\.\s]?1[\.\s]?1\)?\s*[:\-]?\s*(?:SOYADI?|T[İI]CAR[İI]\s*[ÜU]NVANI?)\s*[:\-]?\s*([A-ZÇĞİÖŞÜ\s]{2,50}?)(?=\s*\(?[A-Z][\.\s]?\d|\s{2,}|$)/i);
+  if (soyadM) soyad = soyadM[1].trim().toUpperCase().replace(/\s+/g, ' ');
+
+  // ADI (C.1.2)
+  const adM = t.match(/\(?C[\.\s]?1[\.\s]?2\)?\s*[:\-]?\s*(?:ADI)?\s*[:\-]?\s*([A-ZÇĞİÖŞÜ\s]{2,30}?)(?=\s*\(?[A-Z][\.\s]?\d|\s{2,}|$)/i);
+  if (adM) ad = adM[1].trim().toUpperCase().replace(/\s+/g, ' ');
+
+  // BELGE SERİ NO
+  const belgeM = t.match(/(?:BELGE\s*)?SER[İI]\s*(?:NO)?\s*[:\-]?\s*([A-Z]{2})\s*(?:NO|№)?\s*[:\-]?\s*(\d{5,7})/i)
+    || t.match(/([A-Z]{2})\s*(\d{6})/);
+  if (belgeM) belgeSeri = belgeM[1].toUpperCase() + ' ' + belgeM[2];
+
+  return { plaka, marka, modelYili, sase, tc, soyad, ad, belgeSeri };
+};
+
+// QR + OCR sonuçlarını birleştir (QR öncelikli)
+const mergeResults = (qrResult, ocrResult) => {
+  const fields = ['plaka', 'sase', 'tc', 'belgeSeri'];
+  const result = {
+    plaka: '', marka: '', modelYili: '', sase: '', tc: '', soyad: '', ad: '', belgeSeri: '',
+    raw: qrResult?.raw || '',
+    ocrText: ocrResult?.rawText || '',
+    ocrConfidence: ocrResult?.confidence || 0,
+    source: {}
+  };
+
+  // QR alanları (QR öncelikli)
+  fields.forEach(k => {
+    if (qrResult?.[k]) {
+      result[k] = qrResult[k];
+      result.source[k] = 'qr';
+    } else if (ocrResult?.[k]) {
+      result[k] = ocrResult[k];
+      result.source[k] = 'ocr';
+    }
+  });
+
+  // Sadece OCR alanları
+  ['marka', 'modelYili', 'soyad', 'ad'].forEach(k => {
+    if (ocrResult?.[k]) {
+      result[k] = ocrResult[k];
+      result.source[k] = 'ocr';
+    }
+  });
+
+  return result;
+};
+
 /* ═══ ANA SAYFA BİLEŞENİ ═══ */
 MR.QrRuhsatPage = ({setPage, user}) => {
   const {C, S, toast, ICONS} = MR;
@@ -221,7 +355,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
     handleFiles(e.dataTransfer.files);
   }, [handleFiles]);
 
-  // QR okuma başlat
+  // QR + OCR okuma başlat
   const processAll = useCallback(async () => {
     const pending = files.filter(f => f.status === 'pending' || f.status === 'error');
     if (!pending.length) {
@@ -232,7 +366,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
     setProcessing(true);
 
     for (const item of pending) {
-      setFiles(prev => prev.map(f => f.id === item.id ? {...f, status: 'processing'} : f));
+      setFiles(prev => prev.map(f => f.id === item.id ? {...f, status: 'processing', substatus: 'qr', ocrProgress: 0} : f));
 
       try {
         const img = new Image();
@@ -244,33 +378,73 @@ MR.QrRuhsatPage = ({setPage, user}) => {
           img.src = item.preview;
         });
 
+        // 1. QR Tarama (hızlı)
         const qrResult = await readQrFromImage(img);
-
+        let qrParsed = null;
         if (qrResult.success) {
-          const parsed = parseQrData(qrResult.data);
+          qrParsed = parseQrData(qrResult.data);
+        }
+
+        // 2. OCR Tarama (yavaş, ama tüm alanları çıkarır)
+        let ocrParsed = null;
+        let ocrText = '';
+        let ocrConfidence = 0;
+        setFiles(prev => prev.map(f => f.id === item.id ? {...f, substatus: 'ocr', ocrProgress: 0} : f));
+
+        try {
+          const ocrResult = await Promise.race([
+            runOcrOnImage(img, (progress) => {
+              setFiles(prev => prev.map(f => f.id === item.id ? {...f, ocrProgress: progress} : f));
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('OCR ZAMAN AŞIMI')), 30000))
+          ]);
+          ocrText = ocrResult.text;
+          ocrConfidence = ocrResult.confidence;
+          if (ocrConfidence >= 30) {
+            ocrParsed = parseOcrText(ocrText);
+          }
+        } catch (ocrErr) {
+          console.warn('OCR HATASI:', ocrErr.message);
+        }
+
+        // 3. Birleştir
+        const merged = mergeResults(qrParsed, ocrParsed ? {...ocrParsed, rawText: ocrText, confidence: ocrConfidence} : null);
+        merged.qrRaw = qrResult.success ? qrResult.data : '';
+        merged.ocrText = ocrText;
+        merged.ocrConfidence = ocrConfidence;
+
+        // Herhangi bir alan bulunduysa başarılı say
+        const fieldCount = ['plaka','marka','modelYili','sase','tc','soyad','ad','belgeSeri'].filter(k => merged[k]).length;
+
+        if (fieldCount > 0) {
           setFiles(prev => prev.map(f => f.id === item.id ? {
             ...f,
             status: 'success',
-            result: { ...parsed, qrRaw: qrResult.data }
+            substatus: null,
+            ocrProgress: 1,
+            result: merged
           } : f));
         } else {
           setFiles(prev => prev.map(f => f.id === item.id ? {
             ...f,
             status: 'error',
-            result: { error: qrResult.error }
+            substatus: null,
+            result: { error: 'QR KOD VE OCR İLE BİLGİ ÇIKARILAMADI', ocrText, ocrConfidence }
           } : f));
         }
       } catch (e) {
         setFiles(prev => prev.map(f => f.id === item.id ? {
           ...f,
           status: 'error',
-          result: { error: 'GÖRÜNTÜ YÜKLENEMEDİ' }
+          substatus: null,
+          result: { error: 'GÖRÜNTÜ YÜKLENEMEDİ: ' + e.message }
         } : f));
       }
     }
 
     setProcessing(false);
-    toast('QR OKUMA TAMAMLANDI', 'success');
+    const successCount2 = files.filter(f => f.status === 'success').length;
+    toast('TARAMA TAMAMLANDI', 'success');
   }, [files]);
 
   // Tek dosya sil
@@ -296,10 +470,14 @@ MR.QrRuhsatPage = ({setPage, user}) => {
     const text = success.map((f, i) => {
       const r = f.result;
       return `${i+1}. RUHSAT\n` +
-        `   VERGİ NO / T.C. NO : ${r.tc || '-'}\n` +
-        `   PLAKA              : ${r.plaka || '-'}\n` +
-        `   BELGE SERİ NO      : ${r.belgeSeri || '-'}\n` +
-        `   ŞASE NUMARASI      : ${r.sase || '-'}`;
+        `   (A) PLAKA                       : ${r.plaka || '-'}\n` +
+        `   (D.1) MARKASI                   : ${r.marka || '-'}\n` +
+        `   (D.4) MODEL YILI                : ${r.modelYili || '-'}\n` +
+        `   (E) ŞASE NUMARASI               : ${r.sase || '-'}\n` +
+        `   (Y.4) T.C. / VERGİ NO           : ${r.tc || '-'}\n` +
+        `   (C.1.1) SOYADI / TİCARİ ÜNVANI  : ${r.soyad || '-'}\n` +
+        `   (C.1.2) ADI                      : ${r.ad || '-'}\n` +
+        `   BELGE SERİ NO                    : ${r.belgeSeri || '-'}`;
     }).join('\n\n');
 
     navigator.clipboard.writeText(text).then(() => toast('SONUÇLAR PANOYA KOPYALANDI', 'success'));
@@ -312,16 +490,20 @@ MR.QrRuhsatPage = ({setPage, user}) => {
 
     const data = success.map((f, i) => ({
       'SIRA': i + 1,
-      'VERGİ NO / T.C. NO': f.result.tc || '',
-      'PLAKA': f.result.plaka || '',
+      '(A) PLAKA': f.result.plaka || '',
+      '(D.1) MARKASI': f.result.marka || '',
+      '(D.4) MODEL YILI': f.result.modelYili || '',
+      '(E) ŞASE NUMARASI': f.result.sase || '',
+      '(Y.4) T.C. / VERGİ NO': f.result.tc || '',
+      '(C.1.1) SOYADI': f.result.soyad || '',
+      '(C.1.2) ADI': f.result.ad || '',
       'BELGE SERİ NO': f.result.belgeSeri || '',
-      'ŞASE NUMARASI': f.result.sase || '',
-      'QR VERİ': f.result.qrRaw || ''
+      'OCR GÜVENİLİRLİK %': f.result.ocrConfidence ? Math.round(f.result.ocrConfidence) : ''
     }));
 
     const ws = XLSX.utils.json_to_sheet(data);
     ws['!cols'] = [
-      {wch:6}, {wch:20}, {wch:15}, {wch:18}, {wch:22}, {wch:50}
+      {wch:6}, {wch:15}, {wch:18}, {wch:12}, {wch:22}, {wch:20}, {wch:25}, {wch:18}, {wch:18}, {wch:16}
     ];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'RUHSAT QR SONUÇLARI');
@@ -357,7 +539,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
         ),
         React.createElement('div', null,
           React.createElement('h1', {style: {fontSize: 22, fontWeight: 900, color: C.text, margin: 0}}, 'QR RUHSAT OKUYUCU'),
-          React.createElement('p', {style: {fontSize: 12, color: C.textMuted, margin: 0, fontWeight: 600}}, 'ARAÇ RUHSATI QR KODUNDAN OTOMATİK BİLGİ ÇIKARMA')
+          React.createElement('p', {style: {fontSize: 12, color: C.textMuted, margin: 0, fontWeight: 600}}, 'ARAÇ RUHSATI QR + OCR OTOMATİK BİLGİ ÇIKARMA')
         )
       ),
       files.length > 0 && React.createElement('div', {style: {display:'flex', gap: 8, flexWrap:'wrap'}},
@@ -490,7 +672,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
         processing
           ? React.createElement('div', {style: {width:20, height:20, border:'3px solid rgba(255,255,255,0.3)', borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.8s linear infinite'}})
           : React.createElement(LIcon, {name:'QrCode', size:22, color:'#fff'}),
-        processing ? `OKUNUYOR... (${files.filter(f=>f.status==='processing').length}/${pendingCount})` : `${pendingCount} RUHSATI TARA`
+        processing ? `QR + OCR TARANIYOR... (${files.filter(f=>f.status==='processing').length}/${pendingCount})` : `${pendingCount} RUHSATI TARA (QR + OCR)`
       )
     ),
 
@@ -525,8 +707,8 @@ MR.QrRuhsatPage = ({setPage, user}) => {
             React.createElement('div', {style: {fontSize:13, fontWeight:800, color:C.text}}, `${idx+1}. ${item.name}`),
             React.createElement('div', {style: {fontSize:10, fontWeight:600, color:C.textMuted}},
               item.status === 'pending' ? 'TARANMAYI BEKLİYOR' :
-              item.status === 'processing' ? 'QR KOD OKUNUYOR...' :
-              item.status === 'success' ? 'BAŞARILI - QR KOD OKUNDU' :
+              item.status === 'processing' ? (item.substatus === 'ocr' ? `OCR METİN TANIMA... %${Math.round((item.ocrProgress || 0) * 100)}` : 'QR KOD OKUNUYOR...') :
+              item.status === 'success' ? `BAŞARILI - ${['plaka','marka','modelYili','sase','tc','soyad','ad','belgeSeri'].filter(k => item.result?.[k]).length}/8 ALAN OKUNDU` :
               'HATA - ' + (item.result?.error || 'QR KOD OKUNAMADI')
             )
           ),
@@ -560,16 +742,26 @@ MR.QrRuhsatPage = ({setPage, user}) => {
           /* Sonuç alanları */
           item.status === 'success' && item.result
             ? React.createElement('div', {style: {display:'grid', gap: 12}},
-                /* Her alan için düzenlenebilir input */
+                /* Her alan için düzenlenebilir input (8 alan) */
                 [
-                  {key:'tc', label:'VERGİ NO / T.C. NO', icon:'CreditCard', placeholder:'11 haneli TC veya 10 haneli Vergi No'},
-                  {key:'plaka', label:'PLAKA', icon:'Car', placeholder:'Örn: 34ABC123'},
-                  {key:'belgeSeri', label:'BELGE SERİ NO', icon:'FileText', placeholder:'Örn: HD 120077'},
-                  {key:'sase', label:'ŞASE NUMARASI', icon:'Hash', placeholder:'17 karakterli şase numarası'}
+                  {key:'plaka',     label:'(A) PLAKA',                       icon:'Car',        placeholder:'Örn: 34ABC123'},
+                  {key:'marka',     label:'(D.1) MARKASI',                   icon:'Tag',        placeholder:'Örn: TOYOTA'},
+                  {key:'modelYili', label:'(D.4) MODEL YILI',                icon:'Calendar',   placeholder:'Örn: 2020'},
+                  {key:'sase',      label:'(E) ŞASE NUMARASI',              icon:'Hash',       placeholder:'17 karakterli şase numarası'},
+                  {key:'tc',        label:'(Y.4) T.C. / VERGİ NO',          icon:'CreditCard', placeholder:'10-11 haneli'},
+                  {key:'soyad',     label:'(C.1.1) SOYADI / TİCARİ ÜNVANI', icon:'User',       placeholder:'Soyadı veya ticari ünvan'},
+                  {key:'ad',        label:'(C.1.2) ADI',                     icon:'User',       placeholder:'Adı'},
+                  {key:'belgeSeri', label:'BELGE SERİ NO',                   icon:'FileText',   placeholder:'Örn: HD 120077'}
                 ].map(field => React.createElement('div', {key:field.key},
                   React.createElement('label', {style: {fontSize:10, fontWeight:800, color:C.textMuted, marginBottom:4, display:'flex', alignItems:'center', gap:4}},
                     React.createElement(LIcon, {name:field.icon, size:12, color:C.accent}),
-                    field.label
+                    field.label,
+                    /* Kaynak rozeti (QR/OCR) */
+                    item.result.source?.[field.key] === 'qr'
+                      ? React.createElement('span', {style: {fontSize:8, fontWeight:900, background:(C.success||'#10b981')+'25', color:C.success||'#10b981', padding:'1px 5px', borderRadius:4, marginLeft:4}}, 'QR')
+                      : item.result.source?.[field.key] === 'ocr'
+                        ? React.createElement('span', {style: {fontSize:8, fontWeight:900, background:C.accent+'25', color:C.accent, padding:'1px 5px', borderRadius:4, marginLeft:4}}, 'OCR')
+                        : null
                   ),
                   React.createElement('input', {
                     value: item.result[field.key] || '',
@@ -586,7 +778,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
                   })
                 )),
                 /* QR Ham Veri toggle */
-                React.createElement('details', {style: {marginTop: 4}},
+                item.result.qrRaw && React.createElement('details', {style: {marginTop: 4}},
                   React.createElement('summary', {style: {fontSize:10, fontWeight:700, color:C.textMuted, cursor:'pointer', userSelect:'none'}}, 'QR HAM VERİ'),
                   React.createElement('pre', {style: {
                     fontSize: 10, color: C.textMuted, marginTop: 6,
@@ -595,7 +787,21 @@ MR.QrRuhsatPage = ({setPage, user}) => {
                     border: `1px solid ${C.border}`,
                     whiteSpace: 'pre-wrap', wordBreak: 'break-all',
                     maxHeight: 120, overflow: 'auto'
-                  }}, item.result.qrRaw || item.result.raw || '-')
+                  }}, item.result.qrRaw || '-')
+                ),
+                /* OCR Ham Metin toggle */
+                item.result.ocrText && React.createElement('details', {style: {marginTop: 4}},
+                  React.createElement('summary', {style: {fontSize:10, fontWeight:700, color:C.textMuted, cursor:'pointer', userSelect:'none'}},
+                    `OCR HAM METİN (GÜVENİLİRLİK: %${Math.round(item.result.ocrConfidence || 0)})`
+                  ),
+                  React.createElement('pre', {style: {
+                    fontSize: 10, color: C.textMuted, marginTop: 6,
+                    padding: 10, borderRadius: 8,
+                    background: C.bgInput || '#1e293b',
+                    border: `1px solid ${C.border}`,
+                    whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+                    maxHeight: 120, overflow: 'auto'
+                  }}, item.result.ocrText || '-')
                 )
               )
             : item.status === 'error'
@@ -607,9 +813,16 @@ MR.QrRuhsatPage = ({setPage, user}) => {
                   )
                 )
               : item.status === 'processing'
-                ? React.createElement('div', {style: {display:'flex', alignItems:'center', justifyContent:'center', gap:12}},
-                    React.createElement('div', {style: {width:24, height:24, border:`3px solid ${C.accent}30`, borderTopColor:C.accent, borderRadius:'50%', animation:'spin 0.8s linear infinite'}}),
-                    React.createElement('span', {style: {fontSize:13, fontWeight:700, color:C.accent}}, 'QR KOD TARANIYOR...')
+                ? React.createElement('div', {style: {display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12, padding:20}},
+                    React.createElement('div', {style: {display:'flex', alignItems:'center', gap:10}},
+                      React.createElement('div', {style: {width:24, height:24, border:`3px solid ${C.accent}30`, borderTopColor:C.accent, borderRadius:'50%', animation:'spin 0.8s linear infinite'}}),
+                      React.createElement('span', {style: {fontSize:13, fontWeight:700, color:C.accent}},
+                        item.substatus === 'ocr' ? `OCR METİN TANIMA... %${Math.round((item.ocrProgress || 0) * 100)}` : 'QR KOD TARANIYOR...'
+                      )
+                    ),
+                    item.substatus === 'ocr' && React.createElement('div', {style: {width:'100%', maxWidth:300, height:6, borderRadius:3, background:C.accent+'20', overflow:'hidden'}},
+                      React.createElement('div', {style: {height:'100%', borderRadius:3, background:C.accent, width:`${Math.round((item.ocrProgress || 0) * 100)}%`, transition:'width 0.3s ease'}})
+                    )
                   )
                 : React.createElement('div', {style: {display:'flex', alignItems:'center', justifyContent:'center', color:C.textMuted, fontSize:12, fontWeight:600}},
                     '"TARA" BUTONUNA BASARAK QR OKUMA BAŞLATIN'
@@ -634,12 +847,13 @@ MR.QrRuhsatPage = ({setPage, user}) => {
         'ARAÇ RUHSATI QR OKUYUCU'
       ),
       React.createElement('div', {style: {fontSize: 12, color: C.textMuted, fontWeight: 600, maxWidth: 500, margin: '0 auto', lineHeight: 1.8}},
-        'ARAÇ RUHSATI GÖRSELLERİNİ YÜKLEYİN, QR KODU OTOMATİK TARANARAK VERGİ NO / T.C. NO, PLAKA, BELGE SERİ NO VE ŞASE NUMARASI BİLGİLERİ ÇIKARILIR. TOPLU YÜKLEME İLE BİRDEN FAZLA RUHSATI AYNI ANDA İŞLEYEBİLİRSİNİZ.'
+        'ARAÇ RUHSATI GÖRSELLERİNİ YÜKLEYİN, QR KOD + OCR METİN TANIMA İLE PLAKA, MARKA, MODEL YILI, ŞASE NO, T.C./VERGİ NO, SOYADI, ADI VE BELGE SERİ NO BİLGİLERİ OTOMATİK ÇIKARILIR. TOPLU YÜKLEME İLE BİRDEN FAZLA RUHSATI AYNI ANDA İŞLEYEBİLİRSİNİZ.'
       ),
       React.createElement('div', {style: {display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))', gap:12, marginTop:28, maxWidth:600, margin:'28px auto 0'}},
         [
           {icon:'Upload', text:'TOPLU GÖRSEL YÜKLEME'},
           {icon:'QrCode', text:'OTOMATİK QR OKUMA'},
+          {icon:'FileSearch', text:'OCR METİN TANIMA'},
           {icon:'FileSpreadsheet', text:'EXCEL AKTARIM'},
           {icon:'Camera', text:'KAMERA DESTEĞİ'}
         ].map((f, i) => React.createElement('div', {key:i, style: {
