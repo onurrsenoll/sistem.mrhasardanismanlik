@@ -178,7 +178,50 @@ const enhanceImage = (ctx, w, h) => {
   return imgData;
 };
 
-/* ═══ TESSERACT OCR FONKSİYONLARI ═══ */
+/* ═══ GEMİNİ VİSİON API OCR FONKSİYONLARI ═══ */
+
+// Gemini Vision API ile ruhsat OCR (sunucu taraflı, yüksek doğruluk)
+const runGeminiOcr = async (fileObj, onProgress) => {
+  try {
+    if (onProgress) onProgress(0.1);
+    const fd = new FormData();
+    fd.append('dosya_0', fileObj);
+    fd.append('dosya_sayisi', '1');
+    fd.append('tip', 'ruhsat');
+
+    const headers = {};
+    if (MR.api && MR.api.token) headers['Authorization'] = 'Bearer ' + MR.api.token;
+
+    if (onProgress) onProgress(0.3);
+    const resp = await fetch('/api/v1/hesap/ocr-analiz.php', { method: 'POST', headers, body: fd });
+    if (onProgress) onProgress(0.7);
+    const data = await resp.json();
+    if (onProgress) onProgress(0.9);
+
+    if (data.success && data.data) {
+      const d = data.data;
+      return {
+        success: true,
+        plaka: (d.plaka || '').toUpperCase().replace(/\s+/g, ''),
+        marka: (d.marka || '').toUpperCase(),
+        model: (d.model || '').toUpperCase(),
+        modelYili: d.modelyili ? String(d.modelyili) : (d.model_yili ? String(d.model_yili) : ''),
+        sase: (d.sase || d.sasi_no || '').toUpperCase(),
+        tc: d.tc ? String(d.tc) : '',
+        soyad: (d.soyad || '').toUpperCase(),
+        ad: (d.ad || '').toUpperCase(),
+        belgeSeri: (d.belgeseri || d.belge_seri || '').toUpperCase(),
+        confidence: d.guven || 85,
+        source: 'gemini'
+      };
+    }
+    return { success: false, error: data.error || 'API YANIT HATASI' };
+  } catch (e) {
+    return { success: false, error: 'API BAĞLANTI HATASI: ' + e.message };
+  }
+};
+
+/* ═══ TESSERACT OCR FONKSİYONLARI (YEDEK) ═══ */
 
 // Singleton Tesseract worker (Türkçe)
 let _tesseractWorker = null;
@@ -197,16 +240,14 @@ const initTesseractWorker = async (onProgress) => {
   return _tesseractWorker;
 };
 
-// Görüntü üzerinde OCR çalıştır
+// Görüntü üzerinde OCR çalıştır (Tesseract - yedek)
 const runOcrOnImage = async (imgElement, onProgress) => {
   const worker = await initTesseractWorker(onProgress);
-  // Kontrast artırılmış canvas oluştur (OCR doğruluğu için)
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   canvas.width = imgElement.naturalWidth || imgElement.width;
   canvas.height = imgElement.naturalHeight || imgElement.height;
   ctx.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
-  // Grayscale + kontrast artır
   const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imgData.data;
   for (let i = 0; i < data.length; i += 4) {
@@ -219,41 +260,35 @@ const runOcrOnImage = async (imgElement, onProgress) => {
   return { text: (result.text || '').toUpperCase(), confidence: result.confidence || 0 };
 };
 
-// OCR metninden 8 alanı çıkar
+// OCR metninden 8 alanı çıkar (Tesseract sonucu için)
 const parseOcrText = (text) => {
   if (!text) return {};
   const t = text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 
   let plaka = '', marka = '', modelYili = '', sase = '', tc = '', soyad = '', ad = '', belgeSeri = '';
 
-  // PLAKA (A)
   const plakaM = t.match(/\(?A\)?\s*(?:PLAKA)?\s*[:\-]?\s*(\d{2}\s?[A-ZÇĞİÖŞÜ]{1,4}\s?\d{1,4})/i)
     || t.match(/PLAKA\s*[:\-]?\s*(\d{2}\s?[A-ZÇĞİÖŞÜ]{1,4}\s?\d{1,4})/i)
     || t.match(/(\d{2}\s?[A-ZÇĞİÖŞÜ]{1,4}\s?\d{2,4})/);
   if (plakaM) plaka = plakaM[1].replace(/\s+/g, '').toUpperCase();
 
-  // MARKASI (D.1)
   const markaM = t.match(/\(?D[\.\s]?1\)?\s*[:\-]?\s*(?:MARKA(?:SI)?)?[:\-]?\s*([A-ZÇĞİÖŞÜa-zçğıöşü\s\-]{2,25}?)(?=\s*\(?[A-Z][\.\s]?\d|\s{2,}|\d{4}|$)/i)
     || t.match(/MARKA(?:SI)?\s*[:\-]?\s*([A-ZÇĞİÖŞÜ\s\-]{2,25}?)(?=\s*\(?[A-Z][\.\s]?\d|\s{2,}|\d{4}|$)/i);
   if (markaM) marka = markaM[1].trim().toUpperCase().replace(/\s+/g, ' ');
 
-  // MODEL YILI (D.4)
   const modelM = t.match(/\(?D[\.\s]?4\)?\s*[:\-]?\s*(?:MODEL\s*Y[İI]L[İI]?)?\s*[:\-]?\s*((?:19|20)\d{2})/i)
     || t.match(/MODEL\s*Y[İI]L[İI]?\s*[:\-]?\s*((?:19|20)\d{2})/i);
   if (modelM) modelYili = modelM[1];
 
-  // ŞASE NO (E) — 17 karakter VIN
   const saseM = t.match(/\(?E\)?\s*[:\-]?\s*(?:ŞASE|SASE)?\s*(?:NO|NUMARASI)?\s*[:\-]?\s*([A-HJ-NPR-Z0-9]{17})/i)
     || t.match(/(?:ŞASE|SASE)\s*(?:NO|NUMARASI)?\s*[:\-]?\s*([A-HJ-NPR-Z0-9]{17})/i)
     || t.match(/([A-HJ-NPR-Z0-9]{17})/i);
   if (saseM) {
     let vin = saseM[1].toUpperCase();
-    // Yaygın OCR hataları düzelt: O->0 sayısal pozisyonlarda
     vin = vin.replace(/[OQ]/g, '0').replace(/[IL]/g, '1');
     sase = vin;
   }
 
-  // T.C. / VERGİ NO (Y.4)
   const tcM = t.match(/\(?Y[\.\s]?4\)?\s*[:\-]?\s*(?:T\.?C\.?\s*K[İI]ML[İI]K|VERG[İI])\s*(?:NO|NUMARASI)?\s*[:\-]?\s*(\d{10,11})/i)
     || t.match(/(?:T\.?C\.?\s*(?:K[İI]ML[İI]K)?|VERG[İI])\s*(?:NO|NUMARASI)?\s*[:\-]?\s*(\d{10,11})/i)
     || t.match(/(\d{11})/);
@@ -263,15 +298,12 @@ const parseOcrText = (text) => {
     if (vknM) tc = vknM[1];
   }
 
-  // SOYADI / TİCARİ ÜNVANI (C.1.1)
   const soyadM = t.match(/\(?C[\.\s]?1[\.\s]?1\)?\s*[:\-]?\s*(?:SOYADI?|T[İI]CAR[İI]\s*[ÜU]NVANI?)\s*[:\-]?\s*([A-ZÇĞİÖŞÜ\s]{2,50}?)(?=\s*\(?[A-Z][\.\s]?\d|\s{2,}|$)/i);
   if (soyadM) soyad = soyadM[1].trim().toUpperCase().replace(/\s+/g, ' ');
 
-  // ADI (C.1.2)
   const adM = t.match(/\(?C[\.\s]?1[\.\s]?2\)?\s*[:\-]?\s*(?:ADI)?\s*[:\-]?\s*([A-ZÇĞİÖŞÜ\s]{2,30}?)(?=\s*\(?[A-Z][\.\s]?\d|\s{2,}|$)/i);
   if (adM) ad = adM[1].trim().toUpperCase().replace(/\s+/g, ' ');
 
-  // BELGE SERİ NO
   const belgeM = t.match(/(?:BELGE\s*)?SER[İI]\s*(?:NO)?\s*[:\-]?\s*([A-Z]{2})\s*(?:NO|№)?\s*[:\-]?\s*(\d{5,7})/i)
     || t.match(/([A-Z]{2})\s*(\d{6})/);
   if (belgeM) belgeSeri = belgeM[1].toUpperCase() + ' ' + belgeM[2];
@@ -385,30 +417,90 @@ MR.QrRuhsatPage = ({setPage, user}) => {
           qrParsed = parseQrData(qrResult.data);
         }
 
-        // 2. OCR Tarama (yavaş, ama tüm alanları çıkarır)
+        // 2. Gemini Vision API ile OCR (öncelikli - yüksek doğruluk)
+        let geminiResult = null;
         let ocrParsed = null;
         let ocrText = '';
         let ocrConfidence = 0;
+        let ocrSource = '';
         setFiles(prev => prev.map(f => f.id === item.id ? {...f, substatus: 'ocr', ocrProgress: 0} : f));
 
         try {
-          const ocrResult = await Promise.race([
-            runOcrOnImage(img, (progress) => {
+          geminiResult = await Promise.race([
+            runGeminiOcr(item.file, (progress) => {
               setFiles(prev => prev.map(f => f.id === item.id ? {...f, ocrProgress: progress} : f));
             }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('OCR ZAMAN AŞIMI')), 30000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('API ZAMAN AŞIMI')), 45000))
           ]);
-          ocrText = ocrResult.text;
-          ocrConfidence = ocrResult.confidence;
-          if (ocrConfidence >= 30) {
-            ocrParsed = parseOcrText(ocrText);
+
+          if (geminiResult.success) {
+            ocrParsed = {
+              plaka: geminiResult.plaka || '',
+              marka: geminiResult.marka || '',
+              modelYili: geminiResult.modelYili || '',
+              sase: geminiResult.sase || '',
+              tc: geminiResult.tc || '',
+              soyad: geminiResult.soyad || '',
+              ad: geminiResult.ad || '',
+              belgeSeri: geminiResult.belgeSeri || ''
+            };
+            ocrConfidence = geminiResult.confidence || 85;
+            ocrText = 'GEMİNİ VİSİON API İLE ANALİZ EDİLDİ';
+            ocrSource = 'gemini';
           }
-        } catch (ocrErr) {
-          console.warn('OCR HATASI:', ocrErr.message);
+        } catch (geminiErr) {
+          console.warn('GEMİNİ API HATASI:', geminiErr.message);
         }
 
-        // 3. Birleştir
-        const merged = mergeResults(qrParsed, ocrParsed ? {...ocrParsed, rawText: ocrText, confidence: ocrConfidence} : null);
+        // 3. Gemini başarısız olduysa Tesseract ile dene (yedek)
+        if (!ocrParsed) {
+          try {
+            setFiles(prev => prev.map(f => f.id === item.id ? {...f, substatus: 'ocr-yedek', ocrProgress: 0} : f));
+            const tessResult = await Promise.race([
+              runOcrOnImage(img, (progress) => {
+                setFiles(prev => prev.map(f => f.id === item.id ? {...f, ocrProgress: progress} : f));
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('OCR ZAMAN AŞIMI')), 30000))
+            ]);
+            ocrText = tessResult.text;
+            ocrConfidence = tessResult.confidence;
+            ocrSource = 'tesseract';
+            if (ocrConfidence >= 30) {
+              ocrParsed = parseOcrText(ocrText);
+            }
+          } catch (tessErr) {
+            console.warn('TESSERACT HATASI:', tessErr.message);
+          }
+        }
+
+        // 4. Birleştir - Gemini sonuçları QR ile birleştirilir
+        const merged = {
+          plaka: '', marka: '', modelYili: '', sase: '', tc: '', soyad: '', ad: '', belgeSeri: '',
+          raw: qrParsed?.raw || '',
+          ocrText: ocrText,
+          ocrConfidence: ocrConfidence,
+          source: {}
+        };
+
+        // QR alanları (QR öncelikli kritik alanlar)
+        ['plaka', 'sase', 'tc', 'belgeSeri'].forEach(k => {
+          if (qrParsed?.[k]) {
+            merged[k] = qrParsed[k];
+            merged.source[k] = 'qr';
+          } else if (ocrParsed?.[k]) {
+            merged[k] = ocrParsed[k];
+            merged.source[k] = ocrSource === 'gemini' ? 'gemini' : 'ocr';
+          }
+        });
+
+        // OCR/Gemini alanları (QR'da olmayan alanlar)
+        ['marka', 'modelYili', 'soyad', 'ad'].forEach(k => {
+          if (ocrParsed?.[k]) {
+            merged[k] = ocrParsed[k];
+            merged.source[k] = ocrSource === 'gemini' ? 'gemini' : 'ocr';
+          }
+        });
+
         merged.qrRaw = qrResult.success ? qrResult.data : '';
         merged.ocrText = ocrText;
         merged.ocrConfidence = ocrConfidence;
@@ -429,7 +521,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
             ...f,
             status: 'error',
             substatus: null,
-            result: { error: 'QR KOD VE OCR İLE BİLGİ ÇIKARILAMADI', ocrText, ocrConfidence }
+            result: { error: 'QR KOD VE OCR İLE BİLGİ ÇIKARILAMADI' + (geminiResult?.error ? ' (' + geminiResult.error + ')' : ''), ocrText, ocrConfidence }
           } : f));
         }
       } catch (e) {
@@ -443,7 +535,6 @@ MR.QrRuhsatPage = ({setPage, user}) => {
     }
 
     setProcessing(false);
-    const successCount2 = files.filter(f => f.status === 'success').length;
     toast('TARAMA TAMAMLANDI', 'success');
   }, [files]);
 
@@ -539,7 +630,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
         ),
         React.createElement('div', null,
           React.createElement('h1', {style: {fontSize: 22, fontWeight: 900, color: C.text, margin: 0}}, 'QR RUHSAT OKUYUCU'),
-          React.createElement('p', {style: {fontSize: 12, color: C.textMuted, margin: 0, fontWeight: 600}}, 'ARAÇ RUHSATI QR + OCR OTOMATİK BİLGİ ÇIKARMA')
+          React.createElement('p', {style: {fontSize: 12, color: C.textMuted, margin: 0, fontWeight: 600}}, 'ARAÇ RUHSATI QR + AI OCR OTOMATİK BİLGİ ÇIKARMA')
         )
       ),
       files.length > 0 && React.createElement('div', {style: {display:'flex', gap: 8, flexWrap:'wrap'}},
@@ -672,7 +763,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
         processing
           ? React.createElement('div', {style: {width:20, height:20, border:'3px solid rgba(255,255,255,0.3)', borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.8s linear infinite'}})
           : React.createElement(LIcon, {name:'QrCode', size:22, color:'#fff'}),
-        processing ? `QR + OCR TARANIYOR... (${files.filter(f=>f.status==='processing').length}/${pendingCount})` : `${pendingCount} RUHSATI TARA (QR + OCR)`
+        processing ? `QR + AI OCR TARANIYOR... (${files.filter(f=>f.status==='processing').length}/${pendingCount})` : `${pendingCount} RUHSATI TARA (QR + AI OCR)`
       )
     ),
 
@@ -707,7 +798,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
             React.createElement('div', {style: {fontSize:13, fontWeight:800, color:C.text}}, `${idx+1}. ${item.name}`),
             React.createElement('div', {style: {fontSize:10, fontWeight:600, color:C.textMuted}},
               item.status === 'pending' ? 'TARANMAYI BEKLİYOR' :
-              item.status === 'processing' ? (item.substatus === 'ocr' ? `OCR METİN TANIMA... %${Math.round((item.ocrProgress || 0) * 100)}` : 'QR KOD OKUNUYOR...') :
+              item.status === 'processing' ? (item.substatus === 'ocr' ? `AI OCR ANALİZ EDİLİYOR... %${Math.round((item.ocrProgress || 0) * 100)}` : item.substatus === 'ocr-yedek' ? `YEDEK OCR ÇALIŞIYOR... %${Math.round((item.ocrProgress || 0) * 100)}` : 'QR KOD OKUNUYOR...') :
               item.status === 'success' ? `BAŞARILI - ${['plaka','marka','modelYili','sase','tc','soyad','ad','belgeSeri'].filter(k => item.result?.[k]).length}/8 ALAN OKUNDU` :
               'HATA - ' + (item.result?.error || 'QR KOD OKUNAMADI')
             )
@@ -756,12 +847,14 @@ MR.QrRuhsatPage = ({setPage, user}) => {
                   React.createElement('label', {style: {fontSize:10, fontWeight:800, color:C.textMuted, marginBottom:4, display:'flex', alignItems:'center', gap:4}},
                     React.createElement(LIcon, {name:field.icon, size:12, color:C.accent}),
                     field.label,
-                    /* Kaynak rozeti (QR/OCR) */
+                    /* Kaynak rozeti (QR/Gemini/OCR) */
                     item.result.source?.[field.key] === 'qr'
                       ? React.createElement('span', {style: {fontSize:8, fontWeight:900, background:(C.success||'#10b981')+'25', color:C.success||'#10b981', padding:'1px 5px', borderRadius:4, marginLeft:4}}, 'QR')
-                      : item.result.source?.[field.key] === 'ocr'
-                        ? React.createElement('span', {style: {fontSize:8, fontWeight:900, background:C.accent+'25', color:C.accent, padding:'1px 5px', borderRadius:4, marginLeft:4}}, 'OCR')
-                        : null
+                      : item.result.source?.[field.key] === 'gemini'
+                        ? React.createElement('span', {style: {fontSize:8, fontWeight:900, background:'#8b5cf6'+'25', color:'#8b5cf6', padding:'1px 5px', borderRadius:4, marginLeft:4}}, 'AI OCR')
+                        : item.result.source?.[field.key] === 'ocr'
+                          ? React.createElement('span', {style: {fontSize:8, fontWeight:900, background:C.accent+'25', color:C.accent, padding:'1px 5px', borderRadius:4, marginLeft:4}}, 'OCR')
+                          : null
                   ),
                   React.createElement('input', {
                     value: item.result[field.key] || '',
@@ -817,10 +910,10 @@ MR.QrRuhsatPage = ({setPage, user}) => {
                     React.createElement('div', {style: {display:'flex', alignItems:'center', gap:10}},
                       React.createElement('div', {style: {width:24, height:24, border:`3px solid ${C.accent}30`, borderTopColor:C.accent, borderRadius:'50%', animation:'spin 0.8s linear infinite'}}),
                       React.createElement('span', {style: {fontSize:13, fontWeight:700, color:C.accent}},
-                        item.substatus === 'ocr' ? `OCR METİN TANIMA... %${Math.round((item.ocrProgress || 0) * 100)}` : 'QR KOD TARANIYOR...'
+                        item.substatus === 'ocr' ? `AI OCR ANALİZ EDİLİYOR... %${Math.round((item.ocrProgress || 0) * 100)}` : item.substatus === 'ocr-yedek' ? `YEDEK OCR ÇALIŞIYOR... %${Math.round((item.ocrProgress || 0) * 100)}` : 'QR KOD TARANIYOR...'
                       )
                     ),
-                    item.substatus === 'ocr' && React.createElement('div', {style: {width:'100%', maxWidth:300, height:6, borderRadius:3, background:C.accent+'20', overflow:'hidden'}},
+                    (item.substatus === 'ocr' || item.substatus === 'ocr-yedek') && React.createElement('div', {style: {width:'100%', maxWidth:300, height:6, borderRadius:3, background:C.accent+'20', overflow:'hidden'}},
                       React.createElement('div', {style: {height:'100%', borderRadius:3, background:C.accent, width:`${Math.round((item.ocrProgress || 0) * 100)}%`, transition:'width 0.3s ease'}})
                     )
                   )
@@ -847,13 +940,13 @@ MR.QrRuhsatPage = ({setPage, user}) => {
         'ARAÇ RUHSATI QR OKUYUCU'
       ),
       React.createElement('div', {style: {fontSize: 12, color: C.textMuted, fontWeight: 600, maxWidth: 500, margin: '0 auto', lineHeight: 1.8}},
-        'ARAÇ RUHSATI GÖRSELLERİNİ YÜKLEYİN, QR KOD + OCR METİN TANIMA İLE PLAKA, MARKA, MODEL YILI, ŞASE NO, T.C./VERGİ NO, SOYADI, ADI VE BELGE SERİ NO BİLGİLERİ OTOMATİK ÇIKARILIR. TOPLU YÜKLEME İLE BİRDEN FAZLA RUHSATI AYNI ANDA İŞLEYEBİLİRSİNİZ.'
+        'ARAÇ RUHSATI GÖRSELLERİNİ YÜKLEYİN, QR KOD + GEMİNİ AI OCR İLE PLAKA, MARKA, MODEL YILI, ŞASE NO, T.C./VERGİ NO, SOYADI, ADI VE BELGE SERİ NO BİLGİLERİ OTOMATİK ÇIKARILIR. TOPLU YÜKLEME İLE BİRDEN FAZLA RUHSATI AYNI ANDA İŞLEYEBİLİRSİNİZ.'
       ),
       React.createElement('div', {style: {display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))', gap:12, marginTop:28, maxWidth:600, margin:'28px auto 0'}},
         [
           {icon:'Upload', text:'TOPLU GÖRSEL YÜKLEME'},
           {icon:'QrCode', text:'OTOMATİK QR OKUMA'},
-          {icon:'FileSearch', text:'OCR METİN TANIMA'},
+          {icon:'FileSearch', text:'AI OCR METİN TANIMA'},
           {icon:'FileSpreadsheet', text:'EXCEL AKTARIM'},
           {icon:'Camera', text:'KAMERA DESTEĞİ'}
         ].map((f, i) => React.createElement('div', {key:i, style: {

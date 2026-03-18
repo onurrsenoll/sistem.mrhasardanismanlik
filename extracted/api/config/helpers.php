@@ -437,7 +437,7 @@ $GLOBALS['YETKI_MAP'] = array(
     'saha/medya-list.php' => array('crm', 'saha-liste'),
 
     // ─── HESAPLAMALAR ───
-    'hesap/ocr-analiz.php' => array('hesaplamalar', 'hesap-adk'),
+    'hesap/ocr-analiz.php' => array('hesaplamalar', 'hesap-adk', 'police-qr-ruhsat'),
     'hesap/ai-analiz.php' => array('hesaplamalar', 'hesap-adk'),
     'hesap/rayic-arastirma.php' => array('hesaplamalar', 'hesap-adk'),
     'hesap/tahkim-emsal-ara.php' => array('hesaplamalar', 'hesap-bh'),

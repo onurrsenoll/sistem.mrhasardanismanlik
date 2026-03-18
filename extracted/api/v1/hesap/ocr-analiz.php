@@ -79,7 +79,27 @@ if (empty($images)) {
 }
 
 // Prompt oluştur
-if ($tip === 'bh') {
+if ($tip === 'ruhsat') {
+    $prompt = 'Bu görseli analiz et. Bu bir Türk araç tescil belgesi (ruhsat) fotoğrafıdır.
+Belgedeki tüm bilgileri dikkatle oku ve aşağıdaki JSON formatında döndür:
+{
+  "plaka": "araç plaka numarası (Örn: 34ABC1234)",
+  "marka": "araç markası (BÜYÜK HARF, Örn: TOYOTA, FORD, VOLKSWAGEN)",
+  "model": "araç modeli (BÜYÜK HARF, Örn: COROLLA, FOCUS)",
+  "modelYili": model yılı (sayı, Örn: 2020),
+  "sase": "şase/VIN numarası (17 karakter)",
+  "tc": "TC kimlik numarası veya vergi numarası (10-11 haneli sayı)",
+  "soyad": "ruhsat sahibi soyadı veya ticari ünvanı (BÜYÜK HARF)",
+  "ad": "ruhsat sahibi adı (BÜYÜK HARF)",
+  "belgeSeri": "belge seri numarası (Örn: HD 120077)",
+  "motorNo": "motor numarası varsa",
+  "renk": "araç rengi",
+  "yakitTuru": "benzin/dizel/LPG/elektrik",
+  "guven": güven yüzdesi (1-100)
+}
+ÖNEMLİ: Ruhsat belgesinde (A) plaka, (D.1) marka, (D.2) tip/model, (D.4) model yılı, (E) şase numarası, (Y.4) TC/Vergi No, (C.1.1) soyadı/ticari ünvan, (C.1.2) adı, belge seri no gibi alanlar bulunur. Tüm alanları dikkatlice oku.
+Bulamadığın alanları null yap. Sadece JSON döndür, başka metin yazma.';
+} else if ($tip === 'bh') {
     $prompt = 'Bu belgeyi analiz et. Bedeni hasar / sağlık / maluliyet raporu olarak incele.
 Aşağıdaki bilgileri JSON formatında döndür:
 {
