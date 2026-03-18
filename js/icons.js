@@ -180,7 +180,8 @@ MR.ICONS = {
   RotateCw:'M23 4v6h-6 M20.49 15a9 9 0 11-2.12-9.36L23 10',
   SkipBack:'M19 20L9 12l10-8v16z M5 19V5',
   SkipForward:'M5 4l10 8-10 8V4z M19 5v14',
-  Volume2:'M11 5L6 9H2v6h4l5 4V5z M19.07 4.93a10 10 0 010 14.14 M15.54 8.46a5 5 0 010 7.07'
+  Volume2:'M11 5L6 9H2v6h4l5 4V5z M19.07 4.93a10 10 0 010 14.14 M15.54 8.46a5 5 0 010 7.07',
+  QrCode:'M5 3H3v2 M19 3h2v2 M5 21H3v-2 M19 21h2v-2 M7 7h0 M7 13h0 M13 7h0 M17 17h0 M17 13h0 M13 17h0 M7 7h4v4H7V7z M7 13h4v4H7v-4z M13 7h4v4h-4V7z M13 13h4v4h-4v-4z'
 };
 
 MR.LIcon = ({ name, size = 16, color = 'currentColor', style: st = {}, ...p }) => (

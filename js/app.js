@@ -35,7 +35,8 @@ const MENU = [
     {id:'police-yenileme', label:'YENİLEME TAKİBİ', icon:'RefreshCw'},
     {id:'police-tahsilat', label:'TAHSİLAT / CARİ', icon:'Wallet'},
     {id:'police-rapor', label:'RAPORLAR', icon:'BarChart3'},
-    {id:'police-kazanc', label:'KAZANÇ', icon:'TrendingUp'}
+    {id:'police-kazanc', label:'KAZANÇ', icon:'TrendingUp'},
+    {id:'police-qr-ruhsat', label:'QR RUHSAT OKUYUCU', icon:'QrCode'}
   ]},
   {id:'muhasebe', label:'MUHASEBE', icon:'Landmark', sub:[
     {id:'muhasebe-gelir', label:'GELİR YÖNETİMİ', icon:'TrendingUp'},
@@ -780,6 +781,9 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     const sub = page.replace('personel-', '') || 'liste';
     return <MR.PersonelPage setPage={setPage} user={user} subPage={sub === 'personel' ? 'liste' : sub}/>;
   }
+
+  /* QR RUHSAT OKUYUCU */
+  if (page === 'police-qr-ruhsat') return <MR.QrRuhsatPage setPage={setPage} user={user}/>;
 
   /* POLİÇE */
   if (page.startsWith('police')) {
