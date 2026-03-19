@@ -1014,3 +1014,424 @@ Kusur oranlarına ilişkin emsal kararları arayabilirsiniz. Sonuçlarda kusur o
 > ✅ **İPUCU:** İçtihat araması yaparken mümkün olduğunca spesifik terimler kullanın. Örneğin "değer kaybı" yerine "2024 araç değer kaybı BMW tahkim" yazarak daha isabetli sonuçlar alabilirsiniz.
 
 ---
+
+# 📋 BÖLÜM 10: PAYDAŞLAR (İŞ ORTAKLARI VE İŞ PAYDAŞLARI)
+
+> 📌 **MODÜL ÖZETİ**
+> | Özellik | Detay |
+> |---------|-------|
+> | Amaç | Avukatlar, acenteler, galeriler ve diğer iş ortaklarının yönetimi |
+> | Erişim | Yönetici seviyesi |
+> | Alt Sekmeler | İş Ortakları, İş Paydaşları |
+> | Bağlantılar | Dosyalar, Muhasebe, Komisyon |
+
+---
+
+## 10.1 İş Ortakları (Avukatlar / Hukuk Büroları)
+
+İş ortakları, dosyalarınızı yürüten avukatlar ve hukuk bürolarıdır. Her ortağa ödeme oranı atanır ve finansal hareketleri takip edilir.
+
+### Yeni İş Ortağı Ekleme
+
+1. **İş Ortakları** sekmesine gidin
+2. **"+ YENİ ORTAK"** butonuna tıklayın
+3. Formu doldurun:
+
+| Alan | Açıklama | Zorunlu |
+|------|----------|---------|
+| Ad Soyad | Ortağın tam adı | ✅ Evet |
+| Firma / Hukuk Bürosu | Bağlı olduğu büro | Hayır |
+| Baro | Kayıtlı olduğu baro (ör: İSTANBUL BAROSU) | Hayır |
+| Sicil No | Baro sicil numarası | Hayır |
+| Telefon | İletişim numarası | Hayır |
+| E-posta | E-posta adresi | Hayır |
+| İl | Bulunduğu il (81 il listesi) | Hayır |
+| Vergi No | Vergi numarası | Hayır |
+| Ödeme Oranı (%) | Dosya kazancından ortağa verilecek oran (ör: %25) | Hayır |
+| Kasa Ataması | Ödeme yapılacak kasanın seçimi | Hayır |
+| Durum | Aktif / Pasif | Hayır |
+| Adres | Açık adres | Hayır |
+| Notlar | Ek notlar | Hayır |
+
+4. **"KAYDET"** butonuna tıklayın
+
+### İş Ortağı Listesi
+
+Listede her ortak için şu bilgiler görünür:
+- **Ad Soyad** ve telefon
+- **Firma** adı
+- **Baro** ve **Sicil No**
+- **Ödeme Oranı** (mor etiket ile)
+- **İl** ve **Durum** (Aktif/Pasif)
+
+**Filtreleme:** Ad soyad, firma veya baro ile arama yapabilirsiniz. Durum ve il filtreleri mevcuttur.
+
+**Sayfalama:** Her sayfada 20 kayıt gösterilir.
+
+### İş Ortağı Detay ve Finansal Hareketler
+
+Bir ortağın detayına girmek için göz ikonuna (👁) tıklayın. Detay ekranında:
+
+**Sol Panel — Kişisel Bilgiler:**
+- Ad Soyad, Firma, Baro, Sicil No, Telefon, E-posta, İl, Vergi No, Adres, Notlar, Atanmış Kasa
+
+**Sağ Panel — Finansal Özet:**
+- **Ödeme Oranı** (büyük gösterge)
+- **Toplam Ödeme** (ortağa yapılan ödemeler)
+- **Toplam Tahsilat** (ortaktan gelen tahsilatlar)
+- **Toplam Masraf**
+- **Bakiye** = Tahsilat - Ödeme - Masraf
+
+### Finansal Hareket Ekleme
+
+1. Detay ekranında **"+ HAREKET EKLE"** butonuna tıklayın
+2. Formu doldurun:
+
+| Alan | Açıklama | Zorunlu |
+|------|----------|---------|
+| Hareket Türü | Ödeme / Tahsilat / Masraf | ✅ Evet |
+| Tutar (₺) | Hareket tutarı | ✅ Evet |
+| Tarih | Hareket tarihi | ✅ Evet |
+| Dosya No | İlgili dosya ID (opsiyonel) | Hayır |
+| Açıklama | Hareket açıklaması | Hayır |
+
+3. **"HAREKET EKLE"** butonuna tıklayın
+
+**Hareket türü renkleri:**
+- 🔴 **Ödeme** → Kırmızı (ortağa yapılan ödeme)
+- 🟢 **Tahsilat** → Yeşil (ortaktan gelen para)
+- 🟡 **Masraf** → Sarı (ortak adına yapılan masraf)
+
+### Toplu Silme
+
+Admin yetkisi ile birden fazla ortağı seçip toplu silme yapabilirsiniz.
+
+> ⚠️ **UYARI:** Silme işlemi geri alınamaz! Silinen ortağın tüm finansal hareketleri de kaybolur.
+
+---
+
+## 10.2 İş Paydaşları (Acenteler, Galeriler, Tamirciler)
+
+İş paydaşları, size dosya yönlendiren veya iş birliği yaptığınız kuruluşlardır.
+
+### Paydaş Türleri
+
+| Tür | Açıklama | İkon |
+|-----|----------|------|
+| Sigorta Acentesi | Sigorta aracı kurumları | 🛡 |
+| Oto Galeri | Araç alım-satım yerleri | 🚗 |
+| Oto Kiralama | Araç kiralama firmaları | 🔑 |
+| Tamirci | Araç onarım servisleri | 🔧 |
+| Diğer | Yukarıdaki kategorilere uymayan paydaşlar | ⋯ |
+
+### Yeni İş Paydaşı Ekleme
+
+1. **İş Paydaşları** sekmesine gidin
+2. **"+ YENİ PAYDAŞ"** butonuna tıklayın
+3. Formu doldurun:
+
+| Alan | Açıklama | Zorunlu |
+|------|----------|---------|
+| Paydaş Adı | Firma veya kişi adı | ✅ Evet |
+| Tür | Sigorta Acentesi / Oto Galeri / Oto Kiralama / Tamirci / Diğer | ✅ Evet |
+| Yetkili Kişi | İrtibat kişisi | Hayır |
+| Telefon | İletişim numarası | Hayır |
+| E-posta | E-posta adresi | Hayır |
+| İl | Bulunduğu il | Hayır |
+| ADK Prim (₺) | Araç değer kaybı dosyası başına prim tutarı | Hayır |
+| BH Prim (₺) | Bedeni hasar dosyası başına prim tutarı | Hayır |
+| Durum | Aktif / Pasif | Hayır |
+| Adres | Açık adres | Hayır |
+| Notlar | Ek notlar | Hayır |
+
+4. **"KAYDET"** butonuna tıklayın
+
+### Komisyon Takibi
+
+Her paydaş için komisyon kayıtları tutulabilir:
+- **Komisyon durumları:** Bekliyor → Onaylandı → Ödendi
+- Komisyon ödemesi yapılırken kasa seçimi zorunludur
+- Ödeme sonrası komisyon otomatik olarak "Ödendi" durumuna geçer
+
+### İstatistik Kartları
+
+| Kart | Açıklama |
+|------|----------|
+| Toplam Paydaş | Kayıtlı paydaş sayısı |
+| Aktif | Aktif durumdaki paydaşlar |
+| Bekleyen Komisyon | Henüz ödenmemiş komisyon toplamı |
+| Ödenen Komisyon | Ödenmiş komisyon toplamı |
+
+> ✅ **İPUCU:** ADK ve BH prim tutarlarını doğru girin. Bu tutarlar dosya kapandığında komisyon hesaplamasında kullanılır.
+
+---
+
+# 💰 BÖLÜM 11: MUHASEBE
+
+> 📌 **MODÜL ÖZETİ**
+> | Özellik | Detay |
+> |---------|-------|
+> | Amaç | Firmanın tüm finansal işlemlerinin yönetimi |
+> | Erişim | Muhasebe ve admin rolleri |
+> | Alt Sekmeler | Gelir, Gider, Komisyon/Prim, Kasa/Banka, Ortak Kasa, Maliyet Analizi, Finansal Raporlar, Kapanış Raporu, Ay Sonu Raporu |
+> | Bağlantılar | Dosyalar, Paydaşlar, Personel |
+
+> ⚠️ **ÖNEMLİ:** Muhasebe sekmelerine erişim yetki bazlıdır. Admin tüm sekmeleri görür, diğer kullanıcılar yalnızca yetkili oldukları sekmeleri görebilir.
+
+---
+
+## 11.1 Gelir Yönetimi
+
+Firmaya gelen tüm gelirleri kaydetmek ve takip etmek için kullanılır.
+
+### Gelir Türleri
+
+| Tür | Açıklama |
+|-----|----------|
+| Danışmanlık Ücreti | Müşteriden alınan danışmanlık bedeli |
+| Sigorta Tahsilatı | Sigorta şirketinden gelen ödeme |
+| Mahkeme Tazminatı | Mahkeme kararıyla alınan tazminat |
+| Komisyon | Aracılık komisyonu |
+| Diğer Gelir | Yukarıdaki kategorilere uymayan gelirler |
+
+> 💡 **NOT:** Gelir türleri Tanımlamalar modülünden özelleştirilebilir.
+
+### Yeni Gelir Kaydı
+
+1. **"+ YENİ GELİR"** butonuna tıklayın
+2. Formu doldurun:
+
+| Alan | Açıklama | Zorunlu |
+|------|----------|---------|
+| Kasa Seçimi | Gelirin yatırılacağı kasa | ✅ Evet |
+| Dosya No | İlgili dosya ID (geliri dosyaya bağlar) | Hayır |
+| Gelir Türü | Yukarıdaki türlerden biri | ✅ Evet |
+| Tutar (₺) | Gelir tutarı | ✅ Evet |
+| Tarih | Gelir tarihi | Hayır |
+| Açıklama | Gelir hakkında açıklama | Hayır |
+
+3. **"GELİR KAYDET"** butonuna tıklayın
+
+### Filtreleme ve İstatistikler
+
+**Filtreler:** Kasa, başlangıç-bitiş tarihi, metin araması (açıklama, dosya no, tür)
+
+**İstatistik Kartları:**
+- Toplam Gelir | Bu Ay | Geçen Ay | Ortalama
+
+Alt kısımda filtrelenmiş kayıtların toplam tutarı gösterilir.
+
+---
+
+## 11.2 Gider Yönetimi
+
+Firmadan çıkan tüm giderleri kaydetmek ve takip etmek için kullanılır.
+
+### Gider Kategorileri
+
+| Kategori | Açıklama |
+|----------|----------|
+| Ofis Gideri | Kırtasiye, temizlik vb. |
+| Personel Gideri | Genel personel harcamaları |
+| Personel Maaş | Aylık maaş ödemeleri |
+| Ulaşım | Yol masrafları |
+| Yakıt | Araç yakıt giderleri |
+| Bilirkişi Ücreti | Bilirkişi hizmet bedeli |
+| Avukat Ücreti | Dış avukat ücretleri |
+| Kira | Ofis kirası |
+| Vergi / Harç | Vergi ve resmi harçlar |
+| Dosya Masrafı | Dosya bazlı masraflar |
+| Diğer Gider | Diğer giderler |
+
+### Personel Maaş Ödeme Entegrasyonu
+
+Gider kategorisi olarak **"Personel Maaş"** seçildiğinde:
+1. → Aktif personel listesi otomatik yüklenir
+2. → Personel seçildiğinde maaş tutarı otomatik doldurulur
+3. → Varsa bekleyen hakediş tutarı otomatik getirilir
+4. → Açıklama otomatik oluşturulur: "AD SOYAD - MAAŞ/HAKEDİŞ ÖDEMESİ"
+
+> ✅ **İPUCU:** Personel maaş ödemelerini her zaman bu yöntemle yapın, böylece hakediş takibi ve personel gideri raporları doğru çalışır.
+
+---
+
+## 11.3 Komisyon / Prim
+
+Ortak ve paydaşlara ait komisyon kayıtlarını yönetir.
+
+### Komisyon Durumları
+
+| Durum | Renk | Açıklama |
+|-------|------|----------|
+| Bekliyor | 🟡 Sarı | Komisyon oluşturuldu, henüz onaylanmadı |
+| Onaylandı | 🔵 Mavi | Yönetici tarafından onaylandı |
+| Ödendi | 🟢 Yeşil | Kasa üzerinden ödeme yapıldı |
+
+### Komisyon İş Akışı
+
+1. **Yeni Komisyon Oluştur** → İlgili tip (Ortak/Paydaş), ID, tutar, oran girin
+2. **Onayla** → Bekleyen komisyonu onaylayın (onay butonu ile)
+3. **Öde** → Ödeme kasası seçerek ödemeyi gerçekleştirin
+
+> ⚠️ **UYARI:** Ödeme yapıldığında seçilen kasanın bakiyesi otomatik olarak düşer. Kasada yeterli bakiye olduğundan emin olun.
+
+### Filtreleme
+
+- **Durum filtresi:** Bekliyor / Onaylandı / Ödendi
+- **İlgili tip filtresi:** Ortak / Paydaş
+
+---
+
+## 11.4 Kasa / Banka
+
+Firmanın nakit ve banka hesaplarını yönetir. Çoklu kasa desteği vardır.
+
+### Kasa Oluşturma
+
+1. **"+ YENİ KASA"** butonuna tıklayın
+2. Formu doldurun:
+
+| Alan | Açıklama | Zorunlu |
+|------|----------|---------|
+| Kasa Adı | Kasanın tanımlayıcı adı | ✅ Evet |
+| Tür | Nakit / Banka | ✅ Evet |
+| Banka Adı | Sadece Banka türü için | Banka ise Evet |
+| IBAN | Banka IBAN numarası | Hayır |
+
+### Kasa Kartları
+
+Her kasa bir kart olarak gösterilir:
+- **Kasa Adı** ve türü (Nakit/Banka etiketi)
+- **Bakiye** (büyük yazı ile, pozitif yeşil / negatif kırmızı)
+- **Banka bilgileri** (banka adı ve IBAN)
+- **İşlem butonları:** Düzenle, Bakiye Düzelt, Aktif/Pasif Değiştir, Sil
+
+### Kasalar Arası Transfer
+
+1. **"TRANSFER"** butonuna tıklayın
+2. **Kaynak Kasa** seçin (para çıkışı)
+3. **Hedef Kasa** seçin (para girişi)
+4. **Tutar** girin
+5. **"TRANSFER YAP"** butonuna tıklayın
+
+> ⚠️ **UYARI:** Kaynak ve hedef kasa aynı olamaz. Transfer tutarı otomatik olarak kaynak kasadan düşer, hedef kasaya eklenir.
+
+### Bakiye Düzeltme (Sadece Admin)
+
+Kasa bakiyesi gerçek durumu yansıtmıyorsa:
+1. Kasanın **hesap makinesi** ikonuna tıklayın
+2. Yeni bakiyeyi girin
+3. Düzeltme nedenini yazın
+4. **"BAKİYE DÜZELT"** butonuna tıklayın
+
+### Kasa Hareketleri
+
+Son 30 hareket listelenir. Her hareket için:
+- **Tarih**, **Kasa**, **Tür** (Gelir/Gider/Masraf/Komisyon/Transfer/Düzeltme)
+- **Tutar** (yeşil: giriş, kırmızı: çıkış)
+- **Açıklama** ve **Dosya No** (varsa tıklanabilir)
+
+**Admin özellikleri:** Hareket düzenleme ve hareket silme
+
+> ⚠️ **DİKKAT:** Bakiyeleri sıfırlama özelliği tüm kasaları sıfırlar ve geri alınamaz!
+
+---
+
+## 11.5 Ortak Kasa
+
+İki iş ortağının paylaştığı müşterek kasalardır.
+
+### Ortak Kasa Oluşturma
+
+1. **"+ YENİ ORTAK KASA"** butonuna tıklayın
+2. Kasa adı ve tipini girin
+3. **İki farklı iş ortağı** seçin (zorunlu)
+4. **"KAYDET"** butonuna tıklayın
+
+### Ortak Kasa Hareketleri
+
+- **Giriş:** Gelir olarak kaydedilir (tür: ORTAK KASA GİRİŞ)
+- **Çıkış:** Gider olarak kaydedilir (tür: ORTAK KASA ÇIKIŞ)
+
+---
+
+## 11.6 Maliyet Analizi
+
+Dosya bazlı kar/zarar analizini gösterir.
+
+### Analiz Tablosu
+
+Her dosya için hesaplanan değerler:
+
+| Sütun | Açıklama |
+|-------|----------|
+| Dosya No | Tıklanabilir dosya numarası |
+| Müşteri | Müşteri adı |
+| Gelir | Dosyadan elde edilen toplam gelir |
+| Gider | Toplam gider + masraf |
+| Komisyon | Ödenen komisyon toplamı |
+| Net Kar | Gelir - Gider - Komisyon |
+| Kar Marjı % | (Net Kar / Gelir) × 100 |
+
+### İstatistik Kartları
+
+- **Toplam Gelir** | **Toplam Gider** | **Net Kar** | **Kar Marjı**
+- **Karlı Dosya** sayısı (yeşil) ve **Zararda Dosya** sayısı (kırmızı)
+
+Zarardaki dosyalar tabloda kırmızı arka plan ile vurgulanır.
+
+---
+
+## 11.7 Finansal Raporlar
+
+Dönem bazlı kapsamlı finansal analiz sunar.
+
+### Rapor İçeriği
+
+1. **Dönem Seçimi:** Başlangıç ve bitiş tarihi belirleyin → "RAPOR GETİR"
+2. **Özet Kartlar:** Toplam Gelir, Toplam Gider, Net Kar/Zarar, Dosya Sayısı
+3. **Aylık Trend Grafiği:** Gelir ve gider çubuk grafik karşılaştırması
+4. **Kategori Dağılımı:** Halka grafik ile gelir/gider/masraf/komisyon dağılımı
+5. **Detaylı Rapor Tablosu:** Dönem bazlı gelir-gider-komisyon detayı
+6. **Net Sonuç Banneri:** Dönemin kar veya zarar durumu
+
+---
+
+## 11.8 Kapanış Raporu
+
+Avukat bazlı ve genel kapanış raporu oluşturur.
+
+### Kullanım
+
+1. Dönem seçin (varsayılan: mevcut ay)
+2. Görünüm seçin: **Avukat Bazlı** veya **Genel**
+3. **"RAPOR GETİR"** butonuna tıklayın
+
+### Avukat Bazlı Görünüm
+
+Her avukat (iş ortağı) için ayrı ayrı:
+- Dosya sayısı ve gelir-gider detayı
+- Komisyon hesaplaması
+- Net sonuç
+
+---
+
+## 11.9 Ay Sonu Raporu
+
+Kapsamlı aylık finansal rapor, yazdırma desteği ile.
+
+### Özellikler
+
+1. **Dönem seçimi:** Ay bazında seçim
+2. **Ortak filtresi:** Belirli bir ortağa ait dosyalar için filtreleme
+3. **Bölüm 1:** Genel finansal özet
+4. **Bölüm 2:** Detaylı dökümler
+5. **Final:** Sonuç ve değerlendirme
+
+### Yazdırma
+
+**"YAZDIR"** butonu ile rapor beyaz arka planlı, okunabilir formatta ayrı pencerede açılır ve yazdırılabilir. Koyu tema renkleri otomatik olarak açık renge dönüştürülür.
+
+> ✅ **İPUCU:** Ay sonu raporunu her ayın sonunda oluşturup yazdırarak arşivleyin. Bu rapor, mali denetimlerde kanıt olarak kullanılabilir.
+
+---
