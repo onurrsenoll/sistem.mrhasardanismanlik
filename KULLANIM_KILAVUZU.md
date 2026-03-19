@@ -1435,3 +1435,247 @@ Kapsamlı aylık finansal rapor, yazdırma desteği ile.
 > ✅ **İPUCU:** Ay sonu raporunu her ayın sonunda oluşturup yazdırarak arşivleyin. Bu rapor, mali denetimlerde kanıt olarak kullanılabilir.
 
 ---
+
+# ⚙️ BÖLÜM 12: SİSTEM YÖNETİMİ
+
+> 📌 **MODÜL ÖZETİ**
+> | Özellik | Detay |
+> |---------|-------|
+> | Amaç | Sistem ayarları, kullanıcı ve yetki yönetimi, tanımlamalar |
+> | Erişim | Yalnızca admin |
+> | Alt Bölümler | Tanımlamalar, Firma Ayarları, SMS, Portal, Toplu Aktarım, Veri Yönetimi, Konum Takibi, Log Kayıtları, Kullanıcı Yönetimi, Yetki Yönetimi, Cihaz Güvenliği |
+
+---
+
+## 12.1 Tanımlamalar
+
+Sistemin temel veri tanımlarını yönetir. 5 kategori altında düzenlenir:
+
+### Dosya Tanımlamaları
+
+| Tanım Grubu | Açıklama | Örnek Değerler |
+|-------------|----------|----------------|
+| Dosya Türü | Dosya sınıflandırması | ADK, BH, MDK |
+| Müşteri Kaynak | Müşterinin geldiği kaynak | Web, Referans, Acente |
+
+### Evrak Tanımlamaları
+
+| Tanım Grubu | Açıklama |
+|-------------|----------|
+| Evrak Türü | Yüklenebilecek belge türleri (60+ tanımlı) |
+| Masraf Türü | Dosya masraf kalemleri (22+ tanımlı) |
+
+### Finansal Tanımlamalar
+
+| Tanım Grubu | Açıklama |
+|-------------|----------|
+| Gelir Türü | Gelir kategorileri |
+| Gider Türü | Gider kategorileri |
+| Komisyon Türü | Komisyon kategorileri |
+
+### Matbu Evrak / Sözleşme Şablonları
+
+Otomatik doldurulabilir belge şablonları oluşturabilirsiniz.
+
+**Şablon Kategorileri:** Matbu Evrak, Sözleşme, Mektup, Diğer
+
+**Kullanılabilir Değişkenler:**
+
+| Değişken | Açıklama |
+|----------|----------|
+| `{{MUSTERI_ADI}}` | Müşteri adı soyadı |
+| `{{TC_NO}}` | TC Kimlik numarası |
+| `{{TELEFON}}` | Telefon numarası |
+| `{{ADRES}}` | Adres bilgisi |
+| `{{DOSYA_NO}}` | Dosya numarası |
+| `{{TARIH}}` | Tarih |
+| `{{PLAKA}}` | Araç plakası |
+| `{{HASAR_TUTARI}}` | Hasar tutarı |
+| `{{SİGORTA_ŞİRKETİ}}` | Sigorta şirketi adı |
+| `{{POLİÇE_NO}}` | Poliçe numarası |
+
+### Genel Tanımlamalar
+
+| Tanım Grubu | Açıklama |
+|-------------|----------|
+| Hizmet Türü | Sunulan hizmet kategorileri |
+| Şablon Kategorisi | Şablon gruplama etiketleri |
+
+### Tanımlama İşlemleri
+
+Her tanım grubu için:
+1. ➕ **Yeni Kayıt Ekle** — Kod, değer, açıklama, sıra numarası
+2. ✏️ **Düzenle** — Mevcut kaydı güncelle
+3. 🗑 **Sil** — Kaydı kalıcı olarak kaldır
+4. 🔄 **Aktif/Pasif** — Kaydı geçici olarak devre dışı bırak
+5. ⬆️⬇️ **Sıralama** — Listeleme sırasını değiştir
+6. 📥 **Toplu Yükleme** — Excel dosyasından çoklu kayıt ekle
+
+> ⚠️ **UYARI:** Tanımlamaları silmeden önce, bu tanımı kullanan dosya veya kayıtların olmadığından emin olun. Aksi halde ilgili kayıtlarda veri tutarsızlığı oluşabilir.
+
+---
+
+## 12.2 Firma Ayarları
+
+Firmanın genel bilgilerini düzenler: firma adı, logo, iletişim bilgileri, adres vb.
+
+## 12.3 SMS Bildirim
+
+NetGSM entegrasyonu ile SMS bildirim ayarlarını yönetir. API anahtarı, gönderici adı ve bildirim şablonları bu bölümden yapılandırılır.
+
+## 12.4 Portal Ayarları
+
+Müşteri portalı yapılandırması. Portal kullanıcıları dosya durumlarını bu portal üzerinden takip edebilir.
+
+## 12.5 Toplu Aktarım
+
+Excel veya CSV dosyasından toplu veri aktarımı yapılabilir. Dosya, CRM ve diğer kayıtlar toplu olarak sisteme yüklenebilir.
+
+## 12.6 Veri Yönetimi
+
+Veritabanı bakımı, yedekleme ve veri temizleme işlemleri.
+
+## 12.7 Konum Takibi
+
+Saha personelinin konum bilgilerini takip eder. GPS verisi üzerinden personelin sahada olup olmadığı kontrol edilebilir.
+
+## 12.8 Log Kayıtları
+
+Sistemdeki tüm işlemlerin denetim kaydını tutar.
+
+**Log türleri ve renk kodları:**
+- 🟢 **Oluştur / Ekle / Yeni** — Yeşil
+- 🟡 **Güncelle / Düzenle** — Sarı
+- 🔴 **Sil / Kaldır** — Kırmızı
+- 🔵 **Giriş (Login)** — Mavi
+- 🟣 **Çıkış (Logout)** — Mor
+
+Her log kaydında: tarih/saat, kullanıcı, işlem türü, detay bilgisi yer alır.
+
+> ✅ **İPUCU:** Şüpheli aktivite fark ettiğinizde log kayıtlarını kontrol edin. Hangi kullanıcının ne zaman ne yaptığını görebilirsiniz.
+
+---
+
+## 12.9 Kullanıcı Yönetimi
+
+Sisteme erişebilecek kullanıcıları yönetir.
+
+### Kullanıcı Rolleri
+
+| Rol | Renk | Açıklama |
+|-----|------|----------|
+| Admin | 🔴 Kırmızı | Tüm yetkilere sahip, sistem yöneticisi |
+| Avukat | 🟣 Mor | Dosya işlemleri, hesaplamalar, içtihat erişimi |
+| Uzman | 🔵 Mavi | Hesaplama ve analiz odaklı |
+| Personel | 🔵 Açık Mavi | Genel ofis işlemleri, CRM, dosya takibi |
+| Muhasebe | 🟢 Yeşil | Finansal işlemler ve raporlama |
+| Portal | 🟡 Sarı | Müşteri portalı erişimi (kısıtlı) |
+
+### Yeni Kullanıcı Ekleme
+
+1. **"+ YENİ KULLANICI"** butonuna tıklayın
+2. Formu doldurun:
+
+| Alan | Açıklama | Zorunlu |
+|------|----------|---------|
+| Ad Soyad | Kullanıcının tam adı | ✅ Evet |
+| E-posta | Giriş için kullanılacak e-posta | ✅ Evet |
+| Şifre | Giriş şifresi (yeni kullanıcı için zorunlu) | ✅ Yeni ise |
+| Telefon | İletişim numarası | Hayır |
+| Rol | Yukarıdaki rollerden biri | ✅ Evet |
+
+3. **"KAYDET"** butonuna tıklayın
+
+### Kullanıcı İşlemleri
+
+- ✏️ **Düzenle** — Bilgileri güncelle, şifre değiştir
+- ⏸ **Aktif/Pasif** — Kullanıcıyı geçici olarak devre dışı bırak (hesabı silmeden)
+- 🗑 **Kalıcı Sil** — Kullanıcıyı tamamen sil (geri alınamaz)
+
+> ⚠️ **UYARI:** Kullanıcı silindiğinde geri getirilemez. Geçici olarak engellemek istiyorsanız "Pasif Yap" kullanın.
+
+---
+
+## 12.10 Yetki Yönetimi
+
+Her kullanıcıya modül bazlı granüler yetkiler atanabilir. **13 modül** altında **69+ izin** tanımlıdır.
+
+### Yetki Modülleri ve İzinler
+
+#### 📁 Dosya İşlemleri (16 izin)
+| İzin | Açıklama |
+|------|----------|
+| Dosya Listesi | Dosya listesini görüntüleme |
+| Yeni Dosya | Yeni dosya oluşturma |
+| Dosya Detay | Dosya detayını görüntüleme |
+| Dosya Düzenle | Dosya bilgilerini değiştirme |
+| Dosya Sil | Tekli dosya silme |
+| Toplu Silme | Birden fazla dosyayı toplu silme |
+| Aşama Değiştir | Dosya aşamasını güncelleme |
+| Portal Erişimi Oluştur | Dosya için müşteri portalı oluşturma |
+| Dosya Kapat | Dosyayı kapatma |
+| Masraf Ekle / Sil / Öde | Masraf işlemleri (3 ayrı izin) |
+| Evrak Yükle / Sil / İndir | Evrak işlemleri (3 ayrı izin) |
+| Hesap Özeti Görüntüle | Finansal hesap özetini görme |
+
+#### 👥 CRM / Saha (12 izin)
+| İzin | Açıklama |
+|------|----------|
+| CRM Listesi / Yeni / Düzenle / Sil | CRM kayıt işlemleri |
+| Toplu Silme | CRM toplu silme |
+| Arama Listesi | Telefon arama listesi erişimi |
+| Saha Dosyaları / Yeni / Düzenle / Sil | Saha kayıt işlemleri |
+| Saha Onayla / Reddet | Saha kayıtlarını onaylama/reddetme |
+
+#### 🧮 Hesaplamalar (4 izin)
+Araç Değer Kaybı, Bedeni Hasar hesaplama ve rapor oluşturma
+
+#### 🤝 Paydaşlar / Ortaklar (9 izin)
+İş ortakları/paydaşları görüntüleme, ekleme, düzenleme, silme, toplu silme, personel
+
+#### 📋 Poliçe (10 izin)
+Liste, yeni, düzenle, sil, toplu sil, Excel ihraç, yenileme, tahsilat, rapor, kazanç
+
+#### 💰 Muhasebe (22 izin)
+Gelir/gider yönetimi ve ekleme/silme, komisyon, kasa/banka, kasa silme, transfer, hareket düzenleme/silme, ortak kasa, maliyet analizi, raporlar, kapanış, ay sonu, bakiye sıfırlama, personel işlemleri ve hakediş
+
+#### 🧾 Masraf Yönetimi (5 izin)
+Görüntüle, ekle, düzenle, sil, öde
+
+#### 📄 Evrak Yönetimi (4 izin)
+Görüntüle, yükle, sil, indir
+
+#### 📅 Ajanda (5 izin)
+Görüntüle, etkinlik ekle/düzenle/sil, toplu silme
+
+#### 💬 Mesajlar (4 izin)
+Görüntüle, gönder, sil, toplu silme
+
+#### 🔔 Bildirimler (2 izin)
+Görüntüle, sil
+
+#### ⚖️ İçtihat (4 izin)
+Yargıtay kararları, tahkim örnekleri, poliçe limit tabloları, kusur emsal dosyaları
+
+#### 🛡 Sistem (22 izin)
+Kullanıcı/yetki yönetimi, firma ayarları, SMS, portal, güvenlik, 2FA, veri yönetimi, log, bildirimler, tanımlamalar (dosya/evrak/finansal/şablon/genel + CRUD), konum takibi, toplu aktarım
+
+### Yetki Atama
+
+1. Kullanıcıyı seçin
+2. Her modül altındaki izinleri açın/kapatın (toggle)
+3. Değişiklikler anında kaydedilir
+
+> ⚠️ **DİKKAT:** Admin rolündeki kullanıcılar otomatik olarak tüm yetkilere sahiptir, yetki ataması gerekmez. Diğer roller için yetkilerin tek tek açılması gerekir.
+
+---
+
+## 12.11 Cihaz Güvenliği
+
+Sisteme erişen cihazları yönetir ve güvenlik kontrolleri sağlar. Yetkisiz cihazlardan erişimi engelleyebilirsiniz.
+
+## 12.12 2FA (İki Faktörlü Doğrulama) Yönetimi
+
+TOTP tabanlı iki faktörlü doğrulama ayarlarını yönetir. Google Authenticator veya benzeri uygulamalarla kullanılır.
+
+---
