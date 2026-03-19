@@ -316,3 +316,157 @@ Bir etkinliği dosya ile ilişkilendirdiğinizde, etkinlik detayında **dosya nu
 > ✅ **İPUCU:** Ajandanızı düzenli kontrol edin. Yaklaşan duruşma tarihleri, evrak teslim süreleri ve müşteri randevuları için etkinlik oluşturmayı alışkanlık haline getirin.
 
 ---
+
+# 5. 👥 CRM / Saha
+
+> **Modül Özeti**
+> | Özellik | Değer |
+> |---------|-------|
+> | Erişim | Personel ve üzeri roller |
+> | Menü Yolu | CRM → Liste / Yeni Kayıt / Arama / Saha |
+> | Amaç | Müşteri adaylarını takip etmek, saha dosyaları yönetmek |
+> | Sekmeler | CRM Listesi, Yeni Kayıt, Arama Listesi, Saha Dosyaları |
+
+CRM (Müşteri İlişkileri Yönetimi) modülü, potansiyel müşterilerin ilk temas noktasından dosya açılmasına kadarki süreci yönetir. Saha alt modülü ise saha personelinin sahadan girdiği dosyaları onay sürecine tabi tutar.
+
+## 5.1 CRM Listesi
+
+Tüm müşteri adayı kayıtlarını bu sayfada görürsünüz.
+
+### İstatistik Kartları
+
+| Kart | Açıklama |
+|------|----------|
+| **Toplam Kayıt** | Sistemdeki tüm CRM kayıtlarının sayısı |
+| **Yeni** | Henüz işlem yapılmamış kayıtlar |
+| **Takipte** | Görüşmeleri devam eden kayıtlar |
+| **Olumlu** | Dosyaya dönüşme potansiyeli olan kayıtlar |
+
+### CRM Durumları
+
+| Durum | Renk | Açıklama |
+|-------|------|----------|
+| **Yeni** | 🔵 Mavi | Yeni gelen, henüz değerlendirilmemiş |
+| **Takipte** | 🟡 Sarı | Görüşmeler devam ediyor |
+| **Olumlu** | 🟢 Yeşil | Dosya açılacak, olumlu sonuçlanmış |
+| **Olumsuz** | 🔴 Kırmızı | Dosya açılmayacak, reddedilmiş |
+
+### Müşteri Kaynakları
+
+CRM kaydının nereden geldiğini belirtir:
+
+- 📞 **TELEFON** — Telefonla arayan müşteri
+- 🌐 **WEB FORMU** — İnternet sitesinden gelen başvuru
+- 📱 **SOSYAL MEDYA** — Sosyal medya kanallarından gelen
+- 🤝 **YÖNLENDİRME** — Başka bir müşteri veya paydaş yönlendirmesi
+- ➕ **DİĞER** — Diğer kanallar
+
+### Filtreleme ve Arama
+
+- **Arama kutusu** → İsim, T.C. No veya plaka ile arama
+- **Durum filtresi** → Yeni / Takipte / Olumlu / Olumsuz
+- **Kaynak filtresi** → Telefon / Web Formu / Sosyal Medya vb.
+
+### CRM İşlemleri
+
+- **Durum değiştirme** → Satırdaki açılır menüden durumu güncelleyebilirsiniz
+- **Düzenleme** → Kalem ikonuna tıklayarak kayıt bilgilerini düzenleyin
+- **Silme** → Çöp kutusu ikonuna tıklayın (admin yetkisi gerektirir)
+- **Toplu silme** → Birden fazla seçip toplu silebilirsiniz
+
+## 5.2 Yeni CRM Kaydı
+
+### Form Alanları
+
+| Alan | Zorunlu | Açıklama |
+|------|---------|----------|
+| **Ad Soyad** | ✅ Evet | Müşteri adayının tam adı |
+| **T.C. / Vergi No** | Hayır | Kimlik veya vergi numarası |
+| **Telefon** | Hayır | İletişim telefonu |
+| **E-posta** | Hayır | E-posta adresi |
+| **İl** | Hayır | Müşterinin bulunduğu il (81 il listesi) |
+| **İlçe** | Hayır | Seçilen ile göre ilçe listesi |
+| **Plaka** | Hayır | Araç plakası |
+| **Marka** | Hayır | Araç markası (24 marka listesi) |
+| **Model** | Hayır | Seçilen markaya göre model listesi |
+| **Araç Yılı** | Hayır | Aracın model yılı |
+| **Araç KM** | Hayır | Kilometre bilgisi |
+| **Olay Açıklama** | Hayır | Kazanın / olayın kısa açıklaması |
+| **Dosya Türü** | Hayır | ADK / BH / MDK |
+| **Kaynak** | Hayır | Müşterinin hangi kanaldan geldiği |
+| **Durum** | Hayır | Yeni (varsayılan) / Takipte / Olumlu / Olumsuz |
+| **Öncelik** | Hayır | Normal / Yüksek / Acil |
+
+### Kayıt Adımları
+
+1. **Ad Soyad** alanını doldurun
+2. **Telefon** numarasını girin (geri arama için)
+3. **Olay açıklamasını** yazın (ne olduğunu kısaca belirtin)
+4. **Dosya türünü** seçin (ADK mi, BH mi?)
+5. Araç bilgilerini girin (marka, model, yıl, plaka)
+6. **KAYDET** butonuna tıklayın
+
+> ✅ **İPUCU:** CRM kaydı "Olumlu" duruma geldiğinde, bu kaydı doğrudan dosyaya dönüştürebilirsiniz. Bu işlem, müşteri bilgilerini yeni dosya formuna otomatik aktarır.
+
+## 5.3 CRM'den Dosyaya Dönüştürme
+
+Bir CRM kaydını dosyaya dönüştürmek için:
+
+1. CRM listesinde ilgili kaydı bulun
+2. Kaydın durumunu **"Olumlu"** yapın
+3. **"DOSYAYA DÖNÜŞTÜR"** butonuna tıklayın
+4. Yeni dosya formu, CRM'deki bilgilerle önceden doldurulmuş olarak açılır
+5. Eksik alanları doldurup dosyayı kaydedin
+
+> ⚠️ **DİKKAT:** Dönüştürme işlemi geri alınamaz. CRM kaydı "Dosyaya Dönüştü" durumuna geçer.
+
+## 5.4 Arama Listesi
+
+Telefon yönlendirme ve geri arama takibi için kullanılır. CRM'deki kayıtlardan aranması gerekenleri bu listede takip edebilirsiniz.
+
+## 5.5 Saha Dosyaları
+
+Saha personelinin sahadan girdiği dosyaları yönetmek için kullanılır. **3 günlük onay süreci** ile çalışır.
+
+### Saha Dosya Durumları
+
+| Durum | Renk | Açıklama |
+|-------|------|----------|
+| **Taslak** | ⚪ Gri | Henüz onaya gönderilmemiş |
+| **Onay Bekliyor** | 🟡 Sarı | Ofis onayı bekleniyor (3 gün süre) |
+| **Onaylandı** | 🟢 Yeşil | Ofis tarafından onaylandı |
+| **Reddedildi** | 🔴 Kırmızı | Ofis tarafından reddedildi |
+| **Dosyaya Dönüştü** | 🟣 Mor | Gerçek dosyaya dönüştürülmüş |
+| **Süresi Doldu** | ⚪ Gri | 3 gün içinde onaylanmadı |
+
+### 3 Günlük Onay Süreci
+
+Saha personeli bir dosya girip onaya gönderdiğinde, ofis tarafının **3 gün** içinde onaylaması veya reddetmesi gerekir. Kalan süre her dosyada geri sayım olarak gösterilir:
+
+- 🟢 **2+ gün kalan** → Yeşil gösterge
+- 🟡 **1 gün kalan** → Sarı gösterge (acele edin!)
+- 🔴 **Birkaç saat kalan** → Kırmızı gösterge (son şans!)
+
+> ⚠️ **ÖNEMLİ:** 3 gün içinde onaylanmayan saha dosyaları otomatik olarak "Süresi Doldu" durumuna geçer!
+
+### Saha Dosyası Alanları
+
+| Alan | Açıklama |
+|------|----------|
+| **Mağdur Bilgileri** | Ad soyad, T.C., telefon, adres |
+| **Hasar Tipi** | Trafik Kazası, DASK, Yangın, Su Baskın, Hırsızlık, Diğer |
+| **Hasar Durumu** | Dosya Açık, Dosya Kapalı, Onarım Devam Ediyor |
+| **Dosya Kaynağı** | Yönlendiren, Servis, Acente, Anlaşmalı Kurum, Bireysel, Diğer |
+| **Kusur Durumu** | %0, %25, %50, %75, %100 |
+| **Araç Bilgileri** | Marka, model, yıl, plaka, renk, şasi, motor |
+| **Sigorta Bilgileri** | Şirket, poliçe no, hasar no |
+| **Medya/Evrak** | Fotoğraf ve belge yükleme (JPG, PNG, PDF — maks. 20MB) |
+
+### Medya Yükleme
+
+Saha dosyalarına **sürükle-bırak** veya **tıklayarak** dosya yükleyebilirsiniz:
+- Desteklenen formatlar: **JPG, PNG, PDF**
+- Maksimum dosya boyutu: **20 MB**
+- Yüklenen dosyaları **önizleyebilir** ve **indirebilirsiniz**
+
+---
