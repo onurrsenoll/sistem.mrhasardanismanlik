@@ -143,3 +143,176 @@ LİSTE SAYFASI → DETAY/DÜZENLEME → KAYDET
 > ✅ **İPUCU:** Listelerde arama kutusuna yazdığınızda sonuçlar otomatik filtrelenir. Enter'a basmanıza gerek yoktur.
 
 ---
+
+# 2. 🏠 Ana Sayfa (Dashboard)
+
+> **Modül Özeti**
+> | Özellik | Değer |
+> |---------|-------|
+> | Erişim | Tüm kullanıcılar |
+> | Menü Yolu | Ana Sayfa |
+> | Amaç | Sistemin genel durumunu tek bakışta görmek |
+
+Ana sayfa, sisteme giriş yaptığınızda karşınıza çıkan ilk ekrandır. Burada dosya istatistikleri, güncel bildirimler ve hızlı erişim kısayolları bulunur.
+
+### Gördüğünüz Bilgiler
+
+- **Toplam dosya sayısı** — Sistemdeki tüm dosyaların sayısı
+- **ADK dosya sayısı** — Araç Değer Kaybı dosyaları
+- **BH dosya sayısı** — Bedeni Hasar dosyaları
+- **Açık dosya sayısı** — Henüz kapanmamış dosyalar
+
+> ✅ **İPUCU:** Dashboard'daki istatistik kartlarına tıklayarak ilgili listelere hızlıca gidebilirsiniz.
+
+---
+
+# 3. ✉️ Mesajlar ve Bildirimler
+
+> **Modül Özeti**
+> | Özellik | Değer |
+> |---------|-------|
+> | Erişim | Tüm kullanıcılar |
+> | Menü Yolu | Mesajlar |
+> | Amaç | Kurum içi mesajlaşma ve sistem bildirimleri |
+> | Sekmeler | Gelen Kutusu, Giden Kutusu, Yeni Mesaj, Sistem Bildirimleri |
+
+## 3.1 Gelen Kutusu
+
+Size gönderilen tüm mesajları burada görürsünüz.
+
+### Mesaj Listesi Alanları
+
+| Alan | Açıklama |
+|------|----------|
+| **Gönderen** | Mesajı gönderen kullanıcının adı |
+| **Konu** | Mesaj konusu (maksimum 200 karakter) |
+| **Öncelik** | Normal, Yüksek veya Acil |
+| **Tarih** | Mesajın gönderilme tarihi ve saati |
+| **Durum** | Okundu / Okunmadı (kalın yazı = okunmadı) |
+
+### Mesaj İşlemleri
+
+- 📖 **Okumak için** → Mesaj satırına tıklayın
+- ↩️ **Yanıtlamak için** → Mesaj detayında "YANITLA" butonuna tıklayın (konu otomatik "YNT:" ile başlar)
+- ➡️ **İletmek için** → "İLET" butonuna tıklayın (konu "İLT:" ile başlar)
+- 🗑️ **Silmek için** → Mesajı seçip "SİL" butonuna tıklayın
+- ☑️ **Toplu silme** → Birden fazla mesajı seçip toplu silebilirsiniz
+
+## 3.2 Giden Kutusu
+
+Gönderdiğiniz mesajların listesi burada görüntülenir. Aynı alan yapısına sahiptir, ancak "Gönderen" yerine **"Alıcı"** sütunu bulunur.
+
+## 3.3 Yeni Mesaj Gönderme
+
+Yeni mesaj oluşturmak için **"Yeni Mesaj"** sekmesine tıklayın.
+
+### Mesaj Formu Alanları
+
+| Alan | Zorunlu | Açıklama |
+|------|---------|----------|
+| **Alıcı** | ✅ Evet | Açılır listeden kullanıcı seçin |
+| **Konu** | ✅ Evet | Mesaj konusu (maks. 200 karakter) |
+| **İçerik** | ✅ Evet | Mesaj metni |
+| **Öncelik** | Hayır | Normal (varsayılan), Yüksek, Acil |
+| **Dosya Bağlantısı** | Hayır | Mesajı bir dosya ile ilişkilendirebilirsiniz |
+
+### Gönderme Adımları
+
+1. **Alıcı** seçin → Açılır listeden hedef kullanıcıyı bulun
+2. **Konu** yazın → Mesajın neyle ilgili olduğunu belirtin
+3. **İçerik** alanına mesajınızı yazın
+4. **Öncelik** seviyesini gerekirse değiştirin
+5. **GÖNDER** butonuna tıklayın
+
+> ⚠️ **DİKKAT:** Gönderilen mesajlar geri alınamaz. Göndermeden önce alıcıyı kontrol edin.
+
+## 3.4 Sistem Bildirimleri
+
+Sistem tarafından otomatik oluşturulan bildirimler bu sekmede listelenir.
+
+### Bildirim Türleri
+
+| Tür | Simge | Açıklama |
+|-----|-------|----------|
+| **Bilgi** | 🔵 | Genel bilgilendirme mesajları |
+| **Uyarı** | 🟡 | Dikkat edilmesi gereken durumlar |
+| **Hata** | 🔴 | Sistem hataları veya acil durumlar |
+| **Başarı** | 🟢 | Tamamlanan işlem bildirimleri |
+
+> ✅ **İPUCU:** Üst çubuktaki 🔔 zil ikonundaki sayı, okunmamış bildirimlerinizi gösterir. Tıklayarak doğrudan bildirimlere gidebilirsiniz.
+
+---
+
+# 4. 📅 Ajanda
+
+> **Modül Özeti**
+> | Özellik | Değer |
+> |---------|-------|
+> | Erişim | Tüm kullanıcılar |
+> | Menü Yolu | Ajanda |
+> | Amaç | Kişisel görev ve etkinlik takibi |
+> | Görünümler | Takvim ve Liste |
+
+## 4.1 Takvim Görünümü
+
+Etkinliklerinizi aylık takvim üzerinde görüntüleyebilirsiniz. Her gün kutucuğunda o güne ait etkinlikler renkli etiketler halinde görünür.
+
+### Takvim İşlemleri
+
+- **Bir güne tıklayın** → O gün için yeni etkinlik oluşturma penceresi açılır
+- **Bir etkinliğe tıklayın** → Etkinlik detayı görüntülenir
+- **◀ / ▶ okları** → Önceki/sonraki aya geçiş
+
+## 4.2 Liste Görünümü
+
+Tüm etkinliklerinizi tarih sırasına göre liste halinde görürsünüz. Bu görünümde filtreleme yapabilirsiniz.
+
+### Filtreleme Seçenekleri
+
+| Filtre | Seçenekler |
+|--------|------------|
+| **Öncelik** | Düşük, Normal, Yüksek, Acil |
+| **Durum** | Aktif (tamamlanmamış), Tamamlanmış |
+
+## 4.3 Yeni Etkinlik Oluşturma
+
+### Etkinlik Formu Alanları
+
+| Alan | Zorunlu | Açıklama |
+|------|---------|----------|
+| **Başlık** | ✅ Evet | Etkinliğin kısa adı |
+| **Açıklama** | Hayır | Detaylı açıklama |
+| **Tarih** | ✅ Evet | Başlangıç tarihi |
+| **Bitiş Tarihi** | Hayır | Etkinliğin bitiş tarihi |
+| **Hatırlatma** | Hayır | Ne zaman hatırlatma yapılacağı |
+| **Öncelik** | Hayır | Düşük / Normal / Yüksek / Acil |
+| **Renk** | Hayır | 8 farklı renk seçeneği (görsel ayrım için) |
+| **Dosya Bağlantısı** | Hayır | Etkinliği bir dosya ile ilişkilendirme |
+
+### Renk Seçenekleri
+
+Etkinliklerinizi görsel olarak ayırt etmek için 8 farklı renk kullanabilirsiniz. Örneğin:
+- 🔵 **Mavi** → Genel görevler
+- 🔴 **Kırmızı** → Acil işler
+- 🟢 **Yeşil** → Tamamlanması kolay işler
+- 🟡 **Sarı** → Dikkat gerektiren işler
+
+## 4.4 Etkinlik Yönetimi
+
+### Tamamlama
+
+Bir etkinliği tamamladığınızda, etkinlik satırındaki **✓ işaretine** tıklayarak tamamlandı olarak işaretleyebilirsiniz. Tamamlanan etkinlikler üstü çizili olarak görünür.
+
+### Toplu Silme
+
+Birden fazla etkinliği seçip **TOPLU SİL** butonu ile silebilirsiniz.
+
+> ⚠️ **DİKKAT:** Silinen etkinlikler geri getirilemez!
+
+### Dosya Bağlantısı
+
+Bir etkinliği dosya ile ilişkilendirdiğinizde, etkinlik detayında **dosya numarasına tıklayarak** doğrudan dosya detayına gidebilirsiniz. Bu özellik özellikle duruşma tarihleri ve dosya takip işleri için çok faydalıdır.
+
+> ✅ **İPUCU:** Ajandanızı düzenli kontrol edin. Yaklaşan duruşma tarihleri, evrak teslim süreleri ve müşteri randevuları için etkinlik oluşturmayı alışkanlık haline getirin.
+
+---
