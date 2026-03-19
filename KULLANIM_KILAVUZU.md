@@ -731,3 +731,286 @@ Bir dosya açıldığında "DOSYA AÇIK" aşamasında başlar ve çeşitli süre
 > ✅ **İPUCU:** Tam aşama listesini görmek için dosya detayındaki aşama açılır menüsüne tıklayın.
 
 ---
+
+# 7. 📋 Poliçe Takibi
+
+> **Modül Özeti**
+> | Özellik | Değer |
+> |---------|-------|
+> | Erişim | Personel ve üzeri roller |
+> | Menü Yolu | Poliçe → Liste / Yeni / Yenileme / Tahsilat / Rapor / Kazanç |
+> | Amaç | Sigorta poliçelerini yönetmek, yenileme takibi, tahsilat izleme |
+> | Sekmeler | Poliçe Listesi, Yeni Poliçe, Yenileme Takibi, Tahsilat/Cari, Raporlar, Kazanç |
+
+## 7.1 Poliçe Listesi
+
+### İstatistik Kartları
+
+| Kart | Açıklama |
+|------|----------|
+| **Toplam Poliçe** | Sistemdeki tüm poliçe sayısı |
+| **Aktif Poliçe** | Süresi devam eden poliçeler |
+| **Toplam Prim** | Tüm poliçelerin brüt prim toplamı |
+| **Tahsil Edilen** | Müşterilerden tahsil edilen toplam |
+| **Bekleyen** | Henüz tahsil edilmemiş tutarlar |
+
+### Filtreleme
+
+| Filtre | Seçenekler |
+|--------|------------|
+| **Arama** | Poliçe no, müşteri adı, plaka ile arama |
+| **Durum** | Aktif, Süresi Doldu, İptal, Yenilendi |
+| **Branş** | Kasko, Trafik, DASK, Konut, Sağlık, Hayat ve 7 branş daha |
+| **Tahsilat** | Beklemede, Kısmi Tahsil, Tahsil Edildi |
+
+### Branş Listesi (13 Branş)
+
+Kasko, Trafik, DASK, Konut, İşyeri, Sağlık, Hayat, Yangın, Nakliyat, Mühendislik, Sorumluluk, Ferdi Kaza, Diğer
+
+## 7.2 Yeni Poliçe
+
+### Poliçe Form Alanları
+
+| Alan | Zorunlu | Açıklama |
+|------|---------|----------|
+| **Poliçe No** | ✅ Evet | Sigorta şirketinden alınan poliçe numarası |
+| **Müşteri Adı** | ✅ Evet | Poliçe sahibinin adı soyadı |
+| **Müşteri Telefon** | Hayır | İletişim telefonu |
+| **Sigorta Şirketi** | ✅ Evet | 52 sigorta şirketinden seçim |
+| **Branş** | ✅ Evet | Poliçe branşı (Kasko, Trafik vb.) |
+| **Poliçe Türü** | Hayır | Yeni / Yenileme / Zeyil |
+| **Plaka** | Hayır | Araç plakası (varsa) |
+| **Brüt Prim** | ✅ Evet | Toplam prim tutarı (₺) |
+| **Net Prim** | Hayır | İndirim sonrası prim |
+| **Komisyon Oranı (%)** | Hayır | Komisyon yüzdesi |
+| **Komisyon Tutarı** | Hayır | Otomatik hesaplanır |
+| **Tanzim Tarihi** | Hayır | Poliçenin düzenlenme tarihi |
+| **Başlangıç Tarihi** | ✅ Evet | Poliçenin geçerlilik başlangıcı |
+| **Bitiş Tarihi** | ✅ Evet | Poliçenin sona erme tarihi |
+| **Hatırlatma (Gün)** | Hayır | Bitiş tarihinden kaç gün önce hatırlatma |
+
+### Ödeme Şekilleri
+
+Nakit, Havale/EFT, Kredi Kartı, Çek, Diğer
+
+## 7.3 Yenileme Takibi
+
+Süresi dolmak üzere olan poliçelerin listesi. Hatırlatma günü ayarına göre otomatik uyarı verir.
+
+## 7.4 Tahsilat / Cari
+
+Poliçe tahsilatlarını takip edin:
+- Tahsilat eklemek için poliçe detayında **"TAHSİLAT EKLE"** butonuna tıklayın
+- **Kasa seçimi** yaparak tahsilatı ilgili kasaya kaydedin
+- Tahsilat ilerleme çubuğu (%0 - %100) ile durumu izleyin
+
+### Tahsilat Durumları
+
+| Durum | Açıklama |
+|-------|----------|
+| 🔴 **Beklemede** | Henüz ödeme alınmamış |
+| 🟡 **Kısmi Tahsil** | Kısmen ödenmiş |
+| 🟢 **Tahsil Edildi** | Tamamı ödenmiş |
+
+## 7.5 Raporlar ve Kazanç
+
+Poliçe bazlı raporlar ve kazanç analizleri bu sekmelerde görüntülenir.
+
+---
+
+# 8. 🧮 Hesaplamalar
+
+> **Modül Özeti**
+> | Özellik | Değer |
+> |---------|-------|
+> | Erişim | Uzman ve avukat rolleri |
+> | Menü Yolu | Hesaplamalar → ADK Hesaplama / BH Hesaplama |
+> | Amaç | Tazminat tutarlarını hesaplamak |
+> | Özellikler | AI destekli analiz, PDF rapor, emsal karşılaştırma |
+
+## 8.1 Araç Değer Kaybı (ADK) Hesaplama
+
+Araç değer kaybı hesaplaması **3 farklı yöntemle** yapılır ve sonuçlar karşılaştırmalı olarak gösterilir.
+
+### ADK Form Alanları
+
+| Alan | Zorunlu | Açıklama |
+|------|---------|----------|
+| **Marka** | ✅ Evet | 24 araç markasından seçim |
+| **Model** | ✅ Evet | Markaya göre model listesi |
+| **Yıl** | ✅ Evet | Aracın model yılı (2005'ten günümüze) |
+| **Kilometre** | ✅ Evet | Aracın kilometre bilgisi |
+| **Kaza Tarihi** | Hayır | Kazanın gerçekleştiği tarih |
+| **Onarım Bedeli** | ✅ Evet | Aracın onarım masrafı (₺) |
+| **Kusur Oranı** | ✅ Evet | Karşı tarafın kusur oranı (%0-%100) |
+| **Önceki Hasar** | Hayır | Daha önce kaç kez hasar görmüş (0-3+) |
+| **Hasarlı Bölge** | Hayır | Ön, Yan, Arka, Tavan |
+| **Plaka** | Hayır | Araç plakası (rapor için) |
+
+### Hesaplama Adımları
+
+1. **Araç bilgilerini** girin (marka, model, yıl, km)
+2. **RAYİÇ ARAŞTIR** butonuna tıklayın → Sistem otomatik olarak piyasa rayiç değerini araştırır (sahibinden.com, araban.com ilanlarından)
+3. Rayiç değer otomatik dolacaktır, gerekirse düzenleyin
+4. **Onarım bedelini** girin
+5. **Kusur oranını** belirleyin (%100 = kusursuz, tazminat alır)
+6. **HESAPLA** butonuna tıklayın
+
+### 3 Hesaplama Yöntemi
+
+#### Yöntem 1: Tahkim Formülü
+Sigorta Tahkim Komisyonu'nun resmi hesaplama yöntemi.
+
+```
+DK = Rayiç × Baz Oran × Yaş Katsayısı × KM Katsayısı × Bölge Katsayısı × Önceki Hasar Katsayısı
+```
+
+**Katsayılar:**
+- **Yaş Katsayısı:** 1 yaş = 1.00, 5 yaş = 0.78, 10+ yaş = 0.35
+- **KM Katsayısı:** <30K = 1.00, 60-100K = 0.88, 200K+ = 0.50
+- **Bölge:** Ön = 1.00, Yan = 0.90, Arka = 0.85, Tavan = 0.75
+- **Önceki Hasar:** 0 = 1.00, 1 = 0.85, 2 = 0.70, 3+ = 0.55
+
+#### Yöntem 2: Yargıtay İçtihadı
+Yargıtay 17. HD / 4. HD kararları bazında hesaplama.
+
+```
+DK = Rayiç × Hasar Etkisi × (1 - Yıpranma) × Bölge Katsayısı × Önceki Hasar Katsayısı
+```
+
+#### Yöntem 3: Tahkim Emsal Ortalaması
+Aynı marka/model/yaş grubundaki tahkim kararlarının ortalaması.
+
+### AI Analizi
+
+Hesaplama tamamlandıktan sonra sistem otomatik olarak **Gemini AI** ile analiz yapar ve şunları sunar:
+- Hangi yöntemin daha avantajlı olduğu
+- Emsal kararlar ile karşılaştırma
+- Tahmini tazminat aralığı
+- Başvuru stratejisi önerisi
+
+### PDF Rapor İndirme
+
+Hesaplama sonuçlarını profesyonel bir **PDF rapor** olarak indirebilirsiniz. Rapor şunları içerir:
+- Araç ve hasar bilgileri
+- 3 yöntem karşılaştırması
+- Piyasa rayiç analizi (ilanlar)
+- Tahkim emsal kararları
+- AI analiz yorumu
+
+> ✅ **İPUCU:** PDF raporunu doğrudan tahkim başvurusuna veya mahkemeye sunabilirsiniz.
+
+## 8.2 Bedeni Hasar (BH) Hesaplama
+
+İş göremezlik tazminatı hesaplaması yapar. **Hızlı** ve **Detaylı** olmak üzere iki mod sunar.
+
+### BH Form Alanları
+
+| Alan | Zorunlu | Açıklama |
+|------|---------|----------|
+| **Mağdur Adı** | Hayır | Mağdurun adı soyadı |
+| **Dava Türü** | Hayır | Trafik Kazası, İş Kazası, Malpraktis, Diğer |
+| **Doğum Tarihi** | ✅ Evet | Mağdurun doğum tarihi |
+| **Cinsiyet** | ✅ Evet | Erkek / Kadın |
+| **Kaza Tarihi** | ✅ Evet | Kazanın gerçekleştiği tarih |
+| **Hesap Tarihi** | Hayır | Hesaplama yapılacak tarih (varsayılan: bugün) |
+| **Maluliyet Oranı (%)** | ✅ Evet | Sağlık kurulu raporundaki oran (1-100) |
+| **Meslek** | Hayır | Mağdurun mesleği |
+| **Aylık Gelir (₺)** | Koşullu | Asgari ücret kullanılmıyorsa zorunlu |
+| **Asgari Ücret Kullan** | Hayır | İşaretlenirse otomatik asgari ücret kullanılır |
+| **PMF Tablosu** | Hayır | TRH2010 (varsayılan), CSO1980, PMF1931 |
+| **Teknik Faiz (%)** | Hayır | Varsayılan %1.8 |
+| **Kusur Oranı (%)** | Hayır | Karşı taraf kusur oranı |
+
+### Ek Hesaplama Seçenekleri
+
+| Seçenek | Açıklama |
+|---------|----------|
+| **Geçici İş Göremezlik** | Aktifleştirilirse gün sayısı girilir |
+| **Bakıcı Ücreti** | Aktifleştirilirse gün sayısı girilir |
+| **PSD (Peşin Sermaye Değeri)** | Sigortanın ödediği tutar düşülür |
+| **Tam Hayat** | İşaretlenirse aktif/pasif ayrımı yapılmaz |
+| **Yaş Yuvarlama** | Yaşı tam sayıya yuvarlar |
+
+### BH Hesaplama Formülü
+
+```
+TOPLAM = Aktif Dönem Kaybı + Pasif Dönem Kaybı + GİG + Bakıcı - PSD
+```
+
+- **Aktif Dönem:** Hesap yaşından 65 yaşına kadar (meslek geliri ile)
+- **Pasif Dönem:** 65 yaşından ömür sonuna kadar (asgari ücret ile)
+- **GİG:** Geçici İş Göremezlik (günlük gelir × gün sayısı)
+- **Bakıcı:** Asgari ücret üzerinden günlük bakıcı × gün sayısı
+
+### OCR ile Otomatik Form Doldurma
+
+Sağlık kurulu raporu veya diğer belgeleri **sürükle-bırak** ile yükleyerek OCR ile otomatik form doldurabilirsiniz. Sistem AI ile belgedeki bilgileri tanıyıp forma aktarır.
+
+### PMF Yaşam Tabloları
+
+| Tablo | Açıklama | Kullanım |
+|-------|----------|----------|
+| **TRH2010** | Türk hayat tablosu (2010) | En güncel, varsayılan |
+| **CSO1980** | Amerikan hayat tablosu | Bazı mahkemeler tercih eder |
+| **PMF1931** | Eski hayat tablosu | Tarihsel karşılaştırma |
+
+> ⚠️ **ÖNEMLİ:** PMF tablosu seçimi tazminat tutarını önemli ölçüde etkiler. TRH2010 daha yüksek beklenen ömür verir, dolayısıyla daha yüksek tazminat çıkar.
+
+---
+
+# 9. ⚖️ İçtihat
+
+> **Modül Özeti**
+> | Özellik | Değer |
+> |---------|-------|
+> | Erişim | Uzman ve avukat rolleri |
+> | Menü Yolu | İçtihat → Yargıtay / Tahkim / Poliçe Limit / Kusur Emsal |
+> | Amaç | Hukuki emsal kararları araştırmak |
+> | Özellikler | AI destekli arama (Gemini), detaylı karar kartları |
+
+## 9.1 Yargıtay Kararları
+
+Yargıtay kararlarını anahtar kelime ile arayabilirsiniz.
+
+### Arama Adımları
+
+1. **Konu / Anahtar Kelime** alanına arama teriminizi yazın (ör: "araç değer kaybı", "maluliyet oranı")
+2. **ARA** butonuna tıklayın
+3. Sistem **Gemini AI** ile ilgili kararları arar ve listeler
+
+### Karar Kartı Bilgileri
+
+Her sonuç kartında şu bilgiler görünür:
+- **Dosya No** — Yargıtay dosya/karar numarası
+- **Tarih** — Karar tarihi
+- **Kaynak** — Kararın alındığı kaynak
+- **Özet** — Kararın kısa özeti
+- **Tutar** — Hükmedilen tazminat tutarı
+- **Detay** — Genişletildiğinde tam metin
+- **Hukuki Dayanak** — İlgili kanun maddeleri
+- **Daire** — Yargıtay dairesi
+- **Anahtar Kelimeler** — Etiketler
+
+## 9.2 Tahkim Kabul Örnekleri
+
+Sigorta Tahkim Komisyonu kararlarını arayabilirsiniz. Arama sonuçlarında istatistikler gösterilir:
+- **Toplam bulunan** karar sayısı
+- **Ortalama tutar** / **En yüksek tutar** / **En düşük tutar**
+- **Ortalama değer kaybı**
+
+### Yerleşik Tahkim Veritabanı
+
+Sistem **20+ güncel tahkim kararını** dahili veritabanında barındırır (2024-2025 kararları). Bu kararlar ADK hesaplamasında otomatik emsal karşılaştırma için de kullanılır.
+
+## 9.3 Poliçe Limit Tabloları
+
+Sigorta poliçe limitlerini araştırmak ve karşılaştırmak için kullanılır.
+
+## 9.4 Kusur Emsal Dosyaları
+
+Kusur oranlarına ilişkin emsal kararları arayabilirsiniz. Sonuçlarda kusur oranı bilgisi özellikle vurgulanır.
+
+> ✅ **İPUCU:** İçtihat araması yaparken mümkün olduğunca spesifik terimler kullanın. Örneğin "değer kaybı" yerine "2024 araç değer kaybı BMW tahkim" yazarak daha isabetli sonuçlar alabilirsiniz.
+
+---
