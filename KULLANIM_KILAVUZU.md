@@ -470,3 +470,264 @@ Saha dosyalarına **sürükle-bırak** veya **tıklayarak** dosya yükleyebilirs
 - Yüklenen dosyaları **önizleyebilir** ve **indirebilirsiniz**
 
 ---
+
+# 6. 📁 Dosya İşlemleri
+
+> **Modül Özeti**
+> | Özellik | Değer |
+> |---------|-------|
+> | Erişim | Personel, avukat ve üzeri roller |
+> | Menü Yolu | Dosya İşlemleri → Liste / Yeni Dosya |
+> | Amaç | Hasar dosyalarını açmak, takip etmek ve yönetmek |
+> | Dosya Türleri | ADK (Araç Değer Kaybı), BH (Bedeni Hasar), MDK (Motor Değer Kaybı) |
+
+Bu modül, sistemin **en temel ve en kapsamlı** modülüdür. Bir hasar dosyasının açılmasından kapanmasına kadar tüm süreç burada yönetilir.
+
+## 6.1 Dosya Listesi
+
+### İstatistik Kartları
+
+| Kart | Açıklama |
+|------|----------|
+| **Toplam** | Sistemdeki tüm dosya sayısı |
+| **ADK** | Araç Değer Kaybı dosyaları |
+| **BH** | Bedeni Hasar dosyaları |
+| **Açık** | Kapanmamış aktif dosyalar |
+
+### Filtreleme ve Arama
+
+| Filtre | Açıklama |
+|--------|----------|
+| **Arama kutusu** | Dosya no, ad soyad, T.C. no, plaka ile arama |
+| **Dosya Türü** | ADK / BH / Tümü |
+| **Aşama** | 53 farklı dosya aşamasından birini seçin |
+
+### Dışa Aktarma
+
+- 📊 **Excel** → Dosya listesini .xlsx formatında indirin
+- 📄 **PDF** → Dosya listesini PDF olarak kaydedin
+- 🖨️ **Yazdır** → Doğrudan yazıcıya gönderin
+
+### Toplu Silme (Sadece Admin)
+
+Admin rolüne sahip kullanıcılar, birden fazla dosyayı seçip **TOPLU SİL** butonu ile silebilir.
+
+> ⚠️ **UYARI:** Toplu silme işlemi GERİ ALINAMAZ! Silinen dosyaların tüm masraf, evrak ve hesap bilgileri de silinir.
+
+### Sayfalama
+
+Dosya listesi **sayfa başına 25 kayıt** gösterir. Alt kısımdaki sayfa numaraları ile diğer sayfalara geçebilirsiniz.
+
+## 6.2 Yeni Dosya Oluşturma
+
+Yeni dosya açmak için **"+ YENİ DOSYA"** butonuna tıklayın. Form 6 ana bölümden oluşur:
+
+### Bölüm A: Mağdur Bilgileri
+
+| Alan | Zorunlu | Açıklama |
+|------|---------|----------|
+| **Ad Soyad** | ✅ Evet | Mağdurun tam adı soyadı |
+| **T.C. Kimlik No** | ✅ Evet | 11 haneli T.C. kimlik numarası |
+| **Telefon** | ✅ Evet | İletişim telefon numarası |
+| **E-posta** | Hayır | E-posta adresi |
+| **İl** | ✅ Evet | 81 ilden birini seçin |
+| **İlçe** | Hayır | Seçilen ile göre ilçe listesi |
+| **Adres** | Hayır | Açık adres bilgisi |
+
+### Bölüm B: Dosya Bilgileri
+
+| Alan | Zorunlu | Açıklama |
+|------|---------|----------|
+| **Dosya Türü** | ✅ Evet | ADK, BH veya MDK |
+| **Kaza Tarihi** | ✅ Evet | Kazanın gerçekleştiği tarih |
+| **Kaza İli** | Hayır | Kazanın olduğu il |
+| **Komisyon Oranı (%)** | ✅ Evet | Danışmanlık komisyon oranı |
+| **Sorumlu** | ✅ Evet | Dosyadan sorumlu kullanıcı |
+| **Dosya Kaynağı** | ✅ Evet | Dosyanın geldiği kaynak |
+
+> ⚠️ **ÖNEMLİ:** Dosya türü seçimi, formun geri kalanını etkiler! ADK seçerseniz araç bilgileri bölümü, BH seçerseniz sürücü ve tıbbi bilgiler bölümü görünür.
+
+### Bölüm C: Paydaş / Yönlendiren
+
+| Alan | Zorunlu | Açıklama |
+|------|---------|----------|
+| **Dosya Kaynağı** | ✅ Evet | "PAYDAŞ/YÖNLENDİREN" seçildiğinde paydaş alanı aktif olur |
+| **Paydaş** | Koşullu ✅ | Kaynak "PAYDAŞ/YÖNLENDİREN" ise zorunlu |
+
+> ✅ **İPUCU:** Paydaş seçildiğinde, ilgili paydaşın ADK veya BH prim oranı otomatik gösterilir.
+
+### Bölüm D: Sigorta Bilgileri
+
+| Alan | Zorunlu | Açıklama |
+|------|---------|----------|
+| **Sigorta Şirketi** | ✅ Evet | 52 sigorta şirketinden birini seçin |
+| **Hasar No** | ✅ Evet | Sigorta şirketinden alınan hasar numarası |
+| **Poliçe No** | Hayır | Sigorta poliçe numarası |
+
+### Bölüm E: Araç Bilgileri (ADK/MDK Dosyaları İçin)
+
+| Alan | Zorunlu | Açıklama |
+|------|---------|----------|
+| **Mağdur Plaka** | ✅ Evet (ADK/MDK) | Mağdura ait araç plakası |
+| **Karşı Plaka** | Hayır | Karşı taraf araç plakası |
+| **Marka** | Hayır | 24 araç markasından seçim |
+| **Model** | Hayır | Markaya göre model listesi |
+| **Araç Yılı** | Hayır | Model yılı |
+| **Araç KM** | Hayır | Kilometre bilgisi |
+
+### Bölüm F: Araç & Sürücü Bilgileri (BH Dosyaları İçin)
+
+BH dosyalarında ek olarak sürücü ve tıbbi bilgi alanları görünür:
+
+| Alan | Açıklama |
+|------|----------|
+| **Sürücü Adı** | Kaza anındaki sürücünün adı |
+| **Sürücü T.C.** | Sürücünün T.C. kimlik numarası |
+| **Araç Plaka** | Kaza yapan aracın plakası |
+
+### Bölüm G: Notlar
+
+| Alan | Açıklama |
+|------|----------|
+| **Notlar** | Dosya ile ilgili serbest metin notları |
+
+### Dosya Kaydetme Adımları
+
+1. **Mağdur bilgilerini** doldurun (ad, T.C., telefon, il)
+2. **Dosya türünü** seçin (ADK / BH / MDK)
+3. **Kaza tarihini** girin
+4. **Komisyon oranını** ve **sorumluyu** belirleyin
+5. **Sigorta bilgilerini** girin (şirket, hasar no)
+6. Dosya türüne göre **araç/sürücü bilgilerini** doldurun
+7. **KAYDET** butonuna tıklayın
+
+> ⚠️ **KRİTİK:** Dosya kaydedildikten sonra dosya türü değiştirilemez! ADK/BH seçimini dikkatle yapın.
+
+## 6.3 Dosya Detayı
+
+Bir dosyaya tıkladığınızda detay sayfası açılır. Bu sayfa **4 sekmeden** oluşur:
+
+### Sekme 1: Bilgi
+
+Dosyanın tüm temel bilgilerini görüntüler ve düzenlemenize olanak tanır.
+
+**Aşama Değiştirme:**
+Dosyanın mevcut aşamasını değiştirebilirsiniz. Sistem **53 farklı aşama** tanımlar. Aşama değiştirildiğinde mağdura otomatik **SMS bildirimi** gönderilir.
+
+**Portal Erişimi Oluşturma:**
+Müşterinin dosya durumunu portal üzerinden takip edebilmesi için portal erişimi oluşturabilirsiniz. Bu işlem otomatik kullanıcı adı ve şifre üretir.
+
+**Dosya Düzenleme:**
+"DÜZENLE" butonuna tıklayarak dosyanın tüm bilgilerini güncelleyebilirsiniz.
+
+**Dosya Kapatma:**
+"DOSYAYI KAPAT" butonu ile dosyayı kapatabilirsiniz. Kapatma işleminde mali uzlaşma bilgileri girilir.
+
+### Sekme 2: Masraf
+
+Dosyaya ait masrafları yönetirsiniz.
+
+| Alan | Açıklama |
+|------|----------|
+| **Masraf Türü** | 22 farklı masraf kaleminden seçim |
+| **Tutar** | Masraf tutarı (₺) |
+| **Açıklama** | Masrafın detayı |
+| **Tarih** | Masraf tarihi |
+| **Ödeme Durumu** | Ödendi / Ödenmedi |
+
+**22 Masraf Kalemi:**
+Yönlendiren Ücreti, Dosya Prim Ödemesi, Vekaletname, Dosya Çıkarma, Islah Harcı, Kargo, Gider Avansı, Mahkeme, Hastane Evrakı, İcra Masrafı, Heyet ve Adli Tıp Masrafı, Yakıt, Azilname, Baro Pulu, Ceza Dava Masrafı, Fotokopi, Yol Ücreti, Mirasçılık Belgesi, Tercüman Ücreti, Dosya Masrafı, Heyet-Fotokopi, Heyet-Otopark
+
+**Masraf İşlemleri:**
+- ➕ Masraf ekleme
+- 💰 Masrafı ödendi olarak işaretleme
+- 🗑️ Masraf silme
+
+### Sekme 3: Evrak
+
+Dosyaya ait evrakları yükleyip yönetirsiniz.
+
+**Evrak Yükleme:**
+- Sürükle-bırak veya tıklayarak dosya seçin
+- Desteklenen formatlar: **PDF, JPG, PNG, DOC, DOCX, XLS, XLSX**
+- Maksimum boyut: **20 MB**
+- Evrak türünü listeden seçin (60+ evrak türü)
+
+**Evrak İşlemleri:**
+- 👁️ **Önizleme** — Evrakı tarayıcıda görüntüleyin
+- ⬇️ **İndirme** — Evrakı bilgisayarınıza kaydedin
+- 🗑️ **Silme** — Evrakı dosyadan kaldırın
+
+### Sekme 4: Hesap
+
+Dosyanın mali özetini görüntüler:
+- Toplam gelir
+- Toplam gider
+- Toplam masraf
+- Komisyon tutarı
+- Net kar/zarar
+
+## 6.4 Dosya Aşamaları (53 Aşama)
+
+Bir dosya açıldığında "DOSYA AÇIK" aşamasında başlar ve çeşitli süreçlerden geçerek "DOSYA KAPANDI" aşamasına ulaşır.
+
+### Başlangıç Aşamaları
+
+| # | Aşama |
+|---|-------|
+| 1 | DOSYA AÇIK |
+| 2 | EVRAK BEKLENİYOR |
+| 3 | BAŞVURU HAZIRLANIYOR |
+| 4 | MAĞDUR İLE GÖRÜŞMELER DEVAM ETMEKTEDİR |
+
+### Başvuru Aşamaları
+
+| # | Aşama |
+|---|-------|
+| 5 | SİGORTA ŞİRKETİNE BAŞVURU YAPILMIŞTIR |
+| 6 | İDARİ BAŞVURU YAPILMIŞTIR |
+| 7 | SİGORTA TAHKİM KOMİSYONUNA BAŞVURU YAPILMIŞTIR |
+| 8 | DOSYA TAHKİM HAKEMİNE SEVK EDİLMİŞTİR |
+
+### Arabuluculuk Aşamaları
+
+| # | Aşama |
+|---|-------|
+| 12 | ARABULUCULUK BAŞVURUSU YAPILDI |
+| 13 | ARABULUCULUK — TOPLANTI GÜNÜ BEKLENMEKTEDİR |
+| 14 | ARABULUCULUK — RAPOR BEKLENMEKTEDİR |
+| 15 | ARABULUCULUK ANLAŞMA TUTANAĞI TUTULDU, ÖDEME BEKLENMEKTEDİR |
+| 16 | ARABULUCULUK GÖRÜŞMELER OLUMSUZ SONUÇLANDI |
+
+### Dava Aşamaları
+
+| # | Aşama |
+|---|-------|
+| 18 | HUKUK DAVANIZ AÇILMIŞTIR — ÖN İNCELEME AŞAMASINDA |
+| 19 | ÖN İNCELEME DURUŞMA GÜNÜ VERİLMİŞTİR |
+| 20 | ÖN İNCELEME DURUŞMASI YAPILMIŞTIR |
+
+### Bilirkişi ve Rapor Aşamaları
+
+| # | Aşama |
+|---|-------|
+| 25 | ADLİ TIP KURUMUNDAN KUSUR RAPORU BEKLENİLMEKTEDİR |
+| 26 | ADLİ TIP KURUMUNDAN SAKATLIK RAPORU BEKLENİLMEKTEDİR |
+| 30 | MALULİYET/KUSUR RAPORU GELMİŞTİR — BİLİRKİŞİYE SEVK EDİLECEKTİR |
+| 34 | DOSYANIN HESAP RAPORU GELMİŞTİR — ISLAH EDİLECEKTİR |
+
+### Karar ve Kapanış Aşamaları
+
+| # | Aşama |
+|---|-------|
+| 37 | DOSYANIZ KARARA ÇIKTI — GEREKÇELİ KARAR BEKLENMEKTEDİR |
+| 38 | GEREKÇELİ KARAR YAZILDI — İCRA İŞLEMLERİ BAŞLATILMIŞTIR |
+| 51 | ÖDEME BEKLENİYOR |
+| 52 | ÖDEME ALINDI |
+| 53 | DOSYA KAPANDI |
+
+> ⚠️ **ÖNEMLİ:** Aşama değişikliği yapıldığında mağdura otomatik SMS gönderilir. Yanlış aşama seçmemeye dikkat edin!
+
+> ✅ **İPUCU:** Tam aşama listesini görmek için dosya detayındaki aşama açılır menüsüne tıklayın.
+
+---
