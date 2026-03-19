@@ -1819,3 +1819,98 @@ Sistemde **53 farklı aşama** bulunur. En sık yapılan hatalar:
 > ⚠️ **UYARI:** Admin rolü dışındaki kullanıcılar için yetkiler varsayılan olarak kapalıdır. Yeni kullanıcı oluşturduktan sonra mutlaka yetki ataması yapın.
 
 ---
+
+# 🔒 BÖLÜM 14: VERİ BÜTÜNLÜĞÜ İÇİN DİKKAT EDİLMESİ GEREKENLER
+
+Bu bölümde sistemdeki verilerin tutarlı ve güvenilir kalması için uyulması gereken kuralları bulacaksınız.
+
+---
+
+## 14.1 Dosya — Muhasebe Bağlantısı
+
+Dosyalar ve muhasebe kayıtları birbirine bağlıdır. Bu bağlantıyı bozmamak için:
+
+| Kural | Açıklama |
+|-------|----------|
+| Gelir kaydederken dosya ID girin | Gelir-dosya ilişkisi kurulur, maliyet analizi doğru çalışır |
+| Gider kaydederken dosya ID girin | Dosya bazlı kar/zarar hesaplaması için gereklidir |
+| Dosya silmeden önce finansal kayıtları kontrol edin | Silinen dosyanın gelir/gider kayıtları yetim kalır |
+| Masraf ödemelerini kasadan yapın | Masraf ödenmeden dosya kapatılmamalıdır |
+
+> ⚠️ **UYARI:** Bir dosyayı silerseniz, o dosyaya bağlı gelir/gider/masraf/komisyon kayıtları dosya numarasız kalır. Maliyet analizi ve raporlarda bu kayıtlar "dosyasız" olarak görünür.
+
+---
+
+## 14.2 Ortak / Paydaş — Dosya İlişkisi
+
+| Kural | Açıklama |
+|-------|----------|
+| Ortağı silmeden önce dosyalarını kontrol edin | Ortağa atanmış dosyalar varsa, önce başka ortağa devredin |
+| Paydaşın komisyonlarını kontrol edin | Bekleyen komisyonu olan paydaş silinmemelidir |
+| Finansal hareketleri olan ortağı silmeyin | Hareket geçmişi de silinir, muhasebe kayıtları tutarsız kalır |
+| Ödeme oranını değiştirmeden önce mevcut hesaplamaları kontrol edin | Oran değişikliği geriye dönük işlemleri etkilemez, sadece yeni işlemleri etkiler |
+
+> ✅ **İPUCU:** Artık çalışmadığınız bir ortağı silmek yerine **"Pasif"** yapın. Böylece geçmiş verileri korunur.
+
+---
+
+## 14.3 Silme İşlemlerinin Geri Alınamazlığı
+
+Sistemde silme işlemleri **kalıcıdır**. Aşağıdaki tabloda hangi silme işlemlerinin neyi etkilediğini görebilirsiniz:
+
+| Silinen Kayıt | Etkilenen Veriler | Risk Seviyesi |
+|---------------|-------------------|---------------|
+| Dosya | Masraflar, evraklar, aşama geçmişi, notlar, hesap özeti | 🔴 Çok Yüksek |
+| İş Ortağı | Finansal hareketler, ödeme geçmişi | 🔴 Yüksek |
+| İş Paydaşı | Komisyon kayıtları | 🟡 Orta |
+| Kullanıcı | Kullanıcı erişimi (kalıcı) | 🔴 Yüksek |
+| Kasa | Tüm kasa hareketleri | 🔴 Çok Yüksek |
+| Kasa Hareketi | Bakiye otomatik güncellenir | 🟡 Orta |
+| CRM Kaydı | Sadece CRM kaydı | 🟢 Düşük |
+| Evrak | Dosya eki kaybolur | 🟡 Orta |
+| Tanımlama | İlgili kayıtlarda tür bilgisi boş kalır | 🟡 Orta |
+
+> ⚠️ **KRİTİK:** Toplu silme işlemleri özellikle dikkat gerektirir. 50 dosyayı toplu silerek yanlışlıkla tüm dosyalarınızı kaybedebilirsiniz. Toplu silme öncesi mutlaka seçili kayıtları gözden geçirin.
+
+---
+
+## 14.4 Kasa Bakiye Tutarlılığı
+
+Kasa bakiyelerinin doğru kalması için:
+
+| Kural | Açıklama |
+|-------|----------|
+| Her gelir/gider kaydını kasa ile ilişkilendirin | Kasasız kayıt bakiyeyi etkilemez, raporlarda tutarsızlık yaratır |
+| Transfer işlemlerini doğru kasalarla yapın | Kaynak ve hedef kasa bakiyeleri otomatik güncellenir |
+| Bakiye düzeltmeyi dikkatli kullanın | Düzeltme kaydı log'a düşer ancak eski bakiye geri getirilemez |
+| Bakiye sıfırlamayı sadece dönem kapanışında kullanın | TÜM kasaları sıfırlar, geri alınamaz |
+| Pasif kasaya yeni işlem yapmayın | Pasif kasalar seçim listesinde görünmez ancak eski verileri korunur |
+
+> ✅ **İPUCU:** Ayda bir kez kasa bakiyelerini gerçek banka hesap özetleriyle karşılaştırın. Fark varsa "Bakiye Düzelt" ile düzeltin ve nedenini açıklamaya yazın.
+
+---
+
+## 14.5 Veri Yedekleme Önerileri
+
+| Öneri | Sıklık |
+|-------|--------|
+| Ay sonu raporunu yazdırıp arşivleyin | Aylık |
+| Kapanış raporunu yazdırıp saklayın | Aylık |
+| Dosya listesini Excel'e aktarın | Haftalık |
+| Poliçe listesini Excel'e aktarın | Aylık |
+| Kritik evrakların yedeğini alın | Sürekli |
+
+> ⚠️ **UYARI:** Sistem veritabanı yedeği admin tarafından Veri Yönetimi bölümünden yapılabilir. Düzenli yedek almayı ihmal etmeyin.
+
+---
+
+## 14.6 Genel Veri Bütünlüğü Kuralları
+
+1. **Silmek yerine pasif yapın** — Ortaklar, paydaşlar, kasalar, tanımlamalar ve kullanıcılar için geçerli
+2. **Dosya ID'lerini doğru girin** — Gelir, gider, masraf, komisyon kayıtlarında dosya bağlantısı önemlidir
+3. **Zorunlu alanları boş bırakmayın** — TC, ad soyad, kasa seçimi gibi alanlar veri bütünlüğü için kritiktir
+4. **Toplu işlemlerde dikkatli olun** — Toplu silme, bakiye sıfırlama gibi işlemler geri alınamaz
+5. **Yetkileri minimum seviyede tutun** — Gereksiz silme yetkisi vermek veri kaybı riskini artırır
+6. **Log kayıtlarını düzenli kontrol edin** — Beklenmedik silme veya değişiklikleri tespit etmek için
+
+---
