@@ -72,7 +72,9 @@ const MENU = [
     {id:'tanimlamalar-finansal', label:'FİNANSAL TANIMLAMALAR', icon:'Wallet'},
     {id:'tanimlamalar-sablon', label:'MATBU EVRAK / SÖZLEŞME', icon:'FileSignature'},
     {id:'tanimlamalar-genel', label:'GENEL TANIMLAMALAR', icon:'Settings'},
-    {id:'sistem-konum', label:'KONUM TAKİBİ', icon:'MapPin'}
+    {id:'sistem-konum', label:'KONUM TAKİBİ', icon:'MapPin'},
+    {id:'sistem-netsantral', label:'NETSANTRAL AYARLARI', icon:'Phone'},
+    {id:'crm-analiz', label:'CRM ANALİZ', icon:'BarChart3'}
   ]}
 ];
 
@@ -435,7 +437,8 @@ const Breadcrumb = ({page, setPage}) => {
       'sistem-ayarlar': 'FİRMA AYARLARI', 'sistem-sms': 'SMS BİLDİRİM',
       'sistem-portal': 'PORTAL AYARLARI',
       'sistem-guvenlik': 'CİHAZ GÜVENLİĞİ', 'sistem-log': 'LOG KAYITLARI', 'sistem-aktarim': 'TOPLU AKTARIM', 'sistem-veri': 'VERİ YÖNETİMİ',
-      'sistem-konum': 'KONUM TAKİBİ'
+      'sistem-konum': 'KONUM TAKİBİ',
+      'sistem-netsantral': 'NETSANTRAL AYARLARI'
     };
     parts.push({label: 'SİSTEM', id: 'sistem'});
     parts.push({label: sistemLabels[page] || page.replace('sistem-','').toUpperCase(), id: page});
@@ -818,6 +821,11 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   /* MESAJLAR (sistem bildirimleri artık sistem menüsünde) */
   if (page === 'mesajlar-sistem') {
     return <MR.MesajlarPage setPage={setPage} user={user} subPage="sistem"/>;
+  }
+
+  /* NETSANTRAL AYARLARI */
+  if (page === 'sistem-netsantral') {
+    return <MR.NetsantralAyarlariPage setPage={setPage} user={user}/>;
   }
 
   /* KONUM TAKİBİ (ADMIN ONLY) */
