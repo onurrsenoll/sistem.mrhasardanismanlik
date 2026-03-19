@@ -1679,3 +1679,143 @@ Sisteme erişen cihazları yönetir ve güvenlik kontrolleri sağlar. Yetkisiz c
 TOTP tabanlı iki faktörlü doğrulama ayarlarını yönetir. Google Authenticator veya benzeri uygulamalarla kullanılır.
 
 ---
+
+# ❗ BÖLÜM 13: SIK YAPILAN HATALAR VE ÖNLEME YÖNTEMLERİ
+
+Bu bölümde kullanıcıların en sık karşılaştığı hataları ve bunlardan kaçınma yollarını bulacaksınız.
+
+---
+
+## 13.1 Dosya Oluşturma Hataları
+
+### TC Kimlik Numarası Hatalı Girilmesi
+
+| Sorun | Çözüm |
+|-------|-------|
+| 11 haneden az/fazla giriliyor | Sistem otomatik 11 hane kontrolü yapar, uyarıyı dikkate alın |
+| Yanlış TC ile kayıt açılıyor | Kayıt sonrası düzeltme yapılabilir ancak bağlı evraklar etkilenir |
+| Aynı TC ile mükerrer dosya | Sistem uyarı verir, mevcut dosyayı kontrol edin |
+
+> ⚠️ **UYARI:** TC Kimlik numarası birçok resmi evrak ve hesaplama ile ilişkilidir. Yanlış girildiğinde tüm belgelerin güncellenmesi gerekir.
+
+### Dosya Türü Seçim Hatası
+
+| Sorun | Çözüm |
+|-------|-------|
+| ADK yerine BH seçildi | Dosya türü araç bilgisi alanlarını etkiler — ADK'da araç alanları zorunlu, BH'de değil |
+| MDK seçilmesi gerektiği halde ADK seçildi | Dosya düzenle ile türü değiştirin, eksik alanları doldurun |
+
+> ⚠️ **UYARI:** Dosya türü değiştirildiğinde bazı alanlar sıfırlanabilir. Değiştirmeden önce mevcut bilgileri not alın.
+
+### Sigorta Şirketi ve Poliçe Bilgileri
+
+| Sorun | Çözüm |
+|-------|-------|
+| Yanlış sigorta şirketi seçildi | 52 şirket listesinden doğru olanı seçin, hasar no ile çapraz kontrol yapın |
+| Hasar no girilmedi | Hasar no dosya takibinde kritik öneme sahiptir, mutlaka girin |
+| Poliçe no eksik | Tahkim başvuruları için poliçe no zorunludur |
+
+---
+
+## 13.2 Aşama Değiştirme Hataları
+
+### Yanlış Aşama Seçimi
+
+Sistemde **53 farklı aşama** bulunur. En sık yapılan hatalar:
+
+| Sorun | Çözüm |
+|-------|-------|
+| "Dosya Kapatıldı" aşaması yanlışlıkla seçildi | Kapatılan dosyayı tekrar açmak için admin yetkisi gerekir |
+| Aşama atlama (sıra dışı ilerleme) | Sistem uyarmaz, ancak raporlarda tutarsızlık oluşur |
+| Aşama notu eklenmedi | Her aşama değişikliğine açıklayıcı not ekleyin |
+
+> ✅ **İPUCU:** Aşama değiştirmeden önce, dosyanın gerçekten o aşamaya geldiğinden emin olun. "Tahkim Başvurusu Yapıldı" seçtiyseniz, başvuruyu gerçekten yaptığınızdan emin olun.
+
+---
+
+## 13.3 Finansal İşlem Hataları
+
+### Kasa Seçimi
+
+| Sorun | Çözüm |
+|-------|-------|
+| Yanlış kasaya gelir/gider kaydedildi | Admin bakiye düzeltme ile düzeltilebilir, ancak hareket kaydı kalır |
+| Pasif kasaya işlem yapılmaya çalışıldı | Yalnızca aktif kasalar seçilebilir |
+| Transfer sırasında kaynak = hedef seçildi | Sistem bunu engeller, farklı kasalar seçin |
+
+### Komisyon Oranları
+
+| Sorun | Çözüm |
+|-------|-------|
+| İş ortağına %0 oran girildi | Komisyon hesaplanmaz, doğru oranı girin |
+| ADK ve BH primleri karıştırıldı | Paydaş formunda ADK Prim ve BH Prim ayrı alanlardır |
+| Komisyon onaylanmadan ödendi | Onaysız ödeme yapılabilir ancak raporlarda "Bekliyor" görünür |
+
+> ⚠️ **UYARI:** Bakiye sıfırlama işlemi TÜM kasaları etkiler ve geri alınamaz. Bu işlemi sadece yıl sonu kapanışında kullanın.
+
+---
+
+## 13.4 Evrak Yükleme Hataları
+
+| Sorun | Çözüm |
+|-------|-------|
+| 20 MB üzeri dosya yüklenemiyor | Dosyayı sıkıştırın veya bölün. Maksimum limit: **20 MB** |
+| Desteklenmeyen format | Desteklenen: **JPG, PNG, PDF**. Word veya Excel dosyalarını önce PDF'e çevirin |
+| Yanlış evrak türü seçildi | Evrak türünü düzenleyerek düzeltebilirsiniz |
+| Evrak yanlışlıkla silindi | Silinen evraklar geri getirilemez, yeniden yükleyin |
+
+---
+
+## 13.5 CRM ve Saha Hataları
+
+### CRM Kayıtları
+
+| Sorun | Çözüm |
+|-------|-------|
+| Mükerrer CRM kaydı oluşturuldu | Telefon veya TC ile arama yaparak mevcut kaydı kontrol edin |
+| CRM'den dosyaya dönüştürme unutuldu | CRM listesinde "Dosyaya Dönüştür" butonunu kullanın |
+
+### Saha Dosyaları
+
+| Sorun | Çözüm |
+|-------|-------|
+| 3 günlük onay süresi doldu | Süresi dolan kayıtlar otomatik olarak "Süresi Doldu" durumuna geçer, yeni kayıt oluşturun |
+| Saha kaydı onaylanmadan dosyaya dönüştürüldü | Önce onaylayın, sonra dönüştürün |
+| Fotoğraf/belge eklenmedi | Saha kaydına medya eklemeden onay verilmesi raporlarda eksikliğe neden olur |
+
+> ✅ **İPUCU:** Saha kayıtlarını oluşturduktan sonra 3 gün içinde onaylamayı unutmayın. Geri sayım sayacını takip edin.
+
+---
+
+## 13.6 Hesaplama Hataları
+
+### ADK (Araç Değer Kaybı)
+
+| Sorun | Çözüm |
+|-------|-------|
+| Araç marka/model bulunamıyor | 24 marka ve modelleri dahili veritabanından seçilir, araç yoksa en yakın modeli seçin |
+| Kilometre bilgisi girilmedi | Kilometre, değer kaybı hesaplamasında kritik faktördür |
+| Önceki hasar sayısı yanlış | Önceki hasar varsa değer kaybı oranını düşürür, doğru girin |
+| Rayiç araştırma sonucu gelmedi | İnternet bağlantısını kontrol edin, manuel rayiç girin |
+
+### BH (Bedeni Hasar)
+
+| Sorun | Çözüm |
+|-------|-------|
+| PMF tablosu yanlış seçildi | TRH2010 (güncel), CSO1980, PMF1931 arasında doğru tabloyu seçin |
+| Maluliyet oranı yanlış girildi | Sağlık kurulu raporundaki oranı birebir girin |
+| Aktif/pasif dönem hesaplama hatası | Doğum tarihi ve emeklilik yaşını doğru girin |
+
+---
+
+## 13.7 Yetki ve Erişim Hataları
+
+| Sorun | Çözüm |
+|-------|-------|
+| Kullanıcı modüle erişemiyor | Admin → Yetki Yönetimi'nden ilgili izni açın |
+| Yeni eklenen kullanıcı hiçbir şey göremyor | Rol ataması yapılmış ancak yetkiler verilmemiş — tüm izinleri kontrol edin |
+| Portal kullanıcısı dosya düzenleyebiliyor | Portal rolü kısıtlı olmalı, yetkileri daraltın |
+
+> ⚠️ **UYARI:** Admin rolü dışındaki kullanıcılar için yetkiler varsayılan olarak kapalıdır. Yeni kullanıcı oluşturduktan sonra mutlaka yetki ataması yapın.
+
+---
