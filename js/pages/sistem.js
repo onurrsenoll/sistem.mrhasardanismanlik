@@ -811,11 +811,11 @@ const AyarlarTab = () => {
 
   const up = (k, v) => setAyarlar(p => ({...p, [k]: v}));
 
-  /* GEMİNİ API TESTİ */
-  const geminiTestEt = async (key) => {
+  /* CLAUDE API TESTİ */
+  const claudeTestEt = async (key) => {
     setApiTest({testing: true, sonuc: null});
     try {
-      const r = await api.geminiTest(key ? {api_key: key} : {});
+      const r = await api.claudeTest(key ? {api_key: key} : {});
       if (r?.success && r.data) {
         setApiTest({testing: false, sonuc: r.data});
       } else {
@@ -841,8 +841,8 @@ const AyarlarTab = () => {
     const r = await api.ayarlarGuncelle(ayarlar);
     if (r?.success) {
       setMesaj({type: 'success', text: 'AYARLAR BAŞARIYLA KAYDEDİLDİ'});
-      // KAYDETME SONRASI GEMİNİ API TESTİ YAP
-      geminiTestEt(ayarlar.gemini_api_key);
+      // KAYDETME SONRASI CLAUDE API TESTİ YAP
+      claudeTestEt(ayarlar.claude_api_key);
     } else {
       setMesaj({type: 'error', text: r?.error || 'AYARLAR KAYDEDİLİRKEN HATA OLUŞTU'});
     }
@@ -1252,94 +1252,35 @@ const AyarlarTab = () => {
             border: `1px solid ${C.accent}20`, marginBottom: 16, fontSize: 11, color: C.textSec, lineHeight: 1.6
           }}>
             <LIcon name="Info" size={13} color={C.accent} style={{verticalAlign: 'middle'}}/>{' '}
-            AI ANALİZ, MOTİVASYON SÖZLERİ, İÇTİHAT ARAMA VE OCR İÇİN API ANAHTARLARI.
-            BİRDEN FAZLA PROVIDER TANIMLANIRSA ÖNCELİK: GEMİNİ {'>'} OPENAI {'>'} CLAUDE.
-            OCR (EVRAK OKUMA) SADECE GEMİNİ İLE ÇALIŞIR.
+            AI ANALİZ, MOTİVASYON SÖZLERİ, İÇTİHAT ARAMA İÇİN CLAUDE API ANAHTARI.
             BOŞ BIRAKIRSANIZ VARSAYILAN ANAHTAR KULLANILIR.
           </div>
           <div style={{display: 'grid', gap: 16}}>
-            {/* GOOGLE GEMİNİ */}
-            <div>
-              <label style={S.label}>
-                <span style={{display: 'inline-flex', alignItems: 'center', gap: 6}}>
-                  <span style={{width: 8, height: 8, borderRadius: '50%', background: '#4285F4', display: 'inline-block'}}/>
-                  GOOGLE GEMİNİ API ANAHTARI
-                  <span style={{...S.badge(C.accent), fontSize: 8, padding: '1px 6px'}}>ADK + BH + OCR + İÇTİHAT + MOTİVASYON</span>
-                </span>
-              </label>
-              <div style={{display: 'flex', gap: 8, alignItems: 'center'}}>
-                <input style={{...S.input, flex: 1, fontFamily: 'monospace', fontSize: 12, letterSpacing: 0.5}}
-                  value={ayarlar.gemini_api_key || ''}
-                  onChange={e => up('gemini_api_key', e.target.value)}
-                  placeholder="AIzaSy... (BOŞ BIRAKIRSANIZ VARSAYILAN KULLANILIR)"/>
-                <button style={{
-                  ...S.btn, background: C.accent, color: '#fff', fontSize: 11, padding: '10px 16px',
-                  fontWeight: 700, whiteSpace: 'nowrap', opacity: apiTest.testing ? 0.7 : 1,
-                  borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6
-                }} onClick={() => geminiTestEt(ayarlar.gemini_api_key)} disabled={apiTest.testing}>
-                  <LIcon name={apiTest.testing ? 'Loader2' : 'Zap'} size={14} color="#fff"/>
-                  {apiTest.testing ? 'TEST EDİLİYOR...' : 'TEST ET'}
-                </button>
-              </div>
-              <div style={{fontSize: 10, color: C.textMuted, marginTop: 4}}>
-                AISTUDIO.GOOGLE.COM ADRESINDEN ÜCRETSİZ API ANAHTARI ALABİLİRSİNİZ
-              </div>
-            </div>
-
-            {/* OPENAI */}
-            <div>
-              <label style={S.label}>
-                <span style={{display: 'inline-flex', alignItems: 'center', gap: 6}}>
-                  <span style={{width: 8, height: 8, borderRadius: '50%', background: '#10a37f', display: 'inline-block'}}/>
-                  OPENAI API ANAHTARI (GPT-4o-mini)
-                  <span style={{...S.badge(C.success), fontSize: 8, padding: '1px 6px'}}>ADK + BH + İÇTİHAT</span>
-                </span>
-              </label>
-              <input style={{...S.input, fontFamily: 'monospace', fontSize: 12, letterSpacing: 0.5}}
-                value={ayarlar.openai_api_key || ''}
-                onChange={e => up('openai_api_key', e.target.value)}
-                placeholder="sk-proj-... (OPSİYONEL - GEMİNİ YOKSA KULLANILIR)"/>
-              <div style={{fontSize: 10, color: C.textMuted, marginTop: 4}}>
-                PLATFORM.OPENAI.COM ADRESINDEN API ANAHTARI ALABİLİRSİNİZ
-              </div>
-            </div>
-
             {/* CLAUDE / ANTHROPIC */}
             <div>
               <label style={S.label}>
                 <span style={{display: 'inline-flex', alignItems: 'center', gap: 6}}>
                   <span style={{width: 8, height: 8, borderRadius: '50%', background: '#d97706', display: 'inline-block'}}/>
                   CLAUDE API ANAHTARI (Anthropic)
-                  <span style={{...S.badge(C.warning), fontSize: 8, padding: '1px 6px'}}>ADK + BH + İÇTİHAT</span>
+                  <span style={{...S.badge(C.accent), fontSize: 8, padding: '1px 6px'}}>ADK + BH + İÇTİHAT + MOTİVASYON + RAYİÇ</span>
                 </span>
               </label>
-              <input style={{...S.input, fontFamily: 'monospace', fontSize: 12, letterSpacing: 0.5}}
-                value={ayarlar.claude_api_key || ''}
-                onChange={e => up('claude_api_key', e.target.value)}
-                placeholder="sk-ant-... (OPSİYONEL - GEMİNİ VE OPENAI YOKSA KULLANILIR)"/>
+              <div style={{display: 'flex', gap: 8, alignItems: 'center'}}>
+                <input style={{...S.input, flex: 1, fontFamily: 'monospace', fontSize: 12, letterSpacing: 0.5}}
+                  value={ayarlar.claude_api_key || ''}
+                  onChange={e => up('claude_api_key', e.target.value)}
+                  placeholder="sk-ant-... (BOŞ BIRAKIRSANIZ VARSAYILAN ANAHTAR KULLANILIR)"/>
+                <button style={{
+                  ...S.btn, background: C.accent, color: '#fff', fontSize: 11, padding: '10px 16px',
+                  fontWeight: 700, whiteSpace: 'nowrap', opacity: apiTest.testing ? 0.7 : 1,
+                  borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6
+                }} onClick={() => claudeTestEt(ayarlar.claude_api_key)} disabled={apiTest.testing}>
+                  <LIcon name={apiTest.testing ? 'Loader2' : 'Zap'} size={14} color="#fff"/>
+                  {apiTest.testing ? 'TEST EDİLİYOR...' : 'TEST ET'}
+                </button>
+              </div>
               <div style={{fontSize: 10, color: C.textMuted, marginTop: 4}}>
                 CONSOLE.ANTHROPIC.COM ADRESINDEN API ANAHTARI ALABİLİRSİNİZ
-              </div>
-            </div>
-
-            {/* PROVIDER BİLGİ TABLOSU */}
-            <div style={{
-              padding: '10px 14px', background: `${C.bgHover}`, borderRadius: 8,
-              border: `1px solid ${C.border}`, fontSize: 10, color: C.textSec
-            }}>
-              <div style={{fontWeight: 700, marginBottom: 6, fontSize: 11}}>PROVIDER ÖZELLİK TABLOSU:</div>
-              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 4}}>
-                <span style={{fontWeight: 700}}>ÖZELLİK</span>
-                <span style={{fontWeight: 700, color: '#4285F4'}}>GEMİNİ</span>
-                <span style={{fontWeight: 700, color: '#10a37f'}}>OPENAI</span>
-                <span style={{fontWeight: 700, color: '#d97706'}}>CLAUDE</span>
-
-                <span>ADK ANALİZ</span><span>✓</span><span>✓</span><span>✓</span>
-                <span>BH ANALİZ</span><span>✓</span><span>✓</span><span>✓</span>
-                <span>RAYİÇ ARAŞTIRMA</span><span>✓</span><span>✓</span><span>✓</span>
-                <span>İÇTİHAT ARAMA</span><span>✓</span><span>✓</span><span>✓</span>
-                <span>OCR EVRAK OKUMA</span><span>✓</span><span>-</span><span>-</span>
-                <span>MOTİVASYON</span><span>✓</span><span>✓</span><span>✓</span>
               </div>
             </div>
           </div>
@@ -1357,7 +1298,7 @@ const AyarlarTab = () => {
                 animation: 'spin 1s linear infinite'
               }}/>
               <span style={{fontSize: 12, color: C.textSec, fontWeight: 600}}>
-                GEMİNİ API TEST EDİLİYOR... LÜTFEN BEKLEYİN
+                CLAUDE API TEST EDİLİYOR... LÜTFEN BEKLEYİN
               </span>
             </div>
           )}
