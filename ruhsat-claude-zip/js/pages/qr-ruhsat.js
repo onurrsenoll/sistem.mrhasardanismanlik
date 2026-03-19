@@ -532,7 +532,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
     (async () => {
       try {
         const r = await MR.api.ayarlarList();
-        if (r?.success && r?.data?.qr_ruhsat_gemini_key) {
+        if (r?.success && r?.data?.qr_ruhsat_claude_key) {
           setRuhsatApiKey(r.data.qr_ruhsat_claude_key);
         }
       } catch(e) {}
@@ -800,11 +800,11 @@ MR.QrRuhsatPage = ({setPage, user}) => {
         }}, React.createElement(LIcon, {name:'QrCode', size:26, color:'#fff'})),
         React.createElement('div', null,
           React.createElement('h1', {style: {fontSize: 22, fontWeight: 900, color: C.text, margin: 0}}, 'QR RUHSAT OKUYUCU'),
-          React.createElement('p', {style: {fontSize: 12, color: C.textMuted, margin: 0, fontWeight: 600}}, 'GEMİNİ AI + QR + OCR RUHSAT BİLGİ ÇIKARMA')
+          React.createElement('p', {style: {fontSize: 12, color: C.textMuted, margin: 0, fontWeight: 600}}, 'CLAUDE AI + QR + OCR RUHSAT BİLGİ ÇIKARMA')
         )
       ),
 
-      /* Orta: Gemini API Key Alanı */
+      /* Orta: Claude API Key Alanı */
       React.createElement('div', {style: {
         display:'flex', alignItems:'center', gap: 6,
         background: C.bgCard, border: `1px solid ${C.border}`,
@@ -998,8 +998,8 @@ MR.QrRuhsatPage = ({setPage, user}) => {
                     /* Kaynak rozeti (QR / OCR / AI) */
                     item.result.source?.[field.key] === 'qr'
                       ? React.createElement('span', {style: {fontSize:8, fontWeight:900, background:(C.success||'#10b981')+'25', color:C.success||'#10b981', padding:'1px 5px', borderRadius:4, marginLeft:4}}, 'QR')
-                      : item.result.source?.[field.key] === 'gemini'
-                        ? React.createElement('span', {style: {fontSize:8, fontWeight:900, background:'#8b5cf6'+'25', color:'#8b5cf6', padding:'1px 5px', borderRadius:4, marginLeft:4}}, 'AI')
+                      : item.result.source?.[field.key] === 'claude'
+                        ? React.createElement('span', {style: {fontSize:8, fontWeight:900, background:'#d97706'+'25', color:'#d97706', padding:'1px 5px', borderRadius:4, marginLeft:4}}, 'AI')
                         : item.result.source?.[field.key] === 'ocr'
                           ? React.createElement('span', {style: {fontSize:8, fontWeight:900, background:C.accent+'25', color:C.accent, padding:'1px 5px', borderRadius:4, marginLeft:4}}, 'OCR')
                           : null
@@ -1067,7 +1067,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
       }}, React.createElement(LIcon, {name:'QrCode', size:36, color:C.accent})),
       React.createElement('div', {style: {fontSize:16, fontWeight:900, color:C.text, marginBottom:8}}, 'ARAÇ RUHSATI OKUYUCU'),
       React.createElement('div', {style: {fontSize:12, color:C.textMuted, fontWeight:600, maxWidth:500, margin:'0 auto', lineHeight:1.8}},
-        'ARAÇ RUHSATI GÖRSELLERİNİ YÜKLEYİN. SİSTEM ÜÇ AŞAMALI TARAMA YAPAR: 1) GELİŞMİŞ OCR (ÖN İŞLEME + BÖLGE BAZLI) 2) QR KOD OKUMA 3) CLAUDE AI ANALİZİ. TOPLU YÜKLEME İLE BİRDEN FAZLA RUHSATI AYNI ANDA İŞLEYEBİLİRSİNİZ.'
+        'ARAÇ RUHSATI GÖRSELLERİNİ YÜKLEYİN. SİSTEM ÜÇ AŞAMALI TARAMA YAPAR: 1) CLAUDE AI ANALİZ (BİRİNCİL) 2) QR KOD OKUMA 3) TESSERACT OCR (YEDEK). TOPLU YÜKLEME İLE BİRDEN FAZLA RUHSATI AYNI ANDA İŞLEYEBİLİRSİNİZ.'
       ),
       React.createElement('div', {style: {display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))', gap:12, marginTop:28, maxWidth:650, margin:'28px auto 0'}},
         [
