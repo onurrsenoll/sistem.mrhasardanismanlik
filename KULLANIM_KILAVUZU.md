@@ -1914,3 +1914,144 @@ Kasa bakiyelerinin doğru kalması için:
 6. **Log kayıtlarını düzenli kontrol edin** — Beklenmedik silme veya değişiklikleri tespit etmek için
 
 ---
+
+# 📖 BÖLÜM 15: SÖZLÜK
+
+Sistemde karşılaşacağınız tüm terim ve kısaltmaların açıklamaları.
+
+---
+
+## 15.1 Dosya ve Hukuk Terimleri
+
+| Terim | Açıklama |
+|-------|----------|
+| **ADK** | Araç Değer Kaybı — Kaza sonrası aracın piyasa değerindeki düşüş |
+| **BH** | Bedeni Hasar — Kaza sonrası kişinin bedensel zararı |
+| **MDK** | Maddi Hasar / Manevi Değer Kaybı — Maddi zarar talebi |
+| **Tahkim** | Sigorta Tahkim Komisyonu — Sigorta uyuşmazlıklarında alternatif çözüm yolu |
+| **Hasar No** | Sigorta şirketinin kazaya verdiği takip numarası |
+| **Poliçe No** | Sigorta poliçesinin benzersiz numarası |
+| **Dosya No** | Sistemin otomatik oluşturduğu dosya takip numarası (ör: MR-2025-0042) |
+| **Aşama** | Dosyanın bulunduğu süreç adımı (53 farklı aşama) |
+| **Kusur Oranı** | Kazadaki tarafların hata payı yüzdesi |
+| **Maluliyet** | Kaza sonrası kalıcı sakatlık oranı (tıbbi rapor ile belirlenir) |
+| **Bilirkişi** | Mahkeme tarafından atanan teknik uzman |
+| **İcra** | Alacağın yasal yollarla tahsili süreci |
+| **İhtarname** | Karşı tarafa gönderilen resmi uyarı yazısı |
+| **Sulh** | Tarafların anlaşarak uzlaşması |
+| **Rücu** | Sigorta şirketinin ödediği tazminatı kusurlu taraftan geri istemesi |
+| **Temerrüt** | Borcun vadesinde ödenmemesi durumu |
+| **Muafiyet** | Poliçede sigorta kapsamı dışında tutulan miktar |
+
+---
+
+## 15.2 Hesaplama Terimleri
+
+| Terim | Açıklama |
+|-------|----------|
+| **PMF** | Population Mortality Factor — Yaşam/ölüm tabloları |
+| **TRH2010** | Türkiye Hayat Tablosu 2010 — Güncel PMF tablosu |
+| **CSO1980** | Commissioners Standard Ordinary 1980 — ABD kökenli yaşam tablosu |
+| **PMF1931** | 1931 yılı yaşam tablosu (eski hesaplamalar için) |
+| **Aktif Dönem** | Kişinin çalışabilir olduğu yaş aralığı |
+| **Pasif Dönem** | Emeklilik sonrası yaşam süresi |
+| **Rant Katsayısı** | Tazminat hesaplamasında kullanılan iskonto çarpanı |
+| **Progresif Rant** | Kademeli artan rant hesaplama yöntemi |
+| **Rayiç Değer** | Aracın piyasa satış fiyatı |
+| **Emsal** | Benzer davalarda verilen kararlar (karşılaştırma için) |
+| **GİG** | Geçici İş Göremezlik — Tedavi süresince çalışamama |
+| **PSD** | Psikolojik / Sosyal Destek gideri |
+| **Asgari Ücret** | Devletin belirlediği minimum maaş (hesaplamalarda taban değer) |
+
+---
+
+## 15.3 Muhasebe Terimleri
+
+| Terim | Açıklama |
+|-------|----------|
+| **Kasa** | Para tutma birimi (nakit veya banka hesabı) |
+| **Bakiye** | Kasadaki mevcut para miktarı |
+| **Tahsilat** | Dışarıdan gelen para (alacak tahsilatı) |
+| **Tediye / Ödeme** | Dışarıya yapılan para çıkışı |
+| **Komisyon** | Aracıya veya ortağa ödenen pay |
+| **Prim** | Paydaşlara dosya başına ödenen sabit tutar |
+| **Hakediş** | Personelin hak ettiği maaş + prim toplamı |
+| **Cari** | Borç-alacak hesabı takibi |
+| **Maliyet Analizi** | Dosya bazlı gelir-gider-kar hesaplaması |
+| **Kar Marjı** | Net karın gelire oranı (yüzde olarak) |
+| **Transfer** | Kasalar arası para aktarımı |
+| **Kapanış Raporu** | Dönem sonu finansal değerlendirme |
+
+---
+
+## 15.4 Sistem Terimleri
+
+| Terim | Açıklama |
+|-------|----------|
+| **Admin** | Sistem yöneticisi — tüm yetkilere sahip |
+| **Rol** | Kullanıcının sistem içindeki görevi (6 farklı rol) |
+| **Yetki** | Belirli bir işlemi yapabilme izni |
+| **2FA** | İki Faktörlü Doğrulama — Şifre + telefon kodu ile giriş |
+| **TOTP** | Time-based One Time Password — Zamana dayalı tek kullanımlık şifre |
+| **JWT** | JSON Web Token — Oturum doğrulama teknolojisi |
+| **Portal** | Müşterilerin dosya durumunu takip edebildiği dış arayüz |
+| **Log** | Sistem işlem kayıtları (denetim izi) |
+| **API** | Sistemin arka plan veri iletişim katmanı |
+| **OCR** | Optical Character Recognition — Belgelerden otomatik metin okuma |
+| **AI Analiz** | Yapay zeka destekli analiz (Gemini entegrasyonu) |
+| **SMS Bildirim** | NetGSM üzerinden otomatik kısa mesaj gönderimi |
+| **Tema** | Arayüz görünümü (Koyu / Açık mod) |
+
+---
+
+## 15.5 CRM ve Saha Terimleri
+
+| Terim | Açıklama |
+|-------|----------|
+| **CRM** | Customer Relationship Management — Müşteri İlişkileri Yönetimi |
+| **Saha** | Ofis dışında, sahada yapılan hasar tespit çalışması |
+| **Lead** | Potansiyel müşteri kaydı |
+| **Dönüştürme** | CRM kaydının dosyaya çevrilmesi |
+| **Onay Süresi** | Saha kayıtları için 3 günlük değerlendirme süresi |
+
+---
+
+## 15.6 Poliçe Terimleri
+
+| Terim | Açıklama |
+|-------|----------|
+| **Branş** | Sigorta türü (Kasko, Trafik, Konut, Sağlık vb. — 13 branş) |
+| **Yenileme** | Süresi dolan poliçenin uzatılması |
+| **Taksit** | Poliçe bedelinin bölünerek ödenmesi |
+| **DASK** | Doğal Afet Sigortaları Kurumu — Zorunlu deprem sigortası |
+| **Kasko** | İhtiyari araç sigortası |
+| **Trafik** | Zorunlu mali sorumluluk sigortası |
+| **Ferdi Kaza** | Bireysel kaza sigortası |
+| **İMM** | İhtiyari Mali Mesuliyet sigortası |
+
+---
+
+> 📌 **NOT:** Bu sözlük, sistemde karşılaşılan en yaygın terimleri kapsar. Hukuki terimlerin resmi tanımları için ilgili mevzuata başvurunuz.
+
+---
+
+# ✅ KILAVUZ SONU
+
+Bu kılavuz, **MR Hasar Danışmanlık Dosya Takip Sistemi**'nin tüm modüllerini kapsamlı olarak açıklamaktadır.
+
+**Kapsam özeti:**
+- 📋 **15 ana bölüm**
+- 🔧 **11 modül** detaylı açıklaması
+- 📊 **69+ yetki** izin listesi
+- 📁 **53 dosya aşaması** referansı
+- 📄 **60+ evrak türü** desteği
+- 🏢 **52 sigorta şirketi** veritabanı
+- 🚗 **24 araç markası** ve modelleri
+- 💰 **22 masraf kalemi**
+- ⚖️ **3 PMF yaşam tablosu**
+- 🤖 **AI destekli** hesaplama ve analiz
+
+> 📞 Sorularınız veya önerileriniz için sistem yöneticinize başvurunuz.
+
+---
+*MR Hasar Danışmanlık — Dosya Takip Sistemi Kullanım Kılavuzu v1.0*
