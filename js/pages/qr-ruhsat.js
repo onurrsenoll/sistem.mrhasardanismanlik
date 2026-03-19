@@ -1,10 +1,8 @@
 /**
- * MR HASAR DANIŞMANLIK - QR RUHSAT OKUYUCU v3.0
- * Gelişmiş OCR + QR + Gemini AI hibrit ruhsat okuma sistemi
- * Sıra: 1) Gemini AI (birincil) → 2) QR Kod → 3) Tesseract OCR (tam metin, yedek)
- * v3.0: Sabit bölge bazlı OCR kaldırıldı - gerçek ruhsat fotoğrafları standart
- * boyut/açıda olmadığından sabit koordinatlar yanlış sonuç üretiyordu.
- * Artık Tesseract sadece tam metin OCR + regex ile alan çıkarma kullanır.
+ * MR HASAR DANIŞMANLIK - QR RUHSAT OKUYUCU v3.1
+ * Claude Vision AI + QR + Tesseract OCR hibrit ruhsat okuma sistemi
+ * Sıra: 1) Claude AI (birincil) → 2) QR Kod → 3) Tesseract OCR (tam metin, yedek)
+ * v3.1: Gemini kaldırıldı, sadece Claude Vision API kullanılıyor.
  */
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect, useCallback, useRef, useMemo} = React;
@@ -460,10 +458,10 @@ const runEnhancedOcrOnImage = async (imgElement, onProgress) => {
 };
 
 /* ═══════════════════════════════════════════════════════════════
-   BÖLÜM 4: GEMİNİ VİSİON API (SON ÇARE)
+   BÖLÜM 4: CLAUDE VİSİON API (BİRİNCİL YÖNTEM)
    ═══════════════════════════════════════════════════════════════ */
 
-const runGeminiOcr = async (fileObj, onProgress, customApiKey) => {
+const runClaudeOcr = async (fileObj, onProgress, customApiKey) => {
   try {
     if (onProgress) onProgress(0.1);
     const fd = new FormData();
@@ -495,7 +493,7 @@ const runGeminiOcr = async (fileObj, onProgress, customApiKey) => {
         ad: (d.ad || '').toUpperCase(),
         belgeSeri: (d.belgeseri || d.belge_seri || '').toUpperCase(),
         confidence: d.guven || 85,
-        source: 'gemini'
+        source: 'claude'
       };
     }
     return { success: false, error: data.error || 'API YANIT HATASI' };
@@ -532,8 +530,8 @@ MR.QrRuhsatPage = ({setPage, user}) => {
     (async () => {
       try {
         const r = await MR.api.ayarlarList();
-        if (r?.success && r?.data?.qr_ruhsat_gemini_key) {
-          setRuhsatApiKey(r.data.qr_ruhsat_gemini_key);
+        if (r?.success && r?.data?.qr_ruhsat_claude_key) {
+          setRuhsatApiKey(r.data.qr_ruhsat_claude_key);
         }
       } catch(e) {}
       setApiKeyLoaded(true);
@@ -544,9 +542,9 @@ MR.QrRuhsatPage = ({setPage, user}) => {
   const saveApiKey = useCallback(async () => {
     setApiKeySaving(true);
     try {
-      const r = await MR.api.ayarlarGuncelle({ qr_ruhsat_gemini_key: ruhsatApiKey });
+      const r = await MR.api.ayarlarGuncelle({ qr_ruhsat_claude_key: ruhsatApiKey });
       if (r?.success) {
-        toast('GEMİNİ API ANAHTARI KAYDEDİLDİ', 'success');
+        toast('CLAUDE API ANAHTARI KAYDEDİLDİ', 'success');
       } else {
         toast(r?.error || 'API ANAHTARI KAYDEDİLEMEDİ', 'error');
       }
@@ -574,7 +572,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
   const onDragLeave = useCallback(() => setDragOver(false), []);
   const onDrop = useCallback((e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }, [handleFiles]);
 
-  /* ═══ ANA İŞLEM AKIŞI: GEMİNİ (birincil) → QR → OCR (yedek) ═══ */
+  /* ═══ ANA İŞLEM AKIŞI: CLAUDE (birincil) → QR → OCR (yedek) ═══ */
   const processAll = useCallback(async () => {
     const pending = files.filter(f => f.status === 'pending' || f.status === 'error');
     if (!pending.length) { toast('İŞLENECEK RUHSAT BULUNMUYOR', 'warning'); return; }
@@ -597,26 +595,26 @@ MR.QrRuhsatPage = ({setPage, user}) => {
         };
         const allFields = ['plaka','marka','modelYili','sase','tc','soyad','ad','belgeSeri'];
 
-        // ═══ ADIM 1: GEMİNİ AI (API KEY VARSA - BİRİNCİL YÖNTEM) ═══
-        let geminiUsed = false;
+        // ═══ ADIM 1: CLAUDE AI (API KEY VARSA - BİRİNCİL YÖNTEM) ═══
+        let claudeUsed = false;
         if (hasApiKey) {
           try {
-            const geminiResult = await Promise.race([
-              runGeminiOcr(item.file, (progress) => {
+            const claudeResult = await Promise.race([
+              runClaudeOcr(item.file, (progress) => {
                 setFiles(prev => prev.map(f => f.id === item.id ? {...f, ocrProgress: progress} : f));
               }, ruhsatApiKey),
               new Promise((_, reject) => setTimeout(() => reject(new Error('AI ZAMAN AŞIMI')), 45000))
             ]);
 
-            if (geminiResult.success) {
+            if (claudeResult.success) {
               allFields.forEach(k => {
-                if (geminiResult[k]) { merged[k] = geminiResult[k]; merged.source[k] = 'gemini'; }
+                if (claudeResult[k]) { merged[k] = claudeResult[k]; merged.source[k] = 'claude'; }
               });
-              merged.ocrConfidence = geminiResult.confidence || 85;
-              geminiUsed = true;
+              merged.ocrConfidence = claudeResult.confidence || 85;
+              claudeUsed = true;
             }
-          } catch (geminiErr) {
-            console.warn('GEMİNİ HATASI:', geminiErr.message);
+          } catch (claudeErr) {
+            console.warn('CLAUDE HATASI:', claudeErr.message);
           }
         }
 
@@ -634,11 +632,11 @@ MR.QrRuhsatPage = ({setPage, user}) => {
           });
         }
 
-        // ═══ ADIM 3: TESSERACT OCR (API KEY YOKSA veya Gemini başarısızsa) ═══
+        // ═══ ADIM 3: TESSERACT OCR (API KEY YOKSA veya Claude başarısızsa) ═══
         let ocrText = '';
         let ocrConfidence = 0;
-        const fieldCountAfterGemini = allFields.filter(k => merged[k]).length;
-        const needsOcr = !geminiUsed || fieldCountAfterGemini < 4;
+        const fieldCountAfterClaude = allFields.filter(k => merged[k]).length;
+        const needsOcr = !claudeUsed || fieldCountAfterClaude < 4;
 
         if (needsOcr) {
           setFiles(prev => prev.map(f => f.id === item.id ? {...f, substatus: 'ocr', ocrProgress: 0} : f));
@@ -651,7 +649,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
             ]);
             ocrText = ocrResult.rawText || '';
             ocrConfidence = ocrResult.confidence || 0;
-            // OCR sadece boş alanları doldurur (Gemini/QR verilerini ezmez)
+            // OCR sadece boş alanları doldurur (Claude/QR verilerini ezmez)
             allFields.forEach(k => {
               if (!merged[k] && ocrResult[k]) { merged[k] = ocrResult[k]; merged.source[k] = 'ocr'; }
             });
@@ -661,26 +659,26 @@ MR.QrRuhsatPage = ({setPage, user}) => {
           }
         }
 
-        // ═══ ADIM 4: API KEY YOKSA ve OCR yetersizse Gemini dene ═══
-        if (!geminiUsed) {
+        // ═══ ADIM 4: API KEY YOKSA ve OCR yetersizse Claude dene ═══
+        if (!claudeUsed) {
           const fcAfterOcr = allFields.filter(k => merged[k]).length;
           if (fcAfterOcr < 6 || ocrConfidence < 65) {
             setFiles(prev => prev.map(f => f.id === item.id ? {...f, substatus: 'ai', ocrProgress: 0} : f));
             try {
-              const geminiResult = await Promise.race([
-                runGeminiOcr(item.file, (progress) => {
+              const claudeResult = await Promise.race([
+                runClaudeOcr(item.file, (progress) => {
                   setFiles(prev => prev.map(f => f.id === item.id ? {...f, ocrProgress: progress} : f));
                 }, null),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('AI ZAMAN AŞIMI')), 45000))
               ]);
-              if (geminiResult.success) {
+              if (claudeResult.success) {
                 allFields.forEach(k => {
-                  if (!merged[k] && geminiResult[k]) { merged[k] = geminiResult[k]; merged.source[k] = 'gemini'; }
+                  if (!merged[k] && claudeResult[k]) { merged[k] = claudeResult[k]; merged.source[k] = 'claude'; }
                 });
-                merged.ocrConfidence = Math.max(ocrConfidence, geminiResult.confidence || 0);
+                merged.ocrConfidence = Math.max(ocrConfidence, claudeResult.confidence || 0);
               }
-            } catch (geminiErr) {
-              console.warn('GEMİNİ HATASI:', geminiErr.message);
+            } catch (claudeErr) {
+              console.warn('CLAUDE HATASI:', claudeErr.message);
             }
           }
         }
@@ -777,7 +775,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
     if (item.status === 'processing') {
       if (item.substatus === 'ocr') return `OCR METİN TANIMA... %${Math.round((item.ocrProgress || 0) * 100)}`;
       if (item.substatus === 'qr') return 'QR KOD TARANIYOR...';
-      if (item.substatus === 'ai') return `GEMİNİ AI ANALİZ... %${Math.round((item.ocrProgress || 0) * 100)}`;
+      if (item.substatus === 'ai') return `CLAUDE AI ANALİZ... %${Math.round((item.ocrProgress || 0) * 100)}`;
       return 'İŞLENİYOR...';
     }
     if (item.status === 'success') return `BAŞARILI - ${['plaka','marka','modelYili','sase','tc','soyad','ad','belgeSeri'].filter(k => item.result?.[k]).length}/8 ALAN OKUNDU`;
@@ -800,11 +798,11 @@ MR.QrRuhsatPage = ({setPage, user}) => {
         }}, React.createElement(LIcon, {name:'QrCode', size:26, color:'#fff'})),
         React.createElement('div', null,
           React.createElement('h1', {style: {fontSize: 22, fontWeight: 900, color: C.text, margin: 0}}, 'QR RUHSAT OKUYUCU'),
-          React.createElement('p', {style: {fontSize: 12, color: C.textMuted, margin: 0, fontWeight: 600}}, 'GEMİNİ AI + QR + OCR RUHSAT BİLGİ ÇIKARMA')
+          React.createElement('p', {style: {fontSize: 12, color: C.textMuted, margin: 0, fontWeight: 600}}, 'CLAUDE AI + QR + OCR RUHSAT BİLGİ ÇIKARMA')
         )
       ),
 
-      /* Orta: Gemini API Key Alanı */
+      /* Orta: Claude API Key Alanı */
       React.createElement('div', {style: {
         display:'flex', alignItems:'center', gap: 6,
         background: C.bgCard, border: `1px solid ${C.border}`,
@@ -815,7 +813,7 @@ MR.QrRuhsatPage = ({setPage, user}) => {
         React.createElement('input', {
           value: ruhsatApiKey,
           onChange: (e) => setRuhsatApiKey(e.target.value),
-          placeholder: 'Gemini API Key (aistudio.google.com)',
+          placeholder: 'Claude API Key (console.anthropic.com)',
           type: apiKeyVisible ? 'text' : 'password',
           style: {
             background: 'transparent', border: 'none', outline: 'none',
@@ -998,8 +996,8 @@ MR.QrRuhsatPage = ({setPage, user}) => {
                     /* Kaynak rozeti (QR / OCR / AI) */
                     item.result.source?.[field.key] === 'qr'
                       ? React.createElement('span', {style: {fontSize:8, fontWeight:900, background:(C.success||'#10b981')+'25', color:C.success||'#10b981', padding:'1px 5px', borderRadius:4, marginLeft:4}}, 'QR')
-                      : item.result.source?.[field.key] === 'gemini'
-                        ? React.createElement('span', {style: {fontSize:8, fontWeight:900, background:'#8b5cf6'+'25', color:'#8b5cf6', padding:'1px 5px', borderRadius:4, marginLeft:4}}, 'AI')
+                      : item.result.source?.[field.key] === 'claude'
+                        ? React.createElement('span', {style: {fontSize:8, fontWeight:900, background:'#d97706'+'25', color:'#d97706', padding:'1px 5px', borderRadius:4, marginLeft:4}}, 'AI')
                         : item.result.source?.[field.key] === 'ocr'
                           ? React.createElement('span', {style: {fontSize:8, fontWeight:900, background:C.accent+'25', color:C.accent, padding:'1px 5px', borderRadius:4, marginLeft:4}}, 'OCR')
                           : null
@@ -1067,16 +1065,16 @@ MR.QrRuhsatPage = ({setPage, user}) => {
       }}, React.createElement(LIcon, {name:'QrCode', size:36, color:C.accent})),
       React.createElement('div', {style: {fontSize:16, fontWeight:900, color:C.text, marginBottom:8}}, 'ARAÇ RUHSATI OKUYUCU'),
       React.createElement('div', {style: {fontSize:12, color:C.textMuted, fontWeight:600, maxWidth:500, margin:'0 auto', lineHeight:1.8}},
-        'ARAÇ RUHSATI GÖRSELLERİNİ YÜKLEYİN. SİSTEM ÜÇ AŞAMALI TARAMA YAPAR: 1) GELİŞMİŞ OCR (ÖN İŞLEME + BÖLGE BAZLI) 2) QR KOD OKUMA 3) GEMİNİ AI ANALİZİ. TOPLU YÜKLEME İLE BİRDEN FAZLA RUHSATI AYNI ANDA İŞLEYEBİLİRSİNİZ.'
+        'ARAÇ RUHSATI GÖRSELLERİNİ YÜKLEYİN. SİSTEM ÜÇ AŞAMALI TARAMA YAPAR: 1) CLAUDE AI ANALİZ (BİRİNCİL) 2) QR KOD OKUMA 3) TESSERACT OCR (YEDEK). TOPLU YÜKLEME İLE BİRDEN FAZLA RUHSATI AYNI ANDA İŞLEYEBİLİRSİNİZ.'
       ),
       React.createElement('div', {style: {display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))', gap:12, marginTop:28, maxWidth:650, margin:'28px auto 0'}},
         [
           {icon:'ScanLine', text:'GELİŞMİŞ OCR TANIMA', desc:'Otsu eşikleme + bölge bazlı'},
           {icon:'QrCode', text:'QR KOD OKUMA', desc:'Çoklu bölge tarama'},
-          {icon:'Sparkles', text:'GEMİNİ AI ANALİZ', desc:'Son çare yapay zeka'},
+          {icon:'Sparkles', text:'CLAUDE AI ANALİZ', desc:'Birincil yapay zeka'},
           {icon:'Upload', text:'TOPLU YÜKLEME', desc:'Sürükle bırak destekli'},
           {icon:'FileSpreadsheet', text:'EXCEL AKTARIM', desc:'Sonuçları dışa aktar'},
-          {icon:'Key', text:'ÖZEL API KEY', desc:'Modül bazlı Gemini key'}
+          {icon:'Key', text:'ÖZEL API KEY', desc:'Modül bazlı Claude key'}
         ].map((f, i) => React.createElement('div', {key:i, style: {
           padding:'14px 12px', borderRadius:12,
           background: C.accent + '08', border: `1px solid ${C.accent}15`,

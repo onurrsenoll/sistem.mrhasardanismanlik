@@ -1236,7 +1236,7 @@ const AyarlarTab = () => {
         <div style={{...S.cardHead, padding: '12px 16px'}}>
           <LIcon name="Sparkles" size={14} color={C.warning}/>
           <span style={{fontSize: 12, fontWeight: 700}}>AI API AYARLARI</span>
-          <span style={{...S.badge(C.accent), marginLeft: 8, fontSize: 9}}>GEMİNİ / OPENAI / CLAUDE</span>
+          <span style={{...S.badge(C.accent), marginLeft: 8, fontSize: 9}}>CLAUDE (ANTHROPIC)</span>
           {apiTest.sonuc && (
             <span style={{
               ...S.badge(apiTest.sonuc.basarili ? C.success : C.danger),
