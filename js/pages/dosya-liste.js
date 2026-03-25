@@ -395,7 +395,7 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
   const theadBg = isKoyu
     ? 'linear-gradient(135deg, #1e3a5f 0%, #0f2342 100%)'
     : 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)';
-  const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:'11px',whiteSpace:'nowrap',color:'#FFFFFF',position:'sticky',top:0,background:isKoyu?'#0f2342':'#1e40af',zIndex:2,letterSpacing:0.5,borderBottom:'none'};
+  const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:'11px',whiteSpace:'nowrap',color:isKoyu?'#FFFFFF':'#1e293b',position:'sticky',top:0,background:isKoyu?'#0f2342':'#1e40af',zIndex:2,letterSpacing:0.5,borderBottom:'none'};
   const thSticky = {...thS,textAlign:'center'};
 
   /* ── TD STİLLERİ ── */

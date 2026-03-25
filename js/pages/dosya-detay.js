@@ -672,7 +672,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <thead>
                   <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                     {((!hasYetki('dosya','dosya-masraf-ode') && !hasYetki('dosya','dosya-masraf-sil')) ? ['#','MASRAF KALEMİ','TUTAR','DURUM','TARİH'] : ['#','MASRAF KALEMİ','TUTAR','DURUM','KASA','TARİH','KULLANICI','İŞLEM']).map(h =>
-                      <th key={h} style={{padding:'8px 10px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                      <th key={h} style={{padding:'8px 10px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
                     )}
                   </tr>
                 </thead>
@@ -718,8 +718,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                     );
                   })}
                   <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af',borderRadius:8}}>
-                    <td colSpan={2} style={{padding:'10px 12px',fontWeight:800,textAlign:'right',fontSize:'12px',color:'#FFFFFF'}}>TOPLAM:</td>
-                    <td style={{padding:'10px 12px',fontWeight:800,fontSize:13,color:'#FFFFFF'}}>{fmt(dosya.toplam_masraf || 0)}</td>
+                    <td colSpan={2} style={{padding:'10px 12px',fontWeight:800,textAlign:'right',fontSize:'12px',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b'}}>TOPLAM:</td>
+                    <td style={{padding:'10px 12px',fontWeight:800,fontSize:13,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b'}}>{fmt(dosya.toplam_masraf || 0)}</td>
                     <td colSpan={(!hasYetki('dosya','dosya-masraf-ode') && !hasYetki('dosya','dosya-masraf-sil')) ? 2 : 5}/>
                   </tr>
                 </tbody>

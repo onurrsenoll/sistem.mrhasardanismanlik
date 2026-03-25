@@ -379,7 +379,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
   /* ── STİLLER ── */
   const FS = 11; /* TÜM HÜCRELER AYNI FONT BOYUTU */
   const isKoyu = MR.tema === 'koyu';
-  const thSt = {padding:'7px 6px', textAlign:'left', color:'#FFFFFF', fontWeight:800, fontSize:FS, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:isKoyu?'#0f2342':'#1e40af', backgroundImage:isKoyu?'linear-gradient(135deg, #1e3a5f 0%, #0f2342 100%)':'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)', zIndex:2, letterSpacing:0.3};
+  const thSt = {padding:'7px 6px', textAlign:'left', color:isKoyu?'#FFFFFF':'#1e293b', fontWeight:800, fontSize:FS, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', position:'sticky', top:0, background:isKoyu?'#0f2342':'#1e40af', backgroundImage:isKoyu?'linear-gradient(135deg, #1e3a5f 0%, #0f2342 100%)':'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)', zIndex:2, letterSpacing:0.3};
   const tdSt = {padding:'6px 6px', fontSize:FS, fontWeight:600, borderBottom:'none', whiteSpace:'nowrap', color:isKoyu?'#e2e8f0':'#1e293b'};
   const tdTrunc = {...tdSt, maxWidth:90, overflow:'hidden', textOverflow:'ellipsis'};
   const thSticky = {...thSt, position:'sticky', right:0, zIndex:3, background:isKoyu?'#0f2342':'#1e40af', backgroundImage:isKoyu?'linear-gradient(135deg, #1e3a5f 0%, #0f2342 100%)':'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)'};

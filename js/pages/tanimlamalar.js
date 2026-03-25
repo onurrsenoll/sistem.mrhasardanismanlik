@@ -63,7 +63,7 @@ const ORNEK_VERILER = {
 };
 
 /* ─── ORTAK STİLLER ─── */
-const TH_STYLE = {padding:'12px 14px', fontSize:13, fontWeight:800, color:'#FFFFFF', textAlign:'left', borderBottom:`2px solid ${MR.C.border}`, letterSpacing:0.5, background: MR.tema==='koyu'?'#0f2342':'#1e40af'};
+const TH_STYLE = {padding:'12px 14px', fontSize:13, fontWeight:800, color: MR.tema==='koyu' ? '#FFFFFF' : '#1e293b', textAlign:'left', borderBottom:`2px solid ${MR.C.border}`, letterSpacing:0.5, background: MR.tema==='koyu'?'#0f2342':'#1e40af'};
 const TD_STYLE = {padding:'12px 14px', fontSize:13, fontWeight:600, color: MR.tema==='koyu' ? '#e2e8f0' : '#1e293b', borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)'};
 const BTN_KUCUK = {padding:'5px 8px', borderRadius:7, border:'none', cursor:'pointer', display:'inline-flex', alignItems:'center', gap:4, transition:'all .15s', position:'relative', textShadow:'0 1px 1px rgba(0,0,0,0.12)'};
 

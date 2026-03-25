@@ -263,7 +263,7 @@ const GelirYonetimi = ({setPage, user}) => {
                 <thead>
                   <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                     {['TARİH','KASA','DOSYA NO','TÜR','TUTAR','AÇIKLAMA'].map(h =>
-                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                     )}
                   </tr>
                 </thead>
@@ -526,7 +526,7 @@ const GiderYonetimi = ({setPage, user}) => {
                 <thead>
                   <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                     {['TARİH','KASA','DOSYA NO','KATEGORİ','TUTAR','AÇIKLAMA'].map(h =>
-                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                     )}
                   </tr>
                 </thead>
@@ -806,7 +806,7 @@ const KomisyonPrim = ({setPage, user}) => {
               <thead>
                 <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['İLGİLİ','TİP','DOSYA NO','TUTAR','ORAN','DURUM','ÖDEME TARİHİ','İŞLEM'].map(h =>
-                    <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                    <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                   )}
                 </tr>
               </thead>
@@ -1236,7 +1236,7 @@ const KasaBanka = ({setPage, user}) => {
               <thead>
                 <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['TARİH','KASA','TÜR','TUTAR','AÇIKLAMA','DOSYA NO', ...((MR.hasYetki(user,'muhasebe','muhasebe-hareket-duzenle') || MR.hasYetki(user,'muhasebe','muhasebe-hareket-sil')) ? ['İŞLEM'] : [])].map(h =>
-                    <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                    <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                   )}
                 </tr>
               </thead>
@@ -1606,7 +1606,7 @@ const MaliyetAnalizi = ({setPage, user}) => {
                 <thead>
                   <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                     {['DOSYA NO','MÜŞTERİ','GELİR','GİDER','KOMİSYON','NET KAR','KAR MARJI %'].map(h =>
-                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                     )}
                   </tr>
                 </thead>
@@ -1914,7 +1914,7 @@ const FinansalRaporlar = ({setPage, user}) => {
                   <thead>
                     <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                       {['DÖNEM','GELİR','GİDER','KOMİSYON','NET','DOSYA SAYISI'].map(h =>
-                        <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                        <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                       )}
                     </tr>
                   </thead>
@@ -2127,7 +2127,7 @@ const KapanisRaporu = ({setPage, user}) => {
                           <thead>
                             <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                               {['DOSYA NO','MÜVEKKİL','TÜR','TAHSİLAT','MASRAF','YÖN. ÜCRET','NET KAR','PAY (%50)'].map(h =>
-                                <th key={h} style={{padding:'10px 12px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                                <th key={h} style={{padding:'10px 12px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                               )}
                             </tr>
                           </thead>
@@ -2180,7 +2180,7 @@ const KapanisRaporu = ({setPage, user}) => {
                     <thead>
                       <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['#','DOSYA NO','MÜVEKKİL','TÜR','AVUKAT','TAHSİLAT','MASRAF','YÖN. ÜCRET','NET KAR','PAY (%50)'].map(h =>
-                          <th key={h} style={{padding:'10px 12px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                          <th key={h} style={{padding:'10px 12px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                         )}
                       </tr>
                     </thead>
@@ -2448,7 +2448,7 @@ const OrtakKasa = ({setPage, user}) => {
                             <thead>
                               <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                                 {['TARİH','İŞLEM TÜRÜ','TUTAR','BAKİYE SONRASI','AÇIKLAMA'].map(h =>
-                                  <th key={h} style={{padding:'8px 12px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:'2px solid '+C.border}}>{h}</th>
+                                  <th key={h} style={{padding:'8px 12px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:'2px solid '+C.border}}>{h}</th>
                                 )}
                               </tr>
                             </thead>
@@ -2714,8 +2714,8 @@ const AySonuRaporu = ({setPage, user}) => {
             React.createElement('table', {style:{width:'100%',borderCollapse:'collapse'}},
               React.createElement('thead', null,
                 React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA'),
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TUTAR')
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA'),
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TUTAR')
                 )
               ),
               React.createElement('tbody', null,
@@ -2742,11 +2742,11 @@ const AySonuRaporu = ({setPage, user}) => {
               React.createElement('table', {style:{width:'100%',borderCollapse:'collapse',minWidth:600}},
                 React.createElement('thead', null,
                   React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
-                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TARİH'),
-                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MAĞDUR ADI SOYADI'),
-                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'center',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'DOSYA TÜRÜ'),
-                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'center',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'KAYNAK'),
-                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MASRAF')
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TARİH'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MAĞDUR ADI SOYADI'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'center',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'DOSYA TÜRÜ'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'center',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'KAYNAK'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MASRAF')
                   )
                 ),
                 React.createElement('tbody', null,
@@ -2780,8 +2780,8 @@ const AySonuRaporu = ({setPage, user}) => {
             React.createElement('table', {style:{width:'100%',borderCollapse:'collapse',maxWidth:400}},
               React.createElement('thead', null,
                 React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'DOSYA TÜRÜ'),
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'ADET')
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'DOSYA TÜRÜ'),
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'ADET')
                 )
               ),
               React.createElement('tbody', null,
@@ -2839,8 +2839,8 @@ const AySonuRaporu = ({setPage, user}) => {
             React.createElement('table', {style:{width:'100%',borderCollapse:'collapse'}},
               React.createElement('thead', null,
                 React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA'),
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TUTAR')
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA'),
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TUTAR')
                 )
               ),
               React.createElement('tbody', null,
@@ -2869,11 +2869,11 @@ const AySonuRaporu = ({setPage, user}) => {
                     React.createElement('table', {style:{width:'100%',borderCollapse:'collapse',minWidth:500}},
                       React.createElement('thead', null,
                         React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
-                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'DOSYA NO'),
-                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MAĞDUR'),
-                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'GELİR'),
-                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MASRAF'),
-                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'NET')
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'DOSYA NO'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MAĞDUR'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'GELİR'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MASRAF'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'NET')
                         )
                       ),
                       React.createElement('tbody', null,
@@ -2965,10 +2965,10 @@ const AySonuRaporu = ({setPage, user}) => {
               ok.hareketler && ok.hareketler.length > 0 && React.createElement('table', {style:{width:'100%',borderCollapse:'collapse'}},
                 React.createElement('thead', null,
                   React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
-                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TARİH'),
-                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TÜR'),
-                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TUTAR'),
-                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA')
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TARİH'),
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TÜR'),
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TUTAR'),
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA')
                   )
                 ),
                 React.createElement('tbody', null,

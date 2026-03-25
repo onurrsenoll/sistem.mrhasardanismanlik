@@ -264,7 +264,7 @@ const PersonelListesi = ({setPage, user}) => {
   const ef = (key, val) => setEditForm(p => ({...p, [key]: val}));
 
   const isKoyu = MR.tema === 'koyu';
-  const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:11,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color:'#FFFFFF',position:'sticky',top:0,background:isKoyu?'#0f2342':'#1e40af',zIndex:1,letterSpacing:0.3};
+  const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:11,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',position:'sticky',top:0,background:isKoyu?'#0f2342':'#1e40af',zIndex:1,letterSpacing:0.3};
   const tdS = {padding:'8px 8px',fontSize:12,fontWeight:600,whiteSpace:'nowrap',borderBottom:isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',color: isKoyu ? '#e2e8f0' : '#1e293b'};
   const pRowBg = (i) => isKoyu ? (i%2===0?'#111827':'#0d1321') : (i%2===0?'#ffffff':'#f0f4ff');
   const pRowSt = (i) => ({cursor:'pointer',backgroundColor:pRowBg(i),borderBottom:isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:isKoyu?'0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8});
@@ -826,7 +826,7 @@ const HakedisTakibi = ({setPage, user}) => {
   };
 
   const isKoyu2 = MR.tema === 'koyu';
-  const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:11,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color:'#FFFFFF',position:'sticky',top:0,background:isKoyu2?'#0f2342':'#1e40af',zIndex:1,letterSpacing:0.3};
+  const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:11,whiteSpace:'nowrap',borderBottom:`2px solid ${C.border}`,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',position:'sticky',top:0,background:isKoyu2?'#0f2342':'#1e40af',zIndex:1,letterSpacing:0.3};
   const tdS = {padding:'8px 8px',fontSize:12,fontWeight:600,whiteSpace:'nowrap',borderBottom:isKoyu2?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',color: isKoyu2 ? '#e2e8f0' : '#1e293b'};
   const hRowBg = (i) => isKoyu2 ? (i%2===0?'#111827':'#0d1321') : (i%2===0?'#ffffff':'#f0f4ff');
   const hRowSt = (i) => ({backgroundColor:hRowBg(i),borderBottom:isKoyu2?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:isKoyu2?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:isKoyu2?'0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8});

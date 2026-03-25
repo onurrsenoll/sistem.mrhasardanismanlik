@@ -610,10 +610,10 @@ const PoliceLimitPage = ({user, setPage}) => {
               <table style={{width: '100%', borderCollapse: 'collapse', fontSize: 13}}>
                 <thead>
                   <tr style={{background: isK ? '#0f2342' : '#1e40af'}}>
-                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>POLİÇE TÜRÜ</th>
-                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>TEMİNAT</th>
-                    <th style={{padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>LİMİT (₺)</th>
-                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>AÇIKLAMA</th>
+                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: MR.tema==='koyu'?'#FFFFFF':'#1e293b', fontSize: '12px'}}>POLİÇE TÜRÜ</th>
+                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: MR.tema==='koyu'?'#FFFFFF':'#1e293b', fontSize: '12px'}}>TEMİNAT</th>
+                    <th style={{padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: MR.tema==='koyu'?'#FFFFFF':'#1e293b', fontSize: '12px'}}>LİMİT (₺)</th>
+                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: MR.tema==='koyu'?'#FFFFFF':'#1e293b', fontSize: '12px'}}>AÇIKLAMA</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -644,10 +644,10 @@ const PoliceLimitPage = ({user, setPage}) => {
               <table style={{width: '100%', borderCollapse: 'collapse', fontSize: 13}}>
                 <thead>
                   <tr style={{background: isK ? '#0f2342' : '#1e40af'}}>
-                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>YIL</th>
-                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>POLİÇE TÜRÜ</th>
-                    <th style={{padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>LİMİT (₺)</th>
-                    <th style={{padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#FFFFFF', fontSize: '12px'}}>DEĞİŞİM</th>
+                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: MR.tema==='koyu'?'#FFFFFF':'#1e293b', fontSize: '12px'}}>YIL</th>
+                    <th style={{padding: '12px 16px', textAlign: 'left', fontWeight: 800, color: MR.tema==='koyu'?'#FFFFFF':'#1e293b', fontSize: '12px'}}>POLİÇE TÜRÜ</th>
+                    <th style={{padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: MR.tema==='koyu'?'#FFFFFF':'#1e293b', fontSize: '12px'}}>LİMİT (₺)</th>
+                    <th style={{padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: MR.tema==='koyu'?'#FFFFFF':'#1e293b', fontSize: '12px'}}>DEĞİŞİM</th>
                   </tr>
                 </thead>
                 <tbody>

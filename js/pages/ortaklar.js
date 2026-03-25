@@ -373,12 +373,12 @@ const IsOrtaklari = ({setPage, user}) => {
                   <thead>
                     <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                       {MR.hasYetki(user,'paydaslar','ortaklar-toplu-sil') && (
-                        <th style={{padding:'10px 6px',textAlign:'center',width:32,color:'#FFFFFF',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
+                        <th style={{padding:'10px 6px',textAlign:'center',width:32,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                           <input type="checkbox" checked={ortaklar.length > 0 && secililer.length === ortaklar.length} onChange={tumunuSec} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                         </th>
                       )}
                       {['AD SOYAD','FİRMA','BARO','SİCİL NO','ÖDEME ORANI','İL','DURUM','İŞLEMLER'].map(h =>
-                        <th key={h} style={{padding:'10px 10px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>{h}</th>
+                        <th key={h} style={{padding:'10px 10px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>{h}</th>
                       )}
                     </tr>
                   </thead>
@@ -647,7 +647,7 @@ const IsOrtaklari = ({setPage, user}) => {
                     <thead>
                       <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['TARİH','TÜR','TUTAR','DOSYA NO','AÇIKLAMA'].map(h =>
-                          <th key={h} style={{padding:'8px 12px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>{h}</th>
+                          <th key={h} style={{padding:'8px 12px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>{h}</th>
                         )}
                       </tr>
                     </thead>
@@ -1065,12 +1065,12 @@ const IsPaydaslari = ({setPage, user}) => {
                   <thead>
                     <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                       {MR.hasYetki(user,'paydaslar','paydaslar-toplu-sil') && (
-                        <th style={{padding:'10px 6px',textAlign:'center',width:32,color:'#FFFFFF',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
+                        <th style={{padding:'10px 6px',textAlign:'center',width:32,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                           <input type="checkbox" checked={paydaslar.length > 0 && secililerP.length === paydaslar.length} onChange={tumunuSecP} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                         </th>
                       )}
                       {['AD','TÜR','YETKİLİ','TELEFON','İL','ADK PRİM','BH PRİM','DURUM','İŞLEMLER'].map(h =>
-                        <th key={h} style={{padding:'10px 10px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>{h}</th>
+                        <th key={h} style={{padding:'10px 10px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>{h}</th>
                       )}
                     </tr>
                   </thead>
@@ -1335,7 +1335,7 @@ const IsPaydaslari = ({setPage, user}) => {
                     <thead>
                       <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['TARİH','TUTAR','DURUM','DOSYA NO','AÇIKLAMA','İŞLEM'].map(h =>
-                          <th key={h} style={{padding:'8px 12px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>{h}</th>
+                          <th key={h} style={{padding:'8px 12px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>{h}</th>
                         )}
                       </tr>
                     </thead>

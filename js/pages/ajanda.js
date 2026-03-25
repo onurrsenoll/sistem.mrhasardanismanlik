@@ -511,12 +511,12 @@ MR.AjandaPage = ({setPage, user}) => {
                   <thead>
                     <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                       {MR.hasYetki(user,'ajanda','ajanda-toplu-sil') && (
-                        <th style={{padding:'10px 8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`,width:36}}>
+                        <th style={{padding:'10px 8px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`,width:36}}>
                           <input type="checkbox" checked={filtrelenmis.length > 0 && filtrelenmis.every(g => secililer.includes(g.id))} onChange={() => tumunuSec(filtrelenmis)} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                         </th>
                       )}
                       {['', 'BAŞLIK', 'TARİH', 'BİTİŞ TARİHİ', 'ÖNCELİK', 'DURUM', 'İŞLEMLER'].map(h =>
-                        <th key={h||'chk'} style={{padding:'10px 8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`,letterSpacing:.4}}>{h}</th>
+                        <th key={h||'chk'} style={{padding:'10px 8px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`,letterSpacing:.4}}>{h}</th>
                       )}
                     </tr>
                   </thead>

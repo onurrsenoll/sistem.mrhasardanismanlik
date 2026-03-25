@@ -259,11 +259,11 @@ const PoliceListe = ({setPage, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:1100}}>
               <thead>
                 <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                  {MR.hasYetki(user,'police','police-toplu-sil') && <th style={{padding:'12px 10px',textAlign:'center',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`2px solid ${C.border}`,width:30}}>
+                  {MR.hasYetki(user,'police','police-toplu-sil') && <th style={{padding:'12px 10px',textAlign:'center',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`2px solid ${C.border}`,width:30}}>
                     <input type="checkbox" checked={policeler.length > 0 && secililer.length === policeler.length} onChange={tumunuSec} style={{cursor:'pointer',width:15,height:15,accentColor:C.accent}}/>
                   </th>}
                   {['POLİÇE NO','MÜŞTERİ','SİGORTA ŞİRKETİ','BRANŞ','BRÜT PRİM','KOMİSYON','BAŞLANGIÇ','BİTİŞ','TAHSİLAT','DURUM','İŞLEM'].map(h=>
-                    <th key={h} style={{padding:'12px 10px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`2px solid ${C.border}`,letterSpacing:.4}}>{h}</th>
+                    <th key={h} style={{padding:'12px 10px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`2px solid ${C.border}`,letterSpacing:.4}}>{h}</th>
                   )}
                 </tr>
               </thead>
@@ -399,7 +399,7 @@ const PoliceListe = ({setPage, user}) => {
                 {(p.tahsilatlar && p.tahsilatlar.length > 0) ? (
                   <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
                     <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                      {['TARİH','TUTAR','ÖDEME ŞEKLİ','KASA','AÇIKLAMA'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
+                      {['TARİH','TUTAR','ÖDEME ŞEKLİ','KASA','AÇIKLAMA'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
                     </tr></thead>
                     <tbody>
                       {p.tahsilatlar.map((t,i)=>(
@@ -848,7 +848,7 @@ const PoliceYenileme = ({setPage, user}) => {
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:1050}}>
             <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
               {['POLİÇE NO','MÜŞTERİ','BRANŞ','ŞİRKET','PLAKA','BİTİŞ','KALAN GÜN','PRİM','HATIRLATMA','İŞLEM'].map(h=>
-                <th key={h} style={{padding:'10px 8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`,letterSpacing:.5}}>{h}</th>
+                <th key={h} style={{padding:'10px 8px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`,letterSpacing:.5}}>{h}</th>
               )}
             </tr></thead>
             <tbody>
@@ -899,7 +899,7 @@ const PoliceYenileme = ({setPage, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:10,minWidth:900}}>
               <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                 {['PERSONEL','BRANŞ','POLİÇE NO','MÜŞTERİ','YENİLEME TARİHİ','TC VERGİ NO','DOĞUM TARİHİ','PLAKA','BELGE SERİ','TELEFON'].map(h=>
-                  <th key={h} style={{padding:'8px 6px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                  <th key={h} style={{padding:'8px 6px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
                 )}
               </tr></thead>
               <tbody>
@@ -1132,7 +1132,7 @@ const PoliceTahsilat = ({setPage, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:950}}>
               <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                 {['POLİÇE NO','MÜŞTERİ','BRANŞ','KOMİSYON','TAHSİL EDİLEN','CARİ BAKİYE','TAHSİLAT DURUM','İŞLEM'].map(h=>
-                  <th key={h} style={{padding:'10px 8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                  <th key={h} style={{padding:'10px 8px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
                 )}
               </tr></thead>
               <tbody>
@@ -1368,7 +1368,7 @@ const PoliceRapor = ({setPage, user}) => {
               <div style={{overflowX:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
                   <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                    {['ŞİRKET','POLİÇE','PRİM'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
+                    {['ŞİRKET','POLİÇE','PRİM'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
                   </tr></thead>
                   <tbody>
                     {sirketler.map((s,i)=>(
@@ -1414,7 +1414,7 @@ const PoliceRapor = ({setPage, user}) => {
               <div style={{overflowX:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
                   <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                    {['POLİÇE NO','MÜŞTERİ','BRANŞ','BİTİŞ','KALAN GÜN','PRİM'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
+                    {['POLİÇE NO','MÜŞTERİ','BRANŞ','BİTİŞ','KALAN GÜN','PRİM'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
                   </tr></thead>
                   <tbody>
                     {yenileme.map((y,i)=>(
@@ -1533,7 +1533,7 @@ const PoliceKazanc = ({setPage, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:800}}>
               <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                 {['DÖNEM','ÜRETİM ADEDİ','TOPLAM PRİM','KOMİSYON TUTARI','TAHSİL EDİLEN','CARİ BAKİYE','İŞLEM'].map(h=>
-                  <th key={h} style={{padding:'10px 8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                  <th key={h} style={{padding:'10px 8px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
                 )}
               </tr></thead>
               <tbody>
