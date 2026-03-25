@@ -342,7 +342,8 @@ MR.AramaGecmisPage = ({setPage, user}) => {
                     {label:'GELEN / GİDEN', value: stats.giden_arama > 0 ? (stats.gelen_arama / stats.giden_arama).toFixed(2) : '-', icon:'ArrowLeftRight', c:C.purple}
                   ].map((item, i) => (
                     <div key={i} style={{
-                      ...S.stat, display:'flex', alignItems:'center', gap:12, padding:'10px 16px'
+                      background:`${item.c}08`, border:`1px solid ${item.c}20`, borderRadius:10,
+                      display:'flex', alignItems:'center', gap:12, padding:'10px 16px'
                     }}>
                       <div style={{width:34,height:34,minWidth:34,borderRadius:8,background:`${item.c}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
                         <LIcon name={item.icon} size={16} color={item.c}/>
@@ -621,6 +622,7 @@ const SesOynatici = ({kayitId, kayitDosya, C, LIcon, api}) => {
             onChange={sliderDegisti}
             onMouseUp={sliderBirakti} onTouchEnd={sliderBirakti}
             style={{position:'absolute', left:0, top:0, width:'100%', height:'100%', opacity:0, cursor:'pointer', margin:0, padding:0, zIndex:2}}/>
+        </div>
         <span style={{fontSize:9, fontWeight:700, color:C.textMuted, minWidth:36, fontFamily:'monospace'}}>{sureFmtDetay(toplamSure)}</span>
       </div>
 
