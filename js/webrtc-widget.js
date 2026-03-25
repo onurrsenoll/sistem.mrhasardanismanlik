@@ -166,11 +166,12 @@ MR.WebrtcWidget = ({user, setPage}) => {
       if (d.bilgi) {
         localStorage.setItem('webrtc_new_call_phone', d.numara || '');
         localStorage.setItem('webrtc_new_call_name', d.bilgi.ad || d.bilgi.ad_soyad || '');
-        setPage('crm-yeni');
+        if (d.bilgi.il) localStorage.setItem('webrtc_new_call_il', d.bilgi.il);
+        if (d.bilgi.dosya_turu) localStorage.setItem('webrtc_new_call_dosya_turu', d.bilgi.dosya_turu);
+        /* Sayfa yönlendirmesi CRM listesi tarafından yapılıyor, burada tekrar yapma */
       } else if (d.numara) {
         localStorage.setItem('webrtc_new_call_phone', d.numara || '');
         localStorage.setItem('webrtc_new_call_name', '');
-        setPage('crm-yeni');
       }
     };
     window.addEventListener('mr-webrtc-arama-basla', handler);

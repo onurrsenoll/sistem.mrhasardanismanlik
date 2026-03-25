@@ -479,14 +479,23 @@ MR._CRMListesiInner = ({setPage, user}) => {
                         style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                     </td>}
                     <td style={{...cellSt, fontWeight: 600}}>{c.ad_soyad}</td>
-                    <td style={{...cellSt, color: C.textSec, display:'flex', alignItems:'center', gap:6}}>
-                      {c.telefon || '-'}
-                      {c.telefon && (
-                        <button style={{...iconBtn(C.success), width:24, height:24}} title="ARA"
-                          onClick={(e) => { e.stopPropagation(); if (MR.webrtcAra) { MR.webrtcAra(c.telefon, {ad: c.ad_soyad || ''}); } else { MR._gelenCagriTelefon = c.telefon; MR._gelenCagriAdi = c.ad_soyad || ''; setPage('crm-yeni'); } }}>
-                          <LIcon name="Phone" size={12} color={C.success}/>
-                        </button>
-                      )}
+                    <td style={{...cellSt, color: C.textSec}}>
+                      <div style={{display:'flex', alignItems:'center', gap:6}}>
+                        <span style={{whiteSpace:'nowrap'}}>{c.telefon || '-'}</span>
+                        {c.telefon && (
+                          <button style={{...iconBtn(C.success), width:26, height:26, flexShrink:0}} title="ARA"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              /* ARAMA BAŞLAT VE KİŞİ KARTI AÇ */
+                              localStorage.setItem('webrtc_new_call_phone', c.telefon);
+                              localStorage.setItem('webrtc_new_call_name', c.ad_soyad || '');
+                              if (MR.webrtcAra) { MR.webrtcAra(c.telefon, {ad: c.ad_soyad || '', telefon: c.telefon, il: c.il || '', dosya_turu: c.dosya_turu || 'ADK', crm_id: c.id}); }
+                              setPage('crm-yeni');
+                            }}>
+                            <LIcon name="Phone" size={13} color={C.success}/>
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td style={cellSt}>{c.il || '-'}</td>
                     <td style={cellSt}><Badge text={c.dosya_turu || 'ADK'} color={c.dosya_turu === 'BH' ? C.purple : C.accent}/></td>
@@ -836,7 +845,7 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
               <div style={{fontSize: 12, color: C.textSec, marginTop: 4, display: 'flex', gap: 10, alignItems: 'center'}}>
                 <span>{crm.telefon || '-'}</span>
                 {crm.telefon && (
-                  <button onClick={() => { MR._gelenCagriTelefon = crm.telefon; MR._gelenCagriAdi = crm.ad_soyad || ''; setPage('crm-yeni'); }} style={{
+                  <button onClick={() => { localStorage.setItem('webrtc_new_call_phone', crm.telefon); localStorage.setItem('webrtc_new_call_name', crm.ad_soyad || ''); if (MR.webrtcAra) { MR.webrtcAra(crm.telefon, {ad: crm.ad_soyad || '', telefon: crm.telefon, crm_id: crmId}); } setPage('crm-yeni'); }} style={{
                     ...S.btnMini,...S.btnMiniS, padding:'5px 12px', fontSize:11
                   }}>
                     <LIcon name="Phone" size={13} color="#fff"/> ARA
@@ -879,7 +888,7 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
             {infoRow('TELEFON', crm.telefon ? (
               <div style={{display:'flex', alignItems:'center', gap:8}}>
                 <span>{crm.telefon}</span>
-                <button onClick={() => { MR._gelenCagriTelefon = crm.telefon; MR._gelenCagriAdi = crm.ad_soyad || ''; setPage('crm-yeni'); }} style={{
+                <button onClick={() => { localStorage.setItem('webrtc_new_call_phone', crm.telefon); localStorage.setItem('webrtc_new_call_name', crm.ad_soyad || ''); if (MR.webrtcAra) { MR.webrtcAra(crm.telefon, {ad: crm.ad_soyad || '', telefon: crm.telefon, crm_id: crmId}); } setPage('crm-yeni'); }} style={{
                   ...S.btnMini,...S.btnMiniS, padding:'4px 10px'
                 }}>
                   <LIcon name="Phone" size={11} color="#fff"/> ARA
@@ -1118,11 +1127,17 @@ MR._CRMYeniInner = ({setPage}) => {
 
   /* ── GELEN ÇAĞRI / ARA BUTONUNDAN OTOMATİK DOLDURMA ── */
   useEffect(() => {
-    /* ÖNCE localStorage'DAN KONTROL ET (WEBRTC WIDGET TARAFINDAN SET EDİLİR) */
+    /* ÖNCE localStorage'DAN KONTROL ET (WEBRTC WIDGET / CRM LİSTE TARAFINDAN SET EDİLİR) */
     var lsTel = localStorage.getItem('webrtc_new_call_phone');
     var lsAd = localStorage.getItem('webrtc_new_call_name');
     if (lsTel) {
-      sF(p => ({...p, telefon: lsTel, ad_soyad: lsAd || p.ad_soyad || ''}));
+      var updates = {telefon: lsTel, ad_soyad: lsAd || ''};
+      /* EK BİLGİLER - webrtcAra bilgi objesi localStorage'dan */
+      var lsIl = localStorage.getItem('webrtc_new_call_il');
+      var lsDosyaTuru = localStorage.getItem('webrtc_new_call_dosya_turu');
+      if (lsIl) { updates.il = lsIl; localStorage.removeItem('webrtc_new_call_il'); }
+      if (lsDosyaTuru) { updates.dosya_turu = lsDosyaTuru; localStorage.removeItem('webrtc_new_call_dosya_turu'); }
+      sF(p => ({...p, ...updates}));
       localStorage.removeItem('webrtc_new_call_phone');
       localStorage.removeItem('webrtc_new_call_name');
     } else if (MR._gelenCagriTelefon) {

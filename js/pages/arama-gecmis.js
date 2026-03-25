@@ -246,10 +246,27 @@ MR.AramaGecmisPage = ({setPage, user}) => {
                           </span>
                         </td>
                         <td style={{...tdSt, fontWeight:600}}>
-                          {item.arayan_adi && <div style={{fontSize:11, fontWeight:700}}>{item.arayan_adi}</div>}
-                          <div style={{fontSize:10, color:C.textMuted}}>{item.arayan || '-'}</div>
+                          {/* ARAYAN: Giden aramada dahili/sistem numarası, Gelen aramada karşı taraf */}
+                          {item.yon === 'giden' ? (
+                            <div>
+                              {item.arayan_adi && <div style={{fontSize:11, fontWeight:700}}>{item.arayan_adi}</div>}
+                              <div style={{fontSize:10, color:C.textMuted}}>{item.dahili || item.arayan || '-'}</div>
+                            </div>
+                          ) : (
+                            <div>
+                              {item.arayan_adi && <div style={{fontSize:11, fontWeight:700}}>{item.arayan_adi}</div>}
+                              <div style={{fontSize:10, color:C.textMuted}}>{item.arayan || '-'}</div>
+                            </div>
+                          )}
                         </td>
-                        <td style={{...tdSt, fontWeight:600}}>{item.aranan || '-'}</td>
+                        <td style={{...tdSt, fontWeight:600}}>
+                          {/* ARANAN: Giden aramada karşı taraf numara, Gelen aramada dahili */}
+                          {item.yon === 'giden' ? (
+                            <div style={{fontSize:11}}>{item.aranan || item.arayan || '-'}</div>
+                          ) : (
+                            <div style={{fontSize:10, color:C.textMuted}}>{item.aranan || item.dahili || '-'}</div>
+                          )}
+                        </td>
                         <td style={tdSt}>
                           <span style={{
                             padding:'2px 8px', borderRadius:6, fontSize:9, fontWeight:700,
@@ -368,27 +385,49 @@ MR.AramaGecmisPage = ({setPage, user}) => {
 };
 
 /* ═══════════════════════════════════════════
-   SES OYNATICI BİLEŞENİ
-   Play/Pause, İleri/Geri, Süre Slider, İndirme
+   GLOBAL SES YÖNETİCİSİ
+   Aynı anda sadece 1 ses çalmasını sağlar
+   ═══════════════════════════════════════════ */
+if (!window._mrAktifAudio) window._mrAktifAudio = null;
+if (!window._mrAktifAudioDurdur) window._mrAktifAudioDurdur = null;
+
+/* ═══════════════════════════════════════════
+   GELİŞMİŞ SES OYNATICI BİLEŞENİ v2.0
+   Play/Pause, 10sn İleri/Geri, Süre Slider (seek), İndirme
+   Tek seferde sadece 1 kayıt çalar (önceki otomatik durur)
    ═══════════════════════════════════════════ */
 const SesOynatici = ({kayitId, kayitDosya, C, LIcon, api}) => {
   const audioRef = useRef(null);
+  const sliderRef = useRef(null);
   const [caliniyor, setCaliniyor] = useState(false);
   const [sure, setSure] = useState(0);
   const [toplamSure, setToplamSure] = useState(0);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [hata, setHata] = useState('');
+  const [buffered, setBuffered] = useState(0);
+  const isSeeking = useRef(false);
 
   const kaynakUrl = '/api/v1/arama-log/kayit-indir.php?id=' + kayitId + (api.token ? '&auth=' + api.token : '');
 
+  /* CLEANUP */
   useEffect(() => {
+    /* Başka kayıt oynatıldığında bu bileşeni durdur */
+    const globalStopHandler = (e) => {
+      if (e.detail && e.detail.kayitId !== kayitId && audioRef.current) {
+        audioRef.current.pause();
+        setCaliniyor(false);
+      }
+    };
+    window.addEventListener('mr-ses-oynat', globalStopHandler);
     return () => {
+      window.removeEventListener('mr-ses-oynat', globalStopHandler);
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = '';
+        audioRef.current = null;
       }
     };
-  }, []);
+  }, [kayitId]);
 
   const audioOlustur = () => {
     if (audioRef.current) return audioRef.current;
@@ -403,11 +442,16 @@ const SesOynatici = ({kayitId, kayitDosya, C, LIcon, api}) => {
       if (a.duration && isFinite(a.duration)) setToplamSure(a.duration);
     });
     a.addEventListener('timeupdate', () => {
-      setSure(a.currentTime || 0);
+      if (!isSeeking.current) setSure(a.currentTime || 0);
+      /* Buffer durumu */
+      if (a.buffered.length > 0) {
+        setBuffered(a.buffered.end(a.buffered.length - 1));
+      }
     });
     a.addEventListener('ended', () => {
       setCaliniyor(false);
       setSure(0);
+      window._mrAktifAudio = null;
     });
     a.addEventListener('error', () => {
       setHata('SES DOSYASI YÜKLENEMEDİ');
@@ -416,6 +460,7 @@ const SesOynatici = ({kayitId, kayitDosya, C, LIcon, api}) => {
     });
     a.addEventListener('waiting', () => setYukleniyor(true));
     a.addEventListener('canplay', () => setYukleniyor(false));
+    a.addEventListener('playing', () => setYukleniyor(false));
 
     audioRef.current = a;
     return a;
@@ -426,7 +471,15 @@ const SesOynatici = ({kayitId, kayitDosya, C, LIcon, api}) => {
     if (caliniyor) {
       a.pause();
       setCaliniyor(false);
+      window._mrAktifAudio = null;
     } else {
+      /* ÖNCEKİ KAYDI DURDUR - GLOBAL */
+      window.dispatchEvent(new CustomEvent('mr-ses-oynat', { detail: { kayitId: kayitId } }));
+      if (window._mrAktifAudio && window._mrAktifAudio !== a) {
+        try { window._mrAktifAudio.pause(); } catch(e) {}
+      }
+      window._mrAktifAudio = a;
+
       setHata('');
       setYukleniyor(true);
       a.play().then(() => {
@@ -442,15 +495,37 @@ const SesOynatici = ({kayitId, kayitDosya, C, LIcon, api}) => {
   const ileriSar = (sn) => {
     const a = audioRef.current;
     if (a && isFinite(a.duration)) {
-      a.currentTime = Math.min(a.duration, Math.max(0, a.currentTime + sn));
+      const yeniZaman = Math.min(a.duration, Math.max(0, a.currentTime + sn));
+      a.currentTime = yeniZaman;
+      setSure(yeniZaman);
     }
   };
 
+  /* SLIDER SEEK - mousedown/touchstart sırasında timeupdate'i durdur */
+  const sliderBasla = () => { isSeeking.current = true; };
   const sliderDegisti = (e) => {
+    const val = parseFloat(e.target.value);
+    setSure(val);
+  };
+  const sliderBirakti = (e) => {
+    isSeeking.current = false;
+    const val = parseFloat(e.target.value);
     const a = audioRef.current;
     if (a && isFinite(a.duration)) {
-      a.currentTime = parseFloat(e.target.value);
+      a.currentTime = val;
     }
+  };
+
+  /* PROGRESS BAR CLICK İLE SEEK */
+  const progressClick = (e) => {
+    const a = audioRef.current;
+    if (!a || !isFinite(a.duration) || a.duration === 0) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const pct = Math.max(0, Math.min(1, x / rect.width));
+    const yeniZaman = pct * a.duration;
+    a.currentTime = yeniZaman;
+    setSure(yeniZaman);
   };
 
   const indir = () => {
@@ -469,52 +544,93 @@ const SesOynatici = ({kayitId, kayitDosya, C, LIcon, api}) => {
     return (dk < 10 ? '0' : '') + dk + ':' + (sn < 10 ? '0' : '') + sn;
   };
 
+  const pct = toplamSure > 0 ? (sure / toplamSure) * 100 : 0;
+  const bufPct = toplamSure > 0 ? (buffered / toplamSure) * 100 : 0;
+
   return (
-    <div style={{display:'flex', alignItems:'center', gap:6, minWidth:280}}>
-      {/* GERİ SAR */}
-      <button onClick={() => ileriSar(-10)} title="10sn GERİ" style={{
-        width:26, height:26, borderRadius:6, border:'none', cursor:'pointer',
-        background:`${C.accent}12`, display:'flex', alignItems:'center', justifyContent:'center'
-      }}>
-        <LIcon name="SkipBack" size={12} color={C.accent}/>
+    <div style={{display:'flex', alignItems:'center', gap:4, minWidth:320}}>
+      {/* 10sn GERİ */}
+      <button onClick={() => ileriSar(-10)} title="10 SANİYE GERİ" style={{
+        width:28, height:28, borderRadius:8, border:'1px solid ' + C.accent + '30', cursor:'pointer',
+        background:`${C.accent}0a`, display:'flex', alignItems:'center', justifyContent:'center',
+        transition:'all .2s', position:'relative'
+      }}
+        onMouseEnter={e => e.currentTarget.style.background = C.accent + '22'}
+        onMouseLeave={e => e.currentTarget.style.background = C.accent + '0a'}>
+        <LIcon name="RotateCcw" size={13} color={C.accent}/>
+        <span style={{position:'absolute', bottom:-1, right:1, fontSize:7, fontWeight:800, color:C.accent}}>10</span>
       </button>
 
       {/* OYNAT / DURDUR */}
       <button onClick={oynatDurdur} disabled={yukleniyor} title={caliniyor ? 'DURDUR' : 'OYNAT'} style={{
-        width:32, height:32, borderRadius:8, border:'none', cursor:'pointer',
-        background: caliniyor ? C.danger : C.success,
+        width:36, height:36, borderRadius:10, border:'none', cursor:'pointer',
+        background: caliniyor
+          ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+          : 'linear-gradient(135deg, #34d399, #10b981)',
         display:'flex', alignItems:'center', justifyContent:'center',
-        boxShadow: '0 2px 6px rgba(0,0,0,0.15)', opacity: yukleniyor ? 0.6 : 1
+        boxShadow: caliniyor
+          ? '0 3px 10px rgba(239,68,68,0.35)'
+          : '0 3px 10px rgba(16,185,129,0.35)',
+        opacity: yukleniyor ? 0.7 : 1,
+        transition:'all .2s', flexShrink:0
       }}>
-        <LIcon name={yukleniyor ? 'Loader' : caliniyor ? 'Pause' : 'Play'} size={14} color="#fff"/>
+        <LIcon name={yukleniyor ? 'Loader' : caliniyor ? 'Pause' : 'Play'} size={16} color="#fff"/>
       </button>
 
-      {/* İLERİ SAR */}
-      <button onClick={() => ileriSar(10)} title="10sn İLERİ" style={{
-        width:26, height:26, borderRadius:6, border:'none', cursor:'pointer',
-        background:`${C.accent}12`, display:'flex', alignItems:'center', justifyContent:'center'
-      }}>
-        <LIcon name="SkipForward" size={12} color={C.accent}/>
+      {/* 10sn İLERİ */}
+      <button onClick={() => ileriSar(10)} title="10 SANİYE İLERİ" style={{
+        width:28, height:28, borderRadius:8, border:'1px solid ' + C.accent + '30', cursor:'pointer',
+        background:`${C.accent}0a`, display:'flex', alignItems:'center', justifyContent:'center',
+        transition:'all .2s', position:'relative'
+      }}
+        onMouseEnter={e => e.currentTarget.style.background = C.accent + '22'}
+        onMouseLeave={e => e.currentTarget.style.background = C.accent + '0a'}>
+        <LIcon name="RotateCw" size={13} color={C.accent}/>
+        <span style={{position:'absolute', bottom:-1, right:1, fontSize:7, fontWeight:800, color:C.accent}}>10</span>
       </button>
 
-      {/* SÜRE SLIDER */}
-      <div style={{flex:1, display:'flex', alignItems:'center', gap:6, minWidth:120}}>
-        <span style={{fontSize:9, fontWeight:600, color:C.textMuted, minWidth:36, textAlign:'right'}}>{sureFmtDetay(sure)}</span>
-        <input type="range" min="0" max={toplamSure || 1} step="0.1" value={sure}
+      {/* SÜRE + CUSTOM PROGRESS BAR */}
+      <div style={{flex:1, display:'flex', alignItems:'center', gap:6, minWidth:140}}>
+        <span style={{fontSize:9, fontWeight:700, color: caliniyor ? C.accent : C.textMuted, minWidth:36, textAlign:'right', fontFamily:'monospace'}}>{sureFmtDetay(sure)}</span>
+        <div ref={sliderRef} onClick={progressClick} style={{
+          flex:1, height:6, borderRadius:3, background:C.border, cursor:'pointer',
+          position:'relative', overflow:'hidden'
+        }}>
+          {/* BUFFER */}
+          <div style={{position:'absolute', top:0, left:0, height:'100%', borderRadius:3,
+            width: bufPct + '%', background: C.textMuted + '30', transition:'width .3s'}}/>
+          {/* PROGRESS */}
+          <div style={{position:'absolute', top:0, left:0, height:'100%', borderRadius:3,
+            width: pct + '%', background: caliniyor ? 'linear-gradient(90deg, #10b981, #06b6d4)' : C.accent,
+            transition: isSeeking.current ? 'none' : 'width .15s', boxShadow: caliniyor ? '0 0 6px rgba(16,185,129,0.4)' : 'none'}}/>
+          {/* THUMB */}
+          <div style={{position:'absolute', top:'50%', transform:'translate(-50%,-50%)',
+            left: pct + '%', width:12, height:12, borderRadius:'50%',
+            background:'#fff', border:'2px solid ' + (caliniyor ? '#10b981' : C.accent),
+            boxShadow:'0 1px 4px rgba(0,0,0,0.25)', transition: isSeeking.current ? 'none' : 'left .15s',
+            opacity: toplamSure > 0 ? 1 : 0}}/>
+        </div>
+        {/* GİZLİ RANGE INPUT - SEEK İÇİN */}
+        <input type="range" min="0" max={toplamSure || 1} step="0.01" value={sure}
+          onMouseDown={sliderBasla} onTouchStart={sliderBasla}
           onChange={sliderDegisti}
-          style={{flex:1, accentColor:C.accent, cursor:'pointer', height:4}}/>
-        <span style={{fontSize:9, fontWeight:600, color:C.textMuted, minWidth:36}}>{sureFmtDetay(toplamSure)}</span>
+          onMouseUp={sliderBirakti} onTouchEnd={sliderBirakti}
+          style={{position:'absolute', left:0, top:0, width:'100%', height:'100%', opacity:0, cursor:'pointer', margin:0, padding:0, display:'none'}}/>
+        <span style={{fontSize:9, fontWeight:700, color:C.textMuted, minWidth:36, fontFamily:'monospace'}}>{sureFmtDetay(toplamSure)}</span>
       </div>
 
       {/* İNDİR */}
       <button onClick={indir} title="İNDİR" style={{
-        width:26, height:26, borderRadius:6, border:'none', cursor:'pointer',
-        background:`${C.cyan}12`, display:'flex', alignItems:'center', justifyContent:'center'
-      }}>
-        <LIcon name="Download" size={12} color={C.cyan}/>
+        width:28, height:28, borderRadius:8, border:'1px solid ' + C.cyan + '30', cursor:'pointer',
+        background:`${C.cyan}0a`, display:'flex', alignItems:'center', justifyContent:'center',
+        transition:'all .2s'
+      }}
+        onMouseEnter={e => e.currentTarget.style.background = C.cyan + '22'}
+        onMouseLeave={e => e.currentTarget.style.background = C.cyan + '0a'}>
+        <LIcon name="Download" size={13} color={C.cyan}/>
       </button>
 
-      {hata && <span style={{fontSize:8, color:C.danger, maxWidth:100, overflow:'hidden', textOverflow:'ellipsis'}}>{hata}</span>}
+      {hata && <span style={{fontSize:8, color:C.danger, maxWidth:80, overflow:'hidden', textOverflow:'ellipsis'}}>{hata}</span>}
     </div>
   );
 };
@@ -603,7 +719,7 @@ const KayitlarTab = ({api, C, S, LIcon, Badge, Loading, EmptyState, sureFmt, yon
           desc="KAYITLI GÖRÜŞME BULUNMAMAKTADIR. ARAMALAR GERÇEKLEŞTİKÇE SES KAYITLARI BURADA LİSTELENECEKTİR."/>
       ) : (
         <div style={{overflowX:'auto'}}>
-          <table style={{width:'100%', borderCollapse:'collapse', fontSize:11, minWidth:1000}}>
+          <table style={{width:'100%', borderCollapse:'collapse', fontSize:11, minWidth:1100}}>
             <thead>
               <tr style={{background:C.bgHover}}>
                 {['TARİH', 'YÖN', 'NUMARA', 'MÜŞTERİ', 'SÜRE', 'BOYUT', 'KULLANICI', 'SES KAYDI'].map(h =>
@@ -630,7 +746,7 @@ const KayitlarTab = ({api, C, S, LIcon, Badge, Loading, EmptyState, sureFmt, yon
                   <td style={{...tdSt2, color:C.textSec}}>{sureFmt(item.sure_saniye || 0)}</td>
                   <td style={{...tdSt2, color:C.textMuted, fontSize:10}}>{boyutFmt(item.kayit_boyut)}</td>
                   <td style={{...tdSt2, color:C.textMuted, fontSize:10}}>{item.kullanici_adi || '-'}</td>
-                  <td style={{...tdSt2, minWidth:300}}>
+                  <td style={{...tdSt2, minWidth:350}}>
                     <SesOynatici kayitId={item.id} kayitDosya={item.kayit_dosya} C={C} LIcon={LIcon} api={api}/>
                   </td>
                 </tr>

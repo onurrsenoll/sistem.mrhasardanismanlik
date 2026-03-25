@@ -359,8 +359,12 @@ MR.CrmAramaPage = ({setPage, user}) => {
 
   const aramaYap = (item) => {
     if (!item.magdur_telefon) return;
+    /* ARAMA BAŞLAT VE KİŞİ KARTI AÇ */
+    localStorage.setItem('webrtc_new_call_phone', item.magdur_telefon);
+    localStorage.setItem('webrtc_new_call_name', item.magdur_ad_soyad || '');
+    if (item.magdur_il) localStorage.setItem('webrtc_new_call_il', item.magdur_il);
     if (MR.webrtcAra) {
-      MR.webrtcAra(item.magdur_telefon, {ad: item.magdur_ad_soyad || ''});
+      MR.webrtcAra(item.magdur_telefon, {ad: item.magdur_ad_soyad || '', il: item.magdur_il || ''});
       setAramaMsg('WEBRTC ARAMA BAŞLATILIYOR...');
       setAramaAktif(item.id);
       setTimeout(() => { setAramaMsg(''); setAramaAktif(null); }, 4000);
@@ -368,6 +372,8 @@ MR.CrmAramaPage = ({setPage, user}) => {
       setAramaMsg('ARAMA SİSTEMİ DEVRE DIŞI');
       setTimeout(() => { setAramaMsg(''); }, 3000);
     }
+    /* KİŞİ KARTI (CRM-YENİ) SAYFASINI AÇ */
+    setPage('crm-yeni');
   };
 
   /* ── STİLLER ── */
@@ -554,7 +560,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
         {loading ? <Loading/> : data.length === 0 ? (
           <EmptyState icon="PhoneCall" title="YÖNLENDİRME KAYDI BULUNAMADI" desc="EXCEL DOSYASI YÜKLEYEREK BAŞLAYIN"/>
         ) : (
-          <div style={{overflowX:'auto', maxHeight:'calc(100vh - 420px)', width:'100%', position:'relative'}}>
+          <div style={{overflowX:'auto', width:'100%', position:'relative'}}>
             <table style={{width:'100%', borderCollapse:'separate', borderSpacing:'0 3px', fontSize:FS, minWidth:900, tableLayout:'fixed'}}>
               <colgroup>
                 <col style={{width:30}}/>{/* checkbox */}
@@ -610,7 +616,17 @@ MR.CrmAramaPage = ({setPage, user}) => {
                       ) : '-'}
                     </td>
                     <td style={{...tdTrunc, fontWeight:600}} title={item.magdur_ad_soyad || ''}>{item.magdur_ad_soyad || '-'}</td>
-                    <td style={tdSt}>{item.magdur_telefon || '-'}</td>
+                    <td style={tdSt}>
+                      <div style={{display:'flex', alignItems:'center', gap:4}}>
+                        <span style={{minWidth:80, whiteSpace:'nowrap'}}>{item.magdur_telefon || '-'}</span>
+                        {item.magdur_telefon && (
+                          <button style={{...iconBtn(C.success), width:22, height:22, flexShrink:0}} title="ARA"
+                            onClick={(e) => { e.stopPropagation(); aramaYap(item); }}>
+                            <LIcon name="Phone" size={10} color={C.success}/>
+                          </button>
+                        )}
+                      </div>
+                    </td>
                     <td style={tdTrunc} title={item.magdur_il || ''}>{item.magdur_il || '-'}</td>
                     <td style={tdTrunc} title={item.magdur_ilce || ''}>{item.magdur_ilce || '-'}</td>
                     <td style={tdSt}>{item.gorusme_tarihi ? item.gorusme_tarihi.slice(0,10) : '-'}</td>
