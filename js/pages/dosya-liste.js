@@ -395,11 +395,11 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
   const theadBg = isKoyu
     ? 'linear-gradient(135deg, #1e3a5f 0%, #0f2342 100%)'
     : 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)';
-  const thS = {padding:'8px 6px',textAlign:'left',fontWeight:800,fontSize:'12px',whiteSpace:'nowrap',color:'#FFFFFF',position:'sticky',top:0,background:isKoyu?'#0f2342':'#1e40af',zIndex:2,letterSpacing:0.4,borderBottom:'none'};
-  const thSticky = {...thS,position:'sticky',right:0,zIndex:3,background:isKoyu?'#0f2342':'#1e40af',borderLeft:isKoyu?'1px solid rgba(6,182,212,0.2)':'1px solid rgba(99,102,241,0.2)',textAlign:'center'};
+  const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:'11px',whiteSpace:'nowrap',color:'#FFFFFF',position:'sticky',top:0,background:isKoyu?'#0f2342':'#1e40af',zIndex:2,letterSpacing:0.5,borderBottom:'none'};
+  const thSticky = {...thS,position:'sticky',right:0,zIndex:3,background:isKoyu?'#0f2342':'#1e40af',textAlign:'center'};
 
   /* ── TD STİLLERİ ── */
-  const tdS = {padding:'7px 6px',fontSize:'12px',fontWeight:600,whiteSpace:'nowrap',color:isKoyu?'#e2e8f0':'#1e293b',borderBottom:'none',opacity:1};
+  const tdS = {padding:'10px 8px',fontSize:'12px',fontWeight:600,whiteSpace:'nowrap',color:isKoyu?'#e2e8f0':'#1e293b',borderBottom:'none'};
   const tdTrunc = {...tdS,overflow:'hidden',textOverflow:'ellipsis'};
   const tdStickyBg = (i) => isKoyu
     ? (i % 2 === 0 ? '#111827' : '#0d1321')
@@ -409,20 +409,13 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
   const rowBg = (i) => isKoyu
     ? (i % 2 === 0 ? '#111827' : '#0d1321')
     : (i % 2 === 0 ? '#ffffff' : '#f0f4ff');
-  const rowGrad = (i) => isKoyu
-    ? (i % 2 === 0 ? 'linear-gradient(90deg, #111827 0%, #0d1321 100%)' : 'linear-gradient(90deg, #0d1321 0%, #090e1a 100%)')
-    : 'none';
   const rowSt = (i) => ({
     cursor:'pointer',
     backgroundColor:rowBg(i),
-    backgroundImage:rowGrad(i),
-    borderBottom:isKoyu ? '1px solid rgba(6,182,212,0.1)' : '1px solid rgba(99,102,241,0.1)',
-    borderLeft:isKoyu ? '3px solid rgba(6,182,212,0.5)' : '3px solid rgba(99,102,241,0.4)',
-    boxShadow:isKoyu
-      ? '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)'
-      : '0 1px 4px rgba(99,102,241,0.08)',
-    transition:'all .2s ease',
-    borderRadius:8
+    border: isKoyu ? '1px solid rgba(6,182,212,0.15)' : '1px solid rgba(99,102,241,0.12)',
+    borderRadius:8,
+    boxShadow: isKoyu ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 3px rgba(99,102,241,0.06)',
+    transition:'all .25s ease'
   });
 
   return (
@@ -504,15 +497,8 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
         {loading ? <Loading/> : data.length === 0 ? (
           <EmptyState icon="FolderOpen" title="DOSYA BULUNAMADI" desc="FİLTRELERİ KONTROL EDİN VEYA YENİ DOSYA OLUŞTURUN"/>
         ) : (
-          <div style={{overflowX:'auto',maxHeight:'calc(100vh - 300px)',width:'100%',position:'relative',
-            borderRadius:12,
-            border:isKoyu ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(99,102,241,0.15)',
-            boxShadow:isKoyu ? 'none' : '0 8px 32px rgba(99,102,241,0.1)',
-            backdropFilter:isKoyu ? 'blur(10px)' : 'none',
-            WebkitBackdropFilter:isKoyu ? 'blur(10px)' : 'none',
-            background:isKoyu ? 'rgba(15,23,42,0.6)' : '#f8faff'
-          }}>
-            <table style={{width:'100%',borderCollapse:'separate',borderSpacing:'0 3px',fontSize:'12px',tableLayout:'fixed'}}>
+          <div style={{overflowX:'auto',width:'100%',position:'relative'}}>
+            <table style={{width:'100%',borderCollapse:'separate',borderSpacing:'0 2px',fontSize:'12px',tableLayout:'fixed'}}>
               <colgroup>
                 {MR.hasYetki(user,'dosya','dosya-toplu-sil') && <col style={{width:35}}/>}
                 <col style={{width:90}}/>{/* DOSYA NO */}
@@ -555,21 +541,15 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                     <tr key={d.id || i}
                       style={rowSt(i)}
                       onMouseEnter={e => {
-                        if(isKoyu){
-                          e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';
-                          e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';
-                        } else {
-                          e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';
-                          e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';
-                        }
+                        e.currentTarget.style.border=isKoyu?'1px solid rgba(6,182,212,0.45)':'1px solid rgba(99,102,241,0.35)';
+                        e.currentTarget.style.boxShadow=isKoyu?'0 0 8px rgba(6,182,212,0.18), 0 2px 8px rgba(0,0,0,0.15)':'0 0 8px rgba(99,102,241,0.12), 0 2px 6px rgba(99,102,241,0.08)';
                         e.currentTarget.style.transform='translateY(-1px)';
                       }}
                       onMouseLeave={e => {
                         e.currentTarget.style.backgroundColor=rowBg(i);
-                        e.currentTarget.style.backgroundImage=rowGrad(i);
-                        e.currentTarget.style.borderLeft=isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';
-                        e.currentTarget.style.boxShadow=isKoyu?'0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)':'0 1px 4px rgba(99,102,241,0.08)';
-                        e.currentTarget.style.transform='none';
+                        e.currentTarget.style.border=isKoyu?'1px solid rgba(6,182,212,0.15)':'1px solid rgba(99,102,241,0.12)';
+                        e.currentTarget.style.boxShadow=isKoyu?'0 1px 4px rgba(0,0,0,0.2)':'0 1px 3px rgba(99,102,241,0.06)';
+                        e.currentTarget.style.transform='translateY(0)';
                       }}>
                       {MR.hasYetki(user,'dosya','dosya-toplu-sil') && <td style={{...tdS,textAlign:'center',padding:'6px 4px'}} onClick={e => e.stopPropagation()}>
                         <input type="checkbox" checked={secililer.includes(d.id)} onChange={() => toggleSecim(d.id)}
@@ -611,7 +591,7 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                         </span>
                       </td>
                       {/* İŞLEM - STICKY */}
-                      <td style={{...tdS,position:'sticky',right:0,background:tdStickyBg(i),borderLeft:isKoyu?'1px solid rgba(59,130,246,0.15)':'1px solid rgba(26,86,219,0.06)',textAlign:'center'}}>
+                      <td style={{...tdS,position:'sticky',right:0,background:tdStickyBg(i),textAlign:'center'}}>
                         <div style={{display:'flex',gap:6,justifyContent:'center',alignItems:'center'}}>
                           <a href={'#/dosya-detay-'+d.id} onClick={e=>{if(!e.ctrlKey&&!e.metaKey){e.preventDefault();onSelect(d.id);}}}
                             title="GÖRÜNTÜLE" style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.accent}11`,textDecoration:'none'}}>
