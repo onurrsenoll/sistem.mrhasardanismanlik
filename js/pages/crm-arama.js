@@ -610,7 +610,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
                     <td style={tdSt}><input type="checkbox" checked={sel} onChange={() => toggleSecili(item.id)}/></td>
                     <td style={{...tdSt, fontWeight:700, color:C.accent}}>{item.sira_no || item.id}</td>
                     <td style={tdTrunc} title={item.yonlendiren || ''}>{item.yonlendiren || '-'}</td>
-                    <td style={tdSt}>{item.yonlendirme_tarihi ? item.yonlendirme_tarihi.slice(0,10) : '-'}</td>
+                    <td style={tdSt}>{MR.tarihFmt ? MR.tarihFmt(item.yonlendirme_tarihi) : '-'}</td>
                     <td style={tdTrunc} title={item.kaza_turu || ''}>
                       {item.kaza_turu ? (
                         <Badge text={item.kaza_turu?.length > 8 ? item.kaza_turu.slice(0,8)+'..' : item.kaza_turu} color={item.kaza_turu?.includes('ÇİFT') ? C.accent : C.purple}/>
@@ -630,7 +630,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
                     </td>
                     <td style={tdTrunc} title={item.magdur_il || ''}>{item.magdur_il || '-'}</td>
                     <td style={tdTrunc} title={item.magdur_ilce || ''}>{item.magdur_ilce || '-'}</td>
-                    <td style={tdSt}>{item.gorusme_tarihi ? item.gorusme_tarihi.slice(0,10) : '-'}</td>
+                    <td style={tdSt}>{MR.tarihFmt ? MR.tarihFmt(item.gorusme_tarihi) : '-'}</td>
                     <td style={tdSt}>
                       <span style={durumChip(item.durum)}>
                         {item.durum === 'Alindi' ? '\u2714' : item.durum === 'Olumsuz' ? '\u2716' : '\u25CF'}{' '}
@@ -752,7 +752,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
                       <div style={{fontSize:12, lineHeight:1.6, marginBottom:6}}>{n.not_text}</div>
                       <div style={{display:'flex', justifyContent:'space-between', fontSize:10, color:C.textMuted}}>
                         <span>{n.ekleyen_adi || 'SİSTEM'}</span>
-                        <span>{n.created_at || '-'}</span>
+                        <span>{MR.tarihFmt ? MR.tarihFmt(n.created_at) : (n.created_at || '-')}</span>
                       </div>
                     </div>
                   ))}

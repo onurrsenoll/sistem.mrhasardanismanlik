@@ -88,6 +88,29 @@ MR.today = function(){
 };
 
 /**
+ * TARİHİ GG.AA.YYYY FORMATINDA GÖSTER
+ * @param {string} t - TARİH STRING (YYYY-MM-DD veya YYYY-MM-DD HH:MM:SS)
+ * @returns {string} ÖRN: "25.03.2026" veya "25.03.2026 15:29"
+ */
+MR.tarihFmt = function(t){
+  if (!t || t === '-' || t === '0000-00-00') return '-';
+  t = String(t).trim();
+  /* YYYY-MM-DD veya YYYY-MM-DD HH:MM:SS formatını parçala */
+  var parcalar = t.split(/[\sT]/);
+  var tarihKismi = parcalar[0] || '';
+  var saatKismi = parcalar[1] || '';
+  var tp = tarihKismi.split('-');
+  if (tp.length < 3) return t; /* tanınamayan format, olduğu gibi döndür */
+  var sonuc = tp[2] + '.' + tp[1] + '.' + tp[0];
+  if (saatKismi) {
+    /* HH:MM:SS -> HH:MM */
+    var sp = saatKismi.split(':');
+    sonuc += ' ' + sp[0] + ':' + (sp[1] || '00');
+  }
+  return sonuc;
+};
+
+/**
  * İKİ TARİH ARASINDA YAŞ HESAPLA
  * @param {string} d - DOĞUM TARİHİ (YYYY-MM-DD)
  * @param {string} [k] - KARŞILAŞTIRMA TARİHİ (VARSAYILAN: BUGÜN)

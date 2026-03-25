@@ -272,7 +272,7 @@ const GelirYonetimi = ({setPage, user}) => {
                     <tr key={g.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
                       onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
                       onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
-                      <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{g.tarih || g.created_at?.split(' ')[0] || '-'}</td>
+                      <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{MR.tarihFmt ? MR.tarihFmt(g.tarih || g.created_at) : (g.tarih || g.created_at?.split(' ')[0] || '-')}</td>
                       <td style={{padding:'10px 12px',fontWeight:600}}>{g.kasa_adi || kasaAdi(g.kasa_id)}</td>
                       <td style={{padding:'10px 12px'}}>
                         {g.dosya_no ? (
@@ -535,7 +535,7 @@ const GiderYonetimi = ({setPage, user}) => {
                     <tr key={g.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
                       onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
                       onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
-                      <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{g.tarih || g.created_at?.split(' ')[0] || '-'}</td>
+                      <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{MR.tarihFmt ? MR.tarihFmt(g.tarih || g.created_at) : (g.tarih || g.created_at?.split(' ')[0] || '-')}</td>
                       <td style={{padding:'10px 12px',fontWeight:600}}>{g.kasa_adi || kasaAdi(g.kasa_id)}</td>
                       <td style={{padding:'10px 12px'}}>
                         {g.dosya_no ? (
@@ -1248,7 +1248,7 @@ const KasaBanka = ({setPage, user}) => {
                     <tr key={h.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
                       onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
                       onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
-                      <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{h.tarih || h.created_at?.split(' ')[0] || '-'}</td>
+                      <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{MR.tarihFmt ? MR.tarihFmt(h.tarih || h.created_at) : (h.tarih || h.created_at?.split(' ')[0] || '-')}</td>
                       <td style={{padding:'10px 12px',fontWeight:600}}>{h.kasa_adi || kasaAdi(h.kasa_id)}</td>
                       <td style={{padding:'10px 12px'}}><Badge text={turLabel(h.tur)} color={turRenk(h.tur)}/></td>
                       <td style={{padding:'10px 12px',fontWeight:700,color: giris ? C.success : C.danger,fontSize:12}}>
@@ -1448,7 +1448,7 @@ const KasaBanka = ({setPage, user}) => {
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <div>
                   <div style={{fontSize:13,fontWeight:700}}>{hareketDuzenleModal.kasa_adi || kasaAdi(hareketDuzenleModal.kasa_id)}</div>
-                  <div style={{fontSize:11,color:C.textSec,marginTop:2}}>{hareketDuzenleModal.tarih || hareketDuzenleModal.created_at?.split(' ')[0] || '-'}</div>
+                  <div style={{fontSize:11,color:C.textSec,marginTop:2}}>{MR.tarihFmt ? MR.tarihFmt(hareketDuzenleModal.tarih || hareketDuzenleModal.created_at) : '-'}</div>
                 </div>
                 <Badge text={turLabel(hareketDuzenleModal.tur)} color={turRenk(hareketDuzenleModal.tur)}/>
               </div>
@@ -2460,7 +2460,7 @@ const OrtakKasa = ({setPage, user}) => {
                                   <tr key={h.id||i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
                                     onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
                                     onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
-                                    <td style={{padding:'8px 12px',color:C.textSec}}>{h.created_at?.split(' ')[0] || '-'}</td>
+                                    <td style={{padding:'8px 12px',color:C.textSec}}>{MR.tarihFmt ? MR.tarihFmt(h.created_at) : (h.created_at?.split(' ')[0] || '-')}</td>
                                     <td style={{padding:'8px 12px'}}>
                                       <Badge text={(h.islem_turu||'').toUpperCase()} color={isGelir ? C.success : C.danger}/>
                                     </td>
@@ -2975,7 +2975,7 @@ const AySonuRaporu = ({setPage, user}) => {
                   ok.hareketler.map(function(h,i){
                     var isGelir = h.islem_turu==='gelir'||h.islem_turu==='transfer_giris';
                     return React.createElement('tr', {key:i, style:{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}},
-                      React.createElement('td', {style:{padding:'5px 10px',fontSize:10,borderBottom:'1px solid '+C.border+'22'}}, (h.created_at||'').split(' ')[0]||'-'),
+                      React.createElement('td', {style:{padding:'5px 10px',fontSize:10,borderBottom:'1px solid '+C.border+'22'}}, MR.tarihFmt ? MR.tarihFmt(h.created_at) : ((h.created_at||'').split(' ')[0]||'-')),
                       React.createElement('td', {style:{padding:'5px 10px',fontSize:10,borderBottom:'1px solid '+C.border+'22',color:isGelir?C.success:C.danger,fontWeight:600}}, (h.islem_turu||'').toUpperCase()),
                       React.createElement('td', {style:{padding:'5px 10px',fontSize:11,fontWeight:700,textAlign:'right',borderBottom:'1px solid '+C.border+'22',color:isGelir?C.success:C.danger}}, (isGelir?'+':'-')+fmt(h.tutar)),
                       React.createElement('td', {style:{padding:'5px 10px',fontSize:10,borderBottom:'1px solid '+C.border+'22',color:C.textSec}}, h.aciklama||'-')

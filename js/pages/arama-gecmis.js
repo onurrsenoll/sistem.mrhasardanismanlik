@@ -241,7 +241,7 @@ MR.AramaGecmisPage = ({setPage, user}) => {
                       <tr key={item.id || i} style={{borderBottom:`1px solid ${C.border}`}}
                         onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                        <td style={{...tdSt, color:C.textMuted, fontSize:11}}>{item.arama_tarihi || '-'}</td>
+                        <td style={{...tdSt, color:C.textMuted, fontSize:11}}>{MR.tarihFmt ? MR.tarihFmt(item.arama_tarihi) : (item.arama_tarihi || '-')}</td>
                         <td style={tdSt}>
                           <span style={{
                             padding:'2px 8px', borderRadius:6, fontSize:9, fontWeight:700,
@@ -400,7 +400,7 @@ if (!window._mrAktifAudioDurdur) window._mrAktifAudioDurdur = null;
    Play/Pause, 10sn İleri/Geri, Süre Slider (seek), İndirme
    Tek seferde sadece 1 kayıt çalar (önceki otomatik durur)
    ═══════════════════════════════════════════ */
-const SesOynatici = ({kayitId, kayitDosya, C, LIcon, api}) => {
+const SesOynatici = ({kayitId, kayitDosya, sureSaniye, C, LIcon, api}) => {
   const audioRef = useRef(null);
   const sliderRef = useRef(null);
   const [caliniyor, setCaliniyor] = useState(false);
@@ -433,10 +433,16 @@ const SesOynatici = ({kayitId, kayitDosya, C, LIcon, api}) => {
     };
   }, [kayitId]);
 
+  /* Fallback süre: backend'den gelen sure_saniye */
+  useEffect(() => {
+    if (sureSaniye && sureSaniye > 0 && toplamSure === 0) setToplamSure(sureSaniye);
+  }, [sureSaniye]);
+
   const audioOlustur = () => {
     if (audioRef.current) return audioRef.current;
     const a = new Audio();
-    a.preload = 'metadata';
+    a.preload = 'auto';
+    a.crossOrigin = 'anonymous';
     a.src = kaynakUrl;
 
     a.addEventListener('loadedmetadata', () => {
@@ -447,6 +453,15 @@ const SesOynatici = ({kayitId, kayitDosya, C, LIcon, api}) => {
     });
     a.addEventListener('timeupdate', () => {
       if (!isSeeking.current) setSure(a.currentTime || 0);
+      /* Duration fallback: seekable veya buffered'dan al */
+      if (!isFinite(a.duration) || a.duration === 0) {
+        if (a.seekable && a.seekable.length > 0) {
+          var seekEnd = a.seekable.end(a.seekable.length - 1);
+          if (seekEnd > 0 && isFinite(seekEnd)) setToplamSure(seekEnd);
+        }
+      } else if (a.duration > 0 && toplamSure === 0) {
+        setToplamSure(a.duration);
+      }
       /* Buffer durumu */
       if (a.buffered.length > 0) {
         setBuffered(a.buffered.end(a.buffered.length - 1));
@@ -498,8 +513,10 @@ const SesOynatici = ({kayitId, kayitDosya, C, LIcon, api}) => {
 
   const ileriSar = (sn) => {
     const a = audioRef.current;
-    if (a && isFinite(a.duration)) {
-      const yeniZaman = Math.min(a.duration, Math.max(0, a.currentTime + sn));
+    if (!a) return;
+    const maxSure = (isFinite(a.duration) && a.duration > 0) ? a.duration : toplamSure;
+    if (maxSure > 0) {
+      const yeniZaman = Math.min(maxSure, Math.max(0, a.currentTime + sn));
       a.currentTime = yeniZaman;
       setSure(yeniZaman);
     }
@@ -739,7 +756,7 @@ const KayitlarTab = ({api, C, S, LIcon, Badge, Loading, EmptyState, sureFmt, yon
                 <tr key={item.id || i} style={{borderBottom:`1px solid ${C.border}`}}
                   onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                  <td style={{...tdSt2, color:C.textMuted, fontSize:11}}>{item.baslangic_zamani || item.created_at || '-'}</td>
+                  <td style={{...tdSt2, color:C.textMuted, fontSize:11}}>{MR.tarihFmt ? MR.tarihFmt(item.baslangic_zamani || item.created_at) : (item.baslangic_zamani || item.created_at || '-')}</td>
                   <td style={tdSt2}>
                     <span style={{
                       padding:'2px 8px', borderRadius:6, fontSize:9, fontWeight:700,
@@ -754,7 +771,7 @@ const KayitlarTab = ({api, C, S, LIcon, Badge, Loading, EmptyState, sureFmt, yon
                   <td style={{...tdSt2, color:C.textMuted, fontSize:10}}>{boyutFmt(item.kayit_boyut)}</td>
                   <td style={{...tdSt2, color:C.textMuted, fontSize:10}}>{item.kullanici_adi || '-'}</td>
                   <td style={{...tdSt2, minWidth:350}}>
-                    <SesOynatici kayitId={item.id} kayitDosya={item.kayit_dosya} C={C} LIcon={LIcon} api={api}/>
+                    <SesOynatici kayitId={item.id} kayitDosya={item.kayit_dosya} sureSaniye={item.sure_saniye || 0} C={C} LIcon={LIcon} api={api}/>
                   </td>
                 </tr>
               ))}

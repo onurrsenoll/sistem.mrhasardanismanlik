@@ -454,7 +454,7 @@ MR._CRMListesiInner = ({setPage, user}) => {
 
         {/* TABLO */}
         {loading ? <Loading/> : (
-          <div style={{overflowX: 'auto'}}>
+          <div style={{overflowX: 'auto', overflow: durumDropId ? 'visible' : 'auto'}}>
             <table style={{width: '100%', borderCollapse: 'collapse', fontSize: 11, minWidth: 1000}}>
               <thead>
                 <tr style={{background:isKoyu?'#0f2342':'#1e40af'}}>
@@ -481,7 +481,7 @@ MR._CRMListesiInner = ({setPage, user}) => {
                     <td style={{...cellSt, fontWeight: 600}}>{c.ad_soyad}</td>
                     <td style={{...cellSt, color: C.textSec}}>
                       <div style={{display:'flex', alignItems:'center', gap:6}}>
-                        <span style={{whiteSpace:'nowrap'}}>{c.telefon || '-'}</span>
+                        <span style={{whiteSpace:'nowrap', minWidth:95, display:'inline-block'}}>{c.telefon || '-'}</span>
                         {c.telefon && (
                           <button style={{...iconBtn(C.success), width:26, height:26, flexShrink:0}} title="ARA"
                             onClick={(e) => {
@@ -501,7 +501,7 @@ MR._CRMListesiInner = ({setPage, user}) => {
                     <td style={cellSt}><Badge text={c.dosya_turu || 'ADK'} color={c.dosya_turu === 'BH' ? C.purple : C.accent}/></td>
                     <td style={{...cellSt, color: C.textMuted}}>{c.kaynak || '-'}</td>
                     <td style={cellSt}><Badge text={c.durum || 'YENİ'} color={dC(c.durum)}/></td>
-                    <td style={{...cellSt, color: C.textMuted}}>{c.son_iletisim || '-'}</td>
+                    <td style={{...cellSt, color: C.textMuted}}>{MR.tarihFmt ? MR.tarihFmt(c.son_iletisim) : (c.son_iletisim || '-')}</td>
                     <td style={{...cellSt, position: 'relative'}}>
                       <div style={{display: 'flex', gap: 4, alignItems: 'center'}}>
                         {/* DETAY */}
@@ -517,14 +517,14 @@ MR._CRMListesiInner = ({setPage, user}) => {
                         {/* DURUM DEĞİŞTİR */}
                         <div style={{position: 'relative'}}>
                           <button style={iconBtn(C.cyan)} title="DURUM DEĞİŞTİR"
-                            onClick={() => setDurumDropId(durumDropId === c.id ? null : c.id)}>
+                            onClick={(e) => { e.currentTarget.dataset.durumDrop = c.id; setDurumDropId(durumDropId === c.id ? null : c.id); }}>
                             <LIcon name="RefreshCw" size={13} color={C.cyan}/>
                           </button>
                           {durumDropId === c.id && (
                             <div style={{
-                              position: 'absolute', top: 32, right: 0, zIndex: 100,
+                              position: 'absolute', top: 32, right: 0, zIndex: 99999,
                               background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 8,
-                              boxShadow: '0 8px 24px rgba(0,0,0,.3)', minWidth: 140, overflow: 'hidden'
+                              boxShadow: '0 12px 32px rgba(0,0,0,.4)', minWidth: 140, overflow: 'visible'
                             }}>
                               {['Yeni', 'Takipte', 'Olumlu', 'Olumsuz'].map(d => (
                                 <div key={d} onClick={() => durumDegistir(c.id, d)}
@@ -913,8 +913,8 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
               <Badge text={crm.durum || 'YENİ'} color={dC(crm.durum)}/>
             ))}
             {infoRow('ATANAN', crm.atanan_adi || '-')}
-            {infoRow('KAYIT TARİHİ', crm.created_at || '-')}
-            {infoRow('SON İLETİŞİM', crm.son_iletisim || '-')}
+            {infoRow('KAYIT TARİHİ', MR.tarihFmt ? MR.tarihFmt(crm.created_at) : (crm.created_at || '-'))}
+            {infoRow('SON İLETİŞİM', MR.tarihFmt ? MR.tarihFmt(crm.son_iletisim) : (crm.son_iletisim || '-'))}
             {crm.olay_aciklama && (
               <div style={{marginTop:10}}>
                 <div style={{fontSize:10, fontWeight:700, color:C.accent, letterSpacing:1, marginBottom:6}}>OLAY AÇIKLAMASI</div>
@@ -957,7 +957,7 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
                   <div style={{fontSize: 12, lineHeight: 1.6, marginBottom: 8}}>{n.not_text || n.icerik || '-'}</div>
                   <div style={{display: 'flex', justifyContent: 'space-between', fontSize: 10, color: C.textMuted}}>
                     <span>{n.ekleyen_adi || 'SİSTEM'}</span>
-                    <span>{n.created_at || '-'}</span>
+                    <span>{MR.tarihFmt ? MR.tarihFmt(n.created_at) : (n.created_at || '-')}</span>
                   </div>
                 </div>
               ))}
