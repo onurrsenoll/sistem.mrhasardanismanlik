@@ -360,12 +360,317 @@ MR.AramaGecmisPage = ({setPage, user}) => {
 
         {/* GÖRÜŞME KAYITLARI TAB */}
         {tab === 'kayitlar' && (
-          <div style={{padding:20}}>
-            <EmptyState icon="Mic" title="GÖRÜŞME KAYDI BULUNAMADI"
-              desc="SES KAYDI SİSTEMİ AKTİF EDİLDİĞİNDE BURADA LİSTELENECEKTİR"/>
-          </div>
+          <KayitlarTab api={api} C={C} S={S} LIcon={LIcon} Badge={Badge} Loading={Loading} EmptyState={EmptyState} sureFmt={sureFmt} yonRenk={yonRenk} durumRenk={durumRenk} tarihBas={tarihBas} tarihBit={tarihBit} search={search}/>
         )}
       </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════
+   SES OYNATICI BİLEŞENİ
+   Play/Pause, İleri/Geri, Süre Slider, İndirme
+   ═══════════════════════════════════════════ */
+const SesOynatici = ({kayitId, kayitDosya, C, LIcon, api}) => {
+  const audioRef = useRef(null);
+  const [caliniyor, setCaliniyor] = useState(false);
+  const [sure, setSure] = useState(0);
+  const [toplamSure, setToplamSure] = useState(0);
+  const [yukleniyor, setYukleniyor] = useState(false);
+  const [hata, setHata] = useState('');
+
+  const kaynakUrl = '/api/v1/arama-log/kayit-indir.php?id=' + kayitId + (api.token ? '&auth=' + api.token : '');
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
+    };
+  }, []);
+
+  const audioOlustur = () => {
+    if (audioRef.current) return audioRef.current;
+    const a = new Audio();
+    a.preload = 'metadata';
+    a.src = kaynakUrl;
+
+    a.addEventListener('loadedmetadata', () => {
+      if (a.duration && isFinite(a.duration)) setToplamSure(a.duration);
+    });
+    a.addEventListener('durationchange', () => {
+      if (a.duration && isFinite(a.duration)) setToplamSure(a.duration);
+    });
+    a.addEventListener('timeupdate', () => {
+      setSure(a.currentTime || 0);
+    });
+    a.addEventListener('ended', () => {
+      setCaliniyor(false);
+      setSure(0);
+    });
+    a.addEventListener('error', () => {
+      setHata('SES DOSYASI YÜKLENEMEDİ');
+      setYukleniyor(false);
+      setCaliniyor(false);
+    });
+    a.addEventListener('waiting', () => setYukleniyor(true));
+    a.addEventListener('canplay', () => setYukleniyor(false));
+
+    audioRef.current = a;
+    return a;
+  };
+
+  const oynatDurdur = () => {
+    const a = audioOlustur();
+    if (caliniyor) {
+      a.pause();
+      setCaliniyor(false);
+    } else {
+      setHata('');
+      setYukleniyor(true);
+      a.play().then(() => {
+        setCaliniyor(true);
+        setYukleniyor(false);
+      }).catch(e => {
+        setHata('OYNATMA HATASI');
+        setYukleniyor(false);
+      });
+    }
+  };
+
+  const ileriSar = (sn) => {
+    const a = audioRef.current;
+    if (a && isFinite(a.duration)) {
+      a.currentTime = Math.min(a.duration, Math.max(0, a.currentTime + sn));
+    }
+  };
+
+  const sliderDegisti = (e) => {
+    const a = audioRef.current;
+    if (a && isFinite(a.duration)) {
+      a.currentTime = parseFloat(e.target.value);
+    }
+  };
+
+  const indir = () => {
+    const link = document.createElement('a');
+    link.href = kaynakUrl + '&mode=download';
+    link.download = kayitDosya || ('kayit_' + kayitId + '.webm');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const sureFmtDetay = (s) => {
+    if (!s || !isFinite(s)) return '00:00';
+    const dk = Math.floor(s / 60);
+    const sn = Math.floor(s % 60);
+    return (dk < 10 ? '0' : '') + dk + ':' + (sn < 10 ? '0' : '') + sn;
+  };
+
+  return (
+    <div style={{display:'flex', alignItems:'center', gap:6, minWidth:280}}>
+      {/* GERİ SAR */}
+      <button onClick={() => ileriSar(-10)} title="10sn GERİ" style={{
+        width:26, height:26, borderRadius:6, border:'none', cursor:'pointer',
+        background:`${C.accent}12`, display:'flex', alignItems:'center', justifyContent:'center'
+      }}>
+        <LIcon name="SkipBack" size={12} color={C.accent}/>
+      </button>
+
+      {/* OYNAT / DURDUR */}
+      <button onClick={oynatDurdur} disabled={yukleniyor} title={caliniyor ? 'DURDUR' : 'OYNAT'} style={{
+        width:32, height:32, borderRadius:8, border:'none', cursor:'pointer',
+        background: caliniyor ? C.danger : C.success,
+        display:'flex', alignItems:'center', justifyContent:'center',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.15)', opacity: yukleniyor ? 0.6 : 1
+      }}>
+        <LIcon name={yukleniyor ? 'Loader' : caliniyor ? 'Pause' : 'Play'} size={14} color="#fff"/>
+      </button>
+
+      {/* İLERİ SAR */}
+      <button onClick={() => ileriSar(10)} title="10sn İLERİ" style={{
+        width:26, height:26, borderRadius:6, border:'none', cursor:'pointer',
+        background:`${C.accent}12`, display:'flex', alignItems:'center', justifyContent:'center'
+      }}>
+        <LIcon name="SkipForward" size={12} color={C.accent}/>
+      </button>
+
+      {/* SÜRE SLIDER */}
+      <div style={{flex:1, display:'flex', alignItems:'center', gap:6, minWidth:120}}>
+        <span style={{fontSize:9, fontWeight:600, color:C.textMuted, minWidth:36, textAlign:'right'}}>{sureFmtDetay(sure)}</span>
+        <input type="range" min="0" max={toplamSure || 1} step="0.1" value={sure}
+          onChange={sliderDegisti}
+          style={{flex:1, accentColor:C.accent, cursor:'pointer', height:4}}/>
+        <span style={{fontSize:9, fontWeight:600, color:C.textMuted, minWidth:36}}>{sureFmtDetay(toplamSure)}</span>
+      </div>
+
+      {/* İNDİR */}
+      <button onClick={indir} title="İNDİR" style={{
+        width:26, height:26, borderRadius:6, border:'none', cursor:'pointer',
+        background:`${C.cyan}12`, display:'flex', alignItems:'center', justifyContent:'center'
+      }}>
+        <LIcon name="Download" size={12} color={C.cyan}/>
+      </button>
+
+      {hata && <span style={{fontSize:8, color:C.danger, maxWidth:100, overflow:'hidden', textOverflow:'ellipsis'}}>{hata}</span>}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════
+   GÖRÜŞME KAYITLARI TAB BİLEŞENİ
+   Kayıtlı görüşmeleri listeler + ses oynatıcı
+   ═══════════════════════════════════════════ */
+const KayitlarTab = ({api, C, S, LIcon, Badge, Loading, EmptyState, sureFmt, yonRenk, durumRenk, tarihBas, tarihBit, search}) => {
+  const [kayitlar, setKayitlar] = useState([]);
+  const [kayitLoading, setKayitLoading] = useState(true);
+  const [kayitSayfa, setKayitSayfa] = useState(1);
+  const [kayitToplamSayfa, setKayitToplamSayfa] = useState(1);
+  const [kayitToplam, setKayitToplam] = useState(0);
+  const [kayitYonF, setKayitYonF] = useState('');
+  const [kayitSearch, setKayitSearch] = useState('');
+
+  const kayitlariYukle = useCallback(async () => {
+    setKayitLoading(true);
+    const p = {sayfa: kayitSayfa, limit: 30, durum: 'cevaplandi'};
+    if (kayitSearch) p.q = kayitSearch;
+    if (kayitYonF) p.yon = kayitYonF;
+    if (tarihBas) p.tarih_bas = tarihBas;
+    if (tarihBit) p.tarih_son = tarihBit;
+    const r = await api.aramaLogList(p);
+    if (r?.success && r.data) {
+      const rawItems = r.data?.items || [];
+      /* Sadece kayit_dosya olan kayıtları filtrele */
+      const filtered = rawItems.filter(item => item.kayit_dosya && item.kayit_dosya.trim() !== '');
+      setKayitlar(filtered);
+      if (r.data?.toplam_sayfa) {
+        setKayitToplamSayfa(r.data.toplam_sayfa || 1);
+        setKayitToplam(r.data.toplam || 0);
+      } else if (r.data?.pagination) {
+        setKayitToplamSayfa(r.data.pagination.totalPages || r.data.pagination.toplam_sayfa || 1);
+        setKayitToplam(r.data.pagination.total || r.data.pagination.toplam || 0);
+      }
+    }
+    setKayitLoading(false);
+  }, [kayitSayfa, kayitYonF, kayitSearch, tarihBas, tarihBit]);
+
+  const ilkRef2 = useRef(true);
+  useEffect(() => {
+    if (ilkRef2.current) { ilkRef2.current = false; kayitlariYukle(); return; }
+    const t = setTimeout(kayitlariYukle, 400);
+    return () => clearTimeout(t);
+  }, [kayitSayfa, kayitYonF, kayitSearch, tarihBas, tarihBit]);
+
+  const boyutFmt = (b) => {
+    if (!b) return '-';
+    b = parseInt(b);
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+  };
+
+  const thSt2 = {padding:'10px 8px', textAlign:'left', color: MR.tema==='koyu' ? '#cbd5e1' : C.textMuted, fontWeight:800, fontSize:11, borderBottom:`2px solid ${C.border}`, whiteSpace:'nowrap', letterSpacing:0.3};
+  const tdSt2 = {padding:'8px 8px', fontSize:12, fontWeight:600, borderBottom:`1px solid ${C.border}`, whiteSpace:'nowrap'};
+
+  return (
+    <div>
+      {/* KAYITLAR BAŞLIK + FİLTRE */}
+      <div style={{...S.cardHead, padding:'10px 16px', justifyContent:'space-between'}}>
+        <div style={{display:'flex', alignItems:'center', gap:8}}>
+          <LIcon name="Mic" size={14} color={C.cyan}/>
+          <span style={{fontSize:12, fontWeight:700}}>GÖRÜŞME KAYITLARI</span>
+          <Badge text={kayitToplam + ' KAYIT'} color={C.cyan}/>
+        </div>
+        <div style={{display:'flex', gap:6, alignItems:'center'}}>
+          <input placeholder="NUMARA / İSİM ARA..." value={kayitSearch} onChange={e => {setKayitSearch(e.target.value); setKayitSayfa(1);}}
+            style={{...S.input, width:180, fontSize:10, padding:'6px 10px'}}/>
+          <select value={kayitYonF} onChange={e => {setKayitYonF(e.target.value); setKayitSayfa(1);}}
+            style={{...S.select, width:100, fontSize:10, padding:'6px 8px'}}>
+            <option value="">TÜMÜ</option>
+            <option value="gelen">GELEN</option>
+            <option value="giden">GİDEN</option>
+          </select>
+          <button style={{...S.btn, ...S.btnG, fontSize:10, padding:'6px 12px'}} onClick={kayitlariYukle}>
+            <LIcon name="RefreshCw" size={12} color={C.textSec}/> YENİLE
+          </button>
+        </div>
+      </div>
+
+      {kayitLoading ? <Loading/> : kayitlar.length === 0 ? (
+        <EmptyState icon="Mic" title="GÖRÜŞME KAYDI BULUNAMADI"
+          desc="KAYITLI GÖRÜŞME BULUNMAMAKTADIR. ARAMALAR GERÇEKLEŞTİKÇE SES KAYITLARI BURADA LİSTELENECEKTİR."/>
+      ) : (
+        <div style={{overflowX:'auto'}}>
+          <table style={{width:'100%', borderCollapse:'collapse', fontSize:11, minWidth:1000}}>
+            <thead>
+              <tr style={{background:C.bgHover}}>
+                {['TARİH', 'YÖN', 'NUMARA', 'MÜŞTERİ', 'SÜRE', 'BOYUT', 'KULLANICI', 'SES KAYDI'].map(h =>
+                  <th key={h} style={thSt2}>{h}</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {kayitlar.map((item, i) => (
+                <tr key={item.id || i} style={{borderBottom:`1px solid ${C.border}`}}
+                  onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <td style={{...tdSt2, color:C.textMuted, fontSize:11}}>{item.baslangic_zamani || item.created_at || '-'}</td>
+                  <td style={tdSt2}>
+                    <span style={{
+                      padding:'2px 8px', borderRadius:6, fontSize:9, fontWeight:700,
+                      background:`${yonRenk(item.yon)}15`, color:yonRenk(item.yon)
+                    }}>
+                      {item.yon === 'gelen' ? 'GELEN' : 'GİDEN'}
+                    </span>
+                  </td>
+                  <td style={{...tdSt2, fontWeight:700}}>{item.numara || item.arayan || '-'}</td>
+                  <td style={{...tdSt2, color:C.textSec}}>{item.musteri_adi || '-'}</td>
+                  <td style={{...tdSt2, color:C.textSec}}>{sureFmt(item.sure_saniye || 0)}</td>
+                  <td style={{...tdSt2, color:C.textMuted, fontSize:10}}>{boyutFmt(item.kayit_boyut)}</td>
+                  <td style={{...tdSt2, color:C.textMuted, fontSize:10}}>{item.kullanici_adi || '-'}</td>
+                  <td style={{...tdSt2, minWidth:300}}>
+                    <SesOynatici kayitId={item.id} kayitDosya={item.kayit_dosya} C={C} LIcon={LIcon} api={api}/>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* SAYFALAMA */}
+      {kayitlar.length > 0 && kayitToplamSayfa > 1 && (
+        <div style={{padding:'12px 16px', borderTop:`1px solid ${C.border}`, display:'flex', justifyContent:'center', alignItems:'center', gap:4}}>
+          <button disabled={kayitSayfa <= 1} onClick={() => setKayitSayfa(1)}
+            style={{...S.btn, ...S.btnG, fontSize:10, padding:'4px 8px', opacity: kayitSayfa <= 1 ? 0.4 : 1}}>&laquo;</button>
+          <button disabled={kayitSayfa <= 1} onClick={() => setKayitSayfa(s => Math.max(1, s - 1))}
+            style={{...S.btn, ...S.btnG, fontSize:10, padding:'4px 8px', opacity: kayitSayfa <= 1 ? 0.4 : 1}}>&lsaquo;</button>
+
+          {Array.from({length: Math.min(5, kayitToplamSayfa)}, (_, i) => {
+            let p = kayitSayfa - 2 + i;
+            if (p < 1) p = i + 1;
+            if (p > kayitToplamSayfa) p = kayitToplamSayfa - (4 - i);
+            if (p < 1) p = i + 1;
+            return p;
+          }).filter((v, i, a) => v >= 1 && v <= kayitToplamSayfa && a.indexOf(v) === i).map(p => (
+            <button key={p} onClick={() => setKayitSayfa(p)}
+              style={{
+                width:28, height:28, borderRadius:6, border:`1px solid ${p === kayitSayfa ? C.accent : C.borderLight}`,
+                background: p === kayitSayfa ? C.accent : 'transparent', color: p === kayitSayfa ? '#fff' : C.textSec,
+                cursor:'pointer', fontSize:11, fontWeight:600, display:'flex', alignItems:'center', justifyContent:'center'
+              }}>{p}</button>
+          ))}
+
+          <button disabled={kayitSayfa >= kayitToplamSayfa} onClick={() => setKayitSayfa(s => Math.min(kayitToplamSayfa, s + 1))}
+            style={{...S.btn, ...S.btnG, fontSize:10, padding:'4px 8px', opacity: kayitSayfa >= kayitToplamSayfa ? 0.4 : 1}}>&rsaquo;</button>
+          <button disabled={kayitSayfa >= kayitToplamSayfa} onClick={() => setKayitSayfa(kayitToplamSayfa)}
+            style={{...S.btn, ...S.btnG, fontSize:10, padding:'4px 8px', opacity: kayitSayfa >= kayitToplamSayfa ? 0.4 : 1}}>&raquo;</button>
+
+          <span style={{fontSize:9, color:C.textMuted, marginLeft:8}}>SAYFA {kayitSayfa} / {kayitToplamSayfa} ({kayitToplam} KAYIT)</span>
+        </div>
+      )}
     </div>
   );
 };

@@ -306,6 +306,11 @@ MR.api = {
   portalMesajList(dosyaId) { return this.req('/portal/portal-mesaj-list.php?dosya_id=' + dosyaId); },
   portalMesajGonder(d) { return this.req('/portal/portal-mesaj-gonder.php', { method: 'POST', body: JSON.stringify(d) }); },
   portalLoglar(p = {}) { return this.req('/portal/loglar.php?' + new URLSearchParams(p)); },
+  // OTOMATİK ARAMA (NETSANTRAL)
+  autocallListeOlustur(d) { return this.req('/netsantral/autocall-olustur.php', { method: 'POST', body: JSON.stringify(d) }); },
+  autocallListeler() { return this.req('/netsantral/autocall-listeler.php'); },
+  autocallRapor(listId) { return this.req('/netsantral/autocall-rapor.php?list_id=' + listId); },
+  autocallListeDurdur(listId) { return this.req('/netsantral/autocall-durdur.php', { method: 'POST', body: JSON.stringify({list_id: listId}) }); },
   // İÇTİHAT
   ictihatYargitayAra(d) { return this.req('/ictihat/yargitay-ara.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
   ictihatTahkimAra(d) { return this.req('/ictihat/tahkim-ara.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },

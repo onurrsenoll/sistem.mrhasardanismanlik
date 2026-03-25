@@ -18,6 +18,7 @@ const MENU = [
     {id:'saha-liste', label:'SAHA DOSYALARI', icon:'MapPin'},
     {id:'saha-yeni', label:'YENİ SAHA KAYDI', icon:'PlusCircle'}
   ]},
+  {id:'eposta', label:'E-POSTA', icon:'Mail'},
   {id:'hesap', label:'HESAPLAMALAR', icon:'Calculator', sub:[
     {id:'hesap-adk', label:'ARAÇ DEĞER KAYBI', icon:'Car'},
     {id:'hesap-bh', label:'BEDENİ HASAR', icon:'Heart'}
@@ -33,7 +34,8 @@ const MENU = [
     {id:'police-yenileme', label:'YENİLEME TAKİBİ', icon:'RefreshCw'},
     {id:'police-tahsilat', label:'TAHSİLAT / CARİ', icon:'Wallet'},
     {id:'police-rapor', label:'RAPORLAR', icon:'BarChart3'},
-    {id:'police-kazanc', label:'KAZANÇ', icon:'TrendingUp'}
+    {id:'police-kazanc', label:'KAZANÇ', icon:'TrendingUp'},
+    {id:'police-qr-ruhsat', label:'QR RUHSAT OKUYUCU', icon:'QrCode'}
   ]},
   {id:'muhasebe', label:'MUHASEBE', icon:'Landmark', sub:[
     {id:'muhasebe-gelir', label:'GELİR YÖNETİMİ', icon:'TrendingUp'},
@@ -79,6 +81,7 @@ const MENU = [
 const MENU_MODUL = {
   dosya: 'dosya',
   crm: 'crm',
+  eposta: 'eposta',
   hesap: 'hesaplamalar',
   paydaslar: 'paydaslar',
   muhasebe: 'muhasebe',
@@ -175,9 +178,8 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
         : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)'
     }}>
       {/* SOL ÜST LOGO - ANASAYFAYA YÖNLENDİRİR */}
-      <a
-        href="#/"
-        onClick={(e) => { e.preventDefault(); setPage('home'); setMenuOpen(null); }}
+      <div
+        onClick={() => { setPage('home'); setMenuOpen(null); }}
         style={{
           height: 40, minWidth: 40, maxWidth: 150, flexShrink: 0,
           borderRadius: 12, cursor: 'pointer', marginRight: 10,
@@ -204,7 +206,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
             textShadow: isK ? `0 0 20px ${C.accent}40` : 'none'
           }}>MR</div>
         )}
-      </a>
+      </div>
 
       {/* MENÜ - ESNEK ALAN, TEK SATIR */}
       <div style={{
@@ -213,10 +215,8 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
       }}>
         {filteredMenu.map(m => (
           <div key={m.id} style={{position: 'relative'}}>
-            <a
-              href={m.sub ? `#/${m.sub[0]?.id || m.id}` : `#/${m.id}`}
-              onClick={(e) => {
-                e.preventDefault();
+            <div
+              onClick={() => {
                 if (m.sub) { setMenuOpen(menuOpen === m.id ? null : m.id); }
                 else { setPage(m.id); setMenuOpen(null); }
               }}
@@ -227,7 +227,6 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                 color: isActive(m) ? C.accent : C.text,
                 background: isActive(m) ? `${C.accent}15` : 'transparent',
                 transition: 'all .2s', position: 'relative',
-                textDecoration: 'none',
                 boxShadow: isActive(m)
                   ? (isK ? '0 1px 2px rgba(0,0,0,0.05)' : '0 1px 2px rgba(0,0,0,0.05)')
                   : 'none'
@@ -246,7 +245,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                 }}>{bildirimSayisi > 9 ? '9+' : bildirimSayisi}</span>
               )}
               {m.sub && <LIcon name="ChevronDown" size={10} color={C.textMuted}/>}
-            </a>
+            </div>
 
             {/* DROPDOWN */}
             {m.sub && menuOpen === m.id && (
@@ -263,13 +262,12 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                 maxHeight: 'calc(100vh - 80px)', overflowY: 'auto'
               }}>
                 {m.sub.map(s => (
-                  <a key={s.id}
-                    href={`#/${s.id}`}
-                    onClick={(e) => { e.preventDefault(); setPage(s.id); setMenuOpen(null); }}
+                  <div key={s.id}
+                    onClick={() => { setPage(s.id); setMenuOpen(null); }}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10,
                       padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
-                      fontSize: 13, fontWeight: 700, textDecoration: 'none',
+                      fontSize: 13, fontWeight: 700,
                       color: page === s.id ? C.accent : C.textSec,
                       background: page === s.id ? `${C.accent}12` : 'transparent',
                       transition: 'all .15s',
@@ -282,7 +280,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                   >
                     <LIcon name={s.icon} size={14} color={page === s.id ? C.accent : C.textMuted}/>
                     {s.label}
-                  </a>
+                  </div>
                 ))}
               </div>
             )}
@@ -356,12 +354,12 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                   <div style={{fontSize: 10, color: C.textMuted}}>{user?.email}</div>
                 </div>
               </div>
-              <a href="#/profil" onClick={(e) => { e.preventDefault(); setPage('profil'); setProfilOpen(false); }}
-                style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 600, color: C.textSec, textDecoration: 'none'}}
+              <div onClick={() => { setPage('profil'); setProfilOpen(false); }}
+                style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 600, color: C.textSec}}
                 onMouseEnter={e => e.currentTarget.style.background = `${C.accent}0c`}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                 <LIcon name="User" size={14} color={C.textMuted}/> PROFİL
-              </a>
+              </div>
               <div onClick={onLogout}
                 style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 600, color: C.danger}}
                 onMouseEnter={e => e.currentTarget.style.background = `${C.danger}0c`}
@@ -444,6 +442,10 @@ const Breadcrumb = ({page, setPage}) => {
     parts.push({label: 'SİSTEM', id: 'sistem'});
     parts.push({label: sistemLabels[page] || page.replace('sistem-','').toUpperCase(), id: page});
   }
+  if (page === 'crm-analiz' && parts.length <= 1) {
+    parts.push({label: 'SİSTEM', id: 'sistem'});
+    parts.push({label: 'CRM ANALİZ', id: 'crm-analiz'});
+  }
   if (page.startsWith('tanimlamalar-') && parts.length <= 1) {
     const tanimLabels = {
       'tanimlamalar-dosya': 'DOSYA TANIMLAMALARI', 'tanimlamalar-evrak': 'EVRAK TANIMLAMALARI',
@@ -452,6 +454,9 @@ const Breadcrumb = ({page, setPage}) => {
     };
     parts.push({label: 'SİSTEM', id: 'sistem'});
     parts.push({label: tanimLabels[page] || 'TANIMLAMALAR', id: page});
+  }
+  if (page === 'eposta' && parts.length <= 1) {
+    parts.push({label: 'E-POSTA', id: 'eposta'});
   }
   if (page === 'mesajlar-sistem' && parts.length <= 1) {
     parts.push({label: 'SİSTEM', id: 'sistem'});
@@ -473,11 +478,11 @@ const Breadcrumb = ({page, setPage}) => {
         <React.Fragment key={i}>
           {i > 0 && <LIcon name="ChevronRight" size={12} color={C.textMuted}/>}
           {i < parts.length - 1 ? (
-            <a href={`#/${p.id}`} onClick={(e) => { e.preventDefault(); setPage(p.id); }} style={{cursor: 'pointer', color: C.textSec, textDecoration: 'none'}}
+            <span onClick={() => setPage(p.id)} style={{cursor: 'pointer', color: C.textSec}}
               onMouseEnter={e => e.currentTarget.style.color = C.accent}
               onMouseLeave={e => e.currentTarget.style.color = C.textSec}>
               {p.label}
-            </a>
+            </span>
           ) : (
             <span style={{color: C.text, fontWeight: 600}}>{p.label}</span>
           )}
@@ -738,8 +743,6 @@ const ProfilPage = ({user, setUser}) => {
           </div>
         </div>
       </div>
-
-      {/* NETSANTRAL AYARLARI SİSTEM MENÜSÜNE TAŞINDI → sistem-netsantral */}
     </div>
   );
 };
@@ -760,6 +763,7 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   if (page === 'crm-liste') return <MR.CrmPage setPage={setPage} user={user} view="liste"/>;
   if (page === 'crm-yeni') return <MR.CrmPage setPage={setPage} user={user} view="yeni"/>;
   if (page === 'crm-arama') return <MR.CrmAramaPage setPage={setPage} user={user}/>;
+  if (page === 'crm-analiz') return <MR.AramaGecmisPage setPage={setPage} user={user}/>;
   if (crmIdMatch) return <MR.CrmPage setPage={setPage} user={user} view="detay" crmId={parseInt(crmIdMatch[1])}/>;
 
   /* SAHA DOSYALARI */
@@ -783,6 +787,9 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     const sub = page.replace('personel-', '') || 'liste';
     return <MR.PersonelPage setPage={setPage} user={user} subPage={sub === 'personel' ? 'liste' : sub}/>;
   }
+
+  /* QR RUHSAT OKUYUCU */
+  if (page === 'police-qr-ruhsat') return <MR.QrRuhsatPage setPage={setPage} user={user}/>;
 
   /* POLİÇE */
   if (page.startsWith('police')) {
@@ -808,6 +815,9 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     return <MR.IctihatPage setPage={setPage} user={user} subPage={sub === 'ictihat' ? 'yargitay' : sub}/>;
   }
 
+  /* E-POSTA */
+  if (page === 'eposta') return <MR.MailPage setPage={setPage} user={user}/>;
+
   /* AJANDA */
   if (page === 'ajanda') return <MR.AjandaPage setPage={setPage} user={user}/>;
 
@@ -821,23 +831,10 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     return <MR.NetsantralAyarlariPage setPage={setPage} user={user}/>;
   }
 
-  /* CRM ANALİZ (Arama Geçmişi + İstatistik + Cevapsız + Görüşme Kayıtları tek menüde) */
-  if (page === 'crm-analiz') {
-    return <MR.AramaGecmisPage setPage={setPage} user={user}/>;
-  }
-
   /* KONUM TAKİBİ (ADMIN ONLY) */
   if (page === 'sistem-konum') {
     if (user?.rol !== 'admin') return <div style={{padding:40,textAlign:'center',color:MR.C.danger,fontWeight:800}}>YETKİSİZ ERİŞİM</div>;
     return <MR.KonumTakipPage setPage={setPage} user={user}/>;
-  }
-
-  /* NETSANTRAL AYARLARI */
-  if (page === 'sistem-netsantral') {
-    if (user?.rol !== 'admin' && !MR.hasYetki(user, 'netsantral', 'netsantral-goruntule')) {
-      return <div style={{padding:40,textAlign:'center',color:MR.C.danger,fontWeight:800}}>YETKİSİZ ERİŞİM</div>;
-    }
-    return <MR.NetsantralAyarlariPage setPage={setPage} user={user}/>;
   }
 
   /* SİSTEM */
@@ -888,11 +885,7 @@ const App = () => {
     (async () => {
       if (api.token) {
         const r = await api.me();
-        if (r?.success) {
-          const u = r.data?.user || r.data;
-          setUser(u);
-          if (MR.webrtcOtoBaslat) MR.webrtcOtoBaslat(u);
-        }
+        if (r?.success) { setUser(r.data?.user || r.data); }
         else { api.setToken(null); }
       }
       setLoading(false);
@@ -947,6 +940,74 @@ const App = () => {
   /* KULLANICI DEĞİŞTİĞİNDE GLOBAL REFERANSI GÜNCELLE (YETKİ KONTROLÜ İÇİN) */
   useEffect(() => {
     MR._currentUser = user;
+  }, [user]);
+
+  /* ═══ ARAMA LOG — WEBRTC ÇAĞRI BİTTİĞİNDE OTOMATİK KAYIT ═══ */
+  useEffect(() => {
+    if (!user) return;
+    var aramaBaslangic = null;
+    var aramaNumara = '';
+    var aramaAdi = '';
+    var aramaYon = 'giden';
+    var gorusmeCevaplandi = false;
+
+    const durumHandler = (e) => {
+      const d = e.detail;
+      if (!d) return;
+
+      if (d.durum === 'araniyor') {
+        aramaBaslangic = Date.now();
+        aramaNumara = d.detay || '';
+        aramaYon = 'giden';
+        gorusmeCevaplandi = false;
+      }
+      if (d.durum === 'gelen-cagri') {
+        aramaBaslangic = Date.now();
+        aramaYon = 'gelen';
+        gorusmeCevaplandi = false;
+        if (d.detay) {
+          aramaNumara = d.detay.arayan || '';
+          aramaAdi = d.detay.arayanAdi || '';
+        }
+      }
+      if (d.durum === 'gorusmede') {
+        gorusmeCevaplandi = true;
+        aramaBaslangic = Date.now();
+      }
+      if (d.durum === 'kapandi' || d.durum === 'reddedildi' || (d.durum === 'hata' && aramaBaslangic)) {
+        var sure = aramaBaslangic ? Math.round((Date.now() - aramaBaslangic) / 1000) : 0;
+        var durum = gorusmeCevaplandi ? 'cevaplandi' : (d.durum === 'reddedildi' ? 'reddedildi' : 'cevapsiz');
+        if (d.durum === 'hata') {
+          var detayStr = (d.detay || '').toLowerCase();
+          if (detayStr.indexOf('rejected') >= 0 || detayStr.indexOf('busy') >= 0) durum = 'reddedildi';
+          else durum = 'cevapsiz';
+        }
+        if (aramaNumara) {
+          var now = new Date();
+          var baslangic = now.getFullYear() + '-' +
+            String(now.getMonth()+1).padStart(2,'0') + '-' +
+            String(now.getDate()).padStart(2,'0') + ' ' +
+            String(now.getHours()).padStart(2,'0') + ':' +
+            String(now.getMinutes()).padStart(2,'0') + ':' +
+            String(now.getSeconds()).padStart(2,'0');
+          api.aramaLogCreate({
+            numara: aramaNumara,
+            yon: aramaYon,
+            durum: durum,
+            sure_saniye: sure,
+            baslangic_zamani: baslangic,
+            musteri_adi: aramaAdi || ''
+          }).catch(() => {});
+        }
+        aramaBaslangic = null;
+        aramaNumara = '';
+        aramaAdi = '';
+        gorusmeCevaplandi = false;
+      }
+    };
+
+    window.addEventListener('mr-webrtc-durum', durumHandler);
+    return () => window.removeEventListener('mr-webrtc-durum', durumHandler);
   }, [user]);
 
   /* ═══ SESSİZ KONUM TAKİP SERVİSİ — TÜM KULLANICILAR ═══ */
@@ -1222,12 +1283,7 @@ const App = () => {
     setUser(u);
     try {
       const r = await api.me();
-      if (r?.success) {
-        const fullUser = r.data?.user || r.data;
-        setUser(fullUser);
-        /* WebRTC otomatik başlat */
-        if (MR.webrtcOtoBaslat) MR.webrtcOtoBaslat(fullUser);
-      }
+      if (r?.success) { setUser(r.data?.user || r.data); }
     } catch(e) {}
   };
 
@@ -1308,9 +1364,6 @@ const App = () => {
         </div>
       </div>
 
-
-      {/* WEBRTC FLOATING TELEFON WİDGET */}
-      {MR.WebrtcWidget && <MR.WebrtcWidget user={user} setPage={setPage}/>}
 
       {/* ANİMASYON CSS */}
       <style>{`

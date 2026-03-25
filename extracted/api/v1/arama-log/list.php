@@ -73,8 +73,8 @@ if (!empty($_GET['q'])) {
     $params[] = $q;
 }
 
-// Sadece kayitli gorusmeler
-if (!empty($_GET['sadece_kayitli'])) {
+// Sadece kayitli gorusmeleri getir
+if (!empty($_GET['kayitli']) && $_GET['kayitli'] == '1') {
     $where[] = "a.kayit_dosya IS NOT NULL AND a.kayit_dosya != ''";
 }
 

@@ -105,6 +105,10 @@ MR.api = {
     const h = {}; if (this.token) h['Authorization'] = 'Bearer ' + this.token;
     return (await fetch(API_BASE + '/crm/dosya-yukle.php', { method: 'POST', headers: h, body: fd })).json();
   },
+  // CRM ARAMA LOG
+  aramaLogList(p = {}) { return this.req('/arama-log/list.php?' + new URLSearchParams(p)); },
+  aramaLogIstatistik(p = {}) { return this.req('/arama-log/istatistik.php?' + new URLSearchParams(p)); },
+  aramaLogCreate(d) { return this.req('/arama-log/create.php', { method: 'POST', body: JSON.stringify(d) }); },
   // MUHASEBE
   kasaList() { return this.req('/muhasebe/kasa-list.php'); },
   kasaCreate(d) { return this.req('/muhasebe/kasa-create.php', { method: 'POST', body: JSON.stringify(d) }); },
@@ -229,18 +233,21 @@ MR.api = {
   smsGonder(d) { return this.req('/sms/gonder.php', { method: 'POST', body: JSON.stringify(d) }); },
   smsGelenList(p = {}) { return this.req('/sms/gelen-list.php?' + new URLSearchParams(p)); },
   smsGelenOkundu(d) { return this.req('/sms/gelen-okundu.php', { method: 'POST', body: JSON.stringify(d) }); },
-  // ARAMA LOG
-  aramaLogList(p = {}) { return this.req('/arama-log/list.php?' + new URLSearchParams(p)); },
-  aramaLogCreate(d) { return this.req('/arama-log/create.php', { method: 'POST', body: JSON.stringify(d) }); },
-  aramaLogUpdate(d) { return this.req('/arama-log/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
-  aramaLogDelete(id) { return this.req('/arama-log/delete.php?id=' + id, { method: 'DELETE' }); },
-  aramaLogIstatistik(p = {}) { return this.req('/arama-log/istatistik.php?' + new URLSearchParams(p)); },
-  aramaLogKayitUrl(id) { return API_BASE + '/arama-log/kayit-indir.php?id=' + id; },
-  async aramaLogKayitYukle(logId, file) {
-    const fd = new FormData(); fd.append('arama_log_id', logId); fd.append('file', file);
-    const h = {}; if (this.token) h['Authorization'] = 'Bearer ' + this.token;
-    return (await fetch(API_BASE + '/arama-log/kayit-yukle.php', { method: 'POST', headers: h, body: fd })).json();
-  },
+  smsTopluGonder(d) { return this.req('/sms/toplu-gonder.php', { method: 'POST', body: JSON.stringify(d) }); },
+  smsKredi() { return this.req('/sms/kredi.php'); },
+  smsRapor(p = {}) { return this.req('/sms/rapor.php?' + new URLSearchParams(p)); },
+  smsBasliklar() { return this.req('/sms/basliklar.php'); },
+  smsIptal(d) { return this.req('/sms/iptal.php', { method: 'POST', body: JSON.stringify(d) }); },
+  // MAIL (E-POSTA)
+  mailHesaplar() { return this.req('/mail/hesaplar.php'); },
+  mailHesapKaydet(d) { return this.req('/mail/hesaplar.php', { method: 'POST', body: JSON.stringify(d) }); },
+  mailHesapSil(d) { return this.req('/mail/hesaplar.php', { method: 'DELETE', body: JSON.stringify(d) }); },
+  mailList(p = {}) { return this.req('/mail/list.php?' + new URLSearchParams(p)); },
+  mailGet(id) { return this.req('/mail/get.php?id=' + id); },
+  mailGonder(d) { return this.req('/mail/gonder.php', { method: 'POST', body: JSON.stringify(d) }); },
+  mailSync(d) { return this.req('/mail/sync.php', { method: 'POST', body: JSON.stringify(d) }, 60000); },
+  mailIslem(d) { return this.req('/mail/islem.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  mailTest(d) { return this.req('/mail/test.php', { method: 'POST', body: JSON.stringify(d) }, 30000); },
   // ARAÇ KATALOG
   aracMarkaList() { return this.req('/tanim/arac-marka-list.php'); },
   aracModelList(marka) { return this.req('/tanim/arac-model-list.php?marka=' + encodeURIComponent(marka)); },
@@ -299,6 +306,11 @@ MR.api = {
   portalMesajList(dosyaId) { return this.req('/portal/portal-mesaj-list.php?dosya_id=' + dosyaId); },
   portalMesajGonder(d) { return this.req('/portal/portal-mesaj-gonder.php', { method: 'POST', body: JSON.stringify(d) }); },
   portalLoglar(p = {}) { return this.req('/portal/loglar.php?' + new URLSearchParams(p)); },
+  // OTOMATİK ARAMA (NETSANTRAL)
+  autocallListeOlustur(d) { return this.req('/netsantral/autocall-olustur.php', { method: 'POST', body: JSON.stringify(d) }); },
+  autocallListeler() { return this.req('/netsantral/autocall-listeler.php'); },
+  autocallRapor(listId) { return this.req('/netsantral/autocall-rapor.php?list_id=' + listId); },
+  autocallListeDurdur(listId) { return this.req('/netsantral/autocall-durdur.php', { method: 'POST', body: JSON.stringify({list_id: listId}) }); },
   // İÇTİHAT
   ictihatYargitayAra(d) { return this.req('/ictihat/yargitay-ara.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
   ictihatTahkimAra(d) { return this.req('/ictihat/tahkim-ara.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },

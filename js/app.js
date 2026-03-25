@@ -15,7 +15,6 @@ const MENU = [
     {id:'crm-liste', label:'CRM LİSTESİ', icon:'List'},
     {id:'crm-yeni', label:'YENİ KAYIT', icon:'UserPlus'},
     {id:'crm-arama', label:'ARAMA LİSTESİ', icon:'PhoneCall'},
-    {id:'crm-analiz', label:'CRM ANALİZ', icon:'BarChart3'},
     {id:'saha-liste', label:'SAHA DOSYALARI', icon:'MapPin'},
     {id:'saha-yeni', label:'YENİ SAHA KAYDI', icon:'PlusCircle'}
   ]},
@@ -442,6 +441,10 @@ const Breadcrumb = ({page, setPage}) => {
     };
     parts.push({label: 'SİSTEM', id: 'sistem'});
     parts.push({label: sistemLabels[page] || page.replace('sistem-','').toUpperCase(), id: page});
+  }
+  if (page === 'crm-analiz' && parts.length <= 1) {
+    parts.push({label: 'SİSTEM', id: 'sistem'});
+    parts.push({label: 'CRM ANALİZ', id: 'crm-analiz'});
   }
   if (page.startsWith('tanimlamalar-') && parts.length <= 1) {
     const tanimLabels = {
