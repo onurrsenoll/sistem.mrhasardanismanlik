@@ -600,9 +600,9 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                       {/* SİGORTA HASAR NO */}
                       <td style={{...tdTrunc,fontFamily:'monospace'}} title={d.hasar_no||''}>{d.hasar_no || '-'}</td>
                       {/* KAZA TARİHİ */}
-                      <td style={tdS}>{d.kaza_tarihi || '-'}</td>
+                      <td style={tdS}>{MR.tarihFmt ? MR.tarihFmt(d.kaza_tarihi) : (d.kaza_tarihi || '-')}</td>
                       {/* AÇILIŞ TARİHİ */}
-                      <td style={tdS}>{d.acilis_tarihi || '-'}</td>
+                      <td style={tdS}>{MR.tarihFmt ? MR.tarihFmt(d.acilis_tarihi) : (d.acilis_tarihi || '-')}</td>
                       {/* DOSYA AŞAMA DURUMU */}
                       <td style={tdS}>
                         <span style={{display:'inline-block',padding:'2px 6px',borderRadius:4,fontSize:8,fontWeight:600,
