@@ -123,6 +123,11 @@ MR.AramaGecmisPage = ({setPage, user}) => {
     setSayfa(1);
   };
 
+  /* NETSANTRAL DAHİLİ BİLGİSİ */
+  const santralNo = localStorage.getItem('mr_netsantral_no') || (MR._netsantralVarsayilan && MR._netsantralVarsayilan.santralNo) || '3625026502';
+  const dahili = localStorage.getItem('mr_netsantral_dahili') || (MR._netsantralVarsayilan && MR._netsantralVarsayilan.dahili) || '102';
+  const netsantralGosterim = '0' + santralNo + ' - ' + dahili;
+
   /* YÖN RENK */
   const yonRenk = (y) => y === 'gelen' ? C.success : y === 'giden' ? C.accent : C.textSec;
   const durumRenk = (d) => {
@@ -246,11 +251,10 @@ MR.AramaGecmisPage = ({setPage, user}) => {
                           </span>
                         </td>
                         <td style={{...tdSt, fontWeight:600}}>
-                          {/* ARAYAN: Giden aramada dahili/sistem numarası, Gelen aramada karşı taraf */}
+                          {/* ARAYAN: Giden aramada Netsantral/dahili, Gelen aramada karşı taraf */}
                           {item.yon === 'giden' ? (
                             <div>
-                              {item.arayan_adi && <div style={{fontSize:11, fontWeight:700}}>{item.arayan_adi}</div>}
-                              <div style={{fontSize:10, color:C.textMuted}}>{item.dahili || item.arayan || '-'}</div>
+                              <div style={{fontSize:10, color:C.textMuted}}>{netsantralGosterim}</div>
                             </div>
                           ) : (
                             <div>
@@ -260,11 +264,14 @@ MR.AramaGecmisPage = ({setPage, user}) => {
                           )}
                         </td>
                         <td style={{...tdSt, fontWeight:600}}>
-                          {/* ARANAN: Giden aramada karşı taraf numara, Gelen aramada dahili */}
+                          {/* ARANAN: Giden aramada karşı taraf numara, Gelen aramada Netsantral/dahili */}
                           {item.yon === 'giden' ? (
-                            <div style={{fontSize:11}}>{item.aranan || item.arayan || '-'}</div>
+                            <div>
+                              {item.arayan_adi && <div style={{fontSize:11, fontWeight:700}}>{item.arayan_adi}</div>}
+                              <div style={{fontSize:11, fontWeight:700}}>{item.aranan || item.arayan || '-'}</div>
+                            </div>
                           ) : (
-                            <div style={{fontSize:10, color:C.textMuted}}>{item.aranan || item.dahili || '-'}</div>
+                            <div style={{fontSize:10, color:C.textMuted}}>{netsantralGosterim}</div>
                           )}
                         </td>
                         <td style={tdSt}>
@@ -324,28 +331,24 @@ MR.AramaGecmisPage = ({setPage, user}) => {
           <div style={{padding:20}}>
             {statsLoading ? <Loading/> : (
               <>
-                <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:20}}>
+                {/* SADECE ÜSTTEKİ KARTLARDA OLMAYAN EK İSTATİSTİKLER - KÜÇÜK BOYUT */}
+                <div style={{display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:10, marginBottom:20}}>
                   {[
-                    {label:'TOPLAM ARAMA', value:stats.toplam_arama, icon:'Phone', c:C.accent},
-                    {label:'GELEN ÇAĞRI', value:stats.gelen_arama, icon:'PhoneIncoming', c:C.success},
-                    {label:'GİDEN ÇAĞRI', value:stats.giden_arama, icon:'PhoneOutgoing', c:C.accent},
                     {label:'CEVAPLANAN', value:stats.cevaplanan, icon:'PhoneCall', c:C.success},
-                    {label:'CEVAPSIZ', value:stats.cevapsiz, icon:'PhoneMissed', c:C.danger},
                     {label:'REDDEDİLEN', value:stats.reddedilen, icon:'PhoneOff', c:C.warning},
-                    {label:'ORT. GÖRÜŞME SÜRESİ', value:sureFmt(stats.ort_sure), icon:'Clock', c:C.warning},
-                    {label:'EN UZUN GÖRÜŞME', value:sureFmt(stats.en_uzun_gorusme), icon:'Timer', c:C.purple},
-                    {label:'KAYITLI GÖRÜŞME', value:stats.kayitli_gorusme, icon:'UserCheck', c:C.cyan},
+                    {label:'EN UZUN GÖRÜŞME', value:sureFmt(stats.en_uzun_gorusme), icon:'Clock', c:C.purple},
                     {label:'CEVAPLANMA ORANI', value: stats.toplam_arama > 0 ? '%' + ((stats.cevaplanan / stats.toplam_arama) * 100).toFixed(1) : '%0', icon:'TrendingUp', c:C.success},
-                    {label:'TOPLAM SÜRE', value:sureFmt(stats.toplam_sure), icon:'Hourglass', c:C.accent},
+                    {label:'TOPLAM SÜRE', value:sureFmt(stats.toplam_sure), icon:'Clock', c:C.accent},
                     {label:'GELEN / GİDEN', value: stats.giden_arama > 0 ? (stats.gelen_arama / stats.giden_arama).toFixed(2) : '-', icon:'ArrowLeftRight', c:C.purple}
                   ].map((item, i) => (
                     <div key={i} style={{
-                      background:`${item.c}08`, border:`1px solid ${item.c}20`,
-                      borderRadius:14, padding:20, textAlign:'center'
+                      ...S.stat, display:'flex', alignItems:'center', gap:12, padding:'10px 16px'
                     }}>
-                      <LIcon name={item.icon} size={24} color={item.c} style={{opacity:0.7, marginBottom:8}}/>
-                      <div style={{fontSize:28, fontWeight:800, color:item.c}}>{item.value}</div>
-                      <div style={{fontSize:10, color:C.textMuted, marginTop:6, fontWeight:600, letterSpacing:0.5}}>{item.label}</div>
+                      <div style={{width:34,height:34,minWidth:34,borderRadius:8,background:`${item.c}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                        <LIcon name={item.icon} size={16} color={item.c}/>
+                      </div>
+                      <div style={{fontSize:20, fontWeight:800, lineHeight:1}}>{item.value}</div>
+                      <div style={{fontSize:11, color:C.textMuted, fontWeight:600}}>{item.label}</div>
                     </div>
                   ))}
                 </div>
@@ -593,29 +596,31 @@ const SesOynatici = ({kayitId, kayitDosya, C, LIcon, api}) => {
       <div style={{flex:1, display:'flex', alignItems:'center', gap:6, minWidth:140}}>
         <span style={{fontSize:9, fontWeight:700, color: caliniyor ? C.accent : C.textMuted, minWidth:36, textAlign:'right', fontFamily:'monospace'}}>{sureFmtDetay(sure)}</span>
         <div ref={sliderRef} onClick={progressClick} style={{
-          flex:1, height:6, borderRadius:3, background:C.border, cursor:'pointer',
-          position:'relative', overflow:'hidden'
+          flex:1, height:16, borderRadius:3, background:'transparent', cursor:'pointer',
+          position:'relative', display:'flex', alignItems:'center'
         }}>
-          {/* BUFFER */}
-          <div style={{position:'absolute', top:0, left:0, height:'100%', borderRadius:3,
-            width: bufPct + '%', background: C.textMuted + '30', transition:'width .3s'}}/>
-          {/* PROGRESS */}
-          <div style={{position:'absolute', top:0, left:0, height:'100%', borderRadius:3,
-            width: pct + '%', background: caliniyor ? 'linear-gradient(90deg, #10b981, #06b6d4)' : C.accent,
-            transition: isSeeking.current ? 'none' : 'width .15s', boxShadow: caliniyor ? '0 0 6px rgba(16,185,129,0.4)' : 'none'}}/>
+          {/* PROGRESS TRACK */}
+          <div style={{position:'absolute', left:0, width:'100%', height:6, borderRadius:3, background:C.border, overflow:'hidden'}}>
+            {/* BUFFER */}
+            <div style={{position:'absolute', top:0, left:0, height:'100%', borderRadius:3,
+              width: bufPct + '%', background: C.textMuted + '30', transition:'width .3s'}}/>
+            {/* PROGRESS */}
+            <div style={{position:'absolute', top:0, left:0, height:'100%', borderRadius:3,
+              width: pct + '%', background: caliniyor ? 'linear-gradient(90deg, #10b981, #06b6d4)' : C.accent,
+              transition: isSeeking.current ? 'none' : 'width .15s', boxShadow: caliniyor ? '0 0 6px rgba(16,185,129,0.4)' : 'none'}}/>
+          </div>
           {/* THUMB */}
           <div style={{position:'absolute', top:'50%', transform:'translate(-50%,-50%)',
             left: pct + '%', width:12, height:12, borderRadius:'50%',
             background:'#fff', border:'2px solid ' + (caliniyor ? '#10b981' : C.accent),
             boxShadow:'0 1px 4px rgba(0,0,0,0.25)', transition: isSeeking.current ? 'none' : 'left .15s',
-            opacity: toplamSure > 0 ? 1 : 0}}/>
-        </div>
-        {/* GİZLİ RANGE INPUT - SEEK İÇİN */}
-        <input type="range" min="0" max={toplamSure || 1} step="0.01" value={sure}
-          onMouseDown={sliderBasla} onTouchStart={sliderBasla}
-          onChange={sliderDegisti}
-          onMouseUp={sliderBirakti} onTouchEnd={sliderBirakti}
-          style={{position:'absolute', left:0, top:0, width:'100%', height:'100%', opacity:0, cursor:'pointer', margin:0, padding:0, display:'none'}}/>
+            opacity: toplamSure > 0 ? 1 : 0, zIndex:1}}/>
+          {/* RANGE INPUT - SEEK İÇİN (şeffaf overlay) */}
+          <input type="range" min="0" max={toplamSure || 1} step="0.01" value={sure}
+            onMouseDown={sliderBasla} onTouchStart={sliderBasla}
+            onChange={sliderDegisti}
+            onMouseUp={sliderBirakti} onTouchEnd={sliderBirakti}
+            style={{position:'absolute', left:0, top:0, width:'100%', height:'100%', opacity:0, cursor:'pointer', margin:0, padding:0, zIndex:2}}/>
         <span style={{fontSize:9, fontWeight:700, color:C.textMuted, minWidth:36, fontFamily:'monospace'}}>{sureFmtDetay(toplamSure)}</span>
       </div>
 
