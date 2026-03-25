@@ -396,7 +396,7 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
     ? 'linear-gradient(135deg, #1e3a5f 0%, #0f2342 100%)'
     : 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)';
   const thS = {padding:'10px 8px',textAlign:'left',fontWeight:800,fontSize:'11px',whiteSpace:'nowrap',color:'#FFFFFF',position:'sticky',top:0,background:isKoyu?'#0f2342':'#1e40af',zIndex:2,letterSpacing:0.5,borderBottom:'none'};
-  const thSticky = {...thS,position:'sticky',right:0,zIndex:3,background:isKoyu?'#0f2342':'#1e40af',textAlign:'center'};
+  const thSticky = {...thS,textAlign:'center'};
 
   /* ── TD STİLLERİ ── */
   const tdS = {padding:'10px 8px',fontSize:'12px',fontWeight:600,whiteSpace:'nowrap',color:isKoyu?'#e2e8f0':'#1e293b',borderBottom:'none'};
@@ -591,19 +591,19 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                         </span>
                       </td>
                       {/* İŞLEM - STICKY */}
-                      <td style={{...tdS,position:'sticky',right:0,background:tdStickyBg(i),textAlign:'center'}}>
-                        <div style={{display:'flex',gap:6,justifyContent:'center',alignItems:'center'}}>
+                      <td style={{...tdS,textAlign:'center'}}>
+                        <div style={{display:'flex',gap:4,justifyContent:'center',alignItems:'center'}}>
                           <a href={'#/dosya-detay-'+d.id} onClick={e=>{if(!e.ctrlKey&&!e.metaKey){e.preventDefault();onSelect(d.id);}}}
-                            title="GÖRÜNTÜLE" style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.accent}11`,textDecoration:'none'}}>
-                            <LIcon name="Eye" size={12} color={C.accent}/>
+                            title="GÖRÜNTÜLE" style={{width:28,height:28,borderRadius:6,border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',justifyContent:'center',background:`${C.accent}18`,transition:'all .2s',textDecoration:'none'}}>
+                            <LIcon name="Eye" size={13} color={C.accent}/>
                           </a>
                           <span title="YENİ SEKMEDE AÇ" onClick={()=>window.open('#/dosya-detay-'+d.id,'_blank')}
-                            style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.cyan||'#06b6d4'}11`}}>
-                            <LIcon name="ExternalLink" size={12} color={C.cyan||'#06b6d4'}/>
+                            style={{width:28,height:28,borderRadius:6,border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',justifyContent:'center',background:`${C.cyan||'#06b6d4'}18`,transition:'all .2s'}}>
+                            <LIcon name="ExternalLink" size={13} color={C.cyan||'#06b6d4'}/>
                           </span>
                           {!isAvukat && <span title="SİL" onClick={(e) => { e.stopPropagation(); setDeleteConfirm({id: d.id, text: d.dosya_no}); }}
-                            style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.danger}11`}}>
-                            <LIcon name="Trash2" size={12} color={C.danger}/>
+                            style={{width:28,height:28,borderRadius:6,border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',justifyContent:'center',background:`${C.danger}18`,transition:'all .2s'}}>
+                            <LIcon name="Trash2" size={13} color={C.danger}/>
                           </span>}
                         </div>
                       </td>

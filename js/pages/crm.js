@@ -281,6 +281,7 @@ MR._CRMListesiInner = ({setPage, user}) => {
 
   // DURUM DEĞİŞTİR DROPDOWN
   const [durumDropId, setDurumDropId] = useState(null);
+  const [durumDropPos, setDurumDropPos] = useState({top:0,left:0});
 
   // SİL ONAY
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -454,7 +455,7 @@ MR._CRMListesiInner = ({setPage, user}) => {
 
         {/* TABLO */}
         {loading ? <Loading/> : (
-          <div style={{overflowX: 'auto', overflow: durumDropId ? 'visible' : 'auto'}}>
+          <div style={{overflowX: 'auto'}}>
             <table style={{width: '100%', borderCollapse: 'collapse', fontSize: 11, minWidth: 1000}}>
               <thead>
                 <tr style={{background:isKoyu?'#0f2342':'#1e40af'}}>
@@ -517,12 +518,12 @@ MR._CRMListesiInner = ({setPage, user}) => {
                         {/* DURUM DEĞİŞTİR */}
                         <div style={{position: 'relative'}}>
                           <button style={iconBtn(C.cyan)} title="DURUM DEĞİŞTİR"
-                            onClick={(e) => { e.currentTarget.dataset.durumDrop = c.id; setDurumDropId(durumDropId === c.id ? null : c.id); }}>
+                            onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setDurumDropPos({top: rect.bottom + 4, left: rect.right - 140}); setDurumDropId(durumDropId === c.id ? null : c.id); }}>
                             <LIcon name="RefreshCw" size={13} color={C.cyan}/>
                           </button>
                           {durumDropId === c.id && (
                             <div style={{
-                              position: 'absolute', top: 32, right: 0, zIndex: 99999,
+                              position: 'fixed', top: durumDropPos.top, left: durumDropPos.left, zIndex: 99999,
                               background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 8,
                               boxShadow: '0 12px 32px rgba(0,0,0,.4)', minWidth: 140, overflow: 'visible'
                             }}>
