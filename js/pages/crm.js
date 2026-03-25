@@ -281,7 +281,6 @@ MR._CRMListesiInner = ({setPage, user}) => {
 
   // DURUM DEĞİŞTİR DROPDOWN
   const [durumDropId, setDurumDropId] = useState(null);
-  const [durumDropPos, setDurumDropPos] = useState({top:0,left:0});
 
   // SİL ONAY
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -517,31 +516,10 @@ MR._CRMListesiInner = ({setPage, user}) => {
                         </button>
                         {/* DURUM DEĞİŞTİR */}
                         <div style={{position: 'relative'}}>
-                          <button style={iconBtn(C.cyan)} title="DURUM DEĞİŞTİR"
-                            onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setDurumDropPos({top: rect.bottom + 4, left: rect.right - 140}); setDurumDropId(durumDropId === c.id ? null : c.id); }}>
+                          <button data-durum-id={c.id} style={iconBtn(C.cyan)} title="DURUM DEĞİŞTİR"
+                            onClick={() => setDurumDropId(durumDropId === c.id ? null : c.id)}>
                             <LIcon name="RefreshCw" size={13} color={C.cyan}/>
                           </button>
-                          {durumDropId === c.id && (
-                            <div style={{
-                              position: 'fixed', top: durumDropPos.top, left: durumDropPos.left, zIndex: 99999,
-                              background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 8,
-                              boxShadow: '0 12px 32px rgba(0,0,0,.4)', minWidth: 140, overflow: 'visible'
-                            }}>
-                              {['Yeni', 'Takipte', 'Olumlu', 'Olumsuz'].map(d => (
-                                <div key={d} onClick={() => durumDegistir(c.id, d)}
-                                  style={{
-                                    padding: '8px 14px', fontSize: 11, cursor: 'pointer', display: 'flex',
-                                    alignItems: 'center', gap: 8, borderBottom: `1px solid ${C.border}`,
-                                    background: c.durum === d ? `${dC(d)}15` : 'transparent'
-                                  }}
-                                  onMouseEnter={e => e.currentTarget.style.background = `${dC(d)}22`}
-                                  onMouseLeave={e => e.currentTarget.style.background = c.durum === d ? `${dC(d)}15` : 'transparent'}>
-                                  <span style={{width: 8, height: 8, borderRadius: '50%', background: dC(d)}}/>
-                                  {d.toUpperCase()}
-                                </div>
-                              ))}
-                            </div>
-                          )}
                         </div>
                         {/* SİL */}
                         <button style={iconBtn(C.danger)} title="SİL"
@@ -558,9 +536,37 @@ MR._CRMListesiInner = ({setPage, user}) => {
         )}
       </div>
 
-      {/* DURUM DROPDOWN KAPATMA - GLOBAL CLICK */}
+      {/* DURUM DROPDOWN - TABLO DIŞINDA RENDER */}
       {durumDropId && (
-        <div style={{position: 'fixed', inset: 0, zIndex: 50}} onClick={() => setDurumDropId(null)}/>
+        <>
+          <div style={{position: 'fixed', inset: 0, zIndex: 9998}} onClick={() => setDurumDropId(null)}/>
+          {(() => {
+            const btn = document.querySelector('[data-durum-id="'+durumDropId+'"]');
+            const rect = btn ? btn.getBoundingClientRect() : {bottom:100,right:200};
+            const secili = data.find(x => x.id === durumDropId);
+            return (
+              <div style={{
+                position: 'fixed', top: rect.bottom + 4, left: rect.right - 140, zIndex: 9999,
+                background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 8,
+                boxShadow: '0 12px 32px rgba(0,0,0,.4)', minWidth: 140
+              }}>
+                {['Yeni', 'Takipte', 'Olumlu', 'Olumsuz'].map(d => (
+                  <div key={d} onClick={() => durumDegistir(durumDropId, d)}
+                    style={{
+                      padding: '8px 14px', fontSize: 11, cursor: 'pointer', display: 'flex',
+                      alignItems: 'center', gap: 8, borderBottom: `1px solid ${C.border}`,
+                      background: secili && secili.durum === d ? `${dC(d)}15` : 'transparent'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = `${dC(d)}22`}
+                    onMouseLeave={e => e.currentTarget.style.background = secili && secili.durum === d ? `${dC(d)}15` : 'transparent'}>
+                    <span style={{width: 8, height: 8, borderRadius: '50%', background: dC(d)}}/>
+                    {d.toUpperCase()}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </>
       )}
 
       {/* DÜZENLEME MODAL */}
