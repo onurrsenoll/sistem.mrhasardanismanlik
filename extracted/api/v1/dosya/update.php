@@ -259,11 +259,60 @@ try {
         }
     }
 
+    // ═══ AVUKAT (İŞ ORTAĞI) DEĞİŞTİĞİNDE SMS BİLDİRİMİ ═══
+    $avukatSmsBilgi = null;
+    if (array_key_exists('ortak_id', $body) && (int)($body['ortak_id'] ?? 0) !== (int)($dosya['ortak_id'] ?? 0) && !empty($body['ortak_id'])) {
+        try {
+            $yeniOrtakId = (int)$body['ortak_id'];
+            $stmtAv = $db->prepare("SELECT id, ad_soyad, telefon, firma FROM ortaklar WHERE id = ? AND durum = 'aktif'");
+            $stmtAv->execute([$yeniOrtakId]);
+            $avukat = $stmtAv->fetch();
+
+            if ($avukat && !empty($avukat['telefon'])) {
+                $firmaAdiAv = 'MR HASAR DANISMANLIK';
+                try {
+                    $stmtFav = $db->query("SELECT deger FROM ayarlar WHERE anahtar = 'firma_adi' LIMIT 1");
+                    $favRow = $stmtFav->fetch();
+                    if ($favRow && !empty($favRow['deger'])) $firmaAdiAv = $favRow['deger'];
+                } catch (\Exception $e) {}
+
+                // Müşteri adını çek
+                $stmtMag = $db->prepare("SELECT ad_soyad FROM magdurlar WHERE dosya_id = ? LIMIT 1");
+                $stmtMag->execute([$id]);
+                $mag = $stmtMag->fetch();
+                $musteriAdi = $mag ? $mag['ad_soyad'] : '-';
+
+                $dosyaTuruKisa = $dosya['dosya_turu'] ?? '';
+                $dosyaTuruTam = $dosyaTuruKisa === 'ADK' ? 'Arac Deger Kaybi' : ($dosyaTuruKisa === 'BH' ? 'Bedeni Hasar' : $dosyaTuruKisa);
+                $sigortaSirket = $dosya['sigorta_sirket'] ?? '-';
+                $mevcutAsama = $body['asama'] ?? $dosya['asama'] ?? 'Dosya Acik';
+
+                $avTelNorm = sms_telefon_normalize($avukat['telefon']);
+                $avukatMesaj = "Sayin {$avukat['ad_soyad']}, tarafiniza yeni bir dosya atanmistir. Dosya No: {$dosya['dosya_no']} | Tur: {$dosyaTuruTam} | Musteri: {$musteriAdi} | Sigorta: {$sigortaSirket} | Asama: {$mevcutAsama} - {$firmaAdiAv}";
+
+                $avukatSms = sms_gonder($avTelNorm ?: $avukat['telefon'], $avukatMesaj, $id, $user['id']);
+
+                $avukatSmsBilgi = [
+                    'avukat_adi' => $avukat['ad_soyad'],
+                    'sms_gonderildi' => $avukatSms['basarili'] ?? false
+                ];
+            }
+        } catch (\Exception $e) {
+            // Avukat SMS hatası güncellemeyi engellemez
+        }
+    }
+
+    $guncMesaj = 'Dosya güncellendi';
+    if (!empty($avukatSmsBilgi['sms_gonderildi'])) {
+        $guncMesaj .= ' | AVUKATA SMS BİLDİRİMİ GÖNDERİLDİ (' . $avukatSmsBilgi['avukat_adi'] . ')';
+    }
+
     json_success([
         'dosya_no' => $dosya['dosya_no'],
         'sms_gonderildi' => $smsGonderildi,
-        'sms_sonuc' => $smsSonuc
-    ], 'Dosya güncellendi');
+        'sms_sonuc' => $smsSonuc,
+        'avukat_sms' => $avukatSmsBilgi
+    ], $guncMesaj);
 
 } catch (\Exception $e) {
     $db->rollBack();

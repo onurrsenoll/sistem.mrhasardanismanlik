@@ -1,0 +1,67 @@
+================================================================
+  QR RUHSAT OKUYUCU - CLAUDE API VERSIYONU
+  KURULUM REHBERI
+================================================================
+
+DOSYA LISTESI VE YUKLEME YOLLARI:
+================================================================
+
+1. js/pages/qr-ruhsat.js
+   YUKLE → /js/pages/qr-ruhsat.js
+   (Frontend ana modul dosyasi - Claude AI entegrasyonlu)
+
+2. api/v1/hesap/ocr-analiz.php
+   YUKLE → /api/v1/hesap/ocr-analiz.php
+   (Backend OCR endpoint - Claude Vision API kullaniyor)
+
+3. api/v1/config/ai-helper.php
+   YUKLE → /api/v1/config/ai-helper.php
+   (AI API helper - Claude API fonksiyonlari)
+
+4. api/v1/config/helpers.php
+   YUKLE → /api/v1/config/helpers.php
+   (Genel PHP helper fonksiyonlari + http_post)
+
+5. api/v1/sistem/ayarlar-list.php
+   YUKLE → /api/v1/sistem/ayarlar-list.php
+   (Ayarlar listeleme endpoint)
+
+6. api/v1/sistem/ayarlar-guncelle.php
+   YUKLE → /api/v1/sistem/ayarlar-guncelle.php
+   (Ayarlar guncelleme endpoint)
+
+================================================================
+DEGISIKLIKLER (Gemini -> Claude):
+================================================================
+
+1. ocr-analiz.php:
+   - Gemini Vision API yerine Claude Vision API kullanilir
+   - API endpoint: api.anthropic.com/v1/messages
+   - Model: claude-haiku-4-5-20251001
+   - Gorsel base64 olarak content block icinde gonderilir
+   - API key header: x-api-key + anthropic-version
+   - DB key: qr_ruhsat_claude_key (eskisi: qr_ruhsat_gemini_key)
+
+2. qr-ruhsat.js:
+   - Tum "Gemini" referanslari "Claude" olarak degistirildi
+   - API key placeholder: console.anthropic.com
+   - DB key: qr_ruhsat_claude_key
+   - Kaynak etiketleri: 'claude' (eskisi: 'gemini')
+
+3. ai-helper.php & helpers.php:
+   - Zaten Claude destekli, degisiklik yok
+
+================================================================
+KULLANIM:
+================================================================
+
+1. console.anthropic.com adresinden Claude API key alin
+2. QR Ruhsat Okuyucu sayfasinda "Claude API Key" alanina yapistin
+3. KAYDET butonuna basin
+4. Ruhsat gorsellerini yukleyin ve TARA butonuna basin
+
+================================================================
+NOT: Mevcut Gemini API key'iniz varsa, DB'deki
+qr_ruhsat_gemini_key kaydini silebilirsiniz.
+Yeni kayit: qr_ruhsat_claude_key
+================================================================

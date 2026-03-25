@@ -437,7 +437,7 @@ $GLOBALS['YETKI_MAP'] = array(
     'saha/medya-list.php' => array('crm', 'saha-liste'),
 
     // ─── HESAPLAMALAR ───
-    'hesap/ocr-analiz.php' => array('hesaplamalar', 'hesap-adk'),
+    'hesap/ocr-analiz.php' => array('hesaplamalar', 'hesap-adk', 'police-qr-ruhsat'),
     'hesap/ai-analiz.php' => array('hesaplamalar', 'hesap-adk'),
     'hesap/rayic-arastirma.php' => array('hesaplamalar', 'hesap-adk'),
     'hesap/tahkim-emsal-ara.php' => array('hesaplamalar', 'hesap-bh'),
@@ -593,6 +593,13 @@ $GLOBALS['YETKI_MAP'] = array(
     'ictihat/police-limit.php' => array('ictihat', 'ictihat-police-limit'),
     'ictihat/kusur-emsal-ara.php' => array('ictihat', 'ictihat-kusur-emsal'),
 
+
+    // ─── ARAMA LOG ───
+    // create, update, kayit-yukle: Yetki gerektirmez - her kullanıcı kendi aramasını loglar
+    'arama-log/list.php' => array('sistem', 'arama-gecmis'),
+    'arama-log/delete.php' => array('sistem', 'arama-gecmis-sil'),
+    'arama-log/istatistik.php' => array('sistem', 'arama-gecmis-istatistik'),
+    'arama-log/kayit-indir.php' => array('sistem', 'arama-gecmis-kayit-dinle'),
 
     // ─── BİLDİRİM ───
     'bildirim/create.php' => array('bildirim', 'bildirim-goruntule'),
