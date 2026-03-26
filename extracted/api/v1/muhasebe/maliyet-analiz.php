@@ -106,6 +106,8 @@ if ($dosyaId) {
         d.dosya_turu,
         d.asama,
         d.sigorta_sirket,
+        d.ortak_id,
+        COALESCE(ort.ad_soyad, '') as avukat_adi,
         (COALESCE(gel.toplam_gelir, 0) + COALESCE(gel2.toplam_gelir_aciklama, 0)) as toplam_gelir,
         COALESCE(gid.toplam_gider, 0) as toplam_gider,
         COALESCE(mas.toplam_masraf, 0) as toplam_masraf,
@@ -139,6 +141,7 @@ if ($dosyaId) {
         FROM komisyonlar
         GROUP BY dosya_id
     ) kom ON kom.dosya_id = d.id
+    LEFT JOIN ortaklar ort ON ort.id = d.ortak_id
     WHERE 1=1 $dateFilter
     HAVING (toplam_gelir > 0 OR toplam_gider > 0 OR toplam_masraf > 0 OR toplam_komisyon > 0)
     ORDER BY net_kar DESC

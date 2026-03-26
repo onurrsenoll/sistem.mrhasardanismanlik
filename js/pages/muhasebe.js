@@ -631,7 +631,7 @@ const KomisyonPrim = ({setPage, user}) => {
   const [modalAcik, setModalAcik] = useState(false);
   const [odeModalAcik, setOdeModalAcik] = useState(false);
   const [secilenKomisyon, setSecilenKomisyon] = useState(null);
-  const [form, setForm] = useState({ilgili_tip:'ortak', ilgili_id:'', dosya_id:'', tutar:'', oran:'', aciklama:''});
+  const [form, setForm] = useState({ilgili_tip:'ortak', ilgili_id:'', dosya_id:'', tutar:'', oran:'', aciklama:'', beklenen_tarih:''});
   const [odeForm, setOdeForm] = useState({kasa_id:''});
   const [kayitLoading, setKayitLoading] = useState(false);
   const [hata, setHata] = useState('');
@@ -685,7 +685,7 @@ const KomisyonPrim = ({setPage, user}) => {
 
   /* YENİ KOMİSYON */
   const yeniKomisyonAc = () => {
-    setForm({ilgili_tip:'ortak', ilgili_id:'', dosya_id:'', tutar:'', oran:'', aciklama:''});
+    setForm({ilgili_tip:'ortak', ilgili_id:'', dosya_id:'', tutar:'', oran:'', aciklama:'', beklenen_tarih:''});
     setHata(''); setBasari('');
     setModalAcik(true);
   };
@@ -703,6 +703,7 @@ const KomisyonPrim = ({setPage, user}) => {
       aciklama: form.aciklama
     };
     if (form.dosya_id) gonder.dosya_id = parseInt(form.dosya_id);
+    if (form.beklenen_tarih) gonder.beklenen_tarih = form.beklenen_tarih;
     const r = await api.komisyonOlustur(gonder);
     if (r?.success) {
       setModalAcik(false);
@@ -810,7 +811,7 @@ const KomisyonPrim = ({setPage, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:900}}>
               <thead>
                 <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                  {['İLGİLİ','TİP','DOSYA NO','TUTAR','ORAN','DURUM','ÖDEME TARİHİ','İŞLEM'].map(h =>
+                  {['İLGİLİ','TİP','DOSYA NO','TUTAR','ORAN','DURUM','BEKLENEN TARİH','ÖDEME TARİHİ','İŞLEM'].map(h =>
                     <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                   )}
                 </tr>
@@ -834,7 +835,21 @@ const KomisyonPrim = ({setPage, user}) => {
                     <td style={{padding:'10px 12px',fontWeight:700,fontSize:12}}>{fmt(parseFloat(k.tutar) || 0)}</td>
                     <td style={{padding:'10px 12px',color:C.textSec}}>{k.oran ? `%${k.oran}` : '-'}</td>
                     <td style={{padding:'10px 12px'}}><Badge text={durumLabel(k.durum)} color={durumRenk(k.durum)}/></td>
-                    <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{k.odeme_tarihi || '-'}</td>
+                    <td style={{padding:'10px 12px',fontSize:11}}>
+                      {k.beklenen_tarih ? (() => {
+                        const bugun = new Date(); bugun.setHours(0,0,0,0);
+                        const bt = new Date(k.beklenen_tarih); bt.setHours(0,0,0,0);
+                        const fark = Math.floor((bugun - bt) / 86400000);
+                        const gecikti = k.durum !== 'odendi' && fark > 0;
+                        const yaklasik = k.durum !== 'odendi' && fark >= -7 && fark <= 0;
+                        return <span style={{fontWeight:gecikti?700:500, color: gecikti ? C.danger : yaklasik ? C.warning : C.textSec}}>
+                          {MR.tarihFmt ? MR.tarihFmt(k.beklenen_tarih) : k.beklenen_tarih}
+                          {gecikti && <span style={{fontSize:8,marginLeft:4}}>({fark} GÜN GECİKMİŞ)</span>}
+                          {yaklasik && <span style={{fontSize:8,marginLeft:4}}>(YAKLAŞIYOR)</span>}
+                        </span>;
+                      })() : <span style={{color:C.textMuted}}>-</span>}
+                    </td>
+                    <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{k.odeme_tarihi ? (MR.tarihFmt ? MR.tarihFmt(k.odeme_tarihi) : k.odeme_tarihi) : '-'}</td>
                     <td style={{padding:'10px 12px'}}>
                       <div style={{display:'flex',gap:6}}>
                         {k.durum === 'bekliyor' && (
@@ -856,6 +871,51 @@ const KomisyonPrim = ({setPage, user}) => {
           )}
         </div>
       </div>
+
+      {/* ALACAK YAŞLANDIRMA RAPORU (D8) */}
+      {(() => {
+        const bugun = new Date(); bugun.setHours(0,0,0,0);
+        const bekleyenler = komisyonlar.filter(k => k.durum !== 'odendi');
+        if (bekleyenler.length === 0) return null;
+        const gruplar = {'0-30':[], '30-60':[], '60-90':[], '90+':[]};
+        bekleyenler.forEach(k => {
+          const tarih = new Date(k.created_at || k.tarih || bugun);
+          const gun = Math.floor((bugun - tarih) / 86400000);
+          if (gun <= 30) gruplar['0-30'].push(k);
+          else if (gun <= 60) gruplar['30-60'].push(k);
+          else if (gun <= 90) gruplar['60-90'].push(k);
+          else gruplar['90+'].push(k);
+        });
+        const grupToplam = (arr) => arr.reduce((t,k) => t + (parseFloat(k.tutar)||0), 0);
+        const renkler = {'0-30':C.success, '30-60':C.warning, '60-90':C.accent, '90+':C.danger};
+        return (
+          <div style={{...S.card, marginTop:20}}>
+            <SectionTitle icon="Clock" title="ALACAK YAŞLANDIRMA" sub="BEKLEYEN KOMİSYONLARIN BEKLEME SÜRESİ"/>
+            <div style={{padding:16}}>
+              <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:16}}>
+                {Object.entries(gruplar).map(([key, arr]) => (
+                  <div key={key} style={{background:`${renkler[key]}08`, border:`1px solid ${renkler[key]}20`, borderRadius:10, padding:14, textAlign:'center'}}>
+                    <div style={{fontSize:10, fontWeight:700, color:renkler[key], letterSpacing:1, marginBottom:6}}>{key} GÜN</div>
+                    <div style={{fontSize:22, fontWeight:800, color:renkler[key]}}>{arr.length}</div>
+                    <div style={{fontSize:10, color:C.textMuted, marginTop:4}}>{fmt(grupToplam(arr))}</div>
+                  </div>
+                ))}
+              </div>
+              {gruplar['90+'].length > 0 && (
+                <div style={{background:`${C.danger}08`, border:`1px solid ${C.danger}20`, borderRadius:8, padding:12}}>
+                  <div style={{fontSize:11, fontWeight:700, color:C.danger, marginBottom:8}}>90+ GÜN BEKLEYEN KOMİSYONLAR</div>
+                  {gruplar['90+'].map((k,i) => (
+                    <div key={i} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'6px 0', borderBottom: i < gruplar['90+'].length-1 ? `1px solid ${C.border}` : 'none'}}>
+                      <span style={{fontSize:11, fontWeight:600}}>{k.ilgili_adi || '-'}</span>
+                      <span style={{fontSize:11, fontWeight:700, color:C.danger}}>{fmt(parseFloat(k.tutar)||0)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* YENİ KOMİSYON MODAL */}
       <Modal open={modalAcik} onClose={() => setModalAcik(false)} title="YENİ KOMİSYON OLUŞTUR" width="560px">
@@ -882,6 +942,9 @@ const KomisyonPrim = ({setPage, user}) => {
           </FormGroup>
           <FormGroup label="ORAN (%)">
             <input style={S.input} value={form.oran} onChange={e => setForm(p => ({...p, oran: e.target.value}))} placeholder="ÖRN: 10"/>
+          </FormGroup>
+          <FormGroup label="BEKLENEN ÖDEME TARİHİ">
+            <input type="date" style={S.input} value={form.beklenen_tarih} onChange={e => setForm(p => ({...p, beklenen_tarih: e.target.value}))}/>
           </FormGroup>
           <FormGroup label="AÇIKLAMA" full>
             <textarea style={{...S.input,minHeight:70}} value={form.aciklama} onChange={e => setForm(p => ({...p, aciklama: e.target.value.toUpperCase()}))} placeholder="KOMİSYON AÇIKLAMASI..."/>
@@ -1595,6 +1658,51 @@ const MaliyetAnalizi = ({setPage, user}) => {
           <div style={{fontSize:11,color:C.textSec,marginTop:4}}>TOPLAM DOSYA</div>
         </div>
       </div>
+
+      {/* AVUKAT BAZLI KARLILIK ANALİZİ (D9) */}
+      {veriler.length > 0 && (() => {
+        const avukatGrup = {};
+        veriler.forEach(d => {
+          const key = d.avukat_adi || d.ortak_id || 'BELİRSİZ';
+          if (!avukatGrup[key]) avukatGrup[key] = {ad: key, gelir:0, gider:0, komisyon:0, dosya:0};
+          avukatGrup[key].gelir += parseFloat(d.gelir)||0;
+          avukatGrup[key].gider += parseFloat(d.gider)||0;
+          avukatGrup[key].komisyon += parseFloat(d.komisyon)||0;
+          avukatGrup[key].dosya++;
+        });
+        const grupList = Object.values(avukatGrup).sort((a,b) => (b.gelir-b.gider-b.komisyon) - (a.gelir-a.gider-a.komisyon));
+        return (
+          <div style={{...S.card, marginBottom:20}}>
+            <SectionTitle icon="Users" title="AVUKAT BAZLI KARLILIK" sub="ORTAK/AVUKAT PERFORMANS ÖZETİ"/>
+            <div style={{overflowX:'auto'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                <thead>
+                  <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
+                    {['AVUKAT / ORTAK','DOSYA SAYISI','TOPLAM GELİR','TOPLAM GİDER','KOMİSYON','NET KAR'].map(h =>
+                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {grupList.map((g,i) => {
+                    const net = g.gelir - g.gider - g.komisyon;
+                    return (
+                      <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderBottom:`1px solid ${C.border}`}}>
+                        <td style={{padding:'10px 14px',fontWeight:700}}>{g.ad || 'BELİRSİZ'}</td>
+                        <td style={{padding:'10px 14px'}}><Badge text={g.dosya + ' DOSYA'} color={C.accent}/></td>
+                        <td style={{padding:'10px 14px',color:C.success,fontWeight:600}}>{fmt(g.gelir)}</td>
+                        <td style={{padding:'10px 14px',color:C.danger,fontWeight:600}}>{fmt(g.gider)}</td>
+                        <td style={{padding:'10px 14px',color:C.warning,fontWeight:600}}>{fmt(g.komisyon)}</td>
+                        <td style={{padding:'10px 14px',fontWeight:800,color:net>=0?C.success:C.danger}}>{fmt(net)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* MALİYET TABLOSU */}
       <div style={S.card}>
