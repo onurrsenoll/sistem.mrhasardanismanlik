@@ -115,7 +115,7 @@ unset($d);
 // 2a. Diğer masraflar (giderler tablosundan, ay içinde)
 $stmt = $db->prepare("SELECT id, gider_turu, tutar, aciklama, islem_tarihi
     FROM giderler
-    WHERE islem_tarihi BETWEEN ? AND ?
+    WHERE islem_tarihi BETWEEN ? AND ? AND (gider_turu IS NULL OR gider_turu NOT LIKE '%ORTAK KASA%')
     ORDER BY islem_tarihi ASC");
 $stmt->execute([$baslangic, $bitis]);
 $digerMasraflar = $stmt->fetchAll();
@@ -128,7 +128,7 @@ foreach ($digerMasraflar as $dm) {
 // 2b. Kapanan dosyalar kazancı (ay içinde kapanan)
 $kapananSQL = "SELECT d.id, d.dosya_no, d.dosya_turu, d.asama, d.updated_at as kapanma_tarihi,
     m.ad_soyad as magdur_adi,
-    COALESCE((SELECT SUM(g.tutar) FROM gelirler g WHERE g.dosya_id = d.id AND g.tahsilat_durumu = 'tahsil_edildi'), 0) as toplam_gelir,
+    COALESCE((SELECT SUM(g.tutar) FROM gelirler g WHERE g.dosya_id = d.id AND g.tahsilat_durumu = 'tahsil_edildi' AND (g.gelir_turu IS NULL OR g.gelir_turu NOT LIKE '%ORTAK KASA%')), 0) as toplam_gelir,
     COALESCE((SELECT SUM(mas.tutar) FROM masraflar mas WHERE mas.dosya_id = d.id), 0) as toplam_masraf
     FROM dosyalar d
     LEFT JOIN magdurlar m ON m.dosya_id = d.id

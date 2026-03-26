@@ -30,7 +30,7 @@ if ($dosyaId) {
     if (!$dosya) json_error('Dosya bulunamadı', 404);
 
     // Gelirler
-    $stmt = $db->prepare('SELECT COALESCE(SUM(tutar), 0) as toplam FROM gelirler WHERE dosya_id = ? AND tahsilat_durumu = \'tahsil_edildi\'');
+    $stmt = $db->prepare('SELECT COALESCE(SUM(tutar), 0) as toplam FROM gelirler WHERE dosya_id = ? AND tahsilat_durumu = \'tahsil_edildi\' AND (gelir_turu IS NULL OR gelir_turu NOT LIKE \'%ORTAK KASA%\')');
     $stmt->execute([$dosyaId]);
     $toplamGelir = (float)$stmt->fetch()['toplam'];
 
@@ -39,7 +39,7 @@ if ($dosyaId) {
     $gelirDetay = $stmt->fetchAll();
 
     // Giderler
-    $stmt = $db->prepare('SELECT COALESCE(SUM(tutar), 0) as toplam FROM giderler WHERE dosya_id = ?');
+    $stmt = $db->prepare('SELECT COALESCE(SUM(tutar), 0) as toplam FROM giderler WHERE dosya_id = ? AND (gider_turu IS NULL OR gider_turu NOT LIKE \'%ORTAK KASA%\')');
     $stmt->execute([$dosyaId]);
     $toplamGider = (float)$stmt->fetch()['toplam'];
 
@@ -106,20 +106,27 @@ if ($dosyaId) {
         d.dosya_turu,
         d.asama,
         d.sigorta_sirket,
-        COALESCE(gel.toplam_gelir, 0) as toplam_gelir,
+        (COALESCE(gel.toplam_gelir, 0) + COALESCE(gel2.toplam_gelir_aciklama, 0)) as toplam_gelir,
         COALESCE(gid.toplam_gider, 0) as toplam_gider,
         COALESCE(mas.toplam_masraf, 0) as toplam_masraf,
         COALESCE(kom.toplam_komisyon, 0) as toplam_komisyon,
-        (COALESCE(gel.toplam_gelir, 0) - COALESCE(gid.toplam_gider, 0) - COALESCE(mas.toplam_masraf, 0) - COALESCE(kom.toplam_komisyon, 0)) as net_kar
+        ((COALESCE(gel.toplam_gelir, 0) + COALESCE(gel2.toplam_gelir_aciklama, 0)) - COALESCE(gid.toplam_gider, 0) - COALESCE(mas.toplam_masraf, 0) - COALESCE(kom.toplam_komisyon, 0)) as net_kar
     FROM dosyalar d
     LEFT JOIN (
         SELECT dosya_id, SUM(tutar) as toplam_gelir
-        FROM gelirler WHERE tahsilat_durumu = 'tahsil_edildi'
+        FROM gelirler WHERE tahsilat_durumu = 'tahsil_edildi' AND dosya_id IS NOT NULL AND (gelir_turu IS NULL OR gelir_turu NOT LIKE '%ORTAK KASA%')
         GROUP BY dosya_id
     ) gel ON gel.dosya_id = d.id
     LEFT JOIN (
+        SELECT d2.id as dosya_id, SUM(g2.tutar) as toplam_gelir_aciklama
+        FROM gelirler g2
+        INNER JOIN dosyalar d2 ON g2.aciklama LIKE CONCAT('%', d2.dosya_no, '%')
+        WHERE g2.dosya_id IS NULL AND g2.tahsilat_durumu = 'tahsil_edildi' AND (g2.gelir_turu IS NULL OR g2.gelir_turu NOT LIKE '%ORTAK KASA%')
+        GROUP BY d2.id
+    ) gel2 ON gel2.dosya_id = d.id
+    LEFT JOIN (
         SELECT dosya_id, SUM(tutar) as toplam_gider
-        FROM giderler
+        FROM giderler WHERE (gider_turu IS NULL OR gider_turu NOT LIKE '%ORTAK KASA%')
         GROUP BY dosya_id
     ) gid ON gid.dosya_id = d.id
     LEFT JOIN (

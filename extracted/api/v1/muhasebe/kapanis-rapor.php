@@ -19,11 +19,13 @@ $bitis = clean($_GET['bitis'] ?? date('Y-m-t'));
 $avukatId = (int)($_GET['avukat_id'] ?? 0);
 
 // Kapanan dosyaları çek (asama KAPANDI veya ÖDEME ALINDI içeren)
-$sql = "SELECT d.id, d.dosya_no, d.dosya_turu, d.muvekkil_adi, d.asama, d.ortak_id, d.avukat_id, d.paydas_id,
-    d.updated_at as kapanma_tarihi
+$sql = "SELECT d.id, d.dosya_no, d.dosya_turu, d.asama, d.ortak_id, d.avukat_id, d.paydas_id,
+    COALESCE(d.kapanma_tarihi, d.updated_at) as kapanma_tarihi,
+    COALESCE(m.ad_soyad, d.magdur_adi, '') as muvekkil_adi
     FROM dosyalar d
+    LEFT JOIN magdurlar m ON m.dosya_id = d.id
     WHERE (d.asama LIKE '%KAPANDI%' OR d.asama LIKE '%ÖDEME ALINDI%' OR d.asama LIKE '%KAPANIŞ%')
-    AND DATE(d.updated_at) BETWEEN ? AND ?";
+    AND DATE(COALESCE(d.kapanma_tarihi, d.updated_at)) BETWEEN ? AND ?";
 $params = [$baslangic, $bitis];
 
 if ($avukatId > 0) {

@@ -34,7 +34,7 @@ $stmt = $db->prepare("SELECT
 $stmt->execute([$baslangic, $bitis]);
 $gelirOzet = $stmt->fetchAll();
 
-$stmt = $db->prepare("SELECT COALESCE(SUM(tutar), 0) as toplam FROM gelirler WHERE DATE(created_at) BETWEEN ? AND ? AND tahsilat_durumu = 'tahsil_edildi'");
+$stmt = $db->prepare("SELECT COALESCE(SUM(tutar), 0) as toplam FROM gelirler WHERE DATE(created_at) BETWEEN ? AND ? AND tahsilat_durumu = 'tahsil_edildi' AND (gelir_turu IS NULL OR gelir_turu NOT LIKE '%ORTAK KASA%')");
 $stmt->execute([$baslangic, $bitis]);
 $toplamGelir = (float)$stmt->fetch()['toplam'];
 
@@ -52,7 +52,7 @@ $stmt = $db->prepare("SELECT
 $stmt->execute([$baslangic, $bitis]);
 $giderOzet = $stmt->fetchAll();
 
-$stmt = $db->prepare("SELECT COALESCE(SUM(tutar), 0) as toplam FROM giderler WHERE islem_tarihi BETWEEN ? AND ?");
+$stmt = $db->prepare("SELECT COALESCE(SUM(tutar), 0) as toplam FROM giderler WHERE islem_tarihi BETWEEN ? AND ? AND (gider_turu IS NULL OR gider_turu NOT LIKE '%ORTAK KASA%')");
 $stmt->execute([$baslangic, $bitis]);
 $toplamGider = (float)$stmt->fetch()['toplam'];
 
@@ -110,7 +110,7 @@ $stmt = $db->prepare("SELECT
     DATE_FORMAT(created_at, '%Y-%m') as ay,
     SUM(CASE WHEN tahsilat_durumu = 'tahsil_edildi' THEN tutar ELSE 0 END) as gelir
     FROM gelirler
-    WHERE DATE(created_at) BETWEEN ? AND ?
+    WHERE DATE(created_at) BETWEEN ? AND ? AND (gelir_turu IS NULL OR gelir_turu NOT LIKE '%ORTAK KASA%')
     GROUP BY DATE_FORMAT(created_at, '%Y-%m')
     ORDER BY ay");
 $stmt->execute([$baslangic, $bitis]);
@@ -123,7 +123,7 @@ $stmt = $db->prepare("SELECT
     DATE_FORMAT(islem_tarihi, '%Y-%m') as ay,
     SUM(tutar) as gider
     FROM giderler
-    WHERE islem_tarihi BETWEEN ? AND ?
+    WHERE islem_tarihi BETWEEN ? AND ? AND (gider_turu IS NULL OR gider_turu NOT LIKE '%ORTAK KASA%')
     GROUP BY DATE_FORMAT(islem_tarihi, '%Y-%m')
     ORDER BY ay");
 $stmt->execute([$baslangic, $bitis]);
@@ -145,8 +145,28 @@ foreach ($stmt->fetchAll() as $row) {
     $aylikMasraf[$row['ay']] = (float)$row['masraf'];
 }
 
+// Aylık komisyon
+$stmt = $db->prepare("SELECT
+    DATE_FORMAT(created_at, '%Y-%m') as ay,
+    SUM(tutar) as komisyon,
+    SUM(CASE WHEN odendi = 1 THEN tutar ELSE 0 END) as komisyon_odenen,
+    SUM(CASE WHEN odendi = 0 THEN tutar ELSE 0 END) as komisyon_bekleyen
+    FROM komisyonlar
+    WHERE DATE(created_at) BETWEEN ? AND ?
+    GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+    ORDER BY ay");
+$stmt->execute([$baslangic, $bitis]);
+$aylikKomisyon = [];
+foreach ($stmt->fetchAll() as $row) {
+    $aylikKomisyon[$row['ay']] = [
+        'toplam' => (float)$row['komisyon'],
+        'odenen' => (float)$row['komisyon_odenen'],
+        'bekleyen' => (float)$row['komisyon_bekleyen']
+    ];
+}
+
 // Aylık trendleri birleştir
-$tumAylar = array_unique(array_merge(array_keys($aylikGelir), array_keys($aylikGider), array_keys($aylikMasraf)));
+$tumAylar = array_unique(array_merge(array_keys($aylikGelir), array_keys($aylikGider), array_keys($aylikMasraf), array_keys($aylikKomisyon)));
 sort($tumAylar);
 
 $aylikTrend = [];
@@ -154,12 +174,16 @@ foreach ($tumAylar as $ay) {
     $gelir = $aylikGelir[$ay] ?? 0;
     $gider = $aylikGider[$ay] ?? 0;
     $masraf = $aylikMasraf[$ay] ?? 0;
+    $kom = $aylikKomisyon[$ay] ?? ['toplam' => 0, 'odenen' => 0, 'bekleyen' => 0];
     $aylikTrend[] = [
         'ay' => $ay,
         'gelir' => $gelir,
         'gider' => $gider,
         'masraf' => $masraf,
-        'net' => $gelir - $gider - $masraf
+        'komisyon' => $kom['toplam'],
+        'komisyon_odenen' => $kom['odenen'],
+        'komisyon_bekleyen' => $kom['bekleyen'],
+        'net' => $gelir - $gider - $masraf - $kom['toplam']
     ];
 }
 

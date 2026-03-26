@@ -440,6 +440,11 @@ const GiderYonetimi = ({setPage, user}) => {
     const tutarNum = parseNum(form.tutar);
     if (tutarNum <= 0) { setHata('TUTAR 0\'DAN BÜYÜK OLMALIDIR'); return; }
     if (!form.kategori) { setHata('KATEGORİ SEÇİMİ ZORUNLUDUR'); return; }
+    /* EKSİ BAKİYE UYARISI */
+    const secKasa = aktifKasalar.find(k => String(k.id) === String(form.kasa_id));
+    if (secKasa && parseFloat(secKasa.bakiye) < tutarNum) {
+      if (!confirm('DİKKAT: Bu işlem "' + secKasa.ad + '" kasasını eksi bakiyeye düşürecek!\n\nMevcut bakiye: ' + fmt(parseFloat(secKasa.bakiye)) + '\nİşlem tutarı: ' + fmt(tutarNum) + '\nİşlem sonrası: ' + fmt(parseFloat(secKasa.bakiye) - tutarNum) + '\n\nDevam etmek istiyor musunuz?')) return;
+    }
     setKayitLoading(true); setHata('');
     const gonder = {
       kasa_id: parseInt(form.kasa_id),
@@ -1060,6 +1065,10 @@ const KasaBanka = ({setPage, user}) => {
     if (transferForm.kaynak_id === transferForm.hedef_id) { setHata('KAYNAK VE HEDEF KASA AYNI OLAMAZ'); return; }
     const tutarNum = parseNum(transferForm.tutar);
     if (tutarNum <= 0) { setHata('TUTAR 0\'DAN BÜYÜK OLMALIDIR'); return; }
+    /* EKSİ BAKİYE UYARISI - TRANSFER */
+    if (kaynakKasa && parseFloat(kaynakKasa.bakiye) < tutarNum) {
+      if (!confirm('DİKKAT: Bu transfer "' + kaynakKasa.ad + '" kasasını eksi bakiyeye düşürecek!\n\nMevcut bakiye: ' + fmt(parseFloat(kaynakKasa.bakiye)) + '\nTransfer tutarı: ' + fmt(tutarNum) + '\nİşlem sonrası: ' + fmt(parseFloat(kaynakKasa.bakiye) - tutarNum) + '\n\nDevam etmek istiyor musunuz?')) return;
+    }
     setKayitLoading(true); setHata('');
     const r = await api.kasaTransfer({
       kaynak_id: parseInt(transferForm.kaynak_id),
@@ -1714,7 +1723,9 @@ const FinansalRaporlar = ({setPage, user}) => {
           donem: a.ay || a.donem,
           gelir: parseFloat(a.gelir) || 0,
           gider: (parseFloat(a.gider) || 0) + (parseFloat(a.masraf) || 0),
-          komisyon: 0,
+          komisyon: parseFloat(a.komisyon) || 0,
+          komisyon_odenen: parseFloat(a.komisyon_odenen) || 0,
+          komisyon_bekleyen: parseFloat(a.komisyon_bekleyen) || 0,
           dosya_sayisi: a.dosya_sayisi || ''
         })),
         kaynak_analiz: data.kaynak_analiz || [],
@@ -1913,7 +1924,7 @@ const FinansalRaporlar = ({setPage, user}) => {
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                   <thead>
                     <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                      {['DÖNEM','GELİR','GİDER','KOMİSYON','NET','DOSYA SAYISI'].map(h =>
+                      {['DÖNEM','GELİR','GİDER','KOMİSYON (ÖDENEN / BEKLEYEN)','NET','DOSYA SAYISI'].map(h =>
                         <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                       )}
                     </tr>
@@ -1931,7 +1942,14 @@ const FinansalRaporlar = ({setPage, user}) => {
                           <td style={{padding:'10px 12px',fontWeight:600}}>{d.donem || d.ay || '-'}</td>
                           <td style={{padding:'10px 12px',color:C.success,fontWeight:600}}>{fmt(gelir)}</td>
                           <td style={{padding:'10px 12px',color:C.danger,fontWeight:600}}>{fmt(gider)}</td>
-                          <td style={{padding:'10px 12px',color:C.warning,fontWeight:600}}>{fmt(komisyon)}</td>
+                          <td style={{padding:'10px 12px',fontWeight:600}}>
+                            <span style={{color:C.warning}}>{fmt(komisyon)}</span>
+                            {komisyon > 0 && <div style={{fontSize:9,marginTop:2}}>
+                              <span style={{color:C.success}}>{fmt(parseFloat(d.komisyon_odenen)||0)} ödenen</span>
+                              {' / '}
+                              <span style={{color:C.danger}}>{fmt(parseFloat(d.komisyon_bekleyen)||0)} bekleyen</span>
+                            </div>}
+                          </td>
                           <td style={{padding:'10px 12px',fontWeight:700,color: net >= 0 ? C.success : C.danger}}>{fmt(net)}</td>
                           <td style={{padding:'10px 12px',color:C.textSec}}>{d.dosya_sayisi || '-'}</td>
                         </tr>
@@ -2044,6 +2062,10 @@ const KapanisRaporu = ({setPage, user}) => {
 
       {!rapor && !loading && (
         <EmptyState icon="FileCheck" title="KAPANIŞ RAPORU" desc="DÖNEM SEÇİP 'RAPOR GETİR' BUTONUNA BASIN"/>
+      )}
+
+      {rapor && !loading && (genelToplam.dosya_sayisi || 0) === 0 && (
+        <EmptyState icon="FileCheck" title="BU DÖNEMDE KAPANAN DOSYA BULUNMAMAKTADIR" desc="FARKLI BİR DÖNEM SEÇEBİLİRSİNİZ"/>
       )}
 
       {loading && <Loading/>}
