@@ -121,6 +121,7 @@ MR.WebrtcWidget = ({user, setPage}) => {
   const [karsiTaraf, setKarsiTaraf] = useState('');
   const [karsiTarafAdi, setKarsiTarafAdi] = useState('');
   const [eslestirme, setEslestirme] = useState(null);
+  const [sessiz, setSessiz] = useState(false);
 
   /* WEBRTC DURUM DİNLEYİCİ */
   useEffect(() => {
@@ -141,17 +142,20 @@ MR.WebrtcWidget = ({user, setPage}) => {
         case 'gorusmede':
           /* Cevaplanınca popup kapansın */
           if (aramaDurumu === 'gelen') setAramaDurumu('bos');
+          setSessiz(false);
           break;
         case 'kapandi':
         case 'reddedildi':
           setAramaDurumu('bos');
           setEslestirme(null);
           setKarsiTarafAdi('');
+          setSessiz(false);
           break;
         case 'baglanti-koptu':
         case 'durduruldu':
         case 'kayit-kaldirildi':
           setAramaDurumu('bos');
+          setSessiz(false);
           break;
       }
     };
@@ -213,6 +217,19 @@ MR.WebrtcWidget = ({user, setPage}) => {
   /* REDDET */
   const reddet = () => {
     if (MR.webrtcTelefon) MR.webrtcTelefon.reddet();
+  };
+
+  /* SESSİZE AL */
+  const sessizeAl = () => {
+    setSessiz(true);
+    /* Zil sesini kapat */
+    if (MR.webrtcTelefon && MR.webrtcTelefon._zilSesi) {
+      try { MR.webrtcTelefon._zilSesi.pause(); MR.webrtcTelefon._zilSesi.currentTime = 0; } catch(e) {}
+    }
+    /* Genel ses kapatma */
+    if (MR.webrtcTelefon && typeof MR.webrtcTelefon.zilSustur === 'function') {
+      MR.webrtcTelefon.zilSustur();
+    }
   };
 
   const isK = MR.tema === 'koyu';
@@ -283,26 +300,45 @@ MR.WebrtcWidget = ({user, setPage}) => {
         </div>
       )}
 
-      {/* BUTONLAR - REDDET + CEVAPLA */}
-      <div style={{padding: '10px 14px', display: 'flex', gap: 8}}>
+      {/* SESSİZ MOD BİLGİSİ */}
+      {sessiz && (
+        <div style={{padding: '6px 14px', background: 'rgba(245,158,11,0.1)', borderBottom: '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', gap: 6}}>
+          <LIcon name="VolumeX" size={12} color="#f59e0b"/>
+          <span style={{fontSize: 10, fontWeight: 700, color: '#f59e0b', letterSpacing: 0.5}}>SESSİZ MOD - ÇAĞRI DEVAM EDİYOR</span>
+        </div>
+      )}
+
+      {/* BUTONLAR - REDDET + SESSİZ + CEVAPLA */}
+      <div style={{padding: '10px 14px', display: 'flex', gap: 6}}>
         <button onClick={reddet} style={{
           flex: 1, padding: '10px', borderRadius: 10, border: 'none',
           background: 'linear-gradient(180deg, #f87171, #dc2626)',
-          color: '#fff', fontSize: 12, fontWeight: 800, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
           boxShadow: '0 3px 10px rgba(220,38,38,0.3)'
         }}>
-          <LIcon name="PhoneOff" size={15} color="#fff"/> REDDET
+          <LIcon name="PhoneOff" size={14} color="#fff"/> REDDET
         </button>
+        {!sessiz && (
+          <button onClick={sessizeAl} style={{
+            padding: '10px 12px', borderRadius: 10, border: 'none',
+            background: 'linear-gradient(180deg, #fbbf24, #f59e0b)',
+            color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+            boxShadow: '0 3px 10px rgba(245,158,11,0.3)'
+          }}>
+            <LIcon name="VolumeX" size={14} color="#fff"/> SESSİZ
+          </button>
+        )}
         <button onClick={cevapla} style={{
           flex: 1, padding: '10px', borderRadius: 10, border: 'none',
           background: 'linear-gradient(180deg, #34d399, #059669)',
-          color: '#fff', fontSize: 12, fontWeight: 800, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
           boxShadow: '0 3px 10px rgba(5,150,105,0.3)',
-          animation: 'pulse 1.5s infinite'
+          animation: sessiz ? 'none' : 'pulse 1.5s infinite'
         }}>
-          <LIcon name="Phone" size={15} color="#fff"/> CEVAPLA
+          <LIcon name="Phone" size={14} color="#fff"/> CEVAPLA
         </button>
       </div>
     </div>

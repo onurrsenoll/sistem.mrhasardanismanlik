@@ -1332,6 +1332,9 @@ const App = () => {
         <PageRouter page={page} setPage={setPage} user={user} setUser={setUser}/>
       </div>
 
+      {/* GELEN ÇAĞRI WIDGET'I */}
+      {MR.WebrtcWidget && <MR.WebrtcWidget user={user} setPage={setPage}/>}
+
       {/* MOTİVASYON SÖZÜ + SLOGAN - ALT KISIMDA SABİT */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
