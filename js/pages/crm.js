@@ -1092,6 +1092,26 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
 /* ═══════════════════════════════════════════
    CRM YENİ KAYIT - ZENGİNLEŞTİRİLMİŞ EKRAN
    ═══════════════════════════════════════════ */
+/* ── FIELDSET BİLEŞENİ (CRM YENİ FORMU İÇİN - BİLEŞEN DIŞINDA) ── */
+const CRM_Fieldset = ({title, icon, children}) => {
+  const {C, LIcon} = MR;
+  return (
+    <fieldset style={{
+      border: `1px solid ${C.border}`, borderRadius: 8,
+      padding: '12px 14px 10px', marginBottom: 10, background: 'transparent'
+    }}>
+      <legend style={{
+        padding: '3px 10px', fontSize: 11, fontWeight: 700, color: C.textSec,
+        display: 'flex', alignItems: 'center', gap: 5, letterSpacing: 0.5
+      }}>
+        <LIcon name={icon} size={12} color={C.accent}/>
+        {title}
+      </legend>
+      {children}
+    </fieldset>
+  );
+};
+
 MR._CRMYeniInner = ({setPage}) => {
   const {C, S, LIcon, FormGroup, Badge, api, ILLER, Confirm} = MR;
 
@@ -1356,22 +1376,7 @@ MR._CRMYeniInner = ({setPage}) => {
     setEkler([]);
   };
 
-  /* ── FIELDSET BİLEŞENİ ── */
-  const Fieldset = ({title, icon, children}) => (
-    <fieldset style={{
-      border: `1px solid ${C.border}`, borderRadius: 8,
-      padding: '12px 14px 10px', marginBottom: 10, background: 'transparent'
-    }}>
-      <legend style={{
-        padding: '3px 10px', fontSize: 11, fontWeight: 700, color: C.textSec,
-        display: 'flex', alignItems: 'center', gap: 5, letterSpacing: 0.5
-      }}>
-        <LIcon name={icon} size={12} color={C.accent}/>
-        {title}
-      </legend>
-      {children}
-    </fieldset>
-  );
+  /* ── FIELDSET BİLEŞENİ → DİKKAT: DIŞARIDA TANIMLI (CRM_Fieldset) ── */
 
   /* ── SOL PANEL BUTON STİLİ ── */
   const actionBtn = (color) => ({
@@ -1545,7 +1550,7 @@ MR._CRMYeniInner = ({setPage}) => {
         <div style={{flex:1, minWidth:0}}>
 
           {/* ── MÜŞTERİ BİLGİLERİ ── */}
-          <Fieldset title="MÜŞTERİ BİLGİLERİ" icon="User">
+          <CRM_Fieldsettitle="MÜŞTERİ BİLGİLERİ" icon="User">
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
               <FormGroup label="ADI SOYADI *">
                 <input style={{...S.input, padding:'10px 12px', fontSize:13}} value={f.ad_soyad} onChange={e => up('ad_soyad', e.target.value)} placeholder="ADI SOYADI"/>
@@ -1571,10 +1576,10 @@ MR._CRMYeniInner = ({setPage}) => {
                 <textarea style={{...S.input, minHeight:50, padding:'10px 12px', fontSize:13}} value={f.adres} onChange={e => up('adres', e.target.value)} placeholder="AÇIK ADRES..."/>
               </FormGroup>
             </div>
-          </Fieldset>
+          </CRM_Fieldset>
 
           {/* ── OLAY BİLGİLERİ ── */}
-          <Fieldset title="OLAY BİLGİLERİ" icon="FileText">
+          <CRM_Fieldsettitle="OLAY BİLGİLERİ" icon="FileText">
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10}}>
               <FormGroup label="DOSYA TÜRÜ">
                 <select style={S.select} value={f.dosya_turu} onChange={e => up('dosya_turu', e.target.value)}>
@@ -1633,10 +1638,10 @@ MR._CRMYeniInner = ({setPage}) => {
             <FormGroup label="OLAY AÇIKLAMASI / GÖRÜŞME NOTU">
               <textarea style={{...S.input, minHeight:80, padding:'10px 12px', fontSize:13}} value={f.olay_aciklama} onChange={e => up('olay_aciklama', e.target.value)} placeholder="MÜŞTERİ SAĞ ÖN ÇAMURLUK HASARLI, SİGORTA EKSPER BEKLİYOR, DEĞER KAYBI TALEP EDECEK..."/>
             </FormGroup>
-          </Fieldset>
+          </CRM_Fieldset>
 
           {/* ── EKLER / MEDYA ── */}
-          <Fieldset title="EKLER" icon="Paperclip">
+          <CRM_Fieldsettitle="EKLER" icon="Paperclip">
             <div style={{display:'flex', gap:8, marginBottom:10, flexWrap:'wrap'}}>
               {/* DOSYA EKLE */}
               <button type="button" onClick={() => dosyaInputRef.current?.click()}
@@ -1686,7 +1691,7 @@ MR._CRMYeniInner = ({setPage}) => {
                 ))}
               </div>
             )}
-          </Fieldset>
+          </CRM_Fieldset>
 
         </div>
       </div>
