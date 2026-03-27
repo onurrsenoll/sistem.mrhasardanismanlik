@@ -220,23 +220,13 @@ MR.WebrtcWidget = ({user, setPage}) => {
   /* REDDET */
   const reddet = () => {
     if (!MR.webrtcTelefon) return;
-    /* Önce zili durdur */
-    try { MR.webrtcTelefon._zilDurdur(); } catch(e) {}
-    /* Session'ı reddet */
-    if (MR.webrtcTelefon._session) {
-      try {
-        if (MR.webrtcTelefon._session.direction === 'incoming' && MR.webrtcTelefon._session.status < 8) {
-          MR.webrtcTelefon._session.terminate({ status_code: 486, reason_phrase: 'Busy Here' });
-        } else {
-          MR.webrtcTelefon._session.terminate();
-        }
-      } catch(e) {
-        console.log('[WIDGET] REDDET terminate hatası:', e);
-      }
+    /* Sessiz moddan çıkış - ringtoneVolume geri yükle */
+    if (sessiz) {
+      MR.webrtcTelefon._sesAyarlari.ringtoneVolume = parseFloat(localStorage.getItem('mr_webrtc_ringtone_vol') || '0.5');
+      setSessiz(false);
     }
-    MR.webrtcTelefon._temizle && MR.webrtcTelefon._temizle();
-    MR.webrtcTelefon._durumBildir && MR.webrtcTelefon._durumBildir('reddedildi');
-    setAramaDurumu('bos');
+    /* webrtc-phone.js'in kendi reddet fonksiyonunu çağır - tüm temizliği o yapar */
+    MR.webrtcTelefon.kapat();
   };
 
   /* SESSİZE AL */
