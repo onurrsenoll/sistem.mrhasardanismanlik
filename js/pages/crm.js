@@ -1109,7 +1109,7 @@ MR._CRMYeniInner = ({setPage}) => {
   const [success, setSuccess] = useState('');
   const [savedId, setSavedId] = useState(null);
   const [donusturConfirm, setDonusturConfirm] = useState(false);
-  const up = (k, v) => { sF(p => ({...p, [k]: v})); setError(''); setSuccess(''); };
+  const up = (k, v) => { sF(p => ({...p, [k]: v})); };
 
   /* ── DOSYA / FOTOĞRAF STATE ── */
   const [ekler, setEkler] = useState([]);
@@ -1356,25 +1356,22 @@ MR._CRMYeniInner = ({setPage}) => {
     setEkler([]);
   };
 
-  /* ── FIELDSET BİLEŞENİ (useMemo ile sarılı - focus kaybını önler) ── */
-  const Fieldset = useMemo(() => {
-    const Comp = ({title, icon, children}) => (
-      <fieldset style={{
-        border: `1px solid ${C.border}`, borderRadius: 8,
-        padding: '12px 14px 10px', marginBottom: 10, background: 'transparent'
+  /* ── FIELDSET BİLEŞENİ ── */
+  const Fieldset = ({title, icon, children}) => (
+    <fieldset style={{
+      border: `1px solid ${C.border}`, borderRadius: 8,
+      padding: '12px 14px 10px', marginBottom: 10, background: 'transparent'
+    }}>
+      <legend style={{
+        padding: '3px 10px', fontSize: 11, fontWeight: 700, color: C.textSec,
+        display: 'flex', alignItems: 'center', gap: 5, letterSpacing: 0.5
       }}>
-        <legend style={{
-          padding: '3px 10px', fontSize: 11, fontWeight: 700, color: C.textSec,
-          display: 'flex', alignItems: 'center', gap: 5, letterSpacing: 0.5
-        }}>
-          <LIcon name={icon} size={12} color={C.accent}/>
-          {title}
-        </legend>
-        {children}
-      </fieldset>
-    );
-    return Comp;
-  }, []);
+        <LIcon name={icon} size={12} color={C.accent}/>
+        {title}
+      </legend>
+      {children}
+    </fieldset>
+  );
 
   /* ── SOL PANEL BUTON STİLİ ── */
   const actionBtn = (color) => ({
@@ -1548,7 +1545,7 @@ MR._CRMYeniInner = ({setPage}) => {
         <div style={{flex:1, minWidth:0}}>
 
           {/* ── MÜŞTERİ BİLGİLERİ ── */}
-          <Fieldsettitle="MÜŞTERİ BİLGİLERİ" icon="User">
+          <Fieldset title="MÜŞTERİ BİLGİLERİ" icon="User">
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
               <FormGroup label="ADI SOYADI *">
                 <input style={{...S.input, padding:'10px 12px', fontSize:13}} value={f.ad_soyad} onChange={e => up('ad_soyad', e.target.value)} placeholder="ADI SOYADI"/>
@@ -1577,7 +1574,7 @@ MR._CRMYeniInner = ({setPage}) => {
           </Fieldset>
 
           {/* ── OLAY BİLGİLERİ ── */}
-          <Fieldsettitle="OLAY BİLGİLERİ" icon="FileText">
+          <Fieldset title="OLAY BİLGİLERİ" icon="FileText">
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10}}>
               <FormGroup label="DOSYA TÜRÜ">
                 <select style={S.select} value={f.dosya_turu} onChange={e => up('dosya_turu', e.target.value)}>
@@ -1639,7 +1636,7 @@ MR._CRMYeniInner = ({setPage}) => {
           </Fieldset>
 
           {/* ── EKLER / MEDYA ── */}
-          <Fieldsettitle="EKLER" icon="Paperclip">
+          <Fieldset title="EKLER" icon="Paperclip">
             <div style={{display:'flex', gap:8, marginBottom:10, flexWrap:'wrap'}}>
               {/* DOSYA EKLE */}
               <button type="button" onClick={() => dosyaInputRef.current?.click()}
