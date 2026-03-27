@@ -937,9 +937,13 @@ const App = () => {
     return () => window.removeEventListener('mr-sidebar-logo-degisti', handler);
   }, []);
 
-  /* KULLANICI DEĞİŞTİĞİNDE GLOBAL REFERANSI GÜNCELLE (YETKİ KONTROLÜ İÇİN) */
+  /* KULLANICI DEĞİŞTİĞİNDE GLOBAL REFERANSI GÜNCELLE + NETSANTRAL OTO BAĞLAN */
   useEffect(() => {
     MR._currentUser = user;
+    /* Kullanıcı giriş yaptığında Netsantral otomatik başlat */
+    if (user && MR.webrtcOtoBaslat) {
+      setTimeout(() => MR.webrtcOtoBaslat(user), 1500);
+    }
   }, [user]);
 
   /* ═══ ARAMA LOG — WEBRTC ÇAĞRI BİTTİĞİNDE OTOMATİK KAYIT ═══ */
