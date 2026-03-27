@@ -1357,7 +1357,7 @@ MR._CRMYeniInner = ({setPage}) => {
   };
 
   /* ── FIELDSET BİLEŞENİ ── */
-  const Fieldset = ({title, icon, children}) => (
+  const Fieldset = useMemo(() => ({title, icon, children}) => (
     <fieldset style={{
       border: `1px solid ${C.border}`, borderRadius: 8,
       padding: '12px 14px 10px', marginBottom: 10, background: 'transparent'
@@ -1371,7 +1371,7 @@ MR._CRMYeniInner = ({setPage}) => {
       </legend>
       {children}
     </fieldset>
-  );
+  ), []);
 
   /* ── SOL PANEL BUTON STİLİ ── */
   const actionBtn = (color) => ({
