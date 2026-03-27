@@ -146,6 +146,7 @@ MR.WebrtcWidget = ({user, setPage}) => {
           break;
         case 'kapandi':
         case 'reddedildi':
+        case 'hata':
           setAramaDurumu('bos');
           setEslestirme(null);
           setKarsiTarafAdi('');
@@ -225,8 +226,9 @@ MR.WebrtcWidget = ({user, setPage}) => {
       MR.webrtcTelefon._sesAyarlari.ringtoneVolume = parseFloat(localStorage.getItem('mr_webrtc_ringtone_vol') || '0.5');
       setSessiz(false);
     }
-    /* webrtc-phone.js'in kendi reddet fonksiyonunu çağır - tüm temizliği o yapar */
-    MR.webrtcTelefon.kapat();
+    /* webrtc-phone.js reddet() → _zilDurdur + session.terminate(486) + _temizle + _durumBildir('reddedildi')
+       Sonrasında JsSIP 'failed' event tetikler → _durumBildir('hata') → widget 'hata' case ile kapanır */
+    MR.webrtcTelefon.reddet();
   };
 
   /* SESSİZE AL */
