@@ -1093,7 +1093,7 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
    CRM YENİ KAYIT - ZENGİNLEŞTİRİLMİŞ EKRAN
    ═══════════════════════════════════════════ */
 /* ── FIELDSET BİLEŞENİ (CRM YENİ FORMU İÇİN - BİLEŞEN DIŞINDA) ── */
-const CRM_Fieldset = ({title, icon, children}) => {
+const Fieldset = ({title, icon, children}) => {
   const {C, LIcon} = MR;
   return (
     <fieldset style={{
@@ -1376,7 +1376,7 @@ MR._CRMYeniInner = ({setPage}) => {
     setEkler([]);
   };
 
-  /* ── FIELDSET BİLEŞENİ → DİKKAT: DIŞARIDA TANIMLI (CRM_Fieldset) ── */
+  /* ── FIELDSET BİLEŞENİ → DIŞARIDA TANIMLI (focus kaybını önlemek için) ── */
 
   /* ── SOL PANEL BUTON STİLİ ── */
   const actionBtn = (color) => ({
@@ -1550,7 +1550,7 @@ MR._CRMYeniInner = ({setPage}) => {
         <div style={{flex:1, minWidth:0}}>
 
           {/* ── MÜŞTERİ BİLGİLERİ ── */}
-          <CRM_Fieldsettitle="MÜŞTERİ BİLGİLERİ" icon="User">
+          <Fieldsettitle="MÜŞTERİ BİLGİLERİ" icon="User">
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
               <FormGroup label="ADI SOYADI *">
                 <input style={{...S.input, padding:'10px 12px', fontSize:13}} value={f.ad_soyad} onChange={e => up('ad_soyad', e.target.value)} placeholder="ADI SOYADI"/>
@@ -1576,10 +1576,10 @@ MR._CRMYeniInner = ({setPage}) => {
                 <textarea style={{...S.input, minHeight:50, padding:'10px 12px', fontSize:13}} value={f.adres} onChange={e => up('adres', e.target.value)} placeholder="AÇIK ADRES..."/>
               </FormGroup>
             </div>
-          </CRM_Fieldset>
+          </Fieldset>
 
           {/* ── OLAY BİLGİLERİ ── */}
-          <CRM_Fieldsettitle="OLAY BİLGİLERİ" icon="FileText">
+          <Fieldsettitle="OLAY BİLGİLERİ" icon="FileText">
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10}}>
               <FormGroup label="DOSYA TÜRÜ">
                 <select style={S.select} value={f.dosya_turu} onChange={e => up('dosya_turu', e.target.value)}>
@@ -1638,10 +1638,10 @@ MR._CRMYeniInner = ({setPage}) => {
             <FormGroup label="OLAY AÇIKLAMASI / GÖRÜŞME NOTU">
               <textarea style={{...S.input, minHeight:80, padding:'10px 12px', fontSize:13}} value={f.olay_aciklama} onChange={e => up('olay_aciklama', e.target.value)} placeholder="MÜŞTERİ SAĞ ÖN ÇAMURLUK HASARLI, SİGORTA EKSPER BEKLİYOR, DEĞER KAYBI TALEP EDECEK..."/>
             </FormGroup>
-          </CRM_Fieldset>
+          </Fieldset>
 
           {/* ── EKLER / MEDYA ── */}
-          <CRM_Fieldsettitle="EKLER" icon="Paperclip">
+          <Fieldsettitle="EKLER" icon="Paperclip">
             <div style={{display:'flex', gap:8, marginBottom:10, flexWrap:'wrap'}}>
               {/* DOSYA EKLE */}
               <button type="button" onClick={() => dosyaInputRef.current?.click()}
@@ -1691,7 +1691,7 @@ MR._CRMYeniInner = ({setPage}) => {
                 ))}
               </div>
             )}
-          </CRM_Fieldset>
+          </Fieldset>
 
         </div>
       </div>
