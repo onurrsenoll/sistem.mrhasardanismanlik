@@ -149,6 +149,9 @@ MR.WebrtcWidget = ({user, setPage}) => {
           setAramaDurumu('bos');
           setEslestirme(null);
           setKarsiTarafAdi('');
+          if (sessiz && MR.webrtcTelefon) {
+            MR.webrtcTelefon._sesAyarlari.ringtoneVolume = parseFloat(localStorage.getItem('mr_webrtc_ringtone_vol') || '0.5');
+          }
           setSessiz(false);
           break;
         case 'baglanti-koptu':
@@ -216,19 +219,34 @@ MR.WebrtcWidget = ({user, setPage}) => {
 
   /* REDDET */
   const reddet = () => {
-    if (MR.webrtcTelefon) MR.webrtcTelefon.reddet();
+    if (!MR.webrtcTelefon) return;
+    /* Önce zili durdur */
+    try { MR.webrtcTelefon._zilDurdur(); } catch(e) {}
+    /* Session'ı reddet */
+    if (MR.webrtcTelefon._session) {
+      try {
+        if (MR.webrtcTelefon._session.direction === 'incoming' && MR.webrtcTelefon._session.status < 8) {
+          MR.webrtcTelefon._session.terminate({ status_code: 486, reason_phrase: 'Busy Here' });
+        } else {
+          MR.webrtcTelefon._session.terminate();
+        }
+      } catch(e) {
+        console.log('[WIDGET] REDDET terminate hatası:', e);
+      }
+    }
+    MR.webrtcTelefon._temizle && MR.webrtcTelefon._temizle();
+    MR.webrtcTelefon._durumBildir && MR.webrtcTelefon._durumBildir('reddedildi');
+    setAramaDurumu('bos');
   };
 
   /* SESSİZE AL */
   const sessizeAl = () => {
     setSessiz(true);
-    /* Zil sesini kapat */
-    if (MR.webrtcTelefon && MR.webrtcTelefon._zilSesi) {
-      try { MR.webrtcTelefon._zilSesi.pause(); MR.webrtcTelefon._zilSesi.currentTime = 0; } catch(e) {}
-    }
-    /* Genel ses kapatma */
-    if (MR.webrtcTelefon && typeof MR.webrtcTelefon.zilSustur === 'function') {
-      MR.webrtcTelefon.zilSustur();
+    /* _zilDurdur fonksiyonunu doğrudan çağır - AudioContext kapatır */
+    if (MR.webrtcTelefon) {
+      try { MR.webrtcTelefon._zilDurdur(); } catch(e) {}
+      /* ringtoneVolume'u geçici sıfırla */
+      MR.webrtcTelefon._sesAyarlari.ringtoneVolume = 0;
     }
   };
 
@@ -242,7 +260,7 @@ MR.WebrtcWidget = ({user, setPage}) => {
 
   return (
     <div style={{
-      position: 'fixed', top: 20, right: 20, zIndex: 99999,
+      position: 'fixed', top: 56, right: 20, zIndex: 99999,
       width: 320,
       background: isK ? '#1e293b' : '#fff',
       border: '2px solid #10b981',
