@@ -1092,26 +1092,6 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
 /* ═══════════════════════════════════════════
    CRM YENİ KAYIT - ZENGİNLEŞTİRİLMİŞ EKRAN
    ═══════════════════════════════════════════ */
-/* ── FIELDSET BİLEŞENİ (CRM YENİ FORMU İÇİN - BİLEŞEN DIŞINDA) ── */
-const Fieldset = ({title, icon, children}) => {
-  const {C, LIcon} = MR;
-  return (
-    <fieldset style={{
-      border: `1px solid ${C.border}`, borderRadius: 8,
-      padding: '12px 14px 10px', marginBottom: 10, background: 'transparent'
-    }}>
-      <legend style={{
-        padding: '3px 10px', fontSize: 11, fontWeight: 700, color: C.textSec,
-        display: 'flex', alignItems: 'center', gap: 5, letterSpacing: 0.5
-      }}>
-        <LIcon name={icon} size={12} color={C.accent}/>
-        {title}
-      </legend>
-      {children}
-    </fieldset>
-  );
-};
-
 MR._CRMYeniInner = ({setPage}) => {
   const {C, S, LIcon, FormGroup, Badge, api, ILLER, Confirm} = MR;
 
@@ -1376,7 +1356,25 @@ MR._CRMYeniInner = ({setPage}) => {
     setEkler([]);
   };
 
-  /* ── FIELDSET BİLEŞENİ → DIŞARIDA TANIMLI (focus kaybını önlemek için) ── */
+  /* ── FIELDSET BİLEŞENİ (useMemo ile sarılı - focus kaybını önler) ── */
+  const Fieldset = useMemo(() => {
+    const Comp = ({title, icon, children}) => (
+      <fieldset style={{
+        border: `1px solid ${C.border}`, borderRadius: 8,
+        padding: '12px 14px 10px', marginBottom: 10, background: 'transparent'
+      }}>
+        <legend style={{
+          padding: '3px 10px', fontSize: 11, fontWeight: 700, color: C.textSec,
+          display: 'flex', alignItems: 'center', gap: 5, letterSpacing: 0.5
+        }}>
+          <LIcon name={icon} size={12} color={C.accent}/>
+          {title}
+        </legend>
+        {children}
+      </fieldset>
+    );
+    return Comp;
+  }, []);
 
   /* ── SOL PANEL BUTON STİLİ ── */
   const actionBtn = (color) => ({
