@@ -255,6 +255,16 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       dosya_kaynagi: dosya.dosya_kaynagi || '',
       kaza_tarihi: dosya.kaza_tarihi || '',
       kaza_il: dosya.kaza_il || '',
+      kaza_ilce: dosya.kaza_ilce || '',
+      acilis_tarihi: dosya.acilis_tarihi || '',
+      police_no: dosya.police_no || '',
+      sigorta_turu: dosya.sigorta_turu || '',
+      talep_turu: dosya.talep_turu || '',
+      sorumlu_sigorta: dosya.sorumlu_sigorta || '',
+      sakatlik_aciklama: dosya.sakatlik_aciklama || '',
+      surucu_ad: dosya.surucu_ad || '',
+      surucu_ehliyet: dosya.surucu_ehliyet || '',
+      surucu_kusur: dosya.surucu_kusur || '',
       haklilik: dosya.haklilik || 100,
       komisyon_orani: dosya.komisyon_orani || 0,
       hak_mahrumiyet: parseInt(dosya.hak_mahrumiyet) === 1 ? 1 : 0,
@@ -270,6 +280,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       magdur_dogum_tarihi: magdur.dogum_tarihi || '',
       magdur_meslek: magdur.meslek || '',
       magdur_iban: magdur.iban || '',
+      magdur_adres: magdur.adres || '',
+      magdur_gelir_durumu: magdur.gelir_durumu || '',
       sorumlu_id: dosya.sorumlu_id ? String(dosya.sorumlu_id) : '',
       paydas_id: dosya.paydas_id ? String(dosya.paydas_id) : '',
       // Mağdur araç alanları
@@ -278,6 +290,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       ma_belge_tescil_no: maArac.belge_tescil_no || '',
       ma_onarim_gun_suresi: maArac.onarim_gun_suresi || '',
       ma_gecmis_hasar: maArac.gecmis_hasar || '',
+      ma_kasko: maArac.kasko ? 1 : 0,
       // Karşı araç alanları
       ka_ruhsat_sahibi: kaArac.ruhsat_sahibi || '',
       ka_tc_kimlik: kaArac.tc_kimlik || '',
@@ -307,6 +320,16 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       dosya_kaynagi: editForm.dosya_kaynagi,
       kaza_tarihi: editForm.kaza_tarihi || null,
       kaza_il: editForm.kaza_il,
+      kaza_ilce: editForm.kaza_ilce || '',
+      acilis_tarihi: editForm.acilis_tarihi || null,
+      police_no: editForm.police_no || '',
+      sigorta_turu: editForm.sigorta_turu || '',
+      talep_turu: editForm.talep_turu || '',
+      sorumlu_sigorta: editForm.sorumlu_sigorta || '',
+      sakatlik_aciklama: editForm.sakatlik_aciklama || '',
+      surucu_ad: editForm.surucu_ad || '',
+      surucu_ehliyet: editForm.surucu_ehliyet || '',
+      surucu_kusur: editForm.surucu_kusur || '',
       haklilik: parseInt(editForm.haklilik) || 100,
       komisyon_orani: parseFloat(editForm.komisyon_orani) || 0,
       hak_mahrumiyet: parseInt(editForm.hak_mahrumiyet) || 0,
@@ -322,6 +345,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       magdur_dogum_tarihi: editForm.magdur_dogum_tarihi || null,
       magdur_meslek: editForm.magdur_meslek,
       magdur_iban: editForm.magdur_iban,
+      magdur_adres: editForm.magdur_adres || '',
+      magdur_gelir_durumu: editForm.magdur_gelir_durumu || '',
       sorumlu_id: editForm.sorumlu_id ? parseInt(editForm.sorumlu_id) : null,
       paydas_id: editForm.paydas_id ? parseInt(editForm.paydas_id) : null
     };
@@ -332,6 +357,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       updateData.ma_belge_tescil_no = editForm.ma_belge_tescil_no || '';
       updateData.ma_onarim_gun_suresi = editForm.ma_onarim_gun_suresi ? parseInt(editForm.ma_onarim_gun_suresi) : null;
       updateData.ma_gecmis_hasar = editForm.ma_gecmis_hasar || '';
+      updateData.ma_kasko = editForm.ma_kasko ? 1 : 0;
       // Karşı araç alanları
       updateData.ka_ruhsat_sahibi = editForm.ka_ruhsat_sahibi || '';
       updateData.ka_tc_kimlik = editForm.ka_tc_kimlik || '';
@@ -546,9 +572,18 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <InfoRow label="AÇILIŞ TARİHİ" value={dosya.acilis_tarihi}/>
               <InfoRow label="KAZA TARİHİ" value={dosya.kaza_tarihi}/>
               <InfoRow label="KAZA İLİ" value={dosya.kaza_il}/>
+              <InfoRow label="KAZA İLÇE" value={dosya.kaza_ilce}/>
+              {dosya.police_no && <InfoRow label="POLİÇE NO" value={dosya.police_no} mono/>}
+              {dosya.sigorta_turu && <InfoRow label="SİGORTA TÜRÜ" value={dosya.sigorta_turu}/>}
+              {dosya.talep_turu && <InfoRow label="TALEP TÜRÜ" value={dosya.talep_turu}/>}
               <InfoRow label="HAKLILIK" value={`%${dosya.haklilik || 0}`} bold color={C.success}/>
               <InfoRow label="KOMİSYON" value={`%${dosya.komisyon_orani || 0}`}/>
               <InfoRow label="HAK MAHRUMİYET TALEP" value={parseInt(dosya.hak_mahrumiyet) === 1 ? 'VAR' : 'YOK'} bold color={parseInt(dosya.hak_mahrumiyet) === 1 ? C.success : C.textMuted}/>
+              {dosya.dosya_turu === 'BH' && dosya.sorumlu_sigorta && <InfoRow label="SORUMLU SİGORTA" value={dosya.sorumlu_sigorta}/>}
+              {dosya.dosya_turu === 'BH' && dosya.sakatlik_aciklama && <InfoRow label="SAKATLIK AÇIKLAMASI" value={dosya.sakatlik_aciklama}/>}
+              {dosya.dosya_turu === 'BH' && dosya.surucu_ad && <InfoRow label="SÜRÜCÜ ADI" value={dosya.surucu_ad}/>}
+              {dosya.dosya_turu === 'BH' && dosya.surucu_ehliyet && <InfoRow label="SÜRÜCÜ EHLİYET" value={dosya.surucu_ehliyet}/>}
+              {dosya.dosya_turu === 'BH' && dosya.surucu_kusur && <InfoRow label="SÜRÜCÜ KUSUR" value={dosya.surucu_kusur}/>}
               {dosya.notlar && <div style={{marginTop:8,padding:8,background:C.bgInput,borderRadius:6,fontSize:10,color:C.textSec}}>{dosya.notlar}</div>}
             </div>
           </div>
@@ -570,6 +605,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 {magdur.ilce && <InfoRow label="İLÇE" value={magdur.ilce}/>}
                 {magdur.meslek && <InfoRow label="MESLEK" value={magdur.meslek}/>}
                 {magdur.dogum_tarihi && <InfoRow label="DOĞUM TARİHİ" value={magdur.dogum_tarihi}/>}
+                {magdur.iban && <InfoRow label="IBAN" value={magdur.iban} mono/>}
+                {magdur.adres && <InfoRow label="ADRES" value={magdur.adres}/>}
+                {magdur.gelir_durumu && <InfoRow label="GELİR DURUMU" value={magdur.gelir_durumu}/>}
               </div>
             </div>
 
@@ -591,6 +629,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                     <InfoRow label="BELGE TESCİL NO" value={arac.belge_tescil_no} mono/>
                     <InfoRow label="ONARIM GÜN SÜRESİ" value={arac.onarim_gun_suresi ? `${arac.onarim_gun_suresi} GÜN` : '-'}/>
                     <InfoRow label="GEÇMİŞ HASAR" value={arac.gecmis_hasar ? arac.gecmis_hasar.toUpperCase() : '-'} bold color={arac.gecmis_hasar === 'var' ? C.danger : C.success}/>
+                    <InfoRow label="KASKO" value={arac.kasko ? 'VAR' : 'YOK'} bold color={arac.kasko ? C.success : C.textMuted}/>
                   </div>
                 </div>
               </div>
@@ -1393,6 +1432,33 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               {(ILLER || []).map(il => <option key={il} value={il}>{il}</option>)}
             </select>
           </FormGroup>
+          <FormGroup label="KAZA İLÇE">
+            <input value={editForm.kaza_ilce||''} onChange={e => u('kaza_ilce',e.target.value)} placeholder="KAZA İLÇE" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+          </FormGroup>
+          <FormGroup label="AÇILIŞ TARİHİ">
+            <MR.DateInput value={editForm.acilis_tarihi||''} onChange={v => u('acilis_tarihi',v)} style={{padding:'8px 10px',fontSize:11}}/>
+          </FormGroup>
+          <FormGroup label="POLİÇE NO">
+            <input value={editForm.police_no||''} onChange={e => u('police_no',e.target.value)} placeholder="POLİÇE NO" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+          </FormGroup>
+          <FormGroup label="SİGORTA TÜRÜ">
+            <select value={editForm.sigorta_turu||''} onChange={e => u('sigorta_turu',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+              <option value="">SEÇİNİZ</option>
+              <option value="TRAFİK">TRAFİK</option>
+              <option value="KASKO">KASKO</option>
+              <option value="İMM">İMM</option>
+              <option value="DİĞER">DİĞER</option>
+            </select>
+          </FormGroup>
+          <FormGroup label="TALEP TÜRÜ">
+            <select value={editForm.talep_turu||''} onChange={e => u('talep_turu',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+              <option value="">SEÇİNİZ</option>
+              <option value="DEĞER KAYBI">DEĞER KAYBI</option>
+              <option value="BEDENİ HASAR">BEDENİ HASAR</option>
+              <option value="MOTOR DEĞER KAYBI">MOTOR DEĞER KAYBI</option>
+              <option value="DİĞER">DİĞER</option>
+            </select>
+          </FormGroup>
           <FormGroup label="HAKLILIK (%)">
             <input type="number" min="0" max="100" value={editForm.haklilik} onChange={e => u('haklilik',e.target.value)} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
           </FormGroup>
@@ -1517,7 +1583,49 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           <FormGroup label="MESLEK">
             <input value={editForm.magdur_meslek||''} onChange={e => u('magdur_meslek',e.target.value)} placeholder="MESLEK" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
           </FormGroup>
+          <FormGroup label="GELİR DURUMU">
+            <select value={editForm.magdur_gelir_durumu||''} onChange={e => u('magdur_gelir_durumu',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+              <option value="">SEÇİNİZ</option>
+              <option value="ASGARİ ÜCRET">ASGARİ ÜCRET</option>
+              <option value="ASGARİ ÜCRET ÜSTÜ">ASGARİ ÜCRET ÜSTÜ</option>
+              <option value="SERBEST MESLEK">SERBEST MESLEK</option>
+              <option value="EMEKLİ">EMEKLİ</option>
+              <option value="ÖĞRENCİ">ÖĞRENCİ</option>
+              <option value="ÇALIŞMIYOR">ÇALIŞMIYOR</option>
+            </select>
+          </FormGroup>
         </div>
+        <div style={{marginBottom:14}}>
+          <FormGroup label="ADRES">
+            <textarea value={editForm.magdur_adres||''} onChange={e => u('magdur_adres',e.target.value.toUpperCase())} placeholder="AÇIK ADRES..." style={{...S.input,minHeight:50,padding:'8px 10px',fontSize:11}}/>
+          </FormGroup>
+        </div>
+
+        {/* BH DOSYA ALANLARI */}
+        {editForm.dosya_turu === 'BH' && (
+          <>
+            <div style={{fontSize:10,fontWeight:700,color:C.purple,marginBottom:8,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
+              <LIcon name="Heart" size={12} color={C.purple}/> BEDENİ HASAR BİLGİLERİ
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+              <FormGroup label="SORUMLU SİGORTA">
+                <input value={editForm.sorumlu_sigorta||''} onChange={e => u('sorumlu_sigorta',e.target.value.toUpperCase())} placeholder="SORUMLU SİGORTA" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+              </FormGroup>
+              <FormGroup label="SAKATLIK AÇIKLAMASI">
+                <input value={editForm.sakatlik_aciklama||''} onChange={e => u('sakatlik_aciklama',e.target.value.toUpperCase())} placeholder="SAKATLIK AÇIKLAMASI" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+              </FormGroup>
+              <FormGroup label="SÜRÜCÜ ADI">
+                <input value={editForm.surucu_ad||''} onChange={e => u('surucu_ad',e.target.value.toUpperCase())} placeholder="SÜRÜCÜ ADI SOYADI" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+              </FormGroup>
+              <FormGroup label="SÜRÜCÜ EHLİYET">
+                <input value={editForm.surucu_ehliyet||''} onChange={e => u('surucu_ehliyet',e.target.value.toUpperCase())} placeholder="EHLİYET BİLGİSİ" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+              </FormGroup>
+              <FormGroup label="SÜRÜCÜ KUSUR">
+                <input value={editForm.surucu_kusur||''} onChange={e => u('surucu_kusur',e.target.value.toUpperCase())} placeholder="KUSUR DURUMU" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+              </FormGroup>
+            </div>
+          </>
+        )}
 
         {/* MAĞDUR ARAÇ BİLGİLERİ */}
         {(editForm.dosya_turu === 'ADK' || editForm.dosya_turu === 'MDK') && (
@@ -1550,6 +1658,20 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                       background:editForm.ma_gecmis_hasar==='yok'?`${C.success}22`:'transparent',
                       color:editForm.ma_gecmis_hasar==='yok'?C.success:C.textMuted,
                       border:`1px solid ${editForm.ma_gecmis_hasar==='yok'?C.success+'66':C.border}`}}>YOK</div>
+                </div>
+              </FormGroup>
+              <FormGroup label="KASKO">
+                <div style={{display:'flex',gap:8,alignItems:'center',paddingTop:4}}>
+                  <div onClick={() => u('ma_kasko',1)}
+                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
+                      background:editForm.ma_kasko==1?`${C.success}22`:'transparent',
+                      color:editForm.ma_kasko==1?C.success:C.textMuted,
+                      border:`1px solid ${editForm.ma_kasko==1?C.success+'66':C.border}`}}>VAR</div>
+                  <div onClick={() => u('ma_kasko',0)}
+                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
+                      background:editForm.ma_kasko==0?`${C.danger}22`:'transparent',
+                      color:editForm.ma_kasko==0?C.danger:C.textMuted,
+                      border:`1px solid ${editForm.ma_kasko==0?C.danger+'66':C.border}`}}>YOK</div>
                 </div>
               </FormGroup>
             </div>

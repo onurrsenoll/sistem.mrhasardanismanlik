@@ -49,7 +49,8 @@ try {
     $dosyaFields = ['asama', 'dosya_turu', 'talep_turu', 'sigorta_sirket', 'police_no', 'sigorta_turu',
         'dosya_kaynagi', 'avukat_id', 'ortak_id', 'sorumlu_id', 'paydas_id', 'haklilik', 'komisyon_orani',
         'kaza_tarihi', 'kaza_il', 'kaza_ilce', 'pozisyon', 'kusur_durumu', 'hasar_no',
-        'sakatlik_aciklama', 'notlar', 'kapanma_tarihi', 'plaka', 'hak_mahrumiyet'];
+        'sakatlik_aciklama', 'notlar', 'kapanma_tarihi', 'plaka', 'hak_mahrumiyet',
+        'acilis_tarihi', 'sorumlu_sigorta', 'surucu_ad', 'surucu_ehliyet', 'surucu_kusur'];
 
     $sets = [];
     $params = [];
@@ -63,7 +64,7 @@ try {
                 $params[] = (int)$body[$field];
             } elseif (in_array($field, ['komisyon_orani'])) {
                 $params[] = (float)$body[$field];
-            } elseif (in_array($field, ['kaza_tarihi', 'kapanma_tarihi'])) {
+            } elseif (in_array($field, ['kaza_tarihi', 'kapanma_tarihi', 'acilis_tarihi'])) {
                 $params[] = !empty($body[$field]) ? $body[$field] : null;
             } else {
                 $params[] = clean($body[$field]);
@@ -110,7 +111,7 @@ try {
 
     // ═══ ARAÇ BİLGİLERİ GÜNCELLE ═══
     // Mağdur araç güncelle
-    $magdurAracFields = ['plaka','ruhsat_sahibi','tc_kimlik','marka','model','model_yili','belge_tescil_no','onarim_gun_suresi','gecmis_hasar'];
+    $magdurAracFields = ['plaka','ruhsat_sahibi','tc_kimlik','marka','model','model_yili','belge_tescil_no','onarim_gun_suresi','gecmis_hasar','kasko'];
     $maPrefix = 'ma_';
     $maSets = [];
     $maParams = [];
