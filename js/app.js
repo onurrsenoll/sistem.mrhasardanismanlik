@@ -26,7 +26,8 @@ const MENU = [
   {id:'paydaslar', label:'PAYDAŞLAR', icon:'Handshake', sub:[
     {id:'ortaklar-ortaklar', label:'İŞ ORTAKLARI', icon:'Briefcase'},
     {id:'ortaklar-paydaslar', label:'İŞ PAYDAŞLARI', icon:'Network'},
-    {id:'personel-liste', label:'PERSONEL', icon:'Users'}
+    {id:'personel-liste', label:'PERSONEL', icon:'Users'},
+    {id:'sozlesme', label:'SÖZLEŞMELER', icon:'FileText'}
   ]},
   {id:'police', label:'POLİÇE', icon:'FileCheck', sub:[
     {id:'police-liste', label:'POLİÇE LİSTESİ', icon:'List'},
@@ -787,6 +788,9 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     const sub = page.replace('personel-', '') || 'liste';
     return <MR.PersonelPage setPage={setPage} user={user} subPage={sub === 'personel' ? 'liste' : sub}/>;
   }
+
+  /* SÖZLEŞMELER */
+  if (page === 'sozlesme') return MR.SozlesmePage ? <MR.SozlesmePage setPage={setPage} user={user}/> : null;
 
   /* QR RUHSAT OKUYUCU */
   if (page === 'police-qr-ruhsat') return <MR.QrRuhsatPage setPage={setPage} user={user}/>;

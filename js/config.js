@@ -254,6 +254,14 @@ MR.api = {
   // AI MOTİVASYON
   motivasyonSoz() { return this.req('/ai/motivasyon.php', {}, 12000); },
   claudeTest(d = {}) { return this.req('/ai/motivasyon-test.php', { method: 'POST', body: JSON.stringify(d) }, 20000); },
+  // SÖZLEŞME
+  sozlesmeList(p = {}) { return this.req('/sozlesme/list.php?' + new URLSearchParams(p)); },
+  sozlesmeGet(id) { return this.req('/sozlesme/get.php?id=' + id); },
+  sozlesmeCreate(d) { return this.req('/sozlesme/create.php', { method: 'POST', body: JSON.stringify(d) }); },
+  sozlesmeUpdate(d) { return this.req('/sozlesme/update.php', { method: 'POST', body: JSON.stringify(d) }); },
+  sozlesmeDelete(id) { return this.req('/sozlesme/delete.php', { method: 'POST', body: JSON.stringify({id}) }); },
+  sozlesmeSettings() { return this.req('/sozlesme/settings.php'); },
+  sozlesmeSettingsUpdate(d) { return this.req('/sozlesme/settings.php', { method: 'POST', body: JSON.stringify(d) }); },
   // PERSONEL
   personelList(p = {}) { return this.req('/personel/list.php?' + new URLSearchParams(p)); },
   personelGet(id) { return this.req('/personel/get.php?id=' + id); },
