@@ -15,7 +15,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     ad_soyad:'', tc_kimlik:'', telefon:'', iban:'', adres:'', il:'', ilce:'',
     // Dosya bilgileri
     dosya_turu:'ADK', kaza_tarihi:'', haklilik:'100', hak_mahrumiyet:'0', meslek:'', komisyon:'',
-    dosya_kaynak:'', sorumlu_id:'', ortak_id:'', paydas_id:'',
+    dosya_kaynak:'', sorumlu_id:'', ortak_id:'', paydas_id:'', noter_vekalet:'',
     sakatlik_aciklama:'',
     // Sigorta bilgileri
     sigorta_sirket:'', hasar_no:'', police_no:'', sorumlu_sigorta:'',
@@ -58,6 +58,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     if (!form.dosya_turu) return 'DOSYA TÜRÜ SEÇİMİ GEREKLİ';
     if (!form.kaza_tarihi) return 'KAZA TARİHİ GEREKLİ';
     if (!form.komisyon) return 'KOMİSYON ORANI GEREKLİ';
+    if (!form.noter_vekalet || parseFloat(form.noter_vekalet) <= 0) return 'NOTER VEKALET UCRETI GEREKLİ (VEKALET ALINMADAN DOSYA ACILAMAZ)';
     if (!form.sorumlu_id) return 'DOSYA SORUMLUSU SEÇİMİ GEREKLİ';
     if (!form.dosya_kaynak) return 'DOSYA KAYNAĞI SEÇİMİ GEREKLİ';
     if (form.dosya_kaynak === 'PAYDAŞ/YÖNLENDİREN' && !form.paydas_id) return 'YÖNLENDİREN PAYDAŞ SEÇİMİ GEREKLİ';
@@ -78,6 +79,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     else delete gonder.sorumlu_id;
     if (gonder.paydas_id) gonder.paydas_id = parseInt(gonder.paydas_id);
     else delete gonder.paydas_id;
+    if (gonder.noter_vekalet) gonder.noter_vekalet = parseFloat(gonder.noter_vekalet);
     const r = await api.dosyaCreate(gonder);
     if (r?.success) setResult(r.data);
     else setError(r?.error || 'HATA');
@@ -167,6 +169,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
             </FormGroup>
             <FormGroup label="KAZA TARİHİ *"><DateInput value={form.kaza_tarihi} onChange={v=>u('kaza_tarihi',v)}/></FormGroup>
             <FormGroup label="KOMİSYON (%) *"><input type="number" style={S.input} value={form.komisyon} onChange={e=>u('komisyon',e.target.value)} placeholder="20"/></FormGroup>
+            <FormGroup label="NOTER VEKALET UCRETI (TL) *"><input type="number" style={S.input} value={form.noter_vekalet} onChange={e=>u('noter_vekalet',e.target.value)} placeholder="0"/></FormGroup>
             <FormGroup label="DOSYA KAYNAĞI *">
               <select style={S.select} value={form.dosya_kaynak} onChange={e=>{u('dosya_kaynak',e.target.value);u('paydas_id','');}}>
                 <option value="">SEÇİNİZ</option>

@@ -265,6 +265,15 @@ try {
         $paydas = $stmtPd->fetch();
         if ($paydas) {
             $primTutarP = (float)($paydas[$primField] ?? 0);
+            // Paydasta ozel fiyat yoksa varsayilan tarifeden al
+            if ($primTutarP <= 0) {
+                try {
+                    $stmtPT = $db->prepare("SELECT tutar FROM mr_ucretlendirme_tarife WHERE tip = 'paydas' AND dosya_turu = ? AND dosya_kaynagi = 'YONLENDIRME' AND yil = YEAR(CURDATE()) AND aktif = 1 LIMIT 1");
+                    $stmtPT->execute([$dosyaTuru]);
+                    $ptRow = $stmtPT->fetch();
+                    if ($ptRow) $primTutarP = (float)$ptRow['tutar'];
+                } catch (\Exception $e) {}
+            }
             if ($primTutarP > 0) {
                 // MASRAF OLARAK DOSYAYA EKLE — ÖDENMEDİ DURUMUNDA (KASADAN DÜŞMEZ)
                 $stmtMasraf2 = $db->prepare('INSERT INTO masraflar (dosya_id, masraf_kalemi, tutar, kasa_id, aciklama, islem_tarihi, kullanici_id, odeme_durumu) VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?)');
@@ -317,50 +326,71 @@ try {
         }
     }
 
-    // ═══ 5c. DOSYA KAYNAĞI BAZLI ÜCRETLENDİRME — DOSYA TÜRÜNE VE KAYNAĞINA GÖRE OTOMATİK MASRAF ═══
-    // Dosya kaynağına göre ücret anahtarını belirle (Ofis CRM veya Yönlendiren)
-    // NOT: Paydaş primi (5b) zaten YÖNLENDİREN ÜCRETİ masrafı eklediyse tekrar eklenmez
+    // ═══ 5c. ORTAK (DEMİRHAN) DOSYA BAŞI MASRAF — ÜCRETLENDIRME TARİFESİNDEN OTOMATİK ═══
     $dosyaKaynagi = clean($body['dosya_kaynagi'] ?? '');
-    $kaynakUcretPrefix = 'yonlendiren_ucret_'; // varsayılan
-    $kaynakMasrafKalemi = 'YÖNLENDİREN ÜCRETİ';
-    $kaynakAciklama = 'DOSYA BAŞI YÖNLENDİREN ÜCRETİ';
-
-    if (mb_stripos($dosyaKaynagi, 'OFİS') !== false || mb_stripos($dosyaKaynagi, 'CRM') !== false) {
-        $kaynakUcretPrefix = 'ofis_crm_ucret_';
-        $kaynakMasrafKalemi = 'OFİS CRM ÜCRETİ';
-        $kaynakAciklama = 'DOSYA BAŞI OFİS CRM ÜCRETİ';
+    // Kaynak belirleme: OFİS CRM veya YÖNLENDİRME
+    $tarifKaynak = 'YONLENDIRME'; // varsayilan
+    if (mb_stripos($dosyaKaynagi, 'OFİS') !== false || mb_stripos($dosyaKaynagi, 'OFIS') !== false || mb_stripos($dosyaKaynagi, 'CRM') !== false) {
+        $tarifKaynak = 'OFIS CRM';
     }
 
-    // Paydaş primi (5b) zaten yönlendiren ücreti masrafı eklediyse, bu bölümde tekrar eklenmesini engelle
-    $yonlendirenZatenEklendi = !empty($otoPrimBilgi['paydas_prim']) && $kaynakMasrafKalemi === 'YÖNLENDİREN ÜCRETİ';
+    // Ücretlendirme tarifesinden Demirhan masrafını çek
+    $ortakMasrafTutar = 0;
+    try {
+        $stmtTarif = $db->prepare("SELECT tutar FROM mr_ucretlendirme_tarife WHERE tip = 'ortak' AND dosya_turu = ? AND dosya_kaynagi = ? AND yil = YEAR(CURDATE()) AND aktif = 1 LIMIT 1");
+        $stmtTarif->execute([$dosyaTuru, $tarifKaynak]);
+        $tarifRow = $stmtTarif->fetch();
+        if ($tarifRow) {
+            $ortakMasrafTutar = (float)$tarifRow['tutar'];
+        }
+    } catch (\Exception $e) {}
 
-    if (!$yonlendirenZatenEklendi) {
+    // Eski ayarlar tablosundan da dene (geriye uyumluluk)
+    if ($ortakMasrafTutar <= 0) {
+        $kaynakUcretPrefix = ($tarifKaynak === 'OFIS CRM') ? 'ofis_crm_ucret_' : 'yonlendiren_ucret_';
         $ucretAnahtari = $kaynakUcretPrefix . strtolower($dosyaTuru);
-        $kaynakUcret = 0;
         try {
             $stmtYU = $db->prepare("SELECT deger FROM ayarlar WHERE anahtar = ? AND deger != '' AND deger != '0'");
             $stmtYU->execute([$ucretAnahtari]);
             $yuRow = $stmtYU->fetch();
-            if ($yuRow) {
-                $kaynakUcret = (float)$yuRow['deger'];
-            }
+            if ($yuRow) $ortakMasrafTutar = (float)$yuRow['deger'];
         } catch (\Exception $e) {}
+    }
 
-        if ($kaynakUcret > 0) {
-            $stmtYUM = $db->prepare('INSERT INTO masraflar (dosya_id, masraf_kalemi, tutar, kasa_id, aciklama, islem_tarihi, kullanici_id, odeme_durumu) VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?)');
-            $stmtYUM->execute([
-                $dosyaId,
-                $kaynakMasrafKalemi,
-                $kaynakUcret,
-                null,
-                'OTOMATİK - ' . $dosyaTuru . ' ' . $kaynakAciklama,
-                $user['id'],
-                'odenmedi'
-            ]);
-            $otoPrimBilgi['yonlendiren_ucret'] = $kaynakUcret;
-            $otoPrimBilgi['yonlendiren_tur'] = $dosyaTuru;
-            $otoPrimBilgi['kaynak_tipi'] = $kaynakMasrafKalemi;
-        }
+    $kaynakMasrafKalemi = ($tarifKaynak === 'OFIS CRM') ? 'ORTAK DOSYA MASRAFI (OFIS CRM)' : 'ORTAK DOSYA MASRAFI (YONLENDIRME)';
+
+    // Paydaş primi zaten yönlendiren ücreti masrafı eklediyse tekrar eklenmesini engelle
+    $yonlendirenZatenEklendi = !empty($otoPrimBilgi['paydas_prim']);
+
+    if ($ortakMasrafTutar > 0) {
+        $stmtOM = $db->prepare('INSERT INTO masraflar (dosya_id, masraf_kalemi, tutar, kasa_id, aciklama, islem_tarihi, kullanici_id, odeme_durumu) VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?)');
+        $stmtOM->execute([
+            $dosyaId,
+            $kaynakMasrafKalemi,
+            $ortakMasrafTutar,
+            null,
+            'OTOMATIK - ORTAK DOSYA BASI MASRAF (' . $dosyaTuru . ' / ' . $tarifKaynak . ')',
+            $user['id'],
+            'odenmedi'
+        ]);
+        $otoPrimBilgi['ortak_masraf'] = $ortakMasrafTutar;
+        $otoPrimBilgi['ortak_masraf_kaynak'] = $tarifKaynak;
+    }
+
+    // ═══ 5d. NOTER VEKALET MASRAFI (MANUEL GİRİLEN) ═══
+    $noterVekalet = !empty($body['noter_vekalet']) ? (float)$body['noter_vekalet'] : 0;
+    if ($noterVekalet > 0) {
+        $stmtNV = $db->prepare('INSERT INTO masraflar (dosya_id, masraf_kalemi, tutar, kasa_id, aciklama, islem_tarihi, kullanici_id, odeme_durumu) VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?)');
+        $stmtNV->execute([
+            $dosyaId,
+            'NOTER VEKALET MASRAFI',
+            $noterVekalet,
+            null,
+            'DOSYA ACILIS - NOTER VEKALET UCRETI',
+            $user['id'],
+            'odenmedi'
+        ]);
+        $otoPrimBilgi['noter_vekalet'] = $noterVekalet;
     }
 
     // ═══ DOSYA SÜRECİ: İLK KAYIT ═══
