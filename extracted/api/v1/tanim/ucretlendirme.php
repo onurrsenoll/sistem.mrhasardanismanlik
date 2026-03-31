@@ -29,11 +29,14 @@ $db->exec("CREATE TABLE IF NOT EXISTS mr_ucretlendirme_tarife (
   UNIQUE KEY uq_tarife (yil, tip, dosya_turu, dosya_kaynagi)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-// Bozuk Türkçe karakter düzeltme (? olan kayıtları temizle ve yeniden oluştur)
-$stmt = $db->query("SELECT COUNT(*) as c FROM mr_ucretlendirme_tarife WHERE dosya_kaynagi LIKE '%?%'");
-if ((int)$stmt->fetch()['c'] > 0) {
-    $db->exec("DELETE FROM mr_ucretlendirme_tarife WHERE dosya_kaynagi LIKE '%?%'");
-}
+// Bozuk karakter düzeltme: tabloyu tamamen temizle ve yeniden oluştur (sadece bozuk varsa)
+try {
+    $stmtChk = $db->query("SELECT id, dosya_kaynagi FROM mr_ucretlendirme_tarife LIMIT 1");
+    $ilkKayit = $stmtChk->fetch();
+    if ($ilkKayit && (strpos($ilkKayit['dosya_kaynagi'], '?') !== false || strpos($ilkKayit['dosya_kaynagi'], 'OF?S') !== false || strpos($ilkKayit['dosya_kaynagi'], 'Y?NLEND') !== false)) {
+        $db->exec("DELETE FROM mr_ucretlendirme_tarife");
+    }
+} catch (\Exception $e) {}
 
 // Varsayılan değerler yoksa ekle
 $stmt = $db->query("SELECT COUNT(*) as c FROM mr_ucretlendirme_tarife WHERE yil = " . date('Y'));
