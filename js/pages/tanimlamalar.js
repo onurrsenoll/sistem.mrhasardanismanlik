@@ -1086,7 +1086,8 @@ MR.TanimlamalarPage = ({setPage, user, subPage}) => {
     {key:'evrak',    label:'EVRAK TANIMLAMALARI',    icon:'FileText'},
     {key:'finansal', label:'FİNANSAL TANIMLAMALAR',  icon:'Wallet'},
     {key:'sablon',   label:'MATBU EVRAK / SÖZLEŞME', icon:'FileSignature'},
-    {key:'genel',    label:'GENEL TANIMLAMALAR',      icon:'Settings'}
+    {key:'genel',    label:'GENEL TANIMLAMALAR',      icon:'Settings'},
+    {key:'ucretlendirme', label:'ÜCRETLENDIRME TARİFESİ', icon:'DollarSign'}
   ];
 
   /* ── BAŞLIK BİLGİLERİ ── */
@@ -1095,7 +1096,8 @@ MR.TanimlamalarPage = ({setPage, user, subPage}) => {
     evrak:    {title:'EVRAK TANIMLAMALARI',    desc:'EVRAK TÜRÜ VE MASRAF TÜRÜ TANIMLARINI YÖNETİN',                     icon:'FileText'},
     finansal: {title:'FİNANSAL TANIMLAMALAR',  desc:'GELİR, GİDER VE KOMİSYON TÜRÜ TANIMLARINI YÖNETİN',               icon:'Wallet'},
     sablon:   {title:'MATBU EVRAK / SÖZLEŞME', desc:'ŞABLON OLUŞTURUN, DÜZENLEYİN VE DEĞİŞKEN YÖNETİMİ YAPIN',       icon:'FileSignature'},
-    genel:    {title:'GENEL TANIMLAMALAR',      desc:'HİZMET TÜRÜ VE DİĞER GENEL TANIMLAMALARI YÖNETİN',                icon:'Settings'}
+    genel:    {title:'GENEL TANIMLAMALAR',      desc:'HİZMET TÜRÜ VE DİĞER GENEL TANIMLAMALARI YÖNETİN',                icon:'Settings'},
+    ucretlendirme: {title:'ÜCRETLENDIRME TARİFESİ', desc:'ORTAK VE PAYDAŞ DOSYA BAŞI ÜCRET TARİFELERİNİ YÖNETİN', icon:'DollarSign'}
   };
 
   const aktifBaslik = baslikBilgi[aktifSekme] || baslikBilgi.dosya;
@@ -1149,6 +1151,138 @@ MR.TanimlamalarPage = ({setPage, user, subPage}) => {
       {aktifSekme === 'finansal' && <TanimGrubu kategoriler={SEKME_KATEGORILER.finansal} user={user}/>}
       {aktifSekme === 'sablon'   && <SablonYonetimi user={user}/>}
       {aktifSekme === 'genel'    && <TanimGrubu kategoriler={SEKME_KATEGORILER.genel} user={user}/>}
+      {aktifSekme === 'ucretlendirme' && <UcretlendirmeTarifesi user={user}/>}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   ÜCRETLENDIRME TARİFESİ BİLEŞENİ
+   Ortak (Demirhan) + Paydaş varsayılan dosya başı fiyatları
+   ═══════════════════════════════════════════════════════════ */
+const UcretlendirmeTarifesi = ({user}) => {
+  const {C, S, LIcon, StatCard, Badge, Loading, EmptyState, api} = MR;
+  const isKoyu = MR.tema === 'koyu';
+  const [loading, setLoading] = useState(true);
+  const [tarifeler, setTarifeler] = useState([]);
+  const [aktifTip, setAktifTip] = useState('ortak');
+  const [hata, setHata] = useState('');
+  const [basari, setBasari] = useState('');
+  const [editId, setEditId] = useState(null);
+  const [editTutar, setEditTutar] = useState('');
+  const [kayitLoading, setKayitLoading] = useState(false);
+  const aktifYil = new Date().getFullYear();
+
+  const fmt = (n) => parseFloat(n || 0).toLocaleString('tr-TR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  const yukle = async () => {
+    setLoading(true);
+    const p = {yil: aktifYil};
+    if (aktifTip) p.tip = aktifTip;
+    const r = await api.ucretlendirmeTarife(p);
+    if (r?.success) setTarifeler(r.data?.tarifeler || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { yukle(); }, [aktifTip]);
+
+  const kaydet = async (id, tutar) => {
+    setKayitLoading(true); setHata('');
+    const r = await api.ucretlendirmeTarifeGuncelle({id, tutar: parseFloat(tutar)});
+    if (r?.success) { setBasari('TARİFE GÜNCELLENDİ'); setEditId(null); yukle(); setTimeout(() => setBasari(''), 3000); }
+    else setHata(r?.error || 'GÜNCELLEME HATASI');
+    setKayitLoading(false);
+  };
+
+  const durumDegistir = async (id, aktif) => {
+    await api.ucretlendirmeTarifeGuncelle({id, aktif: aktif ? 1 : 0});
+    yukle();
+  };
+
+  const ortakT = tarifeler.filter(t => t.tip === 'ortak');
+  const paydasT = tarifeler.filter(t => t.tip === 'paydas');
+  const thSt = {padding:'12px 14px', textAlign:'left', color:isKoyu?'#FFFFFF':'#1e293b', fontWeight:800, fontSize:12, borderBottom:`2px solid ${C.border}`};
+  const tdSt = {padding:'10px 14px', fontSize:12, fontWeight:600};
+
+  const renderTablo = (data, baslik, renk) => (
+    <div style={{...S.card, marginBottom:16}}>
+      <div style={{...S.cardHead, padding:'12px 16px', background:`${renk}08`}}>
+        <LIcon name={baslik==='ORTAK' ? 'Handshake' : 'Network'} size={16} color={renk}/>
+        <span style={{fontSize:13, fontWeight:700}}>{baslik} DOSYA BAŞI ÜCRET TARİFESİ</span>
+        <Badge text={data.length+' KAYIT'} color={renk}/>
+      </div>
+      {data.length === 0 ? <EmptyState icon="DollarSign" title="TARİFE YOK" desc="BU KATEGORİDE TARİFE TANIMLANMAMIŞ"/> : (
+        <div style={{overflowX:'auto'}}>
+          <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
+            <thead><tr style={{background:isKoyu?'#0f2342':'#1e40af'}}>
+              <th style={thSt}>DOSYA TÜRÜ</th><th style={thSt}>KAYNAK</th>
+              <th style={{...thSt, textAlign:'right'}}>TUTAR (TL)</th>
+              <th style={{...thSt, textAlign:'right'}}>ÖNCEKİ</th>
+              <th style={{...thSt, textAlign:'center'}}>ARTIŞ</th>
+              <th style={{...thSt, textAlign:'center'}}>DURUM</th>
+              <th style={{...thSt, textAlign:'center'}}>İŞLEM</th>
+            </tr></thead>
+            <tbody>{data.map((t, i) => {
+              const artis = t.onceki_tutar && parseFloat(t.onceki_tutar) > 0 ? ((parseFloat(t.tutar) - parseFloat(t.onceki_tutar)) / parseFloat(t.onceki_tutar) * 100).toFixed(0) : null;
+              const isEdit = editId === t.id;
+              return (
+                <tr key={t.id} style={{backgroundColor:isKoyu?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), border:isKoyu?'1px solid rgba(6,182,212,0.15)':'1px solid rgba(99,102,241,0.12)', borderRadius:8}}>
+                  <td style={{...tdSt, fontWeight:700}}><div>{t.dosya_turu}</div><div style={{fontSize:9, color:C.textMuted}}>{t.dosya_turu==='ADK'?'Araç Değer Kaybı':t.dosya_turu==='BH'?'Bedeni Hasar':'Motosiklet Değer Kaybı'}</div></td>
+                  <td style={tdSt}>{t.dosya_kaynagi}</td>
+                  <td style={{...tdSt, textAlign:'right', fontWeight:700, fontSize:14, color:renk}}>
+                    {isEdit ? <input type="number" value={editTutar} onChange={e => setEditTutar(e.target.value)} style={{...S.input, width:120, textAlign:'right', fontSize:14, fontWeight:700, padding:'6px 10px'}} autoFocus/> : '₺'+fmt(t.tutar)}
+                  </td>
+                  <td style={{...tdSt, textAlign:'right', color:C.textMuted, fontSize:11}}>{t.onceki_tutar ? '₺'+fmt(t.onceki_tutar) : '-'}</td>
+                  <td style={{...tdSt, textAlign:'center'}}>{artis !== null ? <span style={{padding:'2px 8px', borderRadius:10, fontSize:10, fontWeight:700, background:parseFloat(artis)>0?`${C.success}18`:parseFloat(artis)<0?`${C.danger}18`:`${C.textMuted}18`, color:parseFloat(artis)>0?C.success:parseFloat(artis)<0?C.danger:C.textMuted}}>{parseFloat(artis)>0?'+':''}{artis}%</span> : '-'}</td>
+                  <td style={{...tdSt, textAlign:'center'}}><span onClick={() => durumDegistir(t.id, !parseInt(t.aktif))} style={{padding:'3px 10px', borderRadius:10, fontSize:10, fontWeight:700, cursor:'pointer', background:parseInt(t.aktif)?`${C.success}18`:`${C.danger}18`, color:parseInt(t.aktif)?C.success:C.danger}}>{parseInt(t.aktif)?'✓ Aktif':'✗ Pasif'}</span></td>
+                  <td style={{...tdSt, textAlign:'center'}}>{isEdit ? (
+                    <div style={{display:'flex', gap:4, justifyContent:'center'}}>
+                      <button onClick={() => kaydet(t.id, editTutar)} disabled={kayitLoading} style={{...S.btn, ...S.btnP, fontSize:9, padding:'4px 10px'}}><LIcon name="Check" size={11} color="#fff"/> KAYDET</button>
+                      <button onClick={() => {setEditId(null);setEditTutar('');}} style={{...S.btn, ...S.btnG, fontSize:9, padding:'4px 10px'}}>İPTAL</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => {setEditId(t.id);setEditTutar(t.tutar);}} style={{width:28, height:28, borderRadius:6, border:'none', cursor:'pointer', display:'inline-flex', alignItems:'center', justifyContent:'center', background:`${C.warning}18`}}><LIcon name="Edit3" size={13} color={C.warning}/></button>
+                  )}</td>
+                </tr>);
+            })}</tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+
+  const enDusuk = tarifeler.filter(t=>parseInt(t.aktif)).length > 0 ? Math.min(...tarifeler.filter(t=>parseInt(t.aktif)).map(t=>parseFloat(t.tutar))) : 0;
+  const enYuksek = tarifeler.filter(t=>parseInt(t.aktif)).length > 0 ? Math.max(...tarifeler.filter(t=>parseInt(t.aktif)).map(t=>parseFloat(t.tutar))) : 0;
+
+  return (
+    <div>
+      {hata && <div style={{padding:8, background:`${C.danger}15`, borderRadius:8, marginBottom:8, fontSize:11, color:C.danger}}>{hata}</div>}
+      {basari && <div style={{padding:8, background:`${C.success}15`, borderRadius:8, marginBottom:8, fontSize:11, color:C.success}}>{basari}</div>}
+
+      <div style={{...S.card, marginBottom:16, padding:'16px 20px', textAlign:'center', background:isKoyu?'#0f2342':'#1e40af', borderRadius:12}}>
+        <div style={{fontSize:11, color:'rgba(255,255,255,0.7)', fontWeight:600, letterSpacing:2}}>MR HASAR DANIŞMANLIK VE FİLO YÖNETİMİ</div>
+        <div style={{fontSize:20, fontWeight:800, color:'#fff', marginTop:4}}>{aktifYil} Ücretlendirme Tarifesi</div>
+        <div style={{fontSize:10, color:'rgba(255,255,255,0.5)', marginTop:4}}>Geçerlilik: 1 Ocak {aktifYil} – 31 Aralık {aktifYil}</div>
+      </div>
+
+      <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:16}}>
+        <StatCard icon="TrendingDown" label="EN DÜŞÜK FİYAT" value={'₺'+fmt(enDusuk)} color={C.success}/>
+        <StatCard icon="TrendingUp" label="EN YÜKSEK FİYAT" value={'₺'+fmt(enYuksek)} color={C.danger}/>
+        <StatCard icon="FileText" label="TOPLAM TARİFE" value={tarifeler.length} color={C.accent}/>
+      </div>
+
+      <div style={{display:'flex', gap:8, marginBottom:16}}>
+        {[{key:'', label:'TÜMÜ'}, {key:'ortak', label:'ORTAK (DEMİRHAN)'}, {key:'paydas', label:'PAYDAŞ VARSAYILAN'}].map(t => (
+          <button key={t.key} onClick={() => setAktifTip(t.key)} style={{...S.btn, fontSize:11, padding:'8px 16px', background:aktifTip===t.key?`${C.accent}22`:'transparent', color:aktifTip===t.key?C.accent:C.textSec, border:`1px solid ${aktifTip===t.key?C.accent+'44':C.border}`, fontWeight:aktifTip===t.key?700:500}}>{t.label}</button>
+        ))}
+      </div>
+
+      {loading ? <Loading/> : (
+        <>
+          {(aktifTip===''||aktifTip==='ortak') && renderTablo(ortakT, 'ORTAK', C.accent)}
+          {(aktifTip===''||aktifTip==='paydas') && renderTablo(paydasT, 'PAYDAŞ VARSAYILAN', C.purple)}
+        </>
+      )}
     </div>
   );
 };
