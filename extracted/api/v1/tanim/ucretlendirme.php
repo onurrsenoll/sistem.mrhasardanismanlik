@@ -29,13 +29,9 @@ $db->exec("CREATE TABLE IF NOT EXISTS mr_ucretlendirme_tarife (
   UNIQUE KEY uq_tarife (yil, tip, dosya_turu, dosya_kaynagi)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-// Bozuk karakter düzeltme: tabloyu tamamen temizle ve yeniden oluştur (sadece bozuk varsa)
+// Eski bozuk kayıtları temizle (OFIS CRM ve YONLENDIRME dışında kalan kayıtları sil)
 try {
-    $stmtChk = $db->query("SELECT id, dosya_kaynagi FROM mr_ucretlendirme_tarife LIMIT 1");
-    $ilkKayit = $stmtChk->fetch();
-    if ($ilkKayit && (strpos($ilkKayit['dosya_kaynagi'], '?') !== false || strpos($ilkKayit['dosya_kaynagi'], 'OF?S') !== false || strpos($ilkKayit['dosya_kaynagi'], 'Y?NLEND') !== false)) {
-        $db->exec("DELETE FROM mr_ucretlendirme_tarife");
-    }
+    $db->exec("DELETE FROM mr_ucretlendirme_tarife WHERE dosya_kaynagi NOT IN ('OFIS CRM','YONLENDIRME')");
 } catch (\Exception $e) {}
 
 // Varsayılan değerler yoksa ekle
@@ -44,16 +40,16 @@ if ((int)$stmt->fetch()['c'] === 0) {
     $yil = date('Y');
     $defaults = [
         // Ortak (Demirhan) tarifeleri
-        ['ortak', 'ADK', 'OFİS CRM', 10000],
-        ['ortak', 'ADK', 'YÖNLENDİRME', 20000],
-        ['ortak', 'MDK', 'OFİS CRM', 5000],
-        ['ortak', 'MDK', 'YÖNLENDİRME', 10000],
-        ['ortak', 'BH', 'OFİS CRM', 12500],
-        ['ortak', 'BH', 'YÖNLENDİRME', 25000],
+        ['ortak', 'ADK', 'OFIS CRM', 10000],
+        ['ortak', 'ADK', 'YONLENDIRME', 20000],
+        ['ortak', 'MDK', 'OFIS CRM', 5000],
+        ['ortak', 'MDK', 'YONLENDIRME', 10000],
+        ['ortak', 'BH', 'OFIS CRM', 12500],
+        ['ortak', 'BH', 'YONLENDIRME', 25000],
         // Paydaş varsayılan tarifeleri
-        ['paydas', 'ADK', 'YÖNLENDİRME', 8000],
-        ['paydas', 'MDK', 'YÖNLENDİRME', 4000],
-        ['paydas', 'BH', 'YÖNLENDİRME', 15000],
+        ['paydas', 'ADK', 'YONLENDIRME', 8000],
+        ['paydas', 'MDK', 'YONLENDIRME', 4000],
+        ['paydas', 'BH', 'YONLENDIRME', 15000],
     ];
     $stmt = $db->prepare("INSERT IGNORE INTO mr_ucretlendirme_tarife (yil, tip, dosya_turu, dosya_kaynagi, tutar) VALUES (?, ?, ?, ?, ?)");
     foreach ($defaults as $d) {

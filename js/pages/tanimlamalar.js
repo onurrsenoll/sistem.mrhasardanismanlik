@@ -1228,7 +1228,7 @@ const UcretlendirmeTarifesi = ({user}) => {
               return (
                 <tr key={t.id} style={{backgroundColor:isKoyu?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), border:isKoyu?'1px solid rgba(6,182,212,0.15)':'1px solid rgba(99,102,241,0.12)', borderRadius:8}}>
                   <td style={{...tdSt, fontWeight:700}}><div>{t.dosya_turu}</div><div style={{fontSize:9, color:C.textMuted}}>{t.dosya_turu==='ADK'?'Araç Değer Kaybı':t.dosya_turu==='BH'?'Bedeni Hasar':'Motosiklet Değer Kaybı'}</div></td>
-                  <td style={tdSt}>{t.dosya_kaynagi}</td>
+                  <td style={tdSt}>{(t.dosya_kaynagi||'').replace('OFIS CRM','OFİS CRM').replace('YONLENDIRME','YÖNLENDİRME')}</td>
                   <td style={{...tdSt, textAlign:'right', fontWeight:700, fontSize:14, color:renk}}>
                     {isEdit ? <input type="number" value={editTutar} onChange={e => setEditTutar(e.target.value)} style={{...S.input, width:120, textAlign:'right', fontSize:14, fontWeight:700, padding:'6px 10px'}} autoFocus/> : '₺'+fmt(t.tutar)}
                   </td>
