@@ -12,6 +12,7 @@ require_once __DIR__ . '/../../config/auth.php';
 setup_headers();
 $user = auth_required(['admin']);
 $db = getDB();
+$db->exec("SET NAMES 'utf8mb4'");
 
 // Tablo yoksa oluştur
 $db->exec("CREATE TABLE IF NOT EXISTS mr_ucretlendirme_tarife (
@@ -26,7 +27,13 @@ $db->exec("CREATE TABLE IF NOT EXISTS mr_ucretlendirme_tarife (
   aciklama VARCHAR(200) NULL,
   guncelleme TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uq_tarife (yil, tip, dosya_turu, dosya_kaynagi)
-)");
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+// Bozuk Türkçe karakter düzeltme (? olan kayıtları temizle ve yeniden oluştur)
+$stmt = $db->query("SELECT COUNT(*) as c FROM mr_ucretlendirme_tarife WHERE dosya_kaynagi LIKE '%?%'");
+if ((int)$stmt->fetch()['c'] > 0) {
+    $db->exec("DELETE FROM mr_ucretlendirme_tarife WHERE dosya_kaynagi LIKE '%?%'");
+}
 
 // Varsayılan değerler yoksa ekle
 $stmt = $db->query("SELECT COUNT(*) as c FROM mr_ucretlendirme_tarife WHERE yil = " . date('Y'));
