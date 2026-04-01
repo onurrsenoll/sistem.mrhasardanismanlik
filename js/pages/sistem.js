@@ -165,6 +165,31 @@ const MODUL_YETKILERI = [
     {key: 'ictihat-police-limit', label: 'POLİÇE LİMİT TABLOLARI'},
     {key: 'ictihat-kusur-emsal', label: 'KUSUR EMSAL DOSYALARI'}
   ]},
+  {modul: 'eposta', label: 'E-POSTA', icon: 'Mail', islemler: [
+    {key: 'eposta-goruntule', label: 'E-POSTA GÖRÜNTÜLE'},
+    {key: 'eposta-gonder', label: 'E-POSTA GÖNDER'},
+    {key: 'eposta-sil', label: 'E-POSTA SİL'}
+  ]},
+  {modul: 'crm-analiz', label: 'CRM ANALİZ', icon: 'BarChart3', islemler: [
+    {key: 'crm-analiz-goruntule', label: 'CRM ANALİZ GÖRÜNTÜLE'},
+    {key: 'crm-analiz-arama-gecmisi', label: 'ARAMA GEÇMİŞİ'},
+    {key: 'crm-analiz-istatistik', label: 'İSTATİSTİKLER'},
+    {key: 'crm-analiz-kayitlar', label: 'GÖRÜŞME KAYITLARI'}
+  ]},
+  {modul: 'netsantral', label: 'NETSANTRAL', icon: 'Phone', islemler: [
+    {key: 'netsantral-ayarlar', label: 'NETSANTRAL AYARLARI'},
+    {key: 'netsantral-dahili-atama', label: 'DAHİLİ ATAMA'},
+    {key: 'netsipp-goruntule', label: 'ÇAĞRI PANELİ GÖRÜNTÜLE'}
+  ]},
+  {modul: 'qr-ruhsat', label: 'QR RUHSAT OKUYUCU', icon: 'QrCode', islemler: [
+    {key: 'qr-ruhsat-goruntule', label: 'QR RUHSAT OKUYUCU'},
+    {key: 'qr-ruhsat-tara', label: 'RUHSAT TARA'},
+    {key: 'qr-ruhsat-kaydet', label: 'RUHSAT BİLGİSİ KAYDET'}
+  ]},
+  {modul: 'konum', label: 'KONUM TAKİBİ', icon: 'MapPin', islemler: [
+    {key: 'konum-goruntule', label: 'KONUM TAKİBİ GÖRÜNTÜLE'},
+    {key: 'konum-gecmis', label: 'KONUM GEÇMİŞİ'}
+  ]},
   {modul: 'sistem', label: 'SİSTEM', icon: 'Shield', islemler: [
     {key: 'sistem-kullanici', label: 'KULLANICI YÖNETİMİ'},
     {key: 'sistem-yetki', label: 'YETKİ YÖNETİMİ'},
@@ -187,7 +212,8 @@ const MODUL_YETKILERI = [
     {key: 'tanimlamalar-sablon-ekle', label: 'ŞABLON EKLE'},
     {key: 'tanimlamalar-sablon-duzenle', label: 'ŞABLON DÜZENLE'},
     {key: 'sistem-konum', label: 'KONUM TAKİBİ'},
-    {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'}
+    {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'},
+    {key: 'tanimlamalar-ucretlendirme', label: 'ÜCRETLENDIRME TARİFESİ'}
   ]},
 ];
 
