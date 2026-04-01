@@ -1416,8 +1416,8 @@ MR._CRMYeniInner = ({setPage}) => {
             </span>
           </div>
 
-          {/* ÇAĞRI PANELİ - YETKİ KONTROLLÜ */}
-          {(MR._currentUser?.rol === 'admin' || MR._currentUser?.yetkiler?.netsipp_goruntule === 1 || MR._currentUser?.netsantral_dahili) && <div style={{...S.card, marginBottom:10}}>
+          {/* ÇAĞRI PANELİ */}
+          {MR._currentUser && <div style={{...S.card, marginBottom:10}}>
             <div style={{...S.cardHead, padding:'8px 12px'}}>
               <LIcon name="Headphones" size={13} color={C.accent}/>
               <span style={{fontSize:11, fontWeight:700}}>ANLIK ÇAĞRI & ANALİZ</span>
