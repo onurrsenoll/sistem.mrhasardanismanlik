@@ -42,7 +42,7 @@ try {
     }
 
     $db = getDB();
-    $stmt = $db->prepare('SELECT id, ad_soyad, email, rol, telefon, avatar, aktif, totp_secret, totp_aktif, created_at, netsantral_dahili, netsantral_sip_sifre, netsantral_api_sifre FROM users WHERE id = ?');
+    $stmt = $db->prepare('SELECT id, ad_soyad, email, rol, telefon, avatar, aktif, totp_secret, totp_aktif, created_at FROM users WHERE id = ?');
     $stmt->execute([$payload['user_id']]);
     $user = $stmt->fetch();
 
@@ -80,19 +80,20 @@ try {
     unset($user['totp_secret']);
     unset($user['totp_aktif']);
 
-    // Kullanicinin yetkilerini yukle
+    // Netsantral + yetkiler yukle (sessizce)
     try {
-        $stmtY = $db->prepare('SELECT modul, islem, izin FROM yetkiler WHERE kullanici_id = ? AND izin = 1');
+        $stmtNS = $db->prepare('SELECT netsantral_dahili, netsantral_sip_sifre, netsantral_api_sifre FROM users WHERE id = ?');
+        $stmtNS->execute([$user['id']]);
+        $nsRow = $stmtNS->fetch();
+        if ($nsRow) { $user = array_merge($user, $nsRow); }
+    } catch (\Exception $e) {}
+    try {
+        $stmtY = $db->prepare('SELECT modul, islem FROM yetkiler WHERE kullanici_id = ? AND izin = 1');
         $stmtY->execute([$user['id']]);
-        $yetkiRows = $stmtY->fetchAll();
         $yetkiObj = array();
-        foreach ($yetkiRows as $yr) {
-            $yetkiObj[$yr['modul'] . '_' . $yr['islem']] = 1;
-        }
+        foreach ($stmtY->fetchAll() as $yr) { $yetkiObj[$yr['modul'] . '_' . $yr['islem']] = 1; }
         $user['yetkiler'] = $yetkiObj;
-    } catch (\Exception $e) {
-        $user['yetkiler'] = array();
-    }
+    } catch (\Exception $e) { $user['yetkiler'] = array(); }
 
     echo json_encode([
         'success' => true,

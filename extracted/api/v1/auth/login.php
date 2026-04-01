@@ -34,11 +34,7 @@ if (!$body || empty($body['email']) || empty($body['sifre'])) {
 
 try {
     $db = getDB();
-    // Netsantral kolonlari yoksa ekle (guvenli DDL)
-    try { $db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS netsantral_dahili VARCHAR(10) DEFAULT NULL"); } catch(\Exception $e) {}
-    try { $db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS netsantral_sip_sifre VARCHAR(100) DEFAULT NULL"); } catch(\Exception $e) {}
-    try { $db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS netsantral_api_sifre VARCHAR(100) DEFAULT NULL"); } catch(\Exception $e) {}
-    $stmt = $db->prepare('SELECT id, ad_soyad, email, sifre_hash, rol, telefon, aktif, netsantral_dahili, netsantral_sip_sifre, netsantral_api_sifre FROM users WHERE email = ?');
+    $stmt = $db->prepare('SELECT id, ad_soyad, email, sifre_hash, rol, telefon, aktif FROM users WHERE email = ?');
     $stmt->execute([$body['email']]);
     $user = $stmt->fetch();
 
@@ -105,9 +101,17 @@ try {
 
     unset($user['sifre_hash']);
 
-    // Kullanicinin yetkilerini yukle
+    // Netsantral bilgilerini yukle (kolon yoksa sessizce gec)
     try {
-        $stmtY = $db->prepare('SELECT modul, islem, izin FROM yetkiler WHERE kullanici_id = ? AND izin = 1');
+        $stmtNS = $db->prepare('SELECT netsantral_dahili, netsantral_sip_sifre, netsantral_api_sifre FROM users WHERE id = ?');
+        $stmtNS->execute([$user['id']]);
+        $nsRow = $stmtNS->fetch();
+        if ($nsRow) { $user = array_merge($user, $nsRow); }
+    } catch (\Exception $e) {}
+
+    // Kullanicinin yetkilerini yukle (tablo yoksa sessizce gec)
+    try {
+        $stmtY = $db->prepare('SELECT modul, islem FROM yetkiler WHERE kullanici_id = ? AND izin = 1');
         $stmtY->execute([$user['id']]);
         $yetkiRows = $stmtY->fetchAll();
         $yetkiObj = array();
