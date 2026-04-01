@@ -1416,8 +1416,8 @@ MR._CRMYeniInner = ({setPage}) => {
             </span>
           </div>
 
-          {/* ÇAĞRI PANELİ */}
-          {MR._currentUser && <div style={{...S.card, marginBottom:10}}>
+          {/* ÇAĞRI PANELİ - CRM YENİ YETKİSİ OLAN KULLANICILAR */}
+          {(MR._currentUser?.rol === 'admin' || MR.hasYetki(MR._currentUser, 'crm', 'crm-yeni')) && <div style={{...S.card, marginBottom:10}}>
             <div style={{...S.cardHead, padding:'8px 12px'}}>
               <LIcon name="Headphones" size={13} color={C.accent}/>
               <span style={{fontSize:11, fontWeight:700}}>ANLIK ÇAĞRI & ANALİZ</span>
