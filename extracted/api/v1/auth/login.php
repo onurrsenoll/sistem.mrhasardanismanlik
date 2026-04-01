@@ -34,7 +34,11 @@ if (!$body || empty($body['email']) || empty($body['sifre'])) {
 
 try {
     $db = getDB();
-    $stmt = $db->prepare('SELECT id, ad_soyad, email, sifre_hash, rol, telefon, aktif FROM users WHERE email = ?');
+    // Netsantral kolonlari yoksa ekle (guvenli DDL)
+    try { $db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS netsantral_dahili VARCHAR(10) DEFAULT NULL"); } catch(\Exception $e) {}
+    try { $db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS netsantral_sip_sifre VARCHAR(100) DEFAULT NULL"); } catch(\Exception $e) {}
+    try { $db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS netsantral_api_sifre VARCHAR(100) DEFAULT NULL"); } catch(\Exception $e) {}
+    $stmt = $db->prepare('SELECT id, ad_soyad, email, sifre_hash, rol, telefon, aktif, netsantral_dahili, netsantral_sip_sifre, netsantral_api_sifre FROM users WHERE email = ?');
     $stmt->execute([$body['email']]);
     $user = $stmt->fetch();
 

@@ -42,7 +42,7 @@ try {
     }
 
     $db = getDB();
-    $stmt = $db->prepare('SELECT id, ad_soyad, email, rol, telefon, avatar, aktif, totp_secret, totp_aktif, created_at FROM users WHERE id = ?');
+    $stmt = $db->prepare('SELECT id, ad_soyad, email, rol, telefon, avatar, aktif, totp_secret, totp_aktif, created_at, netsantral_dahili, netsantral_sip_sifre, netsantral_api_sifre FROM users WHERE id = ?');
     $stmt->execute([$payload['user_id']]);
     $user = $stmt->fetch();
 

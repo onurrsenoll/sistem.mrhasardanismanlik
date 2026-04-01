@@ -1289,9 +1289,33 @@ const App = () => {
   /* LOGIN SONRASI ME.PHP'DEN YETKİLERİ ÇEK */
   const handleLogin = async (u) => {
     setUser(u);
+    /* NETSANTRAL DAHİLİ OTOMATİK DOLDUR */
+    if (u && u.netsantral_dahili) {
+      var no = u.netsantral_dahili;
+      localStorage.setItem('mr_netsantral_wss', 'wss://sip6.netsantral.com:8089/ws');
+      localStorage.setItem('mr_netsantral_domain', 'sip6.netsantral.com');
+      localStorage.setItem('mr_netsantral_dahili', no);
+      localStorage.setItem('mr_netsantral_sip_sifre', u.netsantral_sip_sifre || '');
+      localStorage.setItem('mr_netsantral_no', '3625026502');
+      localStorage.setItem('mr_netsantral_kullanici', no + '-3625026502');
+      localStorage.setItem('mr_netsantral_api_sifre', u.netsantral_api_sifre || '');
+      localStorage.setItem('mr_netsantral_sip_port', '5060');
+      localStorage.setItem('mr_netsantral_kayit_suresi', '300');
+      localStorage.setItem('mr_netsantral_outbound_proxy', '');
+    }
     try {
       const r = await api.me();
-      if (r?.success) { setUser(r.data?.user || r.data); }
+      if (r?.success) {
+        var ud = r.data?.user || r.data;
+        setUser(ud);
+        /* ME endpoint'inden de dahili bilgisi gelirse guncelle */
+        if (ud && ud.netsantral_dahili && !localStorage.getItem('mr_netsantral_dahili')) {
+          localStorage.setItem('mr_netsantral_dahili', ud.netsantral_dahili);
+          localStorage.setItem('mr_netsantral_sip_sifre', ud.netsantral_sip_sifre || '');
+          localStorage.setItem('mr_netsantral_api_sifre', ud.netsantral_api_sifre || '');
+          localStorage.setItem('mr_netsantral_kullanici', ud.netsantral_dahili + '-3625026502');
+        }
+      }
     } catch(e) {}
   };
 

@@ -38,7 +38,7 @@ if ($aktif >= 0) {
 
 $whereSQL = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
-$stmt = $db->prepare("SELECT id, ad_soyad, email, rol, telefon, avatar, aktif, son_giris, created_at FROM users $whereSQL ORDER BY id");
+$stmt = $db->prepare("SELECT id, ad_soyad, email, rol, telefon, avatar, aktif, son_giris, created_at, netsantral_dahili, netsantral_sip_sifre, netsantral_api_sifre FROM users $whereSQL ORDER BY id");
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 
