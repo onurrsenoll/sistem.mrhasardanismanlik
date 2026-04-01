@@ -80,6 +80,20 @@ try {
     unset($user['totp_secret']);
     unset($user['totp_aktif']);
 
+    // Kullanicinin yetkilerini yukle
+    try {
+        $stmtY = $db->prepare('SELECT modul, islem, izin FROM yetkiler WHERE kullanici_id = ? AND izin = 1');
+        $stmtY->execute([$user['id']]);
+        $yetkiRows = $stmtY->fetchAll();
+        $yetkiObj = array();
+        foreach ($yetkiRows as $yr) {
+            $yetkiObj[$yr['modul'] . '_' . $yr['islem']] = 1;
+        }
+        $user['yetkiler'] = $yetkiObj;
+    } catch (\Exception $e) {
+        $user['yetkiler'] = array();
+    }
+
     echo json_encode([
         'success' => true,
         'message' => '2FA dogrulama basarili',

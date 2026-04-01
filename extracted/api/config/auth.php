@@ -72,6 +72,20 @@ function auth_required($allowedRoles = array()) {
         exit;
     }
 
+    // Kullanicinin yetkilerini yukle
+    try {
+        $stmtY = $db->prepare('SELECT modul, islem, izin FROM yetkiler WHERE kullanici_id = ? AND izin = 1');
+        $stmtY->execute(array($user['id']));
+        $yetkiRows = $stmtY->fetchAll();
+        $yetkiObj = array();
+        foreach ($yetkiRows as $yr) {
+            $yetkiObj[$yr['modul'] . '_' . $yr['islem']] = 1;
+        }
+        $user['yetkiler'] = $yetkiObj;
+    } catch (\Exception $e) {
+        $user['yetkiler'] = array();
+    }
+
     // ═══ YETKİ MATRİS KONTROLÜ ═══
     // Rol bazlı kontrol kaldırıldı. Tüm erişim yetki matrisi üzerinden yönetilir.
     // Admin kullanıcılar has_yetki() içinde otomatik bypass edilir.
