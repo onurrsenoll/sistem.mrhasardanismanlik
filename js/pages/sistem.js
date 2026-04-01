@@ -129,13 +129,6 @@ const MODUL_YETKILERI = [
     {key: 'personel-hakedis', label: 'HAKEDİŞ TAKİBİ'},
     {key: 'personel-maas-ode', label: 'PERSONEL MAAŞ/HAKEDİŞ ÖDEME'}
   ]},
-  {modul: 'masraf', label: 'MASRAF YÖNETİMİ', icon: 'Receipt', islemler: [
-    {key: 'masraf-goruntule', label: 'MASRAFLARI GÖRÜNTÜLE'},
-    {key: 'masraf-ekle', label: 'MASRAF EKLE'},
-    {key: 'masraf-duzenle', label: 'MASRAF DÜZENLE'},
-    {key: 'masraf-sil', label: 'MASRAF SİL'},
-    {key: 'masraf-ode', label: 'MASRAF ÖDE'}
-  ]},
   {modul: 'evrak', label: 'EVRAK YÖNETİMİ', icon: 'FileUp', islemler: [
     {key: 'evrak-goruntule', label: 'EVRAK GÖRÜNTÜLE'},
     {key: 'evrak-yukle', label: 'EVRAK YÜKLE'},

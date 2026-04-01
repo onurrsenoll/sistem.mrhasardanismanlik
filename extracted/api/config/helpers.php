@@ -594,12 +594,22 @@ $GLOBALS['YETKI_MAP'] = array(
     'ictihat/kusur-emsal-ara.php' => array('ictihat', 'ictihat-kusur-emsal'),
 
 
-    // ─── ARAMA LOG ───
-    // create, update, kayit-yukle: Yetki gerektirmez - her kullanıcı kendi aramasını loglar
-    'arama-log/list.php' => array('sistem', 'arama-gecmis'),
-    'arama-log/delete.php' => array('sistem', 'arama-gecmis-sil'),
-    'arama-log/istatistik.php' => array('sistem', 'arama-gecmis-istatistik'),
-    'arama-log/kayit-indir.php' => array('sistem', 'arama-gecmis-kayit-dinle'),
+    // ─── ARAMA LOG (CRM ANALİZ modülüne taşındı - yukarıda tanımlı) ───
+    'arama-log/delete.php' => array('crm-analiz', 'crm-analiz-goruntule'),
+
+    // ─── NETSANTRAL ───
+    'sozlesme/settings.php' => array('netsantral', 'netsantral-ayarlar'),
+
+    // ─── E-POSTA ───
+    'mail/list.php' => array('eposta', 'eposta-goruntule'),
+    'mail/get.php' => array('eposta', 'eposta-goruntule'),
+    'mail/send.php' => array('eposta', 'eposta-gonder'),
+    'mail/delete.php' => array('eposta', 'eposta-sil'),
+
+    // ─── CRM ANALİZ ───
+    'arama-log/list.php' => array('crm-analiz', 'crm-analiz-goruntule'),
+    'arama-log/istatistik.php' => array('crm-analiz', 'crm-analiz-istatistik'),
+    'arama-log/kayit-indir.php' => array('crm-analiz', 'crm-analiz-kayitlar'),
 
     // ─── BİLDİRİM ───
     'bildirim/create.php' => array('bildirim', 'bildirim-goruntule'),
