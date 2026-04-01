@@ -41,7 +41,7 @@ $stmt->execute($params);
 log_action($user['id'], 'profil_guncelle', 'Profil bilgileri güncellendi', 'users', $user['id']);
 
 // Güncel veriyi çek
-$stmt = $db->prepare('SELECT id, ad_soyad, email, rol, telefon, avatar, aktif, created_at FROM users WHERE id = ?');
+$stmt = $db->prepare('SELECT id, ad_soyad, email, rol, telefon, avatar, aktif, created_at, netsantral_dahili, netsantral_sip_sifre, netsantral_api_sifre FROM users WHERE id = ?');
 $stmt->execute([$user['id']]);
 $updatedUser = $stmt->fetch();
 
