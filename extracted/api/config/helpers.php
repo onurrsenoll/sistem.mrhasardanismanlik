@@ -570,15 +570,15 @@ $GLOBALS['YETKI_MAP'] = array(
     'sablon/update.php' => array('sistem', 'tanimlamalar-sablon-duzenle'),
     'sablon/delete.php' => array('sistem', 'tanimlamalar-sil'),
 
-    // ─── YÖNLENDIRME ───
-    'yonlendirme/list.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/get.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/create.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/delete.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/update.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/import.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/not-ekle.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/toplu-islem.php' => array('dosya', 'dosya-detay'),
+    // ─── YÖNLENDIRME (CRM ARAMA LİSTESİ) ───
+    'yonlendirme/list.php' => array('crm', 'crm-arama'),
+    'yonlendirme/get.php' => array('crm', 'crm-arama'),
+    'yonlendirme/create.php' => array('crm', 'crm-arama'),
+    'yonlendirme/delete.php' => array('crm', 'crm-arama'),
+    'yonlendirme/update.php' => array('crm', 'crm-arama'),
+    'yonlendirme/import.php' => array('crm', 'crm-arama'),
+    'yonlendirme/not-ekle.php' => array('crm', 'crm-arama'),
+    'yonlendirme/toplu-islem.php' => array('crm', 'crm-arama'),
 
     // ─── AJANDA ───
     'ajanda/list.php' => array('ajanda', 'goruntule'),
