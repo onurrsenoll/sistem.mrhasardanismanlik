@@ -137,7 +137,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
   // Section card component
   const SecCard = ({icon, title, sub, color, badge, children}) => (
     <div style={{background:C.bgCard||'#fff', borderRadius:10, border:`1px solid ${C.border}`, marginBottom:10, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
-      <div style={{display:'flex', alignItems:'center', gap:8, padding:'10px 14px', borderBottom:`1px solid ${C.border}`, borderLeft:`3px solid ${color||C.accent}`}}>
+      <div style={{display:'flex', alignItems:'center', gap:8, padding:'8px 12px', borderBottom:`1px solid ${C.border}`, borderLeft:`3px solid ${color||C.accent}`}}>
         <div style={{width:26,height:26,borderRadius:6,background:`${color||C.accent}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>
           <LIcon name={icon} size={12} color={color||C.accent}/>
         </div>
@@ -155,7 +155,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
   const Toggle = ({value, onSelect, options}) => (
     <div style={{display:'flex',gap:6}}>
       {options.map(o => (
-        <div key={o.value} onClick={() => onSelect(o.value)} style={{padding:'7px 18px',borderRadius:8,fontSize:11,fontWeight:700,cursor:'pointer',flex:1,textAlign:'center',
+        <div key={o.value} onClick={() => onSelect(o.value)} style={{padding:'5px 12px',borderRadius:6,fontSize:10,fontWeight:700,cursor:'pointer',flex:1,textAlign:'center',
           background:value===o.value?`${o.color}22`:'transparent',color:value===o.value?o.color:C.textMuted,border:`1px solid ${value===o.value?o.color+'66':C.border}`}}>{o.label}</div>
       ))}
     </div>
@@ -182,7 +182,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
 
   // Ana form
   return (
-    <div style={{maxWidth:960,margin:'0 auto',paddingBottom:90}} className="fade-in">
+    <div style={{maxWidth:900,margin:'0 auto',paddingBottom:80}} className="fade-in">
 
       {error && (
         <div style={{padding:12,background:`${C.danger}22`,borderRadius:8,marginBottom:16,fontSize:12,color:C.danger,fontWeight:600,display:'flex',alignItems:'center',gap:8}}>
@@ -209,22 +209,22 @@ MR.DosyaYeniPage = ({setPage, user}) => {
       {/* ═══ 2. DOSYA BİLGİLERİ ═══ */}
       <SecCard icon="FileText" title="DOSYA BİLGİLERİ" sub="Tür, tarih, sorumluluk ve sigorta" color="#f97316" badge="ZORUNLU">
         {/* DOSYA TÜRÜ PİLL */}
-        <div style={{marginBottom:16}}>
-          <div style={{fontSize:10,fontWeight:700,color:C.textMuted,marginBottom:6}}>DOSYA TURU *</div>
-          <div style={{display:'flex',gap:8}}>
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:9,fontWeight:700,color:C.textMuted,marginBottom:4}}>DOSYA TÜRÜ *</div>
+          <div style={{display:'flex',gap:6}}>
             {[{v:'ADK',l:'ADK',d:'Araç Değer Kaybı',icon:'Car'},{v:'BH',l:'BH',d:'Bedeni Hasar',icon:'Heart'},{v:'MDK',l:'MDK',d:'Maddi Hasar / Kaza',icon:'Wrench'}].map(t => (
-              <div key={t.v} onClick={() => u('dosya_turu',t.v)} style={{flex:1,padding:'12px 14px',borderRadius:10,cursor:'pointer',display:'flex',alignItems:'center',gap:10,
-                background:form.dosya_turu===t.v?`${C.accent}18`:'transparent',border:`2px solid ${form.dosya_turu===t.v?C.accent:C.border}`,transition:'all .2s'}}>
-                <LIcon name={t.icon} size={18} color={form.dosya_turu===t.v?C.accent:C.textMuted}/>
+              <div key={t.v} onClick={() => u('dosya_turu',t.v)} style={{flex:1,padding:'8px 10px',borderRadius:8,cursor:'pointer',display:'flex',alignItems:'center',gap:8,
+                background:form.dosya_turu===t.v?`${C.accent}18`:'transparent',border:`1.5px solid ${form.dosya_turu===t.v?C.accent:C.border}`,transition:'all .2s'}}>
+                <LIcon name={t.icon} size={14} color={form.dosya_turu===t.v?C.accent:C.textMuted}/>
                 <div>
-                  <div style={{fontSize:14,fontWeight:800,color:form.dosya_turu===t.v?C.accent:C.text}}>{t.l}</div>
-                  <div style={{fontSize:9,color:C.textMuted}}>{t.d}</div>
+                  <div style={{fontSize:12,fontWeight:800,color:form.dosya_turu===t.v?C.accent:C.text}}>{t.l}</div>
+                  <div style={{fontSize:8,color:C.textMuted}}>{t.d}</div>
                 </div>
               </div>
             ))}
           </div>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
           <FormGroup label="KAZA TARİHİ *"><DateInput value={form.kaza_tarihi} onChange={v=>u('kaza_tarihi',v)}/></FormGroup>
           <FormGroup label="KOMİSYON (%) *"><input type="number" style={S.input} value={form.komisyon} onChange={e=>u('komisyon',e.target.value)} placeholder="20"/></FormGroup>
           <FormGroup label="NOTER VEKALET (TL) *"><input type="number" style={S.input} value={form.noter_vekalet} onChange={e=>u('noter_vekalet',e.target.value)} placeholder="1596"/></FormGroup>
@@ -248,16 +248,16 @@ MR.DosyaYeniPage = ({setPage, user}) => {
           </FormGroup>
         </div>
         {/* HAKLILIK ORANI */}
-        <div style={{marginTop:12}}>
-          <div style={{fontSize:10,fontWeight:700,color:C.textMuted,marginBottom:6}}>HAKLILIK ORANI *</div>
-          <div style={{display:'flex',gap:6}}>
+        <div style={{marginTop:8}}>
+          <div style={{fontSize:9,fontWeight:700,color:C.textMuted,marginBottom:4}}>HAKLILIK ORANI *</div>
+          <div style={{display:'flex',gap:4}}>
             {['100','75','50','25'].map(v => (
-              <div key={v} onClick={() => u('haklilik',v)} style={{flex:1,padding:'10px',borderRadius:8,textAlign:'center',cursor:'pointer',fontSize:14,fontWeight:800,
-                background:form.haklilik===v?`${C.accent}22`:'transparent',color:form.haklilik===v?C.accent:C.textMuted,border:`2px solid ${form.haklilik===v?C.accent:C.border}`}}>%{v}</div>
+              <div key={v} onClick={() => u('haklilik',v)} style={{flex:1,padding:'6px',borderRadius:6,textAlign:'center',cursor:'pointer',fontSize:12,fontWeight:800,
+                background:form.haklilik===v?`${C.accent}22`:'transparent',color:form.haklilik===v?C.accent:C.textMuted,border:`1.5px solid ${form.haklilik===v?C.accent:C.border}`}}>%{v}</div>
             ))}
           </div>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginTop:12}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:8}}>
           <FormGroup label="HAK MAHRUMİYET TALEP">
             <Toggle value={form.hak_mahrumiyet} onSelect={v=>u('hak_mahrumiyet',v)} options={[{value:'0',label:'YOK',color:C.danger},{value:'1',label:'VAR',color:C.success}]}/>
           </FormGroup>
@@ -265,15 +265,15 @@ MR.DosyaYeniPage = ({setPage, user}) => {
 
         {/* SEÇİLİ SORUMLU */}
         {seciliSorumlu && (
-          <div style={{marginTop:12,padding:12,background:`${C.accent}08`,borderRadius:10,border:`1px solid ${C.accent}22`,display:'flex',alignItems:'center',gap:12}}>
-            <div style={{width:40,height:40,borderRadius:10,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center'}}><LIcon name="UserCheck" size={18} color={C.accent}/></div>
+          <div style={{marginTop:8,padding:10,background:`${C.accent}08`,borderRadius:10,border:`1px solid ${C.accent}22`,display:'flex',alignItems:'center',gap:12}}>
+            <div style={{width:32,height:32,borderRadius:8,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center'}}><LIcon name="UserCheck" size={18} color={C.accent}/></div>
             <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700}}>{seciliSorumlu.ad_soyad}</div><div style={{fontSize:9,color:C.textSec}}>{seciliSorumlu.departman||''} {seciliSorumlu.pozisyon?'• '+seciliSorumlu.pozisyon:''}</div></div>
             {(parseFloat(isBH?seciliSorumlu.prim_bh:seciliSorumlu.prim_adk)>0) && <div style={{padding:'6px 12px',background:`${C.success}18`,borderRadius:8,textAlign:'center'}}><div style={{fontSize:8,color:C.textMuted}}>{form.dosya_turu} PRİMİ</div><div style={{fontSize:16,fontWeight:900,color:C.success}}>₺{isBH?seciliSorumlu.prim_bh:seciliSorumlu.prim_adk}</div></div>}
           </div>
         )}
         {seciliOrtak && (
           <div style={{marginTop:8,padding:12,background:`${C.purple}08`,borderRadius:10,border:`1px solid ${C.purple}22`,display:'flex',alignItems:'center',gap:12}}>
-            <div style={{width:40,height:40,borderRadius:10,background:`${C.purple}22`,display:'flex',alignItems:'center',justifyContent:'center'}}><LIcon name="Scale" size={18} color={C.purple}/></div>
+            <div style={{width:32,height:32,borderRadius:8,background:`${C.purple}22`,display:'flex',alignItems:'center',justifyContent:'center'}}><LIcon name="Scale" size={18} color={C.purple}/></div>
             <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700}}>{seciliOrtak.ad_soyad}</div><div style={{fontSize:9,color:C.textSec}}>{seciliOrtak.firma||''} {seciliOrtak.baro?'• '+seciliOrtak.baro:''}</div></div>
             <div style={{padding:'6px 12px',background:`${C.purple}18`,borderRadius:8,textAlign:'center'}}><div style={{fontSize:8,color:C.textMuted}}>ODEME ORANI</div><div style={{fontSize:18,fontWeight:900,color:C.purple}}>%{seciliOrtak.odeme_orani||0}</div></div>
           </div>
@@ -290,8 +290,8 @@ MR.DosyaYeniPage = ({setPage, user}) => {
             </select>
           </FormGroup>
           {seciliPaydas && (
-            <div style={{marginTop:12,padding:12,background:`${C.warning}08`,borderRadius:10,border:`1px solid ${C.warning}22`,display:'flex',alignItems:'center',gap:12}}>
-              <div style={{width:40,height:40,borderRadius:10,background:`${C.warning}22`,display:'flex',alignItems:'center',justifyContent:'center'}}><LIcon name="Users" size={18} color={C.warning}/></div>
+            <div style={{marginTop:8,padding:10,background:`${C.warning}08`,borderRadius:10,border:`1px solid ${C.warning}22`,display:'flex',alignItems:'center',gap:12}}>
+              <div style={{width:32,height:32,borderRadius:8,background:`${C.warning}22`,display:'flex',alignItems:'center',justifyContent:'center'}}><LIcon name="Users" size={18} color={C.warning}/></div>
               <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700}}>{seciliPaydas.ad}</div><div style={{fontSize:9,color:C.textSec}}>{seciliPaydas.yetkili||''} {seciliPaydas.telefon?'• '+seciliPaydas.telefon:''}</div></div>
               <div style={{padding:'6px 12px',background:`${C.warning}18`,borderRadius:8,textAlign:'center'}}><div style={{fontSize:8,color:C.textMuted}}>{form.dosya_turu} DOSYA BASI UCRETI</div><div style={{fontSize:18,fontWeight:900,color:C.warning}}>₺{paydasPrimTutar}</div></div>
             </div>
@@ -301,7 +301,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
 
       {/* ═══ 4. SİGORTA BİLGİLERİ ═══ */}
       <SecCard icon="Shield" title="SİGORTA BİLGİLERİ" sub="Sigorta ve hasar dosya bilgileri" color="#10b981" badge="ZORUNLU">
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
           <FormGroup label="SİGORTA ŞİRKETİ *">
             <select style={S.select} value={form.sigorta_sirket} onChange={e=>u('sigorta_sirket',e.target.value)}>
               <option value="">SEÇİNİZ</option>{SIGORTA.map(s=><option key={s} value={s}>{s}</option>)}
@@ -332,14 +332,14 @@ MR.DosyaYeniPage = ({setPage, user}) => {
       {/* ═══ 5. ARAÇ BİLGİLERİ (ADK/MDK) ═══ */}
       {isADK && (
         <SecCard icon="Car" title="ARAÇ BİLGİLERİ" sub="Mağdur ve karşı araç tescil bilgileri" color="#3b82f6" badge={form.dosya_turu}>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
             {/* MAĞDUR ARACI */}
             <div style={{border:`1px solid ${C.border}`,borderRadius:10,overflow:'hidden'}}>
-              <div style={{padding:'10px 14px',background:`${C.accent}08`,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${C.border}`}}>
+              <div style={{padding:'8px 12px',background:`${C.accent}08`,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${C.border}`}}>
                 <div><div style={{fontSize:12,fontWeight:700}}>Mağdur Aracı</div><div style={{fontSize:9,color:C.textMuted}}>Araç Tescil Belgesi</div></div>
                 <PlakaInput value={form.ma_plaka} onChange={v=>u('ma_plaka',v)} placeholder="55MR001"/>
               </div>
-              <div style={{padding:14,display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+              <div style={{padding:10,display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
                 <FormGroup label="MARKA"><AracMarkaSelect value={form.ma_marka} onChange={v=>{u('ma_marka',v);u('ma_model','');}}/></FormGroup>
                 <FormGroup label="MODEL"><AracModelSelect marka={form.ma_marka} value={form.ma_model} onChange={v=>u('ma_model',v)}/></FormGroup>
                 <FormGroup label="MODEL YILI"><select style={S.select} value={form.ma_yil} onChange={e=>u('ma_yil',e.target.value)}><option value="">YIL</option>{Array.from({length:30},(_,i)=>2026-i).map(y=><option key={y} value={y}>{y}</option>)}</select></FormGroup>
@@ -353,11 +353,11 @@ MR.DosyaYeniPage = ({setPage, user}) => {
             </div>
             {/* KARŞI ARAÇ */}
             <div style={{border:`1px solid ${C.border}`,borderRadius:10,overflow:'hidden'}}>
-              <div style={{padding:'10px 14px',background:`${C.danger}08`,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${C.border}`}}>
+              <div style={{padding:'8px 12px',background:`${C.danger}08`,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${C.border}`}}>
                 <div><div style={{fontSize:12,fontWeight:700}}>Karşı Araç</div><div style={{fontSize:9,color:C.textMuted}}>Araç Tescil Belgesi</div></div>
                 <PlakaInput value={form.ka_plaka} onChange={v=>u('ka_plaka',v)} placeholder="34XX123"/>
               </div>
-              <div style={{padding:14,display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+              <div style={{padding:10,display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
                 <FormGroup label="MARKA"><AracMarkaSelect value={form.ka_marka} onChange={v=>u('ka_marka',v)}/></FormGroup>
                 <FormGroup label="MODEL"><AracModelSelect marka={form.ka_marka} value={form.ka_model} onChange={v=>u('ka_model',v)}/></FormGroup>
                 <FormGroup label="MODEL YILI"><select style={S.select} value={form.ka_yil} onChange={e=>u('ka_yil',e.target.value)}><option value="">YIL</option>{Array.from({length:30},(_,i)=>2026-i).map(y=><option key={y} value={y}>{y}</option>)}</select></FormGroup>
@@ -381,10 +381,10 @@ MR.DosyaYeniPage = ({setPage, user}) => {
       {/* ═══ 6. BEDENİ HASAR (BH) ═══ */}
       {isBH && (
         <SecCard icon="Heart" title="BEDENİ HASAR BİLGİLERİ" sub="Araç, sürücü ve sakatlık bilgileri" color="#ef4444" badge="BH">
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
             <div>
               <div style={{fontSize:11,fontWeight:700,color:C.textMuted,marginBottom:8}}>ARAÇ BİLGİLERİ</div>
-              <div style={{display:'grid',gap:10}}>
+              <div style={{display:'grid',gap:8}}>
                 <FormGroup label="PLAKA"><input style={S.input} value={form.bh_arac_plaka} onChange={e=>u('bh_arac_plaka',formatPlaka(e.target.value))}/></FormGroup>
                 <FormGroup label="MARKA"><AracMarkaSelect value={form.bh_arac_marka} onChange={v=>u('bh_arac_marka',v)}/></FormGroup>
                 <FormGroup label="MODEL YILI"><select style={S.select} value={form.bh_arac_yil} onChange={e=>u('bh_arac_yil',e.target.value)}><option value="">YIL</option>{Array.from({length:30},(_,i)=>2026-i).map(y=><option key={y} value={y}>{y}</option>)}</select></FormGroup>
@@ -393,7 +393,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
             </div>
             <div>
               <div style={{fontSize:11,fontWeight:700,color:C.textMuted,marginBottom:8}}>SÜRÜCÜ BİLGİLERİ</div>
-              <div style={{display:'grid',gap:10}}>
+              <div style={{display:'grid',gap:8}}>
                 <FormGroup label="SÜRÜCÜ ADI"><input style={S.input} value={form.surucu_ad} onChange={e=>u('surucu_ad',e.target.value)}/></FormGroup>
                 <FormGroup label="EHLİYET BİLGİSİ"><input style={S.input} value={form.surucu_ehliyet} onChange={e=>u('surucu_ehliyet',e.target.value)}/></FormGroup>
                 <FormGroup label="KUSUR ORANI (%)"><input type="number" style={S.input} value={form.surucu_kusur} onChange={e=>u('surucu_kusur',e.target.value)} placeholder="0-100"/></FormGroup>
@@ -401,7 +401,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
             </div>
           </div>
           <div style={{marginTop:12}}>
-            <FormGroup label="SAKATLIK AÇIKLAMASI"><textarea style={{...S.input,minHeight:60}} value={form.sakatlik_aciklama} onChange={e=>u('sakatlik_aciklama',e.target.value)}/></FormGroup>
+            <FormGroup label="SAKATLIK AÇIKLAMASI"><textarea style={{...S.input,minHeight:50}} value={form.sakatlik_aciklama} onChange={e=>u('sakatlik_aciklama',e.target.value)}/></FormGroup>
           </div>
         </SecCard>
       )}
@@ -409,7 +409,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
       {/* ═══ 7. NOTLAR ═══ */}
       <SecCard icon="StickyNote" title="Notlar ve Ekstra Bilgi" sub="Kaza hakkında ek bilgiler, özel durumlar" color="#6b7280" badge="İSTEĞE BAĞLI">
         <FormGroup label="DOSYA NOTLARI">
-          <textarea style={{...S.input,minHeight:80}} value={form.notlar} onChange={e=>u('notlar',e.target.value)}/>
+          <textarea style={{...S.input,minHeight:50}} value={form.notlar} onChange={e=>u('notlar',e.target.value)}/>
         </FormGroup>
       </SecCard>
 
