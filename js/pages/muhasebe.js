@@ -13,9 +13,13 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
 
   const tumSekmeler = [
     {key:'gelir',    label:'GELİR / GİDER',        icon:'TrendingUp'},
-    {key:'kasa',     label:'KASA YÖNETİMİ',        icon:'Wallet'},
+    {key:'kasa',     label:'KASALAR',               icon:'Wallet'},
+    {key:'ortakkasa',label:'ORTAK KASA',            icon:'Users'},
     {key:'komisyon', label:'KOMİSYON TAKİBİ',      icon:'Percent'},
-    {key:'rapor',    label:'RAPORLAR',               icon:'BarChart3'}
+    {key:'rapor',    label:'FİNANSAL RAPORLAR',     icon:'BarChart3'},
+    {key:'kapanis',  label:'KAPANIŞ RAPORU',        icon:'FileCheck'},
+    {key:'aysonu',   label:'AY SONU RAPORU',        icon:'CalendarCheck'},
+    {key:'maliyet',  label:'MALİYET ANALİZİ',      icon:'PieChart'}
   ];
 
   /* YETKİ BAZLI SEKME FİLTRELEME */
@@ -57,10 +61,14 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
       </div>
 
       {/* SEKME İÇERİKLERİ */}
-      {aktifSekme === 'gelir'    && <GelirGiderBirlestik setPage={setPage} user={user}/>}
-      {aktifSekme === 'kasa'     && <KasaYonetimiBirlestik setPage={setPage} user={user}/>}
-      {aktifSekme === 'komisyon' && <KomisyonPrim  setPage={setPage} user={user}/>}
-      {aktifSekme === 'rapor'    && <RaporlarBirlestik setPage={setPage} user={user}/>}
+      {aktifSekme === 'gelir'     && <GelirGiderBirlestik setPage={setPage} user={user}/>}
+      {aktifSekme === 'kasa'      && <KasaBanka setPage={setPage} user={user}/>}
+      {aktifSekme === 'ortakkasa' && <OrtakKasa setPage={setPage} user={user}/>}
+      {aktifSekme === 'komisyon'  && <KomisyonPrim setPage={setPage} user={user}/>}
+      {aktifSekme === 'rapor'     && <FinansalRaporlar setPage={setPage} user={user}/>}
+      {aktifSekme === 'kapanis'   && <KapanisRaporu setPage={setPage} user={user}/>}
+      {aktifSekme === 'aysonu'    && <AySonuRaporu setPage={setPage} user={user}/>}
+      {aktifSekme === 'maliyet'   && <MaliyetAnalizi setPage={setPage} user={user}/>}
     </div>
   );
 };
