@@ -197,13 +197,12 @@ MR.DosyaYeniPage = ({setPage, user}) => {
           <FormGroup label="T.C. KİMLİK NO *"><input style={S.input} value={form.tc_kimlik} onChange={e=>u('tc_kimlik',e.target.value)} maxLength={11}/></FormGroup>
           <FormGroup label="TELEFON *"><input style={S.input} value={form.telefon} onChange={e=>u('telefon',e.target.value)} placeholder="05XX XXX XX XX"/></FormGroup>
           <FormGroup label="IBAN"><IBANInput value={form.iban} onChange={v=>u('iban',v)}/></FormGroup>
-          {isBH && <FormGroup label="MESLEK"><input style={S.input} value={form.meslek} onChange={e=>u('meslek',e.target.value)}/></FormGroup>}
-          {isBH && <FormGroup label="GELİR DURUMU"><select style={S.select} value={form.gelir_durumu||''} onChange={e=>u('gelir_durumu',e.target.value)}><option value="">SEÇİNİZ</option><option value="ASGARİ ÜCRET">ASGARİ ÜCRET</option><option value="ASGARİ ÜCRET ÜSTÜ">ASGARİ ÜCRET ÜSTÜ</option><option value="SERBEST MESLEK">SERBEST MESLEK</option><option value="EMEKLİ">EMEKLİ</option><option value="ÖĞRENCİ">ÖĞRENCİ</option><option value="ÇALIŞMIYOR">ÇALIŞMIYOR</option></select></FormGroup>}
-          {!isBH && <div/>}
-          <FormGroup label="ADRES"><input style={S.input} value={form.adres} onChange={e=>u('adres',e.target.value)}/></FormGroup>
           <FormGroup label="İL *"><select style={S.select} value={form.il} onChange={e=>{u('il',e.target.value);u('ilce','');}}><option value="">SEÇİNİZ</option>{ILLER.map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
           <FormGroup label="İLÇE *"><select style={S.select} value={form.ilce} onChange={e=>u('ilce',e.target.value)} disabled={!form.il}><option value="">ÖNCE İL SEÇİN</option>{(ILCELER[form.il]||[]).map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
+          {isBH && <FormGroup label="MESLEK"><input style={S.input} value={form.meslek} onChange={e=>u('meslek',e.target.value)}/></FormGroup>}
+          {isBH && <FormGroup label="GELİR DURUMU"><select style={S.select} value={form.gelir_durumu||''} onChange={e=>u('gelir_durumu',e.target.value)}><option value="">SEÇİNİZ</option><option value="ASGARİ ÜCRET">ASGARİ ÜCRET</option><option value="ASGARİ ÜCRET ÜSTÜ">ASGARİ ÜCRET ÜSTÜ</option><option value="SERBEST MESLEK">SERBEST MESLEK</option><option value="EMEKLİ">EMEKLİ</option><option value="ÖĞRENCİ">ÖĞRENCİ</option><option value="ÇALIŞMIYOR">ÇALIŞMIYOR</option></select></FormGroup>}
         </div>
+        <FormGroup label="ADRES"><textarea style={{...S.input,minHeight:40}} value={form.adres} onChange={e=>u('adres',e.target.value)}/></FormGroup>
       </SecCard>
 
       {/* ═══ 2. DOSYA BİLGİLERİ ═══ */}
@@ -257,12 +256,6 @@ MR.DosyaYeniPage = ({setPage, user}) => {
             ))}
           </div>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:8}}>
-          <FormGroup label="HAK MAHRUMİYET TALEP">
-            <Toggle value={form.hak_mahrumiyet} onSelect={v=>u('hak_mahrumiyet',v)} options={[{value:'0',label:'YOK',color:C.danger},{value:'1',label:'VAR',color:C.success}]}/>
-          </FormGroup>
-        </div>
-
         {/* SEÇİLİ SORUMLU */}
         {seciliSorumlu && (
           <div style={{marginTop:8,padding:10,background:`${C.accent}08`,borderRadius:10,border:`1px solid ${C.accent}22`,display:'flex',alignItems:'center',gap:12}}>
@@ -340,15 +333,16 @@ MR.DosyaYeniPage = ({setPage, user}) => {
                 <PlakaInput value={form.ma_plaka} onChange={v=>u('ma_plaka',v)} placeholder="55MR001"/>
               </div>
               <div style={{padding:10,display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                <FormGroup label="RUHSAT SAHİBİ"><input style={S.input} value={form.ma_ruhsat || form.ad_soyad} onChange={e=>u('ma_ruhsat',e.target.value)}/></FormGroup>
+                <FormGroup label="RUHSAT SAHİBİ TC"><input style={S.input} value={form.ma_tc || form.tc_kimlik} onChange={e=>u('ma_tc',e.target.value)} maxLength={11}/></FormGroup>
                 <FormGroup label="MARKA"><AracMarkaSelect value={form.ma_marka} onChange={v=>{u('ma_marka',v);u('ma_model','');}}/></FormGroup>
                 <FormGroup label="MODEL"><AracModelSelect marka={form.ma_marka} value={form.ma_model} onChange={v=>u('ma_model',v)}/></FormGroup>
                 <FormGroup label="MODEL YILI"><select style={S.select} value={form.ma_yil} onChange={e=>u('ma_yil',e.target.value)}><option value="">YIL</option>{Array.from({length:30},(_,i)=>2026-i).map(y=><option key={y} value={y}>{y}</option>)}</select></FormGroup>
                 <FormGroup label="BELGE TESCİL NO"><input style={S.input} value={form.ma_belge_tescil} onChange={e=>u('ma_belge_tescil',e.target.value)}/></FormGroup>
-                <FormGroup label="RUHSAT SAHİBİ"><input style={S.input} value={form.ma_ruhsat || form.ad_soyad} onChange={e=>u('ma_ruhsat',e.target.value)}/></FormGroup>
-                <FormGroup label="RUHSAT SAHİBİ TC"><input style={S.input} value={form.ma_tc || form.tc_kimlik} onChange={e=>u('ma_tc',e.target.value)} maxLength={11}/></FormGroup>
                 <FormGroup label="ONARIM GÜN SÜRESİ"><input type="number" style={S.input} value={form.ma_onarim_gun} onChange={e=>u('ma_onarim_gun',e.target.value)}/></FormGroup>
                 <div/>
-                <FormGroup label="GECMIS HASAR"><Toggle value={form.ma_gecmis_hasar} onSelect={v=>u('ma_gecmis_hasar',v)} options={[{value:'yok',label:'YOK',color:C.success},{value:'var',label:'VAR',color:C.danger}]}/></FormGroup>
+                <FormGroup label="GEÇMİŞ HASAR"><Toggle value={form.ma_gecmis_hasar} onSelect={v=>u('ma_gecmis_hasar',v)} options={[{value:'yok',label:'YOK',color:C.success},{value:'var',label:'VAR',color:C.danger}]}/></FormGroup>
+                <FormGroup label="HAK MAHRUMİYET TALEP"><Toggle value={form.hak_mahrumiyet} onSelect={v=>u('hak_mahrumiyet',v)} options={[{value:'0',label:'YOK',color:C.danger},{value:'1',label:'VAR',color:C.success}]}/></FormGroup>
               </div>
             </div>
             {/* KARŞI ARAÇ */}
@@ -358,12 +352,12 @@ MR.DosyaYeniPage = ({setPage, user}) => {
                 <PlakaInput value={form.ka_plaka} onChange={v=>u('ka_plaka',v)} placeholder="34XX123"/>
               </div>
               <div style={{padding:10,display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                <FormGroup label="RUHSAT SAHİBİ"><input style={S.input} value={form.ka_ruhsat} onChange={e=>u('ka_ruhsat',e.target.value)}/></FormGroup>
+                <FormGroup label="RUHSAT SAHİBİ TC"><input style={S.input} value={form.ka_tc} onChange={e=>u('ka_tc',e.target.value)} maxLength={11}/></FormGroup>
                 <FormGroup label="MARKA"><AracMarkaSelect value={form.ka_marka} onChange={v=>u('ka_marka',v)}/></FormGroup>
                 <FormGroup label="MODEL"><AracModelSelect marka={form.ka_marka} value={form.ka_model} onChange={v=>u('ka_model',v)}/></FormGroup>
                 <FormGroup label="MODEL YILI"><select style={S.select} value={form.ka_yil} onChange={e=>u('ka_yil',e.target.value)}><option value="">YIL</option>{Array.from({length:30},(_,i)=>2026-i).map(y=><option key={y} value={y}>{y}</option>)}</select></FormGroup>
                 <FormGroup label="BELGE TESCİL NO"><input style={S.input} value={form.ka_belge_tescil} onChange={e=>u('ka_belge_tescil',e.target.value)}/></FormGroup>
-                <FormGroup label="RUHSAT SAHİBİ"><input style={S.input} value={form.ka_ruhsat} onChange={e=>u('ka_ruhsat',e.target.value)}/></FormGroup>
-                <FormGroup label="RUHSAT SAHİBİ TC"><input style={S.input} value={form.ka_tc} onChange={e=>u('ka_tc',e.target.value)} maxLength={11} placeholder="00000000000"/></FormGroup>
                 <FormGroup label="TRAFİK SİGORTA"><select style={S.select} value={form.ka_trafik} onChange={e=>u('ka_trafik',e.target.value)}><option value="">SEÇİNİZ</option>{SIGORTA.map(s=><option key={s} value={s}>{s}</option>)}</select></FormGroup>
                 <FormGroup label="POLICE NO"><input style={S.input} value={form.ka_trafik_police} onChange={e=>u('ka_trafik_police',e.target.value)}/></FormGroup>
                 <FormGroup label="KASKO"><Toggle value={form.ka_kasko} onSelect={v=>u('ka_kasko',v)} options={[{value:'0',label:'YOK',color:C.danger},{value:'1',label:'VAR',color:C.success}]}/></FormGroup>
