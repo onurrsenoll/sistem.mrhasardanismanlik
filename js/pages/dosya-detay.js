@@ -463,9 +463,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
   // Bilgi satır bileşeni
   const InfoRow = ({label, value, mono, bold, color}) => (
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderBottom:`1px solid ${C.border}`}}>
-      <span style={{fontSize:10,color:C.textMuted,fontWeight:500,minWidth:90}}>{label}</span>
-      <span style={{fontSize:11,fontWeight:bold?700:500,color:color||C.text,fontFamily:mono?'monospace':'inherit',textAlign:'right',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{value || '-'}</span>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'4px 0',borderBottom:`1px solid ${C.border}22`,gap:8}}>
+      <span style={{fontSize:10,color:C.textMuted,fontWeight:600,letterSpacing:0.3,whiteSpace:'nowrap',textTransform:'uppercase'}}>{label}</span>
+      <span style={{fontSize:11,fontWeight:bold?800:600,color:color||C.text,fontFamily:mono?'monospace':'inherit',textAlign:'right',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flexShrink:1}}>{value || '-'}</span>
     </div>
   );
 
@@ -567,12 +567,14 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       {tab === 'bilgi' && (
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
           {/* SOL: DOSYA BİLGİLERİ */}
-          <div style={S.card}>
-            <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`${C.accent}06`}}>
-              <LIcon name="FileText" size={14} color={C.accent}/>
-              <span style={{fontSize:12,fontWeight:700}}>DOSYA BİLGİLERİ</span>
+          <div style={{...S.card,overflow:'hidden'}}>
+            <div style={{padding:'8px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`linear-gradient(135deg, ${C.accent}12, ${C.accent}06)`}}>
+              <div style={{width:28,height:28,borderRadius:7,background:`${C.accent}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <LIcon name="FileText" size={14} color={C.accent}/>
+              </div>
+              <span style={{fontSize:12,fontWeight:800,letterSpacing:0.3}}>DOSYA BİLGİLERİ</span>
             </div>
-            <div style={{padding:'10px 14px'}}>
+            <div style={{padding:'8px 14px'}}>
               <InfoRow label="DOSYA NO" value={dosya.dosya_no} bold mono/>
               <InfoRow label="DOSYA TÜRÜ" value={dosya.dosya_turu} bold/>
               <InfoRow label="SİGORTA ŞİRKETİ" value={dosya.sigorta_sirket}/>
@@ -593,7 +595,6 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               {dosya.onarim_servisi && <InfoRow label="ONARIM SERVİSİ" value={dosya.onarim_servisi}/>}
               <InfoRow label="HAKLILIK" value={`%${dosya.haklilik || 0}`} bold color={C.success}/>
               <InfoRow label="KOMİSYON" value={`%${dosya.komisyon_orani || 0}`}/>
-              <InfoRow label="HAK MAHRUMİYET TALEP" value={parseInt(dosya.hak_mahrumiyet) === 1 ? 'VAR' : 'YOK'} bold color={parseInt(dosya.hak_mahrumiyet) === 1 ? C.success : C.textMuted}/>
               {dosya.dosya_turu === 'BH' && dosya.sorumlu_sigorta && <InfoRow label="SORUMLU SİGORTA" value={dosya.sorumlu_sigorta}/>}
               {dosya.dosya_turu === 'BH' && dosya.sakatlik_aciklama && <InfoRow label="SAKATLIK AÇIKLAMASI" value={dosya.sakatlik_aciklama}/>}
               {dosya.dosya_turu === 'BH' && dosya.surucu_ad && <InfoRow label="SÜRÜCÜ ADI" value={dosya.surucu_ad}/>}
@@ -606,12 +607,14 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           {/* SAĞ: MAĞDUR + ARAÇ + FİNANSAL */}
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             {/* MAĞDUR BİLGİLERİ */}
-            <div style={S.card}>
-              <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`${C.cyan}06`}}>
-                <LIcon name="User" size={14} color={C.cyan}/>
-                <span style={{fontSize:12,fontWeight:700}}>MAĞDUR BİLGİLERİ</span>
+            <div style={{...S.card,overflow:'hidden'}}>
+              <div style={{padding:'8px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`linear-gradient(135deg, ${C.cyan}12, ${C.cyan}06)`}}>
+                <div style={{width:28,height:28,borderRadius:7,background:`${C.cyan}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <LIcon name="User" size={14} color={C.cyan}/>
+                </div>
+                <span style={{fontSize:12,fontWeight:800,letterSpacing:0.3}}>MAĞDUR BİLGİLERİ</span>
               </div>
-              <div style={{padding:'10px 14px'}}>
+              <div style={{padding:'8px 14px'}}>
                 <InfoRow label="AD SOYAD" value={magdur.ad_soyad} bold/>
                 <InfoRow label="T.C. KİMLİK" value={magdur.tc_kimlik} mono/>
                 <InfoRow label="TELEFON" value={magdur.telefon} mono/>
@@ -625,68 +628,78 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               </div>
             </div>
 
-            {/* MAĞDUR ARAÇ BİLGİLERİ (ADK/MDK) */}
-            {(dosya.dosya_turu === 'ADK' || dosya.dosya_turu === 'MDK') && (arac.plaka || getPlaka()) && (
-              <div style={S.card}>
-                <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`${C.warning}06`}}>
-                  <LIcon name="Truck" size={14} color={C.warning}/>
-                  <span style={{fontSize:12,fontWeight:700}}>MAĞDUR ARAÇ</span>
-                  <span style={{fontSize:12,fontWeight:800,fontFamily:'monospace',color:C.warning,marginLeft:'auto'}}>{getPlaka()}</span>
-                </div>
-                <div style={{padding:'10px 14px'}}>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 16px'}}>
-                    <InfoRow label="ARAÇ SAHİBİ" value={arac.ruhsat_sahibi}/>
-                    <InfoRow label="SAHİBİ TC KİMLİK" value={arac.tc_kimlik} mono/>
-                    <InfoRow label="MARKA" value={arac.marka}/>
-                    <InfoRow label="MODEL" value={arac.model}/>
-                    <InfoRow label="MODEL YILI" value={arac.model_yili}/>
-                    <InfoRow label="BELGE TESCİL NO" value={arac.belge_tescil_no} mono/>
-                    <InfoRow label="ONARIM GÜN SÜRESİ" value={arac.onarim_gun_suresi ? `${arac.onarim_gun_suresi} GÜN` : '-'}/>
-                    <InfoRow label="GEÇMİŞ HASAR" value={arac.gecmis_hasar ? arac.gecmis_hasar.toUpperCase() : '-'} bold color={arac.gecmis_hasar === 'var' ? C.danger : C.success}/>
-                    <InfoRow label="KASKO" value={arac.kasko ? 'VAR' : 'YOK'} bold color={arac.kasko ? C.success : C.textMuted}/>
+            {/* ARAÇ BİLGİLERİ - RUHSAT KARTI GÖRÜNÜMÜ (ADK/MDK) */}
+            {(dosya.dosya_turu === 'ADK' || dosya.dosya_turu === 'MDK') && (arac.plaka || getPlaka() || karsiArac.plaka) && (
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                {/* MAĞDUR ARAÇ RUHSAT KARTI */}
+                {(arac.plaka || getPlaka()) && (
+                  <div style={{border:`1px solid ${C.border}`,borderRadius:10,overflow:'hidden',background:C.bgCard}}>
+                    <div style={{padding:'8px 12px',background:`linear-gradient(135deg, ${C.accent}12, ${C.accent}06)`,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${C.border}`}}>
+                      <div>
+                        <div style={{fontSize:11,fontWeight:800}}>Mağdur Aracı</div>
+                        <div style={{fontSize:8,color:C.textMuted,fontWeight:600}}>Araç Tescil Belgesi</div>
+                      </div>
+                      <div style={{background:'#2563eb',color:'#fff',padding:'4px 12px',borderRadius:6,fontSize:12,fontWeight:900,fontFamily:'monospace',letterSpacing:1}}>{getPlaka() || '-'}</div>
+                    </div>
+                    <div style={{padding:'8px 10px'}}>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
+                        <InfoRow label="RUHSAT SAHİBİ" value={arac.ruhsat_sahibi} bold/>
+                        <InfoRow label="SAHİBİ TC" value={arac.tc_kimlik} mono/>
+                        <InfoRow label="MARKA" value={arac.marka}/>
+                        <InfoRow label="MODEL" value={arac.model}/>
+                        <InfoRow label="MODEL YILI" value={arac.model_yili}/>
+                        <InfoRow label="TESCİL NO" value={arac.belge_tescil_no} mono/>
+                        <InfoRow label="ONARIM GÜN" value={arac.onarim_gun_suresi ? `${arac.onarim_gun_suresi} GÜN` : '-'}/>
+                        <InfoRow label="KASKO" value={arac.kasko ? 'VAR' : 'YOK'} bold color={arac.kasko ? C.success : C.textMuted}/>
+                        <InfoRow label="GEÇMİŞ HASAR" value={arac.gecmis_hasar ? arac.gecmis_hasar.toUpperCase() : '-'} bold color={arac.gecmis_hasar === 'var' ? C.danger : C.success}/>
+                        <InfoRow label="HAK MAHRUMİYET" value={parseInt(dosya.hak_mahrumiyet) === 1 ? 'VAR' : 'YOK'} bold color={parseInt(dosya.hak_mahrumiyet) === 1 ? C.success : C.textMuted}/>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            )}
+                )}
 
-            {/* KARŞI ARAÇ BİLGİLERİ (ADK/MDK) */}
-            {(dosya.dosya_turu === 'ADK' || dosya.dosya_turu === 'MDK') && karsiArac.plaka && (
-              <div style={S.card}>
-                <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`${C.danger}06`}}>
-                  <LIcon name="Truck" size={14} color={C.danger}/>
-                  <span style={{fontSize:12,fontWeight:700}}>KARŞI ARAÇ</span>
-                  <span style={{fontSize:12,fontWeight:800,fontFamily:'monospace',color:C.danger,marginLeft:'auto'}}>{karsiArac.plaka}</span>
-                </div>
-                <div style={{padding:'10px 14px'}}>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 16px'}}>
-                    <InfoRow label="ARAÇ SAHİBİ" value={karsiArac.ruhsat_sahibi}/>
-                    <InfoRow label="SAHİBİ TC KİMLİK" value={karsiArac.tc_kimlik} mono/>
-                    <InfoRow label="MARKA" value={karsiArac.marka}/>
-                    <InfoRow label="MODEL" value={karsiArac.model}/>
-                    <InfoRow label="MODEL YILI" value={karsiArac.model_yili}/>
-                    <InfoRow label="BELGE TESCİL NO" value={karsiArac.belge_tescil_no} mono/>
-                    <InfoRow label="TRAFİK SİGORTA" value={karsiArac.trafik_sirket}/>
-                    <InfoRow label="POLİÇE NO" value={karsiArac.trafik_police} mono/>
-                    <InfoRow label="KASKO" value={karsiArac.kasko ? 'VAR' : 'YOK'} bold color={karsiArac.kasko ? C.success : C.textMuted}/>
-                    <InfoRow label="RUHSAT SAHİBİ/SÜRÜCÜ" value={karsiArac.ruhsat_sahibi_surucu ? karsiArac.ruhsat_sahibi_surucu.toUpperCase() : '-'} bold color={karsiArac.ruhsat_sahibi_surucu === 'farkli' ? C.warning : C.success}/>
-                    {karsiArac.ruhsat_sahibi_surucu === 'farkli' && (
-                      <>
-                        <InfoRow label="SÜRÜCÜ ADI SOYADI" value={karsiArac.surucu_ad}/>
-                        <InfoRow label="SÜRÜCÜ TC KİMLİK" value={karsiArac.surucu_tc_kimlik} mono/>
-                      </>
-                    )}
+                {/* KARŞI ARAÇ RUHSAT KARTI */}
+                {karsiArac.plaka && (
+                  <div style={{border:`1px solid ${C.border}`,borderRadius:10,overflow:'hidden',background:C.bgCard}}>
+                    <div style={{padding:'8px 12px',background:`linear-gradient(135deg, ${C.danger}12, ${C.danger}06)`,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${C.border}`}}>
+                      <div>
+                        <div style={{fontSize:11,fontWeight:800}}>Karşı Araç</div>
+                        <div style={{fontSize:8,color:C.textMuted,fontWeight:600}}>Araç Tescil Belgesi</div>
+                      </div>
+                      <div style={{background:C.danger,color:'#fff',padding:'4px 12px',borderRadius:6,fontSize:12,fontWeight:900,fontFamily:'monospace',letterSpacing:1}}>{karsiArac.plaka}</div>
+                    </div>
+                    <div style={{padding:'8px 10px'}}>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
+                        <InfoRow label="RUHSAT SAHİBİ" value={karsiArac.ruhsat_sahibi} bold/>
+                        <InfoRow label="SAHİBİ TC" value={karsiArac.tc_kimlik} mono/>
+                        <InfoRow label="MARKA" value={karsiArac.marka}/>
+                        <InfoRow label="MODEL" value={karsiArac.model}/>
+                        <InfoRow label="MODEL YILI" value={karsiArac.model_yili}/>
+                        <InfoRow label="TESCİL NO" value={karsiArac.belge_tescil_no} mono/>
+                        <InfoRow label="TRAFİK SİGORTA" value={karsiArac.trafik_sirket}/>
+                        <InfoRow label="POLİÇE NO" value={karsiArac.trafik_police} mono/>
+                        <InfoRow label="KASKO" value={karsiArac.kasko ? 'VAR' : 'YOK'} bold color={karsiArac.kasko ? C.success : C.textMuted}/>
+                        <InfoRow label="SAHİBİ/SÜRÜCÜ" value={karsiArac.ruhsat_sahibi_surucu ? karsiArac.ruhsat_sahibi_surucu.toUpperCase() : '-'} bold color={karsiArac.ruhsat_sahibi_surucu === 'farkli' ? C.warning : C.success}/>
+                        {karsiArac.ruhsat_sahibi_surucu === 'farkli' && <>
+                          <InfoRow label="SÜRÜCÜ ADI" value={karsiArac.surucu_ad}/>
+                          <InfoRow label="SÜRÜCÜ TC" value={karsiArac.surucu_tc_kimlik} mono/>
+                        </>}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
 
             {/* FİNANSAL ÖZET */}
-            <div style={S.card}>
-              <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`${C.danger}06`}}>
-                <LIcon name="DollarSign" size={14} color={C.danger}/>
-                <span style={{fontSize:12,fontWeight:700}}>FİNANSAL ÖZET</span>
+            <div style={{...S.card,overflow:'hidden'}}>
+              <div style={{padding:'8px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`linear-gradient(135deg, ${C.success}12, ${C.success}06)`}}>
+                <div style={{width:28,height:28,borderRadius:7,background:`${C.success}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <LIcon name="DollarSign" size={14} color={C.success}/>
+                </div>
+                <span style={{fontSize:12,fontWeight:800,letterSpacing:0.3}}>FİNANSAL ÖZET</span>
               </div>
-              <div style={{padding:'10px 14px'}}>
+              <div style={{padding:'8px 14px'}}>
                 <InfoRow label="TOPLAM TAHSİLAT" value={fmt(dosya.tahsil_edilen || 0)} bold color={C.success}/>
                 <InfoRow label="TOPLAM GELİR (BEKLENENLERle)" value={fmt(dosya.toplam_gelir || 0)} color={C.textSec}/>
                 <InfoRow label="TOPLAM MASRAF" value={fmt(dosya.toplam_masraf || 0)} bold color={C.danger}/>
@@ -1438,77 +1451,77 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
         onConfirm={dosyaSil}/>
 
       {/* DÜZENLEME MODAL */}
-      <Modal open={editM} onClose={() => setEditM(false)} title="DOSYA BİLGİLERİ DÜZENLE" width="680px">
+      <Modal open={editM} onClose={() => setEditM(false)} title="DOSYA BİLGİLERİ DÜZENLE" width="75vw">
         {editError && <div style={{padding:8,background:`${C.danger}18`,borderRadius:6,marginBottom:10,fontSize:11,color:C.danger,border:`1px solid ${C.danger}33`}}>{editError}</div>}
 
         {/* DOSYA BİLGİLERİ BÖLÜMÜ */}
-        <div style={{fontSize:10,fontWeight:700,color:C.accent,marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
+        <div style={{fontSize:10,fontWeight:700,color:C.accent,marginBottom:6,display:'flex',alignItems:'center',gap:6}}>
           <LIcon name="FileText" size={12} color={C.accent}/> DOSYA BİLGİLERİ
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:12}}>
           <FormGroup label="DOSYA TÜRÜ">
-            <select value={editForm.dosya_turu} onChange={e => u('dosya_turu',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+            <select value={editForm.dosya_turu} onChange={e => u('dosya_turu',e.target.value)} style={{...S.select,padding:'6px 8px',fontSize:11}}>
               <option value="ADK">ADK</option>
               <option value="BH">BH</option>
               <option value="MDK">MDK</option>
             </select>
           </FormGroup>
           <FormGroup label="SİGORTA ŞİRKETİ">
-            <select value={editForm.sigorta_sirket} onChange={e => u('sigorta_sirket',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+            <select value={editForm.sigorta_sirket} onChange={e => u('sigorta_sirket',e.target.value)} style={{...S.select,padding:'6px 8px',fontSize:11}}>
               <option value="">SEÇİNİZ</option>
               {(SIGORTA || []).map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </FormGroup>
           <FormGroup label="HASAR DOSYA NO">
-            <input value={editForm.hasar_no||''} onChange={e => u('hasar_no',e.target.value)} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            <input value={editForm.hasar_no||''} onChange={e => u('hasar_no',e.target.value)} style={{...S.input,padding:'6px 8px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="SİGORTA BRANŞI">
-            <select value={editForm.sigorta_brans||''} onChange={e => u('sigorta_brans',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+            <select value={editForm.sigorta_brans||''} onChange={e => u('sigorta_brans',e.target.value)} style={{...S.select,padding:'6px 8px',fontSize:11}}>
               <option value="">SEÇİNİZ</option><option value="TRAFİK">TRAFİK</option><option value="KASKO">KASKO</option><option value="İMM">İMM</option><option value="DİĞER">DİĞER</option>
             </select>
           </FormGroup>
           <FormGroup label="DOSYA TALEP TÜRÜ">
-            <select value={editForm.talep_turu||''} onChange={e => u('talep_turu',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+            <select value={editForm.talep_turu||''} onChange={e => u('talep_turu',e.target.value)} style={{...S.select,padding:'6px 8px',fontSize:11}}>
               <option value="">SEÇİNİZ</option><option value="DEĞER KAYBI">DEĞER KAYBI</option><option value="BEDENİ HASAR">BEDENİ HASAR</option><option value="MOTOR DEĞER KAYBI">MOTOR DEĞER KAYBI</option><option value="DİĞER">DİĞER</option>
             </select>
           </FormGroup>
           {(editForm.dosya_turu === 'ADK' || editForm.dosya_turu === 'MDK') && <>
             <FormGroup label="EKSPER FİRMASI">
-              <input value={editForm.eksper_firma||''} onChange={e => u('eksper_firma',e.target.value)} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+              <input value={editForm.eksper_firma||''} onChange={e => u('eksper_firma',e.target.value)} style={{...S.input,padding:'6px 8px',fontSize:11}}/>
             </FormGroup>
             <FormGroup label="ONARIM SERVİSİ">
-              <input value={editForm.onarim_servisi||''} onChange={e => u('onarim_servisi',e.target.value)} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+              <input value={editForm.onarim_servisi||''} onChange={e => u('onarim_servisi',e.target.value)} style={{...S.input,padding:'6px 8px',fontSize:11}}/>
             </FormGroup>
           </>}
           <FormGroup label="DOSYA KAYNAĞI">
-            <select value={editForm.dosya_kaynagi} onChange={e => u('dosya_kaynagi',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+            <select value={editForm.dosya_kaynagi} onChange={e => u('dosya_kaynagi',e.target.value)} style={{...S.select,padding:'6px 8px',fontSize:11}}>
               <option value="">SEÇİNİZ</option>
               {KAYNAKLAR.map(k => <option key={k} value={k}>{k}</option>)}
             </select>
           </FormGroup>
           <FormGroup label="PLAKA">
-            <input value={editForm.plaka||''} onChange={e => u('plaka',e.target.value)} placeholder="34 XX 0000" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            <input value={editForm.plaka||''} onChange={e => u('plaka',e.target.value)} placeholder="34 XX 0000" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="KAZA TARİHİ">
-            <MR.DateInput value={editForm.kaza_tarihi||''} onChange={v => u('kaza_tarihi',v)} style={{padding:'8px 10px',fontSize:11}}/>
+            <MR.DateInput value={editForm.kaza_tarihi||''} onChange={v => u('kaza_tarihi',v)} style={{padding:'6px 8px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="KAZA İLİ">
-            <select value={editForm.kaza_il} onChange={e => u('kaza_il',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+            <select value={editForm.kaza_il} onChange={e => u('kaza_il',e.target.value)} style={{...S.select,padding:'6px 8px',fontSize:11}}>
               <option value="">SEÇİNİZ</option>
               {(ILLER || []).map(il => <option key={il} value={il}>{il}</option>)}
             </select>
           </FormGroup>
           <FormGroup label="KAZA İLÇE">
-            <input value={editForm.kaza_ilce||''} onChange={e => u('kaza_ilce',e.target.value)} placeholder="KAZA İLÇE" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            <input value={editForm.kaza_ilce||''} onChange={e => u('kaza_ilce',e.target.value)} placeholder="KAZA İLÇE" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="AÇILIŞ TARİHİ">
-            <MR.DateInput value={editForm.acilis_tarihi||''} onChange={v => u('acilis_tarihi',v)} style={{padding:'8px 10px',fontSize:11}}/>
+            <MR.DateInput value={editForm.acilis_tarihi||''} onChange={v => u('acilis_tarihi',v)} style={{padding:'6px 8px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="POLİÇE NO">
-            <input value={editForm.police_no||''} onChange={e => u('police_no',e.target.value)} placeholder="POLİÇE NO" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            <input value={editForm.police_no||''} onChange={e => u('police_no',e.target.value)} placeholder="POLİÇE NO" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="SİGORTA TÜRÜ">
-            <select value={editForm.sigorta_turu||''} onChange={e => u('sigorta_turu',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+            <select value={editForm.sigorta_turu||''} onChange={e => u('sigorta_turu',e.target.value)} style={{...S.select,padding:'6px 8px',fontSize:11}}>
               <option value="">SEÇİNİZ</option>
               <option value="TRAFİK">TRAFİK</option>
               <option value="KASKO">KASKO</option>
@@ -1516,44 +1529,21 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <option value="DİĞER">DİĞER</option>
             </select>
           </FormGroup>
-          <FormGroup label="TALEP TÜRÜ">
-            <select value={editForm.talep_turu||''} onChange={e => u('talep_turu',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
-              <option value="">SEÇİNİZ</option>
-              <option value="DEĞER KAYBI">DEĞER KAYBI</option>
-              <option value="BEDENİ HASAR">BEDENİ HASAR</option>
-              <option value="MOTOR DEĞER KAYBI">MOTOR DEĞER KAYBI</option>
-              <option value="DİĞER">DİĞER</option>
-            </select>
-          </FormGroup>
           <FormGroup label="HAKLILIK (%)">
-            <input type="number" min="0" max="100" value={editForm.haklilik} onChange={e => u('haklilik',e.target.value)} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            <input type="number" min="0" max="100" value={editForm.haklilik} onChange={e => u('haklilik',e.target.value)} style={{...S.input,padding:'6px 8px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="KOMİSYON (%)">
-            <input type="number" min="0" max="100" step="0.1" value={editForm.komisyon_orani} onChange={e => u('komisyon_orani',e.target.value)} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
-          </FormGroup>
-          <FormGroup label="HAK MAHRUMİYET TALEP">
-            <div style={{display:'flex',gap:8,alignItems:'center',paddingTop:4}}>
-              <div onClick={() => u('hak_mahrumiyet', 1)}
-                style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
-                  background:editForm.hak_mahrumiyet==1?`${C.success}22`:'transparent',
-                  color:editForm.hak_mahrumiyet==1?C.success:C.textMuted,
-                  border:`1px solid ${editForm.hak_mahrumiyet==1?C.success+'66':C.border}`}}>VAR</div>
-              <div onClick={() => u('hak_mahrumiyet', 0)}
-                style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
-                  background:editForm.hak_mahrumiyet==0?`${C.danger}22`:'transparent',
-                  color:editForm.hak_mahrumiyet==0?C.danger:C.textMuted,
-                  border:`1px solid ${editForm.hak_mahrumiyet==0?C.danger+'66':C.border}`}}>YOK</div>
-            </div>
+            <input type="number" min="0" max="100" step="0.1" value={editForm.komisyon_orani} onChange={e => u('komisyon_orani',e.target.value)} style={{...S.input,padding:'6px 8px',fontSize:11}}/>
           </FormGroup>
         </div>
 
         {/* AVUKAT SEÇİMİ BÖLÜMÜ */}
-        <div style={{fontSize:10,fontWeight:700,color:C.purple,marginBottom:8,marginTop:4,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
+        <div style={{fontSize:10,fontWeight:700,color:C.purple,marginBottom:6,marginTop:4,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:10}}>
           <LIcon name="Scale" size={12} color={C.purple}/> AVUKAT ATAMASI
         </div>
-        <div style={{marginBottom:14}}>
+        <div style={{marginBottom:12}}>
           <FormGroup label="AVUKAT (İŞ ORTAĞI)">
-            <select value={editForm.ortak_id || ''} onChange={e => u('ortak_id', e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11,fontWeight:600}}>
+            <select value={editForm.ortak_id || ''} onChange={e => u('ortak_id', e.target.value)} style={{...S.select,padding:'6px 8px',fontSize:11,fontWeight:600}}>
               <option value="">AVUKAT SEÇİNİZ</option>
               {ortaklar.map(o => (
                 <option key={o.id} value={o.id}>
@@ -1585,12 +1575,12 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
         </div>
 
         {/* DOSYA SORUMLUSU & PAYDAŞ ATAMASI */}
-        <div style={{fontSize:10,fontWeight:700,color:C.success,marginBottom:8,marginTop:4,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
+        <div style={{fontSize:10,fontWeight:700,color:C.success,marginBottom:6,marginTop:4,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:10}}>
           <LIcon name="UserCheck" size={12} color={C.success}/> DOSYA SORUMLUSU & PAYDAS
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
           <FormGroup label="DOSYA SORUMLUSU (PERSONEL)">
-            <select value={editForm.sorumlu_id || ''} onChange={e => u('sorumlu_id', e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+            <select value={editForm.sorumlu_id || ''} onChange={e => u('sorumlu_id', e.target.value)} style={{...S.select,padding:'6px 8px',fontSize:11}}>
               <option value="">SORUMLU SEÇİNİZ</option>
               {personeller.map(p => (
                 <option key={p.id} value={p.user_id || p.id}>
@@ -1600,7 +1590,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             </select>
           </FormGroup>
           <FormGroup label="PAYDAŞ (YÖNLENDİREN)">
-            <select value={editForm.paydas_id || ''} onChange={e => u('paydas_id', e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+            <select value={editForm.paydas_id || ''} onChange={e => u('paydas_id', e.target.value)} style={{...S.select,padding:'6px 8px',fontSize:11}}>
               <option value="">PAYDAŞ SEÇİNİZ</option>
               {paydaslar.map(p => (
                 <option key={p.id} value={p.id}>
@@ -1612,42 +1602,42 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
         </div>
 
         {/* MAĞDUR BİLGİLERİ BÖLÜMÜ */}
-        <div style={{fontSize:10,fontWeight:700,color:C.cyan,marginBottom:8,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
+        <div style={{fontSize:10,fontWeight:700,color:C.cyan,marginBottom:6,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:10}}>
           <LIcon name="User" size={12} color={C.cyan}/> MAĞDUR BİLGİLERİ
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:12}}>
           <FormGroup label="AD SOYAD">
-            <input value={editForm.magdur_ad_soyad||''} onChange={e => u('magdur_ad_soyad',e.target.value)} placeholder="AD SOYAD" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            <input value={editForm.magdur_ad_soyad||''} onChange={e => u('magdur_ad_soyad',e.target.value)} placeholder="AD SOYAD" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="T.C. KİMLİK NO">
-            <input value={editForm.magdur_tc_kimlik||''} onChange={e => u('magdur_tc_kimlik',e.target.value)} placeholder="T.C. KİMLİK" maxLength={11} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            <input value={editForm.magdur_tc_kimlik||''} onChange={e => u('magdur_tc_kimlik',e.target.value)} placeholder="T.C. KİMLİK" maxLength={11} style={{...S.input,padding:'6px 8px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="TELEFON">
-            <input value={editForm.magdur_telefon||''} onChange={e => u('magdur_telefon',e.target.value)} placeholder="05XX XXX XX XX" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            <input value={editForm.magdur_telefon||''} onChange={e => u('magdur_telefon',e.target.value)} placeholder="05XX XXX XX XX" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="IBAN">
-            <MR.IBANInput value={editForm.magdur_iban||''} onChange={v => u('magdur_iban',v)} style={{padding:'8px 10px',fontSize:11}}/>
+            <MR.IBANInput value={editForm.magdur_iban||''} onChange={v => u('magdur_iban',v)} style={{padding:'6px 8px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="İL">
-            <select value={editForm.magdur_il} onChange={e => {u('magdur_il',e.target.value);u('magdur_ilce','');}} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+            <select value={editForm.magdur_il} onChange={e => {u('magdur_il',e.target.value);u('magdur_ilce','');}} style={{...S.select,padding:'6px 8px',fontSize:11}}>
               <option value="">SEÇİNİZ</option>
               {(ILLER || []).map(il => <option key={il} value={il}>{il}</option>)}
             </select>
           </FormGroup>
           <FormGroup label="İLÇE">
-            <select value={editForm.magdur_ilce||''} onChange={e => u('magdur_ilce',e.target.value)} disabled={!editForm.magdur_il} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+            <select value={editForm.magdur_ilce||''} onChange={e => u('magdur_ilce',e.target.value)} disabled={!editForm.magdur_il} style={{...S.select,padding:'6px 8px',fontSize:11}}>
               <option value="">SEÇİNİZ</option>
               {((ILCELER||{})[editForm.magdur_il]||[]).map(i => <option key={i} value={i}>{i}</option>)}
             </select>
           </FormGroup>
           <FormGroup label="DOĞUM TARİHİ">
-            <MR.DateInput value={editForm.magdur_dogum_tarihi||''} onChange={v => u('magdur_dogum_tarihi',v)} style={{padding:'8px 10px',fontSize:11}}/>
+            <MR.DateInput value={editForm.magdur_dogum_tarihi||''} onChange={v => u('magdur_dogum_tarihi',v)} style={{padding:'6px 8px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="MESLEK">
-            <input value={editForm.magdur_meslek||''} onChange={e => u('magdur_meslek',e.target.value)} placeholder="MESLEK" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            <input value={editForm.magdur_meslek||''} onChange={e => u('magdur_meslek',e.target.value)} placeholder="MESLEK" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="GELİR DURUMU">
-            <select value={editForm.magdur_gelir_durumu||''} onChange={e => u('magdur_gelir_durumu',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+            <select value={editForm.magdur_gelir_durumu||''} onChange={e => u('magdur_gelir_durumu',e.target.value)} style={{...S.select,padding:'6px 8px',fontSize:11}}>
               <option value="">SEÇİNİZ</option>
               <option value="ASGARİ ÜCRET">ASGARİ ÜCRET</option>
               <option value="ASGARİ ÜCRET ÜSTÜ">ASGARİ ÜCRET ÜSTÜ</option>
@@ -1658,174 +1648,154 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             </select>
           </FormGroup>
         </div>
-        <div style={{marginBottom:14}}>
+        <div style={{marginBottom:12}}>
           <FormGroup label="ADRES">
-            <textarea value={editForm.magdur_adres||''} onChange={e => u('magdur_adres',e.target.value.toUpperCase())} placeholder="AÇIK ADRES..." style={{...S.input,minHeight:50,padding:'8px 10px',fontSize:11}}/>
+            <textarea value={editForm.magdur_adres||''} onChange={e => u('magdur_adres',e.target.value.toUpperCase())} placeholder="AÇIK ADRES..." style={{...S.input,minHeight:40,padding:'6px 8px',fontSize:11}}/>
           </FormGroup>
         </div>
 
         {/* BH DOSYA ALANLARI */}
         {editForm.dosya_turu === 'BH' && (
           <>
-            <div style={{fontSize:10,fontWeight:700,color:C.purple,marginBottom:8,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
+            <div style={{fontSize:10,fontWeight:700,color:C.purple,marginBottom:6,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:10}}>
               <LIcon name="Heart" size={12} color={C.purple}/> BEDENİ HASAR BİLGİLERİ
             </div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:12}}>
               <FormGroup label="SORUMLU SİGORTA">
-                <input value={editForm.sorumlu_sigorta||''} onChange={e => u('sorumlu_sigorta',e.target.value.toUpperCase())} placeholder="SORUMLU SİGORTA" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+                <input value={editForm.sorumlu_sigorta||''} onChange={e => u('sorumlu_sigorta',e.target.value.toUpperCase())} placeholder="SORUMLU SİGORTA" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
               </FormGroup>
               <FormGroup label="SAKATLIK AÇIKLAMASI">
-                <input value={editForm.sakatlik_aciklama||''} onChange={e => u('sakatlik_aciklama',e.target.value.toUpperCase())} placeholder="SAKATLIK AÇIKLAMASI" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+                <input value={editForm.sakatlik_aciklama||''} onChange={e => u('sakatlik_aciklama',e.target.value.toUpperCase())} placeholder="SAKATLIK AÇIKLAMASI" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
               </FormGroup>
               <FormGroup label="SÜRÜCÜ ADI">
-                <input value={editForm.surucu_ad||''} onChange={e => u('surucu_ad',e.target.value.toUpperCase())} placeholder="SÜRÜCÜ ADI SOYADI" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+                <input value={editForm.surucu_ad||''} onChange={e => u('surucu_ad',e.target.value.toUpperCase())} placeholder="SÜRÜCÜ ADI SOYADI" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
               </FormGroup>
               <FormGroup label="SÜRÜCÜ EHLİYET">
-                <input value={editForm.surucu_ehliyet||''} onChange={e => u('surucu_ehliyet',e.target.value.toUpperCase())} placeholder="EHLİYET BİLGİSİ" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+                <input value={editForm.surucu_ehliyet||''} onChange={e => u('surucu_ehliyet',e.target.value.toUpperCase())} placeholder="EHLİYET BİLGİSİ" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
               </FormGroup>
               <FormGroup label="SÜRÜCÜ KUSUR">
-                <input value={editForm.surucu_kusur||''} onChange={e => u('surucu_kusur',e.target.value.toUpperCase())} placeholder="KUSUR DURUMU" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+                <input value={editForm.surucu_kusur||''} onChange={e => u('surucu_kusur',e.target.value.toUpperCase())} placeholder="KUSUR DURUMU" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
               </FormGroup>
             </div>
           </>
         )}
 
-        {/* MAĞDUR ARAÇ BİLGİLERİ */}
+        {/* ARAÇ BİLGİLERİ - RUHSAT KARTI GÖRÜNÜMÜ (ADK/MDK) */}
         {(editForm.dosya_turu === 'ADK' || editForm.dosya_turu === 'MDK') && (
           <>
-            <div style={{fontSize:10,fontWeight:700,color:C.warning,marginBottom:8,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
-              <LIcon name="Truck" size={12} color={C.warning}/> MAĞDUR ARAÇ BİLGİLERİ
+            <div style={{fontSize:10,fontWeight:700,color:C.warning,marginBottom:6,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:10}}>
+              <LIcon name="Car" size={12} color={C.warning}/> ARAÇ BİLGİLERİ
             </div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
-              <FormGroup label="ARAÇ SAHİBİ ADI SOYADI">
-                <input value={editForm.ma_ruhsat_sahibi||''} onChange={e => u('ma_ruhsat_sahibi',e.target.value)} placeholder="ARAÇ SAHİBİ" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
-              </FormGroup>
-              <FormGroup label="ARAÇ SAHİBİ TC KİMLİK NO">
-                <input value={editForm.ma_tc_kimlik||''} onChange={e => u('ma_tc_kimlik',e.target.value)} placeholder="TC KİMLİK NO" maxLength={11} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
-              </FormGroup>
-              <FormGroup label="BELGE TESCİL NO">
-                <input value={editForm.ma_belge_tescil_no||''} onChange={e => u('ma_belge_tescil_no',e.target.value)} placeholder="BELGE TESCİL NO" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
-              </FormGroup>
-              <FormGroup label="ONARIM GÜN SÜRESİ">
-                <input type="number" min="0" value={editForm.ma_onarim_gun_suresi||''} onChange={e => u('ma_onarim_gun_suresi',e.target.value)} placeholder="GÜN" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
-              </FormGroup>
-              <FormGroup label="GEÇMİŞ HASAR">
-                <div style={{display:'flex',gap:8,alignItems:'center',paddingTop:4}}>
-                  <div onClick={() => u('ma_gecmis_hasar','var')}
-                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
-                      background:editForm.ma_gecmis_hasar==='var'?`${C.danger}22`:'transparent',
-                      color:editForm.ma_gecmis_hasar==='var'?C.danger:C.textMuted,
-                      border:`1px solid ${editForm.ma_gecmis_hasar==='var'?C.danger+'66':C.border}`}}>VAR</div>
-                  <div onClick={() => u('ma_gecmis_hasar','yok')}
-                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
-                      background:editForm.ma_gecmis_hasar==='yok'?`${C.success}22`:'transparent',
-                      color:editForm.ma_gecmis_hasar==='yok'?C.success:C.textMuted,
-                      border:`1px solid ${editForm.ma_gecmis_hasar==='yok'?C.success+'66':C.border}`}}>YOK</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
+              {/* MAĞDUR ARAÇ RUHSAT KARTI */}
+              <div style={{border:`1px solid ${C.border}`,borderRadius:10,overflow:'hidden'}}>
+                <div style={{padding:'7px 12px',background:`linear-gradient(135deg, ${C.accent}12, ${C.accent}06)`,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${C.border}`}}>
+                  <div><div style={{fontSize:11,fontWeight:800}}>Mağdur Aracı</div><div style={{fontSize:8,color:C.textMuted,fontWeight:600}}>Araç Tescil Belgesi</div></div>
+                  <div style={{background:'#2563eb',color:'#fff',padding:'3px 10px',borderRadius:5,fontSize:11,fontWeight:900,fontFamily:'monospace',letterSpacing:1}}>{editForm.plaka || '-'}</div>
                 </div>
-              </FormGroup>
-              <FormGroup label="KASKO">
-                <div style={{display:'flex',gap:8,alignItems:'center',paddingTop:4}}>
-                  <div onClick={() => u('ma_kasko',1)}
-                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
-                      background:editForm.ma_kasko==1?`${C.success}22`:'transparent',
-                      color:editForm.ma_kasko==1?C.success:C.textMuted,
-                      border:`1px solid ${editForm.ma_kasko==1?C.success+'66':C.border}`}}>VAR</div>
-                  <div onClick={() => u('ma_kasko',0)}
-                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
-                      background:editForm.ma_kasko==0?`${C.danger}22`:'transparent',
-                      color:editForm.ma_kasko==0?C.danger:C.textMuted,
-                      border:`1px solid ${editForm.ma_kasko==0?C.danger+'66':C.border}`}}>YOK</div>
+                <div style={{padding:'6px 8px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+                  <FormGroup label="RUHSAT SAHİBİ">
+                    <input value={editForm.ma_ruhsat_sahibi||''} onChange={e => u('ma_ruhsat_sahibi',e.target.value)} placeholder="RUHSAT SAHİBİ" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
+                  </FormGroup>
+                  <FormGroup label="RUHSAT SAHİBİ TC">
+                    <input value={editForm.ma_tc_kimlik||''} onChange={e => u('ma_tc_kimlik',e.target.value)} placeholder="TC KİMLİK NO" maxLength={11} style={{...S.input,padding:'6px 8px',fontSize:11}}/>
+                  </FormGroup>
+                  <FormGroup label="BELGE TESCİL NO">
+                    <input value={editForm.ma_belge_tescil_no||''} onChange={e => u('ma_belge_tescil_no',e.target.value)} placeholder="TESCİL NO" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
+                  </FormGroup>
+                  <FormGroup label="ONARIM GÜN SÜRESİ">
+                    <input type="number" min="0" value={editForm.ma_onarim_gun_suresi||''} onChange={e => u('ma_onarim_gun_suresi',e.target.value)} placeholder="GÜN" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
+                  </FormGroup>
+                  <FormGroup label="KASKO">
+                    <div style={{display:'flex',gap:6,alignItems:'center',paddingTop:2}}>
+                      <div onClick={() => u('ma_kasko',1)} style={{padding:'4px 12px',borderRadius:5,fontSize:10,fontWeight:700,cursor:'pointer',background:editForm.ma_kasko==1?`${C.success}22`:'transparent',color:editForm.ma_kasko==1?C.success:C.textMuted,border:`1px solid ${editForm.ma_kasko==1?C.success+'66':C.border}`}}>VAR</div>
+                      <div onClick={() => u('ma_kasko',0)} style={{padding:'4px 12px',borderRadius:5,fontSize:10,fontWeight:700,cursor:'pointer',background:editForm.ma_kasko==0?`${C.danger}22`:'transparent',color:editForm.ma_kasko==0?C.danger:C.textMuted,border:`1px solid ${editForm.ma_kasko==0?C.danger+'66':C.border}`}}>YOK</div>
+                    </div>
+                  </FormGroup>
+                  <FormGroup label="GEÇMİŞ HASAR">
+                    <div style={{display:'flex',gap:6,alignItems:'center',paddingTop:2}}>
+                      <div onClick={() => u('ma_gecmis_hasar','var')} style={{padding:'4px 12px',borderRadius:5,fontSize:10,fontWeight:700,cursor:'pointer',background:editForm.ma_gecmis_hasar==='var'?`${C.danger}22`:'transparent',color:editForm.ma_gecmis_hasar==='var'?C.danger:C.textMuted,border:`1px solid ${editForm.ma_gecmis_hasar==='var'?C.danger+'66':C.border}`}}>VAR</div>
+                      <div onClick={() => u('ma_gecmis_hasar','yok')} style={{padding:'4px 12px',borderRadius:5,fontSize:10,fontWeight:700,cursor:'pointer',background:editForm.ma_gecmis_hasar==='yok'?`${C.success}22`:'transparent',color:editForm.ma_gecmis_hasar==='yok'?C.success:C.textMuted,border:`1px solid ${editForm.ma_gecmis_hasar==='yok'?C.success+'66':C.border}`}}>YOK</div>
+                    </div>
+                  </FormGroup>
+                  <FormGroup label="HAK MAHRUMİYET TALEP">
+                    <div style={{display:'flex',gap:6,alignItems:'center',paddingTop:2}}>
+                      <div onClick={() => u('hak_mahrumiyet',1)} style={{padding:'4px 12px',borderRadius:5,fontSize:10,fontWeight:700,cursor:'pointer',background:editForm.hak_mahrumiyet==1?`${C.success}22`:'transparent',color:editForm.hak_mahrumiyet==1?C.success:C.textMuted,border:`1px solid ${editForm.hak_mahrumiyet==1?C.success+'66':C.border}`}}>VAR</div>
+                      <div onClick={() => u('hak_mahrumiyet',0)} style={{padding:'4px 12px',borderRadius:5,fontSize:10,fontWeight:700,cursor:'pointer',background:editForm.hak_mahrumiyet==0?`${C.danger}22`:'transparent',color:editForm.hak_mahrumiyet==0?C.danger:C.textMuted,border:`1px solid ${editForm.hak_mahrumiyet==0?C.danger+'66':C.border}`}}>YOK</div>
+                    </div>
+                  </FormGroup>
                 </div>
-              </FormGroup>
-            </div>
-          </>
-        )}
+              </div>
 
-        {/* KARŞI ARAÇ BİLGİLERİ */}
-        {(editForm.dosya_turu === 'ADK' || editForm.dosya_turu === 'MDK') && (
-          <>
-            <div style={{fontSize:10,fontWeight:700,color:C.danger,marginBottom:8,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
-              <LIcon name="Truck" size={12} color={C.danger}/> KARŞI ARAÇ BİLGİLERİ
-            </div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
-              <FormGroup label="ARAÇ SAHİBİ ADI SOYADI">
-                <input value={editForm.ka_ruhsat_sahibi||''} onChange={e => u('ka_ruhsat_sahibi',e.target.value)} placeholder="ARAÇ SAHİBİ" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
-              </FormGroup>
-              <FormGroup label="ARAÇ SAHİBİ TC KİMLİK NO">
-                <input value={editForm.ka_tc_kimlik||''} onChange={e => u('ka_tc_kimlik',e.target.value)} placeholder="TC KİMLİK NO" maxLength={11} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
-              </FormGroup>
-              <FormGroup label="MARKA">
-                <MR.AracMarkaSelect value={editForm.ka_marka||''} onChange={v => {u('ka_marka',v);u('ka_model','');}}/>
-              </FormGroup>
-              <FormGroup label="MODEL / PAKET">
-                <MR.AracModelSelect marka={editForm.ka_marka||''} value={editForm.ka_model||''} onChange={v => u('ka_model',v)}/>
-              </FormGroup>
-              <FormGroup label="MODEL YILI">
-                <select value={editForm.ka_model_yili||''} onChange={e => u('ka_model_yili',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
-                  <option value="">SEÇİNİZ</option>
-                  {Array.from({length:30},(_,i)=>2026-i).map(y => <option key={y} value={y}>{y}</option>)}
-                </select>
-              </FormGroup>
-              <FormGroup label="BELGE TESCİL NO">
-                <input value={editForm.ka_belge_tescil_no||''} onChange={e => u('ka_belge_tescil_no',e.target.value)} placeholder="BELGE TESCİL NO" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
-              </FormGroup>
-              <FormGroup label="TRAFİK SİGORTA ŞİRKETİ">
-                <select value={editForm.ka_trafik_sirket||''} onChange={e => u('ka_trafik_sirket',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
-                  <option value="">SEÇİNİZ</option>
-                  {(SIGORTA || []).map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </FormGroup>
-              <FormGroup label="POLİÇE NO">
-                <input value={editForm.ka_trafik_police||''} onChange={e => u('ka_trafik_police',e.target.value)} placeholder="POLİÇE NO" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
-              </FormGroup>
-              <FormGroup label="KASKO">
-                <div style={{display:'flex',gap:8,alignItems:'center',paddingTop:4}}>
-                  <div onClick={() => u('ka_kasko',1)}
-                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
-                      background:editForm.ka_kasko==1?`${C.success}22`:'transparent',
-                      color:editForm.ka_kasko==1?C.success:C.textMuted,
-                      border:`1px solid ${editForm.ka_kasko==1?C.success+'66':C.border}`}}>VAR</div>
-                  <div onClick={() => u('ka_kasko',0)}
-                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
-                      background:editForm.ka_kasko==0?`${C.danger}22`:'transparent',
-                      color:editForm.ka_kasko==0?C.danger:C.textMuted,
-                      border:`1px solid ${editForm.ka_kasko==0?C.danger+'66':C.border}`}}>YOK</div>
+              {/* KARŞI ARAÇ RUHSAT KARTI */}
+              <div style={{border:`1px solid ${C.border}`,borderRadius:10,overflow:'hidden'}}>
+                <div style={{padding:'7px 12px',background:`linear-gradient(135deg, ${C.danger}12, ${C.danger}06)`,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${C.border}`}}>
+                  <div><div style={{fontSize:11,fontWeight:800}}>Karşı Araç</div><div style={{fontSize:8,color:C.textMuted,fontWeight:600}}>Araç Tescil Belgesi</div></div>
+                  <div style={{background:C.danger,color:'#fff',padding:'3px 10px',borderRadius:5,fontSize:11,fontWeight:900,fontFamily:'monospace',letterSpacing:1}}>KARŞI</div>
                 </div>
-              </FormGroup>
-              <FormGroup label="RUHSAT SAHİBİ / SÜRÜCÜ">
-                <div style={{display:'flex',gap:8,alignItems:'center',paddingTop:4}}>
-                  <div onClick={() => u('ka_ruhsat_sahibi_surucu','ayni')}
-                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
-                      background:editForm.ka_ruhsat_sahibi_surucu==='ayni'?`${C.success}22`:'transparent',
-                      color:editForm.ka_ruhsat_sahibi_surucu==='ayni'?C.success:C.textMuted,
-                      border:`1px solid ${editForm.ka_ruhsat_sahibi_surucu==='ayni'?C.success+'66':C.border}`}}>AYNI</div>
-                  <div onClick={() => u('ka_ruhsat_sahibi_surucu','farkli')}
-                    style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
-                      background:editForm.ka_ruhsat_sahibi_surucu==='farkli'?`${C.warning}22`:'transparent',
-                      color:editForm.ka_ruhsat_sahibi_surucu==='farkli'?C.warning:C.textMuted,
-                      border:`1px solid ${editForm.ka_ruhsat_sahibi_surucu==='farkli'?C.warning+'66':C.border}`}}>FARKLI</div>
+                <div style={{padding:'6px 8px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+                  <FormGroup label="RUHSAT SAHİBİ">
+                    <input value={editForm.ka_ruhsat_sahibi||''} onChange={e => u('ka_ruhsat_sahibi',e.target.value)} placeholder="RUHSAT SAHİBİ" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
+                  </FormGroup>
+                  <FormGroup label="RUHSAT SAHİBİ TC">
+                    <input value={editForm.ka_tc_kimlik||''} onChange={e => u('ka_tc_kimlik',e.target.value)} placeholder="TC KİMLİK NO" maxLength={11} style={{...S.input,padding:'6px 8px',fontSize:11}}/>
+                  </FormGroup>
+                  <FormGroup label="MARKA">
+                    <MR.AracMarkaSelect value={editForm.ka_marka||''} onChange={v => {u('ka_marka',v);u('ka_model','');}}/>
+                  </FormGroup>
+                  <FormGroup label="MODEL / PAKET">
+                    <MR.AracModelSelect marka={editForm.ka_marka||''} value={editForm.ka_model||''} onChange={v => u('ka_model',v)}/>
+                  </FormGroup>
+                  <FormGroup label="MODEL YILI">
+                    <select value={editForm.ka_model_yili||''} onChange={e => u('ka_model_yili',e.target.value)} style={{...S.select,padding:'6px 8px',fontSize:11}}>
+                      <option value="">SEÇİNİZ</option>
+                      {Array.from({length:30},(_,i)=>2026-i).map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </FormGroup>
+                  <FormGroup label="BELGE TESCİL NO">
+                    <input value={editForm.ka_belge_tescil_no||''} onChange={e => u('ka_belge_tescil_no',e.target.value)} placeholder="TESCİL NO" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
+                  </FormGroup>
+                  <FormGroup label="TRAFİK SİGORTA ŞİRKETİ">
+                    <select value={editForm.ka_trafik_sirket||''} onChange={e => u('ka_trafik_sirket',e.target.value)} style={{...S.select,padding:'6px 8px',fontSize:11}}>
+                      <option value="">SEÇİNİZ</option>
+                      {(SIGORTA || []).map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </FormGroup>
+                  <FormGroup label="POLİÇE NO">
+                    <input value={editForm.ka_trafik_police||''} onChange={e => u('ka_trafik_police',e.target.value)} placeholder="POLİÇE NO" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
+                  </FormGroup>
+                  <FormGroup label="KASKO">
+                    <div style={{display:'flex',gap:6,alignItems:'center',paddingTop:2}}>
+                      <div onClick={() => u('ka_kasko',1)} style={{padding:'4px 12px',borderRadius:5,fontSize:10,fontWeight:700,cursor:'pointer',background:editForm.ka_kasko==1?`${C.success}22`:'transparent',color:editForm.ka_kasko==1?C.success:C.textMuted,border:`1px solid ${editForm.ka_kasko==1?C.success+'66':C.border}`}}>VAR</div>
+                      <div onClick={() => u('ka_kasko',0)} style={{padding:'4px 12px',borderRadius:5,fontSize:10,fontWeight:700,cursor:'pointer',background:editForm.ka_kasko==0?`${C.danger}22`:'transparent',color:editForm.ka_kasko==0?C.danger:C.textMuted,border:`1px solid ${editForm.ka_kasko==0?C.danger+'66':C.border}`}}>YOK</div>
+                    </div>
+                  </FormGroup>
+                  <FormGroup label="SAHİBİ / SÜRÜCÜ">
+                    <div style={{display:'flex',gap:6,alignItems:'center',paddingTop:2}}>
+                      <div onClick={() => u('ka_ruhsat_sahibi_surucu','ayni')} style={{padding:'4px 12px',borderRadius:5,fontSize:10,fontWeight:700,cursor:'pointer',background:editForm.ka_ruhsat_sahibi_surucu==='ayni'?`${C.success}22`:'transparent',color:editForm.ka_ruhsat_sahibi_surucu==='ayni'?C.success:C.textMuted,border:`1px solid ${editForm.ka_ruhsat_sahibi_surucu==='ayni'?C.success+'66':C.border}`}}>AYNI</div>
+                      <div onClick={() => u('ka_ruhsat_sahibi_surucu','farkli')} style={{padding:'4px 12px',borderRadius:5,fontSize:10,fontWeight:700,cursor:'pointer',background:editForm.ka_ruhsat_sahibi_surucu==='farkli'?`${C.warning}22`:'transparent',color:editForm.ka_ruhsat_sahibi_surucu==='farkli'?C.warning:C.textMuted,border:`1px solid ${editForm.ka_ruhsat_sahibi_surucu==='farkli'?C.warning+'66':C.border}`}}>FARKLI</div>
+                    </div>
+                  </FormGroup>
+                  {editForm.ka_ruhsat_sahibi_surucu === 'farkli' && <>
+                    <FormGroup label="SÜRÜCÜ ADI">
+                      <input value={editForm.ka_surucu_ad||''} onChange={e => u('ka_surucu_ad',e.target.value)} placeholder="SÜRÜCÜ ADI SOYADI" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
+                    </FormGroup>
+                    <FormGroup label="SÜRÜCÜ TC">
+                      <input value={editForm.ka_surucu_tc_kimlik||''} onChange={e => u('ka_surucu_tc_kimlik',e.target.value)} placeholder="TC KİMLİK NO" maxLength={11} style={{...S.input,padding:'6px 8px',fontSize:11}}/>
+                    </FormGroup>
+                  </>}
                 </div>
-              </FormGroup>
-              {editForm.ka_ruhsat_sahibi_surucu === 'farkli' && (
-                <>
-                  <FormGroup label="SÜRÜCÜ ADI SOYADI">
-                    <input value={editForm.ka_surucu_ad||''} onChange={e => u('ka_surucu_ad',e.target.value)} placeholder="SÜRÜCÜ ADI SOYADI" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
-                  </FormGroup>
-                  <FormGroup label="SÜRÜCÜ TC KİMLİK NO">
-                    <input value={editForm.ka_surucu_tc_kimlik||''} onChange={e => u('ka_surucu_tc_kimlik',e.target.value)} placeholder="TC KİMLİK NO" maxLength={11} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
-                  </FormGroup>
-                </>
-              )}
+              </div>
             </div>
           </>
         )}
 
         {/* NOTLAR */}
-        <div style={{fontSize:10,fontWeight:700,color:C.textSec,marginBottom:8,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
+        <div style={{fontSize:10,fontWeight:700,color:C.textSec,marginBottom:6,display:'flex',alignItems:'center',gap:6,borderTop:`1px solid ${C.border}`,paddingTop:10}}>
           <LIcon name="Edit3" size={12} color={C.textSec}/> NOTLAR
         </div>
         <textarea value={editForm.notlar||''} onChange={e => u('notlar',e.target.value)} placeholder="DOSYA İLE İLGİLİ NOTLAR..."
-          style={{...S.input,minHeight:60,padding:'8px 10px',fontSize:11,resize:'vertical',marginBottom:14}}/>
+          style={{...S.input,minHeight:50,padding:'6px 8px',fontSize:11,resize:'vertical',marginBottom:12}}/>
 
         {/* KAYDET */}
         <button onClick={dosyaGuncelle} disabled={editLoading}
@@ -1865,16 +1835,16 @@ MR.MasrafEkle = ({open, onClose, dosyaId, onOk}) => {
       {error && <div style={{padding:8,background:`${C.danger}18`,borderRadius:6,marginBottom:10,fontSize:11,color:C.danger}}>{error}</div>}
       <div style={{display:'grid',gap:10}}>
         <FormGroup label="MASRAF KALEMİ">
-          <select value={f.masraf_kalemi} onChange={e => sF({...f,masraf_kalemi:e.target.value})} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+          <select value={f.masraf_kalemi} onChange={e => sF({...f,masraf_kalemi:e.target.value})} style={{...S.select,padding:'6px 8px',fontSize:11}}>
             <option value="">SEÇİNİZ</option>
             {MASRAF_K.map(k => <option key={k} value={k}>{k}</option>)}
           </select>
         </FormGroup>
         <FormGroup label="TUTAR (₺)">
-          <input type="number" value={f.tutar} onChange={e => sF({...f,tutar:e.target.value})} placeholder="0.00" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+          <input type="number" value={f.tutar} onChange={e => sF({...f,tutar:e.target.value})} placeholder="0.00" style={{...S.input,padding:'6px 8px',fontSize:11}}/>
         </FormGroup>
         <FormGroup label="KASA">
-          <select value={f.kasa_id} onChange={e => sF({...f,kasa_id:parseInt(e.target.value)})} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+          <select value={f.kasa_id} onChange={e => sF({...f,kasa_id:parseInt(e.target.value)})} style={{...S.select,padding:'6px 8px',fontSize:11}}>
             {kasalar.map(k => <option key={k.id} value={k.id}>{k.ad} ({MR.fmt(k.bakiye)})</option>)}
           </select>
         </FormGroup>
