@@ -16,9 +16,9 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     // Dosya bilgileri
     dosya_turu:'ADK', kaza_tarihi:'', haklilik:'100', hak_mahrumiyet:'0', meslek:'', komisyon:'',
     dosya_kaynak:'', sorumlu_id:'', ortak_id:'', paydas_id:'', noter_vekalet:'',
-    sakatlik_aciklama:'',
+    sakatlik_aciklama:'', gelir_durumu:'', sigorta_brans:'', talep_turu:'',
     // Sigorta bilgileri
-    sigorta_sirket:'', hasar_no:'', police_no:'', sorumlu_sigorta:'',
+    sigorta_sirket:'', hasar_no:'', police_no:'', sorumlu_sigorta:'', eksper_firma:'', onarim_servisi:'',
     // ADK araç bilgileri - mağdur
     ma_plaka:'', ma_marka:'', ma_model:'', ma_yil:'',
     ma_ruhsat:'', ma_tc:'', ma_belge_tescil:'', ma_onarim_gun:'', ma_gecmis_hasar:'',
@@ -27,7 +27,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     ka_ruhsat:'', ka_tc:'', ka_model:'', ka_belge_tescil:'', ka_trafik_police:'',
     ka_kasko:'', ka_ruhsat_surucu:'', ka_surucu_ad:'', ka_surucu_tc:'',
     // BH araç & sürücü bilgileri
-    bh_arac_plaka:'', bh_arac_marka:'', bh_arac_yil:'',
+    bh_arac_plaka:'', bh_arac_marka:'', bh_arac_yil:'', bh_kasko:'',
     surucu_ad:'', surucu_ehliyet:'', surucu_kusur:'',
     // Notlar
     notlar:''
@@ -197,8 +197,9 @@ MR.DosyaYeniPage = ({setPage, user}) => {
           <FormGroup label="T.C. KİMLİK NO *"><input style={S.input} value={form.tc_kimlik} onChange={e=>u('tc_kimlik',e.target.value)} maxLength={11}/></FormGroup>
           <FormGroup label="TELEFON *"><input style={S.input} value={form.telefon} onChange={e=>u('telefon',e.target.value)} placeholder="05XX XXX XX XX"/></FormGroup>
           <FormGroup label="IBAN"><IBANInput value={form.iban} onChange={v=>u('iban',v)}/></FormGroup>
-          <FormGroup label="MESLEK"><input style={S.input} value={form.meslek} onChange={e=>u('meslek',e.target.value)}/></FormGroup>
-          <div/>
+          {isBH && <FormGroup label="MESLEK"><input style={S.input} value={form.meslek} onChange={e=>u('meslek',e.target.value)}/></FormGroup>}
+          {isBH && <FormGroup label="GELİR DURUMU"><select style={S.select} value={form.gelir_durumu||''} onChange={e=>u('gelir_durumu',e.target.value)}><option value="">SEÇİNİZ</option><option value="ASGARİ ÜCRET">ASGARİ ÜCRET</option><option value="ASGARİ ÜCRET ÜSTÜ">ASGARİ ÜCRET ÜSTÜ</option><option value="SERBEST MESLEK">SERBEST MESLEK</option><option value="EMEKLİ">EMEKLİ</option><option value="ÖĞRENCİ">ÖĞRENCİ</option><option value="ÇALIŞMIYOR">ÇALIŞMIYOR</option></select></FormGroup>}
+          {!isBH && <div/>}
           <FormGroup label="ADRES"><input style={S.input} value={form.adres} onChange={e=>u('adres',e.target.value)}/></FormGroup>
           <FormGroup label="İL *"><select style={S.select} value={form.il} onChange={e=>{u('il',e.target.value);u('ilce','');}}><option value="">SEÇİNİZ</option>{ILLER.map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
           <FormGroup label="İLÇE *"><select style={S.select} value={form.ilce} onChange={e=>u('ilce',e.target.value)} disabled={!form.il}><option value="">ÖNCE İL SEÇİN</option>{(ILCELER[form.il]||[]).map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
@@ -307,8 +308,22 @@ MR.DosyaYeniPage = ({setPage, user}) => {
             </select>
           </FormGroup>
           <FormGroup label="HASAR DOSYA NO *"><input style={S.input} value={form.hasar_no} onChange={e=>u('hasar_no',e.target.value)}/></FormGroup>
+          <FormGroup label="SİGORTA BRANŞI">
+            <select style={S.select} value={form.sigorta_brans} onChange={e=>u('sigorta_brans',e.target.value)}>
+              <option value="">SEÇİNİZ</option><option value="TRAFİK">TRAFİK</option><option value="KASKO">KASKO</option><option value="İMM">İMM</option><option value="DİĞER">DİĞER</option>
+            </select>
+          </FormGroup>
+          <FormGroup label="DOSYA TALEP TÜRÜ">
+            <select style={S.select} value={form.talep_turu} onChange={e=>u('talep_turu',e.target.value)}>
+              <option value="">SEÇİNİZ</option><option value="DEĞER KAYBI">DEĞER KAYBI</option><option value="BEDENİ HASAR">BEDENİ HASAR</option><option value="MOTOR DEĞER KAYBI">MOTOR DEĞER KAYBI</option><option value="DİĞER">DİĞER</option>
+            </select>
+          </FormGroup>
+          {isADK && <>
+            <FormGroup label="EKSPER FİRMASI"><input style={S.input} value={form.eksper_firma||''} onChange={e=>u('eksper_firma',e.target.value)}/></FormGroup>
+            <FormGroup label="ONARIM SERVİSİ"><input style={S.input} value={form.onarim_servisi||''} onChange={e=>u('onarim_servisi',e.target.value)}/></FormGroup>
+          </>}
           {isBH && <>
-            <FormGroup label="POLICE NO"><input style={S.input} value={form.police_no} onChange={e=>u('police_no',e.target.value)}/></FormGroup>
+            <FormGroup label="POLİÇE NO"><input style={S.input} value={form.police_no} onChange={e=>u('police_no',e.target.value)}/></FormGroup>
             <FormGroup label="SORUMLU SİGORTA"><select style={S.select} value={form.sorumlu_sigorta} onChange={e=>u('sorumlu_sigorta',e.target.value)}><option value="">SEÇİNİZ</option>{SIGORTA.map(s=><option key={s} value={s}>{s}</option>)}</select></FormGroup>
           </>}
         </div>
@@ -370,9 +385,10 @@ MR.DosyaYeniPage = ({setPage, user}) => {
             <div>
               <div style={{fontSize:11,fontWeight:700,color:C.textMuted,marginBottom:8}}>ARAÇ BİLGİLERİ</div>
               <div style={{display:'grid',gap:10}}>
-                <FormGroup label="PLAKA"><input style={S.input} value={form.bh_arac_plaka} onChange={e=>u('bh_arac_plaka',formatPlaka(e.target.value))} placeholder="34XX123"/></FormGroup>
+                <FormGroup label="PLAKA"><input style={S.input} value={form.bh_arac_plaka} onChange={e=>u('bh_arac_plaka',formatPlaka(e.target.value))}/></FormGroup>
                 <FormGroup label="MARKA"><AracMarkaSelect value={form.bh_arac_marka} onChange={v=>u('bh_arac_marka',v)}/></FormGroup>
                 <FormGroup label="MODEL YILI"><select style={S.select} value={form.bh_arac_yil} onChange={e=>u('bh_arac_yil',e.target.value)}><option value="">YIL</option>{Array.from({length:30},(_,i)=>2026-i).map(y=><option key={y} value={y}>{y}</option>)}</select></FormGroup>
+                <FormGroup label="KASKO"><Toggle value={form.bh_kasko||''} onSelect={v=>u('bh_kasko',v)} options={[{value:'0',label:'YOK',color:C.danger},{value:'1',label:'VAR',color:C.success}]}/></FormGroup>
               </div>
             </div>
             <div>
