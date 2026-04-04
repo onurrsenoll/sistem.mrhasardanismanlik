@@ -462,10 +462,11 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   };
 
   // Bilgi satır bileşeni
-  const InfoRow = ({label, value, mono, bold, color}) => (
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'4px 0',borderBottom:`1px solid ${C.border}22`,gap:8}}>
-      <span style={{fontSize:10,color:C.textMuted,fontWeight:600,letterSpacing:0.3,whiteSpace:'nowrap',textTransform:'uppercase'}}>{label}</span>
-      <span style={{fontSize:11,fontWeight:bold?800:600,color:color||C.text,fontFamily:mono?'monospace':'inherit',textAlign:'right',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flexShrink:1}}>{value || '-'}</span>
+  const InfoRow = ({label, value, mono, bold, color, span2}) => (
+    <div style={{display:'flex',alignItems:'baseline',padding:'5px 8px',borderBottom:`1px solid ${C.border}15`,gap:6,borderRadius:4,background:'transparent',gridColumn:span2?'1/-1':undefined}}>
+      <span style={{fontSize:10,color:C.text,fontWeight:700,opacity:0.7,whiteSpace:'nowrap',minWidth:0,flexShrink:0}}>{label}</span>
+      <span style={{flex:1,borderBottom:`1px dotted ${C.border}44`,minWidth:20,height:1,alignSelf:'center'}}/>
+      <span style={{fontSize:11,fontWeight:bold?800:600,color:color||C.text,fontFamily:mono?'monospace':'inherit',textAlign:'right',whiteSpace:'nowrap',flexShrink:0}}>{value || '-'}</span>
     </div>
   );
 
@@ -565,155 +566,147 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
       {/* DOSYA BİLGİLERİ TAB */}
       {tab === 'bilgi' && (
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-          {/* SOL: DOSYA BİLGİLERİ */}
-          <div style={{...S.card,overflow:'hidden'}}>
-            <div style={{padding:'8px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`linear-gradient(135deg, ${C.accent}12, ${C.accent}06)`}}>
-              <div style={{width:28,height:28,borderRadius:7,background:`${C.accent}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <LIcon name="FileText" size={14} color={C.accent}/>
-              </div>
-              <span style={{fontSize:12,fontWeight:800,letterSpacing:0.3}}>DOSYA BİLGİLERİ</span>
-            </div>
-            <div style={{padding:'8px 14px'}}>
-              <InfoRow label="DOSYA NO" value={dosya.dosya_no} bold mono/>
-              <InfoRow label="DOSYA TÜRÜ" value={dosya.dosya_turu} bold/>
-              <InfoRow label="SİGORTA ŞİRKETİ" value={dosya.sigorta_sirket}/>
-              <InfoRow label="HASAR DOSYA NO" value={dosya.hasar_no} mono/>
-              <InfoRow label="DOSYA KAYNAĞI" value={isAvukat ? (dosya.dosya_kaynagi === 'PAYDAŞ/YÖNLENDİREN' ? 'YÖNLENDİRME' : 'CRM') : dosya.dosya_kaynagi}/>
-              {!isAvukat && <InfoRow label="AVUKAT" value={dosya.avukat_adi} bold color={C.purple}/>}
-              {!isAvukat && dosya.avukat_odeme_orani != null && dosya.avukat_odeme_orani > 0 && <InfoRow label="AVUKAT ÖDEME ORANI" value={`%${dosya.avukat_odeme_orani}`} bold color={C.purple}/>}
-              {!isAvukat && <InfoRow label="SORUMLU" value={dosya.sorumlu_adi}/>}
-              <InfoRow label="AÇILIŞ TARİHİ" value={dosya.acilis_tarihi}/>
-              <InfoRow label="KAZA TARİHİ" value={dosya.kaza_tarihi}/>
-              <InfoRow label="KAZA İLİ" value={dosya.kaza_il}/>
-              <InfoRow label="KAZA İLÇE" value={dosya.kaza_ilce}/>
-              {dosya.police_no && <InfoRow label="POLİÇE NO" value={dosya.police_no} mono/>}
-              {dosya.sigorta_turu && <InfoRow label="SİGORTA TÜRÜ" value={dosya.sigorta_turu}/>}
-              {dosya.sigorta_brans && <InfoRow label="SİGORTA BRANŞI" value={dosya.sigorta_brans}/>}
-              {dosya.talep_turu && <InfoRow label="DOSYA TALEP TÜRÜ" value={dosya.talep_turu}/>}
-              {dosya.eksper_firma && <InfoRow label="EKSPER FİRMASI" value={dosya.eksper_firma}/>}
-              {dosya.onarim_servisi && <InfoRow label="ONARIM SERVİSİ" value={dosya.onarim_servisi}/>}
-              <InfoRow label="HAKLILIK" value={`%${dosya.haklilik || 0}`} bold color={C.success}/>
-              <InfoRow label="KOMİSYON" value={`%${dosya.komisyon_orani || 0}`}/>
-              {dosya.dosya_turu === 'BH' && dosya.sorumlu_sigorta && <InfoRow label="SORUMLU SİGORTA" value={dosya.sorumlu_sigorta}/>}
-              {dosya.dosya_turu === 'BH' && dosya.sakatlik_aciklama && <InfoRow label="SAKATLIK AÇIKLAMASI" value={dosya.sakatlik_aciklama}/>}
-              {dosya.dosya_turu === 'BH' && dosya.surucu_ad && <InfoRow label="SÜRÜCÜ ADI" value={dosya.surucu_ad}/>}
-              {dosya.dosya_turu === 'BH' && dosya.surucu_ehliyet && <InfoRow label="SÜRÜCÜ EHLİYET" value={dosya.surucu_ehliyet}/>}
-              {dosya.dosya_turu === 'BH' && dosya.surucu_kusur && <InfoRow label="SÜRÜCÜ KUSUR" value={dosya.surucu_kusur}/>}
-              {dosya.notlar && <div style={{marginTop:8,padding:8,background:C.bgInput,borderRadius:6,fontSize:10,color:C.textSec}}>{dosya.notlar}</div>}
-            </div>
-          </div>
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
 
-          {/* SAĞ: MAĞDUR + ARAÇ + FİNANSAL */}
-          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          {/* ÜST SATIR: DOSYA + MAĞDUR YAN YANA */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+            {/* DOSYA BİLGİLERİ */}
+            <div style={{...S.card,overflow:'hidden'}}>
+              <div style={{padding:'6px 12px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`linear-gradient(135deg, ${C.accent}15, ${C.accent}08)`}}>
+                <div style={{width:24,height:24,borderRadius:6,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <LIcon name="FileText" size={12} color={C.accent}/>
+                </div>
+                <span style={{fontSize:11,fontWeight:800,letterSpacing:0.3}}>DOSYA BİLGİLERİ</span>
+                <span style={{marginLeft:'auto',fontSize:13,fontWeight:900,fontFamily:'monospace',color:C.accent}}>{dosya.dosya_no}</span>
+              </div>
+              <div style={{padding:'4px 6px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 4px'}}>
+                <InfoRow label="DOSYA TÜRÜ" value={dosya.dosya_turu} bold/>
+                <InfoRow label="KAYNAK" value={isAvukat ? (dosya.dosya_kaynagi === 'PAYDAŞ/YÖNLENDİREN' ? 'YÖNLENDİRME' : 'CRM') : dosya.dosya_kaynagi}/>
+                <InfoRow label="SİGORTA ŞİRKETİ" value={dosya.sigorta_sirket} span2/>
+                <InfoRow label="HASAR NO" value={dosya.hasar_no} mono/>
+                {dosya.police_no ? <InfoRow label="POLİÇE NO" value={dosya.police_no} mono/> : <div/>}
+                {dosya.sigorta_turu && <InfoRow label="SİGORTA TÜRÜ" value={dosya.sigorta_turu}/>}
+                {dosya.sigorta_brans && <InfoRow label="BRANŞ" value={dosya.sigorta_brans}/>}
+                {dosya.talep_turu && <InfoRow label="TALEP TÜRÜ" value={dosya.talep_turu}/>}
+                {dosya.eksper_firma && <InfoRow label="EKSPER" value={dosya.eksper_firma}/>}
+                {dosya.onarim_servisi && <InfoRow label="SERVİS" value={dosya.onarim_servisi}/>}
+                <InfoRow label="AÇILIŞ" value={dosya.acilis_tarihi}/>
+                <InfoRow label="KAZA TARİHİ" value={dosya.kaza_tarihi}/>
+                <InfoRow label="KAZA İLİ" value={dosya.kaza_il}/>
+                <InfoRow label="KAZA İLÇE" value={dosya.kaza_ilce}/>
+                <InfoRow label="HAKLILIK" value={`%${dosya.haklilik || 0}`} bold color={C.success}/>
+                <InfoRow label="KOMİSYON" value={`%${dosya.komisyon_orani || 0}`}/>
+                {!isAvukat && <InfoRow label="AVUKAT" value={dosya.avukat_adi} bold color={C.purple}/>}
+                {!isAvukat && dosya.avukat_odeme_orani > 0 && <InfoRow label="AV. ORAN" value={`%${dosya.avukat_odeme_orani}`} bold color={C.purple}/>}
+                {!isAvukat && <InfoRow label="SORUMLU" value={dosya.sorumlu_adi} span2/>}
+                {dosya.dosya_turu === 'BH' && dosya.sorumlu_sigorta && <InfoRow label="SOR. SİGORTA" value={dosya.sorumlu_sigorta}/>}
+                {dosya.dosya_turu === 'BH' && dosya.sakatlik_aciklama && <InfoRow label="SAKATLIK" value={dosya.sakatlik_aciklama}/>}
+                {dosya.dosya_turu === 'BH' && dosya.surucu_ad && <InfoRow label="SÜRÜCÜ" value={dosya.surucu_ad}/>}
+                {dosya.dosya_turu === 'BH' && dosya.surucu_ehliyet && <InfoRow label="EHLİYET" value={dosya.surucu_ehliyet}/>}
+                {dosya.dosya_turu === 'BH' && dosya.surucu_kusur && <InfoRow label="KUSUR" value={dosya.surucu_kusur}/>}
+              </div>
+              {dosya.notlar && <div style={{margin:'2px 6px 6px',padding:'6px 8px',background:C.bgInput,borderRadius:6,fontSize:10,color:C.textSec,lineHeight:1.4}}>{dosya.notlar}</div>}
+            </div>
+
             {/* MAĞDUR BİLGİLERİ */}
             <div style={{...S.card,overflow:'hidden'}}>
-              <div style={{padding:'8px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`linear-gradient(135deg, ${C.cyan}12, ${C.cyan}06)`}}>
-                <div style={{width:28,height:28,borderRadius:7,background:`${C.cyan}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  <LIcon name="User" size={14} color={C.cyan}/>
+              <div style={{padding:'6px 12px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`linear-gradient(135deg, ${C.cyan}15, ${C.cyan}08)`}}>
+                <div style={{width:24,height:24,borderRadius:6,background:`${C.cyan}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <LIcon name="User" size={12} color={C.cyan}/>
                 </div>
-                <span style={{fontSize:12,fontWeight:800,letterSpacing:0.3}}>MAĞDUR BİLGİLERİ</span>
+                <span style={{fontSize:11,fontWeight:800,letterSpacing:0.3}}>MAĞDUR BİLGİLERİ</span>
               </div>
-              <div style={{padding:'8px 14px'}}>
-                <InfoRow label="AD SOYAD" value={magdur.ad_soyad} bold/>
+              <div style={{padding:'4px 6px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 4px'}}>
+                <InfoRow label="AD SOYAD" value={magdur.ad_soyad} bold span2/>
                 <InfoRow label="T.C. KİMLİK" value={magdur.tc_kimlik} mono/>
                 <InfoRow label="TELEFON" value={magdur.telefon} mono/>
                 <InfoRow label="İL" value={magdur.il}/>
-                {magdur.ilce && <InfoRow label="İLÇE" value={magdur.ilce}/>}
+                {magdur.ilce ? <InfoRow label="İLÇE" value={magdur.ilce}/> : <div/>}
+                {magdur.dogum_tarihi && <InfoRow label="DOĞUM" value={magdur.dogum_tarihi}/>}
                 {magdur.meslek && <InfoRow label="MESLEK" value={magdur.meslek}/>}
-                {magdur.dogum_tarihi && <InfoRow label="DOĞUM TARİHİ" value={magdur.dogum_tarihi}/>}
-                {magdur.iban && <InfoRow label="IBAN" value={magdur.iban} mono/>}
-                {magdur.adres && <InfoRow label="ADRES" value={magdur.adres}/>}
-                {magdur.gelir_durumu && <InfoRow label="GELİR DURUMU" value={magdur.gelir_durumu}/>}
+                {magdur.gelir_durumu && <InfoRow label="GELİR" value={magdur.gelir_durumu}/>}
+                {magdur.iban && <InfoRow label="IBAN" value={magdur.iban} mono span2/>}
+                {magdur.adres && <InfoRow label="ADRES" value={magdur.adres} span2/>}
               </div>
             </div>
+          </div>
 
-            {/* ARAÇ BİLGİLERİ - RUHSAT KARTI GÖRÜNÜMÜ (ADK/MDK) */}
-            {(dosya.dosya_turu === 'ADK' || dosya.dosya_turu === 'MDK') && (arac.plaka || getPlaka() || karsiArac.plaka) && (
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-                {/* MAĞDUR ARAÇ RUHSAT KARTI */}
-                {(arac.plaka || getPlaka()) && (
-                  <div style={{border:`1px solid ${C.border}`,borderRadius:10,overflow:'hidden',background:C.bgCard}}>
-                    <div style={{padding:'8px 12px',background:`linear-gradient(135deg, ${C.accent}12, ${C.accent}06)`,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${C.border}`}}>
-                      <div>
-                        <div style={{fontSize:11,fontWeight:800}}>Mağdur Aracı</div>
-                        <div style={{fontSize:8,color:C.textMuted,fontWeight:600}}>Araç Tescil Belgesi</div>
-                      </div>
-                      <div style={{background:'#2563eb',color:'#fff',padding:'4px 12px',borderRadius:6,fontSize:12,fontWeight:900,fontFamily:'monospace',letterSpacing:1}}>{getPlaka() || '-'}</div>
+          {/* ARAÇ BİLGİLERİ - RUHSAT KARTLARI YAN YANA (ADK/MDK) */}
+          {(dosya.dosya_turu === 'ADK' || dosya.dosya_turu === 'MDK') && (arac.plaka || getPlaka() || karsiArac.plaka) && (
+            <div style={{display:'grid',gridTemplateColumns: karsiArac.plaka ? '1fr 1fr' : '1fr',gap:10}}>
+              {/* MAĞDUR ARAÇ RUHSAT KARTI */}
+              {(arac.plaka || getPlaka()) && (
+                <div style={{...S.card,overflow:'hidden',border:`1px solid ${C.border}`}}>
+                  <div style={{padding:'6px 12px',background:`linear-gradient(135deg, ${C.accent}15, ${C.accent}08)`,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${C.border}`}}>
+                    <div>
+                      <div style={{fontSize:11,fontWeight:800}}>Mağdur Aracı</div>
+                      <div style={{fontSize:8,color:C.textMuted,fontWeight:600}}>Araç Tescil Belgesi</div>
                     </div>
-                    <div style={{padding:'8px 10px'}}>
-                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
-                        <InfoRow label="RUHSAT SAHİBİ" value={arac.ruhsat_sahibi} bold/>
-                        <InfoRow label="SAHİBİ TC" value={arac.tc_kimlik} mono/>
-                        <InfoRow label="MARKA" value={arac.marka}/>
-                        <InfoRow label="MODEL" value={arac.model}/>
-                        <InfoRow label="MODEL YILI" value={arac.model_yili}/>
-                        <InfoRow label="TESCİL NO" value={arac.belge_tescil_no} mono/>
-                        <InfoRow label="ONARIM GÜN" value={arac.onarim_gun_suresi ? `${arac.onarim_gun_suresi} GÜN` : '-'}/>
-                        <InfoRow label="KASKO" value={arac.kasko ? 'VAR' : 'YOK'} bold color={arac.kasko ? C.success : C.textMuted}/>
-                        <InfoRow label="GEÇMİŞ HASAR" value={arac.gecmis_hasar ? arac.gecmis_hasar.toUpperCase() : '-'} bold color={arac.gecmis_hasar === 'var' ? C.danger : C.success}/>
-                        <InfoRow label="HAK MAHRUMİYET" value={parseInt(dosya.hak_mahrumiyet) === 1 ? 'VAR' : 'YOK'} bold color={parseInt(dosya.hak_mahrumiyet) === 1 ? C.success : C.textMuted}/>
-                      </div>
-                    </div>
+                    <div style={{background:'#2563eb',color:'#fff',padding:'3px 10px',borderRadius:5,fontSize:12,fontWeight:900,fontFamily:'monospace',letterSpacing:1}}>{getPlaka() || '-'}</div>
                   </div>
-                )}
-
-                {/* KARŞI ARAÇ RUHSAT KARTI */}
-                {karsiArac.plaka && (
-                  <div style={{border:`1px solid ${C.border}`,borderRadius:10,overflow:'hidden',background:C.bgCard}}>
-                    <div style={{padding:'8px 12px',background:`linear-gradient(135deg, ${C.danger}12, ${C.danger}06)`,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${C.border}`}}>
-                      <div>
-                        <div style={{fontSize:11,fontWeight:800}}>Karşı Araç</div>
-                        <div style={{fontSize:8,color:C.textMuted,fontWeight:600}}>Araç Tescil Belgesi</div>
-                      </div>
-                      <div style={{background:C.danger,color:'#fff',padding:'4px 12px',borderRadius:6,fontSize:12,fontWeight:900,fontFamily:'monospace',letterSpacing:1}}>{karsiArac.plaka}</div>
-                    </div>
-                    <div style={{padding:'8px 10px'}}>
-                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
-                        <InfoRow label="RUHSAT SAHİBİ" value={karsiArac.ruhsat_sahibi} bold/>
-                        <InfoRow label="SAHİBİ TC" value={karsiArac.tc_kimlik} mono/>
-                        <InfoRow label="MARKA" value={karsiArac.marka}/>
-                        <InfoRow label="MODEL" value={karsiArac.model}/>
-                        <InfoRow label="MODEL YILI" value={karsiArac.model_yili}/>
-                        <InfoRow label="TESCİL NO" value={karsiArac.belge_tescil_no} mono/>
-                        <InfoRow label="TRAFİK SİGORTA" value={karsiArac.trafik_sirket}/>
-                        <InfoRow label="POLİÇE NO" value={karsiArac.trafik_police} mono/>
-                        <InfoRow label="KASKO" value={karsiArac.kasko ? 'VAR' : 'YOK'} bold color={karsiArac.kasko ? C.success : C.textMuted}/>
-                        <InfoRow label="SAHİBİ/SÜRÜCÜ" value={karsiArac.ruhsat_sahibi_surucu ? karsiArac.ruhsat_sahibi_surucu.toUpperCase() : '-'} bold color={karsiArac.ruhsat_sahibi_surucu === 'farkli' ? C.warning : C.success}/>
-                        {karsiArac.ruhsat_sahibi_surucu === 'farkli' && <>
-                          <InfoRow label="SÜRÜCÜ ADI" value={karsiArac.surucu_ad}/>
-                          <InfoRow label="SÜRÜCÜ TC" value={karsiArac.surucu_tc_kimlik} mono/>
-                        </>}
-                      </div>
-                    </div>
+                  <div style={{padding:'4px 6px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 4px'}}>
+                    <InfoRow label="RUHSAT SAHİBİ" value={arac.ruhsat_sahibi} bold/>
+                    <InfoRow label="SAHİBİ TC" value={arac.tc_kimlik} mono/>
+                    <InfoRow label="MARKA" value={arac.marka}/>
+                    <InfoRow label="MODEL" value={arac.model}/>
+                    <InfoRow label="MODEL YILI" value={arac.model_yili}/>
+                    <InfoRow label="TESCİL NO" value={arac.belge_tescil_no} mono/>
+                    <InfoRow label="ONARIM GÜN" value={arac.onarim_gun_suresi ? `${arac.onarim_gun_suresi} GÜN` : '-'}/>
+                    <InfoRow label="KASKO" value={arac.kasko ? 'VAR' : 'YOK'} bold color={arac.kasko ? C.success : C.textMuted}/>
+                    <InfoRow label="GEÇMİŞ HASAR" value={arac.gecmis_hasar ? arac.gecmis_hasar.toUpperCase() : '-'} bold color={arac.gecmis_hasar === 'var' ? C.danger : C.success}/>
+                    <InfoRow label="HAK MAHRUMİYET" value={parseInt(dosya.hak_mahrumiyet) === 1 ? 'VAR' : 'YOK'} bold color={parseInt(dosya.hak_mahrumiyet) === 1 ? C.success : C.textMuted}/>
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
 
-            {/* FİNANSAL ÖZET */}
-            <div style={{...S.card,overflow:'hidden'}}>
-              <div style={{padding:'8px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`linear-gradient(135deg, ${C.success}12, ${C.success}06)`}}>
-                <div style={{width:28,height:28,borderRadius:7,background:`${C.success}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  <LIcon name="DollarSign" size={14} color={C.success}/>
+              {/* KARŞI ARAÇ RUHSAT KARTI */}
+              {karsiArac.plaka && (
+                <div style={{...S.card,overflow:'hidden',border:`1px solid ${C.border}`}}>
+                  <div style={{padding:'6px 12px',background:`linear-gradient(135deg, ${C.danger}15, ${C.danger}08)`,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${C.border}`}}>
+                    <div>
+                      <div style={{fontSize:11,fontWeight:800}}>Karşı Araç</div>
+                      <div style={{fontSize:8,color:C.textMuted,fontWeight:600}}>Araç Tescil Belgesi</div>
+                    </div>
+                    <div style={{background:C.danger,color:'#fff',padding:'3px 10px',borderRadius:5,fontSize:12,fontWeight:900,fontFamily:'monospace',letterSpacing:1}}>{karsiArac.plaka}</div>
+                  </div>
+                  <div style={{padding:'4px 6px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 4px'}}>
+                    <InfoRow label="RUHSAT SAHİBİ" value={karsiArac.ruhsat_sahibi} bold/>
+                    <InfoRow label="SAHİBİ TC" value={karsiArac.tc_kimlik} mono/>
+                    <InfoRow label="MARKA" value={karsiArac.marka}/>
+                    <InfoRow label="MODEL" value={karsiArac.model}/>
+                    <InfoRow label="MODEL YILI" value={karsiArac.model_yili}/>
+                    <InfoRow label="TESCİL NO" value={karsiArac.belge_tescil_no} mono/>
+                    <InfoRow label="TRAFİK SİGORTA" value={karsiArac.trafik_sirket}/>
+                    <InfoRow label="POLİÇE NO" value={karsiArac.trafik_police} mono/>
+                    <InfoRow label="KASKO" value={karsiArac.kasko ? 'VAR' : 'YOK'} bold color={karsiArac.kasko ? C.success : C.textMuted}/>
+                    <InfoRow label="SAHİBİ/SÜRÜCÜ" value={karsiArac.ruhsat_sahibi_surucu ? karsiArac.ruhsat_sahibi_surucu.toUpperCase() : '-'} bold color={karsiArac.ruhsat_sahibi_surucu === 'farkli' ? C.warning : C.success}/>
+                    {karsiArac.ruhsat_sahibi_surucu === 'farkli' && <>
+                      <InfoRow label="SÜRÜCÜ ADI" value={karsiArac.surucu_ad}/>
+                      <InfoRow label="SÜRÜCÜ TC" value={karsiArac.surucu_tc_kimlik} mono/>
+                    </>}
+                  </div>
                 </div>
-                <span style={{fontSize:12,fontWeight:800,letterSpacing:0.3}}>FİNANSAL ÖZET</span>
+              )}
+            </div>
+          )}
+
+          {/* FİNANSAL ÖZET - TAM GENİŞLİK */}
+          <div style={{...S.card,overflow:'hidden'}}>
+            <div style={{padding:'6px 12px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`linear-gradient(135deg, ${C.success}15, ${C.success}08)`}}>
+              <div style={{width:24,height:24,borderRadius:6,background:`${C.success}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <LIcon name="DollarSign" size={12} color={C.success}/>
               </div>
-              <div style={{padding:'8px 14px'}}>
-                <InfoRow label="TOPLAM TAHSİLAT" value={fmt(dosya.tahsil_edilen || 0)} bold color={C.success}/>
-                <InfoRow label="TOPLAM GELİR (BEKLENENLERle)" value={fmt(dosya.toplam_gelir || 0)} color={C.textSec}/>
-                <InfoRow label="TOPLAM MASRAF" value={fmt(dosya.toplam_masraf || 0)} bold color={C.danger}/>
-                <div style={{margin:'8px 0',borderTop:`1px dashed ${C.border}`}}/>
-                <InfoRow label="NET KAR" value={fmt(dosya.net_kar || 0)} bold color={(dosya.net_kar || 0) >= 0 ? C.success : C.danger}/>
-                <div style={{margin:'8px 0',padding:10,background:`${C.accent}08`,borderRadius:8,border:`1px solid ${C.accent}22`}}>
-                  <div style={{fontSize:10,color:C.textMuted,fontWeight:600,marginBottom:6,letterSpacing:0.5}}>%50 - %50 PAYLAŞIM</div>
-                  <InfoRow label="BENİM PAYIM (%50)" value={fmt(dosya.benim_payim || 0)} bold color={C.accent}/>
-                  <InfoRow label="AVUKAT PAYI (%50)" value={fmt(dosya.avukat_payi || 0)} bold color={C.purple || '#8b5cf6'}/>
-                </div>
-                <div style={{margin:'8px 0',borderTop:`1px dashed ${C.border}`}}/>
-                <InfoRow label="MASRAF SAYISI" value={dosya.masraflar?.length || 0}/>
-                <InfoRow label="EVRAK SAYISI" value={dosya.evraklar?.length || 0}/>
-              </div>
+              <span style={{fontSize:11,fontWeight:800,letterSpacing:0.3}}>FİNANSAL ÖZET</span>
+            </div>
+            <div style={{padding:'4px 6px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0 8px'}}>
+              <InfoRow label="TAHSİLAT" value={fmt(dosya.tahsil_edilen || 0)} bold color={C.success}/>
+              <InfoRow label="TOPLAM GELİR" value={fmt(dosya.toplam_gelir || 0)}/>
+              <InfoRow label="TOPLAM MASRAF" value={fmt(dosya.toplam_masraf || 0)} bold color={C.danger}/>
+              <InfoRow label="NET KAR" value={fmt(dosya.net_kar || 0)} bold color={(dosya.net_kar || 0) >= 0 ? C.success : C.danger}/>
+              <InfoRow label="BENİM PAYIM (%50)" value={fmt(dosya.benim_payim || 0)} bold color={C.accent}/>
+              <InfoRow label="AVUKAT PAYI (%50)" value={fmt(dosya.avukat_payi || 0)} bold color={C.purple || '#8b5cf6'}/>
+              <InfoRow label="MASRAF SAYISI" value={dosya.masraflar?.length || 0}/>
+              <InfoRow label="EVRAK SAYISI" value={dosya.evraklar?.length || 0}/>
             </div>
           </div>
         </div>
