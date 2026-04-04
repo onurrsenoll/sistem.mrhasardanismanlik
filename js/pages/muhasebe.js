@@ -3185,8 +3185,20 @@ const GelirGiderBirlestik = ({setPage, user}) => {
    BİRLEŞTİRİCİ: KASA YÖNETİMİ (KASA + ORTAK KASA)
    ═══════════════════════════════════════════════════════════ */
 const KasaYonetimiBirlestik = ({setPage, user}) => {
-  const {C, S, LIcon} = MR;
+  const {C, S, LIcon, api} = MR;
   const [altSekme, setAltSekme] = useState('kasa');
+  const [sifirlaLoading, setSifirlaLoading] = useState(false);
+
+  const muhasebeSifirla = async () => {
+    if (!confirm('DİKKAT: Tüm gelir, gider, kasa bakiyeleri ve komisyon kayıtları sıfırlanacak!\n\nDosya masrafları ve diğer veriler etkilenmez.\n\nBu işlem GERİ ALINAMAZ!\n\nDevam etmek istiyor musunuz?')) return;
+    if (!confirm('SON ONAY: Muhasebe verilerini sıfırlamak istediğinizden emin misiniz?')) return;
+    setSifirlaLoading(true);
+    const r = await api.muhasebeSifirla({onay: 'MUHASEBE_SIFIRLA_ONAYLI'});
+    if (r?.success) { alert('Muhasebe verileri sıfırlandı.'); window.location.reload(); }
+    else alert(r?.error || 'Sıfırlama hatası');
+    setSifirlaLoading(false);
+  };
+
   return (
     <div>
       <div style={{display:'flex',gap:6,marginBottom:16}}>
@@ -3204,6 +3216,22 @@ const KasaYonetimiBirlestik = ({setPage, user}) => {
       </div>
       {altSekme === 'kasa' && <KasaBanka setPage={setPage} user={user}/>}
       {altSekme === 'ortak' && <OrtakKasa setPage={setPage} user={user}/>}
+
+      {/* MUHASEBE SIFIRLAMA - SADECE ADMİN */}
+      {user?.rol === 'admin' && (
+        <div style={{marginTop:24,padding:16,background:`${MR.C.danger}08`,borderRadius:10,border:`1px solid ${MR.C.danger}20`}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <div>
+              <div style={{fontSize:12,fontWeight:700,color:MR.C.danger}}>MUHASEBE VERİLERİNİ SIFIRLA</div>
+              <div style={{fontSize:10,color:MR.C.textMuted,marginTop:4}}>Tüm gelir, gider, kasa bakiyeleri ve komisyon kayıtları sıfırlanır. Dosya masrafları etkilenmez.</div>
+            </div>
+            <button onClick={muhasebeSifirla} disabled={sifirlaLoading}
+              style={{...MR.S.btn,...MR.S.btnD,fontSize:10,padding:'8px 16px',flexShrink:0}}>
+              {sifirlaLoading ? 'SIFIRLANIYOR...' : 'SIFIRLA'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
