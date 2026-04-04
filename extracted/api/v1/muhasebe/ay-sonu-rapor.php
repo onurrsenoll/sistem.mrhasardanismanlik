@@ -68,7 +68,7 @@ if ($ortakId) {
     }
 }
 
-// 1b. Ay içinde açılan dosyalar + masrafları
+// 1b. Ay icinde acilan dosyalar + tarife bazli masraf hesabi
 $dosyaSQL = "SELECT d.id, d.dosya_no, d.dosya_turu, d.dosya_kaynagi, d.acilis_tarihi,
     m.ad_soyad as magdur_adi,
     COALESCE((SELECT SUM(mas.tutar) FROM masraflar mas WHERE mas.dosya_id = d.id), 0) as toplam_masraf
@@ -87,15 +87,38 @@ $stmt = $db->prepare($dosyaSQL);
 $stmt->execute($dosyaParams);
 $dosyalar = $stmt->fetchAll();
 
-// Dosya türü dağılımı
+// Ucretlendirme tarifelerini cek (Demirhan birim fiyatlari)
+$tarifeler = [];
+try {
+    $stmtT = $db->prepare("SELECT dosya_turu, dosya_kaynagi, tutar FROM mr_ucretlendirme_tarife WHERE tip = 'ortak' AND yil = ? AND aktif = 1");
+    $stmtT->execute([date('Y', strtotime($baslangic))]);
+    foreach ($stmtT->fetchAll() as $tr) {
+        $tarifeler[$tr['dosya_turu'] . '_' . $tr['dosya_kaynagi']] = (float)$tr['tutar'];
+    }
+} catch (\Exception $e) {}
+
+// Dosya tur dagilimi + tarife bazli masraf hesabi
 $turDagilimi = [];
 $toplamDosyaMasraf = 0;
-foreach ($dosyalar as $d) {
-    $tur = $d['dosya_turu'] ?: 'DİĞER';
+$toplamTarifeMasraf = 0;
+foreach ($dosyalar as &$d) {
+    $tur = $d['dosya_turu'] ?: 'DIGER';
     if (!isset($turDagilimi[$tur])) $turDagilimi[$tur] = 0;
     $turDagilimi[$tur]++;
     $toplamDosyaMasraf += (float)$d['toplam_masraf'];
+
+    // Demirhan tarife fiyati hesapla
+    $kaynak = mb_strtoupper($d['dosya_kaynagi'] ?? '');
+    $tarifKaynak = 'YONLENDIRME';
+    if (mb_stripos($kaynak, 'OFI') !== false || mb_stripos($kaynak, 'CRM') !== false) {
+        $tarifKaynak = 'OFIS CRM';
+    }
+    $tarifKey = $d['dosya_turu'] . '_' . $tarifKaynak;
+    $d['tarife_tutar'] = $tarifeler[$tarifKey] ?? 0;
+    $d['tarife_kaynak'] = $tarifKaynak;
+    $toplamTarifeMasraf += $d['tarife_tutar'];
 }
+unset($d);
 
 // Kaynak formatlama
 foreach ($dosyalar as &$d) {
@@ -168,8 +191,8 @@ $kapananNetKazanc = $pozitifToplam - $mahsupToplam;
 // Diğer masraflar yarısı (ortak payı ve MR payı)
 $digerMasrafYarisi = round($toplamDigerMasraf / 2, 2);
 
-// BÖLÜM 1 SONUÇ: Ortak alacak
-$ortakAlacak = $toplamDosyaMasraf + $digerMasrafYarisi - $ortakToplamOdeme;
+// BÖLÜM 1 SONUÇ: Ortak alacak (tarife bazli)
+$ortakAlacak = $toplamTarifeMasraf + $digerMasrafYarisi - $ortakToplamOdeme;
 
 // BÖLÜM 2 SONUÇ: MR net kazanç
 $mrNetKazanc = $kapananNetKazanc - $digerMasrafYarisi;
@@ -268,6 +291,7 @@ json_success([
         'dosyalar' => $dosyalar,
         'dosya_sayisi' => count($dosyalar),
         'toplam_dosya_masraf' => $toplamDosyaMasraf,
+        'toplam_tarife_masraf' => $toplamTarifeMasraf,
         'tur_dagilimi' => $turDagilimi,
         'diger_masraf_yarisi' => $digerMasrafYarisi,
         'ortak_alacak' => $ortakAlacak
@@ -293,6 +317,9 @@ json_success([
         'ortak_alacak' => $ortakAlacak,
         'mr_net_kazanc' => $mrNetKazanc,
         'toplam_diger_masraf' => $toplamDigerMasraf,
+        'toplam_tarife_masraf' => $toplamTarifeMasraf,
+        'toplam_ic_maliyet' => $toplamDosyaMasraf,
+        'mr_fark' => $toplamTarifeMasraf - $toplamDosyaMasraf,
         'ortak_diger_masraf_payi' => $digerMasrafYarisi,
         'mr_diger_masraf_payi' => $digerMasrafYarisi
     ]
