@@ -62,7 +62,26 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
 
       {/* SEKME İÇERİKLERİ */}
       {aktifSekme === 'gelir'     && <GelirGiderBirlestik setPage={setPage} user={user}/>}
-      {aktifSekme === 'kasa'      && <KasaBanka setPage={setPage} user={user}/>}
+      {aktifSekme === 'kasa'      && <>
+        <KasaBanka setPage={setPage} user={user}/>
+        {user?.rol === 'admin' && (
+          <div style={{marginTop:24,padding:16,background:`${C.danger}08`,borderRadius:10,border:`1px solid ${C.danger}20`}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:C.danger}}>MUHASEBE VERİLERİNİ SIFIRLA</div>
+                <div style={{fontSize:10,color:C.textMuted,marginTop:4}}>Tüm gelir, gider, kasa bakiyeleri ve komisyon kayıtları sıfırlanır. Dosya masrafları etkilenmez.</div>
+              </div>
+              <button onClick={async () => {
+                if (!confirm('DİKKAT: Tüm gelir, gider, kasa bakiyeleri ve komisyon kayıtları sıfırlanacak!\nBu işlem GERİ ALINAMAZ!\nDevam?')) return;
+                if (!confirm('SON ONAY: Emin misiniz?')) return;
+                const r = await api.muhasebeSifirla({onay:'MUHASEBE_SIFIRLA_ONAYLI'});
+                if (r?.success) { alert('Muhasebe verileri sıfırlandı.'); window.location.reload(); }
+                else alert(r?.error || 'Hata');
+              }} style={{...S.btn,...S.btnD,fontSize:10,padding:'8px 16px',flexShrink:0}}>SIFIRLA</button>
+            </div>
+          </div>
+        )}
+      </>}
       {aktifSekme === 'ortakkasa' && <OrtakKasa setPage={setPage} user={user}/>}
       {aktifSekme === 'komisyon'  && <KomisyonPrim setPage={setPage} user={user}/>}
       {aktifSekme === 'rapor'     && <FinansalRaporlar setPage={setPage} user={user}/>}
