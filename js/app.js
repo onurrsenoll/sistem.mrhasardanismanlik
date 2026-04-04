@@ -97,14 +97,6 @@ function menuErisim(user) {
   if (!yetkiler || Object.keys(yetkiler).length === 0) return [];
 
   /* YETKİLER VARSA → SADECE VERİTABANINDAKİ İZİNLERE GÖRE FİLTRELE */
-  /* Alt sekme yetkilerinden herhangi biri varsa ana sekmeyi göster */
-  const ALT_YETKI_MAP = {
-    'muhasebe-gelir': ['muhasebe-gelir','muhasebe-gelir-ekle','muhasebe-gelir-sil','muhasebe-gider','muhasebe-gider-ekle','muhasebe-gider-sil'],
-    'muhasebe-kasa': ['muhasebe-kasa','muhasebe-kasa-sil','muhasebe-transfer','muhasebe-ortakkasa','muhasebe-hareket-duzenle','muhasebe-hareket-sil','muhasebe-bakiye-sifirla'],
-    'muhasebe-komisyon': ['muhasebe-komisyon'],
-    'muhasebe-rapor': ['muhasebe-rapor','muhasebe-kapanis','muhasebe-aysonu','muhasebe-maliyet']
-  };
-
   return MENU.map(m => {
     if (m.id === 'home') return m;
     const modul = MENU_MODUL[m.id];
@@ -112,12 +104,24 @@ function menuErisim(user) {
 
     if (m.sub) {
       const filteredSub = m.sub.filter(s => {
-        /* Doğrudan yetki kontrolü */
+        /* Doğrudan yetki: modul_altMenuId */
         if (yetkiler[modul + '_' + s.id] === 1) return true;
-        /* Alt yetki eşleşme kontrolü */
-        const altYetkiler = ALT_YETKI_MAP[s.id];
-        if (altYetkiler) {
-          return altYetkiler.some(ay => yetkiler[modul + '_' + ay] === 1);
+        /* Alt yetki tarama: modul_ ile başlayan herhangi bir yetki bu alt menüyle ilişkili mi */
+        var altMenuPrefix = s.id.replace(modul + '-', '');
+        for (var key in yetkiler) {
+          if (yetkiler[key] !== 1) continue;
+          if (!key.startsWith(modul + '_')) continue;
+          var islemKismi = key.replace(modul + '_', '');
+          /* muhasebe-rapor alt menüsü için: muhasebe-kapanis, muhasebe-aysonu, muhasebe-maliyet ilişkili */
+          if (s.id === 'muhasebe-rapor' && (islemKismi === 'muhasebe-kapanis' || islemKismi === 'muhasebe-aysonu' || islemKismi === 'muhasebe-maliyet' || islemKismi === 'muhasebe-rapor')) return true;
+          /* muhasebe-kasa alt menüsü için: muhasebe-ortakkasa ilişkili */
+          if (s.id === 'muhasebe-kasa' && (islemKismi === 'muhasebe-kasa' || islemKismi === 'muhasebe-ortakkasa' || islemKismi === 'muhasebe-transfer')) return true;
+          /* muhasebe-gelir alt menüsü için: muhasebe-gelir veya muhasebe-gider ilişkili */
+          if (s.id === 'muhasebe-gelir' && (islemKismi === 'muhasebe-gelir' || islemKismi === 'muhasebe-gider' || islemKismi === 'muhasebe-gelir-ekle' || islemKismi === 'muhasebe-gider-ekle')) return true;
+          /* muhasebe-komisyon */
+          if (s.id === 'muhasebe-komisyon' && islemKismi === 'muhasebe-komisyon') return true;
+          /* Genel eşleşme: alt menü ID'si ile islem aynıysa */
+          if (islemKismi === s.id) return true;
         }
         return false;
       });
