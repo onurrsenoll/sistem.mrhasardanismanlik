@@ -50,7 +50,8 @@ try {
         'dosya_kaynagi', 'avukat_id', 'ortak_id', 'sorumlu_id', 'paydas_id', 'haklilik', 'komisyon_orani',
         'kaza_tarihi', 'kaza_il', 'kaza_ilce', 'pozisyon', 'kusur_durumu', 'hasar_no',
         'sakatlik_aciklama', 'notlar', 'kapanma_tarihi', 'plaka', 'hak_mahrumiyet',
-        'acilis_tarihi', 'sorumlu_sigorta', 'surucu_ad', 'surucu_ehliyet', 'surucu_kusur'];
+        'acilis_tarihi', 'sorumlu_sigorta', 'surucu_ad', 'surucu_ehliyet', 'surucu_kusur',
+        'sigorta_brans', 'eksper_firma', 'onarim_servisi'];
 
     $sets = [];
     $params = [];

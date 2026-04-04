@@ -264,8 +264,11 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       acilis_tarihi: dosya.acilis_tarihi || '',
       police_no: dosya.police_no || '',
       sigorta_turu: dosya.sigorta_turu || '',
+      sigorta_brans: dosya.sigorta_brans || '',
       talep_turu: dosya.talep_turu || '',
       sorumlu_sigorta: dosya.sorumlu_sigorta || '',
+      eksper_firma: dosya.eksper_firma || '',
+      onarim_servisi: dosya.onarim_servisi || '',
       sakatlik_aciklama: dosya.sakatlik_aciklama || '',
       surucu_ad: dosya.surucu_ad || '',
       surucu_ehliyet: dosya.surucu_ehliyet || '',
@@ -296,6 +299,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       ma_onarim_gun_suresi: maArac.onarim_gun_suresi || '',
       ma_gecmis_hasar: maArac.gecmis_hasar || '',
       ma_kasko: maArac.kasko ? 1 : 0,
+      bh_kasko: dosya.bh_kasko ? 1 : 0,
       // Karşı araç alanları
       ka_ruhsat_sahibi: kaArac.ruhsat_sahibi || '',
       ka_tc_kimlik: kaArac.tc_kimlik || '',
@@ -329,8 +333,11 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       acilis_tarihi: editForm.acilis_tarihi || null,
       police_no: editForm.police_no || '',
       sigorta_turu: editForm.sigorta_turu || '',
+      sigorta_brans: editForm.sigorta_brans || '',
       talep_turu: editForm.talep_turu || '',
       sorumlu_sigorta: editForm.sorumlu_sigorta || '',
+      eksper_firma: editForm.eksper_firma || '',
+      onarim_servisi: editForm.onarim_servisi || '',
       sakatlik_aciklama: editForm.sakatlik_aciklama || '',
       surucu_ad: editForm.surucu_ad || '',
       surucu_ehliyet: editForm.surucu_ehliyet || '',
@@ -580,7 +587,10 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <InfoRow label="KAZA İLÇE" value={dosya.kaza_ilce}/>
               {dosya.police_no && <InfoRow label="POLİÇE NO" value={dosya.police_no} mono/>}
               {dosya.sigorta_turu && <InfoRow label="SİGORTA TÜRÜ" value={dosya.sigorta_turu}/>}
-              {dosya.talep_turu && <InfoRow label="TALEP TÜRÜ" value={dosya.talep_turu}/>}
+              {dosya.sigorta_brans && <InfoRow label="SİGORTA BRANŞI" value={dosya.sigorta_brans}/>}
+              {dosya.talep_turu && <InfoRow label="DOSYA TALEP TÜRÜ" value={dosya.talep_turu}/>}
+              {dosya.eksper_firma && <InfoRow label="EKSPER FİRMASI" value={dosya.eksper_firma}/>}
+              {dosya.onarim_servisi && <InfoRow label="ONARIM SERVİSİ" value={dosya.onarim_servisi}/>}
               <InfoRow label="HAKLILIK" value={`%${dosya.haklilik || 0}`} bold color={C.success}/>
               <InfoRow label="KOMİSYON" value={`%${dosya.komisyon_orani || 0}`}/>
               <InfoRow label="HAK MAHRUMİYET TALEP" value={parseInt(dosya.hak_mahrumiyet) === 1 ? 'VAR' : 'YOK'} bold color={parseInt(dosya.hak_mahrumiyet) === 1 ? C.success : C.textMuted}/>
@@ -1451,8 +1461,26 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             </select>
           </FormGroup>
           <FormGroup label="HASAR DOSYA NO">
-            <input value={editForm.hasar_no||''} onChange={e => u('hasar_no',e.target.value)} placeholder="HASAR DOSYA NO" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            <input value={editForm.hasar_no||''} onChange={e => u('hasar_no',e.target.value)} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
           </FormGroup>
+          <FormGroup label="SİGORTA BRANŞI">
+            <select value={editForm.sigorta_brans||''} onChange={e => u('sigorta_brans',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+              <option value="">SEÇİNİZ</option><option value="TRAFİK">TRAFİK</option><option value="KASKO">KASKO</option><option value="İMM">İMM</option><option value="DİĞER">DİĞER</option>
+            </select>
+          </FormGroup>
+          <FormGroup label="DOSYA TALEP TÜRÜ">
+            <select value={editForm.talep_turu||''} onChange={e => u('talep_turu',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
+              <option value="">SEÇİNİZ</option><option value="DEĞER KAYBI">DEĞER KAYBI</option><option value="BEDENİ HASAR">BEDENİ HASAR</option><option value="MOTOR DEĞER KAYBI">MOTOR DEĞER KAYBI</option><option value="DİĞER">DİĞER</option>
+            </select>
+          </FormGroup>
+          {(editForm.dosya_turu === 'ADK' || editForm.dosya_turu === 'MDK') && <>
+            <FormGroup label="EKSPER FİRMASI">
+              <input value={editForm.eksper_firma||''} onChange={e => u('eksper_firma',e.target.value)} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            </FormGroup>
+            <FormGroup label="ONARIM SERVİSİ">
+              <input value={editForm.onarim_servisi||''} onChange={e => u('onarim_servisi',e.target.value)} style={{...S.input,padding:'8px 10px',fontSize:11}}/>
+            </FormGroup>
+          </>}
           <FormGroup label="DOSYA KAYNAĞI">
             <select value={editForm.dosya_kaynagi} onChange={e => u('dosya_kaynagi',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
               <option value="">SEÇİNİZ</option>
