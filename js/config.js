@@ -78,6 +78,7 @@ MR.api = {
   masrafList(p = {}) { return this.req('/masraf/list.php?' + new URLSearchParams(p)); },
   masrafDelete(id) { return this.req('/masraf/delete.php?id=' + id, { method: 'DELETE' }); },
   masrafOde(d) { return this.req('/masraf/ode.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  masrafUpdate(d) { return this.req('/masraf/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
   // EVRAK
   async evrakUpload(did, tur, file) {
     try {

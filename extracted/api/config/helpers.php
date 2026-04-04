@@ -495,6 +495,7 @@ $GLOBALS['YETKI_MAP'] = array(
     'masraf/create.php' => array('dosya', 'dosya-masraf-ekle'),
     'masraf/delete.php' => array('dosya', 'dosya-masraf-sil'),
     'masraf/ode.php' => array('dosya', 'dosya-masraf-ode'),
+    'masraf/update.php' => array('dosya', 'dosya-masraf-duzenle'),
 
     // ─── EVRAK ───
     'evrak/upload.php' => array('evrak', 'evrak-yukle'),

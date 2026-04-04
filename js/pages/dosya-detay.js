@@ -168,6 +168,10 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const [masrafOdeModal, setMasrafOdeModal] = useState(false);
   const [masrafOdeItem, setMasrafOdeItem] = useState(null);
   const [masrafOdeKasa, setMasrafOdeKasa] = useState('');
+  const [masrafDuzenleModal, setMasrafDuzenleModal] = useState(false);
+  const [masrafDuzenleItem, setMasrafDuzenleItem] = useState(null);
+  const [masrafDuzenleForm, setMasrafDuzenleForm] = useState({tutar:'', masraf_kalemi:'', aciklama:''});
+  const [masrafDuzenleLoading, setMasrafDuzenleLoading] = useState(false);
   const [masrafOdeLoading, setMasrafOdeLoading] = useState(false);
 
   // DOSYA KAPAT STATE
@@ -748,6 +752,12 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                                 <LIcon name="Wallet" size={11} color={C.success}/><span style={{fontSize:9,fontWeight:700,color:C.success}}>ÖDE</span>
                               </span>
                             )}
+                            {hasYetki('dosya','dosya-masraf-duzenle') && (
+                              <span style={{cursor:'pointer',display:'flex',padding:'3px 8px',borderRadius:4,background:`${C.warning}18`,alignItems:'center',gap:3}}
+                                onClick={() => { setMasrafDuzenleItem(m); setMasrafDuzenleForm({tutar:m.tutar||'',masraf_kalemi:m.masraf_kalemi||'',aciklama:m.aciklama||''}); setMasrafDuzenleModal(true); }}>
+                                <LIcon name="Edit3" size={11} color={C.warning}/><span style={{fontSize:9,fontWeight:700,color:C.warning}}>DUZENLE</span>
+                              </span>
+                            )}
                             {hasYetki('dosya','dosya-masraf-sil') && <span style={{cursor:'pointer',display:'flex',padding:2,borderRadius:4,background:`${C.danger}11`,width:'fit-content'}}
                               onClick={() => setDeleteConfirm({type:'masraf', id:m.id, text:m.masraf_kalemi})}>
                               <LIcon name="Trash2" size={12} color={C.danger}/>
@@ -1160,6 +1170,37 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
 
       {/* MODALLER */}
       <MR.MasrafEkle open={masrafM} onClose={() => setMasrafM(false)} dosyaId={dosya.id} onOk={load}/>
+
+      {/* MASRAF DÜZENLEME MODAL */}
+      <Modal open={masrafDuzenleModal} onClose={() => setMasrafDuzenleModal(false)} title="MASRAF DÜZENLE" width="500px">
+        {masrafDuzenleItem && (
+          <div>
+            <div style={{padding:12,background:C.bgHover,borderRadius:8,marginBottom:16,fontSize:11,color:C.textSec}}>
+              Dosya masrafini duzenliyorsunuz. Mevcut tutar: <strong>{fmt(masrafDuzenleItem.tutar)}</strong>
+            </div>
+            <FormGroup label="MASRAF KALEMİ">
+              <input value={masrafDuzenleForm.masraf_kalemi} onChange={e => setMasrafDuzenleForm(p=>({...p,masraf_kalemi:e.target.value.toUpperCase()}))} style={{...S.input,padding:'8px 10px',fontSize:12}}/>
+            </FormGroup>
+            <FormGroup label="TUTAR (TL)">
+              <input type="number" value={masrafDuzenleForm.tutar} onChange={e => setMasrafDuzenleForm(p=>({...p,tutar:e.target.value}))} style={{...S.input,padding:'8px 10px',fontSize:14,fontWeight:700}}/>
+            </FormGroup>
+            <FormGroup label="AÇIKLAMA">
+              <textarea value={masrafDuzenleForm.aciklama} onChange={e => setMasrafDuzenleForm(p=>({...p,aciklama:e.target.value.toUpperCase()}))} style={{...S.input,minHeight:60,padding:'8px 10px',fontSize:11}}/>
+            </FormGroup>
+            <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+              <button style={{...S.btn,...S.btnG}} onClick={() => setMasrafDuzenleModal(false)}>IPTAL</button>
+              <button style={{...S.btn,...S.btnP}} disabled={masrafDuzenleLoading} onClick={async () => {
+                if (!masrafDuzenleForm.tutar || parseFloat(masrafDuzenleForm.tutar) < 0) { alert('TUTAR GIRINIZ'); return; }
+                setMasrafDuzenleLoading(true);
+                const r = await api.masrafUpdate({id:masrafDuzenleItem.id, tutar:parseFloat(masrafDuzenleForm.tutar), masraf_kalemi:masrafDuzenleForm.masraf_kalemi, aciklama:masrafDuzenleForm.aciklama});
+                if (r?.success) { setMasrafDuzenleModal(false); load(); }
+                else alert(r?.error || 'GUNCELLEME HATASI');
+                setMasrafDuzenleLoading(false);
+              }}>{masrafDuzenleLoading ? 'KAYDEDİLİYOR...' : 'KAYDET'}</button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* MASRAF ÖDEME MODAL */}
       <Modal open={masrafOdeModal} onClose={() => setMasrafOdeModal(false)} title="MASRAF ÖDEMESİ" width="420px">

@@ -53,6 +53,7 @@ const MODUL_YETKILERI = [
     {key: 'dosya-kapat', label: 'DOSYA KAPAT'},
     {key: 'dosya-masraf-ekle', label: 'MASRAF EKLE'},
     {key: 'dosya-masraf-sil', label: 'MASRAF SİL'},
+    {key: 'dosya-masraf-duzenle', label: 'MASRAF DÜZENLE'},
     {key: 'dosya-masraf-ode', label: 'MASRAF ÖDE'},
     {key: 'dosya-evrak-yukle', label: 'EVRAK YÜKLE'},
     {key: 'dosya-evrak-sil', label: 'EVRAK SİL'},
