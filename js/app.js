@@ -39,15 +39,10 @@ const MENU = [
     {id:'police-qr-ruhsat', label:'QR RUHSAT OKUYUCU', icon:'QrCode'}
   ]},
   {id:'muhasebe', label:'MUHASEBE', icon:'Landmark', sub:[
-    {id:'muhasebe-gelir', label:'GELİR YÖNETİMİ', icon:'TrendingUp'},
-    {id:'muhasebe-gider', label:'GİDER YÖNETİMİ', icon:'TrendingDown'},
-    {id:'muhasebe-komisyon', label:'KOMİSYON / PRİM', icon:'Percent'},
-    {id:'muhasebe-kasa', label:'KASA / BANKA', icon:'Wallet'},
-    {id:'muhasebe-ortakkasa', label:'ORTAK KASA', icon:'Users'},
-    {id:'muhasebe-maliyet', label:'MALİYET ANALİZİ', icon:'PieChart'},
-    {id:'muhasebe-rapor', label:'FİNANSAL RAPORLAR', icon:'BarChart3'},
-    {id:'muhasebe-kapanis', label:'KAPANIŞ RAPORU', icon:'FileCheck'},
-    {id:'muhasebe-aysonu', label:'AY SONU RAPORU', icon:'CalendarCheck'}
+    {id:'muhasebe-gelir', label:'GELİR / GİDER', icon:'TrendingUp'},
+    {id:'muhasebe-kasa', label:'KASA YÖNETİMİ', icon:'Wallet'},
+    {id:'muhasebe-komisyon', label:'KOMİSYON TAKİBİ', icon:'Percent'},
+    {id:'muhasebe-rapor', label:'RAPORLAR', icon:'BarChart3'}
   ]},
   {id:'ictihat', label:'İÇTİHAT', icon:'Scale', sub:[
     {id:'ictihat-yargitay', label:'YARGITAY KARARLARI', icon:'Scale'},

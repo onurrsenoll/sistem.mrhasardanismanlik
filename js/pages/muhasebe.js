@@ -12,15 +12,10 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
   const {C, S, LIcon} = MR;
 
   const tumSekmeler = [
-    {key:'gelir',    label:'GELİR YÖNETİMİ',     icon:'TrendingUp'},
-    {key:'gider',    label:'GİDER YÖNETİMİ',      icon:'TrendingDown'},
-    {key:'komisyon', label:'KOMİSYON / PRİM',      icon:'Percent'},
-    {key:'kasa',     label:'KASA / BANKA',          icon:'Wallet'},
-    {key:'ortakkasa',label:'ORTAK KASA',             icon:'Users'},
-    {key:'maliyet',  label:'MALİYET ANALİZİ',      icon:'PieChart'},
-    {key:'rapor',    label:'FİNANSAL RAPORLAR',     icon:'BarChart3'},
-    {key:'kapanis',  label:'KAPANIŞ RAPORU',         icon:'FileCheck'},
-    {key:'aysonu',   label:'AY SONU RAPORU',          icon:'CalendarCheck'}
+    {key:'gelir',    label:'GELİR / GİDER',        icon:'TrendingUp'},
+    {key:'kasa',     label:'KASA YÖNETİMİ',        icon:'Wallet'},
+    {key:'komisyon', label:'KOMİSYON TAKİBİ',      icon:'Percent'},
+    {key:'rapor',    label:'RAPORLAR',               icon:'BarChart3'}
   ];
 
   /* YETKİ BAZLI SEKME FİLTRELEME */
@@ -62,15 +57,10 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
       </div>
 
       {/* SEKME İÇERİKLERİ */}
-      {aktifSekme === 'gelir'    && <GelirYonetimi setPage={setPage} user={user}/>}
-      {aktifSekme === 'gider'    && <GiderYonetimi setPage={setPage} user={user}/>}
+      {aktifSekme === 'gelir'    && <GelirGiderBirlestik setPage={setPage} user={user}/>}
+      {aktifSekme === 'kasa'     && <KasaYonetimiBirlestik setPage={setPage} user={user}/>}
       {aktifSekme === 'komisyon' && <KomisyonPrim  setPage={setPage} user={user}/>}
-      {aktifSekme === 'kasa'     && <KasaBanka     setPage={setPage} user={user}/>}
-      {aktifSekme === 'ortakkasa' && <OrtakKasa    setPage={setPage} user={user}/>}
-      {aktifSekme === 'maliyet'  && <MaliyetAnalizi setPage={setPage} user={user}/>}
-      {aktifSekme === 'rapor'    && <FinansalRaporlar setPage={setPage} user={user}/>}
-      {aktifSekme === 'kapanis'  && <KapanisRaporu setPage={setPage} user={user}/>}
-      {aktifSekme === 'aysonu'   && <AySonuRaporu setPage={setPage} user={user}/>}
+      {aktifSekme === 'rapor'    && <RaporlarBirlestik setPage={setPage} user={user}/>}
     </div>
   );
 };
@@ -3161,5 +3151,93 @@ const AySonuRaporu = ({setPage, user}) => {
         )
       )
     )
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   BİRLEŞTİRİCİ: GELİR / GİDER TEK SEKMEDE
+   ═══════════════════════════════════════════════════════════ */
+const GelirGiderBirlestik = ({setPage, user}) => {
+  const {C, S, LIcon} = MR;
+  const [altSekme, setAltSekme] = useState('gelir');
+  return (
+    <div>
+      <div style={{display:'flex',gap:6,marginBottom:16}}>
+        {[{key:'gelir',label:'GELİR',icon:'TrendingUp',c:C.success},{key:'gider',label:'GİDER',icon:'TrendingDown',c:C.danger}].map(t => (
+          <button key={t.key} onClick={() => setAltSekme(t.key)}
+            style={{...S.btn, fontSize:12, padding:'10px 24px', borderRadius:10,
+              background: altSekme===t.key ? `${t.c}22` : 'transparent',
+              color: altSekme===t.key ? t.c : C.textSec,
+              border: `2px solid ${altSekme===t.key ? t.c+'66' : C.border}`,
+              fontWeight: altSekme===t.key ? 800 : 500, display:'flex', alignItems:'center', gap:6
+            }}>
+            <LIcon name={t.icon} size={14} color={altSekme===t.key ? t.c : C.textSec}/> {t.label}
+          </button>
+        ))}
+      </div>
+      {altSekme === 'gelir' && <GelirYonetimi setPage={setPage} user={user}/>}
+      {altSekme === 'gider' && <GiderYonetimi setPage={setPage} user={user}/>}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   BİRLEŞTİRİCİ: KASA YÖNETİMİ (KASA + ORTAK KASA)
+   ═══════════════════════════════════════════════════════════ */
+const KasaYonetimiBirlestik = ({setPage, user}) => {
+  const {C, S, LIcon} = MR;
+  const [altSekme, setAltSekme] = useState('kasa');
+  return (
+    <div>
+      <div style={{display:'flex',gap:6,marginBottom:16}}>
+        {[{key:'kasa',label:'KASALAR',icon:'Wallet',c:C.accent},{key:'ortak',label:'ORTAK KASA',icon:'Users',c:C.purple}].map(t => (
+          <button key={t.key} onClick={() => setAltSekme(t.key)}
+            style={{...S.btn, fontSize:12, padding:'10px 24px', borderRadius:10,
+              background: altSekme===t.key ? `${t.c}22` : 'transparent',
+              color: altSekme===t.key ? t.c : C.textSec,
+              border: `2px solid ${altSekme===t.key ? t.c+'66' : C.border}`,
+              fontWeight: altSekme===t.key ? 800 : 500, display:'flex', alignItems:'center', gap:6
+            }}>
+            <LIcon name={t.icon} size={14} color={altSekme===t.key ? t.c : C.textSec}/> {t.label}
+          </button>
+        ))}
+      </div>
+      {altSekme === 'kasa' && <KasaBanka setPage={setPage} user={user}/>}
+      {altSekme === 'ortak' && <OrtakKasa setPage={setPage} user={user}/>}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   BİRLEŞTİRİCİ: RAPORLAR (FİNANSAL + KAPANIŞ + AY SONU + MALİYET)
+   ═══════════════════════════════════════════════════════════ */
+const RaporlarBirlestik = ({setPage, user}) => {
+  const {C, S, LIcon} = MR;
+  const [altSekme, setAltSekme] = useState('finansal');
+  return (
+    <div>
+      <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}>
+        {[
+          {key:'finansal',label:'FİNANSAL',icon:'BarChart3',c:C.accent},
+          {key:'kapanis',label:'KAPANIŞ',icon:'FileCheck',c:C.success},
+          {key:'aysonu',label:'AY SONU',icon:'CalendarCheck',c:C.purple},
+          {key:'maliyet',label:'MALİYET',icon:'PieChart',c:C.warning}
+        ].map(t => (
+          <button key={t.key} onClick={() => setAltSekme(t.key)}
+            style={{...S.btn, fontSize:11, padding:'8px 18px', borderRadius:10,
+              background: altSekme===t.key ? `${t.c}22` : 'transparent',
+              color: altSekme===t.key ? t.c : C.textSec,
+              border: `2px solid ${altSekme===t.key ? t.c+'66' : C.border}`,
+              fontWeight: altSekme===t.key ? 800 : 500, display:'flex', alignItems:'center', gap:6
+            }}>
+            <LIcon name={t.icon} size={13} color={altSekme===t.key ? t.c : C.textSec}/> {t.label}
+          </button>
+        ))}
+      </div>
+      {altSekme === 'finansal' && <FinansalRaporlar setPage={setPage} user={user}/>}
+      {altSekme === 'kapanis' && <KapanisRaporu setPage={setPage} user={user}/>}
+      {altSekme === 'aysonu' && <AySonuRaporu setPage={setPage} user={user}/>}
+      {altSekme === 'maliyet' && <MaliyetAnalizi setPage={setPage} user={user}/>}
+    </div>
   );
 };
