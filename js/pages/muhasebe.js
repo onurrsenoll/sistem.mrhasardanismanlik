@@ -21,7 +21,7 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
   /* YETKİ BAZLI SEKME FİLTRELEME */
   const sekmeler = useMemo(() => {
     if (user?.rol === 'admin') return tumSekmeler;
-    const yetkiler = user?.yetkiler;
+    const yetkiler = user?.yetkiler || MR._currentUser?.yetkiler;
     if (!yetkiler || Object.keys(yetkiler).length === 0) return tumSekmeler;
     return tumSekmeler.filter(s => { const v = yetkiler['muhasebe_muhasebe-' + s.key]; return v === undefined || v === 1; });
   }, [user?.rol, user?.yetkiler]);
@@ -3160,7 +3160,7 @@ const AySonuRaporu = ({setPage, user}) => {
 const GelirGiderBirlestik = ({setPage, user}) => {
   const {C, S, LIcon} = MR;
   const isAdmin = user?.rol === 'admin';
-  const yt = user?.yetkiler || {};
+  const yt = user?.yetkiler || MR._currentUser?.yetkiler || {};
   const tumAlt = [{key:'gelir',label:'GELİR',icon:'TrendingUp',c:C.success,yetki:'muhasebe_muhasebe-gelir'},{key:'gider',label:'GİDER',icon:'TrendingDown',c:C.danger,yetki:'muhasebe_muhasebe-gider'}];
   const altSekmeler = isAdmin ? tumAlt : tumAlt.filter(s => yt[s.yetki] === 1);
   const [altSekme, setAltSekme] = useState(altSekmeler.length > 0 ? altSekmeler[0].key : '');
@@ -3208,7 +3208,7 @@ const KasaYonetimiBirlestik = ({setPage, user}) => {
       <div style={{display:'flex',gap:6,marginBottom:16}}>
         {(() => {
           const isAdmin = user?.rol === 'admin';
-          const yt = user?.yetkiler || {};
+          const yt = user?.yetkiler || MR._currentUser?.yetkiler || {};
           const tumAlt = [{key:'kasa',label:'KASALAR',icon:'Wallet',c:C.accent,yetki:'muhasebe_muhasebe-kasa'},{key:'ortak',label:'ORTAK KASA',icon:'Users',c:C.purple,yetki:'muhasebe_muhasebe-ortakkasa'}];
           return (isAdmin ? tumAlt : tumAlt.filter(s => yt[s.yetki] === 1));
         })().map(t => (
@@ -3251,7 +3251,7 @@ const KasaYonetimiBirlestik = ({setPage, user}) => {
 const RaporlarBirlestik = ({setPage, user}) => {
   const {C, S, LIcon} = MR;
   const isAdmin = user?.rol === 'admin';
-  const yt = user?.yetkiler || {};
+  const yt = user?.yetkiler || MR._currentUser?.yetkiler || {};
   const tumAltSekmeler = [
     {key:'finansal',label:'FİNANSAL',icon:'BarChart3',c:C.accent, yetki:'muhasebe_muhasebe-rapor'},
     {key:'kapanis',label:'KAPANIŞ',icon:'FileCheck',c:C.success, yetki:'muhasebe_muhasebe-kapanis'},
