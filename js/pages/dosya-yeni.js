@@ -136,18 +136,18 @@ MR.DosyaYeniPage = ({setPage, user}) => {
 
   // Section card component
   const SecCard = ({icon, title, sub, color, badge, children}) => (
-    <div style={{background:C.bgCard||'#fff', borderRadius:12, border:`1px solid ${C.border}`, marginBottom:16, overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
-      <div style={{display:'flex', alignItems:'center', gap:10, padding:'14px 18px', borderBottom:`1px solid ${C.border}`, borderLeft:`4px solid ${color||C.accent}`}}>
-        <div style={{width:32,height:32,borderRadius:8,background:`${color||C.accent}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>
-          <LIcon name={icon} size={15} color={color||C.accent}/>
+    <div style={{background:C.bgCard||'#fff', borderRadius:10, border:`1px solid ${C.border}`, marginBottom:10, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
+      <div style={{display:'flex', alignItems:'center', gap:8, padding:'10px 14px', borderBottom:`1px solid ${C.border}`, borderLeft:`3px solid ${color||C.accent}`}}>
+        <div style={{width:26,height:26,borderRadius:6,background:`${color||C.accent}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <LIcon name={icon} size={12} color={color||C.accent}/>
         </div>
         <div style={{flex:1}}>
-          <div style={{fontSize:13,fontWeight:800,color:C.text}}>{title}</div>
-          {sub && <div style={{fontSize:10,color:C.textMuted}}>{sub}</div>}
+          <div style={{fontSize:11,fontWeight:800,color:C.text}}>{title}</div>
+          {sub && <div style={{fontSize:8,color:C.textMuted}}>{sub}</div>}
         </div>
-        {badge && <span style={{padding:'3px 10px',borderRadius:8,fontSize:9,fontWeight:700,background:`${color||C.accent}18`,color:color||C.accent}}>{badge}</span>}
+        {badge && <span style={{padding:'2px 8px',borderRadius:6,fontSize:8,fontWeight:700,background:`${color||C.accent}18`,color:color||C.accent}}>{badge}</span>}
       </div>
-      <div style={{padding:18}}>{children}</div>
+      <div style={{padding:12}}>{children}</div>
     </div>
   );
 
@@ -192,7 +192,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
 
       {/* ═══ 1. MAĞDUR BİLGİLERİ ═══ */}
       <SecCard icon="User" title="MAĞDUR BİLGİLERİ" sub="Mağdur kişiye ait bilgiler" color="#3b82f6" badge="ZORUNLU">
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
           <FormGroup label="ADI SOYADI *"><input style={S.input} value={form.ad_soyad} onChange={e=>u('ad_soyad',e.target.value)}/></FormGroup>
           <FormGroup label="T.C. KİMLİK NO *"><input style={S.input} value={form.tc_kimlik} onChange={e=>u('tc_kimlik',e.target.value)} maxLength={11}/></FormGroup>
           <FormGroup label="TELEFON *"><input style={S.input} value={form.telefon} onChange={e=>u('telefon',e.target.value)} placeholder="05XX XXX XX XX"/></FormGroup>
