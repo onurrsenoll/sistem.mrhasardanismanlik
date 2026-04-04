@@ -3159,11 +3159,15 @@ const AySonuRaporu = ({setPage, user}) => {
    ═══════════════════════════════════════════════════════════ */
 const GelirGiderBirlestik = ({setPage, user}) => {
   const {C, S, LIcon} = MR;
-  const [altSekme, setAltSekme] = useState('gelir');
+  const isAdmin = user?.rol === 'admin';
+  const yt = user?.yetkiler || {};
+  const tumAlt = [{key:'gelir',label:'GELİR',icon:'TrendingUp',c:C.success,yetki:'muhasebe_muhasebe-gelir'},{key:'gider',label:'GİDER',icon:'TrendingDown',c:C.danger,yetki:'muhasebe_muhasebe-gider'}];
+  const altSekmeler = isAdmin ? tumAlt : tumAlt.filter(s => yt[s.yetki] === 1);
+  const [altSekme, setAltSekme] = useState(altSekmeler.length > 0 ? altSekmeler[0].key : '');
   return (
     <div>
       <div style={{display:'flex',gap:6,marginBottom:16}}>
-        {[{key:'gelir',label:'GELİR',icon:'TrendingUp',c:C.success},{key:'gider',label:'GİDER',icon:'TrendingDown',c:C.danger}].map(t => (
+        {altSekmeler.map(t => (
           <button key={t.key} onClick={() => setAltSekme(t.key)}
             style={{...S.btn, fontSize:12, padding:'10px 24px', borderRadius:10,
               background: altSekme===t.key ? `${t.c}22` : 'transparent',
@@ -3202,7 +3206,12 @@ const KasaYonetimiBirlestik = ({setPage, user}) => {
   return (
     <div>
       <div style={{display:'flex',gap:6,marginBottom:16}}>
-        {[{key:'kasa',label:'KASALAR',icon:'Wallet',c:C.accent},{key:'ortak',label:'ORTAK KASA',icon:'Users',c:C.purple}].map(t => (
+        {(() => {
+          const isAdmin = user?.rol === 'admin';
+          const yt = user?.yetkiler || {};
+          const tumAlt = [{key:'kasa',label:'KASALAR',icon:'Wallet',c:C.accent,yetki:'muhasebe_muhasebe-kasa'},{key:'ortak',label:'ORTAK KASA',icon:'Users',c:C.purple,yetki:'muhasebe_muhasebe-ortakkasa'}];
+          return (isAdmin ? tumAlt : tumAlt.filter(s => yt[s.yetki] === 1));
+        })().map(t => (
           <button key={t.key} onClick={() => setAltSekme(t.key)}
             style={{...S.btn, fontSize:12, padding:'10px 24px', borderRadius:10,
               background: altSekme===t.key ? `${t.c}22` : 'transparent',
@@ -3241,16 +3250,20 @@ const KasaYonetimiBirlestik = ({setPage, user}) => {
    ═══════════════════════════════════════════════════════════ */
 const RaporlarBirlestik = ({setPage, user}) => {
   const {C, S, LIcon} = MR;
-  const [altSekme, setAltSekme] = useState('finansal');
+  const isAdmin = user?.rol === 'admin';
+  const yt = user?.yetkiler || {};
+  const tumAltSekmeler = [
+    {key:'finansal',label:'FİNANSAL',icon:'BarChart3',c:C.accent, yetki:'muhasebe_muhasebe-rapor'},
+    {key:'kapanis',label:'KAPANIŞ',icon:'FileCheck',c:C.success, yetki:'muhasebe_muhasebe-kapanis'},
+    {key:'aysonu',label:'AY SONU',icon:'CalendarCheck',c:C.purple, yetki:'muhasebe_muhasebe-aysonu'},
+    {key:'maliyet',label:'MALİYET',icon:'PieChart',c:C.warning, yetki:'muhasebe_muhasebe-maliyet'}
+  ];
+  const altSekmeler = isAdmin ? tumAltSekmeler : tumAltSekmeler.filter(s => yt[s.yetki] === 1);
+  const [altSekme, setAltSekme] = useState(altSekmeler.length > 0 ? altSekmeler[0].key : '');
   return (
     <div>
       <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}>
-        {[
-          {key:'finansal',label:'FİNANSAL',icon:'BarChart3',c:C.accent},
-          {key:'kapanis',label:'KAPANIŞ',icon:'FileCheck',c:C.success},
-          {key:'aysonu',label:'AY SONU',icon:'CalendarCheck',c:C.purple},
-          {key:'maliyet',label:'MALİYET',icon:'PieChart',c:C.warning}
-        ].map(t => (
+        {altSekmeler.map(t => (
           <button key={t.key} onClick={() => setAltSekme(t.key)}
             style={{...S.btn, fontSize:11, padding:'8px 18px', borderRadius:10,
               background: altSekme===t.key ? `${t.c}22` : 'transparent',
