@@ -615,7 +615,6 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <InfoRow label="AD SOYAD" value={magdur.ad_soyad} bold/>
                 <InfoRow label="T.C. KİMLİK" value={magdur.tc_kimlik} mono/>
                 <InfoRow label="TELEFON" value={magdur.telefon} mono/>
-                {magdur.telefon2 && <InfoRow label="TELEFON 2" value={magdur.telefon2} mono/>}
                 <InfoRow label="İL" value={magdur.il}/>
                 {magdur.ilce && <InfoRow label="İLÇE" value={magdur.ilce}/>}
                 {magdur.meslek && <InfoRow label="MESLEK" value={magdur.meslek}/>}
@@ -1625,9 +1624,6 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           </FormGroup>
           <FormGroup label="TELEFON">
             <input value={editForm.magdur_telefon||''} onChange={e => u('magdur_telefon',e.target.value)} placeholder="05XX XXX XX XX" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
-          </FormGroup>
-          <FormGroup label="TELEFON 2">
-            <input value={editForm.magdur_telefon2||''} onChange={e => u('magdur_telefon2',e.target.value)} placeholder="TELEFON 2" style={{...S.input,padding:'8px 10px',fontSize:11}}/>
           </FormGroup>
           <FormGroup label="IBAN">
             <MR.IBANInput value={editForm.magdur_iban||''} onChange={v => u('magdur_iban',v)} style={{padding:'8px 10px',fontSize:11}}/>

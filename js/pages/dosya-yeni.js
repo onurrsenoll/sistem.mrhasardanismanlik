@@ -12,16 +12,16 @@ MR.DosyaYeniPage = ({setPage, user}) => {
   const [kullanicilar, setKullanicilar] = useState([]);
   const [form, setForm] = useState({
     // Mağdur bilgileri
-    ad_soyad:'', tc_kimlik:'', telefon:'', iban:'', adres:'', il:'', ilce:'',
+    ad_soyad:'', tc_kimlik:'', telefon:'', iban:'', adres:'', il:'', ilce:'', dogum_tarihi:'',
     // Dosya bilgileri
-    dosya_turu:'ADK', kaza_tarihi:'', haklilik:'100', hak_mahrumiyet:'0', meslek:'', komisyon:'',
+    dosya_turu:'ADK', kaza_tarihi:'', kaza_il:'', kaza_ilce:'', haklilik:'100', hak_mahrumiyet:'0', meslek:'', komisyon:'',
     dosya_kaynak:'', sorumlu_id:'', ortak_id:'', paydas_id:'', noter_vekalet:'',
     sakatlik_aciklama:'', gelir_durumu:'', sigorta_brans:'', talep_turu:'',
     // Sigorta bilgileri
     sigorta_sirket:'', hasar_no:'', police_no:'', sorumlu_sigorta:'', eksper_firma:'', onarim_servisi:'',
     // ADK araç bilgileri - mağdur
     ma_plaka:'', ma_marka:'', ma_model:'', ma_yil:'',
-    ma_ruhsat:'', ma_tc:'', ma_belge_tescil:'', ma_onarim_gun:'', ma_gecmis_hasar:'',
+    ma_ruhsat:'', ma_tc:'', ma_belge_tescil:'', ma_onarim_gun:'', ma_gecmis_hasar:'', ma_kasko:'',
     // ADK araç bilgileri - karşı
     ka_plaka:'', ka_marka:'', ka_yil:'', ka_trafik:'',
     ka_ruhsat:'', ka_tc:'', ka_model:'', ka_belge_tescil:'', ka_trafik_police:'',
@@ -196,6 +196,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
           <FormGroup label="ADI SOYADI *"><input style={S.input} value={form.ad_soyad} onChange={e=>u('ad_soyad',e.target.value)}/></FormGroup>
           <FormGroup label="T.C. KİMLİK NO *"><input style={S.input} value={form.tc_kimlik} onChange={e=>u('tc_kimlik',e.target.value)} maxLength={11}/></FormGroup>
           <FormGroup label="TELEFON *"><input style={S.input} value={form.telefon} onChange={e=>u('telefon',e.target.value)} placeholder="05XX XXX XX XX"/></FormGroup>
+          <FormGroup label="DOĞUM TARİHİ"><DateInput value={form.dogum_tarihi} onChange={v=>u('dogum_tarihi',v)}/></FormGroup>
           <FormGroup label="IBAN"><IBANInput value={form.iban} onChange={v=>u('iban',v)}/></FormGroup>
           <FormGroup label="İL *"><select style={S.select} value={form.il} onChange={e=>{u('il',e.target.value);u('ilce','');}}><option value="">SEÇİNİZ</option>{ILLER.map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
           <FormGroup label="İLÇE *"><select style={S.select} value={form.ilce} onChange={e=>u('ilce',e.target.value)} disabled={!form.il}><option value="">ÖNCE İL SEÇİN</option>{(ILCELER[form.il]||[]).map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
@@ -225,6 +226,8 @@ MR.DosyaYeniPage = ({setPage, user}) => {
         </div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
           <FormGroup label="KAZA TARİHİ *"><DateInput value={form.kaza_tarihi} onChange={v=>u('kaza_tarihi',v)}/></FormGroup>
+          <FormGroup label="KAZA İLİ"><select style={S.select} value={form.kaza_il} onChange={e=>u('kaza_il',e.target.value)}><option value="">SEÇİNİZ</option>{ILLER.map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
+          <FormGroup label="KAZA İLÇE"><input style={S.input} value={form.kaza_ilce} onChange={e=>u('kaza_ilce',e.target.value)}/></FormGroup>
           <FormGroup label="KOMİSYON (%) *"><input type="number" style={S.input} value={form.komisyon} onChange={e=>u('komisyon',e.target.value)} placeholder="20"/></FormGroup>
           <FormGroup label="NOTER VEKALET (TL) *"><input type="number" style={S.input} value={form.noter_vekalet} onChange={e=>u('noter_vekalet',e.target.value)} placeholder="1596"/></FormGroup>
           <FormGroup label="DOSYA KAYNAĞI *">
@@ -342,6 +345,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
                 <FormGroup label="ONARIM GÜN SÜRESİ"><input type="number" style={S.input} value={form.ma_onarim_gun} onChange={e=>u('ma_onarim_gun',e.target.value)}/></FormGroup>
                 <div/>
                 <FormGroup label="GEÇMİŞ HASAR"><Toggle value={form.ma_gecmis_hasar} onSelect={v=>u('ma_gecmis_hasar',v)} options={[{value:'yok',label:'YOK',color:C.success},{value:'var',label:'VAR',color:C.danger}]}/></FormGroup>
+                <FormGroup label="KASKO"><Toggle value={form.ma_kasko} onSelect={v=>u('ma_kasko',v)} options={[{value:'0',label:'YOK',color:C.danger},{value:'1',label:'VAR',color:C.success}]}/></FormGroup>
                 <FormGroup label="HAK MAHRUMİYET TALEP"><Toggle value={form.hak_mahrumiyet} onSelect={v=>u('hak_mahrumiyet',v)} options={[{value:'0',label:'YOK',color:C.danger},{value:'1',label:'VAR',color:C.success}]}/></FormGroup>
               </div>
             </div>
