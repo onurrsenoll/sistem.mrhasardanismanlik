@@ -363,6 +363,22 @@ try {
         }
     }
 
+    // ═══ 5d. NOTER VEKALET MASRAFI ═══
+    $noterVekalet = !empty($body['noter_vekalet']) ? (float)$body['noter_vekalet'] : 0;
+    if ($noterVekalet > 0) {
+        $stmtNV = $db->prepare('INSERT INTO masraflar (dosya_id, masraf_kalemi, tutar, kasa_id, aciklama, islem_tarihi, kullanici_id, odeme_durumu) VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?)');
+        $stmtNV->execute([
+            $dosyaId,
+            'NOTER VEKALET MASRAFI',
+            $noterVekalet,
+            null,
+            'DOSYA ACILIS - NOTER VEKALET UCRETI',
+            $user['id'],
+            'odenmedi'
+        ]);
+        $otoPrimBilgi['noter_vekalet'] = $noterVekalet;
+    }
+
     // ═══ DOSYA SÜRECİ: İLK KAYIT ═══
     try {
         $stmtSurec = $db->prepare("INSERT INTO dosya_surecler (dosya_id, baslik, detay, islem_tipi, created_at) VALUES (?, ?, ?, 'sistem', NOW())");

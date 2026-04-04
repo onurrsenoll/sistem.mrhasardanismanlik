@@ -257,6 +257,8 @@ MR.api = {
   // ÜCRETLENDIRME TARİFE
   ucretlendirmeTarife(p = {}) { return this.req('/tanim/ucretlendirme.php?' + new URLSearchParams(p)); },
   ucretlendirmeTarifeGuncelle(d) { return this.req('/tanim/ucretlendirme.php', { method: 'POST', body: JSON.stringify(d) }); },
+  // MUHASEBE SIFIRLA
+  muhasebeSifirla(d) { return this.req('/muhasebe/muhasebe-sifirla.php', { method: 'POST', body: JSON.stringify(d) }); },
   // SÖZLEŞME
   sozlesmeList(p = {}) { return this.req('/sozlesme/list.php?' + new URLSearchParams(p)); },
   sozlesmeGet(id) { return this.req('/sozlesme/get.php?id=' + id); },

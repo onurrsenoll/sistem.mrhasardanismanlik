@@ -706,13 +706,40 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <LIcon name="Plus" size={12} color="#fff"/> YENİ MASRAF
             </button>}
           </div>
-          <div>
-            {dosya.masraflar?.length > 0 ? (
-              <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                <thead>
-                  <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                    {((!hasYetki('dosya','dosya-masraf-ode') && !hasYetki('dosya','dosya-masraf-sil')) ? ['#','MASRAF KALEMİ','TUTAR','DURUM','TARİH'] : ['#','MASRAF KALEMİ','TUTAR','DURUM','KASA','TARİH','KULLANICI','İŞLEM']).map(h =>
-                      <th key={h} style={{padding:'8px 10px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
+          {/* İKİ KATMANLI MASRAF ÖZETİ */}
+          {dosya.masraflar && dosya.masraflar.length > 0 && (() => {
+            const ortakKalemler = ['NOTER VEKALET MASRAFI','YÖNLENDİREN ÜCRETİ','OFİS CRM ÜCRETİ','ORTAK DOSYA MASRAFI'];
+            const ortakMasraflar = dosya.masraflar.filter(m => ortakKalemler.some(k => (m.masraf_kalemi||'').toUpperCase().includes(k)));
+            const icMasraflar = dosya.masraflar.filter(m => !ortakKalemler.some(k => (m.masraf_kalemi||'').toUpperCase().includes(k)));
+            const ortakToplam = ortakMasraflar.reduce((t,m) => t + (parseFloat(m.tutar)||0), 0);
+            const icToplam = icMasraflar.reduce((t,m) => t + (parseFloat(m.tutar)||0), 0);
+            return (
+              <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',gap:12}}>
+                <div style={{flex:1,padding:8,background:`${C.accent}08`,borderRadius:8,border:`1px solid ${C.accent}20`}}>
+                  <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>ORTAK GORUNUM (DEMİRHAN)</div>
+                  <div style={{fontSize:16,fontWeight:800,color:C.accent}}>{fmt(ortakToplam)}</div>
+                  <div style={{fontSize:8,color:C.textMuted}}>{ortakMasraflar.length} kalem</div>
+                </div>
+                <div style={{flex:1,padding:8,background:`${C.purple}08`,borderRadius:8,border:`1px solid ${C.purple}20`}}>
+                  <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>IC MALIYET (MR)</div>
+                  <div style={{fontSize:16,fontWeight:800,color:C.purple}}>{fmt(icToplam)}</div>
+                  <div style={{fontSize:8,color:C.textMuted}}>{icMasraflar.length} kalem</div>
+                </div>
+                <div style={{flex:1,padding:8,background:`${C.success}08`,borderRadius:8,border:`1px solid ${C.success}20`}}>
+                  <div style={{fontSize:9,color:C.textMuted,fontWeight:600}}>TOPLAM</div>
+                  <div style={{fontSize:16,fontWeight:800,color:C.success}}>{fmt(dosya.toplam_masraf||0)}</div>
+                  <div style={{fontSize:8,color:C.textMuted}}>{dosya.masraflar.length} kalem</div>
+                </div>
+              </div>
+            );
+          })()}
+          {/* MASRAF TABLOSU */}
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:700}}>
+              <thead>
+                <tr style={{background:isKoyu?'#0f2342':'#1e40af'}}>
+                  {((!hasYetki('dosya','dosya-masraf-ode') && !hasYetki('dosya','dosya-masraf-sil')) ? ['#','MASRAF KALEMİ','TUTAR','DURUM','TARİH'] : ['#','MASRAF KALEMİ','TUTAR','DURUM','KASA','TARİH','KULLANICI','İŞLEM']).map(h =>
+                      <th key={h} style={{padding:'8px 10px',textAlign:'left',color:isKoyu?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
                     )}
                   </tr>
                 </thead>
@@ -764,7 +791,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                   </tr>
                 </tbody>
               </table>
-            ) : <EmptyState icon="Receipt" title="MASRAF YOK" desc="YENİ MASRAF EKLE BUTONUYLA MASRAF GİREBİLİRSİNİZ"/>}
+            {(!dosya.masraflar || dosya.masraflar.length === 0) && <EmptyState icon="Receipt" title="MASRAF YOK" desc="YENİ MASRAF EKLE BUTONUYLA MASRAF GİREBİLİRSİNİZ"/>}
           </div>
         </div>
       )}
