@@ -734,6 +734,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             );
           })()}
           {/* MASRAF TABLOSU */}
+          {dosya.masraflar && dosya.masraflar.length > 0 ? (
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:700}}>
               <thead>
@@ -791,8 +792,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                   </tr>
                 </tbody>
               </table>
-            {(!dosya.masraflar || dosya.masraflar.length === 0) && <EmptyState icon="Receipt" title="MASRAF YOK" desc="YENİ MASRAF EKLE BUTONUYLA MASRAF GİREBİLİRSİNİZ"/>}
           </div>
+          ) : <EmptyState icon="Receipt" title="MASRAF YOK" desc="YENİ MASRAF EKLE BUTONUYLA MASRAF GİREBİLİRSİNİZ"/>}
         </div>
       )}
 
