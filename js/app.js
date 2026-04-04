@@ -97,19 +97,34 @@ function menuErisim(user) {
   if (!yetkiler || Object.keys(yetkiler).length === 0) return [];
 
   /* YETKİLER VARSA → SADECE VERİTABANINDAKİ İZİNLERE GÖRE FİLTRELE */
+  /* Alt sekme yetkilerinden herhangi biri varsa ana sekmeyi göster */
+  const ALT_YETKI_MAP = {
+    'muhasebe-gelir': ['muhasebe-gelir','muhasebe-gelir-ekle','muhasebe-gelir-sil','muhasebe-gider','muhasebe-gider-ekle','muhasebe-gider-sil'],
+    'muhasebe-kasa': ['muhasebe-kasa','muhasebe-kasa-sil','muhasebe-transfer','muhasebe-ortakkasa','muhasebe-hareket-duzenle','muhasebe-hareket-sil','muhasebe-bakiye-sifirla'],
+    'muhasebe-komisyon': ['muhasebe-komisyon'],
+    'muhasebe-rapor': ['muhasebe-rapor','muhasebe-kapanis','muhasebe-aysonu','muhasebe-maliyet']
+  };
+
   return MENU.map(m => {
     if (m.id === 'home') return m;
     const modul = MENU_MODUL[m.id];
     if (!modul) return null;
 
     if (m.sub) {
-      /* ALT MODÜL BAZLI: SADECE izin === 1 OLANLARI GÖSTER */
-      const filteredSub = m.sub.filter(s => { const v = yetkiler[modul + '_' + s.id]; return v === 1; });
+      const filteredSub = m.sub.filter(s => {
+        /* Doğrudan yetki kontrolü */
+        if (yetkiler[modul + '_' + s.id] === 1) return true;
+        /* Alt yetki eşleşme kontrolü */
+        const altYetkiler = ALT_YETKI_MAP[s.id];
+        if (altYetkiler) {
+          return altYetkiler.some(ay => yetkiler[modul + '_' + ay] === 1);
+        }
+        return false;
+      });
       if (filteredSub.length === 0) return null;
       return {...m, sub: filteredSub};
     }
 
-    /* SUB YOK (AJANDA GİBİ): GENEL GÖRÜNTÜLE İZNİ */
     return yetkiler[modul + '_goruntule'] === 1 ? m : null;
   }).filter(Boolean);
 }
