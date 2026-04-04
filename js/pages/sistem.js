@@ -88,7 +88,8 @@ const MODUL_YETKILERI = [
     {key: 'ortaklar-sil', label: 'SİL'},
     {key: 'ortaklar-toplu-sil', label: 'ORTAK TOPLU SİLME'},
     {key: 'paydaslar-toplu-sil', label: 'PAYDAŞ TOPLU SİLME'},
-    {key: 'personel-liste', label: 'PERSONEL'}
+    {key: 'personel-liste', label: 'PERSONEL'},
+    {key: 'sozlesme', label: 'SÖZLEŞMELER'}
   ]},
   {modul: 'police', label: 'POLİÇE', icon: 'FileCheck', islemler: [
     {key: 'police-liste', label: 'POLİÇE LİSTESİ'},
@@ -100,7 +101,8 @@ const MODUL_YETKILERI = [
     {key: 'police-yenileme', label: 'YENİLEME TAKİBİ'},
     {key: 'police-tahsilat', label: 'TAHSİLAT / CARİ'},
     {key: 'police-rapor', label: 'RAPORLAR'},
-    {key: 'police-kazanc', label: 'KAZANÇ'}
+    {key: 'police-kazanc', label: 'KAZANÇ'},
+    {key: 'police-qr-ruhsat', label: 'QR RUHSAT OKUYUCU'}
   ]},
   {modul: 'muhasebe', label: 'MUHASEBE', icon: 'Landmark', islemler: [
     {key: 'muhasebe-gelir', label: 'GELİR YÖNETİMİ'},
@@ -206,7 +208,9 @@ const MODUL_YETKILERI = [
     {key: 'tanimlamalar-sablon-duzenle', label: 'ŞABLON DÜZENLE'},
     {key: 'sistem-konum', label: 'KONUM TAKİBİ'},
     {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'},
-    {key: 'tanimlamalar-ucretlendirme', label: 'ÜCRETLENDIRME TARİFESİ'}
+    {key: 'tanimlamalar-ucretlendirme', label: 'ÜCRETLENDIRME TARİFESİ'},
+    {key: 'sistem-netsantral', label: 'NETSANTRAL AYARLARI'},
+    {key: 'crm-analiz', label: 'CRM ANALİZ'}
   ]},
 ];
 
