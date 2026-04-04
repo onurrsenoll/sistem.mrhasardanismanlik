@@ -196,14 +196,16 @@ MR.DosyaYeniPage = ({setPage, user}) => {
           <FormGroup label="ADI SOYADI *"><input style={S.input} value={form.ad_soyad} onChange={e=>u('ad_soyad',e.target.value)}/></FormGroup>
           <FormGroup label="T.C. KİMLİK NO *"><input style={S.input} value={form.tc_kimlik} onChange={e=>u('tc_kimlik',e.target.value)} maxLength={11}/></FormGroup>
           <FormGroup label="TELEFON *"><input style={S.input} value={form.telefon} onChange={e=>u('telefon',e.target.value)} placeholder="05XX XXX XX XX"/></FormGroup>
-          <FormGroup label="DOĞUM TARİHİ"><DateInput value={form.dogum_tarihi} onChange={v=>u('dogum_tarihi',v)}/></FormGroup>
           <FormGroup label="IBAN"><IBANInput value={form.iban} onChange={v=>u('iban',v)}/></FormGroup>
           <FormGroup label="İL *"><select style={S.select} value={form.il} onChange={e=>{u('il',e.target.value);u('ilce','');}}><option value="">SEÇİNİZ</option>{ILLER.map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
           <FormGroup label="İLÇE *"><select style={S.select} value={form.ilce} onChange={e=>u('ilce',e.target.value)} disabled={!form.il}><option value="">ÖNCE İL SEÇİN</option>{(ILCELER[form.il]||[]).map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
           {isBH && <FormGroup label="MESLEK"><input style={S.input} value={form.meslek} onChange={e=>u('meslek',e.target.value)}/></FormGroup>}
           {isBH && <FormGroup label="GELİR DURUMU"><select style={S.select} value={form.gelir_durumu||''} onChange={e=>u('gelir_durumu',e.target.value)}><option value="">SEÇİNİZ</option><option value="ASGARİ ÜCRET">ASGARİ ÜCRET</option><option value="ASGARİ ÜCRET ÜSTÜ">ASGARİ ÜCRET ÜSTÜ</option><option value="SERBEST MESLEK">SERBEST MESLEK</option><option value="EMEKLİ">EMEKLİ</option><option value="ÖĞRENCİ">ÖĞRENCİ</option><option value="ÇALIŞMIYOR">ÇALIŞMIYOR</option></select></FormGroup>}
         </div>
-        <FormGroup label="ADRES"><textarea style={{...S.input,minHeight:40}} value={form.adres} onChange={e=>u('adres',e.target.value)}/></FormGroup>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 2fr',gap:8,marginTop:8}}>
+          <FormGroup label="DOĞUM TARİHİ"><DateInput value={form.dogum_tarihi} onChange={v=>u('dogum_tarihi',v)}/></FormGroup>
+          <FormGroup label="ADRES"><input style={S.input} value={form.adres} onChange={e=>u('adres',e.target.value)}/></FormGroup>
+        </div>
       </SecCard>
 
       {/* ═══ 2. DOSYA BİLGİLERİ ═══ */}
@@ -343,9 +345,8 @@ MR.DosyaYeniPage = ({setPage, user}) => {
                 <FormGroup label="MODEL YILI"><select style={S.select} value={form.ma_yil} onChange={e=>u('ma_yil',e.target.value)}><option value="">YIL</option>{Array.from({length:30},(_,i)=>2026-i).map(y=><option key={y} value={y}>{y}</option>)}</select></FormGroup>
                 <FormGroup label="BELGE TESCİL NO"><input style={S.input} value={form.ma_belge_tescil} onChange={e=>u('ma_belge_tescil',e.target.value)}/></FormGroup>
                 <FormGroup label="ONARIM GÜN SÜRESİ"><input type="number" style={S.input} value={form.ma_onarim_gun} onChange={e=>u('ma_onarim_gun',e.target.value)}/></FormGroup>
-                <div/>
-                <FormGroup label="GEÇMİŞ HASAR"><Toggle value={form.ma_gecmis_hasar} onSelect={v=>u('ma_gecmis_hasar',v)} options={[{value:'yok',label:'YOK',color:C.success},{value:'var',label:'VAR',color:C.danger}]}/></FormGroup>
                 <FormGroup label="KASKO"><Toggle value={form.ma_kasko} onSelect={v=>u('ma_kasko',v)} options={[{value:'0',label:'YOK',color:C.danger},{value:'1',label:'VAR',color:C.success}]}/></FormGroup>
+                <FormGroup label="GEÇMİŞ HASAR"><Toggle value={form.ma_gecmis_hasar} onSelect={v=>u('ma_gecmis_hasar',v)} options={[{value:'yok',label:'YOK',color:C.success},{value:'var',label:'VAR',color:C.danger}]}/></FormGroup>
                 <FormGroup label="HAK MAHRUMİYET TALEP"><Toggle value={form.hak_mahrumiyet} onSelect={v=>u('hak_mahrumiyet',v)} options={[{value:'0',label:'YOK',color:C.danger},{value:'1',label:'VAR',color:C.success}]}/></FormGroup>
               </div>
             </div>
