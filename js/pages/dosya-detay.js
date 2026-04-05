@@ -690,25 +690,6 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             </div>
           )}
 
-          {/* FİNANSAL ÖZET - TAM GENİŞLİK */}
-          <div style={{...S.card,overflow:'hidden'}}>
-            <div style={{padding:'6px 12px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8,background:`linear-gradient(135deg, ${C.success}15, ${C.success}08)`}}>
-              <div style={{width:24,height:24,borderRadius:6,background:`${C.success}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <LIcon name="DollarSign" size={12} color={C.success}/>
-              </div>
-              <span style={{fontSize:11,fontWeight:800,letterSpacing:0.3}}>FİNANSAL ÖZET</span>
-            </div>
-            <div style={{padding:'4px 6px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0 8px'}}>
-              <InfoRow label="TAHSİLAT" value={fmt(dosya.tahsil_edilen || 0)} bold color={C.success}/>
-              <InfoRow label="TOPLAM GELİR" value={fmt(dosya.toplam_gelir || 0)}/>
-              <InfoRow label="TOPLAM MASRAF" value={fmt(dosya.toplam_masraf || 0)} bold color={C.danger}/>
-              <InfoRow label="NET KAR" value={fmt(dosya.net_kar || 0)} bold color={(dosya.net_kar || 0) >= 0 ? C.success : C.danger}/>
-              <InfoRow label="BENİM PAYIM (%50)" value={fmt(dosya.benim_payim || 0)} bold color={C.accent}/>
-              <InfoRow label="AVUKAT PAYI (%50)" value={fmt(dosya.avukat_payi || 0)} bold color={C.purple || '#8b5cf6'}/>
-              <InfoRow label="MASRAF SAYISI" value={dosya.masraflar?.length || 0}/>
-              <InfoRow label="EVRAK SAYISI" value={dosya.evraklar?.length || 0}/>
-            </div>
-          </div>
         </div>
       )}
 
