@@ -1,6 +1,52 @@
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect} = React;
 
+// ─── Bu componentler DIŞARIDA tanımlanmalı (focus kaybı önlenir) ───
+const SecCard = ({icon, title, sub, color, badge, children}) => {
+  const {C, LIcon} = MR;
+  return (
+    <div style={{background:C.bgCard||'#fff', borderRadius:10, border:`1px solid ${C.border}`, marginBottom:10, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
+      <div style={{display:'flex', alignItems:'center', gap:8, padding:'8px 12px', borderBottom:`1px solid ${C.border}`, borderLeft:`3px solid ${color||C.accent}`}}>
+        <div style={{width:26,height:26,borderRadius:6,background:`${color||C.accent}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <LIcon name={icon} size={12} color={color||C.accent}/>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:11,fontWeight:800,color:C.text}}>{title}</div>
+          {sub && <div style={{fontSize:8,color:C.textMuted}}>{sub}</div>}
+        </div>
+        {badge && <span style={{padding:'2px 8px',borderRadius:6,fontSize:8,fontWeight:700,background:`${color||C.accent}18`,color:color||C.accent}}>{badge}</span>}
+      </div>
+      <div style={{padding:12}}>{children}</div>
+    </div>
+  );
+};
+
+const Toggle = ({value, onSelect, options}) => {
+  const {C} = MR;
+  return (
+    <div style={{display:'flex',gap:6}}>
+      {options.map(o => (
+        <div key={o.value} onClick={() => onSelect(o.value)} style={{padding:'5px 12px',borderRadius:6,fontSize:10,fontWeight:700,cursor:'pointer',flex:1,textAlign:'center',
+          background:value===o.value?`${o.color}22`:'transparent',color:value===o.value?o.color:C.textMuted,border:`1px solid ${value===o.value?o.color+'66':C.border}`}}>{o.label}</div>
+      ))}
+    </div>
+  );
+};
+
+const PlakaInput = ({value, onChange, placeholder}) => {
+  const {formatPlaka} = MR;
+  return (
+    <div style={{display:'flex',border:'2px solid #1a1a1a',borderRadius:7,overflow:'hidden',height:38}}>
+      <div style={{width:28,background:'#003399',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+        <span style={{fontSize:6,color:'#ffd700'}}>★★★</span>
+        <span style={{fontSize:7,fontWeight:900,color:'#fff'}}>TR</span>
+      </div>
+      <input value={value} onChange={e => onChange(formatPlaka(e.target.value))} placeholder={placeholder||'34XX000'}
+        style={{flex:1,border:'none',padding:'0 12px',fontFamily:'Arial Black,Arial',fontSize:17,fontWeight:900,letterSpacing:3,textTransform:'uppercase',textAlign:'center',background:'#fff',color:'#1a1a1a',outline:'none'}}/>
+    </div>
+  );
+};
+
 MR.DosyaYeniPage = ({setPage, user}) => {
   const {C, S, LIcon, Badge, SectionTitle, FormGroup, api, SIGORTA, ILLER, ILCELER, formatPlaka, AracMarkaSelect, AracModelSelect, IBANInput, DateInput} = MR;
   const [loading, setLoading] = useState(false);
@@ -131,45 +177,6 @@ MR.DosyaYeniPage = ({setPage, user}) => {
           </div>
         </div>
       </div>
-    </div>
-  );
-
-  // Section card component
-  const SecCard = ({icon, title, sub, color, badge, children}) => (
-    <div style={{background:C.bgCard||'#fff', borderRadius:10, border:`1px solid ${C.border}`, marginBottom:10, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
-      <div style={{display:'flex', alignItems:'center', gap:8, padding:'8px 12px', borderBottom:`1px solid ${C.border}`, borderLeft:`3px solid ${color||C.accent}`}}>
-        <div style={{width:26,height:26,borderRadius:6,background:`${color||C.accent}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>
-          <LIcon name={icon} size={12} color={color||C.accent}/>
-        </div>
-        <div style={{flex:1}}>
-          <div style={{fontSize:11,fontWeight:800,color:C.text}}>{title}</div>
-          {sub && <div style={{fontSize:8,color:C.textMuted}}>{sub}</div>}
-        </div>
-        {badge && <span style={{padding:'2px 8px',borderRadius:6,fontSize:8,fontWeight:700,background:`${color||C.accent}18`,color:color||C.accent}}>{badge}</span>}
-      </div>
-      <div style={{padding:12}}>{children}</div>
-    </div>
-  );
-
-  // Toggle button component
-  const Toggle = ({value, onSelect, options}) => (
-    <div style={{display:'flex',gap:6}}>
-      {options.map(o => (
-        <div key={o.value} onClick={() => onSelect(o.value)} style={{padding:'5px 12px',borderRadius:6,fontSize:10,fontWeight:700,cursor:'pointer',flex:1,textAlign:'center',
-          background:value===o.value?`${o.color}22`:'transparent',color:value===o.value?o.color:C.textMuted,border:`1px solid ${value===o.value?o.color+'66':C.border}`}}>{o.label}</div>
-      ))}
-    </div>
-  );
-
-  // Plaka bileşeni
-  const PlakaInput = ({value, onChange, placeholder}) => (
-    <div style={{display:'flex',border:'2px solid #1a1a1a',borderRadius:7,overflow:'hidden',height:38}}>
-      <div style={{width:28,background:'#003399',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-        <span style={{fontSize:6,color:'#ffd700'}}>★★★</span>
-        <span style={{fontSize:7,fontWeight:900,color:'#fff'}}>TR</span>
-      </div>
-      <input value={value} onChange={e => onChange(formatPlaka(e.target.value))} placeholder={placeholder||'34XX000'}
-        style={{flex:1,border:'none',padding:'0 12px',fontFamily:'Arial Black,Arial',fontSize:17,fontWeight:900,letterSpacing:3,textTransform:'uppercase',textAlign:'center',background:'#fff',color:'#1a1a1a',outline:'none'}}/>
     </div>
   );
 
