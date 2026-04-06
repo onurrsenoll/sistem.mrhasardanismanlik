@@ -1101,7 +1101,7 @@ MR._CRMYeniInner = ({setPage}) => {
     il: '', ilce: '', adres: '',
     olay_aciklama: '',
     dosya_turu: 'ADK', kaza_tarihi: '', kaza_turu: 'TEK_TARAFLI', pozisyon: 'SURUCU',
-    durum: 'Yeni', not_text: '', taslak: 0
+    durum: 'Yeni', not_text: '', taslak: 0, gorusme_sonucu: ''
   });
   const [loading, setLoading] = useState(false);
   const [hangupLoading, setHangupLoading] = useState(false);
@@ -1207,17 +1207,11 @@ MR._CRMYeniInner = ({setPage}) => {
     return () => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } };
   }, [callActive]);
 
-  /* ── GÖRÜŞME SONLANDIĞINDA: SAYFADA KAL + UYARI ── */
+  /* ── GÖRÜŞME SONLANDIĞINDA: SAYFADA KAL (UYARI YOK) ── */
   const [unsavedWarning, setUnsavedWarning] = useState(false);
   const pendingPageRef = useRef(null);
 
   useEffect(() => {
-    if (prevCallActiveRef.current && !callActive) {
-      /* ÇAĞRI SONA ERDİ - kaydedilmemiş veri varsa uyarı göster */
-      if ((f.ad_soyad.trim() || f.telefon.trim()) && !savedId) {
-        setUnsavedWarning(true);
-      }
-    }
     prevCallActiveRef.current = callActive;
   }, [callActive]);
 
@@ -1289,6 +1283,12 @@ MR._CRMYeniInner = ({setPage}) => {
     const sc = String(s % 60).padStart(2, '0');
     return `${m}:${sc}`;
   };
+
+  const GORUSME_SONUCLARI = [
+    'OLUMLU – TEKRAR ARANACAK','OLUMLU – BELGE / BİLGİ BEKLENİYOR','OLUMLU – ZİYARET OLUŞTURULDU',
+    'OLUMLU – SAHAYA AKTARILDI, TAKİP EDİLİYOR','MALULİYET VAR – TAKİP EDİLECEK',
+    'RED – ARANMAK İSTEMİYOR','RED – MALULİYET YOK','OLUMSUZ – KUSURLU TARAF','ULAŞILAMADI'
+  ];
 
   /* ── AI ANALİZ ── */
   const aiItems = useMemo(() => {
@@ -1639,6 +1639,13 @@ MR._CRMYeniInner = ({setPage}) => {
 
             <FormGroup label="OLAY AÇIKLAMASI / GÖRÜŞME NOTU">
               <textarea style={{...S.input, minHeight:80, padding:'10px 12px', fontSize:13}} value={f.olay_aciklama} onChange={e => up('olay_aciklama', e.target.value)} placeholder="MÜŞTERİ SAĞ ÖN ÇAMURLUK HASARLI, SİGORTA EKSPER BEKLİYOR, DEĞER KAYBI TALEP EDECEK..."/>
+            </FormGroup>
+
+            <FormGroup label="GÖRÜŞME SONUCU">
+              <select style={{...S.select, padding:'10px 12px', fontSize:13}} value={f.gorusme_sonucu} onChange={e => up('gorusme_sonucu', e.target.value)}>
+                <option value="">SEÇİNİZ</option>
+                {GORUSME_SONUCLARI.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
             </FormGroup>
           </Fieldset>
 
