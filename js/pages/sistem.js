@@ -61,12 +61,11 @@ const MODUL_YETKILERI = [
     {key: 'dosya-hesap-ozeti', label: 'HESAP ÖZETİ GÖRÜNTÜLE'}
   ]},
   {modul: 'crm', label: 'CRM / SAHA', icon: 'Users', islemler: [
-    {key: 'crm-liste', label: 'CRM LİSTESİ'},
+    {key: 'crm-arama', label: 'CRM LİSTESİ'},
     {key: 'crm-yeni', label: 'YENİ KAYIT'},
     {key: 'crm-duzenle', label: 'KAYIT DÜZENLE'},
     {key: 'crm-sil', label: 'KAYIT SİL'},
     {key: 'crm-toplu-sil', label: 'TOPLU SİLME'},
-    {key: 'crm-arama', label: 'ARAMA LİSTESİ'},
     {key: 'saha-liste', label: 'SAHA DOSYALARI'},
     {key: 'saha-yeni', label: 'YENİ SAHA KAYDI'},
     {key: 'saha-duzenle', label: 'SAHA KAYDI DÜZENLE'},

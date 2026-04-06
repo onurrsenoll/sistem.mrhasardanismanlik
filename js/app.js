@@ -12,9 +12,7 @@ const MENU = [
     {id:'dosya-yeni', label:'YENİ DOSYA', icon:'Plus'}
   ]},
   {id:'crm', label:'CRM / SAHA', icon:'Users', sub:[
-    {id:'crm-liste', label:'CRM LİSTESİ', icon:'List'},
-    {id:'crm-yeni', label:'YENİ KAYIT', icon:'UserPlus'},
-    {id:'crm-arama', label:'ARAMA LİSTESİ', icon:'PhoneCall'},
+    {id:'crm-arama', label:'CRM LİSTESİ', icon:'List'},
     {id:'saha-liste', label:'SAHA DOSYALARI', icon:'MapPin'},
     {id:'saha-yeni', label:'YENİ SAHA KAYDI', icon:'PlusCircle'}
   ]},
@@ -426,21 +424,21 @@ const Breadcrumb = ({page, setPage}) => {
     }
     if (page === 'crm-arama') {
       if (m.id === 'crm') {
-        parts.push({label: 'CRM', id: 'crm-liste'});
+        parts.push({label: 'CRM', id: 'crm-arama'});
         parts.push({label: 'ARAMA LİSTESİ', id: page});
         break;
       }
     }
     if (page.startsWith('crm-detay-')) {
       if (m.id === 'crm') {
-        parts.push({label: 'CRM / SAHA', id: 'crm-liste'});
+        parts.push({label: 'CRM / SAHA', id: 'crm-arama'});
         parts.push({label: 'CRM DETAY', id: page});
         break;
       }
     }
     if (page.startsWith('saha-')) {
       if (m.id === 'crm') {
-        parts.push({label: 'CRM / SAHA', id: 'crm-liste'});
+        parts.push({label: 'CRM / SAHA', id: 'crm-arama'});
         const sahaLabels = {'saha-liste':'SAHA DOSYALARI','saha-yeni':'YENİ SAHA KAYDI','saha-beklemede':'ONAY İÇİN BEKLEYEN','saha-onaylanan':'ONAYLANAN','saha-dosyaya_donusen':'DOSYAYA DÖNÜŞEN'};
         parts.push({label: sahaLabels[page] || 'SAHA DOSYALARI', id: page});
         break;
@@ -779,7 +777,7 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   if (dosyaIdMatch) return <MR.DosyaDetayPage setPage={setPage} user={user} dosyaId={parseInt(dosyaIdMatch[1])}/>;
 
   /* CRM */
-  if (page === 'crm-liste') return <MR.CrmPage setPage={setPage} user={user} view="liste"/>;
+  if (page === 'crm-liste') return <MR.CrmAramaPage setPage={setPage} user={user}/>;
   if (page === 'crm-yeni') return <MR.CrmPage setPage={setPage} user={user} view="yeni"/>;
   if (page === 'crm-arama') return <MR.CrmAramaPage setPage={setPage} user={user}/>;
   if (page === 'crm-analiz') return <MR.AramaGecmisPage setPage={setPage} user={user}/>;
