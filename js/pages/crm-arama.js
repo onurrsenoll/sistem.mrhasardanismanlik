@@ -729,19 +729,16 @@ MR.CrmAramaPage = ({setPage, user}) => {
                         {hy('crm-sil') && <button style={iconBtn(C.danger)} title="SİL" onClick={() => {setSecili([item.id]); setSilConfirm(true);}}>
                           <LIcon name="Trash2" size={12} color={C.danger}/>
                         </button>}
-                        <button style={iconBtn(C.cyan)} title="SAHAYA AKTAR (KOPYALA)" onClick={async () => {
+                        <button style={iconBtn('#25D366')} title="WHATSAPP İLE SAHAYA AKTAR" onClick={async () => {
                           const tarih = item.yonlendirme_tarihi ? (MR.tarihFmt ? MR.tarihFmt(item.yonlendirme_tarihi) : item.yonlendirme_tarihi) : '-';
                           let sonNot = '';
                           try { const r = await api.yonlendirmeGet(item.id); if (r?.success && r.data?.notlar?.length) sonNot = r.data.notlar[r.data.notlar.length-1].not_text || ''; } catch(e){}
                           const dosyaTuru = item.kaza_turu?.includes('ÇİFT') ? 'ADK' : (item.kaza_turu?.includes('BH') || item.kaza_turu?.includes('BEDENİ') ? 'BH' : 'ADK');
                           const metin = `📋 SAHA GÖREVİ\n\n📌 Dosya Türü: ${dosyaTuru}\n👤 Ad Soyad: ${item.magdur_ad_soyad || '-'}\n📅 Kaza Tarihi: ${tarih}\n📞 Telefon: ${item.magdur_telefon || '-'}\n📍 İl: ${item.magdur_il || '-'}\n🆔 TC: ${item.magdur_tc || '-'}\n\n💬 Detay: ${sonNot || '-'}`;
-                          navigator.clipboard.writeText(metin).then(() => {
-                            const btn = event.currentTarget;
-                            btn.style.background = `${C.success}33`;
-                            setTimeout(() => { btn.style.background = `${C.cyan}18`; }, 1500);
-                          }).catch(() => alert(metin));
+                          const tel = (item.magdur_telefon||'').replace(/\D/g,'').replace(/^0/,'90');
+                          window.open('https://wa.me/' + tel + '?text=' + encodeURIComponent(metin), '_blank');
                         }}>
-                          <LIcon name="Copy" size={12} color={C.cyan}/>
+                          <LIcon name="Send" size={12} color="#25D366"/>
                         </button>
                       </div>
                     </td>
@@ -1012,15 +1009,16 @@ MR.CrmAramaPage = ({setPage, user}) => {
                 {hy('crm-sil') && <button style={{...S.btn, background:`${C.danger}18`, color:C.danger, fontSize:10, padding:'6px 12px', borderRadius:6, border:`1px solid ${C.danger}33`}} onClick={() => { setSecili([detayModal.id]); setSilConfirm(true); setDetayModal(null); }}>
                   <LIcon name="Trash2" size={12} color={C.danger}/> SİL
                 </button>}
-                <button style={{...S.btn, background:`${C.cyan}18`, color:C.cyan, fontSize:10, padding:'6px 12px', borderRadius:6, border:`1px solid ${C.cyan}33`}} onClick={() => {
+                <button style={{...S.btn, background:'#25D36618', color:'#25D366', fontSize:10, padding:'6px 12px', borderRadius:6, border:'1px solid #25D36633'}} onClick={() => {
                   const d = detayModal;
                   const tarih = d.yonlendirme_tarihi ? (MR.tarihFmt ? MR.tarihFmt(d.yonlendirme_tarihi) : d.yonlendirme_tarihi) : '-';
                   const sonNot = notlar.length > 0 ? notlar[notlar.length-1].not_text || '' : '';
                   const dosyaTuru = d.kaza_turu?.includes('ÇİFT') ? 'ADK' : (d.kaza_turu?.includes('BH') || d.kaza_turu?.includes('BEDENİ') ? 'BH' : 'ADK');
                   const metin = `📋 SAHA GÖREVİ\n\n📌 Dosya Türü: ${dosyaTuru}\n👤 Ad Soyad: ${d.magdur_ad_soyad || '-'}\n📅 Kaza Tarihi: ${tarih}\n📞 Telefon: ${d.magdur_telefon || '-'}\n📍 İl: ${d.magdur_il || '-'}\n🆔 TC: ${d.magdur_tc || '-'}\n\n💬 Detay: ${sonNot || '-'}`;
-                  navigator.clipboard.writeText(metin).then(() => alert('PANOYA KOPYALANDI')).catch(() => alert(metin));
+                  const tel = (d.magdur_telefon||'').replace(/\D/g,'').replace(/^0/,'90');
+                  window.open('https://wa.me/' + tel + '?text=' + encodeURIComponent(metin), '_blank');
                 }}>
-                  <LIcon name="Copy" size={12} color={C.cyan}/> SAHAYA AKTAR
+                  <LIcon name="Send" size={12} color="#25D366"/> WHATSAPP
                 </button>
               </div>
             </div>
