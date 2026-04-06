@@ -48,25 +48,13 @@ MR.CrmAramaPage = ({setPage, user}) => {
   const durumlar = ['', 'Belirsiz', 'Alindi', 'Olumsuz'];
   const durumLabels = {'': 'HEPSİ', 'Belirsiz': 'BELİRSİZ', 'Alindi': 'ALINDI', 'Olumsuz': 'OLUMSUZ'};
   const durumRenk = d => d === 'Alindi' ? C.success : d === 'Olumsuz' ? C.danger : C.warning;
-
-  /* GÖRÜŞME SONUÇ DURUMLARI */
   const GORUSME_SONUCLARI = [
-    {value: 'OLUMLU – TEKRAR ARANACAK', tur: 'olumlu'},
-    {value: 'OLUMLU – BELGE / BİLGİ BEKLENİYOR', tur: 'olumlu'},
-    {value: 'OLUMLU – ZİYARET OLUŞTURULDU', tur: 'olumlu'},
-    {value: 'OLUMLU – SAHAYA AKTARILDI, TAKİP EDİLİYOR', tur: 'olumlu'},
-    {value: 'MALULİYET VAR – TAKİP EDİLECEK', tur: 'olumlu'},
-    {value: 'RED – ARANMAK İSTEMİYOR', tur: 'olumsuz'},
-    {value: 'RED – MALULİYET YOK', tur: 'olumsuz'},
-    {value: 'OLUMSUZ – KUSURLU TARAF', tur: 'olumsuz'},
-    {value: 'ULAŞILAMADI', tur: 'belirsiz'}
+    'OLUMLU – TEKRAR ARANACAK','OLUMLU – BELGE / BİLGİ BEKLENİYOR','OLUMLU – ZİYARET OLUŞTURULDU',
+    'OLUMLU – SAHAYA AKTARILDI, TAKİP EDİLİYOR','MALULİYET VAR – TAKİP EDİLECEK',
+    'RED – ARANMAK İSTEMİYOR','RED – MALULİYET YOK','OLUMSUZ – KUSURLU TARAF','ULAŞILAMADI'
   ];
-  const sonucRenk = s => {
-    const found = GORUSME_SONUCLARI.find(g => g.value === s);
-    return found ? (found.tur === 'olumlu' ? C.success : found.tur === 'olumsuz' ? C.danger : C.warning) : C.textMuted;
-  };
-
-  /* SON DURUM FİLTRESİ */
+  const sonucRenk = s => s?.startsWith('OLUMLU') || s?.startsWith('MALULİYET') ? C.success : s?.startsWith('RED') || s?.startsWith('OLUMSUZ') ? C.danger : C.warning;
+  const nedenler = ['BAŞKA FİRMA İLE ANLAŞTI', 'İLGİLENMİYOR', 'TELEFON KAPALI / ULAŞILAMADI', 'MADDİ HASAR DÜŞÜK', 'ZAMAN AŞIMI', 'DİĞER'];
   const [sonDurumF, setSonDurumF] = useState('');
 
   /* ── VERİ YÜKLEME ── */
@@ -153,16 +141,13 @@ MR.CrmAramaPage = ({setPage, user}) => {
       return;
     }
 
-    /* MÜKERRER KAYIT ELEME: Ad Soyad + Telefon aynı olanları filtrele */
+    /* MÜKERRER ELEME: Ad Soyad + Telefon aynı olanları filtrele */
     const benzersizMap = new Map();
     let elenenSayisi = 0;
     for (const k of kayitlar) {
-      const anahtar = (k.magdur_ad_soyad || '').toUpperCase().trim() + '|' + (k.magdur_telefon || '').replace(/\D/g, '').trim();
-      if (!benzersizMap.has(anahtar)) {
-        benzersizMap.set(anahtar, k);
-      } else {
-        elenenSayisi++;
-      }
+      const anahtar = (k.magdur_ad_soyad||'').toUpperCase().trim() + '|' + (k.magdur_telefon||'').replace(/\D/g,'').trim();
+      if (!benzersizMap.has(anahtar)) benzersizMap.set(anahtar, k);
+      else elenenSayisi++;
     }
     const benzersizKayitlar = Array.from(benzersizMap.values());
 
@@ -170,7 +155,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
     const r = await api.yonlendirmeImport({kayitlar: benzersizKayitlar, batch_id});
     setExcelLoading(false);
     if (r?.success) {
-      const elenenInfo = elenenSayisi > 0 ? ` (${elenenSayisi} MÜKERRER KAYIT ELENDİ)` : '';
+      const elenenInfo = elenenSayisi > 0 ? ` (${elenenSayisi} MÜKERRER ELENDİ)` : '';
       setExcelMsg((r.data?.count || benzersizKayitlar.length) + ' KAYIT BAŞARIYLA YÜKLENDİ' + elenenInfo);
       setExcelFile(null);
       setExcelData(null);
@@ -241,10 +226,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
     if (notSonraki) d.sonraki_arama = notSonraki;
     const r = await api.yonlendirmeNotEkle(d);
     if (r?.success) {
-      /* GÖRÜŞME SONUCUNU ANA KAYDA DA YANSIT */
-      if (notDurum) {
-        await api.yonlendirmeUpdate({id: notModal.id, son_durum: notDurum}).catch(() => {});
-      }
+      if (notDurum) await api.yonlendirmeUpdate({id: notModal.id, son_durum: notDurum}).catch(() => {});
       setNotText('');
       setNotDurum('');
       setNotNeden('');
@@ -570,26 +552,13 @@ MR.CrmAramaPage = ({setPage, user}) => {
             </span>
           ))}
 
-          {/* GÖRÜŞME SONUCU FİLTRESİ */}
-          <div style={{width:'100%', display:'flex', gap:4, flexWrap:'wrap', marginTop:6, alignItems:'center'}}>
-            <span style={{fontSize:9, fontWeight:700, color:C.textMuted, marginRight:4}}>GÖRÜŞME SONUCU:</span>
-            <span onClick={() => setSonDurumF('')}
-              style={{padding:'3px 8px', borderRadius:12, fontSize:9, fontWeight: sonDurumF === '' ? 700 : 500, cursor:'pointer',
-                background: sonDurumF === '' ? `${C.accent}18` : 'transparent', color: sonDurumF === '' ? C.accent : C.textSec,
-                border:`1px solid ${sonDurumF === '' ? C.accent+'44' : C.border}`}}>HEPSİ</span>
-            {GORUSME_SONUCLARI.map(d => {
-              const c = d.tur === 'olumlu' ? C.success : d.tur === 'olumsuz' ? C.danger : C.warning;
-              const sel = sonDurumF === d.value;
-              return (
-                <span key={d.value} onClick={() => {setSonDurumF(sel ? '' : d.value); setSayfa(1);}}
-                  style={{padding:'3px 8px', borderRadius:12, fontSize:9, fontWeight: sel ? 700 : 500, cursor:'pointer',
-                    background: sel ? `${c}18` : 'transparent', color: sel ? c : C.textSec,
-                    border:`1px solid ${sel ? c+'44' : C.border}`}}>{d.value}</span>
-              );
-            })}
-          </div>
-
           <div style={{marginLeft:'auto', display:'flex', gap:6, alignItems:'center'}}>
+            <span style={{fontSize:9, color:C.textMuted}}>SONUÇ:</span>
+            <select value={sonDurumF} onChange={e => {setSonDurumF(e.target.value); setSayfa(1);}}
+              style={{...S.select, width:220, fontSize:10, padding:'5px 8px'}}>
+              <option value="">HEPSİ</option>
+              {GORUSME_SONUCLARI.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
             <span style={{fontSize:9, color:C.textMuted}}>TARİH:</span>
             <input type="date" value={tarihBas} onChange={e => {setTarihBas(e.target.value); setSayfa(1);}}
               style={{...S.input, width:130, fontSize:10, padding:'5px 8px'}}/>
@@ -822,24 +791,12 @@ MR.CrmAramaPage = ({setPage, user}) => {
             </div>
 
             <div style={{marginBottom:12}}>
-              <div style={{fontSize:10, fontWeight:600, color:C.textSec, marginBottom:6}}>GÖRÜŞME SONUCU</div>
-              <div style={{display:'flex', gap:4, flexWrap:'wrap'}}>
-                {GORUSME_SONUCLARI.map(d => {
-                  const c = d.tur === 'olumlu' ? C.success : d.tur === 'olumsuz' ? C.danger : C.warning;
-                  const sel = notDurum === d.value;
-                  return (
-                    <button key={d.value} onClick={() => setNotDurum(sel ? '' : d.value)}
-                      style={{
-                        ...S.btn, fontSize:9, padding:'5px 10px', borderRadius:6,
-                        background: sel ? c : `${c}10`,
-                        border:`1px solid ${c}${sel ? '' : '33'}`,
-                        color: sel ? '#fff' : c
-                      }}>
-                      {d.value}
-                    </button>
-                  );
-                })}
-              </div>
+              <FormGroup label="GÖRÜŞME SONUCU">
+                <select style={{...S.select, fontSize:11}} value={notDurum} onChange={e => setNotDurum(e.target.value)}>
+                  <option value="">SEÇİNİZ</option>
+                  {GORUSME_SONUCLARI.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </FormGroup>
             </div>
 
             <div style={{marginBottom:12}}>
