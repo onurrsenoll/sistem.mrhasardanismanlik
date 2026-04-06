@@ -1206,21 +1206,36 @@ MR._CRMYeniInner = ({setPage}) => {
     return () => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } };
   }, [callActive]);
 
-  /* ── GÖRÜŞME SONLANDIĞINDA OTOMATİK KAYDET ── */
+  /* ── GÖRÜŞME SONLANDIĞINDA: SAYFADA KAL, OTOMATİK GEÇİŞ YAPMA ── */
+  const [callEnded, setCallEnded] = useState(false);
+  const [unsavedWarning, setUnsavedWarning] = useState(false);
+  const pendingPageRef = useRef(null);
+
   useEffect(() => {
     if (prevCallActiveRef.current && !callActive) {
-      /* ÇAĞRI SONA ERDİ - AD SOYAD VE TELEFON DOLUYSA OTOMATİK KAYDET */
-      if (f.ad_soyad.trim() && f.telefon.trim()) {
-        otomatikKaydet();
-      }
+      /* ÇAĞRI SONA ERDİ - SAYFADA KAL, OTOMATİK KAYDETME */
+      setCallEnded(true);
     }
     prevCallActiveRef.current = callActive;
   }, [callActive]);
 
-  const otomatikKaydet = async () => {
-    if (loading || savedId) return;
-    if (!f.ad_soyad.trim()) { setError('OTOMATİK KAYIT İÇİN AD SOYAD GİRİLMELİDİR'); return; }
-    if (!f.telefon.trim()) { setError('OTOMATİK KAYIT İÇİN TELEFON GİRİLMELİDİR'); return; }
+  /* SAYFA DEĞİŞİKLİĞİ KORUMASI: Kaydedilmemiş veri varsa uyar */
+  const hasUnsavedData = () => {
+    return (f.ad_soyad.trim() || f.telefon.trim() || f.olay_aciklama.trim()) && !savedId;
+  };
+  const safeSetPage = (page) => {
+    if (hasUnsavedData()) {
+      pendingPageRef.current = page;
+      setUnsavedWarning(true);
+    } else {
+      setPage(page);
+    }
+  };
+
+  const kaydetVeGit = async () => {
+    if (loading) return;
+    if (!f.ad_soyad.trim()) { setError('KAYIT İÇİN AD SOYAD GİRİLMELİDİR'); return; }
+    if (!f.telefon.trim()) { setError('KAYIT İÇİN TELEFON GİRİLMELİDİR'); return; }
     setLoading(true); setError(''); setSuccess('');
     const data = {...f, taslak: 0, kaynak: 'TELEFON'};
     const r = await api.crmCreate(data);
@@ -1241,11 +1256,11 @@ MR._CRMYeniInner = ({setPage}) => {
         await api.crmNotEkle({crm_id: newId, not_text: `TELEFON GÖRÜŞMESİ - SÜRE: ${sure}\n${f.olay_aciklama || ''}`}).catch(() => {});
       }
       setLoading(false);
-      setSuccess('GÖRÜŞME KAYDI OTOMATİK KAYDEDİLDİ');
-      setTimeout(() => setPage('crm-detay-' + newId), 1500);
+      setSuccess('KAYIT BAŞARIYLA KAYDEDİLDİ');
+      setTimeout(() => setPage('crm-detay-' + newId), 1000);
     } else {
       setLoading(false);
-      setError(r?.error || 'OTOMATİK KAYIT SIRASINDA HATA OLUŞTU');
+      setError(r?.error || 'KAYIT SIRASINDA HATA OLUŞTU');
     }
   };
 
@@ -1404,7 +1419,7 @@ MR._CRMYeniInner = ({setPage}) => {
 
           {/* ÜST BAR - KOMPAKT */}
           <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10, flexWrap:'wrap'}}>
-            <button style={{...S.btn, ...S.btnG, fontSize:9, padding:'5px 10px', borderRadius:7}} onClick={() => setPage('crm-liste')}>
+            <button style={{...S.btn, ...S.btnG, fontSize:9, padding:'5px 10px', borderRadius:7}} onClick={() => safeSetPage('crm-liste')}>
               <LIcon name="ArrowLeft" size={11}/> LİSTEYE DÖN
             </button>
             <div style={{display:'flex', alignItems:'center', gap:5, flex:1, minWidth:0}}>
@@ -1711,6 +1726,34 @@ MR._CRMYeniInner = ({setPage}) => {
       {/* ═══ ONAY DİALOGLARI ═══ */}
       <Confirm open={clearConfirm} message="FORMU TEMİZLEMEK İSTEDİĞİNİZE EMİN MİSİNİZ? TÜM GİRİLEN BİLGİLER SİLİNECEKTİR." onConfirm={resetForm} onCancel={() => setClearConfirm(false)}/>
       <Confirm open={donusturConfirm} message="BU KAYDI DOĞRUDAN DOSYAYA DÖNÜŞTÜRMEK İSTİYOR MUSUNUZ? CRM KAYDI OLUŞTURULUP DOSYAYA DÖNÜŞTÜRÜLECEKTİR." onConfirm={handleDonustur} onCancel={() => setDonusturConfirm(false)}/>
+
+      {/* KAYDEDİLMEMİŞ VERİ UYARI MODALI */}
+      <Modal open={unsavedWarning} onClose={() => setUnsavedWarning(false)} title="KAYDEDİLMEMİŞ BİLGİLER" width="460px">
+        <div style={{textAlign:'center',padding:'20px 10px'}}>
+          <div style={{width:56,height:56,borderRadius:'50%',background:`${C.warning}22`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px'}}>
+            <LIcon name="AlertTriangle" size={28} color={C.warning}/>
+          </div>
+          <div style={{fontSize:14,fontWeight:700,color:C.text,marginBottom:8}}>KAYDEDİLMEMİŞ BİLGİLER</div>
+          <div style={{fontSize:12,color:C.textSec,lineHeight:1.6,marginBottom:24}}>
+            Mevcut görüşme kaydında aldığınız bilgileri kaydetmediniz.<br/>
+            Bilgileri kaydetmezseniz girdiğiniz bilgiler kaybolacaktır.
+          </div>
+          <div style={{display:'flex',gap:10,justifyContent:'center'}}>
+            <button style={{...S.btn,...S.btnS,fontSize:12,padding:'10px 24px',borderRadius:8}} onClick={() => {
+              setUnsavedWarning(false);
+              kaydetVeGit();
+            }}>
+              <LIcon name="Save" size={14} color="#fff"/> BİLGİLERİ KAYDET
+            </button>
+            <button style={{...S.btn,...S.btnD,fontSize:12,padding:'10px 24px',borderRadius:8}} onClick={() => {
+              setUnsavedWarning(false);
+              if (pendingPageRef.current) setPage(pendingPageRef.current);
+            }}>
+              <LIcon name="X" size={14} color="#fff"/> KAYDETMEDEN ÇIK
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* PULSE ANİMASYON CSS */}
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}`}</style>
