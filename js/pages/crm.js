@@ -1139,10 +1139,16 @@ MR._CRMYeniInner = ({setPage}) => {
     var lsAd = localStorage.getItem('webrtc_new_call_name');
     if (lsTel) {
       var updates = {telefon: lsTel, ad_soyad: lsAd || ''};
-      /* EK BİLGİLER - webrtcAra bilgi objesi localStorage'dan */
+      /* EK BİLGİLER - arama listesinden aktarılan tüm veriler */
       var lsIl = localStorage.getItem('webrtc_new_call_il');
+      var lsIlce = localStorage.getItem('webrtc_new_call_ilce');
+      var lsTc = localStorage.getItem('webrtc_new_call_tc');
+      var lsKazaTuru = localStorage.getItem('webrtc_new_call_kaza_turu');
       var lsDosyaTuru = localStorage.getItem('webrtc_new_call_dosya_turu');
       if (lsIl) { updates.il = lsIl; localStorage.removeItem('webrtc_new_call_il'); }
+      if (lsIlce) { updates.ilce = lsIlce; localStorage.removeItem('webrtc_new_call_ilce'); }
+      if (lsTc) { updates.tc_vergi_no = lsTc; localStorage.removeItem('webrtc_new_call_tc'); }
+      if (lsKazaTuru) { updates.kaza_turu = lsKazaTuru; localStorage.removeItem('webrtc_new_call_kaza_turu'); }
       if (lsDosyaTuru) { updates.dosya_turu = lsDosyaTuru; localStorage.removeItem('webrtc_new_call_dosya_turu'); }
       sF(p => ({...p, ...updates}));
       localStorage.removeItem('webrtc_new_call_phone');

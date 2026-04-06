@@ -378,10 +378,13 @@ MR.CrmAramaPage = ({setPage, user}) => {
 
   const aramaYap = (item) => {
     if (!item.magdur_telefon) return;
-    /* ARAMA BAŞLAT VE KİŞİ KARTI AÇ */
+    /* ARAMA BAŞLAT VE KİŞİ KARTI AÇ - TÜM BİLGİLERİ AKTAR */
     localStorage.setItem('webrtc_new_call_phone', item.magdur_telefon);
     localStorage.setItem('webrtc_new_call_name', item.magdur_ad_soyad || '');
     if (item.magdur_il) localStorage.setItem('webrtc_new_call_il', item.magdur_il);
+    if (item.magdur_ilce) localStorage.setItem('webrtc_new_call_ilce', item.magdur_ilce);
+    if (item.magdur_tc) localStorage.setItem('webrtc_new_call_tc', item.magdur_tc);
+    if (item.kaza_turu) localStorage.setItem('webrtc_new_call_kaza_turu', item.kaza_turu);
     if (MR.webrtcAra) {
       MR.webrtcAra(item.magdur_telefon, {ad: item.magdur_ad_soyad || '', il: item.magdur_il || ''});
       setAramaMsg('WEBRTC ARAMA BAŞLATILIYOR...');
