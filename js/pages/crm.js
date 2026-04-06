@@ -1093,7 +1093,7 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
    CRM YENİ KAYIT - ZENGİNLEŞTİRİLMİŞ EKRAN
    ═══════════════════════════════════════════ */
 MR._CRMYeniInner = ({setPage}) => {
-  const {C, S, LIcon, FormGroup, Badge, api, ILLER, Confirm} = MR;
+  const {C, S, LIcon, FormGroup, Badge, Modal, api, ILLER, Confirm} = MR;
 
   /* ── FORM STATE ── */
   const [f, sF] = useState({
