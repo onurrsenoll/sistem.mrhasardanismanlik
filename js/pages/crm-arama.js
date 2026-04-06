@@ -729,6 +729,17 @@ MR.CrmAramaPage = ({setPage, user}) => {
                         {hy('crm-sil') && <button style={iconBtn(C.danger)} title="SİL" onClick={() => {setSecili([item.id]); setSilConfirm(true);}}>
                           <LIcon name="Trash2" size={12} color={C.danger}/>
                         </button>}
+                        <button style={iconBtn(C.cyan)} title="SAHAYA AKTAR (KOPYALA)" onClick={() => {
+                          const tarih = item.yonlendirme_tarihi ? (MR.tarihFmt ? MR.tarihFmt(item.yonlendirme_tarihi) : item.yonlendirme_tarihi) : '-';
+                          const metin = `📋 SAHA GÖREVİ\n\n📌 Dosya Türü: ${item.kaza_turu || 'ADK'}\n👤 Ad Soyad: ${item.magdur_ad_soyad || '-'}\n📅 Kaza Tarihi: ${tarih}\n📞 Telefon: ${item.magdur_telefon || '-'}\n📍 İl: ${item.magdur_il || '-'}\n🆔 TC: ${item.magdur_tc || '-'}\n\n💬 Detay: ${item.magdur_ilce || '-'}`;
+                          navigator.clipboard.writeText(metin).then(() => {
+                            const btn = event.currentTarget;
+                            btn.style.background = `${C.success}33`;
+                            setTimeout(() => { btn.style.background = `${C.cyan}18`; }, 1500);
+                          }).catch(() => alert(metin));
+                        }}>
+                          <LIcon name="Copy" size={12} color={C.cyan}/>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -998,6 +1009,14 @@ MR.CrmAramaPage = ({setPage, user}) => {
                 {hy('crm-sil') && <button style={{...S.btn, background:`${C.danger}18`, color:C.danger, fontSize:10, padding:'6px 12px', borderRadius:6, border:`1px solid ${C.danger}33`}} onClick={() => { setSecili([detayModal.id]); setSilConfirm(true); setDetayModal(null); }}>
                   <LIcon name="Trash2" size={12} color={C.danger}/> SİL
                 </button>}
+                <button style={{...S.btn, background:`${C.cyan}18`, color:C.cyan, fontSize:10, padding:'6px 12px', borderRadius:6, border:`1px solid ${C.cyan}33`}} onClick={() => {
+                  const d = detayModal;
+                  const tarih = d.yonlendirme_tarihi ? (MR.tarihFmt ? MR.tarihFmt(d.yonlendirme_tarihi) : d.yonlendirme_tarihi) : '-';
+                  const metin = `📋 SAHA GÖREVİ\n\n📌 Dosya Türü: ${d.kaza_turu || 'ADK'}\n👤 Ad Soyad: ${d.magdur_ad_soyad || '-'}\n📅 Kaza Tarihi: ${tarih}\n📞 Telefon: ${d.magdur_telefon || '-'}\n📍 İl: ${d.magdur_il || '-'}\n🆔 TC: ${d.magdur_tc || '-'}\n\n💬 Detay: ${d.magdur_ilce || '-'}`;
+                  navigator.clipboard.writeText(metin).then(() => alert('PANOYA KOPYALANDI')).catch(() => alert(metin));
+                }}>
+                  <LIcon name="Copy" size={12} color={C.cyan}/> SAHAYA AKTAR
+                </button>
               </div>
             </div>
 
