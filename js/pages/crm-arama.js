@@ -129,7 +129,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
         magdur_ad_soyad: get('MAĞDUR AD SOYAD', 'MAGDUR AD SOYAD', 'AD SOYAD', 'ADSOYAD', 'İSİM', 'ISIM'),
         magdur_telefon: get('MAĞDUR TELEFON', 'MAGDUR TELEFON', 'TELEFON', 'TEL', 'GSM'),
         magdur_il: get('MAĞDUR İL', 'MAGDUR IL', 'İL', 'IL', 'ŞEHİR', 'SEHIR'),
-        magdur_ilce: get('MAĞDUR İLÇE', 'MAGDUR ILCE', 'İLÇE', 'ILCE'),
+        magdur_ilce: get('DETAY', 'MAĞDUR İLÇE', 'MAGDUR ILCE', 'İLÇE', 'ILCE'),
         magdur_tc: get('MAĞDUR TC', 'MAGDUR TC', 'TC', 'TC KİMLİK', 'TC KIMLIK', 'TCKIMLIK')
       };
     };
@@ -169,10 +169,10 @@ MR.CrmAramaPage = ({setPage, user}) => {
   /* ── ŞABLON İNDİR ── */
   const sablonIndir = () => {
     const ws = XLSX.utils.aoa_to_sheet([
-      ['YÖNLENDİREN', 'YÖNLENDİRME TARİHİ', 'KAZA TÜRÜ', 'MAĞDUR AD SOYAD', 'MAĞDUR TELEFON', 'MAĞDUR İL', 'MAĞDUR İLÇE', 'MAĞDUR TC'],
-      ['ÖRNEK KİŞİ', '2026-02-13', 'ÇİFT TARAFLI', 'MEHMET DEMİR', '05321234567', 'İSTANBUL', 'KADIKÖY', '12345678901']
+      ['MAĞDUR AD SOYAD', 'MAĞDUR TC', 'MAĞDUR TELEFON', 'MAĞDUR İL', 'KAZA TÜRÜ', 'DETAY', 'YÖNLENDİREN', 'YÖNLENDİRME TARİHİ'],
+      ['MEHMET DEMİR', '12345678901', '05321234567', 'İSTANBUL', 'ÇİFT TARAFLI', 'KADIKÖY / SAĞ ÖN HASAR', 'ÖRNEK KİŞİ', '2026-02-13']
     ]);
-    ws['!cols'] = [{wch:18},{wch:18},{wch:16},{wch:22},{wch:16},{wch:14},{wch:14},{wch:14}];
+    ws['!cols'] = [{wch:22},{wch:14},{wch:16},{wch:14},{wch:16},{wch:24},{wch:18},{wch:18}];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'YÖNLENDİRME');
     XLSX.writeFile(wb, 'yonlendirme_sablon.xlsx');
@@ -594,36 +594,30 @@ MR.CrmAramaPage = ({setPage, user}) => {
               <colgroup>
                 <col style={{width:30}}/>{/* checkbox */}
                 <col style={{width:36}}/>{/* NO */}
-                <col style={{width:80}}/>{/* YÖNLENDİREN */}
-                <col style={{width:72}}/>{/* TARİH */}
+                <col style={{width:110}}/>{/* AD SOYAD */}
+                <col style={{width:86}}/>{/* TC */}
+                <col style={{width:90}}/>{/* TELEFON */}
+                <col style={{width:52}}/>{/* İL */}
                 <col style={{width:68}}/>{/* KAZA */}
-                <col style={{width:100}}/>{/* AD SOYAD */}
-                <col style={{width:86}}/>{/* TELEFON */}
-                <col style={{width:48}}/>{/* İL */}
-                <col style={{width:56}}/>{/* İLÇE */}
+                <col style={{width:90}}/>{/* DETAY */}
                 <col style={{width:72}}/>{/* GÖRÜŞME */}
                 <col style={{width:72}}/>{/* DURUM */}
-                <col style={{width:80}}/>{/* NEDEN */}
                 <col style={{width:76}}/>{/* SON DURUM */}
-                <col style={{width:82}}/>{/* TC */}
                 <col style={{width:88}}/>{/* İŞLEM */}
               </colgroup>
               <thead>
                 <tr style={{background:isKoyu?'#0f2342':'#1e40af', backgroundImage:isKoyu?'linear-gradient(135deg, #1e3a5f 0%, #0f2342 100%)':'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)'}}>
                   <th style={thSt}><input type="checkbox" checked={secili.length === data.length && data.length > 0} onChange={toggleAll}/></th>
                   <th style={thSt}>NO</th>
-                  <th style={thSt}>YÖNLENDİREN</th>
-                  <th style={thSt}>TARİH</th>
-                  <th style={thSt}>KAZA</th>
                   <th style={thSt}>AD SOYAD</th>
+                  <th style={thSt}>TC</th>
                   <th style={thSt}>TELEFON</th>
                   <th style={thSt}>İL</th>
-                  <th style={thSt}>İLÇE</th>
+                  <th style={thSt}>KAZA</th>
+                  <th style={thSt}>DETAY</th>
                   <th style={thSt}>GÖRÜŞME</th>
                   <th style={thSt}>DURUM</th>
-                  <th style={thSt}>NEDEN</th>
                   <th style={thSt}>SON DURUM</th>
-                  <th style={thSt}>TC</th>
                   <th style={{...thSticky, textAlign:'center'}}>İŞLEM</th>
                 </tr>
               </thead>
@@ -637,14 +631,8 @@ MR.CrmAramaPage = ({setPage, user}) => {
                   >
                     <td style={tdSt}><input type="checkbox" checked={sel} onChange={() => toggleSecili(item.id)}/></td>
                     <td style={{...tdSt, fontWeight:700, color:C.accent}}>{item.sira_no || item.id}</td>
-                    <td style={tdTrunc} title={item.yonlendiren || ''}>{item.yonlendiren || '-'}</td>
-                    <td style={tdSt}>{MR.tarihFmt ? MR.tarihFmt(item.yonlendirme_tarihi) : '-'}</td>
-                    <td style={tdTrunc} title={item.kaza_turu || ''}>
-                      {item.kaza_turu ? (
-                        <Badge text={item.kaza_turu?.length > 8 ? item.kaza_turu.slice(0,8)+'..' : item.kaza_turu} color={item.kaza_turu?.includes('ÇİFT') ? C.accent : C.purple}/>
-                      ) : '-'}
-                    </td>
                     <td style={{...tdTrunc, fontWeight:600}} title={item.magdur_ad_soyad || ''}>{item.magdur_ad_soyad || '-'}</td>
+                    <td style={{...tdSt, fontFamily:'monospace'}} title={item.magdur_tc || ''}>{item.magdur_tc || '-'}</td>
                     <td style={tdSt}>
                       <div style={{display:'flex', alignItems:'center', gap:4}}>
                         <span style={{minWidth:80, whiteSpace:'nowrap'}}>{item.magdur_telefon || '-'}</span>
@@ -657,6 +645,11 @@ MR.CrmAramaPage = ({setPage, user}) => {
                       </div>
                     </td>
                     <td style={tdTrunc} title={item.magdur_il || ''}>{item.magdur_il || '-'}</td>
+                    <td style={tdTrunc} title={item.kaza_turu || ''}>
+                      {item.kaza_turu ? (
+                        <Badge text={item.kaza_turu?.length > 8 ? item.kaza_turu.slice(0,8)+'..' : item.kaza_turu} color={item.kaza_turu?.includes('ÇİFT') ? C.accent : C.purple}/>
+                      ) : '-'}
+                    </td>
                     <td style={tdTrunc} title={item.magdur_ilce || ''}>{item.magdur_ilce || '-'}</td>
                     <td style={tdSt}>{MR.tarihFmt ? MR.tarihFmt(item.gorusme_tarihi) : '-'}</td>
                     <td style={tdSt}>
@@ -665,7 +658,6 @@ MR.CrmAramaPage = ({setPage, user}) => {
                         {durumLabels[item.durum] || 'BELİRSİZ'}
                       </span>
                     </td>
-                    <td style={{...tdTrunc, color:C.danger}} title={item.alinmama_nedeni || ''}>{item.alinmama_nedeni || '-'}</td>
                     <td style={tdTrunc} title={item.son_durum || ''}>
                       {item.son_durum ? (
                         <span style={{
@@ -675,7 +667,6 @@ MR.CrmAramaPage = ({setPage, user}) => {
                         }}>{item.son_durum}</span>
                       ) : '-'}
                     </td>
-                    <td style={{...tdSt, fontFamily:'monospace'}} title={item.magdur_tc || ''}>{item.magdur_tc || '-'}</td>
                     <td style={{...tdSt,position:'sticky',right:0,background:tdStickyBgFn(i,sel),textAlign:'center'}}>
                       <div style={{display:'flex', gap:3, justifyContent:'center'}}>
                         <button style={iconBtn(C.cyan)} title="NOT EKLE / GÖRÜNTÜLE" onClick={() => openNot(item)}>
