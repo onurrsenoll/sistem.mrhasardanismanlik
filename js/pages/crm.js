@@ -1207,11 +1207,17 @@ MR._CRMYeniInner = ({setPage}) => {
     return () => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } };
   }, [callActive]);
 
-  /* ── GÖRÜŞME SONLANDIĞINDA: SAYFADA KAL ── */
+  /* ── GÖRÜŞME SONLANDIĞINDA: SAYFADA KAL + UYARI ── */
   const [unsavedWarning, setUnsavedWarning] = useState(false);
   const pendingPageRef = useRef(null);
 
   useEffect(() => {
+    if (prevCallActiveRef.current && !callActive) {
+      /* ÇAĞRI SONA ERDİ - kaydedilmemiş veri varsa uyarı göster */
+      if ((f.ad_soyad.trim() || f.telefon.trim()) && !savedId) {
+        setUnsavedWarning(true);
+      }
+    }
     prevCallActiveRef.current = callActive;
   }, [callActive]);
 
