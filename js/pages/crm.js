@@ -1373,21 +1373,28 @@ MR._CRMYeniInner = ({setPage}) => {
   };
 
   /* ── FIELDSET BİLEŞENİ ── */
-  const Fieldset = useMemo(() => ({title, icon, children}) => (
+  const isKoyuF = MR.tema === 'koyu';
+  const Fieldset = useMemo(() => ({title, icon, children}) => {
+    const dk = MR.tema === 'koyu';
+    return (
     <fieldset style={{
-      border: `1px solid ${C.border}`, borderRadius: 8,
-      padding: '12px 14px 10px', marginBottom: 10, background: 'transparent'
+      border: dk ? '1px solid rgba(6,182,212,0.25)' : '1px solid #d1d5db',
+      borderRadius: 8, padding: '12px 14px 10px', marginBottom: 10,
+      background: dk ? 'rgba(15,35,66,0.4)' : '#f9fafb',
+      boxShadow: dk ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.06)'
     }}>
       <legend style={{
-        padding: '3px 10px', fontSize: 11, fontWeight: 700, color: C.textSec,
+        padding: '3px 10px', fontSize: 11, fontWeight: 700,
+        color: dk ? '#94a3b8' : '#374151',
         display: 'flex', alignItems: 'center', gap: 5, letterSpacing: 0.5
       }}>
-        <LIcon name={icon} size={12} color={C.accent}/>
+        <LIcon name={icon} size={12} color={MR.C?.accent || '#3b82f6'}/>
         {title}
       </legend>
       {children}
     </fieldset>
-  ), []);
+    );
+  }, [isKoyuF]);
 
   /* ── SOL PANEL BUTON STİLİ ── */
   const actionBtn = (color) => ({
