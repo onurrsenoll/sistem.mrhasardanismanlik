@@ -7,6 +7,7 @@ const {useState, useEffect, useCallback, useMemo, useRef} = React;
    ═══════════════════════════════════════════ */
 MR.CrmAramaPage = ({setPage, user}) => {
   const {C, S, LIcon, Badge, StatCard, Loading, EmptyState, Modal, FormGroup, Confirm, api, ILLER} = MR;
+  const hy = (islem) => MR.hasYetki(user, 'crm', islem);
 
   /* ── STATE ── */
   const [data, setData] = useState([]);
@@ -556,15 +557,15 @@ MR.CrmAramaPage = ({setPage, user}) => {
             <Badge text={toplamKayit + ' KAYIT'} color={C.accent}/>
           </div>
           <div style={{display:'flex', gap:6, alignItems:'center'}}>
-            <button style={{...S.btn, ...S.btnG, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4}} onClick={sablonIndir}>
+            {hy('crm-sablon-indir') && <button style={{...S.btn, ...S.btnG, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4}} onClick={sablonIndir}>
               <LIcon name="Download" size={11} color={C.textSec}/> ŞABLON İNDİR
-            </button>
-            <button style={{...S.btn, ...S.btnP, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4}} onClick={() => fileRef.current?.click()}>
+            </button>}
+            {hy('crm-excel-yukle') && <button style={{...S.btn, ...S.btnP, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4}} onClick={() => fileRef.current?.click()}>
               <LIcon name="Upload" size={11} color="#fff"/> EXCEL YÜKLE
-            </button>
-            <button style={{...S.btn, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4, background:C.success, color:'#fff'}} onClick={() => { setDuzenleId(null); setYeniForm({magdur_ad_soyad:'', magdur_tc:'', magdur_telefon:'', magdur_il:'', kaza_turu:'', magdur_ilce:''}); setYeniModal(true); }}>
+            </button>}
+            {hy('crm-yeni') && <button style={{...S.btn, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4, background:C.success, color:'#fff'}} onClick={() => { setDuzenleId(null); setYeniForm({magdur_ad_soyad:'', magdur_tc:'', magdur_telefon:'', magdur_il:'', kaza_turu:'', magdur_ilce:''}); setYeniModal(true); }}>
               <LIcon name="UserPlus" size={11} color="#fff"/> YENİ KAYIT
-            </button>
+            </button>}
             <input placeholder="AD, TELEFON, TC ARA..." value={search} onChange={e => {setSearch(e.target.value); setSayfa(1);}}
               style={{...S.input, width:200, fontSize:10, padding:'6px 10px'}}/>
           </div>
@@ -690,13 +691,13 @@ MR.CrmAramaPage = ({setPage, user}) => {
                     </td>
                     <td style={{...tdSt,position:'sticky',right:0,background:tdStickyBgFn(i,sel),textAlign:'center'}}>
                       <div style={{display:'flex', gap:3, justifyContent:'center'}}>
-                        <button style={iconBtn(C.cyan)} title="NOT / DETAY" onClick={() => openNot(item)}>
+                        {hy('crm-not-ekle') && <button style={iconBtn(C.cyan)} title="NOT / DETAY" onClick={() => openNot(item)}>
                           <LIcon name="Eye" size={12} color={C.cyan}/>
-                        </button>
-                        <button style={iconBtn(C.warning)} title="DÜZENLE" onClick={() => { setYeniForm({magdur_ad_soyad:item.magdur_ad_soyad||'', magdur_tc:item.magdur_tc||'', magdur_telefon:item.magdur_telefon||'', magdur_il:item.magdur_il||'', kaza_turu:item.kaza_turu||'', magdur_ilce:item.magdur_ilce||''}); setDuzenleId(item.id); setYeniModal(true); }}>
+                        </button>}
+                        {hy('crm-duzenle') && <button style={iconBtn(C.warning)} title="DÜZENLE" onClick={() => { setYeniForm({magdur_ad_soyad:item.magdur_ad_soyad||'', magdur_tc:item.magdur_tc||'', magdur_telefon:item.magdur_telefon||'', magdur_il:item.magdur_il||'', kaza_turu:item.kaza_turu||'', magdur_ilce:item.magdur_ilce||''}); setDuzenleId(item.id); setYeniModal(true); }}>
                           <LIcon name="Edit3" size={12} color={C.warning}/>
-                        </button>
-                        <div style={{position:'relative'}}>
+                        </button>}
+                        {hy('crm-durum-degistir') && <div style={{position:'relative'}}>
                           <button style={iconBtn(C.purple)} title="DURUM DEĞİŞTİR" onClick={() => setDurumDropId(durumDropId===item.id ? null : item.id)}>
                             <LIcon name="RefreshCw" size={12} color={C.purple}/>
                           </button>
@@ -713,8 +714,8 @@ MR.CrmAramaPage = ({setPage, user}) => {
                               ))}
                             </div>
                           )}
-                        </div>
-                        <button style={{
+                        </div>}
+                        {hy('crm-ara') && <button style={{
                           ...iconBtn(aramaAktif === item.id ? C.accent : C.success),
                           background: aramaAktif === item.id ? `${C.accent}33` : `${C.success}18`,
                           minWidth: aramaAktif === item.id ? 60 : 26
@@ -723,10 +724,10 @@ MR.CrmAramaPage = ({setPage, user}) => {
                           <LIcon name={aramaAktif === item.id ? 'PhoneCall' : 'Phone'} size={12}
                             color={aramaAktif === item.id ? C.accent : C.success}/>
                           {aramaAktif === item.id && <span style={{fontSize:8, color:C.accent, fontWeight:700}}>ARANIYOR</span>}
-                        </button>
-                        <button style={iconBtn(C.danger)} title="SİL" onClick={() => {setSecili([item.id]); setSilConfirm(true);}}>
+                        </button>}
+                        {hy('crm-sil') && <button style={iconBtn(C.danger)} title="SİL" onClick={() => {setSecili([item.id]); setSilConfirm(true);}}>
                           <LIcon name="Trash2" size={12} color={C.danger}/>
-                        </button>
+                        </button>}
                       </div>
                     </td>
                   </tr>
