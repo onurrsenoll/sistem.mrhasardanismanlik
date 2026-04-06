@@ -979,13 +979,9 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               </div>
               {dosya.asama !== 'DOSYA KAPANDI' && hasYetki('dosya','dosya-kapat') && (
                 <button style={{...S.btn,...S.btnS,fontSize:10,padding:'5px 12px'}} onClick={() => {
-                  api.kasaList().then(r => { if(r?.success) setKasalar(r.data||[]); });
-                  // Avukat ödeme oranı: ortak varsa onun odeme_orani, yoksa komisyon_orani veya 50
-                  const avukatOran = dosya.avukat_odeme_orani || dosya.komisyon_orani || 50;
                   setKapatForm({
                     tazminat:'', vekalet_ucreti:'', faiz:'', stopaj:'', kdv_oran:'20',
-                    dosya_basi_odenen:'0', kasa_id:1, pay_orani: String(dosya.komisyon_orani || 50),
-                    avukat_pay_orani: String(avukatOran)
+                    mahsup_var:'0', mahsup_tutar:''
                   });
                   setKapatModal(true);
                 }}>
@@ -1020,7 +1016,11 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           const t = parseFloat(kapatForm.tazminat) || 0;
           const komisyonOran = parseFloat(dosya.komisyon_orani) || 20;
           const komisyon = t * komisyonOran / 100;
-          const noterMasrafi = parseFloat(kapatForm.noter_masrafi) || 0;
+          // Noter masrafı dosya masraflarından otomatik alınır
+          const noterMasrafi = (() => {
+            const noterM = (dosya.masraflar || []).find(m => (m.masraf_kalemi || '').toUpperCase().includes('NOTER'));
+            return noterM ? parseFloat(noterM.tutar) || 0 : 0;
+          })();
           const muvekkileHavale = t - komisyon - noterMasrafi;
           const vekalet = parseFloat(kapatForm.vekalet_ucreti) || 0;
           const faiz = parseFloat(kapatForm.faiz) || 0;
@@ -1049,16 +1049,18 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           const dosyaKapat = async () => {
             if (!t || t <= 0) { alert('TAZMİNAT TUTARI GİRMENİZ GEREKLİ'); return; }
             setKapatLoading(true);
-            const gelirR = await api.gelirCreate({
-              dosya_id: dosya.id, gelir_turu: 'DOSYA KAPANIŞ KAZANÇ',
-              tutar: mrKazanc,
-              kasa_id: parseInt(kapatForm.kasa_id),
-              aciklama: `${dosya.dosya_no} - TAZMİNAT: ${fmt(t)}, KOMİSYON(%${komisyonOran}): ${fmt(komisyon)}, VEKALET: ${fmt(vekalet)}, TOPLAM KAZANÇ: ${fmt(toplamKazanc)}, %50 MR: ${fmt(yuzdeElli)}, MAHSUP: ${fmt(mahsupTutar)}, NET MR KAZANÇ: ${fmt(mrKazanc)}`,
-              tahsilat_durumu: 'tahsil_edildi'
-            });
             const kapatR = await api.dosyaUpdate({
               id: dosya.id, asama: 'DOSYA KAPANDI',
-              kapanma_tarihi: new Date().toISOString().split('T')[0]
+              kapanma_tarihi: new Date().toISOString().split('T')[0],
+              kapanis_tazminat: t,
+              kapanis_komisyon: komisyon,
+              kapanis_noter: noterMasrafi,
+              kapanis_vekalet: vekalet,
+              kapanis_faiz: faiz,
+              kapanis_stopaj: stopaj,
+              kapanis_toplam_kazanc: toplamKazanc,
+              kapanis_mr_kazanc: mrKazanc,
+              kapanis_mahsup: mahsupTutar
             });
             if (kapatR?.success) { load(); setKapatModal(false); }
             else alert(kapatR?.error || 'DOSYA KAPATMA HATASI');
@@ -1075,8 +1077,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <FormGroup label={`KOMİSYON ORANI (%${komisyonOran}) — DOSYADAN`}>
                   <input type="number" value={komisyonOran} disabled style={{...S.input,padding:'8px 10px',fontSize:12,background:C.bgHover,cursor:'not-allowed'}}/>
                 </FormGroup>
-                <FormGroup label="NOTER MASRAFI">
-                  <input type="number" value={kapatForm.noter_masrafi} onChange={e=>kF('noter_masrafi',e.target.value)} placeholder="1.596" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
+                <FormGroup label="NOTER MASRAFI (DOSYADAN OTOMATİK)">
+                  <input type="text" value={fmt(noterMasrafi)} disabled style={{...S.input,padding:'8px 10px',fontSize:12,fontWeight:700,background:C.bgHover,cursor:'not-allowed',color:C.text}}/>
                 </FormGroup>
                 <FormGroup label="KARŞI VEKALET ÜCRETİ">
                   <input type="number" value={kapatForm.vekalet_ucreti} onChange={e=>kF('vekalet_ucreti',e.target.value)} placeholder="8.500" style={{...S.input,padding:'8px 10px',fontSize:12}}/>
@@ -1137,21 +1139,6 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <div style={{marginTop:8,paddingTop:8,borderTop:`3px solid ${C.success}66`}}/>
                 {hesapRow('MR HASAR NET KAZANÇ', mrKazanc, {bold:true,color:mrKazanc>=0?C.success:C.danger,big:true})}
               </div>
-
-              {/* KASA SEÇİMİ */}
-              {hasYetki('dosya','dosya-kapat') && <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
-                <FormGroup label="KAZANÇ AKTARILACAK KASA">
-                  <select value={kapatForm.kasa_id} onChange={e=>kF('kasa_id',e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:12}}>
-                    {kasalar.map(k => <option key={k.id} value={k.id}>{k.ad} ({fmt(k.bakiye)})</option>)}
-                  </select>
-                </FormGroup>
-                <div style={{display:'flex',alignItems:'flex-end',paddingBottom:2}}>
-                  <div style={{padding:'10px 16px',background:mrKazanc>=0?`${C.success}11`:`${C.danger}11`,borderRadius:8,border:`1px solid ${mrKazanc>=0?C.success:C.danger}33`,width:'100%'}}>
-                    <div style={{fontSize:9,color:C.textMuted,marginBottom:2}}>KASAYA AKTARILACAK (MR NET KAZANÇ)</div>
-                    <div style={{fontSize:16,fontWeight:800,color:mrKazanc>=0?C.success:C.danger}}>{fmt(mrKazanc)}</div>
-                  </div>
-                </div>
-              </div>}
 
               {/* ONAYLA */}
               <button onClick={dosyaKapat} disabled={kapatLoading || !t}
