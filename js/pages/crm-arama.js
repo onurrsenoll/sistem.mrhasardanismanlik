@@ -593,31 +593,27 @@ MR.CrmAramaPage = ({setPage, user}) => {
             <table style={{width:'100%', borderCollapse:'separate', borderSpacing:'0 3px', fontSize:FS, minWidth:900, tableLayout:'fixed'}}>
               <colgroup>
                 <col style={{width:30}}/>{/* checkbox */}
-                <col style={{width:36}}/>{/* NO */}
-                <col style={{width:110}}/>{/* AD SOYAD */}
-                <col style={{width:86}}/>{/* TC */}
-                <col style={{width:90}}/>{/* TELEFON */}
-                <col style={{width:52}}/>{/* İL */}
-                <col style={{width:68}}/>{/* KAZA */}
-                <col style={{width:90}}/>{/* DETAY */}
+                <col style={{width:120}}/>{/* AD SOYAD */}
+                <col style={{width:90}}/>{/* TC */}
+                <col style={{width:100}}/>{/* TELEFON */}
+                <col style={{width:55}}/>{/* İL */}
+                <col style={{width:60}}/>{/* TÜR */}
+                <col style={{width:100}}/>{/* DETAY */}
                 <col style={{width:72}}/>{/* GÖRÜŞME */}
                 <col style={{width:72}}/>{/* DURUM */}
-                <col style={{width:76}}/>{/* SON DURUM */}
                 <col style={{width:88}}/>{/* İŞLEM */}
               </colgroup>
               <thead>
                 <tr style={{background:isKoyu?'#0f2342':'#1e40af', backgroundImage:isKoyu?'linear-gradient(135deg, #1e3a5f 0%, #0f2342 100%)':'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)'}}>
                   <th style={thSt}><input type="checkbox" checked={secili.length === data.length && data.length > 0} onChange={toggleAll}/></th>
-                  <th style={thSt}>NO</th>
                   <th style={thSt}>AD SOYAD</th>
                   <th style={thSt}>TC</th>
                   <th style={thSt}>TELEFON</th>
                   <th style={thSt}>İL</th>
-                  <th style={thSt}>KAZA</th>
+                  <th style={thSt}>TÜR</th>
                   <th style={thSt}>DETAY</th>
                   <th style={thSt}>GÖRÜŞME</th>
                   <th style={thSt}>DURUM</th>
-                  <th style={thSt}>SON DURUM</th>
                   <th style={{...thSticky, textAlign:'center'}}>İŞLEM</th>
                 </tr>
               </thead>
@@ -630,9 +626,8 @@ MR.CrmAramaPage = ({setPage, user}) => {
                     onMouseLeave={e => {if(!sel) {e.currentTarget.style.border=isKoyu?'1px solid rgba(6,182,212,0.15)':'1px solid rgba(99,102,241,0.12)';e.currentTarget.style.boxShadow=isKoyu?'0 1px 4px rgba(0,0,0,0.2)':'0 1px 3px rgba(99,102,241,0.06)';e.currentTarget.style.transform='translateY(0)';}}}
                   >
                     <td style={tdSt}><input type="checkbox" checked={sel} onChange={() => toggleSecili(item.id)}/></td>
-                    <td style={{...tdSt, fontWeight:700, color:C.accent}}>{item.sira_no || item.id}</td>
                     <td style={{...tdTrunc, fontWeight:600}} title={item.magdur_ad_soyad || ''}>{item.magdur_ad_soyad || '-'}</td>
-                    <td style={{...tdSt, fontFamily:'monospace'}} title={item.magdur_tc || ''}>{item.magdur_tc || '-'}</td>
+                    <td style={{...tdSt, fontFamily:'monospace', fontSize:10}} title={item.magdur_tc || ''}>{item.magdur_tc || '-'}</td>
                     <td style={tdSt}>
                       <div style={{display:'flex', alignItems:'center', gap:4}}>
                         <span style={{minWidth:80, whiteSpace:'nowrap'}}>{item.magdur_telefon || '-'}</span>
@@ -645,7 +640,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
                       </div>
                     </td>
                     <td style={tdTrunc} title={item.magdur_il || ''}>{item.magdur_il || '-'}</td>
-                    <td style={tdTrunc} title={item.kaza_turu || ''}>
+                    <td style={tdSt}>
                       {item.kaza_turu ? (
                         <Badge text={item.kaza_turu?.length > 8 ? item.kaza_turu.slice(0,8)+'..' : item.kaza_turu} color={item.kaza_turu?.includes('ÇİFT') ? C.accent : C.purple}/>
                       ) : '-'}
@@ -657,15 +652,6 @@ MR.CrmAramaPage = ({setPage, user}) => {
                         {item.durum === 'Alindi' ? '\u2714' : item.durum === 'Olumsuz' ? '\u2716' : '\u25CF'}{' '}
                         {durumLabels[item.durum] || 'BELİRSİZ'}
                       </span>
-                    </td>
-                    <td style={tdTrunc} title={item.son_durum || ''}>
-                      {item.son_durum ? (
-                        <span style={{
-                          padding:'2px 5px', borderRadius:4, fontSize:FS, fontWeight:600,
-                          background: `${sonucRenk(item.son_durum)}18`,
-                          color: sonucRenk(item.son_durum)
-                        }}>{item.son_durum}</span>
-                      ) : '-'}
                     </td>
                     <td style={{...tdSt,position:'sticky',right:0,background:tdStickyBgFn(i,sel),textAlign:'center'}}>
                       <div style={{display:'flex', gap:3, justifyContent:'center'}}>

@@ -462,14 +462,14 @@ MR._CRMListesiInner = ({setPage, user}) => {
                     <input type="checkbox" checked={data.length > 0 && secililer.length === data.length}
                       onChange={tumunuSec} style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                   </th>}
-                  {['AD SOYAD', 'TELEFON', 'İL', 'TÜR', 'KAYNAK', 'DURUM', 'SON İLETİŞİM', 'İŞLEMLER'].map(h =>
+                  {['AD SOYAD', 'TC', 'TELEFON', 'İL', 'TÜR', 'DETAY', 'GÖRÜŞME', 'DURUM', 'İŞLEMLER'].map(h =>
                     <th key={h} style={thSt}>{h}</th>
                   )}
                 </tr>
               </thead>
               <tbody>
                 {data.length === 0 ? (
-                  <tr><td colSpan={MR.hasYetki(user,'crm','crm-toplu-sil') ? 9 : 8}><EmptyState icon="Users" title="CRM KAYDI BULUNAMADI" desc="YENİ CRM KAYDI OLUŞTURUN"/></td></tr>
+                  <tr><td colSpan={MR.hasYetki(user,'crm','crm-toplu-sil') ? 11 : 10}><EmptyState icon="Users" title="CRM KAYDI BULUNAMADI" desc="YENİ CRM KAYDI OLUŞTURUN"/></td></tr>
                 ) : data.map((c, i) => (
                   <tr key={c.id || i} style={{backgroundColor:isKoyu?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderBottom:isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:isKoyu?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8,position:'relative',color:isKoyu?'#e2e8f0':'#1e293b'}}
                     onMouseEnter={e=>{if(isKoyu){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
@@ -479,29 +479,32 @@ MR._CRMListesiInner = ({setPage, user}) => {
                         style={{cursor:'pointer',width:14,height:14,accentColor:C.accent}}/>
                     </td>}
                     <td style={{...cellSt, fontWeight: 600}}>{c.ad_soyad}</td>
+                    <td style={{...cellSt, fontFamily:'monospace', fontSize:10}}>{c.tc_vergi_no || '-'}</td>
                     <td style={{...cellSt, color: C.textSec}}>
-                      <div style={{display:'flex', alignItems:'center', gap:6}}>
-                        <span style={{whiteSpace:'nowrap', minWidth:95, display:'inline-block'}}>{c.telefon || '-'}</span>
+                      <div style={{display:'flex', alignItems:'center', gap:4}}>
+                        <span style={{whiteSpace:'nowrap', minWidth:85, display:'inline-block'}}>{c.telefon || '-'}</span>
                         {c.telefon && (
-                          <button style={{...iconBtn(C.success), width:26, height:26, flexShrink:0}} title="ARA"
+                          <button style={{...iconBtn(C.success), width:22, height:22, flexShrink:0}} title="ARA"
                             onClick={(e) => {
                               e.stopPropagation();
-                              /* ARAMA BAŞLAT VE KİŞİ KARTI AÇ */
                               localStorage.setItem('webrtc_new_call_phone', c.telefon);
                               localStorage.setItem('webrtc_new_call_name', c.ad_soyad || '');
-                              if (MR.webrtcAra) { MR.webrtcAra(c.telefon, {ad: c.ad_soyad || '', telefon: c.telefon, il: c.il || '', dosya_turu: c.dosya_turu || 'ADK', crm_id: c.id}); }
+                              if (c.il) localStorage.setItem('webrtc_new_call_il', c.il);
+                              if (c.ilce) localStorage.setItem('webrtc_new_call_ilce', c.ilce);
+                              if (c.tc_vergi_no) localStorage.setItem('webrtc_new_call_tc', c.tc_vergi_no);
+                              if (MR.webrtcAra) { MR.webrtcAra(c.telefon, {ad: c.ad_soyad || ''}); }
                               setPage('crm-yeni');
                             }}>
-                            <LIcon name="Phone" size={13} color={C.success}/>
+                            <LIcon name="Phone" size={11} color={C.success}/>
                           </button>
                         )}
                       </div>
                     </td>
                     <td style={cellSt}>{c.il || '-'}</td>
                     <td style={cellSt}><Badge text={c.dosya_turu || 'ADK'} color={c.dosya_turu === 'BH' ? C.purple : C.accent}/></td>
-                    <td style={{...cellSt, color: C.textMuted}}>{c.kaynak || '-'}</td>
-                    <td style={cellSt}><Badge text={c.durum || 'YENİ'} color={dC(c.durum)}/></td>
+                    <td style={{...cellSt, color: C.textMuted, fontSize:10, maxWidth:80, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}} title={c.olay_aciklama || c.adres || '-'}>{c.olay_aciklama || c.adres || '-'}</td>
                     <td style={{...cellSt, color: C.textMuted}}>{MR.tarihFmt ? MR.tarihFmt(c.son_iletisim) : (c.son_iletisim || '-')}</td>
+                    <td style={cellSt}><Badge text={c.durum || 'YENİ'} color={dC(c.durum)}/></td>
                     <td style={{...cellSt, position: 'relative'}}>
                       <div style={{display: 'flex', gap: 4, alignItems: 'center'}}>
                         {/* DETAY */}
