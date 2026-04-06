@@ -78,10 +78,16 @@ MR.CrmAramaPage = ({setPage, user}) => {
 
   /* DURUM DEĞİŞTİR */
   const [durumDropId, setDurumDropId] = useState(null);
+  const [durumDropPos, setDurumDropPos] = useState({top:0,left:0});
   const durumDegistir = async (id, yeniDurum) => {
     await api.yonlendirmeUpdate({id, durum: yeniDurum});
     setDurumDropId(null);
     load();
+  };
+  const openDurumDrop = (e, itemId) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDurumDropPos({top: rect.bottom + 4, left: rect.left - 40});
+    setDurumDropId(durumDropId === itemId ? null : itemId);
   };
 
   /* SİL ONAY */
@@ -707,24 +713,9 @@ MR.CrmAramaPage = ({setPage, user}) => {
                         {hy('crm-duzenle') && <button style={iconBtn(C.warning)} title="DÜZENLE" onClick={() => { setYeniForm({magdur_ad_soyad:item.magdur_ad_soyad||'', magdur_tc:item.magdur_tc||'', magdur_telefon:item.magdur_telefon||'', magdur_il:item.magdur_il||'', kaza_turu:item.kaza_turu||'', magdur_ilce:item.magdur_ilce||''}); setDuzenleId(item.id); setYeniModal(true); }}>
                           <LIcon name="Edit3" size={12} color={C.warning}/>
                         </button>}
-                        {hy('crm-durum-degistir') && <div style={{position:'relative'}}>
-                          <button style={iconBtn(C.purple)} title="DURUM DEĞİŞTİR" onClick={() => setDurumDropId(durumDropId===item.id ? null : item.id)}>
-                            <LIcon name="RefreshCw" size={12} color={C.purple}/>
-                          </button>
-                          {durumDropId === item.id && (
-                            <div style={{position:'fixed',zIndex:9999,background:C.bgCard||'#fff',border:`1px solid ${C.border}`,borderRadius:8,boxShadow:'0 8px 24px rgba(0,0,0,0.2)',padding:4,minWidth:120}}>
-                              {[{v:'Belirsiz',l:'BELİRSİZ',c:C.warning},{v:'Alindi',l:'ALINDI',c:C.success},{v:'Olumsuz',l:'OLUMSUZ',c:C.danger}].map(d => (
-                                <div key={d.v} onClick={() => durumDegistir(item.id, d.v)}
-                                  style={{padding:'6px 10px',fontSize:10,fontWeight:600,cursor:'pointer',borderRadius:4,color:d.c,
-                                    background: item.durum===d.v ? `${d.c}18` : 'transparent'}}
-                                  onMouseEnter={e=>e.currentTarget.style.background=`${d.c}12`}
-                                  onMouseLeave={e=>e.currentTarget.style.background=item.durum===d.v?`${d.c}18`:'transparent'}>
-                                  {d.l}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>}
+                        {hy('crm-durum-degistir') && <button style={iconBtn(C.purple)} title="DURUM DEĞİŞTİR" onClick={(e) => openDurumDrop(e, item.id)}>
+                          <LIcon name="RefreshCw" size={12} color={C.purple}/>
+                        </button>}
                         {hy('crm-ara') && <button style={{
                           ...iconBtn(aramaAktif === item.id ? C.accent : C.success),
                           background: aramaAktif === item.id ? `${C.accent}33` : `${C.success}18`,
@@ -960,6 +951,23 @@ MR.CrmAramaPage = ({setPage, user}) => {
           </button>
         </div>
       </Modal>
+
+      {/* DURUM DEĞİŞTİR DROPDOWN - TABLO DIŞINDA */}
+      {durumDropId && (
+        <div>
+          <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,zIndex:9998}} onClick={() => setDurumDropId(null)}/>
+          <div style={{position:'fixed',top:durumDropPos.top,left:durumDropPos.left,zIndex:9999,background:isKoyu?'#1e293b':'#fff',border:`1px solid ${C.border}`,borderRadius:8,boxShadow:'0 8px 24px rgba(0,0,0,0.25)',padding:4,minWidth:130}}>
+            {[{v:'Belirsiz',l:'BELİRSİZ',c:C.warning},{v:'Alindi',l:'ALINDI',c:C.success},{v:'Olumsuz',l:'OLUMSUZ',c:C.danger}].map(d => (
+              <div key={d.v} onClick={() => durumDegistir(durumDropId, d.v)}
+                style={{padding:'8px 12px',fontSize:11,fontWeight:600,cursor:'pointer',borderRadius:4,color:d.c}}
+                onMouseEnter={e=>e.currentTarget.style.background=`${d.c}15`}
+                onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                {d.l}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* KİŞİ DETAY MODAL - TAM DETAY */}
       <Modal open={!!detayModal} onClose={() => setDetayModal(null)} title={'KİŞİ DETAY' + (detayModal ? ' - ' + (detayModal.magdur_ad_soyad || '') : '')} width="780px">
