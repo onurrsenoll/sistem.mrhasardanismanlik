@@ -1559,122 +1559,109 @@ MR._CRMYeniInner = ({setPage}) => {
 
           {/* ── MÜŞTERİ BİLGİLERİ ── */}
           <Fieldset title="MÜŞTERİ BİLGİLERİ" icon="User">
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:8}}>
               <FormGroup label="ADI SOYADI *">
-                <input style={{...S.input, padding:'10px 12px', fontSize:13}} value={f.ad_soyad} onChange={e => up('ad_soyad', e.target.value)} placeholder="ADI SOYADI"/>
+                <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={f.ad_soyad} onChange={e => up('ad_soyad', e.target.value)} placeholder="ADI SOYADI"/>
               </FormGroup>
               <FormGroup label="TC KİMLİK NO">
-                <input style={{...S.input, padding:'10px 12px', fontSize:13}} value={f.tc_vergi_no} onChange={e => up('tc_vergi_no', e.target.value.replace(/[^0-9]/g,''))} placeholder="TC KİMLİK NO" maxLength={11}/>
+                <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={f.tc_vergi_no} onChange={e => up('tc_vergi_no', e.target.value.replace(/[^0-9]/g,''))} placeholder="TC KİMLİK NO" maxLength={11}/>
               </FormGroup>
               <FormGroup label="TELEFON *">
-                <input style={{...S.input, padding:'10px 12px', fontSize:13}} value={f.telefon} onChange={e => up('telefon', e.target.value)} placeholder="05XX XXX XX XX"/>
-              </FormGroup>
-              <FormGroup label="İL / İLÇE">
-                <div style={{display:'flex', gap:6}}>
-                  <select style={{...S.select, flex:'1 1 50%', padding:'10px 12px', fontSize:13}} value={f.il} onChange={e => up('il', e.target.value)}>
-                    <option value="">İL SEÇİNİZ</option>
-                    {ILLER.map(i => <option key={i} value={i}>{i}</option>)}
-                  </select>
-                  <input style={{...S.input, flex:'1 1 50%', padding:'10px 12px', fontSize:13}} value={f.ilce} onChange={e => up('ilce', e.target.value)} placeholder="İLÇE"/>
-                </div>
+                <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={f.telefon} onChange={e => up('telefon', e.target.value)} placeholder="05XX XXX XX XX"/>
               </FormGroup>
             </div>
-            <div style={{marginTop:10}}>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 2fr', gap:8}}>
+              <FormGroup label="İL">
+                <select style={{...S.select, padding:'8px 10px', fontSize:12}} value={f.il} onChange={e => up('il', e.target.value)}>
+                  <option value="">İL SEÇİNİZ</option>
+                  {ILLER.map(i => <option key={i} value={i}>{i}</option>)}
+                </select>
+              </FormGroup>
+              <FormGroup label="İLÇE">
+                <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={f.ilce} onChange={e => up('ilce', e.target.value)} placeholder="İLÇE"/>
+              </FormGroup>
               <FormGroup label="ADRES">
-                <textarea style={{...S.input, minHeight:50, padding:'10px 12px', fontSize:13}} value={f.adres} onChange={e => up('adres', e.target.value)} placeholder="AÇIK ADRES..."/>
+                <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={f.adres} onChange={e => up('adres', e.target.value)} placeholder="AÇIK ADRES..."/>
               </FormGroup>
             </div>
           </Fieldset>
 
           {/* ── OLAY BİLGİLERİ ── */}
           <Fieldset title="OLAY BİLGİLERİ" icon="FileText">
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10}}>
+            {/* DOSYA TÜRÜ BUTONLARI + KAZA TARİHİ */}
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8}}>
               <FormGroup label="DOSYA TÜRÜ">
-                <select style={S.select} value={f.dosya_turu} onChange={e => up('dosya_turu', e.target.value)}>
-                  <option value="ADK">ADK</option>
-                  <option value="BH">BEDENİ HASAR</option>
-                  <option value="MDK">MOTOR DEĞER KAYBI</option>
-                </select>
+                <div style={{display:'flex', gap:4}}>
+                  {[{v:'ADK',l:'ADK',c:C.accent},{v:'BH',l:'BH',c:C.danger},{v:'MDK',l:'MDK',c:C.purple}].map(o => (
+                    <button key={o.v} type="button" onClick={() => up('dosya_turu', o.v)}
+                      style={{flex:1, padding:'7px 6px', borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer',
+                        background: f.dosya_turu===o.v ? o.c : 'transparent',
+                        color: f.dosya_turu===o.v ? '#fff' : C.textSec,
+                        border:`1px solid ${f.dosya_turu===o.v ? o.c : C.border}`, transition:'all .15s'}}>
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
               </FormGroup>
               <FormGroup label="KAZA TARİHİ">
                 <MR.DateInput value={f.kaza_tarihi} onChange={v => up('kaza_tarihi', v)}/>
               </FormGroup>
             </div>
 
-            {/* ── KAZA TÜRÜ TOGGLE ── */}
-            <FormGroup label="KAZA TÜRÜ">
-              <div style={{display:'flex', gap:6}}>
-                {[{v:'TEK_TARAFLI', l:'TEK TARAFLI', icon:'ArrowRight'}, {v:'CIFT_TARAFLI', l:'ÇİFT TARAFLI', icon:'ArrowLeftRight'}].map(opt => (
-                  <button key={opt.v} type="button" onClick={() => up('kaza_turu', opt.v)}
-                    style={{
-                      flex:1, padding:'12px 10px', borderRadius:10,
-                      border: `2px solid ${f.kaza_turu === opt.v ? C.accent : C.borderLight}`,
-                      background: f.kaza_turu === opt.v ? `${C.accent}20` : C.bgInput,
-                      color: f.kaza_turu === opt.v ? C.accent : C.textSec,
-                      fontWeight: f.kaza_turu === opt.v ? 800 : 500,
-                      fontSize:13, cursor:'pointer', transition:'all .2s',
-                      display:'flex', alignItems:'center', justifyContent:'center', gap:8
-                    }}>
-                    <LIcon name={opt.icon} size={16} color={f.kaza_turu === opt.v ? C.accent : C.textMuted}/>
-                    {opt.l}
-                  </button>
-                ))}
-              </div>
-            </FormGroup>
+            {/* KAZA TÜRÜ + POZİSYON YAN YANA */}
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8}}>
+              <FormGroup label="KAZA TÜRÜ">
+                <div style={{display:'flex', gap:4}}>
+                  {[{v:'TEK_TARAFLI',l:'TEK TARAFLI',c:C.accent},{v:'CIFT_TARAFLI',l:'ÇİFT TARAFLI',c:C.warning}].map(o => (
+                    <button key={o.v} type="button" onClick={() => up('kaza_turu', o.v)}
+                      style={{flex:1, padding:'7px 6px', borderRadius:6, fontSize:10, fontWeight:700, cursor:'pointer',
+                        background: f.kaza_turu===o.v ? `${o.c}20` : 'transparent',
+                        color: f.kaza_turu===o.v ? o.c : C.textSec,
+                        border:`1px solid ${f.kaza_turu===o.v ? o.c+'66' : C.border}`, transition:'all .15s'}}>
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
+              </FormGroup>
+              <FormGroup label="POZİSYON">
+                <div style={{display:'flex', gap:4}}>
+                  {[{v:'SURUCU',l:'SÜRÜCÜ',c:C.purple},{v:'YOLCU',l:'YOLCU',c:C.cyan},{v:'YAYA',l:'YAYA',c:C.warning}].map(o => (
+                    <button key={o.v} type="button" onClick={() => up('pozisyon', o.v)}
+                      style={{flex:1, padding:'7px 6px', borderRadius:6, fontSize:10, fontWeight:700, cursor:'pointer',
+                        background: f.pozisyon===o.v ? `${o.c}20` : 'transparent',
+                        color: f.pozisyon===o.v ? o.c : C.textSec,
+                        border:`1px solid ${f.pozisyon===o.v ? o.c+'66' : C.border}`, transition:'all .15s'}}>
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
+              </FormGroup>
+            </div>
 
-            {/* ── POZİSYON TOGGLE ── */}
-            <FormGroup label="POZİSYON">
-              <div style={{display:'flex', gap:6, marginBottom:10}}>
-                {[{v:'SURUCU', l:'SÜRÜCÜ', icon:'Steering'}, {v:'YOLCU', l:'YOLCU', icon:'Users'}, {v:'YAYA', l:'YAYA', icon:'PersonStanding'}].map(opt => (
-                  <button key={opt.v} type="button" onClick={() => up('pozisyon', opt.v)}
-                    style={{
-                      flex:1, padding:'12px 10px', borderRadius:10,
-                      border: `2px solid ${f.pozisyon === opt.v ? C.purple : C.borderLight}`,
-                      background: f.pozisyon === opt.v ? `${C.purple}20` : C.bgInput,
-                      color: f.pozisyon === opt.v ? C.purple : C.textSec,
-                      fontWeight: f.pozisyon === opt.v ? 800 : 500,
-                      fontSize:13, cursor:'pointer', transition:'all .2s',
-                      display:'flex', alignItems:'center', justifyContent:'center', gap:8
-                    }}>
-                    <LIcon name={opt.v === 'SURUCU' ? 'CircleUser' : opt.v === 'YOLCU' ? 'Users' : 'Footprints'} size={16} color={f.pozisyon === opt.v ? C.purple : C.textMuted}/>
-                    {opt.l}
-                  </button>
-                ))}
-              </div>
-            </FormGroup>
-
-            <FormGroup label="OLAY AÇIKLAMASI / GÖRÜŞME NOTU">
-              <textarea style={{...S.input, minHeight:80, padding:'10px 12px', fontSize:13}} value={f.olay_aciklama} onChange={e => up('olay_aciklama', e.target.value)} placeholder="MÜŞTERİ SAĞ ÖN ÇAMURLUK HASARLI, SİGORTA EKSPER BEKLİYOR, DEĞER KAYBI TALEP EDECEK..."/>
-            </FormGroup>
-
-            <FormGroup label="GÖRÜŞME SONUCU">
-              <select style={{...S.select, padding:'10px 12px', fontSize:13}} value={f.gorusme_sonucu} onChange={e => up('gorusme_sonucu', e.target.value)}>
-                <option value="">SEÇİNİZ</option>
-                {GORUSME_SONUCLARI.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </FormGroup>
+            {/* GÖRÜŞME NOTU + SONUÇ YAN YANA */}
+            <div style={{display:'grid', gridTemplateColumns:'2fr 1fr', gap:8}}>
+              <FormGroup label="GÖRÜŞME NOTU">
+                <textarea style={{...S.input, minHeight:60, padding:'8px 10px', fontSize:12}} value={f.olay_aciklama} onChange={e => up('olay_aciklama', e.target.value)} placeholder="GÖRÜŞME DETAYLARI..."/>
+              </FormGroup>
+              <FormGroup label="GÖRÜŞME SONUCU">
+                <select style={{...S.select, padding:'8px 10px', fontSize:11}} value={f.gorusme_sonucu} onChange={e => up('gorusme_sonucu', e.target.value)}>
+                  <option value="">SEÇİNİZ</option>
+                  {GORUSME_SONUCLARI.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </FormGroup>
+            </div>
           </Fieldset>
 
-          {/* ── EKLER / MEDYA ── */}
+          {/* ── EKLER - KOMPAKT ── */}
           <Fieldset title="EKLER" icon="Paperclip">
-            <div style={{display:'flex', gap:8, marginBottom:10, flexWrap:'wrap'}}>
-              {/* DOSYA EKLE */}
+            <div style={{display:'flex', gap:6, marginBottom: ekler.length > 0 ? 8 : 0}}>
               <button type="button" onClick={() => dosyaInputRef.current?.click()}
-                style={{
-                  ...S.btn, flex:'1 1 auto', justifyContent:'center',
-                  background: `${C.success}12`, border: `1px solid ${C.success}40`,
-                  color: C.success, fontSize:12, padding:'11px 14px', borderRadius:10
-                }}>
-                <LIcon name="FilePlus" size={16} color={C.success}/> DOSYA EKLE
+                style={{...S.btn, flex:1, justifyContent:'center', background:`${C.success}10`, border:`1px solid ${C.success}30`, color:C.success, fontSize:11, padding:'8px 10px', borderRadius:8}}>
+                <LIcon name="FilePlus" size={14} color={C.success}/> DOSYA EKLE
               </button>
-              {/* FOTOĞRAF YÜKLE */}
               <button type="button" onClick={() => fotoInputRef.current?.click()}
-                style={{
-                  ...S.btn, flex:'1 1 auto', justifyContent:'center',
-                  background: `${C.purple}12`, border: `1px solid ${C.purple}40`,
-                  color: C.purple, fontSize:12, padding:'11px 14px', borderRadius:10
-                }}>
-                <LIcon name="Camera" size={16} color={C.purple}/> FOTOĞRAF YÜKLE
+                style={{...S.btn, flex:1, justifyContent:'center', background:`${C.purple}10`, border:`1px solid ${C.purple}30`, color:C.purple, fontSize:11, padding:'8px 10px', borderRadius:8}}>
+                <LIcon name="Camera" size={14} color={C.purple}/> FOTOĞRAF
               </button>
             </div>
             {/* GİZLİ FILE INPUT'LAR */}
