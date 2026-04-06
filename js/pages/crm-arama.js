@@ -42,6 +42,24 @@ MR.CrmAramaPage = ({setPage, user}) => {
   const [notLoading, setNotLoading] = useState(false);
   const [notlar, setNotlar] = useState([]);
 
+  /* YENİ KAYIT MODAL */
+  const [yeniModal, setYeniModal] = useState(false);
+  const [yeniForm, setYeniForm] = useState({magdur_ad_soyad:'', magdur_tc:'', magdur_telefon:'', magdur_il:'', kaza_turu:'', magdur_ilce:''});
+  const [yeniLoading, setYeniLoading] = useState(false);
+  const yF = (k,v) => setYeniForm(p=>({...p,[k]:v}));
+  const yeniKaydet = async () => {
+    if (!yeniForm.magdur_ad_soyad.trim()) return alert('AD SOYAD GİRİNİZ');
+    if (!yeniForm.magdur_telefon.trim()) return alert('TELEFON GİRİNİZ');
+    setYeniLoading(true);
+    const r = await api.yonlendirmeImport({kayitlar:[yeniForm], batch_id:'M'+Date.now()});
+    setYeniLoading(false);
+    if (r?.success) {
+      setYeniModal(false);
+      setYeniForm({magdur_ad_soyad:'', magdur_tc:'', magdur_telefon:'', magdur_il:'', kaza_turu:'', magdur_ilce:''});
+      load();
+    } else alert(r?.error || 'KAYIT HATASI');
+  };
+
   /* SİL ONAY */
   const [silConfirm, setSilConfirm] = useState(false);
 
@@ -530,6 +548,9 @@ MR.CrmAramaPage = ({setPage, user}) => {
             <button style={{...S.btn, ...S.btnP, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4}} onClick={() => fileRef.current?.click()}>
               <LIcon name="Upload" size={11} color="#fff"/> EXCEL YÜKLE
             </button>
+            <button style={{...S.btn, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4, background:C.success, color:'#fff'}} onClick={() => setYeniModal(true)}>
+              <LIcon name="UserPlus" size={11} color="#fff"/> YENİ KAYIT
+            </button>
             <input placeholder="AD, TELEFON, TC ARA..." value={search} onChange={e => {setSearch(e.target.value); setSayfa(1);}}
               style={{...S.input, width:200, fontSize:10, padding:'6px 10px'}}/>
           </div>
@@ -849,6 +870,49 @@ MR.CrmAramaPage = ({setPage, user}) => {
             )}
           </div>
         )}
+      </Modal>
+
+      {/* YENİ KAYIT MODAL */}
+      <Modal open={yeniModal} onClose={() => setYeniModal(false)} title="YENİ KAYIT EKLE" width="520px">
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10}}>
+          <FormGroup label="AD SOYAD *">
+            <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={yeniForm.magdur_ad_soyad} onChange={e => yF('magdur_ad_soyad', e.target.value.toUpperCase())} placeholder="AD SOYAD"/>
+          </FormGroup>
+          <FormGroup label="TC KİMLİK">
+            <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={yeniForm.magdur_tc} onChange={e => yF('magdur_tc', e.target.value.replace(/\D/g,''))} placeholder="TC KİMLİK" maxLength={11}/>
+          </FormGroup>
+          <FormGroup label="TELEFON *">
+            <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={yeniForm.magdur_telefon} onChange={e => yF('magdur_telefon', e.target.value)} placeholder="05XX XXX XX XX"/>
+          </FormGroup>
+          <FormGroup label="İL">
+            <select style={{...S.select, padding:'8px 10px', fontSize:12}} value={yeniForm.magdur_il} onChange={e => yF('magdur_il', e.target.value)}>
+              <option value="">İL SEÇİNİZ</option>
+              {(ILLER || []).map(i => <option key={i} value={i}>{i}</option>)}
+            </select>
+          </FormGroup>
+          <FormGroup label="TÜR">
+            <div style={{display:'flex', gap:4}}>
+              {['TEK TARAFLI','ÇİFT TARAFLI'].map(t => (
+                <button key={t} type="button" onClick={() => yF('kaza_turu', t)}
+                  style={{flex:1, padding:'7px 4px', borderRadius:6, fontSize:10, fontWeight:700, cursor:'pointer',
+                    background: yeniForm.kaza_turu===t ? `${C.accent}` : 'transparent',
+                    color: yeniForm.kaza_turu===t ? '#fff' : C.textSec,
+                    border:`1px solid ${yeniForm.kaza_turu===t ? C.accent : C.border}`}}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </FormGroup>
+          <FormGroup label="DETAY">
+            <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={yeniForm.magdur_ilce} onChange={e => yF('magdur_ilce', e.target.value.toUpperCase())} placeholder="İLÇE / DETAY BİLGİ"/>
+          </FormGroup>
+        </div>
+        <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
+          <button style={{...S.btn, ...S.btnG}} onClick={() => setYeniModal(false)}>İPTAL</button>
+          <button style={{...S.btn, ...S.btnS}} onClick={yeniKaydet} disabled={yeniLoading}>
+            <LIcon name="Save" size={14} color="#fff"/> {yeniLoading ? 'KAYDEDİLİYOR...' : 'KAYDET'}
+          </button>
+        </div>
       </Modal>
 
       {/* SİL ONAY */}
