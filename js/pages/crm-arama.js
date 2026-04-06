@@ -42,8 +42,9 @@ MR.CrmAramaPage = ({setPage, user}) => {
   const [notLoading, setNotLoading] = useState(false);
   const [notlar, setNotlar] = useState([]);
 
-  /* YENİ KAYIT MODAL */
+  /* YENİ KAYIT / DÜZENLE MODAL */
   const [yeniModal, setYeniModal] = useState(false);
+  const [duzenleId, setDuzenleId] = useState(null);
   const [yeniForm, setYeniForm] = useState({magdur_ad_soyad:'', magdur_tc:'', magdur_telefon:'', magdur_il:'', kaza_turu:'', magdur_ilce:''});
   const [yeniLoading, setYeniLoading] = useState(false);
   const yF = (k,v) => setYeniForm(p=>({...p,[k]:v}));
@@ -51,10 +52,15 @@ MR.CrmAramaPage = ({setPage, user}) => {
     if (!yeniForm.magdur_ad_soyad.trim()) return alert('AD SOYAD GİRİNİZ');
     if (!yeniForm.magdur_telefon.trim()) return alert('TELEFON GİRİNİZ');
     setYeniLoading(true);
-    const r = await api.yonlendirmeImport({kayitlar:[yeniForm], batch_id:'M'+Date.now()});
+    let r;
+    if (duzenleId) {
+      r = await api.yonlendirmeUpdate({id: duzenleId, ...yeniForm});
+    } else {
+      r = await api.yonlendirmeImport({kayitlar:[yeniForm], batch_id:'M'+Date.now()});
+    }
     setYeniLoading(false);
     if (r?.success) {
-      setYeniModal(false);
+      setYeniModal(false); setDuzenleId(null);
       setYeniForm({magdur_ad_soyad:'', magdur_tc:'', magdur_telefon:'', magdur_il:'', kaza_turu:'', magdur_ilce:''});
       load();
     } else alert(r?.error || 'KAYIT HATASI');
@@ -548,7 +554,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
             <button style={{...S.btn, ...S.btnP, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4}} onClick={() => fileRef.current?.click()}>
               <LIcon name="Upload" size={11} color="#fff"/> EXCEL YÜKLE
             </button>
-            <button style={{...S.btn, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4, background:C.success, color:'#fff'}} onClick={() => setYeniModal(true)}>
+            <button style={{...S.btn, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4, background:C.success, color:'#fff'}} onClick={() => { setDuzenleId(null); setYeniForm({magdur_ad_soyad:'', magdur_tc:'', magdur_telefon:'', magdur_il:'', kaza_turu:'', magdur_ilce:''}); setYeniModal(true); }}>
               <LIcon name="UserPlus" size={11} color="#fff"/> YENİ KAYIT
             </button>
             <input placeholder="AD, TELEFON, TC ARA..." value={search} onChange={e => {setSearch(e.target.value); setSayfa(1);}}
@@ -676,8 +682,11 @@ MR.CrmAramaPage = ({setPage, user}) => {
                     </td>
                     <td style={{...tdSt,position:'sticky',right:0,background:tdStickyBgFn(i,sel),textAlign:'center'}}>
                       <div style={{display:'flex', gap:3, justifyContent:'center'}}>
-                        <button style={iconBtn(C.cyan)} title="NOT EKLE / GÖRÜNTÜLE" onClick={() => openNot(item)}>
-                          <LIcon name="MessageSquare" size={12} color={C.cyan}/>
+                        <button style={iconBtn(C.cyan)} title="NOT / DETAY" onClick={() => openNot(item)}>
+                          <LIcon name="Eye" size={12} color={C.cyan}/>
+                        </button>
+                        <button style={iconBtn(C.warning)} title="DÜZENLE" onClick={() => { setYeniForm({magdur_ad_soyad:item.magdur_ad_soyad||'', magdur_tc:item.magdur_tc||'', magdur_telefon:item.magdur_telefon||'', magdur_il:item.magdur_il||'', kaza_turu:item.kaza_turu||'', magdur_ilce:item.magdur_ilce||''}); setDuzenleId(item.id); setYeniModal(true); }}>
+                          <LIcon name="Edit3" size={12} color={C.warning}/>
                         </button>
                         <button style={{
                           ...iconBtn(aramaAktif === item.id ? C.accent : C.success),
@@ -873,7 +882,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
       </Modal>
 
       {/* YENİ KAYIT MODAL */}
-      <Modal open={yeniModal} onClose={() => setYeniModal(false)} title="YENİ KAYIT EKLE" width="520px">
+      <Modal open={yeniModal} onClose={() => {setYeniModal(false); setDuzenleId(null);}} title={duzenleId ? "KAYIT DÜZENLE" : "YENİ KAYIT EKLE"} width="520px">
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10}}>
           <FormGroup label="AD SOYAD *">
             <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={yeniForm.magdur_ad_soyad} onChange={e => yF('magdur_ad_soyad', e.target.value.toUpperCase())} placeholder="AD SOYAD"/>
