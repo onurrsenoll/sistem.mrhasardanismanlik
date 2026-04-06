@@ -683,14 +683,14 @@ MR.CrmAramaPage = ({setPage, user}) => {
                           ...iconBtn(aramaAktif === item.id ? C.accent : C.success),
                           background: aramaAktif === item.id ? `${C.accent}33` : `${C.success}18`,
                           minWidth: aramaAktif === item.id ? 60 : 26
-                        }} title="GİDEN ARAMA YAP" onClick={() => aramaYap(item)}
+                        }} title="ARA" onClick={() => aramaYap(item)}
                           disabled={aramaAktif === item.id}>
                           <LIcon name={aramaAktif === item.id ? 'PhoneCall' : 'Phone'} size={12}
                             color={aramaAktif === item.id ? C.accent : C.success}/>
                           {aramaAktif === item.id && <span style={{fontSize:8, color:C.accent, fontWeight:700}}>ARANIYOR</span>}
                         </button>
-                        <button style={{...iconBtn(item.donusen_crm_id ? C.success : C.warning), opacity: aktarimLoading === item.id ? 0.5 : 1}} title={item.donusen_crm_id ? 'CRM\'E AKTARILDI' : 'CRM\'E AKTAR'} onClick={() => crmAktar(item)} disabled={!!item.donusen_crm_id || aktarimLoading === item.id}>
-                          <LIcon name={item.donusen_crm_id ? 'CheckCircle' : 'UserPlus'} size={12} color={item.donusen_crm_id ? C.success : C.warning}/>
+                        <button style={iconBtn(C.danger)} title="SİL" onClick={() => {setSecili([item.id]); setSilConfirm(true);}}>
+                          <LIcon name="Trash2" size={12} color={C.danger}/>
                         </button>
                       </div>
                     </td>
