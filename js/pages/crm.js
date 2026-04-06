@@ -1174,7 +1174,6 @@ MR._CRMYeniInner = ({setPage}) => {
           break;
         case 'kapandi':
         case 'reddedildi':
-        case 'hata':
           /* ÇAĞRI SONA ERDİ */
           if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           setCallActive(false);
