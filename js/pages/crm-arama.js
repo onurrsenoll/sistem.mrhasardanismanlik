@@ -67,6 +67,15 @@ MR.CrmAramaPage = ({setPage, user}) => {
     } else alert(r?.error || 'KAYIT HATASI');
   };
 
+  /* KİŞİ DETAY MODAL */
+  const [detayModal, setDetayModal] = useState(null);
+  const openDetay = async (item) => {
+    setDetayModal(item);
+    setNotlar([]);
+    const r = await api.yonlendirmeGet(item.id);
+    if (r?.success && r.data?.notlar) setNotlar(r.data.notlar);
+  };
+
   /* DURUM DEĞİŞTİR */
   const [durumDropId, setDurumDropId] = useState(null);
   const durumDegistir = async (id, yeniDurum) => {
@@ -553,7 +562,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
         <div style={{...S.cardHead, justifyContent:'space-between'}}>
           <div style={{display:'flex', alignItems:'center', gap:10}}>
             <LIcon name="PhoneCall" size={14} color={C.accent}/>
-            <span style={{fontSize:13, fontWeight:700}}>YÖNLENDİRME / ARAMA LİSTESİ</span>
+            <span style={{fontSize:13, fontWeight:700}}>CRM LİSTESİ</span>
             <Badge text={toplamKayit + ' KAYIT'} color={C.accent}/>
           </div>
           <div style={{display:'flex', gap:6, alignItems:'center'}}>
@@ -657,11 +666,12 @@ MR.CrmAramaPage = ({setPage, user}) => {
                 {data.filter(item => !sonDurumF || item.son_durum === sonDurumF).map((item, i) => {
                   const sel = secili.includes(item.id);
                   return (
-                  <tr key={item.id} style={rowSt(i, sel)}
+                  <tr key={item.id} style={{...rowSt(i, sel), cursor:'pointer'}}
+                    onClick={() => openDetay(item)}
                     onMouseEnter={e => {if(!sel) {e.currentTarget.style.border=isKoyu?'1px solid rgba(6,182,212,0.45)':'1px solid rgba(99,102,241,0.35)';e.currentTarget.style.boxShadow=isKoyu?'0 0 8px rgba(6,182,212,0.18), 0 2px 8px rgba(0,0,0,0.15)':'0 0 8px rgba(99,102,241,0.12), 0 2px 6px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(-1px)';}}}
                     onMouseLeave={e => {if(!sel) {e.currentTarget.style.border=isKoyu?'1px solid rgba(6,182,212,0.15)':'1px solid rgba(99,102,241,0.12)';e.currentTarget.style.boxShadow=isKoyu?'0 1px 4px rgba(0,0,0,0.2)':'0 1px 3px rgba(99,102,241,0.06)';e.currentTarget.style.transform='translateY(0)';}}}
                   >
-                    <td style={tdSt}><input type="checkbox" checked={sel} onChange={() => toggleSecili(item.id)}/></td>
+                    <td style={tdSt} onClick={e => e.stopPropagation()}><input type="checkbox" checked={sel} onChange={() => toggleSecili(item.id)}/></td>
                     <td style={{...tdTrunc, fontWeight:600}} title={item.magdur_ad_soyad || ''}>{item.magdur_ad_soyad || '-'}</td>
                     <td style={{...tdSt, fontFamily:'monospace', fontSize:10}} title={item.magdur_tc || ''}>{item.magdur_tc || '-'}</td>
                     <td style={tdSt}>
@@ -689,7 +699,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
                         {durumLabels[item.durum] || 'BELİRSİZ'}
                       </span>
                     </td>
-                    <td style={{...tdSt,position:'sticky',right:0,background:tdStickyBgFn(i,sel),textAlign:'center'}}>
+                    <td style={{...tdSt,position:'sticky',right:0,background:tdStickyBgFn(i,sel),textAlign:'center'}} onClick={e => e.stopPropagation()}>
                       <div style={{display:'flex', gap:3, justifyContent:'center'}}>
                         {hy('crm-not-ekle') && <button style={iconBtn(C.cyan)} title="NOT / DETAY" onClick={() => openNot(item)}>
                           <LIcon name="Eye" size={12} color={C.cyan}/>
@@ -949,6 +959,66 @@ MR.CrmAramaPage = ({setPage, user}) => {
             <LIcon name="Save" size={14} color="#fff"/> {yeniLoading ? 'KAYDEDİLİYOR...' : 'KAYDET'}
           </button>
         </div>
+      </Modal>
+
+      {/* KİŞİ DETAY MODAL */}
+      <Modal open={!!detayModal} onClose={() => setDetayModal(null)} title={'KİŞİ DETAY' + (detayModal ? ' - ' + (detayModal.magdur_ad_soyad || '') : '')} width="640px">
+        {detayModal && (
+          <div>
+            {/* KİŞİ BİLGİLERİ */}
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0 16px', marginBottom:16, padding:12, background:isKoyu?'rgba(15,35,66,0.4)':'#f9fafb', borderRadius:8, border:isKoyu?'1px solid rgba(6,182,212,0.2)':'1px solid #e5e7eb'}}>
+              {[
+                {l:'AD SOYAD', v:detayModal.magdur_ad_soyad, b:true},
+                {l:'TC KİMLİK', v:detayModal.magdur_tc, mono:true},
+                {l:'TELEFON', v:detayModal.magdur_telefon, mono:true},
+                {l:'İL', v:detayModal.magdur_il},
+                {l:'TÜR', v:detayModal.kaza_turu},
+                {l:'DETAY', v:detayModal.magdur_ilce},
+                {l:'YÖNLENDİREN', v:detayModal.yonlendiren},
+                {l:'TARİH', v:detayModal.yonlendirme_tarihi ? (MR.tarihFmt ? MR.tarihFmt(detayModal.yonlendirme_tarihi) : detayModal.yonlendirme_tarihi) : '-'},
+                {l:'DURUM', v:detayModal.durum, c:durumRenk(detayModal.durum)},
+                {l:'SON DURUM', v:detayModal.son_durum, c:sonucRenk(detayModal.son_durum)}
+              ].map((r,i) => (
+                <div key={i} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'5px 0', borderBottom:`1px solid ${isKoyu?'rgba(255,255,255,0.06)':'#f0f0f0'}`}}>
+                  <span style={{fontSize:10, fontWeight:600, color:isKoyu?'#94a3b8':'#6b7280'}}>{r.l}</span>
+                  <span style={{fontSize:11, fontWeight:r.b?800:600, color:r.c||(isKoyu?'#e2e8f0':'#1e293b'), fontFamily:r.mono?'monospace':'inherit'}}>{r.v || '-'}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* İŞLEM BUTONLARI */}
+            <div style={{display:'flex', gap:6, marginBottom:16, flexWrap:'wrap'}}>
+              {hy('crm-ara') && detayModal.magdur_telefon && <button style={{...S.btn, background:C.success, color:'#fff', fontSize:10, padding:'6px 14px', borderRadius:6}} onClick={() => { setDetayModal(null); aramaYap(detayModal); }}>
+                <LIcon name="Phone" size={12} color="#fff"/> ARA
+              </button>}
+              {hy('crm-duzenle') && <button style={{...S.btn, background:`${C.warning}18`, color:C.warning, fontSize:10, padding:'6px 14px', borderRadius:6, border:`1px solid ${C.warning}33`}} onClick={() => { setDetayModal(null); setYeniForm({magdur_ad_soyad:detayModal.magdur_ad_soyad||'', magdur_tc:detayModal.magdur_tc||'', magdur_telefon:detayModal.magdur_telefon||'', magdur_il:detayModal.magdur_il||'', kaza_turu:detayModal.kaza_turu||'', magdur_ilce:detayModal.magdur_ilce||''}); setDuzenleId(detayModal.id); setYeniModal(true); }}>
+                <LIcon name="Edit3" size={12} color={C.warning}/> DÜZENLE
+              </button>}
+              {hy('crm-sil') && <button style={{...S.btn, background:`${C.danger}18`, color:C.danger, fontSize:10, padding:'6px 14px', borderRadius:6, border:`1px solid ${C.danger}33`}} onClick={() => { setSecili([detayModal.id]); setSilConfirm(true); setDetayModal(null); }}>
+                <LIcon name="Trash2" size={12} color={C.danger}/> SİL
+              </button>}
+            </div>
+
+            {/* NOTLAR */}
+            <div style={{fontSize:11, fontWeight:700, color:C.accent, marginBottom:8}}>
+              <LIcon name="MessageSquare" size={12} color={C.accent}/> GÖRÜŞME NOTLARI ({notlar.length})
+            </div>
+            {notlar.length > 0 ? (
+              <div style={{maxHeight:200, overflowY:'auto', marginBottom:12}}>
+                {notlar.map((n, i) => (
+                  <div key={n.id || i} style={{background:isKoyu?'rgba(15,35,66,0.3)':`${C.accent}06`, border:`1px solid ${C.border}`, borderRadius:8, padding:10, marginBottom:6}}>
+                    {n.gorusme_durumu && <span style={{padding:'2px 8px', borderRadius:4, fontSize:9, fontWeight:700, background:`${sonucRenk(n.gorusme_durumu)}18`, color:sonucRenk(n.gorusme_durumu), marginBottom:4, display:'inline-block'}}>{n.gorusme_durumu}</span>}
+                    <div style={{fontSize:11, lineHeight:1.5}}>{n.not_text}</div>
+                    <div style={{display:'flex', justifyContent:'space-between', fontSize:9, color:C.textMuted, marginTop:4}}>
+                      <span>{n.ekleyen_adi || 'SİSTEM'}</span>
+                      <span>{MR.tarihFmt ? MR.tarihFmt(n.created_at) : (n.created_at || '-')}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : <div style={{fontSize:10, color:C.textMuted, textAlign:'center', padding:12}}>HENÜZ NOT EKLENMEMİŞ</div>}
+          </div>
+        )}
       </Modal>
 
       {/* SİL ONAY */}
