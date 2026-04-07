@@ -27,6 +27,23 @@ try {
     $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS surucu_tc_kimlik VARCHAR(11) DEFAULT NULL");
     $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS ruhsat_sahibi_surucu ENUM('ayni','farkli') DEFAULT NULL");
 } catch (\Exception $e) {}
+
+// DDL Migration: dosyalar tablosu eksik kolonlar
+try {
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS sigorta_brans VARCHAR(50) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS eksper_firma VARCHAR(100) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS onarim_servisi VARCHAR(100) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS bh_kasko TINYINT(1) DEFAULT 0");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_tazminat DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_komisyon DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_noter DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_vekalet DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_faiz DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_stopaj DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_toplam_kazanc DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_mr_kazanc DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_mahsup DECIMAL(12,2) DEFAULT NULL");
+} catch (\Exception $e) {}
 $id = (int)$body['id'];
 
 $stmt = $db->prepare('SELECT * FROM dosyalar WHERE id = ?');
