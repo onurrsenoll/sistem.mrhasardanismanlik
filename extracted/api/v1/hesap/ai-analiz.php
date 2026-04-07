@@ -1,8 +1,7 @@
 <?php
 /**
  * MR HASAR DANIŞMANLIK - AI ADK ANALİZ ENDPOINTİ
- * Google Gemini + OpenAI + Claude destekli araç değer kaybı analizi
- * Key prefix ile otomatik API seçimi: AIzaSy = Gemini, sk- = OpenAI, sk-ant- = Claude
+ * Claude API ile araç değer kaybı analizi
  */
 
 ob_start(); error_reporting(0);

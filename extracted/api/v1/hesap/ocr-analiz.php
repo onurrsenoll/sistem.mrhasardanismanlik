@@ -37,7 +37,7 @@ $user = auth_required();
 
 // ═══ API KEY ÇÖZÜMLEME (3 katmanlı) ═══
 // 1. POST parametresinden gelen özel key (modül bazlı)
-// 2. DB'den modül bazlı key (qr_ruhsat_gemini_key)
+// 2. DB'den Claude API key
 // 3. Firma ayarlarındaki genel Gemini key
 
 $apiKey = '';
@@ -49,29 +49,27 @@ if (!empty($customApiKey)) {
     $apiKey = $customApiKey;
 }
 
-// Katman 2: DB'den modül bazlı key (sadece ruhsat tipi için)
+// Katman 2: DB'den Claude API key
+if (empty($apiKey)) {
+    $keys = getAiKeys();
+    $apiKey = $keys['active'];
+}
+
+// Katman 3: DB'den modül bazlı key (ruhsat tipi için eski uyumluluk)
 if (empty($apiKey) && $tip === 'ruhsat') {
     try {
         $db = getDB();
-        $stmt = $db->prepare("SELECT deger FROM ayarlar WHERE anahtar = 'qr_ruhsat_gemini_key' AND deger != ''");
+        $stmt = $db->prepare("SELECT deger FROM ayarlar WHERE anahtar = 'claude_api_key' AND deger != ''");
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($row && !empty(trim($row['deger']))) {
             $apiKey = trim($row['deger']);
         }
-    } catch (Exception $e) {
-        // Sessizce devam et, genel key'e düş
-    }
-}
-
-// Katman 3: Firma ayarlarındaki genel Gemini key
-if (empty($apiKey)) {
-    $keys = getAiKeys();
-    $apiKey = $keys['gemini'];
+    } catch (Exception $e) {}
 }
 
 if (empty($apiKey)) {
-    echo json_encode(['success' => false, 'error' => 'GEMİNİ API KEY BULUNAMADI. QR RUHSAT SAYFASINDAN VEYA SİSTEM > FİRMA AYARLARI SAYFASINDAN API ANAHTARI TANIMLAYIN.']);
+    echo json_encode(['success' => false, 'error' => 'CLAUDE API KEY BULUNAMADI. SİSTEM > FİRMA AYARLARI SAYFASINDAN API ANAHTARI TANIMLAYIN.']);
     exit;
 }
 
@@ -242,26 +240,29 @@ Aşağıdaki bilgileri JSON formatında döndür:
 Bulamadığın alanları null yap. Sadece JSON döndür, başka metin yazma.';
 }
 
-// ═══ GEMİNİ VİSİON API ÇAĞRISI ═══
-$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
+// ═══ CLAUDE VİSİON API ÇAĞRISI ═══
+$url = 'https://api.anthropic.com/v1/messages';
 
-$parts = [];
+$content = [];
 foreach ($images as $img) {
-    $parts[] = $img;
+    if (isset($img['inline_data'])) {
+        $content[] = [
+            'type' => 'image',
+            'source' => [
+                'type' => 'base64',
+                'media_type' => $img['inline_data']['mime_type'],
+                'data' => $img['inline_data']['data']
+            ]
+        ];
+    }
 }
-$parts[] = ['text' => $prompt];
+$content[] = ['type' => 'text', 'text' => $prompt];
 
 $payload = [
-    'contents' => [
-        [
-            'role' => 'user',
-            'parts' => $parts
-        ]
-    ],
-    'generationConfig' => [
-        'temperature' => 0.1,
-        'maxOutputTokens' => 1024,
-        'topP' => 0.8
+    'model' => 'claude-haiku-4-5-20251001',
+    'max_tokens' => 1024,
+    'messages' => [
+        ['role' => 'user', 'content' => $content]
     ]
 ];
 
@@ -271,52 +272,55 @@ if ($jsonPayload === false) {
     exit;
 }
 
-$res = http_post($url, $jsonPayload, ['Content-Type: application/json'], 60);
+$headers = [
+    'Content-Type: application/json',
+    'x-api-key: ' . $apiKey,
+    'anthropic-version: 2023-06-01'
+];
+
+$res = http_post($url, $jsonPayload, $headers, 60);
 
 if ($res['http_code'] !== 200 || !$res['body']) {
     echo json_encode([
         'success' => false,
-        'error' => 'GEMİNİ API HATASI: HTTP ' . $res['http_code'] . ($res['error'] ? ' - ' . $res['error'] : '') . ' (yontem: ' . $res['method'] . ')'
+        'error' => 'CLAUDE API HATASI: HTTP ' . $res['http_code'] . ($res['error'] ? ' - ' . $res['error'] : '') . ' (yontem: ' . $res['method'] . ')'
     ]);
     exit;
 }
 
 $data = json_decode($res['body'], true);
-// Gemini 2.5 Flash - TÜM parçaları topla
-$allTexts = [];
-$allParts = isset($data['candidates'][0]['content']['parts']) ? $data['candidates'][0]['content']['parts'] : [];
-foreach ($allParts as $part) {
-    if (isset($part['text'])) $allTexts[] = $part['text'];
+// Claude response'dan text çıkar
+$text = '';
+if (isset($data['content'])) {
+    foreach ($data['content'] as $block) {
+        if (isset($block['text'])) $text .= $block['text'];
+    }
 }
-$text = !empty($allTexts) ? end($allTexts) : '';
 
 if (empty($text)) {
-    echo json_encode(['success' => false, 'error' => 'GEMİNİ YANIT ALINAMADI']);
+    echo json_encode(['success' => false, 'error' => 'CLAUDE YANIT ALINAMADI']);
     exit;
 }
 
 // ═══ JSON PARSE - ÇOKLU STRATEJİ ═══
 $parsed = null;
+$t = trim($text);
 
-foreach ($allTexts as $t) {
-    $t = trim($t);
-    // Direkt
-    $r = json_decode($t, true);
+// Direkt
+$r = json_decode($t, true);
+if ($r && is_array($r)) { $parsed = $r; }
+// Markdown code block
+if (!$parsed && preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $t, $m)) {
+    $r = json_decode(trim($m[1]), true);
     if ($r && is_array($r)) { $parsed = $r; }
-    // Markdown code block
-    if (!$parsed && preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $t, $m)) {
-        $r = json_decode(trim($m[1]), true);
+}
+// İlk { son }
+if (!$parsed) {
+    $f = strpos($t, '{'); $l = strrpos($t, '}');
+    if ($f !== false && $l !== false && $l > $f) {
+        $r = json_decode(substr($t, $f, $l - $f + 1), true);
         if ($r && is_array($r)) { $parsed = $r; }
     }
-    // İlk { son }
-    if (!$parsed) {
-        $f = strpos($t, '{'); $l = strrpos($t, '}');
-        if ($f !== false && $l !== false && $l > $f) {
-            $r = json_decode(substr($t, $f, $l - $f + 1), true);
-            if ($r && is_array($r)) { $parsed = $r; }
-        }
-    }
-    if ($parsed) break;
 }
 
 if ($parsed) {

@@ -43,13 +43,8 @@ if (empty($apiKey)) {
     exit;
 }
 
-// Fallback sırası: aktif key başarısız olursa diğerlerini dene
+// Claude API kullanılır
 $fallbackKeys = [];
-foreach (['gemini', 'openai', 'claude'] as $p) {
-    if (!empty($keys[$p]) && $keys[$p] !== $apiKey) {
-        $fallbackKeys[] = $keys[$p];
-    }
-}
 
 $bugun = date('Y-m-d');
 $kmStr = number_format($km, 0, '.', '.');
