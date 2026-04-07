@@ -298,8 +298,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       ma_belge_tescil_no: maArac.belge_tescil_no || '',
       ma_onarim_gun_suresi: maArac.onarim_gun_suresi || '',
       ma_gecmis_hasar: maArac.gecmis_hasar || '',
-      ma_kasko: maArac.kasko ? 1 : 0,
-      bh_kasko: dosya.bh_kasko ? 1 : 0,
+      ma_kasko: parseInt(maArac.kasko) === 1 ? 1 : 0,
+      bh_kasko: parseInt(dosya.bh_kasko) === 1 ? 1 : 0,
       // Karşı araç alanları
       ka_ruhsat_sahibi: kaArac.ruhsat_sahibi || '',
       ka_tc_kimlik: kaArac.tc_kimlik || '',
@@ -309,7 +309,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       ka_belge_tescil_no: kaArac.belge_tescil_no || '',
       ka_trafik_sirket: kaArac.trafik_sirket || '',
       ka_trafik_police: kaArac.trafik_police || '',
-      ka_kasko: kaArac.kasko ? 1 : 0,
+      ka_kasko: parseInt(kaArac.kasko) === 1 ? 1 : 0,
       ka_ruhsat_sahibi_surucu: kaArac.ruhsat_sahibi_surucu || '',
       ka_surucu_ad: kaArac.surucu_ad || '',
       ka_surucu_tc_kimlik: kaArac.surucu_tc_kimlik || ''
@@ -362,14 +362,14 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       sorumlu_id: editForm.sorumlu_id ? parseInt(editForm.sorumlu_id) : null,
       paydas_id: editForm.paydas_id ? parseInt(editForm.paydas_id) : null
     };
-    // Mağdur araç alanları
+    // Mağdur araç alanları (ADK/MDK)
     if (editForm.dosya_turu === 'ADK' || editForm.dosya_turu === 'MDK') {
       updateData.ma_ruhsat_sahibi = editForm.ma_ruhsat_sahibi || '';
       updateData.ma_tc_kimlik = editForm.ma_tc_kimlik || '';
       updateData.ma_belge_tescil_no = editForm.ma_belge_tescil_no || '';
       updateData.ma_onarim_gun_suresi = editForm.ma_onarim_gun_suresi ? parseInt(editForm.ma_onarim_gun_suresi) : null;
       updateData.ma_gecmis_hasar = editForm.ma_gecmis_hasar || '';
-      updateData.ma_kasko = editForm.ma_kasko ? 1 : 0;
+      updateData.ma_kasko = parseInt(editForm.ma_kasko) === 1 ? 1 : 0;
       // Karşı araç alanları
       updateData.ka_ruhsat_sahibi = editForm.ka_ruhsat_sahibi || '';
       updateData.ka_tc_kimlik = editForm.ka_tc_kimlik || '';
@@ -379,10 +379,14 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       updateData.ka_belge_tescil_no = editForm.ka_belge_tescil_no || '';
       updateData.ka_trafik_sirket = editForm.ka_trafik_sirket || '';
       updateData.ka_trafik_police = editForm.ka_trafik_police || '';
-      updateData.ka_kasko = editForm.ka_kasko ? 1 : 0;
+      updateData.ka_kasko = parseInt(editForm.ka_kasko) === 1 ? 1 : 0;
       updateData.ka_ruhsat_sahibi_surucu = editForm.ka_ruhsat_sahibi_surucu || '';
       updateData.ka_surucu_ad = editForm.ka_surucu_ad || '';
       updateData.ka_surucu_tc_kimlik = editForm.ka_surucu_tc_kimlik || '';
+    }
+    // BH kasko
+    if (editForm.dosya_turu === 'BH') {
+      updateData.bh_kasko = parseInt(editForm.bh_kasko) === 1 ? 1 : 0;
     }
     const r = await api.dosyaUpdate(updateData);
     if (r?.success) { load(); setEditM(false); }
@@ -652,7 +656,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                     <InfoRow label="MODEL YILI" value={arac.model_yili}/>
                     <InfoRow label="TESCİL NO" value={arac.belge_tescil_no} mono/>
                     <InfoRow label="ONARIM GÜN" value={arac.onarim_gun_suresi ? `${arac.onarim_gun_suresi} GÜN` : '-'}/>
-                    <InfoRow label="KASKO" value={arac.kasko ? 'VAR' : 'YOK'} bold color={arac.kasko ? C.success : C.textMuted}/>
+                    <InfoRow label="KASKO" value={parseInt(arac.kasko)===1 ? 'VAR' : 'YOK'} bold color={parseInt(arac.kasko)===1 ? C.success : C.textMuted}/>
                     <InfoRow label="GEÇMİŞ HASAR" value={arac.gecmis_hasar ? arac.gecmis_hasar.toUpperCase() : '-'} bold color={arac.gecmis_hasar === 'var' ? C.danger : C.success}/>
                     <InfoRow label="HAK MAHRUMİYET" value={parseInt(dosya.hak_mahrumiyet) === 1 ? 'VAR' : 'YOK'} bold color={parseInt(dosya.hak_mahrumiyet) === 1 ? C.success : C.textMuted}/>
                   </div>
@@ -678,7 +682,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                     <InfoRow label="TESCİL NO" value={karsiArac.belge_tescil_no} mono/>
                     <InfoRow label="TRAFİK SİGORTA" value={karsiArac.trafik_sirket}/>
                     <InfoRow label="POLİÇE NO" value={karsiArac.trafik_police} mono/>
-                    <InfoRow label="KASKO" value={karsiArac.kasko ? 'VAR' : 'YOK'} bold color={karsiArac.kasko ? C.success : C.textMuted}/>
+                    <InfoRow label="KASKO" value={parseInt(karsiArac.kasko)===1 ? 'VAR' : 'YOK'} bold color={parseInt(karsiArac.kasko)===1 ? C.success : C.textMuted}/>
                     <InfoRow label="SAHİBİ/SÜRÜCÜ" value={karsiArac.ruhsat_sahibi_surucu ? karsiArac.ruhsat_sahibi_surucu.toUpperCase() : '-'} bold color={karsiArac.ruhsat_sahibi_surucu === 'farkli' ? C.warning : C.success}/>
                     {karsiArac.ruhsat_sahibi_surucu === 'farkli' && <>
                       <InfoRow label="SÜRÜCÜ ADI" value={karsiArac.surucu_ad}/>

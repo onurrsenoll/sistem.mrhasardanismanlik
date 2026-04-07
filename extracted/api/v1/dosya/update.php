@@ -125,6 +125,8 @@ try {
             $maSets[] = "$field = ?";
             if (in_array($field, ['model_yili', 'onarim_gun_suresi'])) {
                 $maParams[] = !empty($body[$key]) ? (int)$body[$key] : null;
+            } elseif ($field === 'kasko') {
+                $maParams[] = !empty($body[$key]) && $body[$key] !== '0' ? 1 : 0;
             } else {
                 $maParams[] = clean($body[$key]);
             }
@@ -185,7 +187,7 @@ try {
             if (in_array($field, ['model_yili'])) {
                 $kaParams[] = !empty($body[$key]) ? (int)$body[$key] : null;
             } elseif ($field === 'kasko') {
-                $kaParams[] = !empty($body[$key]) ? 1 : 0;
+                $kaParams[] = !empty($body[$key]) && $body[$key] !== '0' ? 1 : 0;
             } else {
                 $kaParams[] = clean($body[$key]);
             }
