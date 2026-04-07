@@ -13,6 +13,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({toplam: 0, belirsiz: 0, alindi: 0, olumsuz: 0});
+  const [dosyaTuruTab, setDosyaTuruTab] = useState('ADK');
 
   /* FİLTRELER */
   const [search, setSearch] = useState('');
@@ -46,7 +47,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
   /* YENİ KAYIT / DÜZENLE MODAL */
   const [yeniModal, setYeniModal] = useState(false);
   const [duzenleId, setDuzenleId] = useState(null);
-  const [yeniForm, setYeniForm] = useState({magdur_ad_soyad:'', magdur_tc:'', magdur_telefon:'', magdur_il:'', kaza_turu:'', magdur_ilce:''});
+  const [yeniForm, setYeniForm] = useState({dosya_turu:'ADK', magdur_ad_soyad:'', magdur_tc:'', magdur_telefon:'', magdur_il:'', kaza_turu:'', magdur_ilce:'', plaka:'', sigorta_sirket:'', kusur_durumu:'', maluliyet:'', kaza_pozisyonu:'', guncel_durum:''});
   const [yeniLoading, setYeniLoading] = useState(false);
   const yF = (k,v) => setYeniForm(p=>({...p,[k]:v}));
   const yeniKaydet = async () => {
@@ -57,12 +58,12 @@ MR.CrmAramaPage = ({setPage, user}) => {
     if (duzenleId) {
       r = await api.yonlendirmeUpdate({id: duzenleId, ...yeniForm});
     } else {
-      r = await api.yonlendirmeImport({kayitlar:[yeniForm], batch_id:'M'+Date.now()});
+      r = await api.yonlendirmeImport({kayitlar:[{...yeniForm, dosya_turu: dosyaTuruTab}], batch_id:'M'+Date.now()});
     }
     setYeniLoading(false);
     if (r?.success) {
       setYeniModal(false); setDuzenleId(null);
-      setYeniForm({magdur_ad_soyad:'', magdur_tc:'', magdur_telefon:'', magdur_il:'', kaza_turu:'', magdur_ilce:''});
+      setYeniForm({dosya_turu:dosyaTuruTab, magdur_ad_soyad:'', magdur_tc:'', magdur_telefon:'', magdur_il:'', kaza_turu:'', magdur_ilce:'', plaka:'', sigorta_sirket:'', kusur_durumu:'', maluliyet:'', kaza_pozisyonu:'', guncel_durum:''});
       load();
     } else alert(r?.error || 'KAYIT HATASI');
   };
@@ -170,16 +171,26 @@ MR.CrmAramaPage = ({setPage, user}) => {
         }
         return '';
       };
-      return {
-        yonlendiren: get('YÖNLENDİREN', 'YONLENDIREN', 'KAYNAK'),
-        yonlendirme_tarihi: get('YÖNLENDİRME TARİHİ', 'YONLENDIRME TARIHI', 'TARİH', 'TARIH'),
-        kaza_turu: get('KAZA TÜRÜ', 'KAZA TURU', 'TÜR', 'TUR'),
-        magdur_ad_soyad: get('MAĞDUR AD SOYAD', 'MAGDUR AD SOYAD', 'AD SOYAD', 'ADSOYAD', 'İSİM', 'ISIM'),
-        magdur_telefon: get('MAĞDUR TELEFON', 'MAGDUR TELEFON', 'TELEFON', 'TEL', 'GSM'),
-        magdur_il: get('MAĞDUR İL', 'MAGDUR IL', 'İL', 'IL', 'ŞEHİR', 'SEHIR'),
-        magdur_ilce: get('DETAY', 'MAĞDUR İLÇE', 'MAGDUR ILCE', 'İLÇE', 'ILCE'),
-        magdur_tc: get('MAĞDUR TC', 'MAGDUR TC', 'TC', 'TC KİMLİK', 'TC KIMLIK', 'TCKIMLIK')
+      const base = {
+        dosya_turu: dosyaTuruTab,
+        magdur_ad_soyad: get('AD SOYAD', 'MAĞDUR AD SOYAD', 'MAGDUR AD SOYAD', 'ADSOYAD', 'İSİM', 'ISIM'),
+        magdur_tc: get('TC', 'MAĞDUR TC', 'MAGDUR TC', 'TC KİMLİK', 'TC KIMLIK', 'TCKIMLIK'),
+        magdur_telefon: get('TELEFON', 'MAĞDUR TELEFON', 'MAGDUR TELEFON', 'TEL', 'GSM'),
+        magdur_il: get('İL', 'MAĞDUR İL', 'MAGDUR IL', 'IL', 'ŞEHİR', 'SEHIR'),
+        yonlendirme_tarihi: get('KAZA TARİHİ', 'KAZA TARIHI', 'YÖNLENDİRME TARİHİ', 'TARİH', 'TARIH'),
+        kusur_durumu: get('KUSUR', 'KUSUR DURUMU'),
+        magdur_ilce: get('GÖRÜŞME NOTU', 'DETAY', 'İLÇE', 'ILCE', 'NOT')
       };
+      if (dosyaTuruTab === 'ADK' || dosyaTuruTab === 'MDK') {
+        base.plaka = get('PLAKA');
+        base.sigorta_sirket = get('SİGORTA', 'SİGORTA ŞİRKETİ', 'SIGORTA', 'SIGORTA SIRKETI');
+        base.kaza_turu = get('KAZA TÜRÜ', 'KAZA TURU', 'TÜR');
+      } else {
+        base.maluliyet = get('MALULİYET', 'MALULIYET', 'KIRIK', 'SAKATLIK');
+        base.kaza_pozisyonu = get('POZİSYON', 'POZISYON', 'KAZA POZİSYONU');
+        base.guncel_durum = get('GÜNCEL DURUM', 'GUNCEL DURUM', 'HASTAHANE', 'DURUM');
+      }
+      return base;
     };
 
     const kayitlar = excelData.map(colMap).filter(r => r.magdur_ad_soyad || r.magdur_telefon);
@@ -216,14 +227,21 @@ MR.CrmAramaPage = ({setPage, user}) => {
 
   /* ── ŞABLON İNDİR ── */
   const sablonIndir = () => {
-    const ws = XLSX.utils.aoa_to_sheet([
-      ['MAĞDUR AD SOYAD', 'MAĞDUR TC', 'MAĞDUR TELEFON', 'MAĞDUR İL', 'KAZA TÜRÜ', 'DETAY', 'YÖNLENDİREN', 'YÖNLENDİRME TARİHİ'],
-      ['MEHMET DEMİR', '12345678901', '05321234567', 'İSTANBUL', 'ÇİFT TARAFLI', 'KADIKÖY / SAĞ ÖN HASAR', 'ÖRNEK KİŞİ', '2026-02-13']
-    ]);
-    ws['!cols'] = [{wch:22},{wch:14},{wch:16},{wch:14},{wch:16},{wch:24},{wch:18},{wch:18}];
+    let headers, example, cols;
+    if (dosyaTuruTab === 'BH') {
+      headers = ['MALULİYET', 'AD SOYAD', 'TC', 'TELEFON', 'KAZA TARİHİ', 'KUSUR', 'POZİSYON', 'GÜNCEL DURUM', 'İL', 'GÖRÜŞME NOTU'];
+      example = ['SOL KOL KIRIGI', 'MEHMET DEMİR', '12345678901', '05321234567', '2026-02-13', 'HAKLI', 'YOLCU', 'TABURCU', 'İSTANBUL', ''];
+      cols = [{wch:18},{wch:20},{wch:14},{wch:16},{wch:14},{wch:10},{wch:12},{wch:14},{wch:12},{wch:24}];
+    } else {
+      headers = ['PLAKA', 'AD SOYAD', 'TC', 'TELEFON', 'KAZA TARİHİ', 'KUSUR', 'SİGORTA ŞİRKETİ', 'İL', 'GÖRÜŞME NOTU'];
+      example = ['34ABC123', 'MEHMET DEMİR', '12345678901', '05321234567', '2026-02-13', 'AÇIK', 'HDI SİGORTA', 'İSTANBUL', ''];
+      cols = [{wch:12},{wch:20},{wch:14},{wch:16},{wch:14},{wch:10},{wch:20},{wch:12},{wch:24}];
+    }
+    const ws = XLSX.utils.aoa_to_sheet([headers, example]);
+    ws['!cols'] = cols;
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'YÖNLENDİRME');
-    XLSX.writeFile(wb, 'yonlendirme_sablon.xlsx');
+    XLSX.utils.book_append_sheet(wb, ws, dosyaTuruTab);
+    XLSX.writeFile(wb, 'crm_sablon_' + dosyaTuruTab + '.xlsx');
   };
 
   /* ── TOPLU İŞLEM ── */
@@ -478,9 +496,32 @@ MR.CrmAramaPage = ({setPage, user}) => {
     };
   };
 
+  /* DOSYA TÜRÜNE GÖRE KOLONLAR */
+  const isBH = dosyaTuruTab === 'BH';
+  const tabKolonlar = isBH
+    ? ['MALULİYET','AD SOYAD','TC','TELEFON','KAZA TARİHİ','KUSUR','POZİSYON','GÜNCEL DURUM','GÖRÜŞME NOTU','CRM DURUM','İŞLEM']
+    : ['PLAKA','AD SOYAD','TC','TELEFON','KAZA TARİHİ','KUSUR','DOSYA DURUM','SİGORTA ŞİRKETİ','GÖRÜŞME NOTU','CRM DURUM','İŞLEM'];
+
   /* ── RENDER ── */
   return (
     <div className="fade-in">
+
+      {/* ═══ DOSYA TÜRÜ TAB BUTONLARI ═══ */}
+      <div style={{display:'flex', gap:6, marginBottom:12}}>
+        {[{v:'ADK',l:'ADK - ARAÇ DEĞER KAYBI',c:C.accent},{v:'BH',l:'BH - BEDENİ HASAR',c:C.danger},{v:'MDK',l:'MDK - MOTOR DEĞER KAYBI',c:C.purple}].map(t => (
+          <button key={t.v} onClick={() => {setDosyaTuruTab(t.v); setSayfa(1);}}
+            style={{
+              flex:1, padding:'10px 8px', borderRadius:8, fontSize:12, fontWeight:800, cursor:'pointer',
+              background: dosyaTuruTab===t.v ? t.c : 'transparent',
+              color: dosyaTuruTab===t.v ? '#fff' : C.textSec,
+              border: `2px solid ${dosyaTuruTab===t.v ? t.c : C.border}`,
+              transition:'all .2s',
+              boxShadow: dosyaTuruTab===t.v ? `0 4px 12px ${t.c}33` : 'none'
+            }}>
+            {t.l}
+          </button>
+        ))}
+      </div>
 
       {/* ═══ İSTATİSTİK KARTLARI - TAM GENİŞLİK 5 EŞİT KART ═══ */}
       <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:8, marginBottom:12}}>
@@ -578,7 +619,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
             {hy('crm-excel-yukle') && <button style={{...S.btn, ...S.btnP, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4}} onClick={() => fileRef.current?.click()}>
               <LIcon name="Upload" size={11} color="#fff"/> EXCEL YÜKLE
             </button>}
-            {hy('crm-yeni') && <button style={{...S.btn, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4, background:C.success, color:'#fff'}} onClick={() => { setDuzenleId(null); setYeniForm({magdur_ad_soyad:'', magdur_tc:'', magdur_telefon:'', magdur_il:'', kaza_turu:'', magdur_ilce:''}); setYeniModal(true); }}>
+            {hy('crm-yeni') && <button style={{...S.btn, fontSize:9, padding:'5px 10px', display:'flex', alignItems:'center', gap:4, background:C.success, color:'#fff'}} onClick={() => { setDuzenleId(null); setYeniForm({dosya_turu:dosyaTuruTab, magdur_ad_soyad:'', magdur_tc:'', magdur_telefon:'', magdur_il:'', kaza_turu:'', magdur_ilce:'', plaka:'', sigorta_sirket:'', kusur_durumu:'', maluliyet:'', kaza_pozisyonu:'', guncel_durum:''}); setYeniModal(true); }}>
               <LIcon name="UserPlus" size={11} color="#fff"/> YENİ KAYIT
             </button>}
             <input placeholder="AD, TELEFON, TC ARA..." value={search} onChange={e => {setSearch(e.target.value); setSayfa(1);}}
@@ -642,34 +683,15 @@ MR.CrmAramaPage = ({setPage, user}) => {
         ) : (
           <div style={{overflowX:'auto', width:'100%', position:'relative'}}>
             <table style={{width:'100%', borderCollapse:'separate', borderSpacing:'0 3px', fontSize:FS, minWidth:900, tableLayout:'fixed'}}>
-              <colgroup>
-                <col style={{width:30}}/>{/* checkbox */}
-                <col style={{width:120}}/>{/* AD SOYAD */}
-                <col style={{width:90}}/>{/* TC */}
-                <col style={{width:100}}/>{/* TELEFON */}
-                <col style={{width:55}}/>{/* İL */}
-                <col style={{width:60}}/>{/* TÜR */}
-                <col style={{width:100}}/>{/* DETAY */}
-                <col style={{width:72}}/>{/* GÖRÜŞME */}
-                <col style={{width:72}}/>{/* DURUM */}
-                <col style={{width:88}}/>{/* İŞLEM */}
-              </colgroup>
               <thead>
                 <tr style={{background:isKoyu?'#0f2342':'#1e40af', backgroundImage:isKoyu?'linear-gradient(135deg, #1e3a5f 0%, #0f2342 100%)':'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)'}}>
-                  <th style={thSt}><input type="checkbox" checked={secili.length === data.length && data.length > 0} onChange={toggleAll}/></th>
-                  <th style={thSt}>AD SOYAD</th>
-                  <th style={thSt}>TC</th>
-                  <th style={thSt}>TELEFON</th>
-                  <th style={thSt}>İL</th>
-                  <th style={thSt}>TÜR</th>
-                  <th style={thSt}>DETAY</th>
-                  <th style={thSt}>GÖRÜŞME</th>
-                  <th style={thSt}>DURUM</th>
+                  <th style={{...thSt,width:30}}><input type="checkbox" checked={secili.length === data.length && data.length > 0} onChange={toggleAll}/></th>
+                  {tabKolonlar.slice(0,-1).map(h => <th key={h} style={thSt}>{h}</th>)}
                   <th style={{...thSticky, textAlign:'center'}}>İŞLEM</th>
                 </tr>
               </thead>
               <tbody>
-                {data.filter(item => !sonDurumF || item.son_durum === sonDurumF).map((item, i) => {
+                {data.filter(item => (!item.dosya_turu || item.dosya_turu === dosyaTuruTab) && (!sonDurumF || item.son_durum === sonDurumF)).map((item, i) => {
                   const sel = secili.includes(item.id);
                   return (
                   <tr key={item.id} style={{...rowSt(i, sel), cursor:'pointer'}}
@@ -678,8 +700,10 @@ MR.CrmAramaPage = ({setPage, user}) => {
                     onMouseLeave={e => {if(!sel) {e.currentTarget.style.border=isKoyu?'1px solid rgba(6,182,212,0.15)':'1px solid rgba(99,102,241,0.12)';e.currentTarget.style.boxShadow=isKoyu?'0 1px 4px rgba(0,0,0,0.2)':'0 1px 3px rgba(99,102,241,0.06)';e.currentTarget.style.transform='translateY(0)';}}}
                   >
                     <td style={tdSt} onClick={e => e.stopPropagation()}><input type="checkbox" checked={sel} onChange={() => toggleSecili(item.id)}/></td>
+                    {/* İLK KOLON: ADK/MDK=PLAKA, BH=MALULİYET */}
+                    <td style={{...tdSt, fontWeight:700, color:isBH?C.danger:C.accent}}>{isBH ? (item.maluliyet || '-') : (item.plaka || '-')}</td>
                     <td style={{...tdTrunc, fontWeight:600}} title={item.magdur_ad_soyad || ''}>{item.magdur_ad_soyad || '-'}</td>
-                    <td style={{...tdSt, fontFamily:'monospace', fontSize:10}} title={item.magdur_tc || ''}>{item.magdur_tc || '-'}</td>
+                    <td style={{...tdSt, fontFamily:'monospace', fontSize:10}}>{item.magdur_tc || '-'}</td>
                     <td style={tdSt}>
                       <div style={{display:'flex', alignItems:'center', gap:4}}>
                         <span style={{minWidth:80, whiteSpace:'nowrap'}}>{item.magdur_telefon || '-'}</span>
@@ -691,14 +715,17 @@ MR.CrmAramaPage = ({setPage, user}) => {
                         )}
                       </div>
                     </td>
-                    <td style={tdTrunc} title={item.magdur_il || ''}>{item.magdur_il || '-'}</td>
-                    <td style={tdSt}>
-                      {item.kaza_turu ? (
-                        <Badge text={item.kaza_turu?.length > 8 ? item.kaza_turu.slice(0,8)+'..' : item.kaza_turu} color={item.kaza_turu?.includes('ÇİFT') ? C.accent : C.purple}/>
-                      ) : '-'}
-                    </td>
-                    <td style={tdTrunc} title={item.magdur_ilce || ''}>{item.magdur_ilce || '-'}</td>
-                    <td style={tdSt}>{MR.tarihFmt ? MR.tarihFmt(item.gorusme_tarihi) : '-'}</td>
+                    <td style={tdSt}>{item.yonlendirme_tarihi ? (MR.tarihFmt ? MR.tarihFmt(item.yonlendirme_tarihi) : item.yonlendirme_tarihi) : '-'}</td>
+                    <td style={tdSt}><Badge text={item.kusur_durumu || '-'} color={item.kusur_durumu==='AÇIK'||item.kusur_durumu==='HAKLI'?C.success:item.kusur_durumu==='KAPALI'||item.kusur_durumu==='KUSURLU'?C.danger:C.textMuted}/></td>
+                    {/* ADK/MDK: DOSYA DURUM + SİGORTA | BH: POZİSYON + GÜNCEL DURUM */}
+                    {isBH ? (
+                      <><td style={tdSt}><Badge text={item.kaza_pozisyonu || '-'} color={item.kaza_pozisyonu==='YAYA'?C.danger:item.kaza_pozisyonu==='YOLCU'?C.warning:C.accent}/></td>
+                      <td style={tdSt}><Badge text={item.guncel_durum || '-'} color={item.guncel_durum==='HASTAHANE'?C.danger:C.success}/></td></>
+                    ) : (
+                      <><td style={tdTrunc}>{item.son_durum || '-'}</td>
+                      <td style={tdTrunc} title={item.sigorta_sirket || ''}>{item.sigorta_sirket || '-'}</td></>
+                    )}
+                    <td style={{...tdTrunc, fontSize:10}} title={item.magdur_ilce || ''}>{item.magdur_ilce || '-'}</td>
                     <td style={tdSt}>
                       <span style={durumChip(item.durum)}>
                         {item.durum === 'Alindi' ? '\u2714' : item.durum === 'Olumsuz' ? '\u2716' : '\u25CF'}{' '}
@@ -921,8 +948,18 @@ MR.CrmAramaPage = ({setPage, user}) => {
       </Modal>
 
       {/* YENİ KAYIT MODAL */}
-      <Modal open={yeniModal} onClose={() => {setYeniModal(false); setDuzenleId(null);}} title={duzenleId ? "KAYIT DÜZENLE" : "YENİ KAYIT EKLE"} width="520px">
+      <Modal open={yeniModal} onClose={() => {setYeniModal(false); setDuzenleId(null);}} title={(duzenleId ? "KAYIT DÜZENLE" : "YENİ KAYIT EKLE") + ' (' + dosyaTuruTab + ')'} width="560px">
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10}}>
+          {/* İLK ALAN: ADK/MDK=PLAKA, BH=MALULİYET */}
+          {isBH ? (
+            <FormGroup label="MALULİYET (KIRIK VB.)">
+              <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={yeniForm.maluliyet||''} onChange={e => yF('maluliyet', e.target.value.toUpperCase())} placeholder="SOL KOL KIRIGI VB."/>
+            </FormGroup>
+          ) : (
+            <FormGroup label="PLAKA">
+              <input style={{...S.input, padding:'8px 10px', fontSize:12, fontFamily:'monospace', fontWeight:700}} value={yeniForm.plaka||''} onChange={e => yF('plaka', e.target.value.toUpperCase())} placeholder="34ABC123"/>
+            </FormGroup>
+          )}
           <FormGroup label="AD SOYAD *">
             <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={yeniForm.magdur_ad_soyad} onChange={e => yF('magdur_ad_soyad', e.target.value.toUpperCase())} placeholder="AD SOYAD"/>
           </FormGroup>
@@ -932,27 +969,66 @@ MR.CrmAramaPage = ({setPage, user}) => {
           <FormGroup label="TELEFON *">
             <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={yeniForm.magdur_telefon} onChange={e => yF('magdur_telefon', e.target.value)} placeholder="05XX XXX XX XX"/>
           </FormGroup>
+          <FormGroup label="KAZA TARİHİ">
+            <input type="date" style={{...S.input, padding:'8px 10px', fontSize:12}} value={yeniForm.yonlendirme_tarihi||''} onChange={e => yF('yonlendirme_tarihi', e.target.value)}/>
+          </FormGroup>
           <FormGroup label="İL">
             <select style={{...S.select, padding:'8px 10px', fontSize:12}} value={yeniForm.magdur_il} onChange={e => yF('magdur_il', e.target.value)}>
               <option value="">İL SEÇİNİZ</option>
               {(ILLER || []).map(i => <option key={i} value={i}>{i}</option>)}
             </select>
           </FormGroup>
-          <FormGroup label="TÜR">
+          <FormGroup label="KUSUR DURUMU">
             <div style={{display:'flex', gap:4}}>
-              {['TEK TARAFLI','ÇİFT TARAFLI'].map(t => (
-                <button key={t} type="button" onClick={() => yF('kaza_turu', t)}
+              {(isBH ? ['HAKLI','KUSURLU'] : ['AÇIK','KAPALI']).map(t => (
+                <button key={t} type="button" onClick={() => yF('kusur_durumu', t)}
                   style={{flex:1, padding:'7px 4px', borderRadius:6, fontSize:10, fontWeight:700, cursor:'pointer',
-                    background: yeniForm.kaza_turu===t ? `${C.accent}` : 'transparent',
-                    color: yeniForm.kaza_turu===t ? '#fff' : C.textSec,
-                    border:`1px solid ${yeniForm.kaza_turu===t ? C.accent : C.border}`}}>
+                    background: yeniForm.kusur_durumu===t ? (t==='AÇIK'||t==='HAKLI'?C.success:C.danger) : 'transparent',
+                    color: yeniForm.kusur_durumu===t ? '#fff' : C.textSec,
+                    border:`1px solid ${yeniForm.kusur_durumu===t ? (t==='AÇIK'||t==='HAKLI'?C.success:C.danger) : C.border}`}}>
                   {t}
                 </button>
               ))}
             </div>
           </FormGroup>
-          <FormGroup label="DETAY">
-            <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={yeniForm.magdur_ilce} onChange={e => yF('magdur_ilce', e.target.value.toUpperCase())} placeholder="İLÇE / DETAY BİLGİ"/>
+          {/* ADK/MDK: SİGORTA | BH: POZİSYON */}
+          {isBH ? (
+            <FormGroup label="KAZA POZİSYONU">
+              <div style={{display:'flex', gap:4}}>
+                {['SÜRÜCÜ','YOLCU','YAYA'].map(t => (
+                  <button key={t} type="button" onClick={() => yF('kaza_pozisyonu', t)}
+                    style={{flex:1, padding:'7px 4px', borderRadius:6, fontSize:10, fontWeight:700, cursor:'pointer',
+                      background: yeniForm.kaza_pozisyonu===t ? C.purple : 'transparent',
+                      color: yeniForm.kaza_pozisyonu===t ? '#fff' : C.textSec,
+                      border:`1px solid ${yeniForm.kaza_pozisyonu===t ? C.purple : C.border}`}}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </FormGroup>
+          ) : (
+            <FormGroup label="SİGORTA ŞİRKETİ">
+              <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={yeniForm.sigorta_sirket||''} onChange={e => yF('sigorta_sirket', e.target.value.toUpperCase())} placeholder="SİGORTA ŞİRKETİ"/>
+            </FormGroup>
+          )}
+          {/* BH: GÜNCEL DURUM */}
+          {isBH && (
+            <FormGroup label="GÜNCEL DURUM">
+              <div style={{display:'flex', gap:4}}>
+                {['HASTAHANE','TABURCU'].map(t => (
+                  <button key={t} type="button" onClick={() => yF('guncel_durum', t)}
+                    style={{flex:1, padding:'7px 4px', borderRadius:6, fontSize:10, fontWeight:700, cursor:'pointer',
+                      background: yeniForm.guncel_durum===t ? (t==='HASTAHANE'?C.danger:C.success) : 'transparent',
+                      color: yeniForm.guncel_durum===t ? '#fff' : C.textSec,
+                      border:`1px solid ${yeniForm.guncel_durum===t ? (t==='HASTAHANE'?C.danger:C.success) : C.border}`}}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </FormGroup>
+          )}
+          <FormGroup label="GÖRÜŞME NOTU">
+            <input style={{...S.input, padding:'8px 10px', fontSize:12}} value={yeniForm.magdur_ilce||''} onChange={e => yF('magdur_ilce', e.target.value.toUpperCase())} placeholder="DETAY / NOT"/>
           </FormGroup>
         </div>
         <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
