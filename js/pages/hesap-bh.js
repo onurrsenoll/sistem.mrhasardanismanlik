@@ -7,6 +7,7 @@
   window.MR = window.MR || {};
 
   MR.HesapBHPage = ({setPage, user}) => {
+    const hy = (k) => MR.hasYetki(user, 'hesaplamalar', k);
     // MOD SEÇİMİ
     const [mod, setMod] = useState('hizli');
 
@@ -44,7 +45,8 @@
       tamHayat: false,
       yasYuvarla: false,
       yilSonunaKaydir: false,
-      bakiyeKazadan: false
+      bakiyeKazadan: false,
+      emeklilikYasi: '65'
     });
 
     // OCR & DOSYALAR
@@ -160,9 +162,12 @@
         aylikGelir = MR.parseNum(form.aylikGelir);
       }
 
-      // BRÜT/NET DÖNÜŞÜM
+      // BRÜT/NET DÖNÜŞÜM (2024-2026 güncel vergi dilimleri)
       if (!form.maasNet && aylikGelir > 0) {
-        aylikGelir = aylikGelir * 0.83; // Brütten nete yaklaşık
+        // Vergi+SGK kesinti oranı gelir düzeyine göre dinamik
+        const brutYillik = aylikGelir * 12;
+        const kesintiOrani = brutYillik <= 200000 ? 0.15 : brutYillik <= 400000 ? 0.17 : brutYillik <= 700000 ? 0.19 : 0.21;
+        aylikGelir = aylikGelir * (1 - kesintiOrani);
       }
 
       // PMF VE KALAN ÖMÜR
@@ -170,13 +175,14 @@
       const hesapYasi = form.bakiyeKazadan ? yas : MR.yasHesapla(dogumTarihi, hesapTarihi);
       const kalanOmur = MR.pmfDeger(pmfTablosu, cinsiyetKod, hesapYasi);
 
-      // AKTİF/PASİF DÖNEM
+      // AKTİF/PASİF DÖNEM (emeklilik yaşı parametrik)
+      const emeklilikYasi = parseInt(form.emeklilikYasi) || 65;
       let aktifKalanYil, pasifKalanYil;
       if (form.tamHayat) {
         aktifKalanYil = kalanOmur;
         pasifKalanYil = 0;
       } else {
-        aktifKalanYil = Math.max(0, 65 - hesapYasi);
+        aktifKalanYil = Math.max(0, emeklilikYasi - hesapYasi);
         pasifKalanYil = Math.max(0, kalanOmur - aktifKalanYil);
       }
 
@@ -613,7 +619,13 @@
                     </div>}
                   </div>
                   <div style={{ borderTop: '1px solid ' + C.border, paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <Chk checked={form.tamHayat} onChange={v => handleChange('tamHayat', v)} label="TAM HAYAT HESABI (65 YAŞ SINIRI YOK)" />
+                    <div style={{display:'flex', alignItems:'center', gap:8}}>
+                      <Chk checked={form.tamHayat} onChange={v => handleChange('tamHayat', v)} label="TAM HAYAT HESABI" />
+                      {!form.tamHayat && <div style={{display:'flex', alignItems:'center', gap:4}}>
+                        <span style={{fontSize:10, color:C.textMuted}}>EMEKLİLİK YAŞI:</span>
+                        <input type="number" min="55" max="75" value={form.emeklilikYasi} onChange={e => handleChange('emeklilikYasi', e.target.value)} style={{...S.input, width:50, padding:'4px 6px', fontSize:11, textAlign:'center'}}/>
+                      </div>}
+                    </div>
                     <Chk checked={form.yasYuvarla} onChange={v => handleChange('yasYuvarla', v)} label="YAŞLARI YUVARLA" />
                     <Chk checked={form.yilSonunaKaydir} onChange={v => handleChange('yilSonunaKaydir', v)} label="HESAP TARİHİNİ YIL SONUNA KAYDIR" />
                     <Chk checked={form.bakiyeKazadan} onChange={v => handleChange('bakiyeKazadan', v)} label="BAKİYE ÖMRÜ KAZA TARİHİNDEN HESAPLA" />

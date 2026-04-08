@@ -203,19 +203,21 @@ MR.pmfDeger = function(tablo, c, y){
  */
 MR.progresifRant = function(y, f){
   var yil  = Number(y) || 0;
-  var faiz = Number(f) || 0.10;
+  var faiz = Number(f);
   if(yil <= 0) return 0;
-  if(faiz <= 0) return yil;
+  if(isNaN(faiz) || faiz <= 0) faiz = 0.018; // Varsayılan %1.8 teknik faiz
+  if(yil > 100) yil = 100; // Güvenlik sınırı
 
+  var tamYil = Math.floor(yil);
+  var kusurat = yil - tamYil;
   var toplam = 0;
-  for(var i = 1; i <= yil; i++){
+
+  for(var i = 1; i <= tamYil; i++){
     toplam += 1 / Math.pow(1 + faiz, i);
   }
 
   /* KÜSÜRATLI YIL KISMI */
-  var tamYil   = Math.floor(yil);
-  var kusurat  = yil - tamYil;
-  if(kusurat > 0 && tamYil < yil){
+  if(kusurat > 0){
     toplam += kusurat / Math.pow(1 + faiz, tamYil + 1);
   }
 
