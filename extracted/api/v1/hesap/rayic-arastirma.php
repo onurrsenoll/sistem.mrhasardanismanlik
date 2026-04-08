@@ -54,16 +54,18 @@ $prompt = "GÖREV: {$marka} {$model} {$yil} model, {$kmStr} km araç için sahib
 ADIMLAR:
 1. sahibinden.com'da {$marka} {$model} {$yil} model ara, {$kmStr} km'ye EN YAKIN km'deki araçları bul
 2. araban.com'da aynı aramayı yap
-3. Her iki siteden toplam bulunan ilanlardan EN YÜKSEK FİYATLI 5 aracı seç
-4. Bu 5 aracın fiyat ortalamasını hesapla - BU ORTALAMA RAYİÇ DEĞERDİR
+3. SADECE {$kazaTarihi} ile {$bugun} tarihleri arasında yayınlanan/aktif ilanları al
+4. Her iki siteden toplam bulunan ilanlardan EN YÜKSEK FİYATLI 5 aracı seç
+5. Bu 5 aracın fiyat ortalamasını hesapla - BU ORTALAMA RAYİÇ DEĞERDİR
 
 KRİTİK KURALLAR:
 1. MARKA: {$marka}, MODEL: {$model}, MODEL YILI: {$yil} - BİREBİR AYNI OLMALI
 2. KM: {$kmStr} km'ye en yakın araçları tercih et (±30.000 km tolerans)
-3. EN YÜKSEK fiyatlı 5 aracı seç (düşük fiyatlıları eleme)
-4. KESİNLİKLE 0 TL verme - Türkiye piyasa bilgine dayanarak MUTLAKA gerçekçi rakam ver
-5. Fiyatlar {$bugun} tarihi itibarıyla TL cinsinden güncel olmalı
-6. Ortalama = en yüksek 5 aracın fiyat toplamı / 5
+3. TARİH FİLTRE: {$kazaTarihi} - {$bugun} arası ilanlar (kaza tarihinden bugüne)
+4. EN YÜKSEK fiyatlı 5 aracı seç (düşük fiyatlıları eleme)
+5. KESİNLİKLE 0 TL verme - Türkiye piyasa bilgine dayanarak MUTLAKA gerçekçi rakam ver
+6. Fiyatlar {$bugun} tarihi itibarıyla TL cinsinden güncel olmalı
+7. Ortalama = en yüksek 5 aracın fiyat toplamı / 5
 
 YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER:
 {
@@ -79,7 +81,7 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER:
 
 $systemPrompt = "Sen Türkiye otomobil piyasasında 15+ yıl deneyimli bir araç değerleme uzmanısın. sahibinden.com ve araban.com'daki tüm marka/model fiyatlarını biliyorsun. Görevin: verilen aracın birebir aynı marka/model/yılındaki en yüksek fiyatlı 5 ilanın ortalamasını bulmak. MUTLAKA rakamsal değer ver, KESİNLİKLE 0 veya boş bırakma. Yanıtını SADECE JSON formatında ver.";
 
-$fullUserPrompt = "{$marka} {$model} {$yil} model, {$kmStr} km araç. sahibinden.com ve araban.com'da bu aracın aynı marka, aynı model, aynı yıl ilanlarından {$kmStr} km'ye en yakın olanları bul. En yüksek fiyatlı 5 tanesini seç ve ortalamasını hesapla.\n\n" . $prompt;
+$fullUserPrompt = "{$marka} {$model} {$yil} model, {$kmStr} km araç. KAZA TARİHİ: {$kazaTarihi}. sahibinden.com ve araban.com'da bu aracın BİREBİR AYNI marka/model/yıl ilanlarını {$kazaTarihi} ile {$bugun} tarihleri arasında ara. {$kmStr} km'ye en yakın olanlardan EN YÜKSEK FİYATLI 5 tanesini seç ve ortalamasını hesapla.\n\n" . $prompt;
 
 $aiOpts = ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60];
 $aiResult = callAIWithDetail($apiKey, $systemPrompt, $fullUserPrompt, $aiOpts);
