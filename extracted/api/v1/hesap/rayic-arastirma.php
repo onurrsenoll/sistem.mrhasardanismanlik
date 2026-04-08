@@ -72,8 +72,9 @@ function buildArabanUrl($marka, $model, $yil) {
 function fetchWithZenRows($url, $apiKey) {
     $zenUrl = 'https://api.zenrows.com/v1/?apikey=' . $apiKey
         . '&url=' . urlencode($url)
-        . '&js_render=false'
-        . '&premium_proxy=true';
+        . '&js_render=true'
+        . '&premium_proxy=true'
+        . '&wait=3000';
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $zenUrl);
@@ -94,46 +95,41 @@ function parseSahibinden($html, $marka, $model, $yil) {
     $ilanlar = [];
     if (empty($html)) return $ilanlar;
 
-    // Fiyat pattern: data-value veya class="searchResultsPriceValue"
-    // İlan kartları: class="searchResultsItem" veya "searchResultsLargeThumbnail"
+    // sahibinden.com farklı HTML yapıları deneniyor
+    $patterns = [
+        // Pattern 1: searchResultsItem içindeki fiyat
+        '/class="[^"]*searchResults[^"]*Price[^"]*"[^>]*>\s*([\d.]+)\s/si',
+        // Pattern 2: data-price attribute
+        '/data-price="(\d+)"/si',
+        // Pattern 3: TL cinsinden fiyat (genel)
+        '/([\d]{3,3}\.[\d]{3}(?:\.[\d]{3})?)\s*(?:TL|₺)/s',
+        // Pattern 4: Sadece büyük rakamlar (100.000+)
+        '/>\s*((?:\d{1,3}\.)*\d{3,})\s*(?:TL|₺)\s*</s'
+    ];
 
-    // Regex ile fiyat çekme
-    $fiyatPattern = '/class="searchResultsPriceValue[^"]*"[^>]*>\s*([\d.,]+)\s*TL/si';
-    if (!preg_match_all($fiyatPattern, $html, $fiyatMatches)) {
-        // Alternatif pattern
-        $fiyatPattern = '/<td class="searchResultsPrice[^"]*"[^>]*>.*?([\d.]+)\s*TL/si';
-        preg_match_all($fiyatPattern, $html, $fiyatMatches);
+    $fiyatlar = [];
+    foreach ($patterns as $pattern) {
+        if (preg_match_all($pattern, $html, $matches)) {
+            foreach ($matches[1] as $m) {
+                $f = (int)preg_replace('/[^\d]/', '', $m);
+                if ($f >= 50000 && $f <= 50000000) $fiyatlar[] = $f;
+            }
+            if (count($fiyatlar) >= 3) break;
+        }
     }
 
-    // Başlık pattern
-    $baslikPattern = '/<td class="searchResultsTitle[^"]*">.*?<a[^>]*>(.*?)<\/a>/si';
-    preg_match_all($baslikPattern, $html, $baslikMatches);
+    // Tekrarları kaldır ve sırala
+    $fiyatlar = array_unique($fiyatlar);
+    rsort($fiyatlar);
 
-    // Konum pattern
-    $konumPattern = '/<td class="searchResultsLocation[^"]*"[^>]*>(.*?)<\/td>/si';
-    preg_match_all($konumPattern, $html, $konumMatches);
-
-    // KM pattern
-    $kmPattern = '/<td class="searchResultsAttribute"[^>]*>\s*([\d.]+)\s*km/si';
-    preg_match_all($kmPattern, $html, $kmMatches);
-
-    $count = min(count($fiyatMatches[1] ?? []), 10);
-    for ($i = 0; $i < $count; $i++) {
-        $fiyatStr = preg_replace('/[^\d]/', '', $fiyatMatches[1][$i] ?? '0');
-        $fiyat = (int)$fiyatStr;
-        if ($fiyat < 10000 || $fiyat > 50000000) continue; // geçersiz fiyat
-
-        $baslik = isset($baslikMatches[1][$i]) ? trim(strip_tags($baslikMatches[1][$i])) : $marka . ' ' . $model . ' ' . $yil;
-        $konum = isset($konumMatches[1][$i]) ? trim(strip_tags($konumMatches[1][$i])) : '';
-        $kmStr = isset($kmMatches[1][$i]) ? preg_replace('/[^\d]/', '', $kmMatches[1][$i]) : '0';
-
+    foreach (array_slice($fiyatlar, 0, 10) as $i => $fiyat) {
         $ilanlar[] = [
             'kaynak' => 'sahibinden.com',
-            'baslik' => mb_substr($baslik, 0, 60),
+            'baslik' => $marka . ' ' . $model . ' ' . $yil,
             'fiyat' => $fiyat,
-            'km' => (int)$kmStr,
+            'km' => 0,
             'yil' => $yil,
-            'sehir' => mb_substr(trim(explode("\n", $konum)[0] ?? ''), 0, 20),
+            'sehir' => '',
             'tarih' => date('Y-m-d')
         ];
     }
@@ -146,16 +142,27 @@ function parseAraban($html, $marka, $model, $yil) {
     $ilanlar = [];
     if (empty($html)) return $ilanlar;
 
-    // araban.com fiyat pattern
-    $fiyatPattern = '/class="[^"]*price[^"]*"[^>]*>\s*([\d.,]+)\s*(?:TL|₺)/si';
-    preg_match_all($fiyatPattern, $html, $fiyatMatches);
+    $patterns = [
+        '/class="[^"]*price[^"]*"[^>]*>\s*([\d.,]+)\s*(?:TL|₺)/si',
+        '/([\d]{3,3}\.[\d]{3}(?:\.[\d]{3})?)\s*(?:TL|₺)/s',
+        '/>\s*((?:\d{1,3}\.)*\d{3,})\s*(?:TL|₺)\s*</s'
+    ];
 
-    $count = min(count($fiyatMatches[1] ?? []), 10);
-    for ($i = 0; $i < $count; $i++) {
-        $fiyatStr = preg_replace('/[^\d]/', '', $fiyatMatches[1][$i] ?? '0');
-        $fiyat = (int)$fiyatStr;
-        if ($fiyat < 10000 || $fiyat > 50000000) continue;
+    $fiyatlar = [];
+    foreach ($patterns as $pattern) {
+        if (preg_match_all($pattern, $html, $matches)) {
+            foreach ($matches[1] as $m) {
+                $f = (int)preg_replace('/[^\d]/', '', $m);
+                if ($f >= 50000 && $f <= 50000000) $fiyatlar[] = $f;
+            }
+            if (count($fiyatlar) >= 3) break;
+        }
+    }
 
+    $fiyatlar = array_unique($fiyatlar);
+    rsort($fiyatlar);
+
+    foreach (array_slice($fiyatlar, 0, 10) as $fiyat) {
         $ilanlar[] = [
             'kaynak' => 'araban.com',
             'baslik' => $marka . ' ' . $model . ' ' . $yil,
@@ -249,6 +256,9 @@ $ortalama = count($enYuksek5) > 0 ? round($toplamFiyat / count($enYuksek5)) : 0;
 $enYuksekFiyat = $enYuksek5[0]['fiyat'] ?? 0;
 $enDusukFiyat = end($enYuksek5)['fiyat'] ?? 0;
 
+$sahibindenCount = count(array_filter($tumIlanlar, function($i) { return $i['kaynak'] === 'sahibinden.com'; }));
+$arabanCount = count(array_filter($tumIlanlar, function($i) { return $i['kaynak'] === 'araban.com'; }));
+
 $sonuc = [
     'ilanlar' => $enYuksek5,
     'ortalama' => $ortalama,
@@ -256,7 +266,7 @@ $sonuc = [
     'en_dusuk' => $enDusukFiyat,
     'toplam_bulunan' => count($tumIlanlar),
     'kaynak' => 'zenrows_gercek',
-    'analiz_notu' => count($tumIlanlar) . ' gerçek ilan bulundu. En yüksek fiyatlı 5 ilanın ortalaması: ' . number_format($ortalama, 0, ',', '.') . ' TL. Kaynak: sahibinden.com + araban.com (ZenRows API)'
+    'analiz_notu' => 'GERÇEK VERİ: sahibinden.com(' . $sahibindenCount . ' ilan) + araban.com(' . $arabanCount . ' ilan). En yüksek 5 ilanın ortalaması: ' . number_format($ortalama, 0, ',', '.') . ' TL'
 ];
 
 echo json_encode(['success' => true, 'data' => $sonuc]);
