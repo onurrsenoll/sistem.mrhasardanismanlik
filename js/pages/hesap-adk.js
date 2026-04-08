@@ -11,55 +11,93 @@ const {useState, useEffect, useCallback, useRef} = React;
 const fmtM = n => (n || 0).toLocaleString('tr-TR') + ' TL';
 const pct = n => (n * 100).toFixed(1) + '%';
 
-/* ──────── 1. TAHKİM FORMÜLÜ ──────── */
+/* ──────── 1. TAHKİM FORMÜLÜ (2024-2026 Güncel Katsayılar) ──────── */
 const hesaplaTahkim = (rayic, onarim, yil, km, onceki, bolge, kusur) => {
   const aracYasi = new Date().getFullYear() - yil;
   const hasarOrani = rayic > 0 ? onarim / rayic : 0;
 
-  // BAZ DEĞER KAYBI ORANI (hasar oranına göre - Tahkim uygulaması)
-  const bazOran = hasarOrani <= 0.05 ? 0.04 : hasarOrani <= 0.10 ? 0.06 : hasarOrani <= 0.15 ? 0.08 : hasarOrani <= 0.20 ? 0.10 : hasarOrani <= 0.30 ? 0.13 : 0.16;
+  // BAZ DEĞER KAYBI ORANI (2024-2026 Tahkim kararları güncel)
+  const bazOran = hasarOrani <= 0.03 ? 0.03
+    : hasarOrani <= 0.05 ? 0.05
+    : hasarOrani <= 0.10 ? 0.07
+    : hasarOrani <= 0.15 ? 0.10
+    : hasarOrani <= 0.20 ? 0.13
+    : hasarOrani <= 0.25 ? 0.15
+    : hasarOrani <= 0.30 ? 0.17
+    : hasarOrani <= 0.40 ? 0.19
+    : 0.22;
 
-  // YAŞ KATSAYISI
-  const yasK = aracYasi <= 1 ? 1.00 : aracYasi <= 2 ? 0.95 : aracYasi <= 3 ? 0.90 : aracYasi <= 4 ? 0.85 : aracYasi <= 5 ? 0.78 : aracYasi <= 6 ? 0.70 : aracYasi <= 7 ? 0.62 : aracYasi <= 8 ? 0.53 : aracYasi <= 9 ? 0.44 : 0.35;
+  // YAŞ KATSAYISI (0-15 yıl detaylı)
+  const yasK = aracYasi <= 0 ? 1.00
+    : aracYasi <= 1 ? 1.00
+    : aracYasi <= 2 ? 0.96
+    : aracYasi <= 3 ? 0.91
+    : aracYasi <= 4 ? 0.86
+    : aracYasi <= 5 ? 0.80
+    : aracYasi <= 6 ? 0.73
+    : aracYasi <= 7 ? 0.66
+    : aracYasi <= 8 ? 0.58
+    : aracYasi <= 9 ? 0.50
+    : aracYasi <= 10 ? 0.43
+    : aracYasi <= 12 ? 0.35
+    : aracYasi <= 15 ? 0.25
+    : 0.18;
 
-  // KM KATSAYISI
-  const kmK = km < 30000 ? 1.00 : km < 60000 ? 0.95 : km < 100000 ? 0.88 : km < 150000 ? 0.78 : km < 200000 ? 0.65 : 0.50;
+  // KM KATSAYISI (detaylı kademelendirme)
+  const kmK = km < 10000 ? 1.00
+    : km < 30000 ? 0.98
+    : km < 50000 ? 0.95
+    : km < 75000 ? 0.90
+    : km < 100000 ? 0.85
+    : km < 130000 ? 0.78
+    : km < 160000 ? 0.70
+    : km < 200000 ? 0.60
+    : km < 250000 ? 0.50
+    : 0.40;
 
-  // BÖLGE KATSAYISI (ön en yüksek etki)
-  const bolgeK = {on: 1.00, yan: 0.90, arka: 0.85, tavan: 0.75}[bolge] || 0.90;
+  // BÖLGE KATSAYISI (çoklu bölge desteği)
+  const bolgeK = {on: 1.00, on_yan: 0.95, yan: 0.90, arka: 0.85, arka_yan: 0.82, tavan: 0.75, alt: 0.70}[bolge] || 0.90;
 
-  // ÖNCEKİ HASAR
-  const oncekiK = onceki === 0 ? 1.00 : onceki === 1 ? 0.85 : onceki === 2 ? 0.70 : 0.55;
+  // ÖNCEKİ HASAR (0-5+ seviye)
+  const oncekiK = onceki === 0 ? 1.00 : onceki === 1 ? 0.82 : onceki === 2 ? 0.68 : onceki === 3 ? 0.55 : onceki === 4 ? 0.42 : 0.30;
 
   const degerKaybi = Math.round(rayic * bazOran * yasK * kmK * bolgeK * oncekiK);
   const kusurSonrasi = Math.round(degerKaybi * (kusur / 100));
 
   return {
     ad: 'TAHKİM FORMÜLÜ',
-    aciklama: 'Sigorta Tahkim Komisyonu hesaplama yöntemi',
+    aciklama: 'Sigorta Tahkim Komisyonu hesaplama yöntemi (2024-2026 güncel)',
     degerKaybi, kusurSonrasi, bazOran, yasK, kmK, bolgeK, oncekiK, hasarOrani, aracYasi,
-    formul: `DK = Rayiç (${fmtM(rayic)}) × Baz Oran (%${(bazOran*100).toFixed(0)}) × Yaş K. (${yasK.toFixed(2)}) × KM K. (${kmK.toFixed(2)}) × Bölge K. (${bolgeK.toFixed(2)}) × Önceki K. (${oncekiK.toFixed(2)})`
+    formul: `DK = Rayiç (${fmtM(rayic)}) × Baz Oran (%${(bazOran*100).toFixed(1)}) × Yaş K. (${yasK.toFixed(2)}) × KM K. (${kmK.toFixed(2)}) × Bölge K. (${bolgeK.toFixed(2)}) × Önceki K. (${oncekiK.toFixed(2)})`
   };
 };
 
-/* ──────── 2. YARGITAY İÇTİHADI ──────── */
+/* ──────── 2. YARGITAY İÇTİHADI (17. HD / 4. HD Güncel) ──────── */
 const hesaplaYargitay = (rayic, onarim, yil, km, onceki, bolge, kusur) => {
   const aracYasi = new Date().getFullYear() - yil;
   const hasarOrani = rayic > 0 ? onarim / rayic : 0;
 
-  // HASAR ETKİ ORANI (Yargıtay 17. HD / 4. HD kararları bazında)
-  const hasarEtkisi = hasarOrani <= 0.05 ? 0.05 : hasarOrani <= 0.10 ? 0.08 : hasarOrani <= 0.15 ? 0.11 : hasarOrani <= 0.20 ? 0.14 : hasarOrani <= 0.30 ? 0.18 : 0.22;
+  // HASAR ETKİ ORANI (Yargıtay 17. HD / 4. HD kararları - 2024-2026 güncel)
+  const hasarEtkisi = hasarOrani <= 0.03 ? 0.04
+    : hasarOrani <= 0.05 ? 0.06
+    : hasarOrani <= 0.10 ? 0.09
+    : hasarOrani <= 0.15 ? 0.12
+    : hasarOrani <= 0.20 ? 0.15
+    : hasarOrani <= 0.25 ? 0.18
+    : hasarOrani <= 0.30 ? 0.20
+    : hasarOrani <= 0.40 ? 0.23
+    : 0.26;
 
-  // YIPRANMA PAYI (yaş + km bazlı)
-  const yasYipranma = Math.min(aracYasi * 0.04, 0.40);
-  const kmYipranma = Math.min(Math.floor(km / 50000) * 0.03, 0.20);
+  // YIPRANMA PAYI (yaş + km bazlı - 2026 güncel oranlar)
+  const yasYipranma = Math.min(aracYasi * 0.035, 0.40);
+  const kmYipranma = Math.min(Math.floor(km / 50000) * 0.025, 0.20);
   const toplamYipranma = Math.min(yasYipranma + kmYipranma, 0.50);
 
-  // BÖLGE KATSAYISI
-  const bolgeK = {on: 1.00, yan: 0.92, arka: 0.88, tavan: 0.78}[bolge] || 0.90;
+  // BÖLGE KATSAYISI (Yargıtay)
+  const bolgeK = {on: 1.00, on_yan: 0.96, yan: 0.92, arka: 0.88, arka_yan: 0.85, tavan: 0.78, alt: 0.72}[bolge] || 0.90;
 
-  // ÖNCEKİ HASAR
-  const oncekiK = onceki === 0 ? 1.00 : onceki === 1 ? 0.85 : onceki === 2 ? 0.70 : 0.55;
+  // ÖNCEKİ HASAR (Yargıtay)
+  const oncekiK = onceki === 0 ? 1.00 : onceki === 1 ? 0.82 : onceki === 2 ? 0.68 : onceki === 3 ? 0.55 : onceki === 4 ? 0.42 : 0.30;
 
   const degerKaybi = Math.round(rayic * hasarEtkisi * (1 - toplamYipranma) * bolgeK * oncekiK);
   const kusurSonrasi = Math.round(degerKaybi * (kusur / 100));
@@ -77,6 +115,7 @@ const hesaplaYargitay = (rayic, onarim, yil, km, onceki, bolge, kusur) => {
    ═══════════════════════════════════════════════════════════ */
 MR.HesapADKPage = ({setPage, user}) => {
   const C = MR.C, S = MR.S;
+  const hy = (k) => MR.hasYetki(user, 'hesaplamalar', k);
 
   /* FORM */
   const [marka, setMarka] = useState('');
@@ -268,7 +307,7 @@ MR.HesapADKPage = ({setPage, user}) => {
       + '<tr><td style="padding:2px 4px;color:#64748b;">HASAR ORANI:</td><td style="padding:2px 4px;font-weight:600;">%'+hasarOrani+'</td></tr>'
       + '<tr><td style="padding:2px 4px;color:#64748b;">KUSUR ORANI:</td><td style="padding:2px 4px;font-weight:600;">%'+kusur+(parseInt(kusur)===100?' (KUSURSUZ)':'')+'</td></tr>'
       + '<tr><td style="padding:2px 4px;color:#64748b;">ONCEKI HASAR:</td><td style="padding:2px 4px;font-weight:600;">'+(parseInt(onceki)===0?'YOK':onceki+' ADET')+'</td></tr>'
-      + '<tr><td style="padding:2px 4px;color:#64748b;">HASARLI BOLGE:</td><td style="padding:2px 4px;font-weight:600;">'+({on:'ON KISIM',arka:'ARKA KISIM',yan:'YAN KISIM',tavan:'TAVAN'}[bolge]||bolge)+'</td></tr>'
+      + '<tr><td style="padding:2px 4px;color:#64748b;">HASARLI BOLGE:</td><td style="padding:2px 4px;font-weight:600;">'+({on:'ON KISIM',on_yan:'ON+YAN',yan:'YAN KISIM',arka:'ARKA KISIM',arka_yan:'ARKA+YAN',tavan:'TAVAN',alt:'ALT KISIM'}[bolge]||bolge)+'</td></tr>'
       + '</table></td>'
       + '</tr></table>'
 
@@ -434,10 +473,10 @@ MR.HesapADKPage = ({setPage, user}) => {
               </div>
 
               {/* RAYİÇ ARAŞTIR BUTONU */}
-              <button onClick={rayicArastir} disabled={rayicLoading || !marka || !model || !yil || !km}
+              {hy('hesap-rayic') && <button onClick={rayicArastir} disabled={rayicLoading || !marka || !model || !yil || !km}
                 style={{...S.btn, width:'100%', justifyContent:'center', marginTop:12, padding:12, fontSize:12, fontWeight:700, background:'linear-gradient(135deg,'+C.accent+','+C.purple+')', color:'#fff', opacity:(!marka||!model||!yil||!km||rayicLoading)?0.5:1}}>
                 {rayicLoading ? 'SAHİBİNDEN.COM + ARABAN.COM TARANIYOR...' : 'RAYİÇ DEĞER ARAŞTIR (SAHİBİNDEN + ARABAN)'}
-              </button>
+              </button>}
             </div>
           </div>
 
@@ -501,16 +540,21 @@ MR.HesapADKPage = ({setPage, user}) => {
                     <option value="0">YOK</option>
                     <option value="1">1 ADET</option>
                     <option value="2">2 ADET</option>
-                    <option value="3">3+ ADET</option>
+                    <option value="3">3 ADET</option>
+                    <option value="4">4 ADET</option>
+                    <option value="5">5+ ADET</option>
                   </select>
                 </MR.FormGroup>
                 <div style={fullS}>
                   <MR.FormGroup label="HASARLI BÖLGE">
                     <select value={bolge} onChange={e => setBolge(e.target.value)} style={S.select}>
                       <option value="on">ÖN KISIM</option>
-                      <option value="arka">ARKA KISIM</option>
+                      <option value="on_yan">ÖN + YAN</option>
                       <option value="yan">YAN KISIM</option>
+                      <option value="arka">ARKA KISIM</option>
+                      <option value="arka_yan">ARKA + YAN</option>
                       <option value="tavan">TAVAN</option>
+                      <option value="alt">ALT KISIM</option>
                     </select>
                   </MR.FormGroup>
                 </div>

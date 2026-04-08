@@ -62,21 +62,14 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER, BAŞKA HİÇBİR ŞEY YAZMA:
   \"analiz_notu\": \"Kısa analiz notu\"
 }";
 
-$systemPrompt = "Sen bir Türk sigorta hukuku uzmanısın. Görevin Sigorta Tahkim Komisyonu kararlarını araştırıp araç değer kaybı emsal kararlarını bulmaktır. SADECE gerçek tahkim kararlarını kullan. Yanıtını SADECE JSON formatında ver.";
+$systemPrompt = "Sen Türk sigorta hukuku ve Sigorta Tahkim Komisyonu kararları konusunda 15+ yıl deneyimli bir uzmansın. Araç değer kaybı (ADK) emsal kararlarını çok iyi biliyorsun. KRİTİK KURALLAR: 1) Emin olmadığın karar numarası uydurma. 2) Gerçek bilgin yoksa analiz_notu alanında açıkça 'kesin emsal bulunamadı, tahmini değerler' yaz. 3) Rayiç ve değer kaybı tutarları Türkiye piyasa koşullarına uygun ve tutarlı olmalı. 4) Yanıtını SADECE JSON formatında ver.";
 
-$fullUserPrompt = "ÖNEMLİ: Sigorta Tahkim Komisyonu kararları hakkındaki bilgi birikimin ile {$marka} {$model} {$yil} model araç için gerçekçi emsal kararlar oluştur. Türkiye'deki güncel tahkim kararlarına ve rayiç değerlere uygun, tutarlı ve gerçekçi veriler sun.\n\n" . $prompt;
+$fullUserPrompt = "ÖNEMLİ: {$marka} {$model} {$yil} model araç için Sigorta Tahkim Komisyonu araç değer kaybı emsal kararlarını araştır. Bilgi birikimin dahilinde bu marka/model/yaş aralığı için en uygun emsal değerleri sun. Gerçek karar numarası bilmiyorsan 'K-XXXX/TAHMINI' olarak işaretle ve analiz_notu'nda bunu belirt.\n\n" . $prompt;
 
 $aiResult = callAIWithDetail($apiKey, $systemPrompt, $fullUserPrompt, ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60]);
 $text = $aiResult['text'];
 
-// Başarısızsa fallback key'leri dene
-if (empty($text) && !empty($keys['fallbacks'])) {
-    foreach ($keys['fallbacks'] as $fbKey) {
-        $aiResult = callAIWithDetail($fbKey, $systemPrompt, $fullUserPrompt, ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60]);
-        $text = $aiResult['text'];
-        if (!empty($text)) break;
-    }
-}
+// Claude API ile tek çağrı yeterli
 
 if (empty($text)) {
     $errMsg = 'AI YANIT ALINAMADI';

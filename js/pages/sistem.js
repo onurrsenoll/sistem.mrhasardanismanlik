@@ -79,10 +79,13 @@ const MODUL_YETKILERI = [
     {key: 'saha-red', label: 'SAHA KAYDI REDDET'}
   ]},
   {modul: 'hesaplamalar', label: 'HESAPLAMALAR', icon: 'Calculator', islemler: [
-    {key: 'hesap-adk', label: 'ARAÇ DEĞER KAYBI'},
-    {key: 'hesap-bh', label: 'BEDENİ HASAR'},
-    {key: 'hesap-adk-rapor', label: 'ADK RAPOR OLUŞTUR'},
-    {key: 'hesap-bh-rapor', label: 'BH RAPOR OLUŞTUR'}
+    {key: 'hesap-adk', label: 'ADK HESAPLAMA'},
+    {key: 'hesap-bh', label: 'BH HESAPLAMA'},
+    {key: 'hesap-rayic', label: 'RAYİÇ ARAŞTIRMA'},
+    {key: 'hesap-emsal', label: 'EMSAL KARAR ARAMA'},
+    {key: 'hesap-ai-analiz', label: 'AI ANALİZ'},
+    {key: 'hesap-adk-rapor', label: 'ADK PDF RAPOR'},
+    {key: 'hesap-bh-rapor', label: 'BH PDF RAPOR'}
   ]},
   {modul: 'paydaslar', label: 'PAYDAŞLAR / ORTAKLAR', icon: 'Handshake', islemler: [
     {key: 'ortaklar-ortaklar', label: 'İŞ ORTAKLARI'},

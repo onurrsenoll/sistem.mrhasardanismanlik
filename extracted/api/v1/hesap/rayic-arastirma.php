@@ -71,9 +71,9 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER, BAŞKA HİÇBİR ŞEY YAZMA:
   \"analiz_notu\": \"Kısa analiz notu\"
 }";
 
-$systemPrompt = "Sen bir araç değer kaybı uzmanısın. Görevin sahibinden.com ve araban.com sitelerinde gerçek araç ilanlarını araştırıp piyasa rayiç değer belirlemektir. SADECE gerçek ilan verisi kullan, tahmin yapma. Yanıtını SADECE JSON formatında ver.";
+$systemPrompt = "Sen Türkiye otomobil piyasasında 15+ yıl deneyimli bir araç değerleme uzmanısın. sahibinden.com ve araban.com üzerindeki güncel piyasa fiyatlarını çok iyi biliyorsun. Görevin aracın GERÇEK PİYASA RAYİÇ DEĞERİNİ belirlemektir. KRİTİK KURALLAR: 1) Emin olmadığın fiyat verme, gerçekçi ol. 2) Türkiye piyasa koşullarını dikkate al (enflasyon, kur, ÖTV). 3) Yanıtını SADECE JSON formatında ver, başka metin yazma.";
 
-$fullUserPrompt = "ÖNEMLİ: Türkiye araç piyasası hakkındaki bilgini kullanarak {$marka} {$model} {$yil} model aracın gerçekçi piyasa fiyatlarını belirle. sahibinden.com ve araban.com üzerindeki güncel piyasa bilgin ile en gerçekçi ilan verilerini oluştur.\n\n" . $prompt;
+$fullUserPrompt = "ÖNEMLİ: {$marka} {$model} {$yil} model, {$kmStr} km aracın Türkiye piyasasındaki GÜNCEL rayiç değerini belirle. sahibinden.com ve araban.com üzerindeki bilgin ile en gerçekçi fiyatları sun. {$bugun} tarihi itibarıyla geçerli piyasa fiyatları olmalı. Eğer bu araç hakkında yeterli bilgin yoksa 'analiz_notu' alanında bunu açıkça belirt.\n\n" . $prompt;
 
 $aiOpts = ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60];
 $aiResult = callAIWithDetail($apiKey, $systemPrompt, $fullUserPrompt, $aiOpts);
