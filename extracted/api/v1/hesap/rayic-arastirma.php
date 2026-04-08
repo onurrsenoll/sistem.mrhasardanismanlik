@@ -49,23 +49,16 @@ if (empty($zenrowsKey)) {
 
 // ═══ SAHİBİNDEN.COM ARAMA URL'İ OLUŞTUR ═══
 function buildSahibindenUrl($marka, $model, $yil, $km) {
-    // sahibinden.com arama formatı
-    $query = urlencode($marka . ' ' . $model);
-    $url = 'https://www.sahibinden.com/otomobil?query_text=' . $query;
-    $url .= '&a5_max=' . $yil . '&a5_min=' . $yil; // model yılı
-    if ($km > 0) {
-        $kmMin = max(0, $km - 30000);
-        $kmMax = $km + 30000;
-        $url .= '&a4_min=' . $kmMin . '&a4_max=' . $kmMax; // km aralığı
-    }
-    $url .= '&sorting=price_desc'; // en yüksek fiyattan sırala
+    // sahibinden.com arama: /arama endpointi ile
+    $query = $marka . ' ' . $model . ' ' . $yil;
+    $url = 'https://www.sahibinden.com/arama?query_text=' . urlencode($query) . '&category_id=3&sorting=price_desc';
     return $url;
 }
 
 // ═══ ARABAN.COM ARAMA URL'İ OLUŞTUR ═══
 function buildArabanUrl($marka, $model, $yil) {
-    $query = urlencode($marka . ' ' . $model);
-    return 'https://www.araban.com/ikinci-el-araba?q=' . $query . '&yil_min=' . $yil . '&yil_max=' . $yil . '&siralama=fiyat-azalan';
+    $query = $marka . ' ' . $model . ' ' . $yil;
+    return 'https://www.araban.com/arama?q=' . urlencode($query) . '&siralama=fiyat-azalan';
 }
 
 // ═══ ZENROWS İLE HTML ÇEK ═══
