@@ -150,6 +150,7 @@ MR.HesapADKPage = ({setPage, user}) => {
 
   /* PDF */
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfOnizleme, setPdfOnizleme] = useState(null); // {html, raporNo}
 
   /* modeller artık AracModelSelect ile yükleniyor */
   const yillar = [];
@@ -351,25 +352,81 @@ MR.HesapADKPage = ({setPage, user}) => {
       + '<td style="text-align:right;"><div style="font-size:12px;font-weight:900;color:#1e40af;letter-spacing:0.5px;">MR HASAR</div><div style="font-size:8px;color:#64748b;">DANIŞMANLIK</div></td></tr></table></div>'
       + '</div>';
 
+    // MÜŞTERİ RAPORU: sadeleştirilmiş, iç detaylar maskelenmiş
+    if (window._pdfTip === 'musteri') {
+      const enYuksek = yontemler.reduce((max, y) => Math.max(max, y.kusurSonrasi), 0);
+      const musteriHtml = '<div style="font-family:Arial,Helvetica,sans-serif;padding:0;color:#1e293b;line-height:1.4;background:#ffffff;">'
+        + '<table style="width:100%;margin-bottom:16px;border-collapse:collapse;"><tr>'
+        + '<td style="background:#0f172a;color:#fff;padding:20px 24px;border-radius:8px 0 0 8px;width:65%;">'
+        + '<div style="font-size:20px;font-weight:900;letter-spacing:1px;">MR HASAR DANIŞMANLIK</div>'
+        + '<div style="font-size:11px;opacity:0.85;margin-top:4px;">ARAÇ DEĞER KAYBI ÖN DEĞERLENDİRME RAPORU</div></td>'
+        + '<td style="background:#1e40af;color:#fff;padding:20px 24px;border-radius:0 8px 8px 0;text-align:right;">'
+        + '<div style="font-size:9px;opacity:0.8;">RAPOR NO</div><div style="font-size:13px;font-weight:800;">'+raporNo+'</div>'
+        + '<div style="font-size:9px;opacity:0.8;margin-top:6px;">TARİH</div><div style="font-size:12px;font-weight:700;">'+tarih+'</div></td></tr></table>'
+
+        + '<table style="width:100%;margin-bottom:16px;border-collapse:separate;border-spacing:8px 0;"><tr>'
+        + '<td style="width:50%;vertical-align:top;background:#f0f9ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;">'
+        + '<div style="font-size:12px;font-weight:800;color:#1e40af;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #bfdbfe;">ARAÇ BİLGİLERİ</div>'
+        + '<table style="width:100%;font-size:11px;">'
+        + '<tr><td style="padding:5px 0;color:#64748b;width:40%;">MARKA / MODEL</td><td style="padding:5px 0;font-weight:700;">'+marka+' '+model+'</td></tr>'
+        + '<tr><td style="padding:5px 0;color:#64748b;">MODEL YILI</td><td style="padding:5px 0;font-weight:600;">'+yil+'</td></tr>'
+        + '<tr><td style="padding:5px 0;color:#64748b;">KİLOMETRE</td><td style="padding:5px 0;font-weight:600;">'+MR.parseNum(km).toLocaleString('tr-TR')+' KM</td></tr>'
+        + (plaka ? '<tr><td style="padding:5px 0;color:#64748b;">PLAKA</td><td style="padding:5px 0;font-weight:700;font-size:13px;">'+plaka+'</td></tr>' : '')
+        + '</table></td>'
+        + '<td style="width:50%;vertical-align:top;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 16px;">'
+        + '<div style="font-size:12px;font-weight:800;color:#059669;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #bbf7d0;">HESAPLAMA SONUCU</div>'
+        + '<div style="text-align:center;padding:16px 0;">'
+        + '<div style="font-size:10px;color:#64748b;margin-bottom:6px;">TAHMİNİ ARAÇ DEĞER KAYBI</div>'
+        + '<div style="font-size:28px;font-weight:900;color:#059669;">'+fmtM(enYuksek)+'</div>'
+        + '<div style="font-size:10px;color:#64748b;margin-top:6px;">KUSUR ORANI: %'+kusur+'</div>'
+        + '</div></td></tr></table>'
+
+        + '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:14px 16px;margin-bottom:16px;">'
+        + '<div style="font-size:10px;font-weight:700;color:#b45309;margin-bottom:6px;">ÖNEMLİ BİLGİLENDİRME</div>'
+        + '<div style="font-size:9px;color:#78350f;line-height:1.7;">'
+        + 'Bu rapor ortalama ve tahmini hesaplama içermektedir, kesinlik içermez. Mevcut yönetmelik ve mevzuatlara göre hesaplanmış olup, aracın geçmişine bağlı olarak değişkenlik gösterebilmektedir. '
+        + 'Nihai değer kaybı tutarı, Sigorta Tahkim Komisyonu veya mahkeme tarafından atanan bilirkişi raporu ile belirlenir.'
+        + '</div></div>'
+
+        + '<div style="border-top:2px solid #e2e8f0;padding-top:12px;">'
+        + '<table style="width:100%;"><tr>'
+        + '<td style="font-size:8px;color:#94a3b8;">© '+new Date().getFullYear()+' MR Hasar Danışmanlık | İletişim için: info@mrhasardanismanlik.com</td>'
+        + '<td style="text-align:right;"><div style="font-size:13px;font-weight:900;color:#1e40af;">MR HASAR</div><div style="font-size:8px;color:#64748b;">DANIŞMANLIK</div></td>'
+        + '</tr></table></div></div>';
+
+      setPdfOnizleme({html: musteriHtml, raporNo});
+      setPdfLoading(false);
+      return;
+    }
+
+    setPdfOnizleme({html, raporNo});
+    setPdfLoading(false);
+  };
+
+  /* ──────── PDF İNDİR (önizlemeden) ──────── */
+  const pdfIndir2 = () => {
+    if (!pdfOnizleme) return;
+    setPdfLoading(true);
     const el = document.createElement('div');
-    el.innerHTML = html;
+    el.innerHTML = pdfOnizleme.html;
     el.style.width = '780px';
     el.style.background = '#ffffff';
-    el.style.color = '#1e293b';
-    el.style.position = 'fixed';
-    el.style.left = '-9999px';
+    el.style.position = 'absolute';
+    el.style.left = '0';
     el.style.top = '0';
+    el.style.opacity = '0.01';
     document.body.appendChild(el);
     setTimeout(() => {
+      el.style.opacity = '1';
       html2pdf().set({
         margin: [6, 6, 6, 6],
-        filename: 'MR_ADK_Rapor_' + raporNo + '.pdf',
+        filename: 'MR_ADK_Rapor_' + pdfOnizleme.raporNo + '.pdf',
         image: {type:'jpeg', quality:0.98},
-        html2canvas: {scale:2, useCORS:true, scrollY:0, scrollX:0, windowWidth:800, backgroundColor:'#ffffff', logging:false},
+        html2canvas: {scale:2, useCORS:true, scrollY:0, scrollX:0, windowWidth:800, backgroundColor:'#ffffff'},
         jsPDF: {unit:'mm', format:'a4', orientation:'portrait'},
         pagebreak: {mode:['avoid-all','css','legacy']}
       }).from(el).save().then(() => { document.body.removeChild(el); setPdfLoading(false); }).catch(() => { document.body.removeChild(el); setPdfLoading(false); });
-    }, 200);
+    }, 300);
   };
 
   /* ═══════════════ RENDER ═══════════════ */
@@ -659,14 +716,48 @@ MR.HesapADKPage = ({setPage, user}) => {
               </div>
 
               {/* PDF BUTON */}
-              {MR.hasYetki(user,'hesaplamalar','hesap-adk-rapor') && <button onClick={pdfIndir} disabled={pdfLoading}
+              {MR.hasYetki(user,'hesaplamalar','hesap-adk-rapor') && <button onClick={() => { window._pdfTip = 'detayli'; pdfIndir(); }} disabled={pdfLoading}
+                style={{...MR.S.btn, background:'linear-gradient(135deg,#1e40af,#2563eb)', color:'#fff', padding:'10px 18px', fontSize:12, fontWeight:700, borderRadius:8, marginRight:6}}>
+                <MR.LIcon name="FileText" size={15} color="#fff"/> DETAYLI RAPOR
+              </button>}
+              {MR.hasYetki(user,'hesaplamalar','hesap-adk-rapor') && <button onClick={() => { window._pdfTip = 'musteri'; pdfIndir(); }} disabled={pdfLoading}
                 style={{...S.btn, width:'100%', justifyContent:'center', padding:14, fontSize:13, fontWeight:800, background:'linear-gradient(135deg,'+C.success+','+C.cyan+')', color:'#fff', opacity:pdfLoading?0.5:1}}>
-                {pdfLoading ? 'PDF OLUŞTURULUYOR...' : 'PDF RAPOR İNDİR (TÜM DETAYLAR)'}
+                {pdfLoading ? 'OLUŞTURULUYOR...' : 'MÜŞTERİ RAPORU'}
               </button>}
             </div>
           )}
         </div>
       </div>
+
+      {/* ═══ PDF ÖNİZLEME MODAL ═══ */}
+      {pdfOnizleme && (
+        <div style={{position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:10000, display:'flex', justifyContent:'center', alignItems:'center', background:'rgba(0,0,0,0.7)'}}>
+          <div style={{width:'68vw', maxHeight:'92vh', background:'#fff', borderRadius:12, overflow:'hidden', display:'flex', flexDirection:'column', boxShadow:'0 20px 60px rgba(0,0,0,0.4)'}}>
+            {/* BAŞLIK */}
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 20px', background:'#0f172a', color:'#fff', flexShrink:0}}>
+              <div>
+                <div style={{fontSize:14, fontWeight:800}}>RAPOR ÖNİZLEME</div>
+                <div style={{fontSize:10, opacity:0.7}}>{pdfOnizleme.raporNo}</div>
+              </div>
+              <div style={{display:'flex', gap:8}}>
+                <button onClick={pdfIndir2} disabled={pdfLoading}
+                  style={{padding:'8px 20px', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer', background:'#2563eb', color:'#fff', border:'none'}}>
+                  {pdfLoading ? 'İNDİRİLİYOR...' : 'PDF İNDİR'}
+                </button>
+                <button onClick={() => setPdfOnizleme(null)}
+                  style={{padding:'8px 16px', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer', background:'#64748b', color:'#fff', border:'none'}}>
+                  KAPAT
+                </button>
+              </div>
+            </div>
+            {/* İÇERİK */}
+            <div style={{flex:1, overflowY:'auto', padding:20, background:'#f1f5f9'}}>
+              <div style={{background:'#fff', borderRadius:8, boxShadow:'0 2px 12px rgba(0,0,0,0.1)', padding:16, maxWidth:780, margin:'0 auto'}}
+                dangerouslySetInnerHTML={{__html: pdfOnizleme.html}}/>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
