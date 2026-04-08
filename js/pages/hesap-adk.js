@@ -457,7 +457,7 @@ MR.HesapADKPage = ({setPage, user}) => {
             </div>
             <div>
               <div style={{fontSize:14, fontWeight:800}}>ADK HESAPLAMA - GERÇEK PİYASA VERİSİ</div>
-              <div style={{fontSize:10, color:C.textMuted}}>SAHİBİNDEN.COM + ARABAN.COM İLAN ANALİZİ + 3 YÖNTEM HESAPLAMA</div>
+              <div style={{fontSize:10, color:C.textMuted}}>ARABAM.COM + OTOPLUS.COM GERÇEK İLAN ANALİZİ + 3 YÖNTEM HESAPLAMA</div>
             </div>
           </div>
           <div style={{display:'flex', gap:4, flexWrap:'wrap'}}>
@@ -505,7 +505,7 @@ MR.HesapADKPage = ({setPage, user}) => {
               {/* RAYİÇ ARAŞTIR BUTONU */}
               {hy('hesap-rayic') && <button onClick={rayicArastir} disabled={rayicLoading || !marka || !model || !yil || !km}
                 style={{...S.btn, width:'100%', justifyContent:'center', marginTop:12, padding:12, fontSize:12, fontWeight:700, background:'linear-gradient(135deg,'+C.accent+','+C.purple+')', color:'#fff', opacity:(!marka||!model||!yil||!km||rayicLoading)?0.5:1}}>
-                {rayicLoading ? 'SAHİBİNDEN.COM + ARABAN.COM TARANIYOR...' : 'RAYİÇ DEĞER ARAŞTIR (SAHİBİNDEN + ARABAN)'}
+                {rayicLoading ? 'ARABAM.COM + OTOPLUS.COM TARANIYOR...' : 'RAYİÇ DEĞER ARAŞTIR (ARABAM.COM + OTOPLUS.COM)'}
               </button>}
             </div>
           </div>
