@@ -52,13 +52,13 @@ function fetchWithZenRows($url, $apiKey, $jsRender = false) {
     $zenUrl = 'https://api.zenrows.com/v1/?apikey=' . $apiKey
         . '&url=' . urlencode($url)
         . '&premium_proxy=true';
-    if ($jsRender) $zenUrl .= '&js_render=true&wait=3000';
+    if ($jsRender) $zenUrl .= '&js_render=true&wait=5000';
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $zenUrl);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 45);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 60);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -68,31 +68,98 @@ function fetchWithZenRows($url, $apiKey, $jsRender = false) {
     return ['body' => $response, 'code' => $httpCode, 'error' => $error];
 }
 
-// ═══ FİYAT PARSE (GENEL) ═══
-function parseFiyatlar($html, $kaynak, $marka, $model, $yil) {
+// ═══ ARABAM.COM İÇİN insiderArray PARSE ═══
+function parseArabamFiyatlar($html, $marka, $model, $yil) {
     $ilanlar = [];
     if (empty($html)) return $ilanlar;
-
-    // Çoklu fiyat pattern
     $fiyatlar = [];
 
-    // Pattern 1: TL ile biten fiyatlar (100.000 TL formatı)
-    if (preg_match_all('/((?:\d{1,3}\.)*\d{3,})\s*(?:TL|₺)/s', $html, $m)) {
+    // Pattern 1: insiderArray.push({ ... "unit_price": parseFloat(("1.509.000 TL").replace(...)) })
+    if (preg_match_all('/insiderArray\.push\(\{[^}]*"name"\s*:\s*"([^"]*)"[^}]*"unit_price"\s*:\s*parseFloat\(\("([\d.]+)\s*TL"\)/s', $html, $m, PREG_SET_ORDER)) {
+        foreach ($m as $match) {
+            $baslik = $match[1];
+            $val = (int)preg_replace('/[^\d]/', '', $match[2]);
+            if ($val >= 50000 && $val <= 50000000) {
+                $ilanlar[] = [
+                    'kaynak' => 'arabam.com',
+                    'baslik' => $baslik,
+                    'fiyat' => $val,
+                    'km' => 0,
+                    'yil' => $yil,
+                    'sehir' => '',
+                    'tarih' => date('Y-m-d')
+                ];
+            }
+        }
+    }
+
+    // Pattern 2: Fallback - "unit_price": parseFloat(("SAYI TL")...) without name
+    if (empty($ilanlar) && preg_match_all('/"unit_price"\s*:\s*parseFloat\(\("([\d.]+)\s*TL"\)/s', $html, $m)) {
         foreach ($m[1] as $f) {
             $val = (int)preg_replace('/[^\d]/', '', $f);
             if ($val >= 50000 && $val <= 50000000) $fiyatlar[] = $val;
         }
     }
 
-    // Pattern 2: data-price veya data-value attribute
-    if (preg_match_all('/data-(?:price|value)="(\d+)"/si', $html, $m)) {
+    // Pattern 3: Fallback - "unit_price": SAYI (direkt numeric)
+    if (empty($ilanlar) && empty($fiyatlar) && preg_match_all('/"unit_price"\s*:\s*(\d+)/s', $html, $m)) {
         foreach ($m[1] as $f) {
             $val = (int)$f;
             if ($val >= 50000 && $val <= 50000000) $fiyatlar[] = $val;
         }
     }
 
-    // Pattern 3: class="price" veya "fiyat" içindeki sayılar
+    // Pattern 4: data-price veya data-value
+    if (empty($ilanlar) && empty($fiyatlar) && preg_match_all('/data-(?:price|value)="(\d+)"/si', $html, $m)) {
+        foreach ($m[1] as $f) {
+            $val = (int)$f;
+            if ($val >= 50000 && $val <= 50000000) $fiyatlar[] = $val;
+        }
+    }
+
+    // Pattern 5: JSON-LD price
+    if (empty($ilanlar) && empty($fiyatlar) && preg_match_all('/"price"\s*:\s*"?(\d+)"?/si', $html, $m)) {
+        foreach ($m[1] as $f) {
+            $val = (int)$f;
+            if ($val >= 50000 && $val <= 50000000) $fiyatlar[] = $val;
+        }
+    }
+
+    // Pattern 6: TL formatı (son çare)
+    if (empty($ilanlar) && empty($fiyatlar) && preg_match_all('/((?:\d{1,3}\.)*\d{3,})\s*(?:TL|₺)/s', $html, $m)) {
+        foreach ($m[1] as $f) {
+            $val = (int)preg_replace('/[^\d]/', '', $f);
+            if ($val >= 50000 && $val <= 50000000) $fiyatlar[] = $val;
+        }
+    }
+
+    // Fallback pattern sonuçlarını ilanlara dönüştür
+    if (empty($ilanlar) && !empty($fiyatlar)) {
+        $fiyatlar = array_unique($fiyatlar);
+        rsort($fiyatlar);
+        foreach (array_slice($fiyatlar, 0, 10) as $fiyat) {
+            $ilanlar[] = [
+                'kaynak' => 'arabam.com',
+                'baslik' => $marka . ' ' . $model . ' ' . $yil,
+                'fiyat' => $fiyat,
+                'km' => 0,
+                'yil' => $yil,
+                'sehir' => '',
+                'tarih' => date('Y-m-d')
+            ];
+        }
+    }
+
+    return $ilanlar;
+}
+
+// ═══ OTOPLUS.COM FİYAT PARSE ═══
+function parseOtoplusFiyatlar($html, $marka, $model, $yil) {
+    $ilanlar = [];
+    if (empty($html)) return $ilanlar;
+    $fiyatlar = [];
+
+    // Otoplus: class="price" veya fiyat div'leri
     if (preg_match_all('/class="[^"]*(?:price|fiyat)[^"]*"[^>]*>\s*[^\d]*([\d.,]+)/si', $html, $m)) {
         foreach ($m[1] as $f) {
             $val = (int)preg_replace('/[^\d]/', '', $f);
@@ -100,21 +167,28 @@ function parseFiyatlar($html, $kaynak, $marka, $model, $yil) {
         }
     }
 
-    // Pattern 4: JSON-LD structured data
-    if (preg_match_all('/"price"\s*:\s*"?(\d+)"?/si', $html, $m)) {
+    // JSON-LD
+    if (empty($fiyatlar) && preg_match_all('/"price"\s*:\s*"?(\d+)"?/si', $html, $m)) {
         foreach ($m[1] as $f) {
             $val = (int)$f;
             if ($val >= 50000 && $val <= 50000000) $fiyatlar[] = $val;
         }
     }
 
-    // Tekrarları kaldır ve büyükten küçüğe sırala
+    // TL formatı
+    if (empty($fiyatlar) && preg_match_all('/((?:\d{1,3}\.)*\d{3,})\s*(?:TL|₺)/s', $html, $m)) {
+        foreach ($m[1] as $f) {
+            $val = (int)preg_replace('/[^\d]/', '', $f);
+            if ($val >= 50000 && $val <= 50000000) $fiyatlar[] = $val;
+        }
+    }
+
     $fiyatlar = array_unique($fiyatlar);
     rsort($fiyatlar);
 
     foreach (array_slice($fiyatlar, 0, 10) as $fiyat) {
         $ilanlar[] = [
-            'kaynak' => $kaynak,
+            'kaynak' => 'otoplus.com',
             'baslik' => $marka . ' ' . $model . ' ' . $yil,
             'fiyat' => $fiyat,
             'km' => 0,
@@ -132,16 +206,25 @@ $tumIlanlar = [];
 $hatalar = [];
 $basarili = [];
 
-// 1. ARABAM.COM
-$markaSlug = mb_strtolower(str_replace([' ', '(', ')'], ['-', '', ''], $marka));
-$modelSlug = mb_strtolower(str_replace([' ', '.'], ['-', '-'], $model));
-$arabamUrl = 'https://www.arabam.com/ikinci-el/otomobil/' . $markaSlug . '-' . $modelSlug . '?minYear=' . $yil . '&maxYear=' . $yil . '&sort=price-desc';
-// Alternatif: query string ile arama
-$arabamUrl2 = 'https://www.arabam.com/ikinci-el/otomobil?query=' . urlencode($marka . ' ' . $model) . '&minYear=' . $yil . '&maxYear=' . $yil . '&sort=price-desc';
+// ═══ SLUG OLUŞTUR ═══
+function makeSlug($text) {
+    $text = mb_strtolower($text, 'UTF-8');
+    // Türkçe karakter dönüşümü
+    $tr = ['ç'=>'c','ğ'=>'g','ı'=>'i','ö'=>'o','ş'=>'s','ü'=>'u','Ç'=>'c','Ğ'=>'g','İ'=>'i','Ö'=>'o','Ş'=>'s','Ü'=>'u'];
+    $text = strtr($text, $tr);
+    $text = preg_replace('/[^a-z0-9]+/', '-', $text);
+    return trim($text, '-');
+}
 
-$arabamResult = fetchWithZenRows($arabamUrl2, $zenrowsKey, false);
+// 1. ARABAM.COM
+$markaSlug = makeSlug($marka);
+$modelSlug = makeSlug($model);
+// Format: /ikinci-el/otomobil/marka-model?minYear=YYYY&maxYear=YYYY
+$arabamUrl = 'https://www.arabam.com/ikinci-el/otomobil/' . $markaSlug . '-' . $modelSlug . '?minYear=' . $yil . '&maxYear=' . $yil;
+
+$arabamResult = fetchWithZenRows($arabamUrl, $zenrowsKey, true);
 if ($arabamResult['code'] === 200 && !empty($arabamResult['body'])) {
-    $arabamIlanlar = parseFiyatlar($arabamResult['body'], 'arabam.com', $marka, $model, $yil);
+    $arabamIlanlar = parseArabamFiyatlar($arabamResult['body'], $marka, $model, $yil);
     $tumIlanlar = array_merge($tumIlanlar, $arabamIlanlar);
     $basarili[] = 'arabam.com(' . count($arabamIlanlar) . ' ilan)';
 } else {
@@ -149,10 +232,13 @@ if ($arabamResult['code'] === 200 && !empty($arabamResult['body'])) {
 }
 
 // 2. OTOPLUS.COM
-$otoplusUrl = 'https://www.otoplus.com/ikinci-el-arac?marka=' . urlencode($marka) . '&model=' . urlencode($model) . '&yilMin=' . $yil . '&yilMax=' . $yil . '&siralama=fiyatAzalan';
+$otoplusMarkaSlug = makeSlug($marka);
+$otoplusModelSlug = makeSlug($model);
+$otoplusUrl = 'https://www.otoplus.com/ikinci-el-arac/' . $otoplusMarkaSlug . '/' . $otoplusModelSlug . '?yil_min=' . $yil . '&yil_max=' . $yil . '&siralama=fiyat_azalan';
+
 $otoplusResult = fetchWithZenRows($otoplusUrl, $zenrowsKey, false);
 if ($otoplusResult['code'] === 200 && !empty($otoplusResult['body'])) {
-    $otoplusIlanlar = parseFiyatlar($otoplusResult['body'], 'otoplus.com', $marka, $model, $yil);
+    $otoplusIlanlar = parseOtoplusFiyatlar($otoplusResult['body'], $marka, $model, $yil);
     $tumIlanlar = array_merge($tumIlanlar, $otoplusIlanlar);
     $basarili[] = 'otoplus.com(' . count($otoplusIlanlar) . ' ilan)';
 } else {

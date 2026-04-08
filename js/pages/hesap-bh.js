@@ -407,30 +407,16 @@
         + '<p style="margin-top:6px;">MR HASAR DANIŞMANLIK - '+tarih+' | © '+new Date().getFullYear()+'</p></div></div>';
 
       setBhPdfOnizleme({html, raporNo, tip});
-      setPdfYukleniyor(false);
-    };
 
-    const bhPdfIndir2 = () => {
-      if (!bhPdfOnizleme) return;
-      setPdfYukleniyor(true);
-      const el = document.createElement('div');
-      el.innerHTML = bhPdfOnizleme.html;
-      el.style.width = '780px';
-      el.style.background = '#ffffff';
-      el.style.position = 'absolute';
-      el.style.left = '0'; el.style.top = '0'; el.style.opacity = '0.01';
-      document.body.appendChild(el);
-      setTimeout(() => {
-        el.style.opacity = '1';
-        html2pdf().set({
-          margin: [6,6,6,6],
-          filename: 'MR_BH_'+(bhPdfOnizleme.tip==='bilirkisi'?'Bilirkisi_':'Sonuc_')+bhPdfOnizleme.raporNo+'.pdf',
-          image:{type:'jpeg',quality:0.98},
-          html2canvas:{scale:2,useCORS:true,scrollY:0,scrollX:0,windowWidth:800,backgroundColor:'#ffffff'},
-          jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-          pagebreak:{mode:['avoid-all','css','legacy']}
-        }).from(el).save().then(()=>{document.body.removeChild(el);setPdfYukleniyor(false);}).catch(()=>{document.body.removeChild(el);setPdfYukleniyor(false);});
-      }, 300);
+      // Direkt window.print() ile PDF oluştur (html2pdf yerine)
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write('<html><head><title>MR BH Rapor - '+raporNo+'</title><style>@page{size:A4;margin:10mm;}body{margin:0;padding:10px;font-family:Arial,Helvetica,sans-serif;}</style></head><body>');
+      printWindow.document.write(html);
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.onload = () => { printWindow.print(); };
+
+      setPdfYukleniyor(false);
     };
 
     // TEMİZLE
