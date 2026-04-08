@@ -167,8 +167,17 @@ MR.HesapADKPage = ({setPage, user}) => {
       });
       if (r?.success && r.data) {
         setRayicData(r.data);
-        if (r.data.ortalama > 0) {
-          setRayicDeger(MR.fmtInput(String(r.data.ortalama)));
+        // Ortalama varsa direkt ata, yoksa ilanlardan hesapla
+        let rayicDegerHesap = r.data.ortalama || 0;
+        if (!rayicDegerHesap && r.data.ilanlar?.length > 0) {
+          const fiyatlar = r.data.ilanlar.map(il => il.fiyat || 0).filter(f => f > 0).sort((a,b) => b-a).slice(0,5);
+          if (fiyatlar.length > 0) rayicDegerHesap = Math.round(fiyatlar.reduce((t,f) => t+f, 0) / fiyatlar.length);
+        }
+        if (!rayicDegerHesap && r.data.en_yuksek > 0) {
+          rayicDegerHesap = Math.round((r.data.en_yuksek + (r.data.en_dusuk || r.data.en_yuksek)) / 2);
+        }
+        if (rayicDegerHesap > 0) {
+          setRayicDeger(MR.fmtInput(String(rayicDegerHesap)));
         }
       } else {
         alert(r?.error || 'RAYİÇ ARAŞTIRMA HATASI');
