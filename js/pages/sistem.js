@@ -1314,6 +1314,22 @@ const AyarlarTab = () => {
                 CONSOLE.ANTHROPIC.COM ADRESINDEN API ANAHTARI ALABİLİRSİNİZ
               </div>
             </div>
+
+            {/* ZENROWS API KEY */}
+            <div style={{marginTop: 16}}>
+              <label style={{display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8}}>
+                <LIcon name="Globe" size={14} color={C.success}/>
+                <span style={{fontWeight: 700, fontSize: 12}}>ZENROWS API ANAHTARI</span>
+                <span style={{...S.badge(C.success), fontSize: 8, padding: '1px 6px'}}>GERÇEK RAYİÇ VERİSİ</span>
+              </label>
+              <input style={{...S.input, fontFamily: 'monospace', fontSize: 12, letterSpacing: 0.5}}
+                value={ayarlar.zenrows_api_key || ''}
+                onChange={e => up('zenrows_api_key', e.target.value)}
+                placeholder="ZenRows API anahtarı (sahibinden.com + araban.com gerçek ilan verisi)"/>
+              <div style={{fontSize: 10, color: C.textMuted, marginTop: 4}}>
+                ZENROWS.COM ADRESINDEN API ANAHTARI ALABİLİRSİNİZ - RAYİÇ ARAŞTIRMADA GERÇEK İLAN VERİSİ ÇEKİLİR
+              </div>
+            </div>
           </div>
 
           {/* API TEST SONUCU PANELİ */}
