@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MR HASAR DANISMANLIK - TEKNIK SARTNAME</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;color:#1e293b;background:#fff;line-height:1.6}
+.page{max-width:900px;margin:0 auto;padding:40px;page-break-after:always}
+.cover{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#0f172a,#134e4a);color:#fff;text-align:center;padding:60px}
+.cover h1{font-size:36px;letter-spacing:2px;margin-bottom:8px}
+.cover .sub{font-size:14px;color:rgba(255,255,255,0.6);letter-spacing:4px}
+.cover .divider{width:80px;height:3px;background:linear-gradient(90deg,#0d9488,#f59e0b);margin:20px auto}
+h1{font-size:28px;color:#0f172a;border-bottom:3px solid #0d9488;padding-bottom:8px;margin:30px 0 20px}
+h2{font-size:20px;color:#0d9488;margin:24px 0 12px;padding-left:12px;border-left:4px solid #0d9488}
+h3{font-size:16px;color:#1e293b;margin:16px 0 8px}
+p{margin:8px 0;font-size:14px}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+th{background:#0f172a;color:#fff;padding:10px 12px;text-align:left;font-size:12px;letter-spacing:1px}
+td{padding:8px 12px;border-bottom:1px solid #e2e8f0}
+tr:nth-child(even){background:#f8fafc}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700}
+.b-teal{background:#0d948822;color:#0d9488}
+.b-gold{background:#f59e0b22;color:#b45309}
+.b-red{background:#ef444422;color:#dc2626}
+.info-box{background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:14px 18px;margin:12px 0;font-size:13px}
+.warn-box{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 18px;margin:12px 0;font-size:13px}
+.formula{background:#0f172a;color:#0d9488;padding:14px 20px;border-radius:8px;font-family:monospace;font-size:13px;margin:10px 0;overflow-x:auto}
+.footer{text-align:center;font-size:10px;color:#94a3b8;padding:20px 0;border-top:1px solid #e2e8f0;margin-top:30px;letter-spacing:2px}
+code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;color:#0d9488}
+ul{margin:8px 0 8px 20px;font-size:13px}
+li{margin:4px 0}
+@media print{.page{padding:20px;max-width:100%}}
+</style>
+</head>
+<body>
+
+<!-- KAPAK -->
+<div class="cover">
+<div style="font-size:60px;margin-bottom:20px">&#9878;</div>
+<div class="sub">TEKNIK SARTNAME DOKUMANI</div>
+<h1>MR HASAR DANISMANLIK</h1>
+<div class="sub">KURUMSAL DIJITAL PLATFORM</div>
+<div class="divider"></div>
+<div style="margin-top:30px;font-size:13px;color:rgba(255,255,255,0.5)">
+VERSIYON 2.0 | NISAN 2026<br>
+GIZLILIK: SIRKET ICI - DAGITIMI SINIRLIDIR
+</div>
+<div style="margin-top:60px;font-size:12px;color:rgba(255,255,255,0.3)">MR HASAR DANISMANLIK VE FILO YONETIMI | HER ZAMAN FARK EDER</div>
+</div>
+
+<!-- BOLUM 1 -->
+<div class="page">
+<h1>1. GENEL BILGILER</h1>
+
+<table>
+<tr><th style="width:35%">PARAMETRE</th><th>DEGER</th></tr>
+<tr><td><strong>Platform Adi</strong></td><td>MR Hasar Danismanlik - Kurumsal Dijital Platform</td></tr>
+<tr><td><strong>Versiyon</strong></td><td>2.0</td></tr>
+<tr><td><strong>Erisim URL</strong></td><td>https://sistem.mrhasardanismanlik.com</td></tr>
+<tr><td><strong>Frontend Teknoloji</strong></td><td>React.js 18+ (CDN-based, no build step)</td></tr>
+<tr><td><strong>Backend Teknoloji</strong></td><td>PHP 8.x (RESTful API)</td></tr>
+<tr><td><strong>Veritabani</strong></td><td>MySQL / MariaDB (InnoDB, UTF-8)</td></tr>
+<tr><td><strong>Kimlik Dogrulama</strong></td><td>JWT (JSON Web Token)</td></tr>
+<tr><td><strong>Routing</strong></td><td>Hash-based (#/sayfa-adi)</td></tr>
+<tr><td><strong>Tema Destegi</strong></td><td>Koyu / Acik mod</td></tr>
+<tr><td><strong>Responsive</strong></td><td>Evet (mobil uyumlu)</td></tr>
+<tr><td><strong>AI Entegrasyonu</strong></td><td>Claude AI (Anthropic)</td></tr>
+<tr><td><strong>Web Scraping</strong></td><td>ZenRows API</td></tr>
+</table>
+
+<h1>2. MODUL TEKNIK DETAYLARI</h1>
+
+<h2>2.1 DOSYA ISLEMLERI MODULU</h2>
+<div class="info-box">Tum hasar dosyalarinin yasam dongusunu yoneten ana modul. ADK, BH ve MDK dosya turleri desteklenir.</div>
+
+<h3>Dosya Turleri</h3>
+<table>
+<tr><th>TUR</th><th>ACIKLAMA</th><th>OZEL ALANLAR</th></tr>
+<tr><td><span class="badge b-teal">ADK</span></td><td>Arac Deger Kaybi</td><td>Arac bilgileri, kasko, gecmis hasar, karsi arac</td></tr>
+<tr><td><span class="badge b-gold">BH</span></td><td>Bedeni Hasar</td><td>Maluliyet, meslek, dogum tarihi, gelir</td></tr>
+<tr><td><span class="badge b-red">MDK</span></td><td>Motor Deger Kaybi</td><td>Motor bilgileri</td></tr>
+</table>
+
+<h3>Dosya Detay Sekmeleri</h3>
+<table>
+<tr><th>SEKME</th><th>ICERIK</th></tr>
+<tr><td>BILGI</td><td>Magdur, arac, sigorta, ortak bilgileri, asama yonetimi</td></tr>
+<tr><td>MASRAFLAR</td><td>Masraf ekleme/duzenleme, odeme (kasa secimi), toplam takip</td></tr>
+<tr><td>EVRAKLAR</td><td>Evrak turu bazli yukleme (PDF/JPG/PNG), onizleme, toplu indirme</td></tr>
+<tr><td>DOSYA HESABI</td><td>Tazminat, vekalet, faiz, stopaj, KDV, mahsup, komisyon hesaplama, kapanis</td></tr>
+</table>
+
+<h3>Veri Yapisi - Magdur</h3>
+<table>
+<tr><th>ALAN</th><th>TIP</th><th>ACIKLAMA</th></tr>
+<tr><td>ad_soyad</td><td>string</td><td>Magdur adi soyadi</td></tr>
+<tr><td>tc_kimlik</td><td>string(11)</td><td>TC Kimlik No</td></tr>
+<tr><td>telefon</td><td>string</td><td>Telefon numarasi</td></tr>
+<tr><td>iban</td><td>string</td><td>Banka IBAN</td></tr>
+<tr><td>il / ilce</td><td>string</td><td>Adres bilgileri</td></tr>
+<tr><td>meslek</td><td>string</td><td>Meslek (BH icin)</td></tr>
+<tr><td>dogum_tarihi</td><td>date</td><td>Dogum tarihi</td></tr>
+</table>
+
+<h2>2.2 CRM / SAHA MODULU</h2>
+
+<h3>CRM Durum Akisi</h3>
+<div class="formula">YENI ──> TAKIPTE ──> OLUMLU ──> DOSYAYA DONUSTUR
+                         └──> OLUMSUZ (kapandi)</div>
+
+<h3>Saha Onay Akisi</h3>
+<div class="formula">TASLAK ──> BEKLEMEDE ──> ONAYLANDI ──> DOSYAYA DONUSTU
+                              └──> REDDEDILDI ──> (duzelt) ──> BEKLEMEDE</div>
+
+<h3>Entegrasyonlar</h3>
+<ul>
+<li><strong>WebRTC:</strong> Netsantral uzerinden tarayicidan arama</li>
+<li><strong>WhatsApp:</strong> Sahaya aktarim</li>
+<li><strong>Excel:</strong> Import/export</li>
+<li><strong>Autocall:</strong> Otomatik arama sistemi</li>
+</ul>
+
+<h2>2.3 HESAPLAMA MODULU</h2>
+
+<h3>ADK - Tahkim Formulu (2024-2026)</h3>
+<div class="formula">DK = Rayic x BazOran x YasK x KMK x BolgeK x OncekiK x (Kusur/100)</div>
+
+<table>
+<tr><th>KATSAYI</th><th>DEGERLER</th></tr>
+<tr><td>Baz Oran</td><td>%3 (hasar&le;3%) ~ %22 (hasar>40%)</td></tr>
+<tr><td>Yas Katsayisi</td><td>1.00 (0-1 yil) ~ 0.18 (15+ yil)</td></tr>
+<tr><td>KM Katsayisi</td><td>1.00 (&lt;10k) ~ 0.40 (250k+)</td></tr>
+<tr><td>Bolge Katsayisi</td><td>On:1.00, On+Yan:0.95, Yan:0.90, Arka:0.85, Tavan:0.75, Alt:0.70</td></tr>
+<tr><td>Onceki Hasar</td><td>0:1.00, 1:0.82, 2:0.68, 3:0.55, 4:0.42, 5+:0.30</td></tr>
+</table>
+
+<h3>ADK - Yargitay Ictihadi (17. HD / 4. HD)</h3>
+<div class="formula">DK = Rayic x HasarEtkisi x (1 - Yipranma) x BolgeK x OncekiK x (Kusur/100)
+Yipranma = min(YasYipranma + KMYipranma, 0.50)
+YasYipranma = min(aracYasi x 0.035, 0.40)
+KMYipranma = min(floor(km/50000) x 0.025, 0.20)</div>
+
+<h3>BH - Bedeni Hasar Hesaplama</h3>
+<div class="formula">AktifGelirKaybi = AylikGelir x 12 x (Maluliyet/100) x AktifRant
+PasifGelirKaybi = PasifAylikGelir x 12 x (Maluliyet/100) x PasifRant x PasifIskonto
+ToplamNet = max(0, (Aktif + Pasif + GIGS + Bakici) x (Kusur/100) - PSD)</div>
+
+<table>
+<tr><th>PARAMETRE</th><th>ACIKLAMA</th></tr>
+<tr><td>PMF Tablolari</td><td>TRH2010, CSO1980, PMF1931</td></tr>
+<tr><td>Teknik Faiz</td><td>%1.8, %0, %1.65, %10</td></tr>
+<tr><td>Emeklilik Yasi</td><td>Varsayilan 65, ayarlanabilir (55-75)</td></tr>
+<tr><td>Vergi Dilimi</td><td>%15 (&le;200k), %17 (&le;400k), %19 (&le;700k), %21 (>700k)</td></tr>
+<tr><td>Rant Yontemi</td><td>Progresif (1/Ln metodu)</td></tr>
+</table>
+
+<h3>Rayic Arastirma (ZenRows)</h3>
+<table>
+<tr><th>PARAMETRE</th><th>DEGER</th></tr>
+<tr><td>API Yontemi</td><td>Proxy (CURLOPT_PROXY)</td></tr>
+<tr><td>Kaynaklar</td><td>arabam.com, otoplus.com</td></tr>
+<tr><td>JS Render</td><td>true (CSS selector bekleme)</td></tr>
+<tr><td>Timeout</td><td>60 saniye / istek</td></tr>
+<tr><td>Fiyat Filtre</td><td>50.000 - 50.000.000 TL</td></tr>
+<tr><td>Sonuc</td><td>En yuksek 5 ilanin ortalamasi</td></tr>
+</table>
+
+<div class="footer">MR HASAR DANISMANLIK VE FILO YONETIMI | HER ZAMAN FARK EDER | &copy; 2026</div>
+</div>
+
+<!-- SAYFA 2 -->
+<div class="page">
+<h2>2.4 POLICE MODULU</h2>
+<table>
+<tr><th>SEKME</th><th>ISLEVLER</th></tr>
+<tr><td>Police Listesi</td><td>Tum policelerin listelenmesi, arama, filtreleme</td></tr>
+<tr><td>Yeni Police</td><td>Police kaydi olusturma, brans secimi</td></tr>
+<tr><td>Yenileme Takibi</td><td>Vade takibi, yenileme hatirlatma</td></tr>
+<tr><td>Tahsilat / Cari</td><td>Prim tahsilat takibi, cari hesap</td></tr>
+<tr><td>Raporlar</td><td>Police raporlari</td></tr>
+<tr><td>Kazanc</td><td>Police bazli kazanc analizi</td></tr>
+</table>
+
+<h2>2.5 MUHASEBE MODULU</h2>
+<table>
+<tr><th>SEKME</th><th>ISLEVLER</th></tr>
+<tr><td>Gelir / Gider</td><td>Gelir ve gider kayitlari, kategorilendirme</td></tr>
+<tr><td>Kasalar</td><td>Coklu kasa yonetimi, bakiye takibi</td></tr>
+<tr><td>Ortak Kasa</td><td>Is ortaklari ile paylasimli kasa</td></tr>
+<tr><td>Komisyon Takibi</td><td>Dosya bazli komisyon hesaplama ve takip</td></tr>
+<tr><td>Finansal Raporlar</td><td>Genel finansal ozet raporlari</td></tr>
+<tr><td>Kapanis Raporu</td><td>Donem kapanis raporu</td></tr>
+<tr><td>Ay Sonu Raporu</td><td>Aylik mali ozet</td></tr>
+<tr><td>Maliyet Analizi</td><td>Dosya ve kategori bazli maliyet analizi</td></tr>
+</table>
+
+<h2>2.6 ICTIHAT MODULU</h2>
+<table>
+<tr><th>ALT SAYFA</th><th>ICERIK</th></tr>
+<tr><td>Yargitay Kararlari</td><td>AI destekli Yargitay karar arama ve listeleme</td></tr>
+<tr><td>Tahkim Kabul Ornekleri</td><td>Tahkim komisyonu kabul kararlari veritabani</td></tr>
+<tr><td>Police Limit Tablolari</td><td>Sigorta police limit referans tablolari</td></tr>
+<tr><td>Kusur Emsal Dosyalari</td><td>Kusur orani emsal kararlari</td></tr>
+</table>
+
+<h2>2.7 SISTEM YONETIMI</h2>
+<table>
+<tr><th>ALT SAYFA</th><th>ICERIK</th></tr>
+<tr><td>Kullanici Yonetimi</td><td>Kullanici ekleme/duzenleme, rol atama (admin/kullanici)</td></tr>
+<tr><td>Yetki Yonetimi</td><td>Modul bazli detayli yetki matrisi</td></tr>
+<tr><td>Firma Ayarlari</td><td>Logo, sirket bilgileri, API anahtarlari (Claude, ZenRows)</td></tr>
+<tr><td>SMS Bildirim</td><td>SMS gateway entegrasyonu, sablon yonetimi</td></tr>
+<tr><td>Portal Ayarlari</td><td>Avukat/musteri portal konfigurasyonu</td></tr>
+<tr><td>Cihaz Guvenlik</td><td>MAC/IP bazli beyaz liste erisim kontrolu</td></tr>
+<tr><td>Toplu Aktarim</td><td>Excel ile toplu veri import</td></tr>
+<tr><td>Veri Yonetimi</td><td>Veritabani yedekleme ve bakim</td></tr>
+<tr><td>Log Kayitlari</td><td>Sistem log inceleme ve denetim</td></tr>
+</table>
+
+<h1>3. API ENDPOINT LISTESI</h1>
+<table>
+<tr><th>ENDPOINT</th><th>YONTEM</th><th>ACIKLAMA</th></tr>
+<tr><td>/api/v1/auth/login.php</td><td>POST</td><td>Kullanici girisi, JWT token</td></tr>
+<tr><td>/api/v1/dosya/liste.php</td><td>GET</td><td>Dosya listesi</td></tr>
+<tr><td>/api/v1/dosya/create.php</td><td>POST</td><td>Yeni dosya olusturma</td></tr>
+<tr><td>/api/v1/dosya/update.php</td><td>POST</td><td>Dosya guncelleme</td></tr>
+<tr><td>/api/v1/dosya/delete.php</td><td>POST</td><td>Dosya silme</td></tr>
+<tr><td>/api/v1/crm/*.php</td><td>GET/POST</td><td>CRM islemleri</td></tr>
+<tr><td>/api/v1/saha/*.php</td><td>GET/POST</td><td>Saha islemleri</td></tr>
+<tr><td>/api/v1/hesap/rayic-arastirma.php</td><td>POST</td><td>ZenRows rayic arastirma</td></tr>
+<tr><td>/api/v1/hesap/adk-ai-analiz.php</td><td>POST</td><td>ADK AI analiz</td></tr>
+<tr><td>/api/v1/hesap/bh-ai-analiz.php</td><td>POST</td><td>BH AI analiz</td></tr>
+<tr><td>/api/v1/hesap/tahkim-emsal-ara.php</td><td>POST</td><td>Tahkim emsal arama</td></tr>
+<tr><td>/api/v1/hesap/ocr-analiz.php</td><td>POST</td><td>OCR belge analizi</td></tr>
+<tr><td>/api/v1/ictihat/*.php</td><td>POST</td><td>Ictihat arama (AI)</td></tr>
+<tr><td>/api/v1/police/*.php</td><td>GET/POST</td><td>Police islemleri</td></tr>
+<tr><td>/api/v1/muhasebe/*.php</td><td>GET/POST</td><td>Muhasebe islemleri</td></tr>
+<tr><td>/api/v1/sistem/*.php</td><td>GET/POST</td><td>Sistem yonetimi</td></tr>
+<tr><td>/api/v1/upload/*.php</td><td>POST</td><td>Dosya yukleme</td></tr>
+</table>
+
+<h1>4. GUVENLIK MIMARISI</h1>
+<table>
+<tr><th>KATMAN</th><th>YONTEM</th></tr>
+<tr><td>Kimlik Dogrulama</td><td>JWT Token (Header: Authorization: Bearer)</td></tr>
+<tr><td>Yetkilendirme</td><td>RBAC - Rol Bazli Erisim Kontrolu (admin/kullanici)</td></tr>
+<tr><td>Cihaz Kontrolu</td><td>MAC Adresi + IP beyaz liste</td></tr>
+<tr><td>Sifreleme</td><td>SSL/TLS (HTTPS zorunlu)</td></tr>
+<tr><td>SQL Korumasi</td><td>PDO Prepared Statements</td></tr>
+<tr><td>XSS Korumasi</td><td>Input sanitization, output encoding</td></tr>
+<tr><td>Dosya Yukleme</td><td>Tip ve boyut kontrolu, guvenli dizin</td></tr>
+</table>
+
+<h1>5. UCUNCU PARTI ENTEGRASYONLAR</h1>
+<table>
+<tr><th>SERVIS</th><th>AMAC</th><th>PROTOKOL</th></tr>
+<tr><td>Claude AI (Anthropic)</td><td>AI analiz, ictihat arama, OCR, motivasyon</td><td>REST API (HTTPS)</td></tr>
+<tr><td>ZenRows</td><td>Web scraping (rayic arastirma)</td><td>Proxy (HTTP)</td></tr>
+<tr><td>Netsantral</td><td>WebRTC santral, arama yonetimi</td><td>WebSocket + REST</td></tr>
+<tr><td>IMAP/SMTP</td><td>E-posta gonderme/alma</td><td>IMAP (993) / SMTP (465)</td></tr>
+<tr><td>SMS Gateway</td><td>SMS bildirim gonderimi</td><td>REST API</td></tr>
+</table>
+
+<div class="footer">MR HASAR DANISMANLIK VE FILO YONETIMI | HER ZAMAN FARK EDER | &copy; 2026</div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MR HASAR DANISMANLIK - KULLANIM KILAVUZU</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;color:#1e293b;background:#f8fafc;line-height:1.7;font-size:14px}
+.cover{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#0f172a,#134e4a);color:#fff;text-align:center;padding:60px;page-break-after:always}
+.cover h1{font-size:36px;letter-spacing:2px;margin:10px 0}
+.cover .sub{font-size:14px;color:rgba(255,255,255,0.6);letter-spacing:4px}
+.divider{width:80px;height:3px;background:linear-gradient(90deg,#0d9488,#f59e0b);margin:20px auto;border-radius:2px}
+.container{display:flex;max-width:1200px;margin:0 auto}
+.sidebar{width:260px;background:#0f172a;color:#fff;padding:24px 16px;position:fixed;top:0;bottom:0;overflow-y:auto}
+.sidebar h3{font-size:13px;color:#0d9488;letter-spacing:2px;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.1)}
+.sidebar a{display:block;color:rgba(255,255,255,0.7);text-decoration:none;font-size:12px;padding:6px 10px;border-radius:6px;margin:2px 0;transition:all .2s}
+.sidebar a:hover{background:rgba(13,148,136,0.2);color:#fff}
+.main{margin-left:260px;padding:30px 40px;max-width:900px}
+h1{font-size:26px;color:#0f172a;border-bottom:3px solid #0d9488;padding-bottom:8px;margin:40px 0 20px}
+h2{font-size:20px;color:#0d9488;margin:28px 0 14px}
+h3{font-size:16px;color:#334155;margin:18px 0 10px}
+.step{display:flex;gap:14px;margin:14px 0;padding:14px 18px;background:#fff;border-radius:10px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.step-num{min-width:32px;height:32px;background:linear-gradient(135deg,#0d9488,#0f766e);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0}
+.step-text{flex:1}
+.step-text strong{color:#0d9488}
+.tip{background:#f0fdfa;border:1px solid #99f6e4;border-left:4px solid #0d9488;border-radius:8px;padding:14px 18px;margin:14px 0;font-size:13px}
+.tip::before{content:'IPUCU: ';font-weight:800;color:#0d9488}
+.warn{background:#fffbeb;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:8px;padding:14px 18px;margin:14px 0;font-size:13px}
+.warn::before{content:'DIKKAT: ';font-weight:800;color:#b45309}
+.danger{background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #ef4444;border-radius:8px;padding:14px 18px;margin:14px 0;font-size:13px}
+.danger::before{content:'UYARI: ';font-weight:800;color:#dc2626}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+th{background:#0f172a;color:#fff;padding:10px 12px;text-align:left;font-size:11px;letter-spacing:1px}
+td{padding:8px 12px;border-bottom:1px solid #e2e8f0}
+tr:nth-child(even){background:#f8fafc}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700}
+.b-teal{background:#0d948822;color:#0d9488}
+.b-gold{background:#f59e0b22;color:#b45309}
+.footer{text-align:center;font-size:10px;color:#94a3b8;padding:30px 0;border-top:1px solid #e2e8f0;margin-top:40px;letter-spacing:2px}
+.menu-path{background:#0f172a;color:#0d9488;padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;display:inline-block;margin:4px 0}
+@media print{.sidebar{display:none}.main{margin-left:0}body{background:#fff}}
+@media(max-width:900px){.sidebar{display:none}.main{margin-left:0;padding:20px}}
+</style>
+</head>
+<body>
+
+<!-- KAPAK -->
+<div class="cover">
+<div style="font-size:60px">&#128214;</div>
+<div class="sub">KULLANIM KILAVUZU</div>
+<h1>MR HASAR DANISMANLIK</h1>
+<div class="sub">KURUMSAL DIJITAL PLATFORM</div>
+<div class="divider"></div>
+<div style="margin-top:20px;font-size:13px;color:rgba(255,255,255,0.5)">VERSIYON 2.0 | NISAN 2026</div>
+<div style="margin-top:40px;font-size:12px;color:rgba(255,255,255,0.3)">MR HASAR DANISMANLIK VE FILO YONETIMI | HER ZAMAN FARK EDER</div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+<div style="font-size:16px;font-weight:800;letter-spacing:1px;margin-bottom:4px">ICERIK</div>
+<div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:2px;margin-bottom:16px">KULLANIM KILAVUZU</div>
+<h3>TEMEL</h3>
+<a href="#giris">1. Giris ve Navigasyon</a>
+<h3>MODULLER</h3>
+<a href="#dosya">2. Dosya Islemleri</a>
+<a href="#crm">3. CRM / Saha</a>
+<a href="#hesap">4. Hesaplamalar</a>
+<a href="#police">5. Police Takip</a>
+<a href="#muhasebe">6. Muhasebe</a>
+<a href="#ictihat">7. Ictihat</a>
+<a href="#diger">8. Diger Moduller</a>
+<h3>YARDIM</h3>
+<a href="#sss">9. Sikca Sorulan Sorular</a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<h1 id="giris">1. SISTEME GIRIS VE NAVIGASYON</h1>
+
+<h2>1.1 Platforma Erisim</h2>
+<div class="step"><div class="step-num">1</div><div class="step-text">Tarayicinizi acin (Chrome, Firefox veya Edge oneriliyor)</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-text"><strong>sistem.mrhasardanismanlik.com</strong> adresine gidin</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-text">Kullanici adinizi ve sifrenizi girerek <strong>GIRIS YAP</strong> butonuna basin</div></div>
+<div class="step"><div class="step-num">4</div><div class="step-text">Basarili giris sonrasi ana ekran acilacaktir</div></div>
+
+<div class="tip">Koyu ve acik tema arasinda gecis yapabilirsiniz. Koyu tema goz yorulmasi icin idealdir.</div>
+
+<h2>1.2 Menu Yapisi</h2>
+<p>Ust kisimda yatay menu cubugu bulunur. 10 ana modul mevcuttur:</p>
+<table>
+<tr><th>#</th><th>MENU</th><th>ICERIK</th></tr>
+<tr><td>1</td><td>DOSYA ISLEMLERI</td><td>Dosya listesi, yeni dosya olusturma</td></tr>
+<tr><td>2</td><td>CRM / SAHA</td><td>CRM listesi, arama listesi, saha dosyalari</td></tr>
+<tr><td>3</td><td>E-POSTA</td><td>Web mail arayuzu</td></tr>
+<tr><td>4</td><td>HESAPLAMALAR</td><td>ADK ve BH hesaplama</td></tr>
+<tr><td>5</td><td>PAYDASLAR</td><td>Is ortaklari, paydaslar, personel</td></tr>
+<tr><td>6</td><td>POLICE</td><td>Police takibi, yenileme, tahsilat</td></tr>
+<tr><td>7</td><td>MUHASEBE</td><td>Gelir/gider, kasa, raporlar</td></tr>
+<tr><td>8</td><td>ICTIHAT</td><td>Yargitay, tahkim emsal kararlari</td></tr>
+<tr><td>9</td><td>AJANDA</td><td>Takvim ve gorev yonetimi</td></tr>
+<tr><td>10</td><td>SISTEM</td><td>Kullanici, yetki, ayarlar</td></tr>
+</table>
+
+<h1 id="dosya">2. DOSYA ISLEMLERI</h1>
+
+<h2>2.1 Yeni Dosya Olusturma</h2>
+<div class="menu-path">DOSYA ISLEMLERI > YENI DOSYA</div>
+
+<div class="step"><div class="step-num">1</div><div class="step-text"><strong>Dosya Turu</strong> secin: ADK (Arac Deger Kaybi) veya BH (Bedeni Hasar)</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-text"><strong>Magdur Bilgileri</strong> doldurun: Ad Soyad, TC Kimlik (11 hane), Telefon, IBAN, Il/Ilce</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-text"><strong>Sigorta Bilgileri</strong>: Sigorta sirketi secin, hasar no ve brans girin (Trafik/Kasko/IMM)</div></div>
+<div class="step"><div class="step-num">4</div><div class="step-text"><strong>Arac Bilgileri</strong>: Plaka, marka/model secimi (bagimli dropdown), yil, kasko durumu</div></div>
+<div class="step"><div class="step-num">5</div><div class="step-text"><strong>Dosya Kaynagi</strong> secin: Ofis CRM veya Paydas/Yonlendiren. Komisyon oranini belirleyin.</div></div>
+<div class="step"><div class="step-num">6</div><div class="step-text"><strong>KAYDET</strong> butonuna basin. Dosya numarasi otomatik olusturulur.</div></div>
+
+<div class="tip">BH dosyalarinda ek olarak maluliyet orani, meslek ve dogum tarihi girilmelidir.</div>
+
+<h2>2.2 Dosya Listesi</h2>
+<div class="menu-path">DOSYA ISLEMLERI > DOSYA LISTESI</div>
+<p>Tum dosyalari goruntuleyin. TC, isim, dosya no veya plaka ile arama yapabilirsiniz. Dosya turu (ADK/BH) ve asama durumuna gore filtreleme imkani vardir.</p>
+
+<h2>2.3 Dosya Detayi</h2>
+<p>Dosya listesinden bir dosya numarasina tiklayarak detay sayfasina ulasirsiniz. 4 sekme mevcuttur:</p>
+
+<h3>BILGI Sekmesi</h3>
+<p>Tum dosya detaylarini goruntuleyin. Asama degistirme ve bilgi duzenleme butonlari buradadir.</p>
+
+<h3>MASRAFLAR Sekmesi</h3>
+<div class="step"><div class="step-num">1</div><div class="step-text">Masraf kalemi secin ve tutari girin</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-text">Odeme yapmak icin <strong>ODEME YAP</strong> butonuna basin ve kasa secin</div></div>
+
+<h3>EVRAKLAR Sekmesi</h3>
+<div class="step"><div class="step-num">1</div><div class="step-text">Evrak turunu secin (Tutanak, Ruhsat, Police vs.)</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-text">PDF, JPG veya PNG dosyasi yukleyin (drag-drop destekli)</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-text">Yuklenen evraklari onizleyin veya indirin</div></div>
+
+<h3>DOSYA HESABI Sekmesi</h3>
+<p>Dosya kapanisinda tazminat, vekalet ucreti, faiz, stopaj, KDV, mahsup degerlerini girin. Komisyon otomatik hesaplanir.</p>
+
+<h1 id="crm">3. CRM / SAHA</h1>
+
+<h2>3.1 CRM Listesi</h2>
+<div class="menu-path">CRM / SAHA > CRM LISTESI</div>
+<div class="step"><div class="step-num">1</div><div class="step-text">Yeni musteri kaydi olusturun (Ad, TC, Telefon, Il, Plaka)</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-text"><strong>ARA</strong> butonuyla WebRTC uzerinden tarayicidan arama yapin</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-text">Gorusme notu ekleyin ve durumu guncelleyin</div></div>
+<div class="step"><div class="step-num">4</div><div class="step-text">Olumlu sonuclanan kayitlari <strong>DOSYAYA DONUSTUR</strong> ile dosya olusturun</div></div>
+
+<h2>3.2 Saha Dosyalari</h2>
+<div class="menu-path">CRM / SAHA > SAHA DOSYALARI</div>
+<p>Saha incelemeleri icin 5 alt sekme:</p>
+<table>
+<tr><th>SEKME</th><th>ACIKLAMA</th></tr>
+<tr><td>ONAY BEKLEYEN</td><td>Onay bekleyen saha kayitlari - onayla veya reddet</td></tr>
+<tr><td>ONAYLANAN</td><td>Onaylanan kayitlar - dosyaya donusturme</td></tr>
+<tr><td>REDDEDILEN</td><td>Reddedilen kayitlar - duzeltip tekrar gonderme</td></tr>
+<tr><td>DOSYAYA DONUSEN</td><td>Dosyaya donusturulmus kayitlar</td></tr>
+<tr><td>YENI KAYIT</td><td>Yeni saha inceleme kaydi olusturma</td></tr>
+</table>
+
+<h1 id="hesap">4. HESAPLAMALAR</h1>
+
+<h2>4.1 Arac Deger Kaybi (ADK)</h2>
+<div class="menu-path">HESAPLAMALAR > ARAC DEGER KAYBI</div>
+
+<div class="step"><div class="step-num">1</div><div class="step-text"><strong>Arac bilgileri</strong>: Marka, model, yil, km, kaza tarihi, plaka girin</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-text"><strong>RAYIC DEGER ARASTIR</strong> butonuna basin. Sistem arabam.com ve otoplus.com sitelerinden gercek ilan verisi ceker.</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-text">Gelen sonuclari inceleyin: Kaynak, fiyat, ilan sayisi. Ortalama otomatik atanir.</div></div>
+<div class="step"><div class="step-num">4</div><div class="step-text"><strong>Hasar bilgileri</strong>: Onarim bedeli, kusur orani, onceki hasar, hasarli bolge girin</div></div>
+<div class="step"><div class="step-num">5</div><div class="step-text"><strong>HESAPLA</strong> butonuna basin. 3 yontemle sonuc hesaplanir ve AI analiz raporu olusturulur.</div></div>
+<div class="step"><div class="step-num">6</div><div class="step-text"><strong>PDF RAPOR</strong> alin: Detayli Rapor (tam teknik) veya Musteri Raporu (sadeleştirilmis)</div></div>
+
+<div class="warn">Rayic arastirma icin ZenRows API anahtarinin Sistem > Firma Ayarlari sayfasindan girilmis olmasi gerekir.</div>
+
+<h2>4.2 Bedeni Hasar (BH)</h2>
+<div class="menu-path">HESAPLAMALAR > BEDENI HASAR</div>
+
+<div class="step"><div class="step-num">1</div><div class="step-text"><strong>Mod secin</strong>: Hizli Hesaplama veya Detayli Rapor + OCR</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-text"><strong>Magdur bilgileri</strong>: Ad, dogum tarihi, cinsiyet, kaza tarihi, maluliyet orani (%), meslek</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-text"><strong>Gelir bilgisi</strong>: Aylik gelir girin veya Asgari Ucret secin. Net/Brut secimi yapin.</div></div>
+<div class="step"><div class="step-num">4</div><div class="step-text"><strong>Parametreler</strong>: PMF tablosu (TRH2010 oneriliyor), teknik faiz (%1.8)</div></div>
+<div class="step"><div class="step-num">5</div><div class="step-text"><strong>Ek kalemler</strong>: GIGS (gun sayisi), bakici ucreti, PSD dusumu (varsa)</div></div>
+<div class="step"><div class="step-num">6</div><div class="step-text"><strong>HESAPLA + AI ANALIZ</strong> butonuna basin</div></div>
+<div class="step"><div class="step-num">7</div><div class="step-text"><strong>Bilirkisi Raporu</strong> veya <strong>Hesap Sonucu</strong> PDF olarak alin</div></div>
+
+<div class="tip">Detayli modda tibbi belgeleri yukleyerek OCR ile otomatik veri cikartabilirsiniz.</div>
+
+<h1 id="police">5. POLICE TAKIP</h1>
+<div class="menu-path">POLICE</div>
+<p>6 alt sekmeden olusur: Police Listesi, Yeni Police, Yenileme Takibi, Tahsilat/Cari, Raporlar, Kazanc. QR Ruhsat Okuyucu ile kamera kullanarak ruhsat bilgilerini otomatik doldurabilirsiniz.</p>
+
+<h1 id="muhasebe">6. MUHASEBE</h1>
+<div class="menu-path">MUHASEBE</div>
+<p>8 alt sekmeden olusur: Gelir/Gider, Kasalar, Ortak Kasa, Komisyon Takibi, Finansal Raporlar, Kapanis Raporu, Ay Sonu Raporu, Maliyet Analizi.</p>
+
+<h1 id="ictihat">7. ICTIHAT</h1>
+<div class="menu-path">ICTIHAT</div>
+<p>4 alt sayfa: Yargitay Kararlari (AI destekli arama), Tahkim Kabul Ornekleri, Police Limit Tablolari, Kusur Emsal Dosyalari.</p>
+
+<h1 id="diger">8. DIGER MODULLER</h1>
+<h2>E-Posta</h2><p>IMAP/SMTP entegrasyonlu web mail. Gelen kutusu, gonderilen, taslaklar.</p>
+<h2>Ajanda</h2><p>Takvim gorunumlu gorev ve randevu yonetimi.</p>
+<h2>Paydaslar</h2><p>Is ortaklari (avukatlar), paydaslar, personel ve hakedis takibi.</p>
+
+<h1 id="sss">9. SIKCA SORULAN SORULAR</h1>
+
+<h3>Sifremi unuttum, ne yapmaliyim?</h3>
+<p>Sistem yoneticinize basvurun. Admin panelinden yeni sifre olusturulabilir.</p>
+
+<h3>Rayic arastirma calismiyor?</h3>
+<p>Sistem > Firma Ayarlari sayfasindan ZenRows API anahtarinin girildiginden ve ZenRows hesabinda kredi oldugundan emin olun.</p>
+
+<h3>PDF rapor bos cikiyor?</h3>
+<p>Tarayicinizin popup engelini kontrol edin. Chrome > Ayarlar > Gizlilik > Pop-up'lar kapatilmis olabilir.</p>
+
+<h3>Yetki hatasi aliyorum?</h3>
+<p>Sistem yoneticisinden ilgili modul icin yetki atanmasini isteyin (Sistem > Yetki Yonetimi).</p>
+
+<h3>Evrak yukleyemiyorum?</h3>
+<p>Desteklenen formatlar: PDF, JPG, PNG. Dosya boyutu sinirini kontrol edin.</p>
+
+<div class="footer">MR HASAR DANISMANLIK VE FILO YONETIMI | HER ZAMAN FARK EDER | &copy; 2026</div>
+</div>
+
+</body>
+</html>
