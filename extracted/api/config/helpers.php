@@ -414,8 +414,8 @@ $GLOBALS['YETKI_MAP'] = array(
     'crm/create.php' => array('crm', 'crm-yeni'),
     'crm/delete.php' => array('crm', 'crm-sil'),
     'crm/update.php' => array('crm', 'crm-duzenle'),
-    'crm/list.php' => array('crm', 'crm-liste'),
-    'crm/get.php' => array('crm', 'crm-liste'),
+    'crm/list.php' => array('crm', 'crm-arama'),
+    'crm/get.php' => array('crm', 'crm-arama'),
     'crm/donustur.php' => array('crm', 'crm-yeni'),
     'crm/dosya-yukle.php' => array('crm', 'crm-duzenle'),
     'crm/not-ekle.php' => array('crm', 'crm-duzenle'),
@@ -437,7 +437,7 @@ $GLOBALS['YETKI_MAP'] = array(
     'saha/medya-list.php' => array('crm', 'saha-liste'),
 
     // ─── HESAPLAMALAR ───
-    'hesap/ocr-analiz.php' => array('hesaplamalar', 'hesap-adk'),
+    'hesap/ocr-analiz.php' => array('hesaplamalar', 'hesap-adk', 'police-qr-ruhsat'),
     'hesap/ai-analiz.php' => array('hesaplamalar', 'hesap-adk'),
     'hesap/rayic-arastirma.php' => array('hesaplamalar', 'hesap-adk'),
     'hesap/tahkim-emsal-ara.php' => array('hesaplamalar', 'hesap-bh'),
@@ -495,6 +495,7 @@ $GLOBALS['YETKI_MAP'] = array(
     'masraf/create.php' => array('dosya', 'dosya-masraf-ekle'),
     'masraf/delete.php' => array('dosya', 'dosya-masraf-sil'),
     'masraf/ode.php' => array('dosya', 'dosya-masraf-ode'),
+    'masraf/update.php' => array('dosya', 'dosya-masraf-duzenle'),
 
     // ─── EVRAK ───
     'evrak/upload.php' => array('evrak', 'evrak-yukle'),
@@ -570,15 +571,15 @@ $GLOBALS['YETKI_MAP'] = array(
     'sablon/update.php' => array('sistem', 'tanimlamalar-sablon-duzenle'),
     'sablon/delete.php' => array('sistem', 'tanimlamalar-sil'),
 
-    // ─── YÖNLENDIRME ───
-    'yonlendirme/list.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/get.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/create.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/delete.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/update.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/import.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/not-ekle.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/toplu-islem.php' => array('dosya', 'dosya-detay'),
+    // ─── YÖNLENDIRME (CRM ARAMA LİSTESİ) ───
+    'yonlendirme/list.php' => array('crm', 'crm-arama'),
+    'yonlendirme/get.php' => array('crm', 'crm-arama'),
+    'yonlendirme/create.php' => array('crm', 'crm-arama'),
+    'yonlendirme/delete.php' => array('crm', 'crm-arama'),
+    'yonlendirme/update.php' => array('crm', 'crm-arama'),
+    'yonlendirme/import.php' => array('crm', 'crm-arama'),
+    'yonlendirme/not-ekle.php' => array('crm', 'crm-arama'),
+    'yonlendirme/toplu-islem.php' => array('crm', 'crm-arama'),
 
     // ─── AJANDA ───
     'ajanda/list.php' => array('ajanda', 'goruntule'),
@@ -593,6 +594,23 @@ $GLOBALS['YETKI_MAP'] = array(
     'ictihat/police-limit.php' => array('ictihat', 'ictihat-police-limit'),
     'ictihat/kusur-emsal-ara.php' => array('ictihat', 'ictihat-kusur-emsal'),
 
+
+    // ─── ARAMA LOG (CRM ANALİZ modülüne taşındı - yukarıda tanımlı) ───
+    'arama-log/delete.php' => array('crm-analiz', 'crm-analiz-goruntule'),
+
+    // ─── NETSANTRAL ───
+    'sozlesme/settings.php' => array('netsantral', 'netsantral-ayarlar'),
+
+    // ─── E-POSTA ───
+    'mail/list.php' => array('eposta', 'eposta-goruntule'),
+    'mail/get.php' => array('eposta', 'eposta-goruntule'),
+    'mail/send.php' => array('eposta', 'eposta-gonder'),
+    'mail/delete.php' => array('eposta', 'eposta-sil'),
+
+    // ─── CRM ANALİZ ───
+    'arama-log/list.php' => array('crm-analiz', 'crm-analiz-goruntule'),
+    'arama-log/istatistik.php' => array('crm-analiz', 'crm-analiz-istatistik'),
+    'arama-log/kayit-indir.php' => array('crm-analiz', 'crm-analiz-kayitlar'),
 
     // ─── BİLDİRİM ───
     'bildirim/create.php' => array('bildirim', 'bildirim-goruntule'),

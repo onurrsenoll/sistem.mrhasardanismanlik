@@ -2,7 +2,7 @@
 /**
  * MR HASAR DANIŞMANLIK - KUSUR EMSAL DOSYALARI ARAMA
  * Kaza türlerine göre kusur oranı emsal karar AI destekli arama
- * Gemini AI ile gerçek zamanlı içtihat araştırması
+ * Claude AI ile içtihat araştırması
  */
 
 ob_start(); error_reporting(0);
@@ -82,18 +82,18 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER:
 
 $systemPrompt = "Sen bir Türk trafik hukuku uzmanısın ve bilirkişisin. Trafik kazalarında kusur oranı tespiti, Karayolları Trafik Kanunu, Yargıtay ve Sigorta Tahkim Komisyonu kararları konusunda derin bilgi birikimine sahipsin. Kusur oranı değerlendirmesinde bilirkişi raporu hazırlama deneyimin var. Gerçekçi ve tutarlı karar numaraları, tarihler ve kusur oranları kullan. Yanıtını SADECE JSON formatında ver.";
 
-// AI API çağrısı (Gemini/OpenAI/Claude otomatik)
+// AI API çağrısı (Claude API)
 $aiResult = callAIWithDetail($apiKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 8192, 'timeout' => 60]);
 $text = $aiResult['text'];
 
-// Başarısızsa fallback key'leri dene
-if (empty($text) && !empty($keys['fallbacks'])) {
-    foreach ($keys['fallbacks'] as $fbKey) {
-        $aiResult = callAIWithDetail($fbKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 8192, 'timeout' => 60]);
-        $text = $aiResult['text'];
-        if (!empty($text)) break;
-    }
-}
+
+
+
+
+
+
+
+
 
 if (empty($text)) {
     $errMsg = 'AI YANIT ALINAMADI';

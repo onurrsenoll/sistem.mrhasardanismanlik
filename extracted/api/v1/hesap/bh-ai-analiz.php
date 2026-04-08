@@ -38,22 +38,12 @@ if (empty($apiKey)) {
 }
 
 $prompt = buildBHPrompt($input);
-$systemPrompt = 'Sen bir Türk sigorta hukuku ve bedeni hasar tazminat uzmanısın. Maluliyet tazminatı, iş göremezlik, aktif/pasif dönem hesaplamaları, PMF tabloları ve progresif rant yöntemi konularında uzmansın. Yargıtay ve Sigorta Tahkim Komisyonu kararlarına hakimsin. Yanıtlarını Türkçe ve profesyonel bir dilde ver. Kısa ve öz tut, madde madde yaz. Başlıkları büyük harfle yaz.';
+$systemPrompt = 'Sen Türkiye\'de bedeni hasar tazminat hukuku konusunda 15+ yıl deneyimli bir uzmansın. Maluliyet tazminatı, sürekli/geçici iş göremezlik, aktif/pasif dönem hesaplamaları, PMF yaşam tabloları (TRH2010, CSO1980), progresif rant (1/Ln) yöntemi, Yargıtay 17. HD ve 4. HD kararları konularında derin bilgiye sahipsin. Yanıtlarını Türkçe, profesyonel ve hukuki terminolojiye uygun ver. Madde madde, başlıkları büyük harfle yaz. ÖNEMLİ: Emin olmadığın bilgiyi kesinlikle uydurma. Gerçek karar numarası veremiyorsan bunu açıkça belirt. Epikriz ve tedavi raporu bilgileri verilmişse bunları dikkatle analiz et.';
 
-$aiResult = callAIWithDetail($apiKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 1200, 'timeout' => 30]);
+$aiResult = callAIWithDetail($apiKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 1500, 'timeout' => 45]);
 $result = $aiResult['text'];
 
-// Başarısızsa fallback key'leri dene
-if (empty($result) && !empty($keys['fallbacks'])) {
-    foreach ($keys['fallbacks'] as $fbKey) {
-        $aiResult = callAIWithDetail($fbKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 1200, 'timeout' => 30]);
-        $result = $aiResult['text'];
-        if (!empty($result)) {
-            $apiKey = $fbKey;
-            break;
-        }
-    }
-}
+// Claude API tek çağrı yeterli
 
 if (!empty($result)) {
     echo json_encode(['success' => true, 'data' => ['analiz' => $result, 'kaynak' => 'ai', 'provider' => detectProvider($apiKey)]]);

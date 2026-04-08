@@ -1,8 +1,7 @@
 <?php
 /**
  * MR HASAR DANIŞMANLIK - AI ADK ANALİZ ENDPOINTİ
- * Google Gemini + OpenAI + Claude destekli araç değer kaybı analizi
- * Key prefix ile otomatik API seçimi: AIzaSy = Gemini, sk- = OpenAI, sk-ant- = Claude
+ * Claude API ile araç değer kaybı analizi
  */
 
 ob_start(); error_reporting(0);
@@ -40,22 +39,12 @@ if (empty($apiKey)) {
 }
 
 $prompt = buildPrompt($input);
-$systemPrompt = 'Sen bir Türk sigorta hukuku ve araç değer kaybı uzmanısın. Araç değer kaybı (ADK) hesaplamaları konusunda detaylı analiz yapıyorsun. Tahkim komisyonu kararları ve Yargıtay içtihatlarına hakimsin. Yanıtlarını Türkçe ve profesyonel bir dille ver. Kısa ve öz tut, madde madde yaz. Başlıkları büyük harfle yaz.';
+$systemPrompt = 'Sen Türkiye\'de sigorta hukuku ve araç değer kaybı (ADK) konusunda 15+ yıl deneyimli bir uzmansın. Sigorta Tahkim Komisyonu hesaplama yöntemleri, Yargıtay 17. Hukuk Dairesi ve 4. Hukuk Dairesi kararları, bilirkişi raporlama standartları konusunda derin bilgiye sahipsin. Yanıtlarını Türkçe, profesyonel ve hukuki terminolojiye uygun ver. Madde madde, başlıkları büyük harfle yaz. ÖNEMLİ: Emin olmadığın bilgiyi kesinlikle uydurma. Gerçek karar numarası veremiyorsan bunu açıkça belirt.';
 
 $aiResult = callAIWithDetail($apiKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 1024, 'timeout' => 30]);
 $result = $aiResult['text'];
 
-// Başarısızsa fallback key'leri dene
-if (empty($result) && !empty($keys['fallbacks'])) {
-    foreach ($keys['fallbacks'] as $fbKey) {
-        $aiResult = callAIWithDetail($fbKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 1024, 'timeout' => 30]);
-        $result = $aiResult['text'];
-        if (!empty($result)) {
-            $apiKey = $fbKey;
-            break;
-        }
-    }
-}
+// Claude API ile tek çağrı
 
 if (!empty($result)) {
     echo json_encode(['success' => true, 'data' => ['analiz' => $result, 'kaynak' => 'ai', 'provider' => detectProvider($apiKey)]]);

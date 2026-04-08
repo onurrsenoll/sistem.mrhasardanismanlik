@@ -101,6 +101,28 @@ try {
 
     unset($user['sifre_hash']);
 
+    // Netsantral bilgilerini yukle (kolon yoksa sessizce gec)
+    try {
+        $stmtNS = $db->prepare('SELECT netsantral_dahili, netsantral_sip_sifre, netsantral_api_sifre FROM users WHERE id = ?');
+        $stmtNS->execute([$user['id']]);
+        $nsRow = $stmtNS->fetch();
+        if ($nsRow) { $user = array_merge($user, $nsRow); }
+    } catch (\Exception $e) {}
+
+    // Kullanicinin yetkilerini yukle (tablo yoksa sessizce gec)
+    try {
+        $stmtY = $db->prepare('SELECT modul, islem FROM yetkiler WHERE kullanici_id = ? AND izin = 1');
+        $stmtY->execute([$user['id']]);
+        $yetkiRows = $stmtY->fetchAll();
+        $yetkiObj = array();
+        foreach ($yetkiRows as $yr) {
+            $yetkiObj[$yr['modul'] . '_' . $yr['islem']] = 1;
+        }
+        $user['yetkiler'] = $yetkiObj;
+    } catch (\Exception $e) {
+        $user['yetkiler'] = array();
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'Giris basarili',

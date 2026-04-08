@@ -2,27 +2,20 @@
 /**
  * MR HASAR DANIŞMANLIK - AI API HELPER
  * Tüm AI endpoint'leri için ortak API çağrı fonksiyonları
- * Desteklenen Provider'lar: Google Gemini, OpenAI, Claude (Anthropic)
- *
- * Öncelik sırası: gemini_api_key > openai_api_key > claude_api_key > ai_api_key
- * Key prefix ile otomatik provider algılama:
- *   AIzaSy* = Google Gemini
- *   sk-     = OpenAI
- *   sk-ant- = Claude/Anthropic
+ * Sadece Claude (Anthropic) desteklenir
  */
 
 /**
- * Veritabanından AI API anahtarlarını çeker
- * Her provider için ayrı key döner
+ * Veritabanından Claude API anahtarını çeker
  *
- * @return array ['gemini' => string, 'openai' => string, 'claude' => string, 'active' => string]
+ * @return array ['claude' => string, 'active' => string]
  */
 function getAiKeys() {
-    $keys = ['gemini' => '', 'openai' => '', 'claude' => '', 'active' => ''];
+    $keys = ['claude' => '', 'active' => ''];
 
     try {
         $db = getDB();
-        $stmt = $db->prepare("SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('gemini_api_key', 'openai_api_key', 'claude_api_key', 'ai_api_key') AND deger != ''");
+        $stmt = $db->prepare("SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('claude_api_key', 'ai_api_key') AND deger != ''");
         $stmt->execute();
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -31,23 +24,12 @@ function getAiKeys() {
             if (empty($val)) continue;
 
             switch ($row['anahtar']) {
-                case 'gemini_api_key':
-                    $keys['gemini'] = $val;
-                    break;
-                case 'openai_api_key':
-                    $keys['openai'] = $val;
-                    break;
                 case 'claude_api_key':
                     $keys['claude'] = $val;
                     break;
                 case 'ai_api_key':
-                    // Eski genel alan - prefix'e göre doğru yere ata
-                    if (str_starts_with($val, 'AIzaSy') && empty($keys['gemini'])) {
-                        $keys['gemini'] = $val;
-                    } elseif (str_starts_with($val, 'sk-ant-') && empty($keys['claude'])) {
+                    if (empty($keys['claude'])) {
                         $keys['claude'] = $val;
-                    } elseif (str_starts_with($val, 'sk-') && empty($keys['openai'])) {
-                        $keys['openai'] = $val;
                     }
                     break;
             }
@@ -56,22 +38,11 @@ function getAiKeys() {
         // Sessiz geç
     }
 
-    // Aktif key belirle (öncelik: gemini > openai > claude)
-    if (!empty($keys['gemini'])) {
-        $keys['active'] = $keys['gemini'];
-    } elseif (!empty($keys['openai'])) {
-        $keys['active'] = $keys['openai'];
-    } elseif (!empty($keys['claude'])) {
+    if (!empty($keys['claude'])) {
         $keys['active'] = $keys['claude'];
     }
 
-    // Fallback sırası: aktif key dışındaki tüm key'ler
     $keys['fallbacks'] = [];
-    foreach (['gemini', 'openai', 'claude'] as $p) {
-        if (!empty($keys[$p]) && $keys[$p] !== $keys['active']) {
-            $keys['fallbacks'][] = $keys[$p];
-        }
-    }
 
     return $keys;
 }
@@ -80,41 +51,21 @@ function getAiKeys() {
  * API key'in provider tipini belirler
  *
  * @param string $apiKey
- * @return string 'gemini'|'openai'|'claude'|'unknown'
+ * @return string 'claude'
  */
 function detectProvider($apiKey) {
-    if (str_starts_with($apiKey, 'AIzaSy')) return 'gemini';
-    if (str_starts_with($apiKey, 'sk-ant-')) return 'claude';
-    if (str_starts_with($apiKey, 'sk-')) return 'openai';
-    return 'unknown';
+    return 'claude';
 }
 
 /**
- * AI API çağrısı yapar - provider'a göre otomatik yönlendirir
- *
- * @param string $apiKey API anahtarı
- * @param string $systemPrompt Sistem prompt'u
- * @param string $userPrompt Kullanıcı prompt'u
- * @param array $options Ek ayarlar ['temperature', 'maxTokens', 'timeout']
- * @return string|null AI yanıtı veya null
+ * AI API çağrısı yapar - her zaman Claude kullanır
  */
 function callAI($apiKey, $systemPrompt, $userPrompt, $options = []) {
-    $provider = detectProvider($apiKey);
     $temperature = $options['temperature'] ?? 0.3;
     $maxTokens = $options['maxTokens'] ?? 1024;
     $timeout = $options['timeout'] ?? 30;
 
-    switch ($provider) {
-        case 'gemini':
-            return callGeminiAPI($apiKey, $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
-        case 'openai':
-            return callOpenAIAPI($apiKey, $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
-        case 'claude':
-            return callClaudeAPI($apiKey, $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
-        default:
-            // Bilinmeyen key - Gemini dene
-            return callGeminiAPI($apiKey, $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
-    }
+    return callClaudeAPI($apiKey, $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
 }
 
 /**
@@ -123,115 +74,22 @@ function callAI($apiKey, $systemPrompt, $userPrompt, $options = []) {
  * @return array ['text' => string|null, 'error' => string]
  */
 function callAIWithDetail($apiKey, $systemPrompt, $userPrompt, $options = []) {
-    $provider = detectProvider($apiKey);
     $temperature = $options['temperature'] ?? 0.3;
     $maxTokens = $options['maxTokens'] ?? 1024;
     $timeout = $options['timeout'] ?? 30;
 
-    $text = null;
-    switch ($provider) {
-        case 'gemini':
-            $text = callGeminiAPI($apiKey, $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
-            break;
-        case 'openai':
-            $text = callOpenAIAPI($apiKey, $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
-            break;
-        case 'claude':
-            $text = callClaudeAPI($apiKey, $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
-            break;
-        default:
-            $text = callGeminiAPI($apiKey, $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
-            break;
-    }
+    $text = callClaudeAPI($apiKey, $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
 
     if ($text !== null) {
         return ['text' => $text, 'error' => ''];
     }
 
-    // Son hata logunu oku
     $lastErr = $GLOBALS['_ai_last_error'] ?? '';
-    return ['text' => null, 'error' => $lastErr ?: ('API yanit bos (' . $provider . ')')];
+    return ['text' => null, 'error' => $lastErr ?: 'API yanit bos (claude)'];
 }
 
 /**
- * Google Gemini API çağrısı
- */
-function callGeminiAPI($apiKey, $systemPrompt, $userPrompt, $temperature = 0.3, $maxTokens = 1024, $timeout = 30) {
-    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
-
-    $fullPrompt = $systemPrompt . "\n\n" . $userPrompt;
-    $payload = [
-        'contents' => [
-            ['role' => 'user', 'parts' => [['text' => $fullPrompt]]]
-        ],
-        'generationConfig' => [
-            'temperature' => $temperature,
-            'maxOutputTokens' => $maxTokens,
-            'topP' => 0.8
-        ]
-    ];
-
-    $res = http_post($url, json_encode($payload), ['Content-Type: application/json'], $timeout);
-
-    if ($res['http_code'] === 200 && $res['body']) {
-        $data = json_decode($res['body'], true);
-        $text = '';
-        $allParts = $data['candidates'][0]['content']['parts'] ?? [];
-        foreach ($allParts as $part) {
-            if (isset($part['text']) && empty($part['thought'])) $text = $part['text'];
-        }
-        return !empty($text) ? $text : null;
-    }
-
-    // Hata logla ve global değişkene kaydet
-    $errDetail = '';
-    if ($res['body']) {
-        $errData = json_decode($res['body'], true);
-        $errDetail = $errData['error']['message'] ?? '';
-    }
-    $fullErr = "GEMINI HTTP {$res['http_code']} - {$errDetail} {$res['error']} (yontem: {$res['method']})";
-    error_log("GEMINI API HATA: " . $fullErr);
-    $GLOBALS['_ai_last_error'] = $fullErr;
-    return null;
-}
-
-/**
- * OpenAI API çağrısı (GPT-4o-mini)
- */
-function callOpenAIAPI($apiKey, $systemPrompt, $userPrompt, $temperature = 0.3, $maxTokens = 1024, $timeout = 30) {
-    $res = http_post('https://api.openai.com/v1/chat/completions', json_encode([
-        'model' => 'gpt-4o-mini',
-        'messages' => [
-            ['role' => 'system', 'content' => $systemPrompt],
-            ['role' => 'user', 'content' => $userPrompt]
-        ],
-        'max_tokens' => $maxTokens,
-        'temperature' => $temperature
-    ]), [
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . $apiKey
-    ], $timeout);
-
-    if ($res['http_code'] === 200 && $res['body']) {
-        $data = json_decode($res['body'], true);
-        $text = $data['choices'][0]['message']['content'] ?? '';
-        return !empty($text) ? $text : null;
-    }
-
-    // Hata logla ve global değişkene kaydet
-    $errDetail = '';
-    if ($res['body']) {
-        $errData = json_decode($res['body'], true);
-        $errDetail = $errData['error']['message'] ?? '';
-    }
-    $fullErr = "OPENAI HTTP {$res['http_code']} - {$errDetail} {$res['error']}";
-    error_log("OPENAI API HATA: " . $fullErr);
-    $GLOBALS['_ai_last_error'] = $fullErr;
-    return null;
-}
-
-/**
- * Claude/Anthropic API çağrısı (Claude 3.5 Haiku)
+ * Claude/Anthropic API çağrısı (Claude Haiku 4.5)
  */
 function callClaudeAPI($apiKey, $systemPrompt, $userPrompt, $temperature = 0.3, $maxTokens = 1024, $timeout = 30) {
     $res = http_post('https://api.anthropic.com/v1/messages', json_encode([
@@ -259,7 +117,6 @@ function callClaudeAPI($apiKey, $systemPrompt, $userPrompt, $temperature = 0.3, 
         return !empty($text) ? $text : null;
     }
 
-    // Hata logla ve global değişkene kaydet
     $errDetail = '';
     if ($res['body']) {
         $errData = json_decode($res['body'], true);
@@ -272,54 +129,7 @@ function callClaudeAPI($apiKey, $systemPrompt, $userPrompt, $temperature = 0.3, 
 }
 
 /**
- * Google Gemini API - Google Search Grounding destekli çağrı
- * Gerçek zamanlı web araması yaparak güncel veri getirir (sahibinden.com, araban.com vb.)
- */
-function callGeminiWithGrounding($apiKey, $systemPrompt, $userPrompt, $temperature = 0.3, $maxTokens = 4096, $timeout = 60) {
-    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
-
-    $fullPrompt = $systemPrompt . "\n\n" . $userPrompt;
-    $payload = [
-        'contents' => [
-            ['role' => 'user', 'parts' => [['text' => $fullPrompt]]]
-        ],
-        'tools' => [
-            ['googleSearch' => new \stdClass()]
-        ],
-        'generationConfig' => [
-            'temperature' => $temperature,
-            'maxOutputTokens' => $maxTokens,
-            'topP' => 0.8
-        ]
-    ];
-
-    $res = http_post($url, json_encode($payload), ['Content-Type: application/json'], $timeout);
-
-    if ($res['http_code'] === 200 && $res['body']) {
-        $data = json_decode($res['body'], true);
-        $text = '';
-        $allParts = $data['candidates'][0]['content']['parts'] ?? [];
-        foreach ($allParts as $part) {
-            if (isset($part['text']) && empty($part['thought'])) $text .= $part['text'];
-        }
-        return !empty($text) ? $text : null;
-    }
-
-    $errDetail = '';
-    if ($res['body']) {
-        $errData = json_decode($res['body'], true);
-        $errDetail = $errData['error']['message'] ?? '';
-    }
-    $fullErr = "GEMINI-GROUNDING HTTP {$res['http_code']} - {$errDetail} {$res['error']} (yontem: {$res['method']})";
-    error_log("GEMINI GROUNDING HATA: " . $fullErr);
-    $GLOBALS['_ai_last_error'] = $fullErr;
-    return null;
-}
-
-/**
- * Rayiç araştırması için AI çağrısı - Provider'a göre otomatik yönlendirir
- * Gemini: Google Search Grounding ile GERÇEK web araması
- * OpenAI/Claude: Piyasa bilgisine dayalı tahmin
+ * Rayiç araştırması için AI çağrısı - Claude kullanır
  *
  * @return array ['text' => string|null, 'error' => string, 'provider' => string, 'method' => string]
  */
@@ -328,28 +138,6 @@ function callAIForRayic($keys, $systemPrompt, $userPrompt, $marketPrompt, $optio
     $maxTokens = $options['maxTokens'] ?? 4096;
     $timeout = $options['timeout'] ?? 60;
 
-    // 1. Önce Gemini ile Google Search Grounding dene (gerçek web araması)
-    if (!empty($keys['gemini'])) {
-        $text = callGeminiWithGrounding($keys['gemini'], $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
-        if (!empty($text)) {
-            return ['text' => $text, 'error' => '', 'provider' => 'gemini', 'method' => 'google_search'];
-        }
-        // Grounding başarısızsa normal Gemini dene
-        $text = callGeminiAPI($keys['gemini'], $systemPrompt, $userPrompt, $temperature, $maxTokens, $timeout);
-        if (!empty($text)) {
-            return ['text' => $text, 'error' => '', 'provider' => 'gemini', 'method' => 'ai_knowledge'];
-        }
-    }
-
-    // 2. OpenAI ile piyasa bilgisi tabanlı tahmin
-    if (!empty($keys['openai'])) {
-        $text = callOpenAIAPI($keys['openai'], $systemPrompt, $marketPrompt, $temperature, $maxTokens, $timeout);
-        if (!empty($text)) {
-            return ['text' => $text, 'error' => '', 'provider' => 'openai', 'method' => 'ai_knowledge'];
-        }
-    }
-
-    // 3. Claude ile piyasa bilgisi tabanlı tahmin
     if (!empty($keys['claude'])) {
         $text = callClaudeAPI($keys['claude'], $systemPrompt, $marketPrompt, $temperature, $maxTokens, $timeout);
         if (!empty($text)) {
@@ -357,7 +145,7 @@ function callAIForRayic($keys, $systemPrompt, $userPrompt, $marketPrompt, $optio
         }
     }
 
-    $lastErr = $GLOBALS['_ai_last_error'] ?? 'Tüm provider\'lar başarısız';
+    $lastErr = $GLOBALS['_ai_last_error'] ?? 'Claude API anahtarı bulunamadı';
     return ['text' => null, 'error' => $lastErr, 'provider' => '', 'method' => ''];
 }
 

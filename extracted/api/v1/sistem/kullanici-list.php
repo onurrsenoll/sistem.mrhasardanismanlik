@@ -13,6 +13,11 @@ require_method('GET');
 $user = auth_required(['admin']);
 $db = getDB();
 
+// Netsantral kolonlari yoksa ekle
+try { $db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS netsantral_dahili VARCHAR(10) DEFAULT NULL"); } catch(\Exception $e) {}
+try { $db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS netsantral_sip_sifre VARCHAR(100) DEFAULT NULL"); } catch(\Exception $e) {}
+try { $db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS netsantral_api_sifre VARCHAR(100) DEFAULT NULL"); } catch(\Exception $e) {}
+
 $rol = clean($_GET['rol'] ?? '');
 $aktif = isset($_GET['aktif']) ? (int)$_GET['aktif'] : -1;
 $q = clean($_GET['q'] ?? '');
@@ -38,7 +43,7 @@ if ($aktif >= 0) {
 
 $whereSQL = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
-$stmt = $db->prepare("SELECT id, ad_soyad, email, rol, telefon, avatar, aktif, son_giris, created_at FROM users $whereSQL ORDER BY id");
+$stmt = $db->prepare("SELECT id, ad_soyad, email, rol, telefon, avatar, aktif, son_giris, created_at, netsantral_dahili, netsantral_sip_sifre, netsantral_api_sifre FROM users $whereSQL ORDER BY id");
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 

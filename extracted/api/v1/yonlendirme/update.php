@@ -25,7 +25,8 @@ if (!$kayit) json_error('Yönlendirme kaydı bulunamadı', 404);
 $fields = ['sira_no', 'yonlendiren', 'yonlendirme_tarihi', 'kaza_turu', 'magdur_ad_soyad',
     'magdur_telefon', 'magdur_il', 'magdur_ilce', 'magdur_tc', 'gorusme_tarihi',
     'durum', 'alinmama_nedeni', 'son_durum', 'sonraki_arama', 'atanan_id',
-    'donusen_crm_id', 'donusen_dosya_id', 'batch_id'];
+    'donusen_crm_id', 'donusen_dosya_id', 'batch_id',
+    'dosya_turu', 'plaka', 'sigorta_sirket', 'kusur_durumu', 'maluliyet', 'kaza_pozisyonu', 'guncel_durum'];
 
 $sets = [];
 $params = [];
