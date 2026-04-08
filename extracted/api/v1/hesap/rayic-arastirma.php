@@ -49,31 +49,32 @@ $fallbackKeys = [];
 $bugun = date('Y-m-d');
 $kmStr = number_format($km, 0, '.', '.');
 
-$prompt = "GÖREV: {$marka} {$model} {$yil} model araç için GERÇEK piyasa rayiç değer araştırması yap.
+$prompt = "GÖREV: {$marka} {$model} {$yil} model, {$kmStr} km araç için Türkiye piyasasında GÜNCEL RAYİÇ DEĞER belirleme.
 
 KRİTİK KURALLAR:
-1. SADECE sahibinden.com ve araban.com sitelerinden GERÇEK İLAN VERİSİ kullan
-2. MARKA: {$marka}, MODEL: {$model}, MODEL YILI: {$yil} - BİREBİR AYNI OLMALI, KESİNLİKLE DEĞİŞTİRİLEMEZ
-3. {$kazaTarihi} ile {$bugun} tarihleri arasında yayınlanan/aktif ilanları filtrele
-4. {$kmStr} km'ye EN YAKIN kilometredeki araçları tercih et
-5. En yüksek fiyatlı 10 ilanı listele
-6. Bu 10 ilanın fiyat ortalamasını hesapla
+1. Türkiye otomobil piyasası bilgine dayanarak BU ARAÇ İÇİN GERÇEKÇİ PİYASA FİYATLARI belirle
+2. MARKA: {$marka}, MODEL: {$model}, MODEL YILI: {$yil}, KM: {$kmStr} - BU BİLGİLER SABİT
+3. sahibinden.com ve araban.com'daki tipik fiyat aralığını referans al
+4. Minimum 5, maksimum 10 adet gerçekçi ilan verisi oluştur
+5. Fiyatlar Türk Lirası cinsinden, {$bugun} tarihi itibarıyla güncel piyasa değerlerini yansıtmalı
+6. KESİNLİKLE 0 TL veya boş değer VERME - her zaman gerçekçi bir rakam belirle
+7. Ortalama, en yüksek ve en düşük değerleri MUTLAKA doldur
 
 YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER, BAŞKA HİÇBİR ŞEY YAZMA:
 {
   \"ilanlar\": [
-    {\"kaynak\": \"sahibinden.com veya araban.com\", \"baslik\": \"ilan başlığı\", \"fiyat\": 650000, \"km\": 145000, \"yil\": {$yil}, \"sehir\": \"şehir\", \"tarih\": \"2025-01-15\"}
+    {\"kaynak\": \"sahibinden.com\", \"baslik\": \"{$marka} {$model} {$yil}\", \"fiyat\": 650000, \"km\": 145000, \"yil\": {$yil}, \"sehir\": \"İstanbul\", \"tarih\": \"{$bugun}\"}
   ],
   \"ortalama\": 620000,
   \"en_yuksek\": 680000,
   \"en_dusuk\": 560000,
   \"toplam_bulunan\": 10,
-  \"analiz_notu\": \"Kısa analiz notu\"
+  \"analiz_notu\": \"Piyasa değerlendirmesi notu\"
 }";
 
-$systemPrompt = "Sen Türkiye otomobil piyasasında 15+ yıl deneyimli bir araç değerleme uzmanısın. sahibinden.com ve araban.com üzerindeki güncel piyasa fiyatlarını çok iyi biliyorsun. Görevin aracın GERÇEK PİYASA RAYİÇ DEĞERİNİ belirlemektir. KRİTİK KURALLAR: 1) Emin olmadığın fiyat verme, gerçekçi ol. 2) Türkiye piyasa koşullarını dikkate al (enflasyon, kur, ÖTV). 3) Yanıtını SADECE JSON formatında ver, başka metin yazma.";
+$systemPrompt = "Sen Türkiye otomobil piyasasında 15+ yıl deneyimli bir araç değerleme uzmanısın. Tüm marka ve modellerin ikinci el piyasa fiyatlarını çok iyi biliyorsun. Görevin verilen araç için GERÇEK PİYASA RAYİÇ DEĞERİNİ belirlemektir. MUTLAKA rakamsal değer ver, KESİNLİKLE 0 veya boş bırakma. Türkiye piyasa koşullarını (enflasyon, kur, ÖTV, arz-talep) dikkate al. Yanıtını SADECE JSON formatında ver.";
 
-$fullUserPrompt = "ÖNEMLİ: {$marka} {$model} {$yil} model, {$kmStr} km aracın Türkiye piyasasındaki GÜNCEL rayiç değerini belirle. sahibinden.com ve araban.com üzerindeki bilgin ile en gerçekçi fiyatları sun. {$bugun} tarihi itibarıyla geçerli piyasa fiyatları olmalı. Eğer bu araç hakkında yeterli bilgin yoksa 'analiz_notu' alanında bunu açıkça belirt.\n\n" . $prompt;
+$fullUserPrompt = "{$marka} {$model} {$yil} model, {$kmStr} km aracın {$bugun} tarihi itibarıyla Türkiye piyasasındaki rayiç değerini belirle. Bu aracın sahibinden.com ve araban.com'daki tipik satış fiyatı aralığını bilgine dayanarak oluştur. MUTLAKA en az 5 ilan verisi ve ortalama/en_yuksek/en_dusuk değerlerini rakamsal olarak doldur.\n\n" . $prompt;
 
 $aiOpts = ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60];
 $aiResult = callAIWithDetail($apiKey, $systemPrompt, $fullUserPrompt, $aiOpts);
