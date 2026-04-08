@@ -403,30 +403,15 @@ MR.HesapADKPage = ({setPage, user}) => {
     setPdfLoading(false);
   };
 
-  /* ──────── PDF İNDİR (önizlemeden) ──────── */
+  /* ──────── PDF İNDİR / YAZDIR (önizlemeden) ──────── */
   const pdfIndir2 = () => {
     if (!pdfOnizleme) return;
-    setPdfLoading(true);
-    const el = document.createElement('div');
-    el.innerHTML = pdfOnizleme.html;
-    el.style.width = '780px';
-    el.style.background = '#ffffff';
-    el.style.position = 'absolute';
-    el.style.left = '0';
-    el.style.top = '0';
-    el.style.opacity = '0.01';
-    document.body.appendChild(el);
-    setTimeout(() => {
-      el.style.opacity = '1';
-      html2pdf().set({
-        margin: [6, 6, 6, 6],
-        filename: 'MR_ADK_Rapor_' + pdfOnizleme.raporNo + '.pdf',
-        image: {type:'jpeg', quality:0.98},
-        html2canvas: {scale:2, useCORS:true, scrollY:0, scrollX:0, windowWidth:800, backgroundColor:'#ffffff'},
-        jsPDF: {unit:'mm', format:'a4', orientation:'portrait'},
-        pagebreak: {mode:['avoid-all','css','legacy']}
-      }).from(el).save().then(() => { document.body.removeChild(el); setPdfLoading(false); }).catch(() => { document.body.removeChild(el); setPdfLoading(false); });
-    }, 300);
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write('<html><head><title>MR ADK Rapor - '+pdfOnizleme.raporNo+'</title><style>@page{size:A4;margin:10mm;}body{margin:0;padding:10px;font-family:Arial,Helvetica,sans-serif;}</style></head><body>');
+    printWindow.document.write(pdfOnizleme.html);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.onload = () => { printWindow.print(); };
   };
 
   /* ═══════════════ RENDER ═══════════════ */
@@ -716,14 +701,16 @@ MR.HesapADKPage = ({setPage, user}) => {
               </div>
 
               {/* PDF BUTON */}
-              {MR.hasYetki(user,'hesaplamalar','hesap-adk-rapor') && <button onClick={() => { window._pdfTip = 'detayli'; pdfIndir(); }} disabled={pdfLoading}
-                style={{...MR.S.btn, background:'linear-gradient(135deg,#1e40af,#2563eb)', color:'#fff', padding:'10px 18px', fontSize:12, fontWeight:700, borderRadius:8, marginRight:6}}>
+              {MR.hasYetki(user,'hesaplamalar','hesap-adk-rapor') && <div style={{display:'flex',gap:8}}>
+              <button onClick={() => { window._pdfTip = 'detayli'; pdfIndir(); }} disabled={pdfLoading}
+                style={{...MR.S.btn, flex:1, justifyContent:'center', background:'linear-gradient(135deg,#1e40af,#2563eb)', color:'#fff', padding:'10px 18px', fontSize:12, fontWeight:700, borderRadius:8}}>
                 <MR.LIcon name="FileText" size={15} color="#fff"/> DETAYLI RAPOR
-              </button>}
-              {MR.hasYetki(user,'hesaplamalar','hesap-adk-rapor') && <button onClick={() => { window._pdfTip = 'musteri'; pdfIndir(); }} disabled={pdfLoading}
+              </button>
+              <button onClick={() => { window._pdfTip = 'musteri'; pdfIndir(); }} disabled={pdfLoading}
                 style={{...S.btn, width:'100%', justifyContent:'center', padding:14, fontSize:13, fontWeight:800, background:'linear-gradient(135deg,'+C.success+','+C.cyan+')', color:'#fff', opacity:pdfLoading?0.5:1}}>
                 {pdfLoading ? 'OLUŞTURULUYOR...' : 'MÜŞTERİ RAPORU'}
-              </button>}
+              </button>
+              </div>}
             </div>
           )}
         </div>
@@ -732,25 +719,23 @@ MR.HesapADKPage = ({setPage, user}) => {
       {/* ═══ PDF ÖNİZLEME MODAL ═══ */}
       {pdfOnizleme && (
         <div style={{position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:10000, display:'flex', justifyContent:'center', alignItems:'center', background:'rgba(0,0,0,0.7)'}}>
-          <div style={{width:'68vw', maxHeight:'92vh', background:'#fff', borderRadius:12, overflow:'hidden', display:'flex', flexDirection:'column', boxShadow:'0 20px 60px rgba(0,0,0,0.4)'}}>
-            {/* BAŞLIK */}
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 20px', background:'#0f172a', color:'#fff', flexShrink:0}}>
+          <div style={{width:'68vw', maxHeight:'92vh', background:C.bgCard||'#fff', borderRadius:12, overflow:'hidden', display:'flex', flexDirection:'column', boxShadow:'0 20px 60px rgba(0,0,0,0.4)'}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 20px', background:C.accent, flexShrink:0}}>
               <div>
-                <div style={{fontSize:14, fontWeight:800}}>RAPOR ÖNİZLEME</div>
-                <div style={{fontSize:10, opacity:0.7}}>{pdfOnizleme.raporNo}</div>
+                <div style={{fontSize:14, fontWeight:800, color:'#fff'}}>RAPOR ÖNİZLEME</div>
+                <div style={{fontSize:10, color:'rgba(255,255,255,0.7)'}}>{pdfOnizleme.raporNo}</div>
               </div>
               <div style={{display:'flex', gap:8}}>
-                <button onClick={pdfIndir2} disabled={pdfLoading}
-                  style={{padding:'8px 20px', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer', background:'#2563eb', color:'#fff', border:'none'}}>
-                  {pdfLoading ? 'İNDİRİLİYOR...' : 'PDF İNDİR'}
+                <button onClick={pdfIndir2}
+                  style={{padding:'8px 20px', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer', background:'#fff', color:C.accent, border:'none'}}>
+                  YAZDIR / PDF
                 </button>
                 <button onClick={() => setPdfOnizleme(null)}
-                  style={{padding:'8px 16px', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer', background:'#64748b', color:'#fff', border:'none'}}>
+                  style={{padding:'8px 16px', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer', background:'rgba(255,255,255,0.2)', color:'#fff', border:'1px solid rgba(255,255,255,0.3)'}}>
                   KAPAT
                 </button>
               </div>
             </div>
-            {/* İÇERİK */}
             <div style={{flex:1, overflowY:'auto', padding:20, background:'#f1f5f9'}}>
               <div style={{background:'#fff', borderRadius:8, boxShadow:'0 2px 12px rgba(0,0,0,0.1)', padding:16, maxWidth:780, margin:'0 auto'}}
                 dangerouslySetInnerHTML={{__html: pdfOnizleme.html}}/>

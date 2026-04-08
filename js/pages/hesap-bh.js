@@ -65,6 +65,7 @@
 
     // PDF
     const [pdfYukleniyor, setPdfYukleniyor] = useState(false);
+    const [bhPdfOnizleme, setBhPdfOnizleme] = useState(null);
 
     // EMSAL
     const [emsalArama, setEmsalArama] = useState('');
@@ -349,75 +350,87 @@
     const pdfIndir = (tip) => {
       if (!sonuc) return;
       setPdfYukleniyor(true);
-      const isKoyu = MR.tema === 'koyu';
       const raporNo = 'BH-' + Date.now().toString().slice(-8);
       const tarih = new Date().toLocaleDateString('tr-TR');
       const fmtTarih = (t) => t ? new Date(t).toLocaleDateString('tr-TR') : '-';
       const fmtPara = (n) => MR.fmtK(n);
 
-      const bilirkisiHtml = tip === 'bilirkisi' ? `
-        <div style="margin-bottom:20px;padding:15px;background:#f8f8f8;border:1px solid #ccc;">
-          <h3 style="margin:0 0 10px;font-size:14px;color:#333;">BİLİRKİŞİ NOTU</h3>
-          <p style="margin:5px 0;font-size:11px;line-height:1.6;">Mahkemenizin ${sonuc.dosyaNo || '...'} Esas sayılı dosyası kapsamında, davacı ${sonuc.magdurAdi || '...'} adına düzenlenen ${sonuc.davaTuru || 'trafik kazası'} nedeniyle oluşan bedeni hasar tazminatı hesaplama raporudur.</p>
-          <p style="margin:5px 0;font-size:11px;line-height:1.6;">Hesaplama ${sonuc.pmfTablosu} yaşam tablosu, %${sonuc.teknikFaiz} teknik faiz oranı ve 1/Ln progresif rant yöntemi kullanılarak yapılmıştır.</p>
-        </div>` : '';
+      const tRow = (l,v,l2,v2) => '<tr style="background:#fff;"><td style="border:1px solid #e2e8f0;padding:6px 10px;width:25%;background:#f0f4ff;font-weight:600;color:#1e293b;font-size:11px;">'+l+'</td><td style="border:1px solid #e2e8f0;padding:6px 10px;font-weight:600;color:#1e293b;font-size:11px;">'+v+'</td>'+(l2?'<td style="border:1px solid #e2e8f0;padding:6px 10px;width:25%;background:#f0f4ff;font-weight:600;color:#1e293b;font-size:11px;">'+l2+'</td><td style="border:1px solid #e2e8f0;padding:6px 10px;font-weight:600;color:#1e293b;font-size:11px;">'+v2+'</td>':'')+'</tr>';
 
-      const html = `<div style="font-family:Arial,sans-serif;padding:30px;max-width:800px;margin:0 auto;color:#333;font-size:12px;">
-        <div style="text-align:center;border-bottom:3px solid #9333ea;padding-bottom:15px;margin-bottom:20px;">
-          <h1 style="color:#9333ea;margin:0;font-size:20px;">MR HASAR DANIŞMANLIK</h1>
-          <h2 style="color:#555;margin:8px 0 0;font-size:15px;">${tip === 'bilirkisi' ? 'BİLİRKİŞİ TAZMİNAT HESAP RAPORU' : 'BEDENİ HASAR TAZMİNAT HESAP SONUCU'}</h2>
-          <p style="margin:8px 0 0;font-size:10px;color:#888;">Rapor No: ${raporNo} | Tarih: ${tarih}</p>
-        </div>
+      const html = '<div style="font-family:Arial,Helvetica,sans-serif;padding:0;color:#1e293b;line-height:1.4;background:#fff;">'
+        + '<table style="width:100%;margin-bottom:14px;border-collapse:collapse;"><tr>'
+        + '<td style="background:#0f172a;color:#fff;padding:18px 22px;border-radius:8px 0 0 8px;width:65%;">'
+        + '<div style="font-size:18px;font-weight:900;letter-spacing:1px;">MR HASAR DANIŞMANLIK</div>'
+        + '<div style="font-size:11px;opacity:0.85;margin-top:4px;">'+(tip==='bilirkisi'?'BİLİRKİŞİ TAZMİNAT HESAP RAPORU':'BEDENİ HASAR TAZMİNAT HESAP SONUCU')+'</div></td>'
+        + '<td style="background:#7c3aed;color:#fff;padding:18px 22px;border-radius:0 8px 8px 0;text-align:right;">'
+        + '<div style="font-size:9px;opacity:0.8;">RAPOR NO</div><div style="font-size:12px;font-weight:800;">'+raporNo+'</div>'
+        + '<div style="font-size:9px;opacity:0.8;margin-top:6px;">TARİH</div><div style="font-size:11px;font-weight:700;">'+tarih+'</div></td></tr></table>'
 
-        ${bilirkisiHtml}
+        + (tip==='bilirkisi' ? '<div style="margin-bottom:14px;padding:12px 16px;background:#faf5ff;border:1px solid #c4b5fd;border-radius:8px;">'
+          + '<div style="font-size:11px;font-weight:700;color:#6d28d9;margin-bottom:6px;">BİLİRKİŞİ NOTU</div>'
+          + '<div style="font-size:10px;line-height:1.7;color:#334155;">Mahkemenizin '+(sonuc.dosyaNo||'...')+' Esas sayılı dosyası kapsamında, davacı '+(sonuc.magdurAdi||'...')+' adına düzenlenen '+(sonuc.davaTuru||'trafik kazası')+' nedeniyle oluşan bedeni hasar tazminatı hesaplama raporudur. Hesaplama '+sonuc.pmfTablosu+' yaşam tablosu, %'+sonuc.teknikFaiz+' teknik faiz oranı ve 1/Ln progresif rant yöntemi kullanılarak yapılmıştır.</div></div>' : '')
 
-        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
-          <tr style="background:${isKoyu?'#0f2342':'#1e40af'};color:#FFFFFF;"><td colspan="4" style="padding:8px;font-weight:800;font-size:12px;">MAĞDUR BİLGİLERİ</td></tr>
-          <tr style="background:${isKoyu?'#111827':'#ffffff'};border-left:${isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)'};border-bottom:${isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)'};box-shadow:${isKoyu?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)'};border-radius:8px;"><td style="border:1px solid #ddd;padding:6px;width:25%;background:${isKoyu?'#0d1321':'#f0f4ff'};font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">AD SOYAD</td><td style="border:1px solid #ddd;padding:6px;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${sonuc.magdurAdi || '-'}</td><td style="border:1px solid #ddd;padding:6px;width:25%;background:${isKoyu?'#0d1321':'#f0f4ff'};font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">CİNSİYET</td><td style="border:1px solid #ddd;padding:6px;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${sonuc.cinsiyet}</td></tr>
-          <tr style="background:${isKoyu?'#0d1321':'#f0f4ff'};border-left:${isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)'};border-bottom:${isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)'};box-shadow:${isKoyu?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)'};border-radius:8px;"><td style="border:1px solid #ddd;padding:6px;background:${isKoyu?'#0d1321':'#f0f4ff'};font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">DOĞUM TARİHİ</td><td style="border:1px solid #ddd;padding:6px;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${fmtTarih(sonuc.dogumTarihi)}</td><td style="border:1px solid #ddd;padding:6px;background:${isKoyu?'#0d1321':'#f0f4ff'};font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">KAZA TARİHİ</td><td style="border:1px solid #ddd;padding:6px;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${fmtTarih(sonuc.kazaTarihi)}</td></tr>
-          <tr style="background:${isKoyu?'#111827':'#ffffff'};border-left:${isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)'};border-bottom:${isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)'};box-shadow:${isKoyu?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)'};border-radius:8px;"><td style="border:1px solid #ddd;padding:6px;background:${isKoyu?'#0d1321':'#f0f4ff'};font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">KAZA ANINDA YAŞ</td><td style="border:1px solid #ddd;padding:6px;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${sonuc.yas}</td><td style="border:1px solid #ddd;padding:6px;background:${isKoyu?'#0d1321':'#f0f4ff'};font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">MESLEK</td><td style="border:1px solid #ddd;padding:6px;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${sonuc.meslek}</td></tr>
-          <tr style="background:${isKoyu?'#0d1321':'#f0f4ff'};border-left:${isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)'};border-bottom:${isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)'};box-shadow:${isKoyu?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)'};border-radius:8px;"><td style="border:1px solid #ddd;padding:6px;background:${isKoyu?'#0d1321':'#f0f4ff'};font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">MALULİYET ORANI</td><td style="border:1px solid #ddd;padding:6px;font-weight:700;color:#9333ea;font-size:12px;">%${sonuc.maluliyet}</td><td style="border:1px solid #ddd;padding:6px;background:${isKoyu?'#0d1321':'#f0f4ff'};font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">DAVA TÜRÜ</td><td style="border:1px solid #ddd;padding:6px;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${sonuc.davaTuru}</td></tr>
-        </table>
+        + '<table style="width:100%;border-collapse:collapse;margin-bottom:14px;">'
+        + '<tr style="background:#1e40af;color:#fff;"><td colspan="4" style="padding:8px 12px;font-weight:800;font-size:11px;">MAĞDUR BİLGİLERİ</td></tr>'
+        + tRow('AD SOYAD', sonuc.magdurAdi||'-', 'CİNSİYET', sonuc.cinsiyet)
+        + tRow('DOĞUM TARİHİ', fmtTarih(sonuc.dogumTarihi), 'KAZA TARİHİ', fmtTarih(sonuc.kazaTarihi))
+        + tRow('KAZA ANINDA YAŞ', sonuc.yas, 'MESLEK', sonuc.meslek)
+        + tRow('MALULİYET ORANI', '<span style="color:#7c3aed;font-weight:800;">%'+sonuc.maluliyet+'</span>', 'DAVA TÜRÜ', sonuc.davaTuru)
+        + '</table>'
 
-        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
-          <tr style="background:${isKoyu?'#0f2342':'#1e40af'};color:#FFFFFF;"><td colspan="4" style="padding:8px;font-weight:800;font-size:12px;">HESAPLAMA PARAMETRELERİ</td></tr>
-          <tr style="background:${isKoyu?'#111827':'#ffffff'};border-left:${isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)'};border-bottom:${isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)'};box-shadow:${isKoyu?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)'};border-radius:8px;"><td style="border:1px solid #ddd;padding:6px;width:25%;background:${isKoyu?'#0d1321':'#f0f4ff'};font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">AYLIK GELİR</td><td style="border:1px solid #ddd;padding:6px;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${fmtPara(sonuc.aylikGelir)} TL ${sonuc.asgariUcretKullan ? '(ASGARİ ÜCRET)' : ''}</td><td style="border:1px solid #ddd;padding:6px;width:25%;background:${isKoyu?'#0d1321':'#f0f4ff'};font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">PMF TABLOSU</td><td style="border:1px solid #ddd;padding:6px;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${sonuc.pmfTablosu}</td></tr>
-          <tr style="background:${isKoyu?'#0d1321':'#f0f4ff'};border-left:${isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)'};border-bottom:${isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)'};box-shadow:${isKoyu?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)'};border-radius:8px;"><td style="border:1px solid #ddd;padding:6px;background:${isKoyu?'#0d1321':'#f0f4ff'};font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">KALAN ÖMÜR</td><td style="border:1px solid #ddd;padding:6px;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${sonuc.kalanOmur} YIL</td><td style="border:1px solid #ddd;padding:6px;background:${isKoyu?'#0d1321':'#f0f4ff'};font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">TEKNİK FAİZ</td><td style="border:1px solid #ddd;padding:6px;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">%${sonuc.teknikFaiz}</td></tr>
-          <tr style="background:${isKoyu?'#111827':'#ffffff'};border-left:${isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)'};border-bottom:${isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)'};box-shadow:${isKoyu?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)'};border-radius:8px;"><td style="border:1px solid #ddd;padding:6px;background:${isKoyu?'#0d1321':'#f0f4ff'};font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">KUSUR ORANI</td><td style="border:1px solid #ddd;padding:6px;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">%${sonuc.kusur}</td><td style="border:1px solid #ddd;padding:6px;background:${isKoyu?'#0d1321':'#f0f4ff'};font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">HESAP TARİHİ</td><td style="border:1px solid #ddd;padding:6px;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${fmtTarih(sonuc.hesapTarihi)}</td></tr>
-        </table>
+        + '<table style="width:100%;border-collapse:collapse;margin-bottom:14px;">'
+        + '<tr style="background:#1e40af;color:#fff;"><td colspan="4" style="padding:8px 12px;font-weight:800;font-size:11px;">HESAPLAMA PARAMETRELERİ</td></tr>'
+        + tRow('AYLIK GELİR', fmtPara(sonuc.aylikGelir)+' TL'+(sonuc.asgariUcretKullan?' (ASGARİ)':''), 'PMF TABLOSU', sonuc.pmfTablosu)
+        + tRow('KALAN ÖMÜR', sonuc.kalanOmur+' YIL', 'TEKNİK FAİZ', '%'+sonuc.teknikFaiz)
+        + tRow('KUSUR ORANI', '%'+sonuc.kusur, 'HESAP TARİHİ', fmtTarih(sonuc.hesapTarihi))
+        + '</table>'
 
-        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
-          <tr style="background:${isKoyu?'#0f2342':'#1e40af'};"><th style="padding:8px;text-align:left;color:#FFFFFF;font-weight:800;font-size:12px;">DÖNEM</th><th style="padding:8px;text-align:right;color:#FFFFFF;font-weight:800;font-size:12px;">YIL</th><th style="padding:8px;text-align:right;color:#FFFFFF;font-weight:800;font-size:12px;">RANT</th><th style="padding:8px;text-align:right;color:#FFFFFF;font-weight:800;font-size:12px;">BRÜT</th><th style="padding:8px;text-align:right;color:#FFFFFF;font-weight:800;font-size:12px;">KUSURLU</th></tr>
-          <tr style="background:${isKoyu?'#111827':'#ffffff'};border-left:${isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)'};border-bottom:${isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)'};box-shadow:${isKoyu?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)'};border-radius:8px;"><td style="border:1px solid #ddd;padding:6px;font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">AKTİF DÖNEM</td><td style="border:1px solid #ddd;padding:6px;text-align:right;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${sonuc.aktifKalanYil}</td><td style="border:1px solid #ddd;padding:6px;text-align:right;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${sonuc.aktifRant.toFixed(4)}</td><td style="border:1px solid #ddd;padding:6px;text-align:right;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${fmtPara(sonuc.aktifGelirKaybi)} TL</td><td style="border:1px solid #ddd;padding:6px;text-align:right;font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">${fmtPara(sonuc.aktifKusurlu)} TL</td></tr>
-          <tr style="background:${isKoyu?'#0d1321':'#f0f4ff'};border-left:${isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)'};border-bottom:${isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)'};box-shadow:${isKoyu?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)'};border-radius:8px;"><td style="border:1px solid #ddd;padding:6px;font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">PASİF DÖNEM</td><td style="border:1px solid #ddd;padding:6px;text-align:right;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${sonuc.pasifKalanYil}</td><td style="border:1px solid #ddd;padding:6px;text-align:right;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${sonuc.pasifRant.toFixed(4)}</td><td style="border:1px solid #ddd;padding:6px;text-align:right;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;font-weight:600;">${fmtPara(sonuc.pasifGelirKaybi)} TL</td><td style="border:1px solid #ddd;padding:6px;text-align:right;font-weight:600;color:${isKoyu?'#e2e8f0':'#1e293b'};font-size:12px;">${fmtPara(sonuc.pasifKusurlu)} TL</td></tr>
-          ${sonuc.gigsGun > 0 ? '<tr style="background:' + (isKoyu?'#111827':'#ffffff') + ';border-left:' + (isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)') + ';border-bottom:' + (isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)') + ';box-shadow:' + (isKoyu?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)') + ';border-radius:8px;"><td style="border:1px solid #ddd;padding:6px;font-weight:600;color:' + (isKoyu?'#e2e8f0':'#1e293b') + ';font-size:12px;">GEÇİCİ İŞ GÖREMEZLİK (' + sonuc.gigsGun + ' GÜN)</td><td colspan="2"></td><td style="border:1px solid #ddd;padding:6px;text-align:right;color:' + (isKoyu?'#e2e8f0':'#1e293b') + ';font-size:12px;font-weight:600;">' + fmtPara(sonuc.gigsTopla) + ' TL</td><td style="border:1px solid #ddd;padding:6px;text-align:right;font-weight:600;color:' + (isKoyu?'#e2e8f0':'#1e293b') + ';font-size:12px;">' + fmtPara(sonuc.gigsKusurlu) + ' TL</td></tr>' : ''}
-          ${sonuc.bakiciGun > 0 ? '<tr style="background:' + (isKoyu?'#0d1321':'#f0f4ff') + ';border-left:' + (isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)') + ';border-bottom:' + (isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)') + ';box-shadow:' + (isKoyu?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)') + ';border-radius:8px;"><td style="border:1px solid #ddd;padding:6px;font-weight:600;color:' + (isKoyu?'#e2e8f0':'#1e293b') + ';font-size:12px;">BAKICI ÜCRETİ (' + sonuc.bakiciGun + ' GÜN)</td><td colspan="2"></td><td style="border:1px solid #ddd;padding:6px;text-align:right;color:' + (isKoyu?'#e2e8f0':'#1e293b') + ';font-size:12px;font-weight:600;">' + fmtPara(sonuc.bakiciToplam) + ' TL</td><td style="border:1px solid #ddd;padding:6px;text-align:right;font-weight:600;color:' + (isKoyu?'#e2e8f0':'#1e293b') + ';font-size:12px;">' + fmtPara(sonuc.bakiciKusurlu) + ' TL</td></tr>' : ''}
-          ${sonuc.psdDeger > 0 ? '<tr style="background:' + (isKoyu?'#111827':'#ffffff') + ';border-left:' + (isKoyu?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)') + ';border-bottom:' + (isKoyu?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)') + ';box-shadow:' + (isKoyu?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)') + ';border-radius:8px;"><td style="border:1px solid #ddd;padding:6px;font-weight:600;color:#d32f2f;font-size:12px;">PSD DÜŞÜMÜ</td><td colspan="3"></td><td style="border:1px solid #ddd;padding:6px;text-align:right;font-weight:600;color:#d32f2f;font-size:12px;">-' + fmtPara(sonuc.psdDeger) + ' TL</td></tr>' : ''}
-        </table>
+        + '<table style="width:100%;border-collapse:collapse;margin-bottom:14px;">'
+        + '<tr style="background:#1e40af;"><th style="padding:8px 10px;text-align:left;color:#fff;font-size:10px;">DÖNEM</th><th style="padding:8px 10px;text-align:right;color:#fff;font-size:10px;">YIL</th><th style="padding:8px 10px;text-align:right;color:#fff;font-size:10px;">RANT K.</th><th style="padding:8px 10px;text-align:right;color:#fff;font-size:10px;">BRÜT TUTAR</th><th style="padding:8px 10px;text-align:right;color:#fff;font-size:10px;">KUSURLU TUTAR</th></tr>'
+        + '<tr style="background:#fff;border-bottom:1px solid #e2e8f0;"><td style="padding:8px 10px;font-weight:600;font-size:11px;">AKTİF DÖNEM</td><td style="padding:8px 10px;text-align:right;font-size:11px;">'+sonuc.aktifKalanYil+'</td><td style="padding:8px 10px;text-align:right;font-size:11px;">'+sonuc.aktifRant.toFixed(4)+'</td><td style="padding:8px 10px;text-align:right;font-size:11px;">'+fmtPara(sonuc.aktifGelirKaybi)+' TL</td><td style="padding:8px 10px;text-align:right;font-weight:700;font-size:11px;">'+fmtPara(sonuc.aktifKusurlu)+' TL</td></tr>'
+        + '<tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;"><td style="padding:8px 10px;font-weight:600;font-size:11px;">PASİF DÖNEM</td><td style="padding:8px 10px;text-align:right;font-size:11px;">'+sonuc.pasifKalanYil+'</td><td style="padding:8px 10px;text-align:right;font-size:11px;">'+sonuc.pasifRant.toFixed(4)+'</td><td style="padding:8px 10px;text-align:right;font-size:11px;">'+fmtPara(sonuc.pasifGelirKaybi)+' TL</td><td style="padding:8px 10px;text-align:right;font-weight:700;font-size:11px;">'+fmtPara(sonuc.pasifKusurlu)+' TL</td></tr>'
+        + (sonuc.gigsGun>0?'<tr style="background:#fff;border-bottom:1px solid #e2e8f0;"><td style="padding:8px 10px;font-weight:600;font-size:11px;">GEÇİCİ İŞ GÖREMEZLİK ('+sonuc.gigsGun+' GÜN)</td><td colspan="2"></td><td style="padding:8px 10px;text-align:right;font-size:11px;">'+fmtPara(sonuc.gigsTopla)+' TL</td><td style="padding:8px 10px;text-align:right;font-weight:700;font-size:11px;">'+fmtPara(sonuc.gigsKusurlu)+' TL</td></tr>':'')
+        + (sonuc.bakiciGun>0?'<tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;"><td style="padding:8px 10px;font-weight:600;font-size:11px;">BAKICI ÜCRETİ ('+sonuc.bakiciGun+' GÜN)</td><td colspan="2"></td><td style="padding:8px 10px;text-align:right;font-size:11px;">'+fmtPara(sonuc.bakiciToplam)+' TL</td><td style="padding:8px 10px;text-align:right;font-weight:700;font-size:11px;">'+fmtPara(sonuc.bakiciKusurlu)+' TL</td></tr>':'')
+        + (sonuc.psdDeger>0?'<tr style="background:#fff;"><td style="padding:8px 10px;font-weight:600;color:#dc2626;font-size:11px;">PSD DÜŞÜMÜ</td><td colspan="3"></td><td style="padding:8px 10px;text-align:right;font-weight:700;color:#dc2626;font-size:11px;">-'+fmtPara(sonuc.psdDeger)+' TL</td></tr>':'')
+        + '</table>'
 
-        <div style="text-align:center;background:linear-gradient(135deg,#9333ea,#ec4899);color:white;padding:25px;border-radius:8px;margin-bottom:20px;">
-          <h2 style="margin:0 0 8px;font-size:16px;">TOPLAM TAZMİNAT MİKTARI</h2>
-          <h1 style="margin:0;font-size:32px;">${fmtPara(sonuc.toplamNet)} TL</h1>
-        </div>
+        + '<div style="text-align:center;background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;padding:20px;border-radius:8px;margin-bottom:14px;">'
+        + '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">TOPLAM TAZMİNAT MİKTARI</div>'
+        + '<div style="font-size:30px;font-weight:900;">'+fmtPara(sonuc.toplamNet)+' TL</div></div>'
 
-        ${aiAnaliz ? '<div style="margin-bottom:20px;padding:15px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;"><h3 style="font-size:13px;color:#2563eb;margin:0 0 10px;">YAPAY ZEKA ANALİZİ</h3><div style="font-size:11px;line-height:1.7;white-space:pre-wrap;">' + (aiAnaliz.analiz || aiAnaliz.metin || '') + '</div></div>' : ''}
+        + (aiAnaliz ? '<div style="border:1px solid #c4b5fd;border-radius:8px;overflow:hidden;margin-bottom:14px;">'
+          + '<div style="background:#6d28d9;color:#fff;padding:8px 12px;font-size:11px;font-weight:700;">UZMAN ANALİZ RAPORU</div>'
+          + '<div style="padding:10px 12px;font-size:9px;line-height:1.7;color:#334155;background:#faf5ff;">'+(aiAnaliz.analiz||aiAnaliz.metin||'').replace(/\n/g,'<br>')+'</div></div>' : '')
 
-        <div style="margin-top:40px;padding-top:15px;border-top:2px solid #ddd;text-align:center;font-size:9px;color:#888;">
-          <p><b>UYARI:</b> Bu rapor ön çalışma niteliğindedir. Kesin tazminat miktarı mahkeme kararı ile belirlenir.</p>
-          <p>MR HASAR DANIŞMANLIK - ${tarih} | © ${new Date().getFullYear()}</p>
-        </div>
-      </div>`;
+        + '<div style="border-top:2px solid #e2e8f0;padding-top:12px;text-align:center;font-size:9px;color:#94a3b8;">'
+        + '<p><b>UYARI:</b> Bu rapor ön çalışma niteliğindedir. Kesin tazminat miktarı mahkeme kararı ile belirlenir.</p>'
+        + '<p style="margin-top:6px;">MR HASAR DANIŞMANLIK - '+tarih+' | © '+new Date().getFullYear()+'</p></div></div>';
 
+      setBhPdfOnizleme({html, raporNo, tip});
+      setPdfYukleniyor(false);
+    };
+
+    const bhPdfIndir2 = () => {
+      if (!bhPdfOnizleme) return;
+      setPdfYukleniyor(true);
       const el = document.createElement('div');
-      el.innerHTML = html;
+      el.innerHTML = bhPdfOnizleme.html;
+      el.style.width = '780px';
+      el.style.background = '#ffffff';
+      el.style.position = 'absolute';
+      el.style.left = '0'; el.style.top = '0'; el.style.opacity = '0.01';
       document.body.appendChild(el);
-      html2pdf().set({
-        margin: 10, filename: 'MR_BH_' + (tip === 'bilirkisi' ? 'Bilirkisi_' : 'Sonuc_') + raporNo + '.pdf',
-        image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      }).from(el).save().then(() => { document.body.removeChild(el); setPdfYukleniyor(false); }).catch(err => {
-        console.error('PDF hatası:', err); document.body.removeChild(el); setPdfYukleniyor(false);
-      });
+      setTimeout(() => {
+        el.style.opacity = '1';
+        html2pdf().set({
+          margin: [6,6,6,6],
+          filename: 'MR_BH_'+(bhPdfOnizleme.tip==='bilirkisi'?'Bilirkisi_':'Sonuc_')+bhPdfOnizleme.raporNo+'.pdf',
+          image:{type:'jpeg',quality:0.98},
+          html2canvas:{scale:2,useCORS:true,scrollY:0,scrollX:0,windowWidth:800,backgroundColor:'#ffffff'},
+          jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+          pagebreak:{mode:['avoid-all','css','legacy']}
+        }).from(el).save().then(()=>{document.body.removeChild(el);setPdfYukleniyor(false);}).catch(()=>{document.body.removeChild(el);setPdfYukleniyor(false);});
+      }, 300);
     };
 
     // TEMİZLE
