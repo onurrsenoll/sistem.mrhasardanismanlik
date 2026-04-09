@@ -192,6 +192,7 @@ MR.api = {
   adkAiAnaliz(d) { return this.req('/hesap/ai-analiz.php', { method: 'POST', body: JSON.stringify(d) }); },
   bhAiAnaliz(d) { return this.req('/hesap/bh-ai-analiz.php', { method: 'POST', body: JSON.stringify(d) }); },
   rayicArastir(d) { return this.req('/hesap/rayic-arastirma.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
+  evrakAnaliz(fd) { const h = {}; if (this.token) h['Authorization'] = 'Bearer ' + this.token; return fetch('/api/v1/hesap/evrak-analiz.php', {method:'POST', headers:h, body:fd}).then(r=>r.json()); },
   tahkimEmsalAra(d) { return this.req('/hesap/tahkim-emsal-ara.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
   // ŞABLON
   sablonList(p = {}) { return this.req('/sablon/list.php?' + new URLSearchParams(p)); },
