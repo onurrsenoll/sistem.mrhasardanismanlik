@@ -765,23 +765,31 @@ MR.QrRuhsatPage = ({setPage, user}) => {
     const success = files.filter(f => f.status === 'success' && f.result);
     if (!success.length) { toast('AKTARILACAK SONUÇ YOK', 'warning'); return; }
 
-    const policeler = success.map(f => {
+    // Bitiş tarihi: bugünden 1 yıl sonra (varsayılan poliçe süresi)
+    const bugun = new Date();
+    const birYilSonra = new Date(bugun);
+    birYilSonra.setFullYear(birYilSonra.getFullYear() + 1);
+    const bugStr = bugun.toISOString().slice(0,10);
+    const bitStr = birYilSonra.toISOString().slice(0,10);
+
+    const policeler = success.map((f, idx) => {
       const r = f.result;
       const musteriAdi = [(r.ad || ''), (r.soyad || '')].filter(Boolean).join(' ').trim() || '-';
       return {
-        police_no: 'RHT-' + Date.now().toString().slice(-6) + '-' + Math.random().toString(36).slice(2,5).toUpperCase(),
+        police_no: 'RHT-' + Date.now().toString().slice(-6) + '-' + idx + '-' + Math.random().toString(36).slice(2,4).toUpperCase(),
         musteri_adi: musteriAdi,
         musteri_tc: r.tc || '',
         plaka: r.plaka || '',
         belge_seri: r.belgeSeri || '',
+        sase_no: r.sase || '',
         brans: 'TRAFİK',
-        sigorta_sirketi: 'RUHSAT OKUMA',
-        baslangic_tarihi: new Date().toISOString().slice(0,10),
-        bitis_tarihi: '',
+        sigorta_sirketi: '-',
+        baslangic_tarihi: bugStr,
+        bitis_tarihi: bitStr,
         brut_prim: 0,
         net_prim: 0,
         komisyon_orani: 0,
-        notlar: 'RUHSAT OCR: ' + (r.marka || '') + ' ' + (r.modelYili || '') + ' ŞASE: ' + (r.sase || '')
+        notlar: 'RUHSAT OCR: ' + (r.marka || '') + ' ' + (r.modelYili || '') + (r.sase ? ' ŞASE: ' + r.sase : '')
       };
     });
 
