@@ -319,12 +319,8 @@ MR._CRMListesiInner = ({setPage, user}) => {
     setLoading(false);
   }, [filter, durumF]);
 
-  const ilkYukleme = useRef(true);
-  useEffect(() => {
-    if (ilkYukleme.current) { ilkYukleme.current = false; load(); return; }
-    const t = setTimeout(load, 400);
-    return () => clearTimeout(t);
-  }, [filter, durumF]);
+  useEffect(() => { load(); }, []);
+  useEffect(() => { const t = setTimeout(load, 400); return () => clearTimeout(t); }, [filter, durumF]);
 
   // DÜZENLEME
   const openEdit = (crm) => {

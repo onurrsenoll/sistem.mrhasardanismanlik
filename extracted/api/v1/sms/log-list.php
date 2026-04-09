@@ -14,6 +14,26 @@ require_method('GET');
 $user = auth_required(['admin', 'uzman', 'personel']);
 
 $db = getDB();
+
+// Tablo yoksa oluştur
+try {
+    $db->exec("CREATE TABLE IF NOT EXISTS sms_loglari (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        telefon VARCHAR(30) NOT NULL,
+        mesaj TEXT NOT NULL,
+        dosya_id INT DEFAULT NULL,
+        kullanici_id INT DEFAULT NULL,
+        durum VARCHAR(20) NOT NULL DEFAULT 'bekliyor',
+        sonuc_mesaj VARCHAR(500) DEFAULT NULL,
+        bulk_id VARCHAR(100) DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_dosya (dosya_id),
+        INDEX idx_durum (durum),
+        INDEX idx_telefon (telefon),
+        INDEX idx_tarih (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
+} catch (Exception $e) {}
+
 $pagination = get_pagination();
 
 $where = '1=1';

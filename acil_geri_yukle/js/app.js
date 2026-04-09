@@ -15,11 +15,9 @@ const MENU = [
     {id:'crm-liste', label:'CRM LİSTESİ', icon:'List'},
     {id:'crm-yeni', label:'YENİ KAYIT', icon:'UserPlus'},
     {id:'crm-arama', label:'ARAMA LİSTESİ', icon:'PhoneCall'},
-    {id:'crm-analiz', label:'CRM ANALİZ', icon:'BarChart3'},
     {id:'saha-liste', label:'SAHA DOSYALARI', icon:'MapPin'},
     {id:'saha-yeni', label:'YENİ SAHA KAYDI', icon:'PlusCircle'}
   ]},
-  {id:'eposta', label:'E-POSTA', icon:'Mail'},
   {id:'hesap', label:'HESAPLAMALAR', icon:'Calculator', sub:[
     {id:'hesap-adk', label:'ARAÇ DEĞER KAYBI', icon:'Car'},
     {id:'hesap-bh', label:'BEDENİ HASAR', icon:'Heart'}
@@ -79,7 +77,6 @@ const MENU = [
 const MENU_MODUL = {
   dosya: 'dosya',
   crm: 'crm',
-  eposta: 'eposta',
   hesap: 'hesaplamalar',
   paydaslar: 'paydaslar',
   muhasebe: 'muhasebe',
@@ -448,9 +445,6 @@ const Breadcrumb = ({page, setPage}) => {
     parts.push({label: 'SİSTEM', id: 'sistem'});
     parts.push({label: tanimLabels[page] || 'TANIMLAMALAR', id: page});
   }
-  if (page === 'eposta' && parts.length <= 1) {
-    parts.push({label: 'E-POSTA', id: 'eposta'});
-  }
   if (page === 'mesajlar-sistem' && parts.length <= 1) {
     parts.push({label: 'SİSTEM', id: 'sistem'});
     parts.push({label: 'SİSTEM BİLDİRİMLERİ', id: page});
@@ -756,7 +750,6 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   if (page === 'crm-liste') return <MR.CrmPage setPage={setPage} user={user} view="liste"/>;
   if (page === 'crm-yeni') return <MR.CrmPage setPage={setPage} user={user} view="yeni"/>;
   if (page === 'crm-arama') return <MR.CrmAramaPage setPage={setPage} user={user}/>;
-  if (page === 'crm-analiz') return <MR.AramaGecmisPage setPage={setPage} user={user}/>;
   if (crmIdMatch) return <MR.CrmPage setPage={setPage} user={user} view="detay" crmId={parseInt(crmIdMatch[1])}/>;
 
   /* SAHA DOSYALARI */
@@ -804,9 +797,6 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     const sub = page.replace('ictihat-', '') || 'yargitay';
     return <MR.IctihatPage setPage={setPage} user={user} subPage={sub === 'ictihat' ? 'yargitay' : sub}/>;
   }
-
-  /* E-POSTA */
-  if (page === 'eposta') return <MR.MailPage setPage={setPage} user={user}/>;
 
   /* AJANDA */
   if (page === 'ajanda') return <MR.AjandaPage setPage={setPage} user={user}/>;
@@ -925,74 +915,6 @@ const App = () => {
   /* KULLANICI DEĞİŞTİĞİNDE GLOBAL REFERANSI GÜNCELLE (YETKİ KONTROLÜ İÇİN) */
   useEffect(() => {
     MR._currentUser = user;
-  }, [user]);
-
-  /* ═══ ARAMA LOG — WEBRTC ÇAĞRI BİTTİĞİNDE OTOMATİK KAYIT ═══ */
-  useEffect(() => {
-    if (!user) return;
-    var aramaBaslangic = null;
-    var aramaNumara = '';
-    var aramaAdi = '';
-    var aramaYon = 'giden';
-    var gorusmeCevaplandi = false;
-
-    const durumHandler = (e) => {
-      const d = e.detail;
-      if (!d) return;
-
-      if (d.durum === 'araniyor') {
-        aramaBaslangic = Date.now();
-        aramaNumara = d.detay || '';
-        aramaYon = 'giden';
-        gorusmeCevaplandi = false;
-      }
-      if (d.durum === 'gelen-cagri') {
-        aramaBaslangic = Date.now();
-        aramaYon = 'gelen';
-        gorusmeCevaplandi = false;
-        if (d.detay) {
-          aramaNumara = d.detay.arayan || '';
-          aramaAdi = d.detay.arayanAdi || '';
-        }
-      }
-      if (d.durum === 'gorusmede') {
-        gorusmeCevaplandi = true;
-        aramaBaslangic = Date.now();
-      }
-      if (d.durum === 'kapandi' || d.durum === 'reddedildi' || (d.durum === 'hata' && aramaBaslangic)) {
-        var sure = aramaBaslangic ? Math.round((Date.now() - aramaBaslangic) / 1000) : 0;
-        var durum = gorusmeCevaplandi ? 'cevaplandi' : (d.durum === 'reddedildi' ? 'reddedildi' : 'cevapsiz');
-        if (d.durum === 'hata') {
-          var detayStr = (d.detay || '').toLowerCase();
-          if (detayStr.indexOf('rejected') >= 0 || detayStr.indexOf('busy') >= 0) durum = 'reddedildi';
-          else durum = 'cevapsiz';
-        }
-        if (aramaNumara) {
-          var now = new Date();
-          var baslangic = now.getFullYear() + '-' +
-            String(now.getMonth()+1).padStart(2,'0') + '-' +
-            String(now.getDate()).padStart(2,'0') + ' ' +
-            String(now.getHours()).padStart(2,'0') + ':' +
-            String(now.getMinutes()).padStart(2,'0') + ':' +
-            String(now.getSeconds()).padStart(2,'0');
-          api.aramaLogCreate({
-            numara: aramaNumara,
-            yon: aramaYon,
-            durum: durum,
-            sure_saniye: sure,
-            baslangic_zamani: baslangic,
-            musteri_adi: aramaAdi || ''
-          }).catch(() => {});
-        }
-        aramaBaslangic = null;
-        aramaNumara = '';
-        aramaAdi = '';
-        gorusmeCevaplandi = false;
-      }
-    };
-
-    window.addEventListener('mr-webrtc-durum', durumHandler);
-    return () => window.removeEventListener('mr-webrtc-durum', durumHandler);
   }, [user]);
 
   /* ═══ SESSİZ KONUM TAKİP SERVİSİ — TÜM KULLANICILAR ═══ */
