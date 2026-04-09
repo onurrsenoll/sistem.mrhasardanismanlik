@@ -113,9 +113,48 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
   const [hata, setHata] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [onizlemeler, setOnizlemeler] = useState([]);
+  const [gecmis, setGecmis] = useState([]);
+  const [gecmisGoster, setGecmisGoster] = useState(false);
   const fileRef = useRef(null);
 
   const evrakTipi = EVRAK_ALANLARI[tip];
+
+  // Geçmişi localStorage'dan yükle
+  React.useEffect(() => {
+    try {
+      const g = JSON.parse(localStorage.getItem('mr_evrak_gecmis') || '[]');
+      setGecmis(g);
+    } catch(e) {}
+  }, []);
+
+  const gecmiseKaydet = (tipKey, data) => {
+    const plakaA = data.arac_a?.plaka || data.araclar?.[0]?.plaka || data.arac_plaka || '-';
+    const plakaB = data.arac_b?.plaka || data.araclar?.[1]?.plaka || '-';
+    const yeniKayit = {
+      id: Date.now(),
+      tip: tipKey,
+      tipLabel: EVRAK_ALANLARI[tipKey]?.label || tipKey,
+      tarih: new Date().toLocaleString('tr-TR'),
+      plakaA, plakaB,
+      guven: data.guven || 0,
+      data: data
+    };
+    const yeniGecmis = [yeniKayit, ...gecmis].slice(0, 50);
+    setGecmis(yeniGecmis);
+    try { localStorage.setItem('mr_evrak_gecmis', JSON.stringify(yeniGecmis)); } catch(e) {}
+  };
+
+  const gecmisSil = (id) => {
+    const yeni = gecmis.filter(g => g.id !== id);
+    setGecmis(yeni);
+    try { localStorage.setItem('mr_evrak_gecmis', JSON.stringify(yeni)); } catch(e) {}
+  };
+
+  const gecmisYukle = (item) => {
+    setTip(item.tip);
+    setSonuc(item.data);
+    setGecmisGoster(false);
+  };
 
   const dosyaEkle = useCallback((files) => {
     const yeni = Array.from(files).filter(f => ['image/jpeg','image/png','image/webp','application/pdf'].includes(f.type));
@@ -145,6 +184,7 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
       const r = await MR.api.evrakAnaliz(fd);
       if (r.success && r.data) {
         setSonuc(r.data);
+        gecmiseKaydet(tip, r.data);
       } else {
         setHata(r.error || 'ANALİZ BAŞARISIZ');
       }
@@ -227,8 +267,11 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
               <p style={{fontSize:11, color:C.textMuted, margin:0}}>CLAUDE AI İLE KTT + HASAR İHBAR ANALİZİ</p>
             </div>
           </div>
-          {sonuc && (
-            <div style={{display:'flex', gap:8}}>
+          <div style={{display:'flex', gap:8}}>
+            {gecmis.length > 0 && <button onClick={() => setGecmisGoster(!gecmisGoster)} style={{...S.btn, background:gecmisGoster?C.purple:`${C.purple}18`, color:gecmisGoster?'#fff':C.purple, padding:'10px 18px', borderRadius:8, fontSize:12, fontWeight:700, border:`1px solid ${C.purple}44`}}>
+              <LIcon name="Clock" size={14} color={gecmisGoster?'#fff':C.purple}/> GEÇMİŞ ({gecmis.length})
+            </button>}
+            {sonuc && <>
               <button onClick={kopyala} style={{...S.btn, background:C.accent, color:'#fff', padding:'10px 18px', borderRadius:8, fontSize:12, fontWeight:700}}>
                 <LIcon name="Copy" size={14} color="#fff"/> KOPYALA
               </button>
@@ -238,15 +281,15 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
               <button onClick={temizle} style={{...S.btn, background:C.danger, color:'#fff', padding:'10px 18px', borderRadius:8, fontSize:12, fontWeight:700}}>
                 <LIcon name="Trash2" size={14} color="#fff"/> TEMİZLE
               </button>
-            </div>
-          )}
+            </>}
+          </div>
         </div>
       </div>
 
       {/* EVRAK TİPİ SEÇİMİ */}
       <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:20}}>
         {Object.entries(EVRAK_ALANLARI).map(([key, val]) => (
-          <div key={key} onClick={() => { setTip(key); setSonuc(null); setHata(''); }}
+          <div key={key} onClick={() => { setTip(key); setSonuc(null); setHata(''); setDosyalar([]); setOnizlemeler([]); }}
             style={{...S.card, padding:'16px 20px', cursor:'pointer', textAlign:'center',
               border: tip === key ? `3px solid ${val.color}` : `1px solid ${C.border}`,
               background: tip === key ? val.color + '12' : C.bgCard,
@@ -365,6 +408,44 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
           </div>
         )}
       </div>
+
+      {/* GEÇMİŞ KAYITLAR */}
+      {gecmisGoster && gecmis.length > 0 && (
+        <div style={{...S.card, marginTop:20}}>
+          <div style={{padding:'12px 16px', borderBottom:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+            <div style={{display:'flex', alignItems:'center', gap:8}}>
+              <LIcon name="Clock" size={16} color={C.purple}/>
+              <span style={{fontSize:13, fontWeight:800, color:C.purple}}>GEÇMİŞ ANALİZLER ({gecmis.length})</span>
+            </div>
+            <button onClick={() => { setGecmis([]); localStorage.removeItem('mr_evrak_gecmis'); }} style={{...S.btn, fontSize:10, padding:'4px 12px', background:`${C.danger}18`, color:C.danger, border:`1px solid ${C.danger}33`, borderRadius:6}}>
+              <LIcon name="Trash2" size={12} color={C.danger}/> TÜMÜNÜ SİL
+            </button>
+          </div>
+          <div style={{padding:12, maxHeight:400, overflowY:'auto'}}>
+            {gecmis.map((g, i) => (
+              <div key={g.id} style={{display:'flex', alignItems:'center', gap:12, padding:'10px 12px', background:i%2===0?C.bgInput:'transparent', borderRadius:8, marginBottom:4, cursor:'pointer'}}
+                onClick={() => gecmisYukle(g)}>
+                <div style={{width:8, height:8, borderRadius:'50%', background:EVRAK_ALANLARI[g.tip]?.color || C.accent, flexShrink:0}}/>
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:2}}>
+                    <span style={{fontSize:11, fontWeight:700}}>{g.tipLabel}</span>
+                    <span style={{fontSize:10, color:C.textMuted}}>{g.tarih}</span>
+                    <span style={{fontSize:10, fontWeight:700, color:(g.guven||0) >= 60 ? C.success : C.warning}}>%{g.guven||'-'}</span>
+                  </div>
+                  <div style={{display:'flex', gap:12, fontSize:11}}>
+                    <span style={{fontWeight:700, color:C.accent}}>{g.plakaA || '-'}</span>
+                    <span style={{color:C.textMuted}}>↔</span>
+                    <span style={{fontWeight:700, color:C.danger}}>{g.plakaB || '-'}</span>
+                  </div>
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); gecmisSil(g.id); }} style={{background:'transparent', border:'none', cursor:'pointer', padding:4}}>
+                  <LIcon name="X" size={14} color={C.danger}/>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
