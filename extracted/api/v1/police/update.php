@@ -27,7 +27,8 @@ $fields = [
     'musteri_adi', 'musteri_tc', 'musteri_telefon', 'musteri_email', 'plaka',
     'tanzim_tarihi', 'baslangic_tarihi', 'bitis_tarihi',
     'brut_prim', 'net_prim', 'komisyon_orani', 'komisyon_tutari',
-    'durum', 'hatirlatma_gun', 'hatirlatma_gonderildi', 'notlar'
+    'durum', 'hatirlatma_gun', 'hatirlatma_gonderildi', 'notlar',
+    'belge_seri', 'dogum_tarihi', 'sase_no'
 ];
 
 $sets = [];
@@ -40,7 +41,7 @@ foreach ($fields as $field) {
             $params[] = $body[$field] !== null && $body[$field] !== '' ? (float)$body[$field] : null;
         } elseif (in_array($field, ['hatirlatma_gun', 'hatirlatma_gonderildi'])) {
             $params[] = (int)$body[$field];
-        } elseif (in_array($field, ['tanzim_tarihi', 'baslangic_tarihi', 'bitis_tarihi'])) {
+        } elseif (in_array($field, ['tanzim_tarihi', 'baslangic_tarihi', 'bitis_tarihi', 'dogum_tarihi'])) {
             $params[] = !empty($body[$field]) ? $body[$field] : null;
         } else {
             $params[] = clean($body[$field]);
