@@ -109,15 +109,18 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
   const [tip, setTip] = useState('anlasma_ktt');
   const [dosyalar, setDosyalar] = useState([]);
   const [yukleniyor, setYukleniyor] = useState(false);
-  const [sonuc, setSonuc] = useState(null);
+  const [sonuclar, setSonuclar] = useState([]); // birden fazla sonuç
+  const [aktifSonuc, setAktifSonuc] = useState(0); // hangi sonuç görünüyor
   const [hata, setHata] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [onizlemeler, setOnizlemeler] = useState([]);
   const [gecmis, setGecmis] = useState([]);
   const [gecmisGoster, setGecmisGoster] = useState(false);
+  const [ilerleme, setIlerleme] = useState('');
   const fileRef = useRef(null);
 
   const evrakTipi = EVRAK_ALANLARI[tip];
+  const sonuc = sonuclar[aktifSonuc] || null;
 
   // Geçmişi localStorage'dan yükle
   React.useEffect(() => {
@@ -152,7 +155,8 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
 
   const gecmisYukle = (item) => {
     setTip(item.tip);
-    setSonuc(item.data);
+    setSonuclar([item.data]);
+    setAktifSonuc(0);
     setGecmisGoster(false);
   };
 
@@ -175,27 +179,35 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
 
   const analiz = useCallback(async () => {
     if (dosyalar.length === 0) { setHata('EN AZ BİR DOSYA YÜKLEYİN'); return; }
-    setYukleniyor(true); setHata(''); setSonuc(null);
-    try {
-      const fd = new FormData();
-      dosyalar.forEach((f, i) => fd.append('dosya_' + i, f));
-      fd.append('dosya_sayisi', dosyalar.length);
-      fd.append('tip', tip);
-      const r = await MR.api.evrakAnaliz(fd);
-      if (r.success && r.data) {
-        setSonuc(r.data);
-        gecmiseKaydet(tip, r.data);
-      } else {
-        setHata(r.error || 'ANALİZ BAŞARISIZ');
+    setYukleniyor(true); setHata(''); setSonuclar([]); setAktifSonuc(0);
+    const tumSonuclar = [];
+    for (let i = 0; i < dosyalar.length; i++) {
+      setIlerleme(`${i+1}/${dosyalar.length} ANALİZ EDİLİYOR: ${dosyalar[i].name}`);
+      try {
+        const fd = new FormData();
+        fd.append('dosya_0', dosyalar[i]);
+        fd.append('dosya_sayisi', 1);
+        fd.append('tip', tip);
+        const r = await MR.api.evrakAnaliz(fd);
+        if (r.success && r.data) {
+          r.data._dosyaAdi = dosyalar[i].name;
+          tumSonuclar.push(r.data);
+          gecmiseKaydet(tip, r.data);
+        } else {
+          tumSonuclar.push({_dosyaAdi: dosyalar[i].name, _hata: r.error || 'ANALİZ BAŞARISIZ'});
+        }
+      } catch(e) {
+        tumSonuclar.push({_dosyaAdi: dosyalar[i].name, _hata: e.message});
       }
-    } catch(e) {
-      setHata('HATA: ' + e.message);
+      setSonuclar([...tumSonuclar]);
     }
+    setIlerleme('');
+    if (tumSonuclar.length === 0) setHata('HİÇBİR EVRAK ANALİZ EDİLEMEDİ');
     setYukleniyor(false);
   }, [dosyalar, tip]);
 
   const temizle = () => {
-    setDosyalar([]); setSonuc(null); setHata(''); setOnizlemeler([]);
+    setDosyalar([]); setSonuclar([]); setAktifSonuc(0); setHata(''); setOnizlemeler([]); setIlerleme('');
   };
 
   // Sonuçtan değer al (nested objeler için)
@@ -207,11 +219,13 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
 
   // Sonuç düzenleme
   const updateValue = (nested, nested_arr, idx, key, val) => {
-    setSonuc(prev => {
-      const copy = JSON.parse(JSON.stringify(prev));
-      if (nested) { if (!copy[nested]) copy[nested] = {}; copy[nested][key] = val; }
-      else if (nested_arr) { if (!copy[nested_arr]) copy[nested_arr] = []; if (!copy[nested_arr][idx]) copy[nested_arr][idx] = {}; copy[nested_arr][idx][key] = val; }
-      else { copy[key] = val; }
+    setSonuclar(prev => {
+      const copy = [...prev];
+      const item = JSON.parse(JSON.stringify(copy[aktifSonuc] || {}));
+      if (nested) { if (!item[nested]) item[nested] = {}; item[nested][key] = val; }
+      else if (nested_arr) { if (!item[nested_arr]) item[nested_arr] = []; if (!item[nested_arr][idx]) item[nested_arr][idx] = {}; item[nested_arr][idx][key] = val; }
+      else { item[key] = val; }
+      copy[aktifSonuc] = item;
       return copy;
     });
   };
@@ -289,7 +303,7 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
       {/* EVRAK TİPİ SEÇİMİ */}
       <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:20}}>
         {Object.entries(EVRAK_ALANLARI).map(([key, val]) => (
-          <div key={key} onClick={() => { setTip(key); setSonuc(null); setHata(''); setDosyalar([]); setOnizlemeler([]); }}
+          <div key={key} onClick={() => { setTip(key); setSonuclar([]); setAktifSonuc(0); setHata(''); setDosyalar([]); setOnizlemeler([]); }}
             style={{...S.card, padding:'16px 20px', cursor:'pointer', textAlign:'center',
               border: tip === key ? `3px solid ${val.color}` : `1px solid ${C.border}`,
               background: tip === key ? val.color + '12' : C.bgCard,
@@ -345,7 +359,7 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
                   {yukleniyor ? (
                     <div style={{display:'flex', alignItems:'center', gap:8}}>
                       <div style={{width:18, height:18, border:'3px solid rgba(255,255,255,0.3)', borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.8s linear infinite'}}/>
-                      <span>CLAUDE AI ANALİZ EDİYOR...</span>
+                      <span>{ilerleme || 'CLAUDE AI ANALİZ EDİYOR...'}</span>
                     </div>
                   ) : (
                     <><LIcon name="FileSearch" size={18} color="#fff"/> {evrakTipi.label} ANALİZ ET</>
@@ -361,8 +375,32 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
         </div>
 
         {/* SAĞ: SONUÇLAR */}
-        {sonuc && (
+        {sonuclar.length > 0 && (
           <div>
+            {/* EVRAK GEÇİŞ SEKMELERİ */}
+            {sonuclar.length > 1 && (
+              <div style={{display:'flex', gap:6, marginBottom:14, flexWrap:'wrap'}}>
+                {sonuclar.map((s, i) => {
+                  const plakaA = s.arac_a?.plaka || s.araclar?.[0]?.plaka || s.arac_plaka || '';
+                  const isHata = !!s._hata;
+                  return (
+                    <button key={i} onClick={() => setAktifSonuc(i)}
+                      style={{padding:'8px 16px', borderRadius:8, fontSize:11, fontWeight:700, cursor:'pointer', border:`2px solid ${aktifSonuc===i ? evrakTipi.color : C.border}`,
+                        background: aktifSonuc===i ? evrakTipi.color : 'transparent',
+                        color: aktifSonuc===i ? '#fff' : isHata ? C.danger : C.text}}>
+                      {i+1}. {plakaA || s._dosyaAdi || 'EVRAK'} {isHata ? '(HATA)' : ''}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* HATA DURUMU */}
+            {sonuc?._hata ? (
+              <div style={{padding:16, background:`${C.danger}12`, border:`1px solid ${C.danger}33`, borderRadius:10, fontSize:12, color:C.danger, textAlign:'center'}}>
+                <LIcon name="AlertTriangle" size={20} color={C.danger}/><br/>{sonuc._dosyaAdi}: {sonuc._hata}
+              </div>
+            ) : <>
             {/* GÜVEN SKORU */}
             <div style={{...S.card, marginBottom:16, padding:'12px 20px', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
               <div style={{display:'flex', alignItems:'center', gap:10}}>
@@ -405,9 +443,13 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
                 </div>
               </div>
             ))}
+          </>}
           </div>
         )}
       </div>
+
+      {/* İLERLEME */}
+      {ilerleme && <div style={{textAlign:'center', padding:10, fontSize:12, fontWeight:700, color:evrakTipi.color}}>{ilerleme}</div>}
 
       {/* GEÇMİŞ KAYITLAR */}
       {gecmisGoster && gecmis.length > 0 && (
