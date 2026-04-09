@@ -1,8 +1,8 @@
 <?php
 /**
- * MR HASAR DANIŞMANLIK - EVRAK ANALİZ ENDPOINTİ
+ * MR HASAR DANIŞMANLIK - EVRAK ANALİZ ENDPOINTİ v2
  * Claude Vision AI ile KTT / Hasar İhbar Föyü okuma
- * 3 Tip: anlasma_ktt, polis_ktt, hasar_ihbar
+ * TRAMER 48 senaryo kusur analizi dahil
  */
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
@@ -26,7 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $user = auth_required();
 
-// API KEY
 $keys = getAiKeys();
 $apiKey = $keys['active'];
 if (empty($apiKey)) {
@@ -46,7 +45,6 @@ function preprocessEvrak($content, $mime) {
         $img = imagecreatefromstring($content);
         if (!$img) return ['content' => $content, 'mime' => $mime];
         $w = imagesx($img); $h = imagesy($img);
-        // Küçük görselleri büyüt
         if ($w < 1600 || $h < 1200) {
             $scale = max(1600 / $w, 1200 / $h, 1.5);
             $nw = intval($w * $scale); $nh = intval($h * $scale);
@@ -54,7 +52,6 @@ function preprocessEvrak($content, $mime) {
             imagecopyresampled($scaled, $img, 0, 0, 0, 0, $nw, $nh, $w, $h);
             imagedestroy($img); $img = $scaled;
         }
-        // Grayscale + kontrast + keskinleştirme (el yazısı için kritik)
         imagefilter($img, IMG_FILTER_GRAYSCALE);
         imagefilter($img, IMG_FILTER_CONTRAST, -40);
         imagefilter($img, IMG_FILTER_BRIGHTNESS, 15);
@@ -98,156 +95,95 @@ if (empty($images)) {
     exit;
 }
 
+// ═══ TRAMER SENARYOLARI ═══
+$TRAMER = 'DURUM 1A: Aynı yönde A kırmızı ışıkta durmuş B takip mesafesi korumadı → B %100
+DURUM 2: Kırmızı ışıkta geçiş yapan A → A %100
+DURUM 4: Her iki sürücü yeşil ışık iddiasında → A %50 B %50
+DURUM 6: B tali yoldan ana yola çıkarken A ya yol vermedi → B %100
+DURUM 7: B karşı şeride geçti → B %100
+DURUM 9: A B ye arkadan çarptı → A %100 (K.Y.T.K.56/1-c)
+DURUM 10: A arkadan çarptı → A %100
+DURUM 12: B sağ şeritten dar kavisle dönüş yapmadı → B %100
+DURUM 13: İşaretsiz kavşakta B sağdan gelen A ya öncelik vermedi → B %100
+DURUM 14: Her iki araç sağ şerit ihlali → A %50 B %50
+DURUM 20: A sollamada sol taraftan gelen aracı beklemedi → A %100
+DURUM 25: B iz/mülkten çıkarken A nın geçişini beklemedi → B %100
+DURUM 26: B şerit değiştirme ihlali → B %100
+DURUM 27: A kurallı park etmiş araca çarptı → A %100
+DURUM 30: Zincirleme arkadan çarpmalar her çarpan araç %100
+DURUM 44: A dikkatsiz ana yola çıktı B ye çarptı A %100
+DURUM 47: B kontrolsüz U dönüşü → B %100
+DURUM 48: A ters yöne girdi B ile çarpıştı → A %100';
+
 // ═══ PROMPT'LAR ═══
 if ($tip === 'anlasma_ktt') {
-    $prompt = 'Bu görsel bir ANLAŞMALI MADDİ HASARLI TRAFİK KAZASI TESPİT TUTANAĞI (KTT) fotoğrafıdır.
-EL YAZISI İLE DOLDURULMUŞ OLABİLİR - dikkatle oku.
+    $systemPrompt = "Türk trafik sigortası kusur analiz uzmanısın. TRAMER senaryoları:\n{$TRAMER}\n\nKaza Tespit Tutanağını analiz et. Önce krokilere, sonra beyanlara bak. SADECE geçerli JSON döndür.";
 
-Belgedeki TÜM bilgileri dikkatle oku ve aşağıdaki JSON formatında döndür:
+    $prompt = 'Bu görsel ANLAŞMALI MADDİ HASARLI TRAFİK KAZASI TESPİT TUTANAĞI. EL YAZISI ile doldurulmuş olabilir.
+
+SADECE JSON döndür:
 {
-  "kaza_tarihi": "GG.AA.YYYY formatında",
-  "kaza_saati": "SS:DD formatında",
-  "kaza_yeri_il": "İl adı",
-  "kaza_yeri_ilce": "İlçe adı",
-  "kaza_yeri_mahalle": "Mahalle/Semt",
-  "kaza_yeri_sokak": "Sokak/Cadde",
-  "arac_a": {
-    "plaka": "plaka numarası",
-    "marka_model": "araç marka ve model",
-    "surucu_adi": "sürücü adı soyadı",
-    "surucu_tc": "TC kimlik no",
-    "surucu_telefon": "telefon numarası",
-    "surucu_adres": "adres bilgisi",
-    "ehliyet_no": "ehliyet numarası varsa",
-    "sigorta_sirketi": "sigorta şirketi adı",
-    "police_no": "poliçe numarası",
-    "hasar_bolgeleri": "hasarlı bölgeler listesi",
-    "kusur_isaret": "işaretlenen kusur maddeleri (numaralar)"
-  },
-  "arac_b": {
-    "plaka": "plaka numarası",
-    "marka_model": "araç marka ve model",
-    "surucu_adi": "sürücü adı soyadı",
-    "surucu_tc": "TC kimlik no",
-    "surucu_telefon": "telefon numarası",
-    "surucu_adres": "adres bilgisi",
-    "ehliyet_no": "ehliyet numarası varsa",
-    "sigorta_sirketi": "sigorta şirketi adı",
-    "police_no": "poliçe numarası",
-    "hasar_bolgeleri": "hasarlı bölgeler listesi",
-    "kusur_isaret": "işaretlenen kusur maddeleri (numaralar)"
-  },
-  "tanik_adi": "tanık adı soyadı varsa",
-  "tanik_plaka": "tanık plakası varsa",
-  "kaza_aciklama": "10. maddedeki kaza açıklaması (tam metin)",
-  "guven": güven yüzdesi (1-100)
+  "kazaBilgileri":{"tarih":"","saat":"","il":"","ilce":"","cadde":""},
+  "aracA":{"plaka":"","marka":"","surucu":"","tc":"","telefon":"","adres":"","sigorta":"","policeNo":"","hasarYeri":""},
+  "aracB":{"plaka":"","marka":"","surucu":"","tc":"","telefon":"","adres":"","sigorta":"","policeNo":"","hasarYeri":""},
+  "kroKiAnalizi":{"yolYapisi":"","aAracPozisyon":"","bAracPozisyon":"","carpismaNokta":"","ozet":""},
+  "beyanAnalizi":{"aBeyan":"","bBeyan":"","celisme":"","kroKiUyum":""},
+  "eslesenSenaryo":"DURUM X",
+  "kusurAnalizi":"3-4 cümle analiz",
+  "kusurTablosu":[{"arac":"A","plaka":"","kusurOrani":0,"kusurNedeni":""},{"arac":"B","plaka":"","kusurOrani":100,"kusurNedeni":""}],
+  "yasalDayanak":["K.Y.T.K. madde"],
+  "kritikTespitler":["tespit"],
+  "guven":75
 }
 
-ÖNEMLİ KURALLAR:
-- EL YAZISI dikkatle oku, harfleri tek tek ayır
-- Plaka formatı: 2 rakam + 1-3 harf + 2-4 rakam (Örn: 55AOM782, 06DTZ681)
-- TC kimlik numarası 11 haneli sayıdır
-- Telefon numarası 05XX ile başlar, 10-11 hane
-- İşaretlenen kusur kutucuklarının numaralarını yaz
-- A ve B araçlarını KARIŞTIRMA, sol taraf A, sağ taraf B
-- Bulamadığın alanları null yap
-- Sadece JSON döndür, başka metin yazma.';
+KURALLAR:
+- EL YAZISINI dikkatle oku
+- Plaka: 2 rakam + 1-3 harf + 2-4 rakam
+- TC: 11 haneli, Telefon: 05XX ile başlar
+- A sol taraf, B sağ taraf
+- Krokileri ve beyanları karşılaştır
+- TRAMER senaryosuyla eşleştir
+- null kullan bulamadığın için';
 
 } elseif ($tip === 'polis_ktt') {
-    $prompt = 'Bu görsel bir POLİS TRAFİK KAZA TESPİT TUTANAĞI fotoğrafıdır. Birden fazla sayfa olabilir.
+    $systemPrompt = "Türk trafik sigortası kusur analiz uzmanısın. TRAMER senaryoları:\n{$TRAMER}\n\nPolis Kaza Tespit Tutanağını analiz et. SADECE geçerli JSON döndür.";
 
-Belgedeki TÜM bilgileri dikkatle oku ve aşağıdaki JSON formatında döndür:
+    $prompt = 'Bu görsel POLİS TRAFİK KAZA TESPİT TUTANAĞI. Birden fazla sayfa olabilir.
+
+SADECE JSON döndür:
 {
-  "tutanak_no": "tutanak numarası",
-  "kaza_tarihi": "GG.AA.YYYY formatında",
-  "kaza_saati": "SS:DD formatında",
-  "kaza_yeri_il": "İl",
-  "kaza_yeri_ilce": "İlçe",
-  "kaza_yeri_mahalle": "Mahalle/Mevki",
-  "kaza_yeri_adres": "Cadde/Sokak/Yol adı",
-  "yol_tipi": "devlet yolu/il yolu/şehir içi vs.",
-  "yol_kaplama": "asfalt/beton/stabilize vs.",
-  "hava_durumu": "açık/yağmurlu vs.",
-  "araclar": [
-    {
-      "sira": 1,
-      "plaka": "plaka numarası",
-      "marka": "araç markası",
-      "model": "araç modeli",
-      "model_yili": "model yılı",
-      "renk": "araç rengi",
-      "surucu_adi": "sürücü adı soyadı",
-      "surucu_tc": "TC kimlik no",
-      "surucu_dogum": "doğum yılı",
-      "ehliyet_sinif": "ehliyet sınıfı",
-      "sigorta_sirketi": "trafik sigortası şirketi",
-      "police_no": "poliçe numarası",
-      "hasar_durumu": "hasar açıklaması",
-      "kusur_orani": "varsa kusur oranı veya ihlal maddesi",
-      "alkol_durumu": "alkol test sonucu"
-    }
-  ],
-  "yaralilar": [
-    {
-      "adi": "yaralı adı soyadı",
-      "tc": "TC no",
-      "pozisyon": "sürücü/yolcu/yaya",
-      "durum": "hafif/ağır yaralı"
-    }
-  ],
-  "kaza_ozeti": "M.KAZANIN ÖZETİ bölümündeki tam metin",
-  "kusur_tespiti": "kusur tespiti ve ihlal edilen kanun maddeleri",
-  "guven": güven yüzdesi (1-100)
-}
-
-ÖNEMLİ: Birden fazla araç ve yaralı olabilir, hepsini listele.
-Bulamadığın alanları null yap. Sadece JSON döndür.';
+  "kazaBilgileri":{"tutanakNo":"","tarih":"","saat":"","il":"","ilce":"","cadde":"","yolTipi":"","havaDurumu":""},
+  "aracA":{"plaka":"","marka":"","model":"","modelYili":"","surucu":"","tc":"","sigorta":"","policeNo":"","hasarYeri":"","alkol":""},
+  "aracB":{"plaka":"","marka":"","model":"","modelYili":"","surucu":"","tc":"","sigorta":"","policeNo":"","hasarYeri":"","alkol":""},
+  "yaralilar":[{"adi":"","pozisyon":"","durum":""}],
+  "kroKiAnalizi":{"yolYapisi":"","aAracPozisyon":"","bAracPozisyon":"","carpismaNokta":"","ozet":""},
+  "beyanAnalizi":{"aBeyan":"","bBeyan":"","celisme":"","kroKiUyum":""},
+  "eslesenSenaryo":"DURUM X",
+  "kusurAnalizi":"3-4 cümle analiz",
+  "kusurTablosu":[{"arac":"A","plaka":"","kusurOrani":0,"kusurNedeni":""},{"arac":"B","plaka":"","kusurOrani":100,"kusurNedeni":""}],
+  "yasalDayanak":[""],
+  "kritikTespitler":[""],
+  "kazaOzeti":"M.KAZANIN ÖZETİ tam metin",
+  "guven":80
+}';
 
 } else {
-    // hasar_ihbar
-    $prompt = 'Bu görsel bir SİGORTA ŞİRKETİ HASAR İHBAR FÖYÜ / DOSYA KAPAĞI fotoğrafıdır.
-Her sigorta şirketinin formatı farklı olabilir. Belgedeki TÜM bilgileri oku.
+    $systemPrompt = null;
+    $prompt = 'Bu görsel SİGORTA ŞİRKETİ HASAR İHBAR FÖYÜ / DOSYA KAPAĞI. Her şirketin formatı farklı.
 
-Aşağıdaki JSON formatında döndür:
+SADECE JSON döndür:
 {
-  "dosya_no": "hasar dosya numarası",
-  "musteri_no": "müşteri/sigortalı numarası",
-  "sigorta_sirketi": "sigorta şirketi adı",
-  "acente_adi": "acente adı/ünvanı",
-  "police_no": "poliçe numarası",
-  "police_turu": "kasko/trafik/dask vs.",
-  "sigorta_bedeli": "sigorta bedeli (TL)",
-  "police_bitis": "poliçe bitiş tarihi",
-  "sigortali_adi": "sigortalı adı soyadı / ticari ünvan",
-  "sigortali_tc": "TC/Vergi numarası",
-  "sigortali_telefon": "telefon numarası",
-  "sigortali_adres": "adres bilgisi",
-  "arac_plaka": "araç plaka numarası",
-  "arac_marka": "araç markası",
-  "arac_model": "araç modeli",
-  "arac_yili": "model yılı",
-  "arac_sase": "şase numarası varsa",
-  "hasar_tarihi": "hasar/kaza tarihi",
-  "ihbar_tarihi": "ihbar tarihi",
-  "hasar_nedeni": "hasar nedeni (çarpışma/hırsızlık vs.)",
-  "hasar_yeri": "hasar yeri/ili",
-  "hasar_aciklama": "hasar açıklaması",
-  "kusur_durumu": "kusur oranı veya bilgisi",
-  "eksper_adi": "eksper adı soyadı varsa",
-  "servis_adi": "servis/onarım yeri adı varsa",
-  "magdur_bilgileri": [
-    {
-      "adi": "mağdur adı soyadı",
-      "plaka": "mağdur araç plakası",
-      "hasar_tutari": "hasar tutarı"
-    }
-  ],
-  "toplam_hasar": "toplam hasar tutarı varsa",
-  "guven": güven yüzdesi (1-100)
+  "dosyaNo":"","musteriNo":"","sigortaSirketi":"","acenteAdi":"",
+  "policeNo":"","policeTuru":"","sigortaBedeli":"","policeBitis":"",
+  "sigortaliAdi":"","sigortaliTc":"","sigortaliTelefon":"","sigortaliAdres":"",
+  "aracPlaka":"","aracMarka":"","aracModel":"","aracYili":"","aracSase":"",
+  "hasarTarihi":"","ihbarTarihi":"","hasarNedeni":"","hasarYeri":"",
+  "hasarAciklama":"","kusurDurumu":"","eksperAdi":"","servisAdi":"",
+  "toplamHasar":"",
+  "magdurlar":[{"adi":"","plaka":"","tutar":""}],
+  "guven":80
 }
-
-ÖNEMLİ: Her sigorta şirketinin formatı farklıdır. Alanları esnek oku.
-Bulamadığın alanları null yap. Sadece JSON döndür.';
+Bulamadığın alanlara null yaz.';
 }
 
 // ═══ CLAUDE VİSİON API ═══
@@ -256,11 +192,17 @@ $url = 'https://api.anthropic.com/v1/messages';
 $content = $images;
 $content[] = ['type' => 'text', 'text' => $prompt];
 
+$messages = [['role' => 'user', 'content' => $content]];
+
 $payload = [
     'model' => 'claude-haiku-4-5-20251001',
     'max_tokens' => 4096,
-    'messages' => [['role' => 'user', 'content' => $content]]
+    'messages' => $messages
 ];
+
+if ($systemPrompt) {
+    $payload['system'] = $systemPrompt;
+}
 
 $jsonPayload = json_encode($payload);
 if ($jsonPayload === false) {
@@ -274,7 +216,7 @@ $headers = [
     'anthropic-version: 2023-06-01'
 ];
 
-$res = http_post($url, $jsonPayload, $headers, 90);
+$res = http_post($url, $jsonPayload, $headers, 120);
 
 if ($res['http_code'] !== 200 || !$res['body']) {
     echo json_encode(['success' => false, 'error' => 'CLAUDE API HATASI: HTTP ' . $res['http_code'] . ($res['error'] ? ' - ' . $res['error'] : '')]);
@@ -294,25 +236,37 @@ if (empty($text)) {
     exit;
 }
 
-// ═══ JSON PARSE ═══
+// ═══ JSON PARSE (bozuk JSON onarma) ═══
 $parsed = null;
-$t = trim($text);
+$t = preg_replace('/```json|```/', '', trim($text));
+
 $r = json_decode($t, true);
 if ($r && is_array($r)) { $parsed = $r; }
-if (!$parsed && preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $t, $m)) {
-    $r = json_decode(trim($m[1]), true);
+
+if (!$parsed && preg_match('/\{[\s\S]*\}/', $t, $m)) {
+    // Süslü parantez dengeleme
+    $candidate = $m[0];
+    $open = substr_count($candidate, '{');
+    $close = substr_count($candidate, '}');
+    if ($open > $close) $candidate .= str_repeat('}', $open - $close);
+    $r = json_decode($candidate, true);
     if ($r && is_array($r)) { $parsed = $r; }
 }
+
 if (!$parsed) {
-    $f = strpos($t, '{'); $l = strrpos($t, '}');
+    // Son çare: kapanmamış string düzeltme
+    $fixed = preg_replace('/,\s*\}/', '}', $t);
+    $fixed = preg_replace('/,\s*\]/', ']', $fixed);
+    $f = strpos($fixed, '{'); $l = strrpos($fixed, '}');
     if ($f !== false && $l !== false && $l > $f) {
-        $r = json_decode(substr($t, $f, $l - $f + 1), true);
+        $r = json_decode(substr($fixed, $f, $l - $f + 1), true);
         if ($r && is_array($r)) { $parsed = $r; }
     }
 }
 
 if ($parsed) {
+    $parsed['_tip'] = $tip;
     echo json_encode(['success' => true, 'data' => $parsed, 'tip' => $tip]);
 } else {
-    echo json_encode(['success' => false, 'error' => 'EVRAK ANALİZ EDİLEMEDİ. NET GÖRÜNTÜ YÜKLEYİN.', 'raw' => $text]);
+    echo json_encode(['success' => false, 'error' => 'EVRAK ANALİZ EDİLEMEDİ', 'raw' => substr($text, 0, 500)]);
 }
