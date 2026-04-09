@@ -231,13 +231,17 @@ MR.CrmAramaPage = ({setPage, user}) => {
   const sablonIndir = () => {
     let headers, example, cols;
     if (dosyaTuruTab === 'BH') {
-      headers = ['MALULİYET', 'AD SOYAD', 'TC', 'TELEFON', 'KAZA TARİHİ', 'KUSUR', 'POZİSYON', 'GÜNCEL DURUM', 'İL', 'GÖRÜŞME NOTU'];
-      example = ['SOL KOL KIRIGI', 'MEHMET DEMİR', '12345678901', '05321234567', '2026-02-13', 'HAKLI', 'YOLCU', 'TABURCU', 'İSTANBUL', ''];
-      cols = [{wch:18},{wch:20},{wch:14},{wch:16},{wch:14},{wch:10},{wch:12},{wch:14},{wch:12},{wch:24}];
+      headers = ['AD SOYAD', 'TC', 'TELEFON', 'MALULİYET', 'KAZA TARİHİ', 'KUSUR DURUMU', 'POZİSYON', 'GÜNCEL DURUM', 'İL', 'GÖRÜŞME NOTU'];
+      example = ['MEHMET DEMİR', '12345678901', '05321234567', 'SOL KOL KIRIGI', '2026-02-13', '%0', 'YOLCU', 'TABURCU', 'İSTANBUL', ''];
+      cols = [{wch:20},{wch:14},{wch:16},{wch:18},{wch:14},{wch:12},{wch:12},{wch:14},{wch:12},{wch:24}];
+    } else if (dosyaTuruTab === 'MDK') {
+      headers = ['PLAKA', 'AD SOYAD', 'TC', 'TELEFON', 'KAZA TARİHİ', 'KUSUR DURUMU', 'SİGORTA ŞİRKETİ', 'İL', 'GÖRÜŞME NOTU'];
+      example = ['34ABC123', 'MEHMET DEMİR', '12345678901', '05321234567', '2026-02-13', '%0', 'HDI SİGORTA', 'İSTANBUL', ''];
+      cols = [{wch:12},{wch:20},{wch:14},{wch:16},{wch:14},{wch:12},{wch:20},{wch:12},{wch:24}];
     } else {
-      headers = ['PLAKA', 'AD SOYAD', 'TC', 'TELEFON', 'KAZA TARİHİ', 'KUSUR', 'SİGORTA ŞİRKETİ', 'İL', 'GÖRÜŞME NOTU'];
-      example = ['34ABC123', 'MEHMET DEMİR', '12345678901', '05321234567', '2026-02-13', 'AÇIK', 'HDI SİGORTA', 'İSTANBUL', ''];
-      cols = [{wch:12},{wch:20},{wch:14},{wch:16},{wch:14},{wch:10},{wch:20},{wch:12},{wch:24}];
+      headers = ['PLAKA', 'AD SOYAD', 'TC', 'TELEFON', 'KAZA TARİHİ', 'KUSUR DURUMU', 'SİGORTA ŞİRKETİ', 'İL', 'GÖRÜŞME NOTU'];
+      example = ['34ABC123', 'MEHMET DEMİR', '12345678901', '05321234567', '2026-02-13', '%0', 'HDI SİGORTA', 'İSTANBUL', ''];
+      cols = [{wch:12},{wch:20},{wch:14},{wch:16},{wch:14},{wch:12},{wch:20},{wch:12},{wch:24}];
     }
     const ws = XLSX.utils.aoa_to_sheet([headers, example]);
     ws['!cols'] = cols;
@@ -453,6 +457,14 @@ MR.CrmAramaPage = ({setPage, user}) => {
     if (item.magdur_ilce) localStorage.setItem('webrtc_new_call_ilce', item.magdur_ilce);
     if (item.magdur_tc) localStorage.setItem('webrtc_new_call_tc', item.magdur_tc);
     if (item.kaza_turu) localStorage.setItem('webrtc_new_call_kaza_turu', item.kaza_turu);
+    if (item.dosya_turu) localStorage.setItem('webrtc_new_call_dosya_turu', item.dosya_turu);
+    if (item.plaka) localStorage.setItem('webrtc_new_call_plaka', item.plaka);
+    if (item.sigorta_sirket) localStorage.setItem('webrtc_new_call_sigorta', item.sigorta_sirket);
+    if (item.kusur_durumu) localStorage.setItem('webrtc_new_call_kusur', item.kusur_durumu);
+    if (item.maluliyet) localStorage.setItem('webrtc_new_call_maluliyet', item.maluliyet);
+    if (item.kaza_pozisyonu) localStorage.setItem('webrtc_new_call_pozisyon', item.kaza_pozisyonu);
+    if (item.guncel_durum) localStorage.setItem('webrtc_new_call_guncel', item.guncel_durum);
+    if (item.yonlendirme_tarihi) localStorage.setItem('webrtc_new_call_kaza_tarihi', item.yonlendirme_tarihi);
     if (MR.webrtcAra) {
       MR.webrtcAra(item.magdur_telefon, {ad: item.magdur_ad_soyad || '', il: item.magdur_il || ''});
       setAramaMsg('WEBRTC ARAMA BAŞLATILIYOR...');
@@ -989,7 +1001,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
       )}
 
       {/* ═══ BİRLEŞİK KİŞİ KARTI MODAL ═══ */}
-      <Modal open={!!detayModal} onClose={() => setDetayModal(null)} title={'KİŞİ KARTI' + (detayModal ? ' - ' + (detayModal.magdur_ad_soyad || '') : '')} width="75vw">
+      <Modal open={!!detayModal} onClose={() => setDetayModal(null)} title={'KİŞİ KARTI' + (detayModal ? ' - ' + (detayModal.magdur_ad_soyad || '') : '')} width="75vw" style={{margin:'auto'}}>
         {detayModal && (() => {
           const d = detayModal;
           const dUp = (k,v) => setDetayModal(p=>({...p,[k]:v}));

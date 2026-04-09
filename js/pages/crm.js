@@ -1209,6 +1209,21 @@ MR._CRMYeniInner = ({setPage}) => {
       if (lsTc) { updates.tc_vergi_no = lsTc; localStorage.removeItem('webrtc_new_call_tc'); }
       if (lsKazaTuru) { updates.kaza_turu = lsKazaTuru; localStorage.removeItem('webrtc_new_call_kaza_turu'); }
       if (lsDosyaTuru) { updates.dosya_turu = lsDosyaTuru; localStorage.removeItem('webrtc_new_call_dosya_turu'); }
+      /* Excel/CRM listesinden aktarılan ek alanlar */
+      var lsPlaka = localStorage.getItem('webrtc_new_call_plaka');
+      var lsSigorta = localStorage.getItem('webrtc_new_call_sigorta');
+      var lsKusur = localStorage.getItem('webrtc_new_call_kusur');
+      var lsMaluliyet = localStorage.getItem('webrtc_new_call_maluliyet');
+      var lsPozisyon = localStorage.getItem('webrtc_new_call_pozisyon');
+      var lsGuncel = localStorage.getItem('webrtc_new_call_guncel');
+      var lsKazaTarihi = localStorage.getItem('webrtc_new_call_kaza_tarihi');
+      if (lsPlaka) { updates.plaka = lsPlaka; localStorage.removeItem('webrtc_new_call_plaka'); }
+      if (lsSigorta) { updates.sigorta_sirket = lsSigorta; localStorage.removeItem('webrtc_new_call_sigorta'); }
+      if (lsKusur) { updates.kusur_durumu = lsKusur; localStorage.removeItem('webrtc_new_call_kusur'); }
+      if (lsMaluliyet) { updates.maluliyet = lsMaluliyet; localStorage.removeItem('webrtc_new_call_maluliyet'); }
+      if (lsPozisyon) { updates.pozisyon = lsPozisyon; localStorage.removeItem('webrtc_new_call_pozisyon'); }
+      if (lsGuncel) { updates.guncel_durum = lsGuncel; localStorage.removeItem('webrtc_new_call_guncel'); }
+      if (lsKazaTarihi) { updates.kaza_tarihi = lsKazaTarihi; localStorage.removeItem('webrtc_new_call_kaza_tarihi'); }
       sF(p => ({...p, ...updates}));
       localStorage.removeItem('webrtc_new_call_phone');
       localStorage.removeItem('webrtc_new_call_name');
