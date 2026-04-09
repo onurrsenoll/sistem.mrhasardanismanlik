@@ -34,7 +34,7 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
       const fd = new FormData();
       fd.append('dosya_0', item.file);
       fd.append('dosya_sayisi', '1');
-      fd.append('tip', tip);
+      fd.append('tip', item.tip);
       const r = await MR.api.evrakAnaliz(fd);
       if (r.success && r.data) {
         upd(item.id, {status:'done', result: r.data, sub: null});
@@ -62,7 +62,7 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
     if (!valid.length) return;
     const ni = valid.map(f => {
       const preview = f.type.startsWith('image/') ? URL.createObjectURL(f) : null;
-      return {id: Date.now() + '-' + Math.random().toString(36).slice(2,6), name: f.name, file: f, preview, status:'pending', sub:'Sırada', result:null};
+      return {id: Date.now() + '-' + Math.random().toString(36).slice(2,6), name: f.name, file: f, preview, status:'pending', sub:'Sırada', result:null, tip: tip};
     });
     setItems(p => [...p, ...ni]);
     qRef.current.push(...ni);
@@ -184,8 +184,8 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
   };
 
   // ═══ POLİS KTT / HASAR İHBAR SONUÇ RENDER ═══
-  const renderGeneric = (r) => {
-    const groups = tip === 'polis_ktt' ? [
+  const renderGeneric = (r, itemTip) => {
+    const groups = (itemTip||tip) === 'polis_ktt' ? [
       {title:'TUTANAK', icon:'FileText', fields:[['Tutanak No',r.kazaBilgileri?.tutanakNo],['Tarih',r.kazaBilgileri?.tarih],['Saat',r.kazaBilgileri?.saat],['İl',r.kazaBilgileri?.il],['İlçe',r.kazaBilgileri?.ilce],['Cadde',r.kazaBilgileri?.cadde],['Yol Tipi',r.kazaBilgileri?.yolTipi],['Hava',r.kazaBilgileri?.havaDurumu]]},
       {title:'ARAÇ A', icon:'Car', fields:[['Plaka',r.aracA?.plaka],['Marka',r.aracA?.marka],['Model',r.aracA?.model],['Yıl',r.aracA?.modelYili],['Sürücü',r.aracA?.surucu],['TC',r.aracA?.tc],['Sigorta',r.aracA?.sigorta],['Poliçe',r.aracA?.policeNo],['Hasar',r.aracA?.hasarYeri]]},
       {title:'ARAÇ B', icon:'Car', fields:[['Plaka',r.aracB?.plaka],['Marka',r.aracB?.marka],['Model',r.aracB?.model],['Yıl',r.aracB?.modelYili],['Sürücü',r.aracB?.surucu],['TC',r.aracB?.tc],['Sigorta',r.aracB?.sigorta],['Poliçe',r.aracB?.policeNo],['Hasar',r.aracB?.hasarYeri]]},
@@ -312,7 +312,7 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
             {sel?.status === 'analyzing' && <div style={{...S.card, textAlign:'center', padding:'50px'}}><div style={{width:24, height:24, border:`3px solid ${tipInfo.color}30`, borderTopColor:tipInfo.color, borderRadius:'50%', animation:'spin 0.8s linear infinite', margin:'0 auto 12px'}}/><p style={{color:tipInfo.color, fontWeight:700, fontSize:13}}>Analiz ediliyor...</p><p style={{color:C.textMuted, fontSize:11}}>{sel.sub}</p></div>}
             {sel?.status === 'error' && <div style={{...S.card, padding:20, background:`${C.danger}08`}}><p style={{color:C.danger, fontWeight:700}}>HATA: {sel.sub}</p></div>}
             {sel?.status === 'done' && sel.result && (
-              tip === 'anlasma_ktt' ? renderAnlasmaKTT(sel.result) : renderGeneric(sel.result)
+              (sel.tip||tip) === 'anlasma_ktt' ? renderAnlasmaKTT(sel.result) : renderGeneric(sel.result, sel.tip||tip)
             )}
           </div>
         </div>
