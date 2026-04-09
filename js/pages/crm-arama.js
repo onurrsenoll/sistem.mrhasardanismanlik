@@ -911,11 +911,11 @@ MR.CrmAramaPage = ({setPage, user}) => {
             </select>
           </FormGroup>
           <FormGroup label="KUSUR DURUMU">
-            <div style={{display:'flex', gap:4}}>
-              {(isBH ? ['HAKLI','KUSURLU'] : ['AÇIK','KAPALI']).map(t => (
+            <div style={{display:'flex', gap:3}}>
+              {['%0','%25','%50','%75','%100'].map(t => (
                 <button key={t} type="button" onClick={() => yF('kusur_durumu', t)}
                   style={{flex:1, padding:'7px 4px', borderRadius:6, fontSize:10, fontWeight:700, cursor:'pointer',
-                    background: yeniForm.kusur_durumu===t ? (t==='AÇIK'||t==='HAKLI'?C.success:C.danger) : 'transparent',
+                    background: yeniForm.kusur_durumu===t ? (t==='%0'?C.success:t==='%25'?'#22c55e':t==='%50'?C.warning:t==='%75'?'#f97316':C.danger) : 'transparent',
                     color: yeniForm.kusur_durumu===t ? '#fff' : C.textSec,
                     border:`1px solid ${yeniForm.kusur_durumu===t ? (t==='AÇIK'||t==='HAKLI'?C.success:C.danger) : C.border}`}}>
                   {t}
@@ -989,7 +989,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
       )}
 
       {/* ═══ BİRLEŞİK KİŞİ KARTI MODAL ═══ */}
-      <Modal open={!!detayModal} onClose={() => setDetayModal(null)} title={'KİŞİ KARTI' + (detayModal ? ' - ' + (detayModal.magdur_ad_soyad || '') : '')} width="900px">
+      <Modal open={!!detayModal} onClose={() => setDetayModal(null)} title={'KİŞİ KARTI' + (detayModal ? ' - ' + (detayModal.magdur_ad_soyad || '') : '')} width="75vw">
         {detayModal && (() => {
           const d = detayModal;
           const dUp = (k,v) => setDetayModal(p=>({...p,[k]:v}));
@@ -1060,11 +1060,15 @@ MR.CrmAramaPage = ({setPage, user}) => {
                   {!dIsBH && <FormGroup label="SİGORTA ŞİRKETİ"><input style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.sigorta_sirket||''} onChange={e => dUp('sigorta_sirket', e.target.value.toUpperCase())}/></FormGroup>}
                 </div>
 
-                {/* KUSUR DURUMU (ADK/MDK) */}
+                {/* KUSUR DURUMU (ADK/MDK) - %0 %25 %50 %75 %100 */}
                 {!dIsBH && (
                   <FormGroup label="KUSUR DURUMU">
-                    <div style={{display:'flex', gap:4}}>
-                      {['HAKLI','KUSURLU'].map(t => <PillBtn key={t} label={t} active={d.kusur_durumu===t} color={t==='HAKLI'?C.success:C.danger} onClick={() => dUp('kusur_durumu', t)}/>)}
+                    <div style={{display:'flex', gap:3}}>
+                      {['%0','%25','%50','%75','%100'].map(t => {
+                        const aktif = d.kusur_durumu === t;
+                        const renk = t==='%0'?C.success:t==='%25'?'#22c55e':t==='%50'?C.warning:t==='%75'?'#f97316':C.danger;
+                        return <PillBtn key={t} label={t} active={aktif} color={renk} onClick={() => dUp('kusur_durumu', t)}/>;
+                      })}
                     </div>
                   </FormGroup>
                 )}
@@ -1095,14 +1099,6 @@ MR.CrmAramaPage = ({setPage, user}) => {
                     </div>
                   </FormGroup>
                 </div>
-
-                {/* GÖRÜŞME SONUCU */}
-                <FormGroup label="GÖRÜŞME SONUCU">
-                  <select style={{...S.select, fontSize:11, padding:'7px 10px'}} value={d.son_durum||''} onChange={e => { dUp('son_durum', e.target.value); api.yonlendirmeUpdate({id:d.id, son_durum:e.target.value}); load(); }}>
-                    <option value="">SEÇİNİZ</option>
-                    {GORUSME_SONUCLARI.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </FormGroup>
 
                 {/* DETAY / NOT */}
                 <FormGroup label="GÖRÜŞME NOTU / DETAY">
