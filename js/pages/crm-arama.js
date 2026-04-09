@@ -70,8 +70,10 @@ MR.CrmAramaPage = ({setPage, user}) => {
 
   /* KİŞİ DETAY MODAL */
   const [detayModal, setDetayModal] = useState(null);
+  const [detayEdit, setDetayEdit] = useState(false);
   const openDetay = async (item) => {
     setDetayModal(item);
+    setDetayEdit(false);
     setNotlar([]);
     const r = await api.yonlendirmeGet(item.id);
     if (r?.success && r.data?.notlar) setNotlar(r.data.notlar);
@@ -733,30 +735,27 @@ MR.CrmAramaPage = ({setPage, user}) => {
                       </span>
                     </td>
                     <td style={{...tdSt,position:'sticky',right:0,background:tdStickyBgFn(i,sel),textAlign:'center'}} onClick={e => e.stopPropagation()}>
-                      <div style={{display:'flex', gap:3, justifyContent:'center'}}>
-                        {hy('crm-not-ekle') && <button style={iconBtn(C.cyan)} title="NOT / DETAY" onClick={() => openNot(item)}>
-                          <LIcon name="Eye" size={12} color={C.cyan}/>
+                      <div style={{display:'flex', gap:4, justifyContent:'center'}}>
+                        {hy('crm-not-ekle') && <button style={{...iconBtn(C.cyan), minWidth:30, minHeight:28}} title="DETAY / NOT" onClick={() => openDetay(item)}>
+                          <LIcon name="Eye" size={14} color={C.cyan}/>
                         </button>}
-                        {hy('crm-duzenle') && <button style={iconBtn(C.warning)} title="DÜZENLE" onClick={() => { setYeniForm({magdur_ad_soyad:item.magdur_ad_soyad||'', magdur_tc:item.magdur_tc||'', magdur_telefon:item.magdur_telefon||'', magdur_il:item.magdur_il||'', kaza_turu:item.kaza_turu||'', magdur_ilce:item.magdur_ilce||''}); setDuzenleId(item.id); setYeniModal(true); }}>
-                          <LIcon name="Edit3" size={12} color={C.warning}/>
-                        </button>}
-                        {hy('crm-durum-degistir') && <button style={iconBtn(C.purple)} title="DURUM DEĞİŞTİR" onClick={(e) => openDurumDrop(e, item.id)}>
-                          <LIcon name="RefreshCw" size={12} color={C.purple}/>
+                        {hy('crm-durum-degistir') && <button style={{...iconBtn(C.purple), minWidth:30, minHeight:28}} title="DURUM DEĞİŞTİR" onClick={(e) => openDurumDrop(e, item.id)}>
+                          <LIcon name="RefreshCw" size={14} color={C.purple}/>
                         </button>}
                         {hy('crm-ara') && <button style={{
                           ...iconBtn(aramaAktif === item.id ? C.accent : C.success),
                           background: aramaAktif === item.id ? `${C.accent}33` : `${C.success}18`,
-                          minWidth: aramaAktif === item.id ? 60 : 26
+                          minWidth: aramaAktif === item.id ? 60 : 30, minHeight:28
                         }} title="ARA" onClick={() => aramaYap(item)}
                           disabled={aramaAktif === item.id}>
-                          <LIcon name={aramaAktif === item.id ? 'PhoneCall' : 'Phone'} size={12}
+                          <LIcon name={aramaAktif === item.id ? 'PhoneCall' : 'Phone'} size={14}
                             color={aramaAktif === item.id ? C.accent : C.success}/>
                           {aramaAktif === item.id && <span style={{fontSize:8, color:C.accent, fontWeight:700}}>ARANIYOR</span>}
                         </button>}
-                        {hy('crm-sil') && <button style={iconBtn(C.danger)} title="SİL" onClick={() => {setSecili([item.id]); setSilConfirm(true);}}>
-                          <LIcon name="Trash2" size={12} color={C.danger}/>
+                        {hy('crm-sil') && <button style={{...iconBtn(C.danger), minWidth:30, minHeight:28}} title="SİL" onClick={() => {setSecili([item.id]); setSilConfirm(true);}}>
+                          <LIcon name="Trash2" size={14} color={C.danger}/>
                         </button>}
-                        <button style={iconBtn('#25D366')} title="WHATSAPP İLE SAHAYA AKTAR" onClick={async () => {
+                        <button style={{...iconBtn('#25D366'), minWidth:30, minHeight:28}} title="WHATSAPP İLE SAHAYA AKTAR" onClick={async () => {
                           const tarih = item.yonlendirme_tarihi ? (MR.tarihFmt ? MR.tarihFmt(item.yonlendirme_tarihi) : item.yonlendirme_tarihi) : '-';
                           let sonNot = '';
                           try { const r = await api.yonlendirmeGet(item.id); if (r?.success && r.data?.notlar?.length) sonNot = r.data.notlar[r.data.notlar.length-1].not_text || ''; } catch(e){}
@@ -829,74 +828,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
         )}
       </div>
 
-      {/* ═══ NOT MODAL ═══ */}
-      <Modal open={!!notModal} onClose={() => setNotModal(null)} title={'GÖRÜŞME NOTLARI' + (notModal ? ' - ' + notModal.magdur_ad_soyad : '')} width="580px">
-        {notModal && (
-          <div>
-            {/* MEVCUT NOTLAR */}
-            {notlar.length > 0 && (
-              <div style={{marginBottom:16}}>
-                <div style={{fontSize:10, fontWeight:700, color:C.accent, letterSpacing:1, marginBottom:8}}>
-                  <LIcon name="MessageSquare" size={12} color={C.accent}/> MEVCUT NOTLAR
-                </div>
-                <div style={{maxHeight:200, overflowY:'auto'}}>
-                  {notlar.map((n, i) => (
-                    <div key={n.id || i} style={{
-                      background:`${C.accent}08`, border:`1px solid ${C.border}`,
-                      borderRadius:10, padding:12, marginBottom:6
-                    }}>
-                      {n.gorusme_durumu && (
-                        <span style={{...durumChip(n.gorusme_durumu === 'OLUMLU' ? 'Alindi' : n.gorusme_durumu === 'OLUMSUZ' ? 'Olumsuz' : 'Belirsiz'), marginBottom:6, display:'inline-flex'}}>
-                          {n.gorusme_durumu}
-                        </span>
-                      )}
-                      <div style={{fontSize:12, lineHeight:1.6, marginBottom:6}}>{n.not_text}</div>
-                      <div style={{display:'flex', justifyContent:'space-between', fontSize:10, color:C.textMuted}}>
-                        <span>{n.ekleyen_adi || 'SİSTEM'}</span>
-                        <span>{MR.tarihFmt ? MR.tarihFmt(n.created_at) : (n.created_at || '-')}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* YENİ NOT */}
-            <div style={{fontSize:10, fontWeight:700, color:C.success, letterSpacing:1, marginBottom:10}}>
-              <LIcon name="Plus" size={12} color={C.success}/> YENİ NOT EKLE
-            </div>
-
-            <div style={{marginBottom:12}}>
-              <FormGroup label="GÖRÜŞME SONUCU">
-                <select style={{...S.select, fontSize:11}} value={notDurum} onChange={e => setNotDurum(e.target.value)}>
-                  <option value="">SEÇİNİZ</option>
-                  {GORUSME_SONUCLARI.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </FormGroup>
-            </div>
-
-            <div style={{marginBottom:12}}>
-              <FormGroup label="GÖRÜŞME NOTU *">
-                <textarea style={{...S.input, minHeight:80}} value={notText} onChange={e => setNotText(e.target.value)}
-                  placeholder="GÖRÜŞME DETAYLARINI YAZINIZ..."/>
-              </FormGroup>
-            </div>
-
-            <div style={{marginBottom:12}}>
-              <FormGroup label="SONRAKİ ARAMA TARİHİ (OPSİYONEL)">
-                <input type="datetime-local" style={{...S.input, fontSize:11}} value={notSonraki} onChange={e => setNotSonraki(e.target.value)}/>
-              </FormGroup>
-            </div>
-
-            <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
-              <button style={{...S.btn, ...S.btnG}} onClick={() => setNotModal(null)}>İPTAL</button>
-              <button style={{...S.btn, ...S.btnS}} onClick={notKaydet} disabled={notLoading || !notText.trim()}>
-                <LIcon name="Save" size={14} color="#fff"/> {notLoading ? 'KAYDEDİLİYOR...' : 'NOTU KAYDET'}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      {/* NOT MODAL kaldırıldı - detay modalının içine taşındı */}
 
       {/* ═══ OTOMATİK ARAMA LİSTELERİ MODAL ═══ */}
       <Modal open={autocallModal} onClose={() => {setAutocallModal(false); setAutocallRapor(null);}} title="OTOMATİK ARAMA LİSTELERİ (NETGSM)" width="680px">
@@ -1056,83 +988,109 @@ MR.CrmAramaPage = ({setPage, user}) => {
         </div>
       )}
 
-      {/* KİŞİ DETAY MODAL - TAM DETAY */}
-      <Modal open={!!detayModal} onClose={() => setDetayModal(null)} title={'KİŞİ DETAY' + (detayModal ? ' - ' + (detayModal.magdur_ad_soyad || '') : '')} width="780px">
+      {/* ═══ BİRLEŞİK KİŞİ KARTI MODAL ═══ */}
+      <Modal open={!!detayModal} onClose={() => { setDetayModal(null); setDetayEdit(false); }} title={'KİŞİ KARTI' + (detayModal ? ' - ' + (detayModal.magdur_ad_soyad || '') : '')} width="860px">
         {detayModal && (
           <div>
-            {/* HEADER */}
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14, padding:'10px 14px', background:isKoyu?'rgba(15,35,66,0.5)':'#f0f4ff', borderRadius:10, border:isKoyu?'1px solid rgba(6,182,212,0.2)':'1px solid #dbeafe'}}>
+            {/* HEADER: İsim + Butonlar */}
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14, padding:'12px 16px', background:isKoyu?'rgba(15,35,66,0.5)':'#f0f4ff', borderRadius:10, border:isKoyu?'1px solid rgba(6,182,212,0.2)':'1px solid #dbeafe'}}>
               <div style={{display:'flex', alignItems:'center', gap:10}}>
-                <div style={{width:42,height:42,borderRadius:10,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  <LIcon name="User" size={20} color={C.accent}/>
+                <div style={{width:46,height:46,borderRadius:12,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <LIcon name="User" size={22} color={C.accent}/>
                 </div>
                 <div>
-                  <div style={{fontSize:16, fontWeight:800}}>{detayModal.magdur_ad_soyad || '-'}</div>
-                  <div style={{fontSize:11, color:C.textMuted, display:'flex', gap:8, alignItems:'center', marginTop:2}}>
-                    <span style={{fontFamily:'monospace'}}>{detayModal.magdur_telefon || '-'}</span>
-                    {detayModal.kaza_turu && <Badge text={detayModal.kaza_turu} color={detayModal.kaza_turu?.includes('ÇİFT') ? C.accent : C.purple}/>}
+                  <div style={{fontSize:17, fontWeight:800}}>{detayModal.magdur_ad_soyad || '-'}</div>
+                  <div style={{fontSize:11, color:C.textMuted, display:'flex', gap:8, alignItems:'center', marginTop:3}}>
+                    <span style={{fontFamily:'monospace', fontWeight:600}}>{detayModal.magdur_telefon || '-'}</span>
+                    {detayModal.dosya_turu && <Badge text={detayModal.dosya_turu} color={detayModal.dosya_turu==='BH'?C.purple:C.accent}/>}
                     <span style={{...durumChip(detayModal.durum), fontSize:9}}>{durumLabels[detayModal.durum] || 'BELİRSİZ'}</span>
                   </div>
                 </div>
               </div>
-              <div style={{display:'flex', gap:4, flexWrap:'wrap'}}>
-                {hy('crm-ara') && detayModal.magdur_telefon && <button style={{...S.btn, background:C.success, color:'#fff', fontSize:10, padding:'6px 12px', borderRadius:6}} onClick={() => { setDetayModal(null); aramaYap(detayModal); }}>
-                  <LIcon name="Phone" size={12} color="#fff"/> ARA
+              <div style={{display:'flex', gap:6, flexWrap:'wrap'}}>
+                {hy('crm-ara') && detayModal.magdur_telefon && <button style={{...S.btn, background:C.success, color:'#fff', fontSize:11, padding:'8px 16px', borderRadius:8}} onClick={() => { setDetayModal(null); aramaYap(detayModal); }}>
+                  <LIcon name="Phone" size={14} color="#fff"/> ARA
                 </button>}
-                {hy('crm-duzenle') && <button style={{...S.btn, background:`${C.warning}18`, color:C.warning, fontSize:10, padding:'6px 12px', borderRadius:6, border:`1px solid ${C.warning}33`}} onClick={() => { setDetayModal(null); setYeniForm({magdur_ad_soyad:detayModal.magdur_ad_soyad||'', magdur_tc:detayModal.magdur_tc||'', magdur_telefon:detayModal.magdur_telefon||'', magdur_il:detayModal.magdur_il||'', kaza_turu:detayModal.kaza_turu||'', magdur_ilce:detayModal.magdur_ilce||''}); setDuzenleId(detayModal.id); setYeniModal(true); }}>
-                  <LIcon name="Edit3" size={12} color={C.warning}/> DÜZENLE
+                {hy('crm-duzenle') && <button style={{...S.btn, background:detayEdit?C.accent:`${C.accent}18`, color:detayEdit?'#fff':C.accent, fontSize:11, padding:'8px 16px', borderRadius:8, border:`1px solid ${C.accent}44`}} onClick={() => setDetayEdit(!detayEdit)}>
+                  <LIcon name="Edit3" size={14} color={detayEdit?'#fff':C.accent}/> {detayEdit ? 'DÜZENLEME KAPAT' : 'DÜZENLE'}
                 </button>}
-                {hy('crm-sil') && <button style={{...S.btn, background:`${C.danger}18`, color:C.danger, fontSize:10, padding:'6px 12px', borderRadius:6, border:`1px solid ${C.danger}33`}} onClick={() => { setSecili([detayModal.id]); setSilConfirm(true); setDetayModal(null); }}>
-                  <LIcon name="Trash2" size={12} color={C.danger}/> SİL
+                {hy('crm-sil') && <button style={{...S.btn, background:`${C.danger}18`, color:C.danger, fontSize:11, padding:'8px 16px', borderRadius:8, border:`1px solid ${C.danger}33`}} onClick={() => { setSecili([detayModal.id]); setSilConfirm(true); setDetayModal(null); }}>
+                  <LIcon name="Trash2" size={14} color={C.danger}/> SİL
                 </button>}
-                <button style={{...S.btn, background:'#25D36618', color:'#25D366', fontSize:10, padding:'6px 12px', borderRadius:6, border:'1px solid #25D36633'}} onClick={() => {
+                <button style={{...S.btn, background:'#25D36618', color:'#25D366', fontSize:11, padding:'8px 16px', borderRadius:8, border:'1px solid #25D36633'}} onClick={() => {
                   const d = detayModal;
-                  const tarih = d.yonlendirme_tarihi ? (MR.tarihFmt ? MR.tarihFmt(d.yonlendirme_tarihi) : d.yonlendirme_tarihi) : '-';
                   const sonNot = notlar.length > 0 ? notlar[notlar.length-1].not_text || '' : '';
-                  const dosyaTuru = d.kaza_turu?.includes('ÇİFT') ? 'ADK' : (d.kaza_turu?.includes('BH') || d.kaza_turu?.includes('BEDENİ') ? 'BH' : 'ADK');
-                  const metin = `📋 SAHA GÖREVİ\n\n📌 Dosya Türü: ${dosyaTuru}\n👤 Ad Soyad: ${d.magdur_ad_soyad || '-'}\n📅 Kaza Tarihi: ${tarih}\n📞 Telefon: ${d.magdur_telefon || '-'}\n📍 İl: ${d.magdur_il || '-'}\n🆔 TC: ${d.magdur_tc || '-'}\n\n💬 Detay: ${sonNot || '-'}`;
+                  const metin = `SAHA GOREVI\n\nDosya: ${d.dosya_turu||'ADK'}\nAd Soyad: ${d.magdur_ad_soyad || '-'}\nTelefon: ${d.magdur_telefon || '-'}\nIl: ${d.magdur_il || '-'}\nTC: ${d.magdur_tc || '-'}\n\nDetay: ${sonNot || '-'}`;
                   const tel = (d.magdur_telefon||'').replace(/\D/g,'').replace(/^0/,'90');
                   window.open('https://wa.me/' + tel + '?text=' + encodeURIComponent(metin), '_blank');
                 }}>
-                  <LIcon name="Send" size={12} color="#25D366"/> WHATSAPP
+                  <LIcon name="Send" size={14} color="#25D366"/> WHATSAPP
                 </button>
               </div>
             </div>
 
-            {/* İÇERİK: BİLGİLER + NOTLAR YAN YANA */}
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
-              {/* SOL: KİŞİ BİLGİLERİ */}
-              <div style={{padding:12, background:isKoyu?'rgba(15,35,66,0.3)':'#fafbfc', borderRadius:8, border:isKoyu?'1px solid rgba(6,182,212,0.15)':'1px solid #e5e7eb'}}>
-                <div style={{fontSize:10, fontWeight:700, color:C.accent, letterSpacing:0.5, marginBottom:8}}>
-                  <LIcon name="Info" size={11} color={C.accent}/> KİŞİ BİLGİLERİ
+            {/* İÇERİK: SOL (Bilgiler + Durum) | SAĞ (Notlar) */}
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:14}}>
+
+              {/* ══ SOL: KİŞİ BİLGİLERİ ══ */}
+              <div style={{padding:14, background:isKoyu?'rgba(15,35,66,0.3)':'#fafbfc', borderRadius:10, border:isKoyu?'1px solid rgba(6,182,212,0.15)':'1px solid #e5e7eb'}}>
+                <div style={{fontSize:11, fontWeight:700, color:C.accent, letterSpacing:0.5, marginBottom:10, display:'flex', alignItems:'center', gap:6}}>
+                  <LIcon name="Info" size={13} color={C.accent}/> KİŞİ BİLGİLERİ
                 </div>
-                {[
-                  {l:'AD SOYAD', v:detayModal.magdur_ad_soyad, b:true},
-                  {l:'TC KİMLİK', v:detayModal.magdur_tc, mono:true},
-                  {l:'TELEFON', v:detayModal.magdur_telefon, mono:true},
-                  {l:'İL', v:detayModal.magdur_il},
-                  {l:'TÜR', v:detayModal.kaza_turu},
-                  {l:'DETAY', v:detayModal.magdur_ilce},
-                  {l:'YÖNLENDİREN', v:detayModal.yonlendiren},
-                  {l:'TARİH', v:detayModal.yonlendirme_tarihi ? (MR.tarihFmt ? MR.tarihFmt(detayModal.yonlendirme_tarihi) : detayModal.yonlendirme_tarihi) : '-'},
-                  {l:'DURUM', v:durumLabels[detayModal.durum] || 'BELİRSİZ', c:durumRenk(detayModal.durum)},
-                  {l:'SON DURUM', v:detayModal.son_durum, c:sonucRenk(detayModal.son_durum)}
-                ].map((r,i) => (
-                  <div key={i} style={{display:'flex', alignItems:'baseline', padding:'4px 0', borderBottom:`1px solid ${isKoyu?'rgba(255,255,255,0.05)':'#f0f0f0'}`, gap:6}}>
-                    <span style={{fontSize:10, fontWeight:600, color:isKoyu?'#94a3b8':'#6b7280', whiteSpace:'nowrap'}}>{r.l}</span>
-                    <span style={{flex:1, borderBottom:`1px dotted ${isKoyu?'rgba(255,255,255,0.08)':'#e5e7eb'}`, minWidth:20, height:1, alignSelf:'center'}}/>
-                    <span style={{fontSize:11, fontWeight:r.b?800:600, color:r.c||(isKoyu?'#e2e8f0':'#1e293b'), fontFamily:r.mono?'monospace':'inherit'}}>{r.v || '-'}</span>
+
+                {detayEdit ? (
+                  /* DÜZENLEME MODU */
+                  <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8}}>
+                    <FormGroup label="AD SOYAD *"><input style={{...S.input, fontSize:12, padding:'7px 10px'}} value={detayModal.magdur_ad_soyad||''} onChange={e => setDetayModal(p=>({...p, magdur_ad_soyad:e.target.value.toUpperCase()}))}/></FormGroup>
+                    <FormGroup label="TC KİMLİK"><input style={{...S.input, fontSize:12, padding:'7px 10px'}} value={detayModal.magdur_tc||''} onChange={e => setDetayModal(p=>({...p, magdur_tc:e.target.value.replace(/\D/g,'')}))} maxLength={11}/></FormGroup>
+                    <FormGroup label="TELEFON *"><input style={{...S.input, fontSize:12, padding:'7px 10px'}} value={detayModal.magdur_telefon||''} onChange={e => setDetayModal(p=>({...p, magdur_telefon:e.target.value}))}/></FormGroup>
+                    <FormGroup label="İL"><select style={{...S.select, fontSize:11, padding:'7px 8px'}} value={detayModal.magdur_il||''} onChange={e => setDetayModal(p=>({...p, magdur_il:e.target.value}))}>
+                      <option value="">SEÇİNİZ</option>{ILLER.map(il => <option key={il} value={il}>{il}</option>)}
+                    </select></FormGroup>
+                    <FormGroup label="İLÇE / DETAY"><input style={{...S.input, fontSize:12, padding:'7px 10px'}} value={detayModal.magdur_ilce||''} onChange={e => setDetayModal(p=>({...p, magdur_ilce:e.target.value}))}/></FormGroup>
+                    <FormGroup label="KAZA TÜRÜ"><select style={{...S.select, fontSize:11, padding:'7px 8px'}} value={detayModal.kaza_turu||''} onChange={e => setDetayModal(p=>({...p, kaza_turu:e.target.value}))}>
+                      <option value="">SEÇİNİZ</option><option value="TEK_TARAFLI">TEK TARAFLI</option><option value="CIFT_TARAFLI">ÇİFT TARAFLI</option><option value="ZINCIRLEME">ZİNCİRLEME</option>
+                    </select></FormGroup>
+                    <div style={{gridColumn:'span 2', display:'flex', gap:8, marginTop:4}}>
+                      <button style={{...S.btn, background:C.success, color:'#fff', fontSize:11, padding:'8px 20px', borderRadius:8, flex:1, justifyContent:'center'}} onClick={async () => {
+                        await api.yonlendirmeUpdate({id:detayModal.id, magdur_ad_soyad:detayModal.magdur_ad_soyad, magdur_tc:detayModal.magdur_tc, magdur_telefon:detayModal.magdur_telefon, magdur_il:detayModal.magdur_il, magdur_ilce:detayModal.magdur_ilce, kaza_turu:detayModal.kaza_turu});
+                        setDetayEdit(false); load();
+                      }}><LIcon name="Save" size={14} color="#fff"/> KAYDET</button>
+                      <button style={{...S.btn, ...S.btnG, fontSize:11, padding:'8px 20px', borderRadius:8}} onClick={() => setDetayEdit(false)}>İPTAL</button>
+                    </div>
                   </div>
-                ))}
+                ) : (
+                  /* GÖRÜNTÜLEME MODU */
+                  <div>
+                    {[
+                      {l:'AD SOYAD', v:detayModal.magdur_ad_soyad, b:true},
+                      {l:'TC KİMLİK', v:detayModal.magdur_tc, mono:true},
+                      {l:'TELEFON', v:detayModal.magdur_telefon, mono:true},
+                      {l:'İL', v:detayModal.magdur_il},
+                      {l:'TÜR', v:detayModal.kaza_turu},
+                      {l:'DETAY', v:detayModal.magdur_ilce},
+                      {l:'YÖNLENDİREN', v:detayModal.yonlendiren},
+                      {l:'TARİH', v:detayModal.yonlendirme_tarihi ? (MR.tarihFmt ? MR.tarihFmt(detayModal.yonlendirme_tarihi) : detayModal.yonlendirme_tarihi) : '-'},
+                      {l:'DURUM', v:durumLabels[detayModal.durum] || 'BELİRSİZ', c:durumRenk(detayModal.durum)},
+                      {l:'SON DURUM', v:detayModal.son_durum, c:sonucRenk(detayModal.son_durum)}
+                    ].map((r,i) => (
+                      <div key={i} style={{display:'flex', alignItems:'baseline', padding:'5px 0', borderBottom:`1px solid ${isKoyu?'rgba(255,255,255,0.05)':'#f0f0f0'}`, gap:6}}>
+                        <span style={{fontSize:10, fontWeight:600, color:isKoyu?'#94a3b8':'#6b7280', whiteSpace:'nowrap', minWidth:80}}>{r.l}</span>
+                        <span style={{flex:1, borderBottom:`1px dotted ${isKoyu?'rgba(255,255,255,0.08)':'#e5e7eb'}`, minWidth:20, height:1, alignSelf:'center'}}/>
+                        <span style={{fontSize:12, fontWeight:r.b?800:600, color:r.c||(isKoyu?'#e2e8f0':'#1e293b'), fontFamily:r.mono?'monospace':'inherit'}}>{r.v || '-'}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* DURUM DEĞİŞTİR */}
                 {hy('crm-durum-degistir') && (
-                  <div style={{marginTop:10}}>
-                    <div style={{fontSize:10, fontWeight:600, color:C.textMuted, marginBottom:4}}>DURUM DEĞİŞTİR</div>
+                  <div style={{marginTop:12}}>
+                    <div style={{fontSize:10, fontWeight:600, color:C.textMuted, marginBottom:5}}>DURUM DEĞİŞTİR</div>
                     <div style={{display:'flex', gap:4}}>
                       {[{v:'Belirsiz',l:'BELİRSİZ',c:C.warning},{v:'Alindi',l:'ALINDI',c:C.success},{v:'Olumsuz',l:'OLUMSUZ',c:C.danger}].map(d => (
                         <button key={d.v} onClick={async () => { await api.yonlendirmeUpdate({id:detayModal.id, durum:d.v}); setDetayModal({...detayModal, durum:d.v}); load(); }}
-                          style={{flex:1, padding:'5px 4px', borderRadius:5, fontSize:9, fontWeight:700, cursor:'pointer',
+                          style={{flex:1, padding:'6px 4px', borderRadius:6, fontSize:10, fontWeight:700, cursor:'pointer',
                             background: detayModal.durum===d.v ? d.c : 'transparent',
                             color: detayModal.durum===d.v ? '#fff' : d.c,
                             border:`1px solid ${detayModal.durum===d.v ? d.c : d.c+'44'}`}}>
@@ -1143,10 +1101,10 @@ MR.CrmAramaPage = ({setPage, user}) => {
                   </div>
                 )}
 
-                {/* GÖRÜŞME SONUCU SEÇİMİ */}
-                <div style={{marginTop:10}}>
+                {/* GÖRÜŞME SONUCU */}
+                <div style={{marginTop:12}}>
                   <FormGroup label="GÖRÜŞME SONUCU">
-                    <select style={{...S.select, fontSize:10, padding:'6px 8px'}} value={detayModal.son_durum||''} onChange={async e => { const v = e.target.value; await api.yonlendirmeUpdate({id:detayModal.id, son_durum:v}); setDetayModal({...detayModal, son_durum:v}); load(); }}>
+                    <select style={{...S.select, fontSize:11, padding:'7px 10px'}} value={detayModal.son_durum||''} onChange={async e => { const v = e.target.value; await api.yonlendirmeUpdate({id:detayModal.id, son_durum:v}); setDetayModal({...detayModal, son_durum:v}); load(); }}>
                       <option value="">SEÇİNİZ</option>
                       {GORUSME_SONUCLARI.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
@@ -1154,38 +1112,44 @@ MR.CrmAramaPage = ({setPage, user}) => {
                 </div>
               </div>
 
-              {/* SAĞ: NOTLAR */}
-              <div style={{padding:12, background:isKoyu?'rgba(15,35,66,0.3)':'#fafbfc', borderRadius:8, border:isKoyu?'1px solid rgba(6,182,212,0.15)':'1px solid #e5e7eb'}}>
-                <div style={{fontSize:10, fontWeight:700, color:C.accent, letterSpacing:0.5, marginBottom:8}}>
-                  <LIcon name="MessageSquare" size={11} color={C.accent}/> GÖRÜŞME NOTLARI ({notlar.length})
+              {/* ══ SAĞ: GÖRÜŞME NOTLARI ══ */}
+              <div style={{padding:14, background:isKoyu?'rgba(15,35,66,0.3)':'#fafbfc', borderRadius:10, border:isKoyu?'1px solid rgba(6,182,212,0.15)':'1px solid #e5e7eb'}}>
+                <div style={{fontSize:11, fontWeight:700, color:C.accent, letterSpacing:0.5, marginBottom:10, display:'flex', alignItems:'center', gap:6}}>
+                  <LIcon name="MessageSquare" size={13} color={C.accent}/> GÖRÜŞME NOTLARI ({notlar.length})
                 </div>
 
                 {/* YENİ NOT EKLE */}
                 {hy('crm-not-ekle') && (
-                  <div style={{marginBottom:10}}>
-                    <textarea style={{...S.input, minHeight:50, fontSize:11, padding:'6px 8px', marginBottom:6}} value={notText} onChange={e => setNotText(e.target.value)} placeholder="YENİ NOT YAZIN..."/>
-                    <button style={{...S.btn, ...S.btnS, fontSize:9, padding:'5px 12px', width:'100%', justifyContent:'center'}} disabled={notLoading || !notText.trim()} onClick={async () => {
-                      if (!notText.trim()) return;
-                      setNotLoading(true);
-                      await api.yonlendirmeNotEkle({yonlendirme_id:detayModal.id, not_text:notText.trim(), gorusme_durumu:detayModal.son_durum||null});
-                      setNotText('');
-                      const r2 = await api.yonlendirmeGet(detayModal.id);
-                      if (r2?.success && r2.data?.notlar) setNotlar(r2.data.notlar);
-                      setNotLoading(false);
-                      load();
-                    }}>
-                      <LIcon name="Plus" size={11} color="#fff"/> {notLoading ? 'KAYDEDİLİYOR...' : 'NOT EKLE'}
-                    </button>
+                  <div style={{marginBottom:12, padding:10, background:isKoyu?'rgba(0,0,0,0.2)':`${C.success}06`, borderRadius:8, border:`1px solid ${C.success}22`}}>
+                    <textarea style={{...S.input, minHeight:60, fontSize:11, padding:'8px 10px', marginBottom:8}} value={notText} onChange={e => setNotText(e.target.value)} placeholder="GÖRÜŞME DETAYLARINI YAZINIZ..."/>
+                    <div style={{display:'flex', gap:6}}>
+                      <select style={{...S.select, fontSize:10, padding:'6px 8px', flex:1}} value={notDurum} onChange={e => setNotDurum(e.target.value)}>
+                        <option value="">SONUÇ SEÇİNİZ</option>
+                        {GORUSME_SONUCLARI.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      <button style={{...S.btn, background:C.success, color:'#fff', fontSize:10, padding:'6px 16px', borderRadius:6, whiteSpace:'nowrap'}} disabled={notLoading || !notText.trim()} onClick={async () => {
+                        if (!notText.trim()) return;
+                        setNotLoading(true);
+                        await api.yonlendirmeNotEkle({yonlendirme_id:detayModal.id, not_text:notText.trim(), gorusme_durumu:notDurum||detayModal.son_durum||null});
+                        if (notDurum) { await api.yonlendirmeUpdate({id:detayModal.id, son_durum:notDurum}); setDetayModal(p=>({...p, son_durum:notDurum})); }
+                        setNotText(''); setNotDurum('');
+                        const r2 = await api.yonlendirmeGet(detayModal.id);
+                        if (r2?.success && r2.data?.notlar) setNotlar(r2.data.notlar);
+                        setNotLoading(false); load();
+                      }}>
+                        <LIcon name="Plus" size={12} color="#fff"/> {notLoading ? '...' : 'NOT EKLE'}
+                      </button>
+                    </div>
                   </div>
                 )}
 
                 {/* MEVCUT NOTLAR */}
                 {notlar.length > 0 ? (
-                  <div style={{maxHeight:250, overflowY:'auto'}}>
+                  <div style={{maxHeight:300, overflowY:'auto'}}>
                     {notlar.map((n, i) => (
-                      <div key={n.id || i} style={{background:isKoyu?'rgba(15,35,66,0.4)':`${C.accent}06`, border:`1px solid ${C.border}`, borderRadius:8, padding:8, marginBottom:5}}>
-                        {n.gorusme_durumu && <span style={{padding:'2px 6px', borderRadius:4, fontSize:8, fontWeight:700, background:`${sonucRenk(n.gorusme_durumu)}18`, color:sonucRenk(n.gorusme_durumu), display:'inline-block', marginBottom:4}}>{n.gorusme_durumu}</span>}
-                        <div style={{fontSize:11, lineHeight:1.5}}>{n.not_text}</div>
+                      <div key={n.id || i} style={{background:isKoyu?'rgba(15,35,66,0.4)':`${C.accent}06`, border:`1px solid ${C.border}`, borderRadius:8, padding:10, marginBottom:6}}>
+                        {n.gorusme_durumu && <span style={{padding:'2px 7px', borderRadius:4, fontSize:9, fontWeight:700, background:`${sonucRenk(n.gorusme_durumu)}18`, color:sonucRenk(n.gorusme_durumu), display:'inline-block', marginBottom:4}}>{n.gorusme_durumu}</span>}
+                        <div style={{fontSize:11, lineHeight:1.6}}>{n.not_text}</div>
                         <div style={{display:'flex', justifyContent:'space-between', fontSize:9, color:C.textMuted, marginTop:4}}>
                           <span>{n.ekleyen_adi || 'SİSTEM'}</span>
                           <span>{MR.tarihFmt ? MR.tarihFmt(n.created_at) : (n.created_at || '-')}</span>
@@ -1193,7 +1157,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
                       </div>
                     ))}
                   </div>
-                ) : <div style={{fontSize:10, color:C.textMuted, textAlign:'center', padding:16}}>HENÜZ NOT EKLENMEMİŞ</div>}
+                ) : <div style={{fontSize:11, color:C.textMuted, textAlign:'center', padding:20}}>HENUZ NOT EKLENMEMİS</div>}
               </div>
             </div>
           </div>
