@@ -19,7 +19,8 @@ const MENU = [
   {id:'eposta', label:'E-POSTA', icon:'Mail'},
   {id:'hesap', label:'HESAPLAMALAR', icon:'Calculator', sub:[
     {id:'hesap-adk', label:'ARAÇ DEĞER KAYBI', icon:'Car'},
-    {id:'hesap-bh', label:'BEDENİ HASAR', icon:'Heart'}
+    {id:'hesap-bh', label:'BEDENİ HASAR', icon:'Heart'},
+    {id:'hesap-evrak-okuyucu', label:'EVRAK OKUYUCU', icon:'ScanLine'}
   ]},
   {id:'paydaslar', label:'PAYDAŞLAR', icon:'Handshake', sub:[
     {id:'ortaklar-ortaklar', label:'İŞ ORTAKLARI', icon:'Briefcase'},
@@ -34,8 +35,7 @@ const MENU = [
     {id:'police-tahsilat', label:'TAHSİLAT / CARİ', icon:'Wallet'},
     {id:'police-rapor', label:'RAPORLAR', icon:'BarChart3'},
     {id:'police-kazanc', label:'KAZANÇ', icon:'TrendingUp'},
-    {id:'police-qr-ruhsat', label:'QR RUHSAT OKUYUCU', icon:'QrCode'},
-    {id:'police-evrak-okuyucu', label:'EVRAK OKUYUCU', icon:'ScanLine'}
+    {id:'police-qr-ruhsat', label:'QR RUHSAT OKUYUCU', icon:'QrCode'}
   ]},
   {id:'muhasebe', label:'MUHASEBE', icon:'Landmark', sub:[
     {id:'muhasebe-gelir', label:'GELİR / GİDER', icon:'TrendingUp'},
@@ -811,7 +811,7 @@ const PageRouter = ({page, setPage, user, setUser}) => {
 
   /* QR RUHSAT OKUYUCU */
   if (page === 'police-qr-ruhsat') return <MR.QrRuhsatPage setPage={setPage} user={user}/>;
-  if (page === 'police-evrak-okuyucu') return <MR.EvrakOkuyucuPage setPage={setPage} user={user}/>;
+  if (page === 'hesap-evrak-okuyucu') return <MR.EvrakOkuyucuPage setPage={setPage} user={user}/>;
 
   /* POLİÇE */
   if (page.startsWith('police')) {
