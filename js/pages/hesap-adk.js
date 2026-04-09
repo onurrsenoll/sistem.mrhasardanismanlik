@@ -206,18 +206,20 @@ MR.HesapADKPage = ({setPage, user}) => {
 
     setHesapLoading(false);
 
-    // 3. TAHKİM EMSAL (paralel - AI arama)
+    // 3. TAHKİM EMSAL (paralel - AI arama) - hesap tarihinden max 2 yıl geriye
     try {
-      const eR = await MR.api.tahkimEmsalAra({ marka, model, yil: parseInt(yil) });
+      const eR = await MR.api.tahkimEmsalAra({ marka, model, yil: parseInt(yil), hesap_tarihi: kazaTarihi || new Date().toISOString().split('T')[0] });
       if (eR?.success && eR.data) {
         setEmsalData(eR.data);
         setEmsalSonuc({
           ad: 'TAHKİM EMSAL ORTALAMASI',
-          aciklama: 'Aynı marka/model/yaş tahkim kararları ortalaması',
+          aciklama: eR.data.tarih_siniri ? ('Son 2 yıl emsal kararları (' + eR.data.tarih_siniri + ')') : 'Aynı marka/model/yaş tahkim kararları',
           degerKaybi: eR.data.ortalama_dk || 0,
           kusurSonrasi: Math.round((eR.data.ortalama_dk || 0) * (parseInt(kusur) / 100)),
           kararSayisi: eR.data.toplam_bulunan || 0,
-          formul: `En yüksek ${eR.data.toplam_bulunan || 0} tahkim kararının ortalaması`
+          enYuksekDK: eR.data.en_yuksek_dk || 0,
+          enDusukDK: eR.data.en_dusuk_dk || 0,
+          formul: `${eR.data.toplam_bulunan || 0} tahkim kararı | EN DÜŞÜK: ${fmtM(eR.data.en_dusuk_dk||0)} | EN YÜKSEK: ${fmtM(eR.data.en_yuksek_dk||0)}`
         });
       }
     } catch (e) { console.error('EMSAL HATA:', e); }
@@ -266,10 +268,10 @@ MR.HesapADKPage = ({setPage, user}) => {
       ilanRows += '<tr style="background:'+(i%2===0?'#ffffff':'#f8fafc')+';border-bottom:1px solid #e2e8f0;">'
         +'<td style="padding:6px 8px;font-size:9px;color:#64748b;">'+(i+1)+'</td>'
         +'<td style="padding:6px 8px;font-size:9px;font-weight:600;">'+((il.kaynak||'').substring(0,15))+'</td>'
-        +'<td style="padding:6px 8px;font-size:9px;">'+((il.baslik||'').substring(0,35))+'</td>'
+        +'<td style="padding:6px 8px;font-size:9px;">'+((il.baslik||'').substring(0,40))+'</td>'
         +'<td style="padding:6px 8px;font-size:9px;font-weight:700;color:#1e40af;text-align:right;">'+fmtM(il.fiyat)+'</td>'
-        +'<td style="padding:6px 8px;font-size:9px;text-align:right;">'+((il.km||0)/1000).toFixed(0)+'K</td>'
-        +'<td style="padding:6px 8px;font-size:9px;">'+((il.sehir||'').substring(0,10))+'</td></tr>';
+        +'<td style="padding:6px 8px;font-size:9px;text-align:right;">'+(il.km>0?((il.km).toLocaleString('tr-TR')+' KM'):'-')+'</td>'
+        +'<td style="padding:6px 8px;font-size:9px;">'+(il.sehir||'-')+'</td></tr>';
     });
 
     let emsalRows = '';
@@ -281,9 +283,9 @@ MR.HesapADKPage = ({setPage, user}) => {
         +'<td style="padding:6px 8px;font-size:9px;font-weight:700;color:#1e40af;text-align:right;">'+fmtM(k.deger_kaybi)+'</td></tr>';
     });
 
-    const yRenk = ['#1e40af','#6d28d9','#b45309'];
-    const yBg = ['#eff6ff','#f5f3ff','#fffbeb'];
-    const yBorder = ['#93c5fd','#c4b5fd','#fcd34d'];
+    const yRenk = ['#1e40af','#7c3aed','#d97706'];
+    const yBg = ['#dbeafe','#ede9fe','#fef3c7'];
+    const yBorder = ['#3b82f6','#8b5cf6','#f59e0b'];
 
     const html = '<div style="font-family:Arial,Helvetica,sans-serif;padding:0;color:#1e293b;line-height:1.4;background:#ffffff;">'
       + '<table style="width:100%;margin-bottom:12px;border-collapse:collapse;"><tr>'
@@ -336,15 +338,19 @@ MR.HesapADKPage = ({setPage, user}) => {
         + '<div style="background:#eff6ff;padding:8px 12px;text-align:center;font-size:10px;font-weight:700;color:#1e40af;">ORTALAMA: '+fmtM(rayicData?.ortalama||0)+' | EN DÜŞÜK: '+fmtM(rayicData?.en_dusuk||0)+' | EN YÜKSEK: '+fmtM(rayicData?.en_yuksek||0)+'</div></div>' : '')
 
       + (kararlar.length > 0 ? '<div style="border:1px solid #fcd34d;border-radius:8px;overflow:hidden;margin-bottom:12px;">'
-        + '<div style="background:#b45309;color:#fff;padding:8px 12px;font-size:11px;font-weight:700;">TAHKİM EMSAL KARARLARI - '+kararlar.length+' KARAR</div>'
+        + '<div style="background:#b45309;color:#fff;padding:8px 12px;font-size:11px;font-weight:700;">TAHKİM EMSAL KARARLARI - '+kararlar.length+' KARAR (Son 2 Yıl)</div>'
         + '<table style="width:100%;border-collapse:collapse;">'
         + '<tr style="background:#fffbeb;"><th style="padding:6px 8px;font-size:8px;color:#64748b;text-align:left;">DOSYA NO</th><th style="padding:6px 8px;font-size:8px;color:#64748b;text-align:left;">ARAÇ</th><th style="padding:6px 8px;font-size:8px;color:#64748b;text-align:right;">RAYİÇ</th><th style="padding:6px 8px;font-size:8px;color:#64748b;text-align:right;">DEĞER KAYBI</th></tr>'
         + emsalRows + '</table>'
-        + '<div style="background:#fef3c7;padding:8px 12px;text-align:center;font-size:10px;font-weight:700;color:#b45309;">EMSAL ORTALAMA: '+fmtM(emsalData?.ortalama_dk||0)+'</div></div>' : '')
+        + '<div style="background:#fef3c7;padding:8px 12px;display:flex;justify-content:space-around;font-size:10px;font-weight:700;">'
+        + '<span style="color:#dc2626;">EN DÜŞÜK: '+fmtM(emsalData?.en_dusuk_dk||0)+'</span>'
+        + '<span style="color:#b45309;">ORTALAMA: '+fmtM(emsalData?.ortalama_dk||0)+'</span>'
+        + '<span style="color:#059669;">EN YÜKSEK: '+fmtM(emsalData?.en_yuksek_dk||0)+'</span>'
+        + '</div></div>' : '')
 
       + (aiAnaliz ? '<div style="border:1px solid #c4b5fd;border-radius:8px;overflow:hidden;margin-bottom:12px;">'
-        + '<div style="background:#6d28d9;color:#fff;padding:8px 12px;font-size:11px;font-weight:700;">UZMAN ANALİZ RAPORU</div>'
-        + '<div style="padding:10px 12px;font-size:9px;line-height:1.7;color:#334155;background:#faf5ff;">'+aiAnaliz.replace(/\n/g,'<br>')+'</div></div>' : '')
+        + '<div style="background:#6d28d9;color:#fff;padding:10px 14px;font-size:11px;font-weight:700;text-align:center;">UZMAN ANALİZ RAPORU</div>'
+        + '<div style="padding:12px 16px;font-size:10px;line-height:1.8;color:#1e293b;background:#fff;text-align:justify;">'+aiAnaliz.replace(/[*#■●▪▸►→]/g,'').replace(/\n{3,}/g,'\n\n').replace(/\n/g,'<br>')+'</div></div>' : '')
 
       + '<div style="border-top:2px solid #e2e8f0;padding-top:10px;margin-top:8px;">'
       + '<table style="width:100%;"><tr>'
@@ -438,6 +444,18 @@ MR.HesapADKPage = ({setPage, user}) => {
             <div style={{fontSize:20, fontWeight:800, color:C.success}}>{fmtM(sonuc.kusurSonrasi)}</div>
           </div>
         </div>
+        {sonuc.enYuksekDK > 0 && sonuc.enDusukDK > 0 && (
+          <div style={{display:'flex', gap:12, marginBottom:10}}>
+            <div style={{flex:1, textAlign:'center', padding:10, background:'#dc262612', border:'1px solid #dc262633', borderRadius:8}}>
+              <div style={{fontSize:9, color:C.textMuted}}>EN DÜŞÜK EMSAL</div>
+              <div style={{fontSize:16, fontWeight:800, color:'#dc2626'}}>{fmtM(sonuc.enDusukDK)}</div>
+            </div>
+            <div style={{flex:1, textAlign:'center', padding:10, background:'#05966912', border:'1px solid #05966933', borderRadius:8}}>
+              <div style={{fontSize:9, color:C.textMuted}}>EN YÜKSEK EMSAL</div>
+              <div style={{fontSize:16, fontWeight:800, color:'#059669'}}>{fmtM(sonuc.enYuksekDK)}</div>
+            </div>
+          </div>
+        )}
         <div style={{padding:10, background:C.bgInput, borderRadius:8, fontSize:10, color:C.textSec, lineHeight:1.6}}>
           <div style={{fontWeight:700, color:C.purple, marginBottom:4}}>FORMÜL:</div>
           {sonuc.formul}
@@ -457,7 +475,7 @@ MR.HesapADKPage = ({setPage, user}) => {
             </div>
             <div>
               <div style={{fontSize:14, fontWeight:800}}>ADK HESAPLAMA - GERÇEK PİYASA VERİSİ</div>
-              <div style={{fontSize:10, color:C.textMuted}}>SAHİBİNDEN.COM + ARABAN.COM İLAN ANALİZİ + 3 YÖNTEM HESAPLAMA</div>
+              <div style={{fontSize:10, color:C.textMuted}}>ARABAM.COM + OTOPLUS.COM İLAN ANALİZİ + 3 YÖNTEM HESAPLAMA</div>
             </div>
           </div>
           <div style={{display:'flex', gap:4, flexWrap:'wrap'}}>
@@ -505,7 +523,7 @@ MR.HesapADKPage = ({setPage, user}) => {
               {/* RAYİÇ ARAŞTIR BUTONU */}
               {hy('hesap-rayic') && <button onClick={rayicArastir} disabled={rayicLoading || !marka || !model || !yil || !km}
                 style={{...S.btn, width:'100%', justifyContent:'center', marginTop:12, padding:12, fontSize:12, fontWeight:700, background:'linear-gradient(135deg,'+C.accent+','+C.purple+')', color:'#fff', opacity:(!marka||!model||!yil||!km||rayicLoading)?0.5:1}}>
-                {rayicLoading ? 'SAHİBİNDEN.COM + ARABAN.COM TARANIYOR...' : 'RAYİÇ DEĞER ARAŞTIR (SAHİBİNDEN + ARABAN)'}
+                {rayicLoading ? 'ARABAM.COM + OTOPLUS.COM TARANIYOR...' : 'RAYİÇ DEĞER ARAŞTIR (ARABAM + OTOPLUS)'}
               </button>}
             </div>
           </div>
@@ -527,15 +545,21 @@ MR.HesapADKPage = ({setPage, user}) => {
                 </div>
                 {/* İLAN LİSTESİ */}
                 {rayicData.ilanlar?.length > 0 && (
-                  <div style={{maxHeight:200, overflowY:'auto'}}>
+                  <div style={{maxHeight:280, overflowY:'auto'}}>
                     {rayicData.ilanlar.map((il, i) => (
-                      <div key={i} style={{display:'flex', alignItems:'center', gap:8, padding:'6px 8px', background:i%2===0?C.bgInput:'transparent', borderRadius:6, fontSize:10}}>
-                        <span style={{width:18, height:18, borderRadius:'50%', background:C.accent+'22', display:'flex', alignItems:'center', justifyContent:'center', fontSize:8, fontWeight:700, flexShrink:0, color:C.accent}}>{i+1}</span>
+                      <div key={i} style={{display:'flex', alignItems:'center', gap:8, padding:'8px 10px', background:i%2===0?C.bgInput:'transparent', borderRadius:6, fontSize:10, borderBottom:'1px solid '+(C.border||'#e2e8f0')+'44'}}>
+                        <span style={{width:20, height:20, borderRadius:'50%', background:C.accent+'22', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:700, flexShrink:0, color:C.accent}}>{i+1}</span>
                         <div style={{flex:1, minWidth:0}}>
-                          <div style={{fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{il.baslik || (marka+' '+model)}</div>
-                          <div style={{fontSize:9, color:C.textMuted}}>{il.kaynak} • {(il.km||0).toLocaleString('tr-TR')} KM • {il.sehir||''}</div>
+                          <div style={{fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:2}}>{il.baslik || (marka+' '+model)}</div>
+                          <div style={{display:'flex', gap:8, flexWrap:'wrap', fontSize:9, color:C.textMuted}}>
+                            <span>{il.kaynak}</span>
+                            {il.km > 0 && <span style={{fontWeight:600}}>{(il.km).toLocaleString('tr-TR')} KM</span>}
+                            {il.sehir && <span>{il.sehir}</span>}
+                            {il.yil > 0 && <span>{il.yil}</span>}
+                          </div>
+                          {il.link && <a href={il.link} target="_blank" rel="noopener noreferrer" style={{fontSize:8, color:C.accent, textDecoration:'none', marginTop:2, display:'inline-block'}}>ilana git</a>}
                         </div>
-                        <span style={{fontWeight:700, color:C.success, whiteSpace:'nowrap'}}>{fmtM(il.fiyat)}</span>
+                        <span style={{fontWeight:700, color:C.success, whiteSpace:'nowrap', fontSize:12}}>{fmtM(il.fiyat)}</span>
                       </div>
                     ))}
                   </div>
@@ -665,18 +689,41 @@ MR.HesapADKPage = ({setPage, user}) => {
               {/* EMSAL KARARLAR DETAY */}
               {emsalData?.kararlar?.length > 0 && (
                 <div style={{background:C.gold+'08', border:'1px solid '+C.gold+'33', borderRadius:12, padding:14, marginBottom:14}}>
-                  <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10}}>
-                    <MR.LIcon name="FileText" size={14} color={C.gold}/>
-                    <span style={{fontSize:11, fontWeight:700, color:C.gold}}>TAHKİM EMSAL KARARLARI ({emsalData.kararlar.length} KARAR)</span>
+                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10}}>
+                    <div style={{display:'flex', alignItems:'center', gap:8}}>
+                      <MR.LIcon name="FileText" size={14} color={C.gold}/>
+                      <span style={{fontSize:11, fontWeight:700, color:C.gold}}>TAHKİM EMSAL KARARLARI ({emsalData.kararlar.length} KARAR)</span>
+                    </div>
+                    {emsalData.tarih_siniri && <span style={{fontSize:9, color:C.textMuted, background:C.gold+'18', padding:'3px 8px', borderRadius:4}}>Son 2 Yıl</span>}
                   </div>
+                  {/* EN DÜŞÜK / EN YÜKSEK ÖZET */}
+                  {emsalData.en_yuksek_dk > 0 && (
+                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:10}}>
+                      <div style={{textAlign:'center', padding:8, background:'#dc262612', borderRadius:6, border:'1px solid #dc262633'}}>
+                        <div style={{fontSize:8, color:C.textMuted}}>EN DÜŞÜK</div>
+                        <div style={{fontSize:13, fontWeight:800, color:'#dc2626'}}>{fmtM(emsalData.en_dusuk_dk||0)}</div>
+                      </div>
+                      <div style={{textAlign:'center', padding:8, background:C.gold+'18', borderRadius:6, border:'1px solid '+C.gold+'44'}}>
+                        <div style={{fontSize:8, color:C.textMuted}}>ORTALAMA</div>
+                        <div style={{fontSize:13, fontWeight:800, color:C.gold}}>{fmtM(emsalData.ortalama_dk||0)}</div>
+                      </div>
+                      <div style={{textAlign:'center', padding:8, background:'#05966912', borderRadius:6, border:'1px solid #05966933'}}>
+                        <div style={{fontSize:8, color:C.textMuted}}>EN YÜKSEK</div>
+                        <div style={{fontSize:13, fontWeight:800, color:'#059669'}}>{fmtM(emsalData.en_yuksek_dk||0)}</div>
+                      </div>
+                    </div>
+                  )}
                   {emsalData.kararlar.map((k, i) => (
-                    <div key={i} style={{padding:10, background:'rgba(0,0,0,0.08)', borderRadius:8, marginBottom:6}}>
+                    <div key={i} style={{padding:10, background:C.bgInput||'rgba(0,0,0,0.04)', borderRadius:8, marginBottom:6, border:'1px solid '+(C.border||'#e2e8f0')+'44'}}>
                       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4}}>
-                        <span style={{fontSize:10, fontWeight:700, color:C.gold}}>{k.dosya_no}</span>
-                        <span style={{fontSize:12, fontWeight:800, color:C.success}}>{fmtM(k.deger_kaybi)}</span>
+                        <div style={{display:'flex', alignItems:'center', gap:8}}>
+                          <span style={{fontSize:10, fontWeight:700, color:C.gold}}>{k.dosya_no}</span>
+                          {k.tarih && <span style={{fontSize:8, color:C.textMuted, background:C.bgInput, padding:'1px 6px', borderRadius:3}}>{k.tarih}</span>}
+                        </div>
+                        <span style={{fontSize:13, fontWeight:800, color:C.success}}>{fmtM(k.deger_kaybi)}</span>
                       </div>
                       <div style={{fontSize:9, color:C.textMuted}}>
-                        {k.marka} {k.model} ({k.yil}) • {(k.km||0).toLocaleString('tr-TR')} KM • RAYİÇ: {fmtM(k.rayic)}
+                        {k.marka} {k.model} ({k.yil}) {k.km > 0 ? '• ' + (k.km).toLocaleString('tr-TR') + ' KM' : ''} • RAYİÇ: {fmtM(k.rayic)}
                       </div>
                       {k.ozet && <div style={{fontSize:9, color:C.textSec, marginTop:4}}>{k.ozet}</div>}
                     </div>
@@ -685,29 +732,36 @@ MR.HesapADKPage = ({setPage, user}) => {
               )}
 
               {/* AI ANALİZ */}
-              <div style={{background:C.purple+'08', border:'1px solid '+C.purple+'33', borderRadius:12, padding:14, marginBottom:14}}>
-                <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:8}}>
-                  <MR.LIcon name="Sparkles" size={14} color={C.purple}/>
-                  <span style={{fontSize:11, fontWeight:700, color:C.purple}}>AI ANALİZ RAPORU</span>
+              <div style={{background:C.bgCard||'#fff', border:'1px solid '+(C.border||'#e2e8f0'), borderRadius:12, marginBottom:14, overflow:'hidden'}}>
+                <div style={{padding:'10px 16px', background:C.purple, display:'flex', alignItems:'center', justifyContent:'center', gap:8}}>
+                  <MR.LIcon name="Sparkles" size={16} color="#fff"/>
+                  <span style={{fontSize:12, fontWeight:800, color:'#fff', letterSpacing:0.5}}>AI ANALİZ RAPORU</span>
                 </div>
                 {aiLoading ? (
-                  <div style={{display:'flex', alignItems:'center', gap:8, padding:10, color:C.textMuted, fontSize:11}}>
-                    <div style={{width:14,height:14,border:'2px solid '+C.border,borderTopColor:C.purple,borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
+                  <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:24, color:C.textMuted, fontSize:11}}>
+                    <div style={{width:16,height:16,border:'2px solid '+C.border,borderTopColor:C.purple,borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
                     AI ANALİZ YAPILIYOR...
                   </div>
                 ) : (
-                  <div style={{fontSize:11, lineHeight:1.7, color:C.textSec, whiteSpace:'pre-wrap'}}>{aiAnaliz || 'HESAPLAMA YAPINCA AI ANALİZ OTOMATİK BAŞLAR.'}</div>
+                  <div style={{padding:'14px 18px', fontSize:11, lineHeight:1.8, color:C.text||'#1e293b', textAlign:'justify'}}>
+                    {(aiAnaliz || 'HESAPLAMA YAPINCA AI ANALİZ OTOMATİK BAŞLAR.').replace(/[*#\-■●▪▸►→]/g, '').replace(/\n{3,}/g, '\n\n').split('\n').map((line, li) => {
+                      const trimmed = line.trim();
+                      if (!trimmed) return null;
+                      const isTitle = trimmed === trimmed.toUpperCase() && trimmed.length > 3 && trimmed.length < 80;
+                      return React.createElement('p', {key: li, style: {margin: isTitle ? '10px 0 4px' : '2px 0', fontWeight: isTitle ? 700 : 400, fontSize: isTitle ? 12 : 11, color: isTitle ? (C.purple||'#6d28d9') : (C.text||'#1e293b')}}, trimmed);
+                    })}
+                  </div>
                 )}
               </div>
 
               {/* PDF BUTON */}
-              {MR.hasYetki(user,'hesaplamalar','hesap-adk-rapor') && <div style={{display:'flex',gap:8}}>
+              {MR.hasYetki(user,'hesaplamalar','hesap-adk-rapor') && <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
               <button onClick={() => { window._pdfTip = 'detayli'; pdfIndir(); }} disabled={pdfLoading}
-                style={{...MR.S.btn, flex:1, justifyContent:'center', background:'linear-gradient(135deg,#1e40af,#2563eb)', color:'#fff', padding:'10px 18px', fontSize:12, fontWeight:700, borderRadius:8}}>
+                style={{...MR.S.btn, justifyContent:'center', background:'linear-gradient(135deg,#1e40af,#2563eb)', color:'#fff', padding:'14px 18px', fontSize:12, fontWeight:700, borderRadius:8, height:50, opacity:pdfLoading?0.5:1}}>
                 <MR.LIcon name="FileText" size={15} color="#fff"/> DETAYLI RAPOR
               </button>
               <button onClick={() => { window._pdfTip = 'musteri'; pdfIndir(); }} disabled={pdfLoading}
-                style={{...S.btn, width:'100%', justifyContent:'center', padding:14, fontSize:13, fontWeight:800, background:'linear-gradient(135deg,'+C.success+','+C.cyan+')', color:'#fff', opacity:pdfLoading?0.5:1}}>
+                style={{...S.btn, justifyContent:'center', padding:'14px 18px', fontSize:12, fontWeight:700, background:'linear-gradient(135deg,'+C.success+','+C.cyan+')', color:'#fff', borderRadius:8, height:50, opacity:pdfLoading?0.5:1}}>
                 {pdfLoading ? 'OLUŞTURULUYOR...' : 'MÜŞTERİ RAPORU'}
               </button>
               </div>}
@@ -716,28 +770,30 @@ MR.HesapADKPage = ({setPage, user}) => {
         </div>
       </div>
 
-      {/* ═══ PDF ÖNİZLEME MODAL ═══ */}
+      {/* ═══ PDF ÖNİZLEME MODAL (Dosya Evrakları Tarzı) ═══ */}
       {pdfOnizleme && (
-        <div style={{position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:10000, display:'flex', justifyContent:'center', alignItems:'center', background:'rgba(0,0,0,0.7)'}}>
-          <div style={{width:'68vw', maxHeight:'92vh', background:C.bgCard||'#fff', borderRadius:12, overflow:'hidden', display:'flex', flexDirection:'column', boxShadow:'0 20px 60px rgba(0,0,0,0.4)'}}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 20px', background:C.accent, flexShrink:0}}>
-              <div>
-                <div style={{fontSize:14, fontWeight:800, color:'#fff'}}>RAPOR ÖNİZLEME</div>
-                <div style={{fontSize:10, color:'rgba(255,255,255,0.7)'}}>{pdfOnizleme.raporNo}</div>
+        <div style={{position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:10000, display:'flex', justifyContent:'center', alignItems:'center', background:'rgba(0,0,0,0.75)'}}>
+          <div style={{width:'80vw', maxWidth:900, height:'92vh', background:C.bgCard||'#fff', borderRadius:12, overflow:'hidden', display:'flex', flexDirection:'column', boxShadow:'0 20px 60px rgba(0,0,0,0.5)'}}>
+            {/* HEADER BAR */}
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 16px', background:'#1e293b', flexShrink:0}}>
+              <div style={{display:'flex', alignItems:'center', gap:10}}>
+                <MR.LIcon name="FileText" size={18} color="#60a5fa"/>
+                <span style={{fontSize:13, fontWeight:700, color:'#fff'}}>{pdfOnizleme.raporNo}</span>
               </div>
               <div style={{display:'flex', gap:8}}>
                 <button onClick={pdfIndir2}
-                  style={{padding:'8px 20px', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer', background:'#fff', color:C.accent, border:'none'}}>
-                  YAZDIR / PDF
+                  style={{padding:'7px 18px', borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer', background:'#3b82f6', color:'#fff', border:'none', display:'flex', alignItems:'center', gap:6}}>
+                  <MR.LIcon name="Download" size={14} color="#fff"/> İNDİR
                 </button>
                 <button onClick={() => setPdfOnizleme(null)}
-                  style={{padding:'8px 16px', borderRadius:6, fontSize:12, fontWeight:700, cursor:'pointer', background:'rgba(255,255,255,0.2)', color:'#fff', border:'1px solid rgba(255,255,255,0.3)'}}>
-                  KAPAT
+                  style={{padding:'7px 14px', borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer', background:'#ef4444', color:'#fff', border:'none', display:'flex', alignItems:'center', gap:4}}>
+                  <MR.LIcon name="X" size={14} color="#fff"/> KAPAT
                 </button>
               </div>
             </div>
-            <div style={{flex:1, overflowY:'auto', padding:20, background:'#f1f5f9'}}>
-              <div style={{background:'#fff', borderRadius:8, boxShadow:'0 2px 12px rgba(0,0,0,0.1)', padding:16, maxWidth:780, margin:'0 auto'}}
+            {/* ÖNİZLEME İÇERİĞİ */}
+            <div style={{flex:1, overflowY:'auto', padding:24, background:'#e2e8f0'}}>
+              <div style={{background:'#fff', borderRadius:4, boxShadow:'0 2px 16px rgba(0,0,0,0.12)', padding:20, maxWidth:780, margin:'0 auto', minHeight:'100%'}}
                 dangerouslySetInnerHTML={{__html: pdfOnizleme.html}}/>
             </div>
           </div>

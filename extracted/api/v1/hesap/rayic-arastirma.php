@@ -74,19 +74,27 @@ function parseArabamFiyatlar($html, $marka, $model, $yil) {
     if (empty($html)) return $ilanlar;
     $fiyatlar = [];
 
-    // Pattern 1: insiderArray.push({ ... "unit_price": parseFloat(("1.509.000 TL").replace(...)) })
-    if (preg_match_all('/insiderArray\.push\(\{[^}]*"name"\s*:\s*"([^"]*)"[^}]*"unit_price"\s*:\s*parseFloat\(\("([\d.]+)\s*TL"\)/s', $html, $m, PREG_SET_ORDER)) {
-        foreach ($m as $match) {
-            $baslik = $match[1];
-            $val = (int)preg_replace('/[^\d]/', '', $match[2]);
-            if ($val >= 50000 && $val <= 50000000) {
+    // Pattern 1: insiderArray.push({ ... "id": "XXXXX", "name": "...", "unit_price": parseFloat(("1.509.000 TL")...) })
+    if (preg_match_all('/insiderArray\.push\(\{([^}]+)\}/s', $html, $blocks)) {
+        foreach ($blocks[1] as $block) {
+            $name = ''; $price = 0; $id = '';
+            if (preg_match('/"name"\s*:\s*"([^"]*)"/', $block, $nm)) $name = $nm[1];
+            if (preg_match('/"unit_price"\s*:\s*parseFloat\(\("([\d.]+)\s*TL"/', $block, $pr)) {
+                $price = (int)preg_replace('/[^\d]/', '', $pr[1]);
+            } elseif (preg_match('/"unit_price"\s*:\s*(\d+)/', $block, $pr2)) {
+                $price = (int)$pr2[1];
+            }
+            if (preg_match('/"id"\s*:\s*"(\d+)"/', $block, $idm)) $id = $idm[1];
+
+            if ($price >= 50000 && $price <= 50000000) {
                 $ilanlar[] = [
                     'kaynak' => 'arabam.com',
-                    'baslik' => $baslik,
-                    'fiyat' => $val,
+                    'baslik' => $name ?: ($marka . ' ' . $model),
+                    'fiyat' => $price,
                     'km' => 0,
                     'yil' => $yil,
                     'sehir' => '',
+                    'link' => $id ? 'https://www.arabam.com/ilan/' . $id : '',
                     'tarih' => date('Y-m-d')
                 ];
             }
@@ -145,6 +153,7 @@ function parseArabamFiyatlar($html, $marka, $model, $yil) {
                 'km' => 0,
                 'yil' => $yil,
                 'sehir' => '',
+                'link' => '',
                 'tarih' => date('Y-m-d')
             ];
         }
@@ -194,6 +203,7 @@ function parseOtoplusFiyatlar($html, $marka, $model, $yil) {
             'km' => 0,
             'yil' => $yil,
             'sehir' => '',
+            'link' => '',
             'tarih' => date('Y-m-d')
         ];
     }
