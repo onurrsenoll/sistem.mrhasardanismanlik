@@ -85,7 +85,8 @@ const MODUL_YETKILERI = [
     {key: 'hesap-emsal', label: 'EMSAL KARAR ARAMA'},
     {key: 'hesap-ai-analiz', label: 'AI ANALİZ'},
     {key: 'hesap-adk-rapor', label: 'ADK PDF RAPOR'},
-    {key: 'hesap-bh-rapor', label: 'BH PDF RAPOR'}
+    {key: 'hesap-bh-rapor', label: 'BH PDF RAPOR'},
+    {key: 'hesap-evrak-okuyucu', label: 'EVRAK OKUYUCU'}
   ]},
   {modul: 'paydaslar', label: 'PAYDAŞLAR / ORTAKLAR', icon: 'Handshake', islemler: [
     {key: 'ortaklar-ortaklar', label: 'İŞ ORTAKLARI'},
