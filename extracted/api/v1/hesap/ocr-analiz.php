@@ -160,8 +160,8 @@ for ($i = 0; $i < $dosyaSayisi; $i++) {
     $content = file_get_contents($file['tmp_name']);
     if ($content === false) continue;
 
-    // GD ile ön işleme uygula (ruhsat ve adk tipleri için)
-    if ($tip === 'ruhsat' || $tip === 'adk') {
+    // GD ile ön işleme uygula (tüm tipler için)
+    if ($tip === 'ruhsat' || $tip === 'adk' || $tip === 'bh') {
         $processed = preprocessImageGD($content, $mime);
         $content = $processed['content'];
         $mime = $processed['mime'];

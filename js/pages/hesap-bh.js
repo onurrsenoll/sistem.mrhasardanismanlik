@@ -332,13 +332,30 @@
       });
     }, [sonuc]);
 
-    // EMSAL FİLTRELEME
+    // EMSAL FİLTRELEME (YAŞ + MALULİYET + GELİR bazında)
     const emsalFiltrelenmis = useMemo(() => {
       if (!sonuc || !MR.BH_EMSAL) return [];
+      const hedefYas = sonuc.yas;
       const hedefMaluliyet = sonuc.maluliyet;
-      let emsaller = MR.BH_EMSAL.map(e => ({
-        ...e, benzerlik: 100 - Math.abs(e.maluliyet - hedefMaluliyet)
-      })).filter(e => e.benzerlik >= 50);
+      const hedefGelir = sonuc.aylikGelir;
+
+      let emsaller = MR.BH_EMSAL.map(e => {
+        // 1. Yaş benzerliği (%40 ağırlık) - ±5 yaş tolerans
+        const yasFark = Math.abs((e.yas||0) - hedefYas);
+        const yasPuan = yasFark <= 5 ? (100 - yasFark * 10) : Math.max(0, 60 - yasFark * 3);
+
+        // 2. Maluliyet benzerliği (%35 ağırlık) - ±5 puan tolerans
+        const malFark = Math.abs((e.maluliyet||0) - hedefMaluliyet);
+        const malPuan = malFark <= 5 ? (100 - malFark * 8) : Math.max(0, 60 - malFark * 3);
+
+        // 3. Gelir benzerliği (%25 ağırlık)
+        const gelirOran = hedefGelir > 0 && e.gelir > 0 ? Math.min(e.gelir, hedefGelir) / Math.max(e.gelir, hedefGelir) : 0.5;
+        const gelirPuan = Math.round(gelirOran * 100);
+
+        const benzerlik = Math.round(yasPuan * 0.40 + malPuan * 0.35 + gelirPuan * 0.25);
+        return { ...e, benzerlik, yasFark, malFark };
+      }).filter(e => e.benzerlik >= 30);
+
       if (emsalArama.trim()) {
         const ara = emsalArama.toLowerCase();
         emsaller = emsaller.filter(e => (e.aciklama || e.detay || '').toLowerCase().includes(ara) || (e.kaynak || '').toLowerCase().includes(ara));
@@ -399,24 +416,26 @@
         + '<div style="font-size:30px;font-weight:900;">'+fmtPara(sonuc.toplamNet)+' TL</div></div>'
 
         + (aiAnaliz ? '<div style="border:1px solid #c4b5fd;border-radius:8px;overflow:hidden;margin-bottom:14px;">'
-          + '<div style="background:#6d28d9;color:#fff;padding:8px 12px;font-size:11px;font-weight:700;">UZMAN ANALİZ RAPORU</div>'
-          + '<div style="padding:10px 12px;font-size:9px;line-height:1.7;color:#334155;background:#faf5ff;">'+(aiAnaliz.analiz||aiAnaliz.metin||'').replace(/\n/g,'<br>')+'</div></div>' : '')
+          + '<div style="background:#6d28d9;color:#fff;padding:10px 14px;font-size:11px;font-weight:700;text-align:center;">UZMAN ANALİZ RAPORU</div>'
+          + '<div style="padding:12px 16px;font-size:10px;line-height:1.8;color:#1e293b;background:#fff;text-align:justify;">'+(aiAnaliz.analiz||aiAnaliz.metin||'').replace(/[*#■●▪▸►→]/g,'').replace(/\n{3,}/g,'\n\n').replace(/\n/g,'<br>')+'</div></div>' : '')
 
         + '<div style="border-top:2px solid #e2e8f0;padding-top:12px;text-align:center;font-size:9px;color:#94a3b8;">'
         + '<p><b>UYARI:</b> Bu rapor ön çalışma niteliğindedir. Kesin tazminat miktarı mahkeme kararı ile belirlenir.</p>'
         + '<p style="margin-top:6px;">MR HASAR DANIŞMANLIK - '+tarih+' | © '+new Date().getFullYear()+'</p></div></div>';
 
       setBhPdfOnizleme({html, raporNo, tip});
+      setPdfYukleniyor(false);
+    };
 
-      // Direkt window.print() ile PDF oluştur (html2pdf yerine)
+    // PDF İNDİR (önizlemeden)
+    const bhPdfIndir2 = () => {
+      if (!bhPdfOnizleme) return;
       const printWindow = window.open('', '_blank');
-      printWindow.document.write('<html><head><title>MR BH Rapor - '+raporNo+'</title><style>@page{size:A4;margin:10mm;}body{margin:0;padding:10px;font-family:Arial,Helvetica,sans-serif;}</style></head><body>');
-      printWindow.document.write(html);
+      printWindow.document.write('<html><head><title>MR BH Rapor - '+bhPdfOnizleme.raporNo+'</title><style>@page{size:A4;margin:10mm;}body{margin:0;padding:10px;font-family:Arial,Helvetica,sans-serif;}</style></head><body>');
+      printWindow.document.write(bhPdfOnizleme.html);
       printWindow.document.write('</body></html>');
       printWindow.document.close();
       printWindow.onload = () => { printWindow.print(); };
-
-      setPdfYukleniyor(false);
     };
 
     // TEMİZLE
@@ -708,27 +727,7 @@
                   </div>
                 </div>
 
-                {/* AI ANALİZ */}
-                {aiYukleniyor ? (
-                  <div style={{ ...S.card, marginBottom: 20 }}>
-                    <div style={S.cardBody}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center', padding: 28 }}>
-                        <MR.Loading size={24} color={C.purple} /><span style={{ fontSize: 14 }}>AI ANALİZ YAPILIYOR...</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : aiAnaliz ? (
-                  <div style={{ ...S.card, background: C.purple + '08', border: '2px solid ' + C.purple, marginBottom: 20 }}>
-                    <div style={S.cardHead}><MR.LIcon name="Sparkles" size={20} color={C.purple} /><span>AI ANALİZ RAPORU</span><div style={{ marginLeft: 'auto' }}><span style={S.badge(C.purple)}>AI</span></div></div>
-                    <div style={S.cardBody}>
-                      <div style={{ padding: 16, background: C.bgCard, borderRadius: 8, fontSize: 12, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-                        {aiAnaliz.analiz || aiAnaliz.metin || 'AI analiz sonucu bulunamadı'}
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-
-                {/* EMSAL */}
+                {/* EMSAL KARARLARI (AI'dan önce) */}
                 {emsalFiltrelenmis.length > 0 && (
                   <div style={{ ...S.card, marginBottom: 20 }}>
                     <div style={S.cardHead}><MR.LIcon name="Scale" size={20} color={C.gold} /><span>EMSAL KARARLARI ({emsalFiltrelenmis.length})</span></div>
@@ -739,10 +738,11 @@
                           <div key={i} style={{ padding: 12, background: C.gold + '10', border: '1px solid ' + C.gold + '44', borderRadius: 8 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                               <span style={{ fontSize: 12, fontWeight: 600 }}>{e.aciklama || e.detay}</span>
-                              <span style={{ ...S.badge(C.cyan), fontSize: 10 }}>%{e.benzerlik.toFixed(0)} BENZER</span>
+                              <span style={{ ...S.badge(e.benzerlik >= 80 ? C.success : e.benzerlik >= 60 ? C.cyan : C.gold), fontSize: 10 }}>%{e.benzerlik.toFixed(0)} BENZER</span>
                             </div>
-                            <div style={{ display: 'flex', gap: 10, fontSize: 11 }}>
+                            <div style={{ display: 'flex', gap: 8, fontSize: 11, flexWrap: 'wrap' }}>
                               <span style={S.badge(C.purple)}>%{e.maluliyet} MALULİYET</span>
+                              <span style={S.badge(C.cyan)}>{e.yas} YAŞ</span>
                               <span style={{ color: C.gold, fontWeight: 700 }}>{MR.fmtK(e.tutar)} TL</span>
                               <span style={{ color: C.textMuted }}>{e.kaynak}</span>
                             </div>
@@ -753,17 +753,39 @@
                   </div>
                 )}
 
-                {/* PDF BUTONLARI */}
-                {MR.hasYetki(user,'hesaplamalar','hesap-bh-rapor') && <div style={{ display: 'flex', gap: 12 }}>
-                  <button onClick={() => pdfIndir('bilirkisi')} disabled={pdfYukleniyor} style={{ ...S.btnP, flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-                      <MR.LIcon name="FileText" size={16} /><span>BİLİRKİŞİ RAPORU</span>
+                {/* AI ANALİZ (emsal kararların altında) */}
+                {aiYukleniyor ? (
+                  <div style={{ ...S.card, marginBottom: 20 }}>
+                    <div style={S.cardBody}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center', padding: 28 }}>
+                        <MR.Loading size={24} color={C.purple} /><span style={{ fontSize: 14 }}>AI ANALİZ YAPILIYOR...</span>
+                      </div>
                     </div>
+                  </div>
+                ) : aiAnaliz ? (
+                  <div style={{ ...S.card, marginBottom: 20, overflow: 'hidden' }}>
+                    <div style={{ padding: '10px 16px', background: C.purple, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      <MR.LIcon name="Sparkles" size={16} color="#fff" />
+                      <span style={{ fontSize: 12, fontWeight: 800, color: '#fff', letterSpacing: 0.5 }}>AI ANALİZ RAPORU</span>
+                    </div>
+                    <div style={{ padding: '14px 18px', fontSize: 11, lineHeight: 1.8, color: C.text || '#1e293b', textAlign: 'justify' }}>
+                      {((aiAnaliz.analiz || aiAnaliz.metin || '').replace(/[*#\-■●▪▸►→]/g, '').replace(/\n{3,}/g, '\n\n')).split('\n').map((line, li) => {
+                        const trimmed = line.trim();
+                        if (!trimmed) return null;
+                        const isTitle = trimmed === trimmed.toUpperCase() && trimmed.length > 3 && trimmed.length < 80;
+                        return React.createElement('p', { key: li, style: { margin: isTitle ? '10px 0 4px' : '2px 0', fontWeight: isTitle ? 700 : 400, fontSize: isTitle ? 12 : 11, color: isTitle ? (C.purple || '#6d28d9') : (C.text || '#1e293b') } }, trimmed);
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* PDF BUTONLARI (ADK tarzı grid, eşit yükseklik) */}
+                {MR.hasYetki(user,'hesaplamalar','hesap-bh-rapor') && <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <button onClick={() => pdfIndir('bilirkisi')} disabled={pdfYukleniyor} style={{ ...S.btn, justifyContent: 'center', background: 'linear-gradient(135deg,#7c3aed,#a855f7)', color: '#fff', padding: '14px 18px', fontSize: 12, fontWeight: 700, borderRadius: 8, height: 50, opacity: pdfYukleniyor ? 0.5 : 1 }}>
+                    <MR.LIcon name="FileText" size={15} color="#fff" /> BİLİRKİŞİ RAPORU
                   </button>
-                  <button onClick={() => pdfIndir('sonuc')} disabled={pdfYukleniyor} style={{ ...S.btnD, flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-                      <MR.LIcon name="Download" size={16} /><span>HESAP SONUCU</span>
-                    </div>
+                  <button onClick={() => pdfIndir('sonuc')} disabled={pdfYukleniyor} style={{ ...S.btn, justifyContent: 'center', padding: '14px 18px', fontSize: 12, fontWeight: 700, background: 'linear-gradient(135deg,' + C.success + ',' + C.cyan + ')', color: '#fff', borderRadius: 8, height: 50, opacity: pdfYukleniyor ? 0.5 : 1 }}>
+                    {pdfYukleniyor ? 'OLUŞTURULUYOR...' : 'HESAP SONUCU'}
                   </button>
                 </div>}
               </div>
@@ -772,6 +794,33 @@
             )}
           </div>
         </div>
+
+        {/* ═══ PDF ÖNİZLEME MODAL (Dosya Evrakları Tarzı - Sayfa İçi) ═══ */}
+        {bhPdfOnizleme && (
+          <div style={{position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:10000, display:'flex', justifyContent:'center', alignItems:'center', background:'rgba(0,0,0,0.75)'}}>
+            <div style={{width:'80vw', maxWidth:900, height:'92vh', background:C.bgCard||'#fff', borderRadius:12, overflow:'hidden', display:'flex', flexDirection:'column', boxShadow:'0 20px 60px rgba(0,0,0,0.5)'}}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 16px', background:'#1e293b', flexShrink:0}}>
+                <div style={{display:'flex', alignItems:'center', gap:10}}>
+                  <MR.LIcon name="FileText" size={18} color="#a78bfa"/>
+                  <span style={{fontSize:13, fontWeight:700, color:'#fff'}}>{bhPdfOnizleme.raporNo}</span>
+                  <span style={{fontSize:10, color:'rgba(255,255,255,0.6)'}}>{bhPdfOnizleme.tip === 'bilirkisi' ? 'BİLİRKİŞİ RAPORU' : 'HESAP SONUCU'}</span>
+                </div>
+                <div style={{display:'flex', gap:8}}>
+                  <button onClick={bhPdfIndir2} style={{padding:'7px 18px', borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer', background:'#7c3aed', color:'#fff', border:'none', display:'flex', alignItems:'center', gap:6}}>
+                    <MR.LIcon name="Download" size={14} color="#fff"/> İNDİR
+                  </button>
+                  <button onClick={() => setBhPdfOnizleme(null)} style={{padding:'7px 14px', borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer', background:'#ef4444', color:'#fff', border:'none', display:'flex', alignItems:'center', gap:4}}>
+                    <MR.LIcon name="X" size={14} color="#fff"/> KAPAT
+                  </button>
+                </div>
+              </div>
+              <div style={{flex:1, overflowY:'auto', padding:24, background:'#e2e8f0'}}>
+                <div style={{background:'#fff', borderRadius:4, boxShadow:'0 2px 16px rgba(0,0,0,0.12)', padding:20, maxWidth:780, margin:'0 auto', minHeight:'100%'}}
+                  dangerouslySetInnerHTML={{__html: bhPdfOnizleme.html}}/>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
