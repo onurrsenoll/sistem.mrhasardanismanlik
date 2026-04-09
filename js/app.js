@@ -20,7 +20,7 @@ const MENU = [
   {id:'hesap', label:'HESAPLAMALAR', icon:'Calculator', sub:[
     {id:'hesap-adk', label:'ARAÇ DEĞER KAYBI', icon:'Car'},
     {id:'hesap-bh', label:'BEDENİ HASAR', icon:'Heart'},
-    {id:'hesap-evrak-okuyucu', label:'EVRAK OKUYUCU', icon:'ScanLine'}
+    {id:'hesap-evrak-okuyucu', label:'EVRAK OKUYUCU', icon:'FileSearch'}
   ]},
   {id:'paydaslar', label:'PAYDAŞLAR', icon:'Handshake', sub:[
     {id:'ortaklar-ortaklar', label:'İŞ ORTAKLARI', icon:'Briefcase'},

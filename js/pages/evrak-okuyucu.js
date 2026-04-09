@@ -41,7 +41,7 @@ const EVRAK_ALANLARI = {
   },
   polis_ktt: {
     label: 'POLİS KTT',
-    icon: 'Shield',
+    icon: 'ShieldAlert',
     color: '#dc2626',
     desc: 'Polis Trafik Kaza Tespit Tutanağı (Resmi)',
     alanlar: [
@@ -71,7 +71,7 @@ const EVRAK_ALANLARI = {
   },
   hasar_ihbar: {
     label: 'HASAR İHBAR FÖYÜ',
-    icon: 'FileWarning',
+    icon: 'AlertTriangle',
     color: '#d97706',
     desc: 'Sigorta Şirketi Hasar İhbar / Dosya Kapağı',
     alanlar: [
@@ -220,7 +220,7 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
         <div style={{padding:'16px 20px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12}}>
           <div style={{display:'flex', alignItems:'center', gap:12}}>
             <div style={{width:48, height:48, borderRadius:14, background:`linear-gradient(135deg, ${evrakTipi.color}, ${evrakTipi.color}cc)`, display:'flex', alignItems:'center', justifyContent:'center'}}>
-              <LIcon name="ScanLine" size={26} color="#fff"/>
+              <LIcon name="FileSearch" size={26} color="#fff"/>
             </div>
             <div>
               <h1 style={{fontSize:20, fontWeight:900, margin:0}}>EVRAK OKUYUCU</h1>
@@ -305,7 +305,7 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
                       <span>CLAUDE AI ANALİZ EDİYOR...</span>
                     </div>
                   ) : (
-                    <><LIcon name="ScanLine" size={18} color="#fff"/> {evrakTipi.label} ANALİZ ET</>
+                    <><LIcon name="FileSearch" size={18} color="#fff"/> {evrakTipi.label} ANALİZ ET</>
                   )}
                 </button>
               </div>
