@@ -35,6 +35,7 @@ const parseExcelDate = (v) => {
    ═══════════════════════════════════════════════════════════ */
 MR.PolicePage = ({setPage, user, subPage}) => {
   const {C, S, LIcon, StatCard, Badge, SectionTitle, EmptyState, Loading, Modal, FormGroup, Confirm, api} = MR;
+  const [policePrefill, setPolicePrefill] = useState(null);
 
   const tumSekmeler = [
     {key:'liste',    label:'POLİÇE LİSTESİ',   icon:'List'},
@@ -79,8 +80,8 @@ MR.PolicePage = ({setPage, user, subPage}) => {
       </div>
 
       {aktifSekme === 'liste'    && <PoliceListe setPage={setPage} user={user}/>}
-      {aktifSekme === 'yeni'     && <PoliceYeni setPage={setPage} user={user}/>}
-      {aktifSekme === 'yenileme' && <PoliceYenileme setPage={setPage} user={user}/>}
+      {aktifSekme === 'yeni'     && <PoliceYeni setPage={setPage} user={user} prefill={policePrefill} key={policePrefill ? 'pf-'+Date.now() : 'yeni'}/>}
+      {aktifSekme === 'yenileme' && <PoliceYenileme setPage={setPage} user={user} onPoliceyeDonustur={(data) => { setPolicePrefill(data); setPage('police-yeni'); }}/>}
       {aktifSekme === 'tahsilat' && <PoliceTahsilat setPage={setPage} user={user}/>}
       {aktifSekme === 'rapor'    && <PoliceRapor setPage={setPage} user={user}/>}
       {aktifSekme === 'kazanc'   && <PoliceKazanc setPage={setPage} user={user}/>}
@@ -652,7 +653,7 @@ const PoliceYeni = ({setPage, user, prefill}) => {
 /* ═══════════════════════════════════════════════════════════
    SEKME 3: YENİLEME TAKİBİ (TAM YENİDEN YAZILDI)
    ═══════════════════════════════════════════════════════════ */
-const PoliceYenileme = ({setPage, user}) => {
+const PoliceYenileme = ({setPage, user, onPoliceyeDonustur}) => {
   const {C, S, LIcon, StatCard, SectionTitle, Badge, EmptyState, Loading, api} = MR;
   const [loading, setLoading] = useState(true);
   const [policeler, setPoliceler] = useState([]);
@@ -826,7 +827,18 @@ const PoliceYenileme = ({setPage, user}) => {
         <button style={{background:C.accent,color:'#fff',border:'none',borderRadius:4,padding:'4px 8px',fontSize:9,fontWeight:700,cursor:'pointer',marginRight:4}} onClick={()=>setEditRow({...p})}>
           <LIcon name="Edit2" size={10} color="#fff"/>
         </button>
-        <button style={{background:C.success,color:'#fff',border:'none',borderRadius:4,padding:'4px 8px',fontSize:9,fontWeight:700,cursor:'pointer'}} onClick={()=>setPage('police-yeni')}>
+        <button title="POLİÇEYE DÖNÜŞTÜR" style={{background:C.success,color:'#fff',border:'none',borderRadius:4,padding:'4px 8px',fontSize:9,fontWeight:700,cursor:'pointer'}} onClick={()=> onPoliceyeDonustur && onPoliceyeDonustur({
+          musteri_adi: p.musteri_adi||'',
+          musteri_tc: p.musteri_tc||'',
+          musteri_telefon: p.musteri_telefon||'',
+          plaka: p.plaka||'',
+          belge_seri: p.belge_seri||'',
+          dogum_tarihi: p.dogum_tarihi||'',
+          brans: p.brans||'',
+          police_turu: 'yenileme',
+          yenileme_no: p.police_no||'',
+          notlar: p.notlar||''
+        })}>
           <LIcon name="RefreshCw" size={10} color="#fff"/>
         </button>
       </td>
