@@ -180,7 +180,6 @@ MR.CrmAramaPage = ({setPage, user}) => {
         magdur_telefon: get('TELEFON', 'MAĞDUR TELEFON', 'MAGDUR TELEFON', 'TEL', 'GSM'),
         magdur_il: get('İL', 'MAĞDUR İL', 'MAGDUR IL', 'IL', 'ŞEHİR', 'SEHIR'),
         yonlendirme_tarihi: get('KAZA TARİHİ', 'KAZA TARIHI', 'YÖNLENDİRME TARİHİ', 'TARİH', 'TARIH'),
-        kusur_durumu: get('KUSUR', 'KUSUR DURUMU'),
         magdur_ilce: get('GÖRÜŞME NOTU', 'DETAY', 'İLÇE', 'ILCE', 'NOT')
       };
       if (dosyaTuruTab === 'ADK' || dosyaTuruTab === 'MDK') {
@@ -231,17 +230,17 @@ MR.CrmAramaPage = ({setPage, user}) => {
   const sablonIndir = () => {
     let headers, example, cols;
     if (dosyaTuruTab === 'BH') {
-      headers = ['AD SOYAD', 'TC', 'TELEFON', 'MALULİYET', 'KAZA TARİHİ', 'KUSUR DURUMU', 'POZİSYON', 'GÜNCEL DURUM', 'İL', 'GÖRÜŞME NOTU'];
-      example = ['MEHMET DEMİR', '12345678901', '05321234567', 'SOL KOL KIRIGI', '2026-02-13', '%0', 'YOLCU', 'TABURCU', 'İSTANBUL', ''];
-      cols = [{wch:20},{wch:14},{wch:16},{wch:18},{wch:14},{wch:12},{wch:12},{wch:14},{wch:12},{wch:24}];
+      headers = ['AD SOYAD', 'TC', 'TELEFON', 'MALULİYET', 'KAZA TARİHİ', 'POZİSYON', 'GÜNCEL DURUM', 'İL', 'GÖRÜŞME NOTU'];
+      example = ['MEHMET DEMİR', '12345678901', '05321234567', 'SOL KOL KIRIGI', '2026-02-13', 'YOLCU', 'TABURCU', 'İSTANBUL', ''];
+      cols = [{wch:20},{wch:14},{wch:16},{wch:18},{wch:14},{wch:12},{wch:14},{wch:12},{wch:24}];
     } else if (dosyaTuruTab === 'MDK') {
-      headers = ['PLAKA', 'AD SOYAD', 'TC', 'TELEFON', 'KAZA TARİHİ', 'KUSUR DURUMU', 'SİGORTA ŞİRKETİ', 'İL', 'GÖRÜŞME NOTU'];
-      example = ['34ABC123', 'MEHMET DEMİR', '12345678901', '05321234567', '2026-02-13', '%0', 'HDI SİGORTA', 'İSTANBUL', ''];
-      cols = [{wch:12},{wch:20},{wch:14},{wch:16},{wch:14},{wch:12},{wch:20},{wch:12},{wch:24}];
+      headers = ['PLAKA', 'AD SOYAD', 'TC', 'TELEFON', 'KAZA TARİHİ', 'SİGORTA ŞİRKETİ', 'İL', 'GÖRÜŞME NOTU'];
+      example = ['34ABC123', 'MEHMET DEMİR', '12345678901', '05321234567', '2026-02-13', 'HDI SİGORTA', 'İSTANBUL', ''];
+      cols = [{wch:12},{wch:20},{wch:14},{wch:16},{wch:14},{wch:20},{wch:12},{wch:24}];
     } else {
-      headers = ['PLAKA', 'AD SOYAD', 'TC', 'TELEFON', 'KAZA TARİHİ', 'KUSUR DURUMU', 'SİGORTA ŞİRKETİ', 'İL', 'GÖRÜŞME NOTU'];
-      example = ['34ABC123', 'MEHMET DEMİR', '12345678901', '05321234567', '2026-02-13', '%0', 'HDI SİGORTA', 'İSTANBUL', ''];
-      cols = [{wch:12},{wch:20},{wch:14},{wch:16},{wch:14},{wch:12},{wch:20},{wch:12},{wch:24}];
+      headers = ['PLAKA', 'AD SOYAD', 'TC', 'TELEFON', 'KAZA TARİHİ', 'SİGORTA ŞİRKETİ', 'İL', 'GÖRÜŞME NOTU'];
+      example = ['34ABC123', 'MEHMET DEMİR', '12345678901', '05321234567', '2026-02-13', 'HDI SİGORTA', 'İSTANBUL', ''];
+      cols = [{wch:12},{wch:20},{wch:14},{wch:16},{wch:14},{wch:20},{wch:12},{wch:24}];
     }
     const ws = XLSX.utils.aoa_to_sheet([headers, example]);
     ws['!cols'] = cols;
@@ -922,6 +921,19 @@ MR.CrmAramaPage = ({setPage, user}) => {
               {(ILLER || []).map(i => <option key={i} value={i}>{i}</option>)}
             </select>
           </FormGroup>
+          <FormGroup label="DOSYA DURUMU">
+            <div style={{display:'flex', gap:4}}>
+              {['AÇIK','KAPALI'].map(t => (
+                <button key={t} type="button" onClick={() => yF('dosya_durumu', t)}
+                  style={{flex:1, padding:'7px 4px', borderRadius:6, fontSize:10, fontWeight:700, cursor:'pointer',
+                    background: (yeniForm.dosya_durumu||'AÇIK')===t ? (t==='AÇIK'?C.success:C.danger) : 'transparent',
+                    color: (yeniForm.dosya_durumu||'AÇIK')===t ? '#fff' : C.textSec,
+                    border:`1px solid ${(yeniForm.dosya_durumu||'AÇIK')===t ? (t==='AÇIK'?C.success:C.danger) : C.border}`}}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </FormGroup>
           <FormGroup label="KUSUR DURUMU">
             <div style={{display:'flex', gap:3}}>
               {['%0','%25','%50','%75','%100'].map(t => (
@@ -929,7 +941,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
                   style={{flex:1, padding:'7px 4px', borderRadius:6, fontSize:10, fontWeight:700, cursor:'pointer',
                     background: yeniForm.kusur_durumu===t ? (t==='%0'?C.success:t==='%25'?'#22c55e':t==='%50'?C.warning:t==='%75'?'#f97316':C.danger) : 'transparent',
                     color: yeniForm.kusur_durumu===t ? '#fff' : C.textSec,
-                    border:`1px solid ${yeniForm.kusur_durumu===t ? (t==='AÇIK'||t==='HAKLI'?C.success:C.danger) : C.border}`}}>
+                    border:`1px solid ${yeniForm.kusur_durumu===t ? C.accent : C.border}`}}>
                   {t}
                 </button>
               ))}
@@ -1072,18 +1084,24 @@ MR.CrmAramaPage = ({setPage, user}) => {
                   {!dIsBH && <FormGroup label="SİGORTA ŞİRKETİ"><input style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.sigorta_sirket||''} onChange={e => dUp('sigorta_sirket', e.target.value.toUpperCase())}/></FormGroup>}
                 </div>
 
-                {/* KUSUR DURUMU (ADK/MDK) - %0 %25 %50 %75 %100 */}
-                {!dIsBH && (
-                  <FormGroup label="KUSUR DURUMU">
-                    <div style={{display:'flex', gap:3}}>
-                      {['%0','%25','%50','%75','%100'].map(t => {
-                        const aktif = d.kusur_durumu === t;
-                        const renk = t==='%0'?C.success:t==='%25'?'#22c55e':t==='%50'?C.warning:t==='%75'?'#f97316':C.danger;
-                        return <PillBtn key={t} label={t} active={aktif} color={renk} onClick={() => dUp('kusur_durumu', t)}/>;
-                      })}
-                    </div>
-                  </FormGroup>
-                )}
+                {/* DOSYA DURUMU */}
+                <FormGroup label="DOSYA DURUMU">
+                  <div style={{display:'flex', gap:4}}>
+                    <PillBtn label="AÇIK" active={d.dosya_durumu==='AÇIK'||(!d.dosya_durumu)} color={C.success} onClick={() => dUp('dosya_durumu', 'AÇIK')}/>
+                    <PillBtn label="KAPALI" active={d.dosya_durumu==='KAPALI'} color={C.danger} onClick={() => dUp('dosya_durumu', 'KAPALI')}/>
+                  </div>
+                </FormGroup>
+
+                {/* KUSUR DURUMU - sadece görüşme sırasında seçilir */}
+                <FormGroup label="KUSUR DURUMU">
+                  <div style={{display:'flex', gap:3}}>
+                    {['%0','%25','%50','%75','%100'].map(t => {
+                      const aktif = d.kusur_durumu === t;
+                      const renk = t==='%0'?C.success:t==='%25'?'#22c55e':t==='%50'?C.warning:t==='%75'?'#f97316':C.danger;
+                      return <PillBtn key={t} label={t} active={aktif} color={renk} onClick={() => dUp('kusur_durumu', t)}/>;
+                    })}
+                  </div>
+                </FormGroup>
 
                 {/* BH: Kaza Pozisyonu + Güncel Durum */}
                 {dIsBH && (
