@@ -1023,7 +1023,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
             load();
           };
           const PillBtn = ({label, active, color, onClick}) => (
-            <button type="button" onClick={onClick} style={{flex:1, padding:'7px 4px', borderRadius:6, fontSize:10, fontWeight:700, cursor:'pointer', background:active?color:'transparent', color:active?'#fff':C.textSec, border:`1px solid ${active?color:C.border}`}}>{label}</button>
+            <button type="button" onClick={onClick} style={{flex:1, padding:'7px 4px', borderRadius:6, fontSize:10, fontWeight:700, cursor:'pointer', background:active?color:'transparent', color:active?'#fff':color, border:`2px solid ${color}`}}>{label}</button>
           );
           return (
           <div>
@@ -1087,18 +1087,17 @@ MR.CrmAramaPage = ({setPage, user}) => {
                 {/* DOSYA DURUMU */}
                 <FormGroup label="DOSYA DURUMU">
                   <div style={{display:'flex', gap:4}}>
-                    <PillBtn label="AÇIK" active={d.dosya_durumu==='AÇIK'||(!d.dosya_durumu)} color={C.success} onClick={() => dUp('dosya_durumu', 'AÇIK')}/>
-                    <PillBtn label="KAPALI" active={d.dosya_durumu==='KAPALI'} color={C.danger} onClick={() => dUp('dosya_durumu', 'KAPALI')}/>
+                    <PillBtn label="AÇIK" active={d.dosya_durumu==='AÇIK'||(!d.dosya_durumu)} color="#059669" onClick={() => dUp('dosya_durumu', 'AÇIK')}/>
+                    <PillBtn label="KAPALI" active={d.dosya_durumu==='KAPALI'} color="#059669" onClick={() => dUp('dosya_durumu', 'KAPALI')}/>
                   </div>
                 </FormGroup>
 
-                {/* KUSUR DURUMU - sadece görüşme sırasında seçilir */}
+                {/* KUSUR DURUMU */}
                 <FormGroup label="KUSUR DURUMU">
                   <div style={{display:'flex', gap:3}}>
                     {['%0','%25','%50','%75','%100'].map(t => {
                       const aktif = d.kusur_durumu === t;
-                      const renk = t==='%0'?C.success:t==='%25'?'#22c55e':t==='%50'?C.warning:t==='%75'?'#f97316':C.danger;
-                      return <PillBtn key={t} label={t} active={aktif} color={renk} onClick={() => dUp('kusur_durumu', t)}/>;
+                      return <PillBtn key={t} label={t} active={aktif} color="#2563eb" onClick={() => dUp('kusur_durumu', t)}/>;
                     })}
                   </div>
                 </FormGroup>
@@ -1108,12 +1107,12 @@ MR.CrmAramaPage = ({setPage, user}) => {
                   <>
                     <FormGroup label="KAZA POZİSYONU">
                       <div style={{display:'flex', gap:4}}>
-                        {['SÜRÜCÜ','YOLCU','YAYA'].map(t => <PillBtn key={t} label={t} active={d.kaza_pozisyonu===t} color={t==='YAYA'?C.danger:t==='YOLCU'?C.warning:C.accent} onClick={() => dUp('kaza_pozisyonu', t)}/>)}
+                        {['SÜRÜCÜ','YOLCU','YAYA'].map(t => <PillBtn key={t} label={t} active={d.kaza_pozisyonu===t} color="#7c3aed" onClick={() => dUp('kaza_pozisyonu', t)}/>)}
                       </div>
                     </FormGroup>
                     <FormGroup label="GÜNCEL DURUM">
                       <div style={{display:'flex', gap:4}}>
-                        {['HASTAHANE','TABURCU'].map(t => <PillBtn key={t} label={t} active={d.guncel_durum===t} color={t==='HASTAHANE'?C.danger:C.success} onClick={() => dUp('guncel_durum', t)}/>)}
+                        {['HASTAHANE','TABURCU'].map(t => <PillBtn key={t} label={t} active={d.guncel_durum===t} color="#d97706" onClick={() => dUp('guncel_durum', t)}/>)}
                       </div>
                     </FormGroup>
                   </>
@@ -1123,17 +1122,12 @@ MR.CrmAramaPage = ({setPage, user}) => {
                 <div style={{marginTop:10}}>
                   <FormGroup label="DURUM">
                     <div style={{display:'flex', gap:4}}>
-                      {[{v:'Belirsiz',l:'BELİRSİZ',c:C.warning},{v:'Alindi',l:'ALINDI',c:C.success},{v:'Olumsuz',l:'OLUMSUZ',c:C.danger}].map(dd => (
-                        <PillBtn key={dd.v} label={dd.l} active={d.durum===dd.v} color={dd.c} onClick={() => { dUp('durum', dd.v); api.yonlendirmeUpdate({id:d.id, durum:dd.v}); load(); }}/>
+                      {[{v:'Belirsiz',l:'BELİRSİZ'},{v:'Alindi',l:'ALINDI'},{v:'Olumsuz',l:'OLUMSUZ'}].map(dd => (
+                        <PillBtn key={dd.v} label={dd.l} active={d.durum===dd.v} color="#dc2626" onClick={() => { dUp('durum', dd.v); api.yonlendirmeUpdate({id:d.id, durum:dd.v}); load(); }}/>
                       ))}
                     </div>
                   </FormGroup>
                 </div>
-
-                {/* DETAY / NOT */}
-                <FormGroup label="GÖRÜŞME NOTU / DETAY">
-                  <input style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.magdur_ilce||''} onChange={e => dUp('magdur_ilce', e.target.value.toUpperCase())} placeholder="DETAY / NOT"/>
-                </FormGroup>
 
                 {/* KAYDET BUTONU */}
                 <button style={{...S.btn, background:C.success, color:'#fff', fontSize:12, padding:'10px 24px', borderRadius:8, width:'100%', justifyContent:'center', marginTop:10}} onClick={dSave}>
