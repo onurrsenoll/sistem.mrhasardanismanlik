@@ -748,9 +748,11 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
       ad_soyad: crm.ad_soyad || '',
       tc_vergi_no: crm.tc_vergi_no || '',
       telefon: crm.telefon || '',
+      telefon2: crm.telefon2 || '',
       email: crm.email || '',
       il: crm.il || '',
       ilce: crm.ilce || '',
+      adres: crm.adres || '',
       plaka: crm.plaka || '',
       marka: crm.marka || '',
       model_adi: crm.model_adi || '',
@@ -758,6 +760,10 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
       arac_km: crm.arac_km || '',
       olay_aciklama: crm.olay_aciklama || '',
       dosya_turu: crm.dosya_turu || 'ADK',
+      kaza_tarihi: crm.kaza_tarihi || '',
+      kaza_turu: crm.kaza_turu || '',
+      pozisyon: crm.pozisyon || '',
+      gorusme_sonucu: crm.gorusme_sonucu || '',
       kaynak: crm.kaynak || 'TELEFON',
       durum: crm.durum || 'Yeni',
       oncelik: crm.oncelik || 'NORMAL',
@@ -893,6 +899,7 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
         <div style={S.card}>
           <SectionTitle icon="Info" title="MÜŞTERİ & ARAÇ BİLGİLERİ" sub="DETAY BİLGİLER"/>
           <div style={{padding: 20}}>
+            {/* MÜŞTERİ BİLGİLERİ */}
             {infoRow('AD SOYAD', crm.ad_soyad)}
             {infoRow('TC / VERGİ NO', crm.tc_vergi_no)}
             {infoRow('TELEFON', crm.telefon ? (
@@ -905,18 +912,30 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
                 </button>
               </div>
             ) : '-')}
+            {infoRow('TELEFON 2', crm.telefon2)}
             {infoRow('E-POSTA', crm.email)}
             {infoRow('İL / İLÇE', [crm.il, crm.ilce].filter(Boolean).join(' / ') || '-')}
-            {crm.plaka && <div style={{padding:'6px 0', borderBottom:`1px solid ${C.border}`, marginTop:6}}>
-              <div style={{fontSize:10, fontWeight:700, color:C.accent, letterSpacing:1, marginBottom:6}}>ARAÇ BİLGİLERİ</div>
-            </div>}
+            {infoRow('ADRES', crm.adres)}
+
+            {/* ARAÇ BİLGİLERİ */}
+            <div style={{padding:'8px 0', borderBottom:`1px solid ${C.border}`, marginTop:8}}>
+              <div style={{fontSize:10, fontWeight:700, color:C.accent, letterSpacing:1}}>ARAÇ BİLGİLERİ</div>
+            </div>
             {infoRow('PLAKA', crm.plaka)}
             {infoRow('MARKA / MODEL', [crm.marka, crm.model_adi].filter(Boolean).join(' - ') || '-')}
             {infoRow('YIL / KM', [crm.arac_yili, crm.arac_km ? crm.arac_km + ' KM' : ''].filter(Boolean).join(' / ') || '-')}
-            <div style={{padding:'6px 0', borderBottom:`1px solid ${C.border}`, marginTop:6}}>
-              <div style={{fontSize:10, fontWeight:700, color:C.accent, letterSpacing:1, marginBottom:6}}>DOSYA BİLGİLERİ</div>
+
+            {/* KAZA & DOSYA BİLGİLERİ */}
+            <div style={{padding:'8px 0', borderBottom:`1px solid ${C.border}`, marginTop:8}}>
+              <div style={{fontSize:10, fontWeight:700, color:C.accent, letterSpacing:1}}>KAZA & DOSYA BİLGİLERİ</div>
             </div>
             {infoRow('DOSYA TÜRÜ', crm.dosya_turu)}
+            {infoRow('KAZA TARİHİ', crm.kaza_tarihi ? (MR.tarihFmt ? MR.tarihFmt(crm.kaza_tarihi) : crm.kaza_tarihi) : '-')}
+            {infoRow('KAZA TÜRÜ', crm.kaza_turu ? crm.kaza_turu.replace(/_/g,' ') : '-')}
+            {infoRow('POZİSYON', crm.pozisyon || '-')}
+            {infoRow('GÖRÜŞME SONUCU', crm.gorusme_sonucu ? (
+              <Badge text={crm.gorusme_sonucu} color={crm.gorusme_sonucu.includes('OLUMLU') ? C.success : crm.gorusme_sonucu.includes('RED') || crm.gorusme_sonucu.includes('OLUMSUZ') ? C.danger : C.warning}/>
+            ) : '-')}
             {infoRow('KAYNAK', crm.kaynak)}
             {infoRow('ÖNCELİK', crm.oncelik || 'NORMAL')}
             {infoRow('DURUM', (
@@ -925,6 +944,8 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
             {infoRow('ATANAN', crm.atanan_adi || '-')}
             {infoRow('KAYIT TARİHİ', MR.tarihFmt ? MR.tarihFmt(crm.created_at) : (crm.created_at || '-'))}
             {infoRow('SON İLETİŞİM', MR.tarihFmt ? MR.tarihFmt(crm.son_iletisim) : (crm.son_iletisim || '-'))}
+
+            {/* OLAY AÇIKLAMASI */}
             {crm.olay_aciklama && (
               <div style={{marginTop:10}}>
                 <div style={{fontSize:10, fontWeight:700, color:C.accent, letterSpacing:1, marginBottom:6}}>OLAY AÇIKLAMASI</div>
@@ -999,6 +1020,9 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
               <FormGroup label="TELEFON *">
                 <input style={S.input} value={editData.telefon} onChange={e => editUp('telefon', e.target.value)} placeholder="05XX XXX XXXX"/>
               </FormGroup>
+              <FormGroup label="TELEFON 2">
+                <input style={S.input} value={editData.telefon2||''} onChange={e => editUp('telefon2', e.target.value)} placeholder="2. TELEFON"/>
+              </FormGroup>
               <FormGroup label="E-POSTA">
                 <input style={S.input} value={editData.email} onChange={e => editUp('email', e.target.value)} placeholder="E-POSTA"/>
               </FormGroup>
@@ -1011,6 +1035,11 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
               <FormGroup label="İLÇE">
                 <input style={S.input} value={editData.ilce} onChange={e => editUp('ilce', e.target.value)} placeholder="İLÇE"/>
               </FormGroup>
+              <div style={{gridColumn:'span 2'}}>
+                <FormGroup label="ADRES">
+                  <input style={S.input} value={editData.adres||''} onChange={e => editUp('adres', e.target.value)} placeholder="ADRES"/>
+                </FormGroup>
+              </div>
             </div>
             {/* ARAÇ BİLGİLERİ */}
             <div style={{fontSize:11, fontWeight:700, color:C.accent, letterSpacing:1, marginBottom:10}}>
@@ -1037,16 +1066,43 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
               </FormGroup>
               <div/>
             </div>
-            {/* OLAY & DOSYA BİLGİLERİ */}
+            {/* KAZA & DOSYA BİLGİLERİ */}
             <div style={{fontSize:11, fontWeight:700, color:C.accent, letterSpacing:1, marginBottom:10}}>
-              <LIcon name="FileText" size={12} color={C.accent}/> OLAY & DOSYA BİLGİLERİ
+              <LIcon name="FileText" size={12} color={C.accent}/> KAZA & DOSYA BİLGİLERİ
             </div>
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:14, marginBottom:14}}>
-              <FormGroup label="TÜR">
+              <FormGroup label="DOSYA TÜRÜ">
                 <select style={S.select} value={editData.dosya_turu} onChange={e => editUp('dosya_turu', e.target.value)}>
                   <option value="ADK">ADK</option>
                   <option value="BH">BEDENİ HASAR</option>
                   <option value="MDK">MOTOR DEĞER KAYBI</option>
+                </select>
+              </FormGroup>
+              <FormGroup label="KAZA TARİHİ">
+                <MR.DateInput value={editData.kaza_tarihi||''} onChange={v => editUp('kaza_tarihi', v)}/>
+              </FormGroup>
+              <FormGroup label="KAZA TÜRÜ">
+                <select style={S.select} value={editData.kaza_turu||''} onChange={e => editUp('kaza_turu', e.target.value)}>
+                  <option value="">SEÇİNİZ</option>
+                  <option value="TEK_TARAFLI">TEK TARAFLI</option>
+                  <option value="CIFT_TARAFLI">ÇİFT TARAFLI</option>
+                  <option value="ZINCIRLEME">ZİNCİRLEME</option>
+                </select>
+              </FormGroup>
+              <FormGroup label="POZİSYON">
+                <select style={S.select} value={editData.pozisyon||''} onChange={e => editUp('pozisyon', e.target.value)}>
+                  <option value="">SEÇİNİZ</option>
+                  <option value="SURUCU">SÜRÜCÜ</option>
+                  <option value="YOLCU">YOLCU</option>
+                  <option value="YAYA">YAYA</option>
+                </select>
+              </FormGroup>
+            </div>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:14, marginBottom:14}}>
+              <FormGroup label="GÖRÜŞME SONUCU">
+                <select style={S.select} value={editData.gorusme_sonucu||''} onChange={e => editUp('gorusme_sonucu', e.target.value)}>
+                  <option value="">SEÇİNİZ</option>
+                  {['OLUMLU – TEKRAR ARANACAK','OLUMLU – BELGE / BİLGİ BEKLENİYOR','OLUMLU – ZİYARET OLUŞTURULDU','OLUMLU – SAHAYA AKTARILDI, TAKİP EDİLİYOR','MALULİYET VAR – TAKİP EDİLECEK','RED – ARANMAK İSTEMİYOR','RED – MALULİYET YOK','OLUMSUZ – KUSURLU TARAF','ULAŞILAMADI'].map(g => <option key={g} value={g}>{g}</option>)}
                 </select>
               </FormGroup>
               <FormGroup label="KAYNAK">
