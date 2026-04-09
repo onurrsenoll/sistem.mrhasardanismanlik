@@ -760,6 +760,43 @@ MR.QrRuhsatPage = ({setPage, user}) => {
     toast('EXCEL DOSYASI İNDİRİLDİ', 'success');
   }, [files]);
 
+  // Yenileme Takibine Aktar
+  const yenilemeAktar = useCallback(async () => {
+    const success = files.filter(f => f.status === 'success' && f.result);
+    if (!success.length) { toast('AKTARILACAK SONUÇ YOK', 'warning'); return; }
+
+    const policeler = success.map(f => {
+      const r = f.result;
+      const musteriAdi = [(r.ad || ''), (r.soyad || '')].filter(Boolean).join(' ').trim() || '-';
+      return {
+        police_no: 'RHT-' + Date.now().toString().slice(-6) + '-' + Math.random().toString(36).slice(2,5).toUpperCase(),
+        musteri_adi: musteriAdi,
+        musteri_tc: r.tc || '',
+        plaka: r.plaka || '',
+        belge_seri: r.belgeSeri || '',
+        brans: 'TRAFİK',
+        sigorta_sirketi: 'RUHSAT OKUMA',
+        baslangic_tarihi: new Date().toISOString().slice(0,10),
+        bitis_tarihi: '',
+        brut_prim: 0,
+        net_prim: 0,
+        komisyon_orani: 0,
+        notlar: 'RUHSAT OCR: ' + (r.marka || '') + ' ' + (r.modelYili || '') + ' ŞASE: ' + (r.sase || '')
+      };
+    });
+
+    try {
+      const r = await MR.api.policeExcelImport({ policeler });
+      if (r?.success) {
+        toast((r.data?.basarili || policeler.length) + ' KAYIT YENİLEME TAKİBİNE AKTARILDI', 'success');
+      } else {
+        toast(r?.error || 'AKTARIM HATASI', 'error');
+      }
+    } catch(e) {
+      toast('AKTARIM HATASI: ' + e.message, 'error');
+    }
+  }, [files]);
+
   // Manuel düzenleme
   const updateResult = useCallback((id, field, value) => {
     setFiles(prev => prev.map(f => f.id === id ? { ...f, result: { ...f.result, [field]: value } } : f));
@@ -850,6 +887,10 @@ MR.QrRuhsatPage = ({setPage, user}) => {
           onClick: exportExcel, disabled: !successCount,
           style: {...S.btn, background:'#059669', padding:'10px 18px', borderRadius:10, color:'#fff', fontSize:12, fontWeight:800, cursor: successCount ? 'pointer' : 'not-allowed', opacity: successCount ? 1 : 0.5, border:'none', display:'flex', alignItems:'center', gap:6}
         }, React.createElement(LIcon, {name:'FileSpreadsheet', size:15, color:'#fff'}), 'EXCEL İNDİR'),
+        React.createElement('button', {
+          onClick: yenilemeAktar, disabled: !successCount,
+          style: {...S.btn, background:'#7c3aed', padding:'10px 18px', borderRadius:10, color:'#fff', fontSize:12, fontWeight:800, cursor: successCount ? 'pointer' : 'not-allowed', opacity: successCount ? 1 : 0.5, border:'none', display:'flex', alignItems:'center', gap:6}
+        }, React.createElement(LIcon, {name:'RefreshCw', size:15, color:'#fff'}), 'YENİLEME TAKİBİNE AKTAR'),
         React.createElement('button', {
           onClick: clearAll,
           style: {...S.btn, background: C.danger || '#ef4444', padding:'10px 18px', borderRadius:10, color:'#fff', fontSize:12, fontWeight:800, cursor:'pointer', border:'none', display:'flex', alignItems:'center', gap:6}
