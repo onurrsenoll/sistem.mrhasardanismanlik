@@ -616,7 +616,7 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
     const r = new FileReader();
     r.onload = e => {
       const dataUrl = e.target.result;
-      res({ b64: dataUrl.split(',')[1], mime: file.type, preview: dataUrl });
+      res({ dataUrl, b64: dataUrl.split(',')[1], mime: file.type, preview: dataUrl });
     };
     r.onerror = rej;
     r.readAsDataURL(file);
