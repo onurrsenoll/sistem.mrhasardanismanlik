@@ -233,10 +233,20 @@ function normalizeMime(mime) {
   return mime;
 }
 
-function imgContent(b64, mime, text) {
-  const normalized = normalizeMime(mime);
+function imgContent(b64OrArray, mimeOrText, text) {
+  // Tek görsel: imgContent(b64, mime, text)
+  // Çoklu görsel: imgContent([{b64,mime},...], text)
+  if (Array.isArray(b64OrArray)) {
+    const content = b64OrArray.map(img => ({
+      type: "image_url",
+      image_url: { url: `data:${normalizeMime(img.mime)};base64,${img.b64}` }
+    }));
+    content.push({ type: "text", text: mimeOrText });
+    return content;
+  }
+  const normalized = normalizeMime(mimeOrText);
   return [
-    { type: "image_url", image_url: { url: `data:${normalized};base64,${b64}` } },
+    { type: "image_url", image_url: { url: `data:${normalized};base64,${b64OrArray}` } },
     { type: "text", text }
   ];
 }
@@ -389,10 +399,10 @@ KURALLAR:
 ══════════════════════════════════════════════════════ */
 
 // Alan odaklı yeniden analiz: Sadece belirli bir alanı oku
-async function alanOdakliYenidenOku(apiKey, b64, mime, alanAciklama) {
+async function alanOdakliYenidenOku(apiKey, images, alanAciklama) {
   const txt = await callAI(
     apiKey,
-    imgContent(b64, mime, alanAciklama + ' SADECE JSON döndür: {"deger":"değer","guven":"yuksek|orta|dusuk"}'),
+    imgContent(images, alanAciklama + ' SADECE JSON döndür: {"deger":"değer","guven":"yuksek|orta|dusuk"}'),
     'Sen Türk trafik tutanağı OCR uzmanısın. Sadece istenen alanı oku.',
     300
   );
@@ -403,14 +413,18 @@ async function alanOdakliYenidenOku(apiKey, b64, mime, alanAciklama) {
   }
 }
 
-async function anlasmaKTTAnaliz(apiKey, b64, mime, onProgress) {
+async function anlasmaKTTAnaliz(apiKey, images, onProgress) {
+  // images: [{b64, mime}, ...] - birden fazla sayfa/görsel olabilir
+  const sayfaSayisi = images.length;
+  const sayfaBilgi = sayfaSayisi > 1 ? ` (${sayfaSayisi} SAYFA TEK EVRAK)` : '';
+
   // PASS 1: Yapısal alanlar + 4 kritik alan güven skorları
-  onProgress && onProgress('1/2 Yapısal alanlar + 4 kritik alan okunuyor...');
+  onProgress && onProgress(`1/2 Yapısal alanlar + 4 kritik alan okunuyor${sayfaBilgi}...`);
   const pass1Txt = await callAI(
     apiKey,
-    imgContent(b64, mime, "Bu bir Türk trafik kazası tutanağı fotoğrafıdır, Türkçe el yazısıyla doldurulmuş olabilir. Her YAPISAL ALANI (plaka, TC, tarih, saat, konum, kişi bilgileri, sigorta, poliçe) dikkatlice oku. Özellikle 4 KRİTİK ALAN için her birine ayrı GÜVEN SKORU ver: Plaka, Adı Soyadı, TC Kimlik, Telefon. Belirsiz alanları [OKUNAMADI] veya [BELİRSİZ: tahmin] olarak işaretle. SADECE JSON döndür."),
+    imgContent(images, `Bu ${sayfaSayisi > 1 ? sayfaSayisi + ' sayfalık AYNI Türk trafik kazası tutanağıdır, tüm sayfaları birleşik analiz et' : 'bir Türk trafik kazası tutanağı fotoğrafıdır'}, Türkçe el yazısıyla doldurulmuş olabilir. Her YAPISAL ALANI (plaka, TC, tarih, saat, konum, kişi bilgileri, sigorta, poliçe) dikkatlice oku. Özellikle 4 KRİTİK ALAN için her birine ayrı GÜVEN SKORU ver: Plaka, Adı Soyadı, TC Kimlik, Telefon. Belirsiz alanları [OKUNAMADI] veya [BELİRSİZ: tahmin] olarak işaretle. SADECE JSON döndür.`),
     ANLASMA_PASS1_SYS,
-    2000
+    2500
   );
   const pass1 = safeParseJSON(pass1Txt);
 
@@ -441,7 +455,7 @@ async function anlasmaKTTAnaliz(apiKey, b64, mime, onProgress) {
       onProgress && onProgress(`Yeniden okuma: ${alan.label.split(' ')[0]}...`);
       try {
         const retry = await alanOdakliYenidenOku(
-          apiKey, b64, mime,
+          apiKey, images,
           `Bu bir Türk trafik kazası tutanağıdır. SADECE ${alan.label} alanını net şekilde oku. Önceki okumada format hatası vardı (${valid.reason}). Dikkatlice oku.`
         );
         if (retry.deger && !hasMarker(retry.deger)) {
@@ -456,12 +470,12 @@ async function anlasmaKTTAnaliz(apiKey, b64, mime, onProgress) {
   }
 
   // PASS 2: Beyan + Kroki + TRAMER kusur analizi
-  onProgress && onProgress('2/2 Beyanlar ve kroki analiz ediliyor (TRAMER)...');
+  onProgress && onProgress(`2/2 Beyanlar ve kroki analiz ediliyor (TRAMER)${sayfaBilgi}...`);
   const pass2Txt = await callAI(
     apiKey,
-    imgContent(b64, mime, "Bu bir Türk trafik kazası tutanağı fotoğrafıdır. BÖLÜM 9-10 (KROKİ) ve BÖLÜM 11 (BEYAN) kısımlarını Türkçe el yazısından oku. Her iki sürücünün beyanını tam metin olarak çıkar, krokiyi yorumla, TRAMER senaryosuyla eşleştir ve kusur oranı belirle. Belirsiz alanları [OKUNAMADI] veya [BELİRSİZ: tahmin] olarak işaretle. SADECE JSON döndür."),
+    imgContent(images, `${sayfaSayisi > 1 ? sayfaSayisi + ' sayfalık AYNI Türk trafik kazası tutanağı. Tüm sayfaları birleşik analiz et.' : 'Bu bir Türk trafik kazası tutanağı fotoğrafıdır.'} BÖLÜM 9-10 (KROKİ) ve BÖLÜM 11 (BEYAN) kısımlarını Türkçe el yazısından oku. Her iki sürücünün beyanını tam metin olarak çıkar, krokiyi yorumla, TRAMER senaryosuyla eşleştir ve kusur oranı belirle. Belirsiz alanları [OKUNAMADI] veya [BELİRSİZ: tahmin] olarak işaretle. SADECE JSON döndür.`),
     ANLASMA_PASS2_SYS,
-    2500
+    3000
   );
   const pass2 = safeParseJSON(pass2Txt);
 
@@ -533,37 +547,43 @@ async function anlasmaKTTAnaliz(apiKey, b64, mime, onProgress) {
   };
 }
 
-async function polisKTTAnaliz(apiKey, b64, mime, onProgress) {
-  onProgress && onProgress('Polis tutanağı analiz ediliyor...');
+async function polisKTTAnaliz(apiKey, images, onProgress) {
+  const sayfaSayisi = images.length;
+  const sayfaBilgi = sayfaSayisi > 1 ? ` (${sayfaSayisi} sayfa birleşik)` : '';
+  onProgress && onProgress(`Polis tutanağı analiz ediliyor${sayfaBilgi}...`);
   const txt = await callAI(
     apiKey,
-    imgContent(b64, mime, "Bu bir Türk POLİS trafik kaza tespit tutanağı fotoğrafıdır. Tüm araçları, sürücüleri, yaralıları ve M.KAZANIN ÖZETİ bölümünü tam olarak oku. Türkçe karakterleri dikkate al. Belirsiz alanları [OKUNAMADI] veya [BELİRSİZ: tahmin] olarak işaretle. SADECE JSON döndür."),
+    imgContent(images, `${sayfaSayisi > 1 ? 'Bu ' + sayfaSayisi + ' SAYFALIK AYNI Türk POLİS trafik kaza tespit tutanağıdır, tüm sayfaları birleşik analiz et.' : 'Bu bir Türk POLİS trafik kaza tespit tutanağı fotoğrafıdır.'} Tüm araçları, sürücüleri, yaralıları ve M.KAZANIN ÖZETİ bölümünü tam olarak oku. Türkçe karakterleri dikkate al. Belirsiz alanları [OKUNAMADI] veya [BELİRSİZ: tahmin] olarak işaretle. SADECE JSON döndür.`),
     POLIS_SYS,
-    2500
+    3500
   );
   const parsed = safeParseJSON(txt);
   return {
     tip: 'polis_ktt',
     ...parsed,
     _okuma_kalitesi: parsed._okuma_kalitesi || 'orta',
-    _belirsiz_alanlar: parsed._belirsiz_alanlar || []
+    _belirsiz_alanlar: parsed._belirsiz_alanlar || [],
+    _sayfa_sayisi: sayfaSayisi
   };
 }
 
-async function hasarIhbarAnaliz(apiKey, b64, mime, onProgress) {
-  onProgress && onProgress('Hasar ihbar föyü analiz ediliyor...');
+async function hasarIhbarAnaliz(apiKey, images, onProgress) {
+  const sayfaSayisi = images.length;
+  const sayfaBilgi = sayfaSayisi > 1 ? ` (${sayfaSayisi} sayfa birleşik)` : '';
+  onProgress && onProgress(`Hasar ihbar föyü analiz ediliyor${sayfaBilgi}...`);
   const txt = await callAI(
     apiKey,
-    imgContent(b64, mime, "Bu bir Türk sigorta şirketi hasar ihbar föyü / dosya kapağı fotoğrafıdır. Tüm alanları (dosya, poliçe, sigortalı, araç, hasar, eksper, mağdurlar) dikkatlice oku. Her sigorta şirketinin formatı farklı olabilir. Belirsiz alanları [OKUNAMADI] veya [BELİRSİZ: tahmin] olarak işaretle. SADECE JSON döndür."),
+    imgContent(images, `${sayfaSayisi > 1 ? 'Bu ' + sayfaSayisi + ' SAYFALIK AYNI Türk sigorta şirketi hasar ihbar föyüdür, tüm sayfaları birleşik analiz et.' : 'Bu bir Türk sigorta şirketi hasar ihbar föyü / dosya kapağı fotoğrafıdır.'} Tüm alanları (dosya, poliçe, sigortalı, araç, hasar, eksper, mağdurlar) dikkatlice oku. Her sigorta şirketinin formatı farklı olabilir. Belirsiz alanları [OKUNAMADI] veya [BELİRSİZ: tahmin] olarak işaretle. SADECE JSON döndür.`),
     HASAR_SYS,
-    2500
+    3500
   );
   const parsed = safeParseJSON(txt);
   return {
     tip: 'hasar_ihbar',
     ...parsed,
     _okuma_kalitesi: parsed._okuma_kalitesi || 'orta',
-    _belirsiz_alanlar: parsed._belirsiz_alanlar || []
+    _belirsiz_alanlar: parsed._belirsiz_alanlar || [],
+    _sayfa_sayisi: sayfaSayisi
   };
 }
 
@@ -661,31 +681,40 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
   };
 
   const processItem = async (item) => {
-    upd(item.id, {status:'analyzing', sub:'Görüntü ön işleme (grayscale + kontrast + keskinleştirme)...'});
+    upd(item.id, {status:'analyzing', sub:'Görüntü ön işleme...'});
     const progressCb = (msg) => upd(item.id, {sub: msg});
     try {
-      // 1. Orijinal dosyayı dataUrl'e çevir
-      const { dataUrl: origDataUrl, mime: origMime } = await fileToB64(item.file);
+      // Item 'pages' array'i içeriyorsa (PDF = çoklu sayfa), her sayfayı ön işle
+      // Yoksa tek image → ön işle
+      let processedImages = [];
 
-      // 2. Görüntü ön işleme (Canvas API ile)
-      let b64, mime;
-      if (origMime.startsWith('image/')) {
-        const enhanced = await enhanceImage(origDataUrl);
-        b64 = enhanced.b64;
-        mime = enhanced.mime;
+      if (item.pages && item.pages.length > 0) {
+        // PDF sayfaları (zaten dataUrl formatında)
+        upd(item.id, {sub: `${item.pages.length} sayfa ön işleniyor...`});
+        for (let i = 0; i < item.pages.length; i++) {
+          const page = item.pages[i];
+          const enhanced = await enhanceImage(page.dataUrl);
+          processedImages.push({ b64: enhanced.b64, mime: enhanced.mime });
+        }
       } else {
-        b64 = origDataUrl.split(',')[1];
-        mime = origMime;
+        // Tek image dosyası
+        const { dataUrl: origDataUrl, mime: origMime } = await fileToB64(item.file);
+        if (origMime.startsWith('image/')) {
+          const enhanced = await enhanceImage(origDataUrl);
+          processedImages.push({ b64: enhanced.b64, mime: enhanced.mime });
+        } else {
+          processedImages.push({ b64: origDataUrl.split(',')[1], mime: origMime });
+        }
       }
 
-      upd(item.id, {sub: 'Claude-Sonnet analiz ediyor...'});
+      upd(item.id, {sub: `Claude-Sonnet analiz ediyor (${processedImages.length} sayfa)...`});
       let result;
       if (item.tip === 'anlasma_ktt') {
-        result = await anlasmaKTTAnaliz(apiKey, b64, mime, progressCb);
+        result = await anlasmaKTTAnaliz(apiKey, processedImages, progressCb);
       } else if (item.tip === 'polis_ktt') {
-        result = await polisKTTAnaliz(apiKey, b64, mime, progressCb);
+        result = await polisKTTAnaliz(apiKey, processedImages, progressCb);
       } else {
-        result = await hasarIhbarAnaliz(apiKey, b64, mime, progressCb);
+        result = await hasarIhbarAnaliz(apiKey, processedImages, progressCb);
       }
       upd(item.id, {status:'done', result, sub: null});
       setSelId(prev => prev || item.id);
@@ -718,33 +747,29 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
     const allItems = [];
     for (const f of valid) {
       if (f.type === 'application/pdf') {
-        // PDF → her sayfa ayrı item
+        // PDF → TEK ITEM, tüm sayfalar pages array'inde
         if (!window.pdfjsLib) {
           alert('PDF.js kütüphanesi henüz yüklenmedi. Birkaç saniye bekleyip tekrar deneyin.');
           return;
         }
         try {
-          const images = await pdfToImages(f);
-          for (const img of images) {
-            // Image'i File objesine çevir (processItem beklentisi)
-            const blob = await (await fetch(img.dataUrl)).blob();
-            const pageFile = new File([blob], img.name, {type: 'image/jpeg'});
-            allItems.push({
-              id: Date.now() + '-' + Math.random().toString(36).slice(2,6),
-              name: img.name,
-              file: pageFile,
-              preview: img.dataUrl,
-              status: 'pending',
-              sub: 'Sırada (PDF sayfası)',
-              result: null,
-              tip: tip
-            });
-          }
+          const pages = await pdfToImages(f);
+          allItems.push({
+            id: Date.now() + '-' + Math.random().toString(36).slice(2,6),
+            name: f.name + ` (${pages.length} sayfa)`,
+            file: f,
+            pages: pages, // Tüm sayfalar tek item'da
+            preview: pages[0]?.dataUrl || null,
+            status: 'pending',
+            sub: `Sırada (${pages.length} sayfalık PDF)`,
+            result: null,
+            tip: tip
+          });
         } catch (e) {
           alert('PDF okuma hatası: ' + e.message);
         }
       } else {
-        // Normal image
+        // Normal image (tek sayfa)
         allItems.push({
           id: Date.now() + '-' + Math.random().toString(36).slice(2,6),
           name: f.name,
