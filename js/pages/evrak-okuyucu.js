@@ -49,6 +49,7 @@ async function callAI(apiKey, userContent, system, maxTokens = 2000) {
     body: JSON.stringify({
       model: "anthropic/claude-sonnet-4-5",
       max_tokens: maxTokens,
+      temperature: 0.1,
       messages: msgs
     })
   });
@@ -60,12 +61,48 @@ async function callAI(apiKey, userContent, system, maxTokens = 2000) {
   return (d.choices?.[0]?.message?.content || "").replace(/```json|```/g, "").trim();
 }
 
+// Media type normalize (image/jpg → image/jpeg)
+function normalizeMime(mime) {
+  if (!mime) return 'image/jpeg';
+  if (mime === 'image/jpg') return 'image/jpeg';
+  if (!mime.startsWith('image/')) return 'image/jpeg';
+  return mime;
+}
+
 function imgContent(b64, mime, text) {
+  const normalized = normalizeMime(mime);
   return [
-    { type: "image_url", image_url: { url: `data:${mime};base64,${b64}` } },
+    { type: "image_url", image_url: { url: `data:${normalized};base64,${b64}` } },
     { type: "text", text }
   ];
 }
+
+/* ══════════════════════════════════════════════════════
+   TÜRKÇE EL YAZISI ORTAK SYSTEM PROMPT EKLENTİSİ
+══════════════════════════════════════════════════════ */
+const TURKCE_KURALLAR = `
+
+TÜRKÇE EL YAZISI OKUMA KURALLARI (KRİTİK):
+- Bu bir Türk trafik kazası tutanağı. TÜRKÇE karakterleri dikkate al: ğ, ı, ş, ü, ö, ç, İ
+- PLAKA FORMATI: 2 rakam + 1-3 harf + 2-4 rakam (örn: 34 ABC 123, 06 DTZ 686, 55AOM782)
+- TARİH FORMATI: GG.AA.YYYY (örn: 28.02.2026)
+- SAAT FORMATI: SS:DD (örn: 16:49)
+- TC KİMLİK: ASLA ve ASLA 11 haneden farklı olamaz
+- TELEFON: 05XX XXX XX XX (10-11 hane, 05 ile başlar)
+- POLİÇE NO: Genellikle 8-12 haneli sayı
+
+BELİRSİZLİK KURALLARI (ÇOK ÖNEMLİ):
+- Bir alanı NET okuyamıyorsan ASLA uydurma, tahmin etme
+- Net okunamayan alanlara "[OKUNAMADI]" yaz
+- Bağlamdan tahmin edebiliyorsan "[BELİRSİZ: tahminin]" formatında yaz
+- Örnek: plaka net değilse "plaka": "[OKUNAMADI]"
+- Örnek: tarih yarı okunaksa "tarih": "[BELİRSİZ: 28.02.2026]"
+- Emin olduğun alanları direkt yaz, belirsizleri flag'le
+
+OKUMA KALİTESİ DEĞERLENDİRMESİ:
+- "_okuma_kalitesi": "yuksek" (tüm alanlar net) / "orta" (2-3 belirsiz) / "dusuk" (çoğu belirsiz)
+- "_belirsiz_alanlar": belirsiz/okunamadı olan alanların ADI listesi (örn: ["aracA.plaka","kroki.carpma"])
+`;
 
 /* ══════════════════════════════════════════════════════
    TRAMER 48 SENARYO (sadece Anlaşmalı KTT için)
