@@ -591,7 +591,7 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
   };
   const tipInfo = TIPLER[tip];
 
-  // Sistem ayarlarından OpenRouter key çek + XLSX yükle
+  // Sistem ayarlarından OpenRouter key çek + XLSX + PDF.js yükle
   useEffect(() => {
     (async () => {
       try {
@@ -608,6 +608,17 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
       script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
       document.head.appendChild(script);
     }
+    // PDF.js kütüphanesi yükle (PDF → image için)
+    if (!window.pdfjsLib) {
+      const pdfScript = document.createElement('script');
+      pdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      pdfScript.onload = () => {
+        if (window.pdfjsLib) {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+      };
+      document.head.appendChild(pdfScript);
+    }
   }, []);
 
   const upd = (id, p) => setItems(x => x.map(i => i.id === id ? {...i, ...p} : i));
@@ -621,6 +632,33 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
     r.onerror = rej;
     r.readAsDataURL(file);
   });
+
+  // PDF → Image dönüşümü (her sayfa ayrı image)
+  const pdfToImages = async (file) => {
+    if (!window.pdfjsLib) throw new Error('PDF.js yüklenmedi');
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({data: arrayBuffer}).promise;
+    const images = [];
+    const pageCount = Math.min(pdf.numPages, 10); // Max 10 sayfa
+    for (let i = 1; i <= pageCount; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({scale: 2.0}); // Yüksek çözünürlük
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      await page.render({canvasContext: ctx, viewport}).promise;
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      images.push({
+        name: `${file.name} (Sayfa ${i}/${pageCount})`,
+        dataUrl,
+        b64: dataUrl.split(',')[1],
+        mime: 'image/jpeg',
+        preview: dataUrl
+      });
+    }
+    return images;
+  };
 
   const processItem = async (item) => {
     upd(item.id, {status:'analyzing', sub:'Görüntü ön işleme (grayscale + kontrast + keskinleştirme)...'});
@@ -666,25 +704,62 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
     procRef.current = false;
   };
 
-  const addFiles = useCallback((fl) => {
+  const addFiles = useCallback(async (fl) => {
     if (!apiKey) {
       alert('OpenRouter API Key tanımlı değil! Sistem > Firma Ayarları\'ndan eklemelisiniz.');
       return;
     }
-    const valid = Array.from(fl).filter(f => f.type.startsWith('image/'));
-    if (!valid.length) return;
-    const ni = valid.map(f => ({
-      id: Date.now() + '-' + Math.random().toString(36).slice(2,6),
-      name: f.name,
-      file: f,
-      preview: URL.createObjectURL(f),
-      status:'pending',
-      sub:'Sırada',
-      result:null,
-      tip: tip
-    }));
-    setItems(p => [...p, ...ni]);
-    qRef.current.push(...ni);
+    const valid = Array.from(fl).filter(f => f.type.startsWith('image/') || f.type === 'application/pdf');
+    if (!valid.length) {
+      alert('Sadece JPG, PNG veya PDF yükleyebilirsiniz.');
+      return;
+    }
+
+    const allItems = [];
+    for (const f of valid) {
+      if (f.type === 'application/pdf') {
+        // PDF → her sayfa ayrı item
+        if (!window.pdfjsLib) {
+          alert('PDF.js kütüphanesi henüz yüklenmedi. Birkaç saniye bekleyip tekrar deneyin.');
+          return;
+        }
+        try {
+          const images = await pdfToImages(f);
+          for (const img of images) {
+            // Image'i File objesine çevir (processItem beklentisi)
+            const blob = await (await fetch(img.dataUrl)).blob();
+            const pageFile = new File([blob], img.name, {type: 'image/jpeg'});
+            allItems.push({
+              id: Date.now() + '-' + Math.random().toString(36).slice(2,6),
+              name: img.name,
+              file: pageFile,
+              preview: img.dataUrl,
+              status: 'pending',
+              sub: 'Sırada (PDF sayfası)',
+              result: null,
+              tip: tip
+            });
+          }
+        } catch (e) {
+          alert('PDF okuma hatası: ' + e.message);
+        }
+      } else {
+        // Normal image
+        allItems.push({
+          id: Date.now() + '-' + Math.random().toString(36).slice(2,6),
+          name: f.name,
+          file: f,
+          preview: URL.createObjectURL(f),
+          status: 'pending',
+          sub: 'Sırada',
+          result: null,
+          tip: tip
+        });
+      }
+    }
+
+    setItems(p => [...p, ...allItems]);
+    qRef.current.push(...allItems);
     runQueue();
   }, [tip, apiKey]);
 
@@ -721,7 +796,7 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
           {items.length > 0 && <button onClick={() => {setItems([]); setSelId(null); qRef.current=[];}} style={{...S.btn, background:`${C.danger}18`, color:C.danger, padding:'9px 14px', borderRadius:8, fontSize:11, fontWeight:700, border:`1px solid ${C.danger}33`}}>
             <LIcon name="Trash2" size={14} color={C.danger}/> TEMİZLE
           </button>}
-          <input ref={fileRef} type="file" accept="image/*" multiple style={{display:'none'}} onChange={e => {addFiles(e.target.files); e.target.value='';}}/>
+          <input ref={fileRef} type="file" accept="image/*,application/pdf,.pdf" multiple style={{display:'none'}} onChange={e => {addFiles(e.target.files); e.target.value='';}}/>
         </div>
       </div>
 
