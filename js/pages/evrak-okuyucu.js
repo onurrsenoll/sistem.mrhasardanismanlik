@@ -561,3 +561,266 @@ const AnlasmaKTTDetay = ({r, C, S, LIcon, kc, gc}) => {
     </div>
   );
 };
+
+/* ══════════════════════════════════════════════════════
+   POLİS KTT DETAY
+══════════════════════════════════════════════════════ */
+const PolisKTTDetay = ({r, C, S, LIcon}) => {
+  const Row = ({l, v}) => v ? (
+    <div style={{display:'flex', justifyContent:'space-between', padding:'4px 0', borderBottom:`1px solid ${C.border}`}}>
+      <span style={{fontSize:9, color:C.textMuted, fontWeight:700}}>{l}</span>
+      <span style={{fontSize:10, color:C.text, textAlign:'right', maxWidth:'65%'}}>{v}</span>
+    </div>
+  ) : null;
+
+  return (
+    <div style={{display:'flex', flexDirection:'column', gap:11}}>
+      {/* TUTANAK BAŞLIK */}
+      <div style={{...S.card, background:'#dc262608', border:'1px solid #dc262633', padding:'14px 16px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10}}>
+        <div>
+          <div style={{fontSize:9, color:C.textMuted, fontWeight:700}}>POLİS TUTANAK</div>
+          <div style={{fontSize:18, fontWeight:900, color:'#dc2626'}}>{r.tutanakNo || '-'}</div>
+        </div>
+        <div style={{textAlign:'right'}}>
+          <div style={{fontSize:9, color:C.textMuted, fontWeight:700}}>GÜVEN</div>
+          <div style={{fontSize:20, fontWeight:900, color:'#22c55e'}}>{r.guven||90}%</div>
+        </div>
+      </div>
+
+      {/* KAZA BİLGİLERİ */}
+      <div style={{...S.card, padding:14}}>
+        <div style={{fontSize:10, fontWeight:800, color:'#dc2626', textTransform:'uppercase', marginBottom:10}}>
+          <LIcon name="MapPin" size={13} color="#dc2626"/> KAZA BİLGİLERİ
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8}}>
+          <div>
+            <Row l="Tarih" v={r.tarih}/>
+            <Row l="Saat" v={r.saat}/>
+            <Row l="İl" v={r.il}/>
+            <Row l="İlçe" v={r.ilce}/>
+          </div>
+          <div>
+            <Row l="Mahalle" v={r.mahalle}/>
+            <Row l="Cadde" v={r.cadde}/>
+            <Row l="Yol Tipi" v={r.yolTipi}/>
+            <Row l="Hava" v={r.hava}/>
+          </div>
+        </div>
+      </div>
+
+      {/* ARAÇLAR */}
+      {(r.araclar || []).map((arac, i) => (
+        <div key={i} style={{...S.card, borderLeft:'3px solid #dc2626', padding:14}}>
+          <div style={{fontSize:10, fontWeight:800, color:'#dc2626', textTransform:'uppercase', marginBottom:10}}>
+            <LIcon name="Car" size={13} color="#dc2626"/> ARAÇ {arac.sira || (i+1)}
+          </div>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
+            <div style={{fontFamily:'monospace', fontSize:16, fontWeight:900, color:'#dc2626'}}>{arac.plaka || '-'}</div>
+            <div style={{fontSize:10, color:C.textMuted}}>{arac.marka} {arac.model} ({arac.modelYili})</div>
+          </div>
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8}}>
+            <div>
+              <Row l="Sürücü" v={arac.surucu}/>
+              <Row l="TC" v={arac.tc}/>
+              <Row l="Doğum" v={arac.dogumYili}/>
+              <Row l="Ehliyet" v={arac.ehliyet}/>
+              <Row l="Renk" v={arac.renk}/>
+            </div>
+            <div>
+              <Row l="Sigorta" v={arac.sigorta}/>
+              <Row l="Poliçe" v={arac.policeNo}/>
+              <Row l="Hasar" v={arac.hasar}/>
+              <Row l="Kusur" v={arac.kusurOrani}/>
+              <Row l="Alkol" v={arac.alkol}/>
+            </div>
+          </div>
+          {arac.ihlal && <div style={{marginTop:7, fontSize:10, color:C.textSec, background:'#f59e0b10', borderRadius:6, padding:'6px 8px', borderLeft:'2px solid #f59e0b'}}>
+            <strong style={{color:'#f59e0b'}}>İHLAL: </strong>{arac.ihlal}
+          </div>}
+        </div>
+      ))}
+
+      {/* YARALILAR */}
+      {(r.yaralilar || []).filter(y => y.adi).length > 0 && (
+        <div style={{...S.card, background:'#f59e0b08', border:'1px solid #f59e0b33', padding:14}}>
+          <div style={{fontSize:10, fontWeight:800, color:'#f59e0b', textTransform:'uppercase', marginBottom:10}}>
+            <LIcon name="User" size={13} color="#f59e0b"/> YARALILAR
+          </div>
+          {r.yaralilar.filter(y => y.adi).map((y, i) => (
+            <div key={i} style={{display:'flex', justifyContent:'space-between', padding:'6px 10px', background:'rgba(245,158,11,0.08)', borderRadius:6, marginBottom:4}}>
+              <span style={{fontSize:11, fontWeight:700, color:C.text}}>{y.adi}</span>
+              <span style={{fontSize:10, color:C.textMuted}}>{y.tc}</span>
+              <span style={{fontSize:10, color:'#f59e0b'}}>{y.pozisyon}</span>
+              <span style={{fontSize:10, fontWeight:700, color:'#ef4444'}}>{y.durum}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* KAZA ÖZETİ */}
+      {r.kazaOzeti && (
+        <div style={{...S.card, background:'#8b5cf608', border:'1px solid #8b5cf633', padding:14}}>
+          <div style={{fontSize:10, fontWeight:800, color:'#8b5cf6', textTransform:'uppercase', marginBottom:10}}>
+            <LIcon name="FileText" size={13} color="#8b5cf6"/> KAZA ÖZETİ
+          </div>
+          <div style={{fontSize:11, lineHeight:1.75, color:C.text, fontStyle:'italic'}}>{r.kazaOzeti}</div>
+        </div>
+      )}
+
+      {/* KUSUR TESPİTİ */}
+      {r.kusurTespiti && (
+        <div style={{...S.card, background:'#22c55e08', border:'1px solid #22c55e33', padding:14}}>
+          <div style={{fontSize:10, fontWeight:800, color:'#22c55e', textTransform:'uppercase', marginBottom:10}}>
+            <LIcon name="Scale" size={13} color="#22c55e"/> KUSUR TESPİTİ
+          </div>
+          <div style={{fontSize:11, lineHeight:1.75, color:C.text}}>{r.kusurTespiti}</div>
+          {(r.kanunMaddeleri || []).filter(Boolean).length > 0 && (
+            <div style={{marginTop:10, display:'flex', gap:5, flexWrap:'wrap'}}>
+              {r.kanunMaddeleri.filter(Boolean).map((m,i) => (
+                <span key={i} style={{background:'#22c55e18', color:'#22c55e', border:'1px solid #22c55e44', borderRadius:5, padding:'3px 10px', fontSize:10, fontWeight:700}}>{m}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════════
+   HASAR İHBAR FÖYÜ DETAY
+══════════════════════════════════════════════════════ */
+const HasarIhbarDetay = ({r, C, S, LIcon}) => {
+  const Row = ({l, v, h}) => v ? (
+    <div style={{display:'flex', justifyContent:'space-between', padding:'5px 0', borderBottom:`1px solid ${C.border}`}}>
+      <span style={{fontSize:9, color:C.textMuted, fontWeight:700}}>{l}</span>
+      <span style={{fontSize:10, color: h ? '#d97706' : C.text, textAlign:'right', maxWidth:'60%', fontWeight: h ? 700 : 400}}>{v}</span>
+    </div>
+  ) : null;
+
+  return (
+    <div style={{display:'flex', flexDirection:'column', gap:11}}>
+      {/* DOSYA BAŞLIK */}
+      <div style={{...S.card, background:'#d9770608', border:'1px solid #d9770633', padding:'14px 16px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10}}>
+        <div>
+          <div style={{fontSize:9, color:C.textMuted, fontWeight:700}}>HASAR DOSYA</div>
+          <div style={{fontSize:18, fontWeight:900, color:'#d97706'}}>{r.dosyaNo || '-'}</div>
+          {r.sigortaSirketi && <div style={{fontSize:11, color:C.textSec, marginTop:2}}>{r.sigortaSirketi}</div>}
+        </div>
+        <div style={{textAlign:'right'}}>
+          <div style={{fontSize:9, color:C.textMuted, fontWeight:700}}>GÜVEN</div>
+          <div style={{fontSize:20, fontWeight:900, color:'#22c55e'}}>{r.guven||90}%</div>
+        </div>
+      </div>
+
+      {/* POLİÇE BİLGİLERİ */}
+      <div style={{...S.card, padding:14}}>
+        <div style={{fontSize:10, fontWeight:800, color:'#d97706', textTransform:'uppercase', marginBottom:10}}>
+          <LIcon name="FileText" size={13} color="#d97706"/> POLİÇE BİLGİLERİ
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8}}>
+          <div>
+            <Row l="Dosya No" v={r.dosyaNo} h/>
+            <Row l="Müşteri No" v={r.musteriNo}/>
+            <Row l="Sigorta Şirketi" v={r.sigortaSirketi} h/>
+            <Row l="Acente" v={r.acenteAdi}/>
+            <Row l="Poliçe No" v={r.policeNo} h/>
+          </div>
+          <div>
+            <Row l="Poliçe Türü" v={r.policeTuru}/>
+            <Row l="Ürün Kodu" v={r.urunKodu}/>
+            <Row l="Sigorta Bedeli" v={r.sigortaBedeli}/>
+            <Row l="Başlangıç" v={r.policeBaslangic}/>
+            <Row l="Bitiş" v={r.policeBitis}/>
+          </div>
+        </div>
+      </div>
+
+      {/* SİGORTALI */}
+      <div style={{...S.card, padding:14}}>
+        <div style={{fontSize:10, fontWeight:800, color:'#d97706', textTransform:'uppercase', marginBottom:10}}>
+          <LIcon name="User" size={13} color="#d97706"/> SİGORTALI BİLGİLERİ
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8}}>
+          <div>
+            <Row l="Adı / Ünvan" v={r.sigortaliAdi} h/>
+            <Row l="TC / Vergi No" v={r.sigortaliTc}/>
+          </div>
+          <div>
+            <Row l="Telefon" v={r.sigortaliTelefon}/>
+            <Row l="E-posta" v={r.sigortaliEmail}/>
+          </div>
+        </div>
+        <Row l="Adres" v={r.sigortaliAdres}/>
+      </div>
+
+      {/* ARAÇ */}
+      {(r.aracPlaka || r.aracMarka) && (
+        <div style={{...S.card, padding:14}}>
+          <div style={{fontSize:10, fontWeight:800, color:'#d97706', textTransform:'uppercase', marginBottom:10}}>
+            <LIcon name="Car" size={13} color="#d97706"/> ARAÇ BİLGİLERİ
+          </div>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
+            <div style={{fontFamily:'monospace', fontSize:16, fontWeight:900, color:'#d97706'}}>{r.aracPlaka || '-'}</div>
+            <div style={{fontSize:10, color:C.textMuted}}>{r.aracMarka} {r.aracModel} ({r.aracYili})</div>
+          </div>
+          <Row l="Şase No" v={r.aracSase}/>
+        </div>
+      )}
+
+      {/* HASAR DETAYI */}
+      <div style={{...S.card, background:'#ef444408', border:'1px solid #ef444433', padding:14}}>
+        <div style={{fontSize:10, fontWeight:800, color:'#ef4444', textTransform:'uppercase', marginBottom:10}}>
+          <LIcon name="AlertTriangle" size={13} color="#ef4444"/> HASAR DETAYI
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8}}>
+          <div>
+            <Row l="Hasar Tarihi" v={r.hasarTarihi} h/>
+            <Row l="İhbar Tarihi" v={r.ihbarTarihi}/>
+            <Row l="Hasar Nedeni" v={r.hasarNedeni} h/>
+            <Row l="Alt Neden" v={r.hasarAltNedeni}/>
+          </div>
+          <div>
+            <Row l="Hasar Yeri" v={r.hasarYeri}/>
+            <Row l="İhbar Eden" v={r.ihbarEden}/>
+            <Row l="Tahmini Hasar" v={r.tahminiHasar}/>
+            <Row l="Toplam Hasar" v={r.toplamHasar} h/>
+          </div>
+        </div>
+        {r.hasarAciklama && (
+          <div style={{marginTop:10, fontSize:11, color:C.text, background:'rgba(239,68,68,0.05)', borderRadius:6, padding:'8px 10px', lineHeight:1.6, borderLeft:'2px solid #ef4444'}}>
+            {r.hasarAciklama}
+          </div>
+        )}
+      </div>
+
+      {/* EKSPER / SERVİS */}
+      {(r.eksperAdi || r.servisAdi) && (
+        <div style={{...S.card, padding:14}}>
+          <div style={{fontSize:10, fontWeight:800, color:'#d97706', textTransform:'uppercase', marginBottom:10}}>
+            <LIcon name="Wrench" size={13} color="#d97706"/> EKSPER / SERVİS
+          </div>
+          <Row l="Eksper" v={r.eksperAdi}/>
+          <Row l="Eksper Firma" v={r.eksperFirma}/>
+          <Row l="Servis" v={r.servisAdi}/>
+        </div>
+      )}
+
+      {/* MAĞDURLAR */}
+      {(r.magdurlar || []).filter(m => m.adi || m.plaka).length > 0 && (
+        <div style={{...S.card, background:'#22c55e08', border:'1px solid #22c55e33', padding:14}}>
+          <div style={{fontSize:10, fontWeight:800, color:'#22c55e', textTransform:'uppercase', marginBottom:10}}>
+            <LIcon name="Users" size={13} color="#22c55e"/> MAĞDURLAR
+          </div>
+          {r.magdurlar.filter(m => m.adi || m.plaka).map((m, i) => (
+            <div key={i} style={{display:'flex', justifyContent:'space-between', padding:'6px 10px', background:'rgba(34,197,94,0.08)', borderRadius:6, marginBottom:4}}>
+              <span style={{fontSize:11, fontWeight:700, color:C.text}}>{m.adi || '-'}</span>
+              <span style={{fontSize:10, fontFamily:'monospace', color:'#22c55e'}}>{m.plaka || '-'}</span>
+              <span style={{fontSize:10, fontWeight:700, color:'#ef4444'}}>{m.tutar || '-'}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
