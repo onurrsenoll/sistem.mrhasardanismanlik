@@ -332,16 +332,17 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
   });
 
   const processItem = async (item) => {
-    upd(item.id, {status:'analyzing', sub:'OpenRouter Claude-Sonnet analiz ediyor...'});
+    upd(item.id, {status:'analyzing', sub:'Claude-Sonnet başlatılıyor...'});
+    const progressCb = (msg) => upd(item.id, {sub: msg});
     try {
       const { b64, mime } = await fileToB64(item.file);
       let result;
       if (item.tip === 'anlasma_ktt') {
-        result = await anlasmaKTTAnaliz(apiKey, b64, mime);
+        result = await anlasmaKTTAnaliz(apiKey, b64, mime, progressCb);
       } else if (item.tip === 'polis_ktt') {
-        result = await polisKTTAnaliz(apiKey, b64, mime);
+        result = await polisKTTAnaliz(apiKey, b64, mime, progressCb);
       } else {
-        result = await hasarIhbarAnaliz(apiKey, b64, mime);
+        result = await hasarIhbarAnaliz(apiKey, b64, mime, progressCb);
       }
       upd(item.id, {status:'done', result, sub: null});
       setSelId(prev => prev || item.id);
@@ -505,9 +506,15 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
             {sel?.status === 'error' && <div style={{...S.card, padding:20, background:`${C.danger}08`}}><p style={{color:C.danger, fontWeight:700, wordBreak:'break-word'}}>HATA: {sel.sub}</p></div>}
             {sel?.status === 'done' && sel.result && (() => {
               const itemTip = sel.tip || sel.result.tip || tip;
-              if (itemTip === 'anlasma_ktt') return <AnlasmaKTTDetay r={sel.result} C={C} S={S} LIcon={LIcon} kc={kc} gc={gc}/>;
-              if (itemTip === 'polis_ktt') return <PolisKTTDetay r={sel.result} C={C} S={S} LIcon={LIcon}/>;
-              return <HasarIhbarDetay r={sel.result} C={C} S={S} LIcon={LIcon}/>;
+              const kalite = sel.result._okuma_kalitesi || 'orta';
+              const belirsizler = sel.result._belirsiz_alanlar || [];
+              return <div>
+                {/* OKUMA KALİTESİ UYARI BANNERI */}
+                <KaliteBanner kalite={kalite} belirsizler={belirsizler} C={C} S={S} LIcon={LIcon}/>
+                {itemTip === 'anlasma_ktt' && <AnlasmaKTTDetay r={sel.result} C={C} S={S} LIcon={LIcon} kc={kc} gc={gc}/>}
+                {itemTip === 'polis_ktt' && <PolisKTTDetay r={sel.result} C={C} S={S} LIcon={LIcon}/>}
+                {itemTip === 'hasar_ihbar' && <HasarIhbarDetay r={sel.result} C={C} S={S} LIcon={LIcon}/>}
+              </div>;
             })()}
           </div>
         </div>
@@ -913,6 +920,45 @@ const HasarIhbarDetay = ({r, C, S, LIcon}) => {
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════════
+   OKUMA KALİTESİ UYARI BANNERI
+══════════════════════════════════════════════════════ */
+const KaliteBanner = ({kalite, belirsizler, C, S, LIcon}) => {
+  const styles = {
+    yuksek: {color:'#22c55e', icon:'CheckCircle', title:'YÜKSEK OKUMA KALİTESİ', msg:'Tüm alanlar net okundu, sonuç güvenilir.'},
+    orta: {color:'#f59e0b', icon:'AlertTriangle', title:'ORTA OKUMA KALİTESİ', msg:'Bazı alanlar belirsiz okundu, lütfen kontrol edin.'},
+    dusuk: {color:'#ef4444', icon:'AlertCircle', title:'DÜŞÜK OKUMA KALİTESİ', msg:'Bazı alanlar net okunamadı, lütfen manuel kontrol edin.'}
+  };
+  const s = styles[kalite] || styles.orta;
+
+  return (
+    <div style={{
+      marginBottom: 12,
+      padding: '12px 16px',
+      background: s.color + '10',
+      border: `1px solid ${s.color}44`,
+      borderLeft: `4px solid ${s.color}`,
+      borderRadius: 8,
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: 10
+    }}>
+      <LIcon name={s.icon} size={20} color={s.color}/>
+      <div style={{flex: 1}}>
+        <div style={{fontSize: 12, fontWeight: 800, color: s.color, marginBottom: 2}}>{s.title}</div>
+        <div style={{fontSize: 10, color: C.textSec}}>{s.msg}</div>
+        {belirsizler && belirsizler.length > 0 && (
+          <div style={{marginTop: 6, fontSize: 9, color: C.textMuted}}>
+            <strong style={{color: s.color}}>BELİRSİZ ALANLAR ({belirsizler.length}): </strong>
+            {belirsizler.slice(0, 10).join(', ')}
+            {belirsizler.length > 10 && ` +${belirsizler.length - 10} daha`}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
