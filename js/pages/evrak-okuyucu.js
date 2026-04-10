@@ -308,19 +308,43 @@ DURUM 48: A ters yöne girdi B ile çarpıştı → A %100`;
 /* ══════════════════════════════════════════════════════
    PROMPT'LAR
 ══════════════════════════════════════════════════════ */
-// ANLAŞMALI KTT - 1. PASS: YAPISAL ALANLAR (plakalar, tarih, saat, konum, kişi bilgileri)
-const ANLASMA_PASS1_SYS = `Sen Türk trafik kazası tutanağı uzmanısın. Anlaşmalı Maddi Hasarlı Kaza Tespit Tutanağı'nın SADECE YAPISAL ALANLARINI (kimlik, plaka, tarih, saat, konum) okuyacaksın. Bu 1. aşama, sadece net bilgileri çıkar.
+// ANLAŞMALI KTT - 1. PASS: 4 KRİTİK ALAN + GÜVEN SKORU (Plaka, Ad Soyad, Telefon, TC)
+const ANLASMA_PASS1_SYS = `Sen Türk trafik kazası tutanağı uzmanısın. Anlaşmalı Maddi Hasarlı Kaza Tespit Tutanağı'ndan SADECE 4 KRİTİK ALANI çıkaracaksın: Plaka, Adı Soyadı, Telefon, TC Kimlik. Hem A hem B aracı için. Ayrıca kaza bilgileri ve ek alanları oku.
 ${TURKCE_KURALLAR}
 
+HER ALAN İÇİN GÜVEN SKORU EKLEYECEKSİN:
+- "yuksek": Alan net okundu, hiç tereddüt yok
+- "orta": Alan okundu ama bazı karakterler belirsizdi
+- "dusuk": Alan çok belirsiz veya tahmin
+
 SADECE geçerli JSON döndür:
-{"kaza":{"tarih":"","saat":"","il":"","ilce":"","cadde":"","yolTipi":""},"a":{"plaka":"","marka":"","surucu":"","tc":"","telefon":"","adres":"","sigorta":"","policeNo":"","hasar":""},"b":{"plaka":"","marka":"","surucu":"","tc":"","telefon":"","adres":"","sigorta":"","policeNo":"","hasar":""},"_okuma_kalitesi":"yuksek|orta|dusuk","_belirsiz_alanlar":[]}
+{
+  "kaza":{"tarih":"","saat":"","il":"","ilce":"","cadde":"","yolTipi":""},
+  "a":{
+    "plaka":"","plaka_guven":"yuksek|orta|dusuk",
+    "surucu":"","surucu_guven":"yuksek|orta|dusuk",
+    "tc":"","tc_guven":"yuksek|orta|dusuk",
+    "telefon":"","telefon_guven":"yuksek|orta|dusuk",
+    "marka":"","adres":"","sigorta":"","policeNo":"","hasar":""
+  },
+  "b":{
+    "plaka":"","plaka_guven":"yuksek|orta|dusuk",
+    "surucu":"","surucu_guven":"yuksek|orta|dusuk",
+    "tc":"","tc_guven":"yuksek|orta|dusuk",
+    "telefon":"","telefon_guven":"yuksek|orta|dusuk",
+    "marka":"","adres":"","sigorta":"","policeNo":"","hasar":""
+  },
+  "_okuma_kalitesi":"yuksek|orta|dusuk","_belirsiz_alanlar":[]
+}
 
 KURALLAR:
 - A aracı SOL taraf, B aracı SAĞ taraf
-- Plaka formatı: 2 rakam + harfler + rakamlar
-- TC 11 hane, telefon 05XX ile başlar
-- Okunamayan alanlara "[OKUNAMADI]"
-- Belirsiz alanlara "[BELİRSİZ: tahmin]"`;
+- Plaka formatı: 2 rakam + 1-3 harf + 2-4 rakam (örn: 55 AAI 051, 06 DRC 446)
+- TC 11 hane (ilk hane 0 olamaz)
+- Telefon 05XX ile başlar, 11 hane
+- Okunamayan alanlara "[OKUNAMADI]" + guven: "dusuk"
+- Belirsiz alanlara "[BELİRSİZ: tahmin]" + guven: "dusuk"
+- Net okunan alanlara direkt değer + guven: "yuksek"`;
 
 // ANLAŞMALI KTT - 2. PASS: BEYAN + KROKİ + TRAMER KUSUR ANALİZİ
 const ANLASMA_PASS2_SYS = `Sen Türk trafik sigortası kusur analiz uzmanısın. TRAMER senaryoları:
@@ -361,18 +385,75 @@ KURALLAR:
 - Belirsiz alanlara "[BELİRSİZ: tahmin]"`;
 
 /* ══════════════════════════════════════════════════════
-   ANA ANALİZ FONKSİYONLARI - 2 PASS ANALIZ
+   ANA ANALİZ FONKSİYONLARI - 2 PASS + ALAN ODAKLI YENİDEN ANALİZ + HİBRİT DOĞRULAMA
 ══════════════════════════════════════════════════════ */
+
+// Alan odaklı yeniden analiz: Sadece belirli bir alanı oku
+async function alanOdakliYenidenOku(apiKey, b64, mime, alanAciklama) {
+  const txt = await callAI(
+    apiKey,
+    imgContent(b64, mime, alanAciklama + ' SADECE JSON döndür: {"deger":"değer","guven":"yuksek|orta|dusuk"}'),
+    'Sen Türk trafik tutanağı OCR uzmanısın. Sadece istenen alanı oku.',
+    300
+  );
+  try {
+    return safeParseJSON(txt);
+  } catch (e) {
+    return { deger: '[OKUNAMADI]', guven: 'dusuk' };
+  }
+}
+
 async function anlasmaKTTAnaliz(apiKey, b64, mime, onProgress) {
-  // PASS 1: Yapısal alanlar (plakalar, kişi bilgileri, konum)
-  onProgress && onProgress('1/2 Yapısal alanlar okunuyor (plaka, TC, tarih, konum)...');
+  // PASS 1: Yapısal alanlar + 4 kritik alan güven skorları
+  onProgress && onProgress('1/2 Yapısal alanlar + 4 kritik alan okunuyor...');
   const pass1Txt = await callAI(
     apiKey,
-    imgContent(b64, mime, "Bu bir Türk trafik kazası tutanağı fotoğrafıdır, Türkçe el yazısıyla doldurulmuş olabilir. Her YAPISAL ALANI (plaka, TC, tarih, saat, konum, kişi bilgileri, sigorta, poliçe) dikkatlice oku, okunaksız harfleri bağlamdan tahmin et. Belirsiz alanları [OKUNAMADI] veya [BELİRSİZ: tahmin] olarak işaretle. SADECE JSON döndür."),
+    imgContent(b64, mime, "Bu bir Türk trafik kazası tutanağı fotoğrafıdır, Türkçe el yazısıyla doldurulmuş olabilir. Her YAPISAL ALANI (plaka, TC, tarih, saat, konum, kişi bilgileri, sigorta, poliçe) dikkatlice oku. Özellikle 4 KRİTİK ALAN için her birine ayrı GÜVEN SKORU ver: Plaka, Adı Soyadı, TC Kimlik, Telefon. Belirsiz alanları [OKUNAMADI] veya [BELİRSİZ: tahmin] olarak işaretle. SADECE JSON döndür."),
     ANLASMA_PASS1_SYS,
-    1500
+    2000
   );
   const pass1 = safeParseJSON(pass1Txt);
+
+  // ═══ HİBRİT DOĞRULAMA + ALAN ODAKLI YENİDEN ANALİZ ═══
+  // Her 4 kritik alan için: (1) doğrula, (2) geçmezse tekrar sor
+  const kritikAlanlar = [
+    { arac: 'a', key: 'plaka', type: 'plaka', label: 'A aracı PLAKASI (2 rakam + 1-3 harf + 2-4 rakam)' },
+    { arac: 'a', key: 'surucu', type: 'adsoyad', label: 'A aracı SÜRÜCÜSÜNÜN ADI SOYADI (en az 2 kelime)' },
+    { arac: 'a', key: 'tc', type: 'tc', label: 'A aracı sürücüsünün TC KİMLİK NO (11 hane)' },
+    { arac: 'a', key: 'telefon', type: 'telefon', label: 'A aracı sürücüsünün TELEFON NO (05XX formatı)' },
+    { arac: 'b', key: 'plaka', type: 'plaka', label: 'B aracı PLAKASI (2 rakam + 1-3 harf + 2-4 rakam)' },
+    { arac: 'b', key: 'surucu', type: 'adsoyad', label: 'B aracı SÜRÜCÜSÜNÜN ADI SOYADI (en az 2 kelime)' },
+    { arac: 'b', key: 'tc', type: 'tc', label: 'B aracı sürücüsünün TC KİMLİK NO (11 hane)' },
+    { arac: 'b', key: 'telefon', type: 'telefon', label: 'B aracı sürücüsünün TELEFON NO (05XX formatı)' }
+  ];
+
+  const dogrulanmisAlanlar = {};
+  for (let i = 0; i < kritikAlanlar.length; i++) {
+    const alan = kritikAlanlar[i];
+    const rawValue = pass1[alan.arac]?.[alan.key] || '';
+    const aiGuven = pass1[alan.arac]?.[alan.key + '_guven'] || 'orta';
+
+    // İlk doğrulama
+    let valid = validateField(alan.type, rawValue, aiGuven);
+
+    // Geçmezse alan odaklı yeniden oku
+    if (!valid.valid && rawValue && !hasMarker(rawValue)) {
+      onProgress && onProgress(`Yeniden okuma: ${alan.label.split(' ')[0]}...`);
+      try {
+        const retry = await alanOdakliYenidenOku(
+          apiKey, b64, mime,
+          `Bu bir Türk trafik kazası tutanağıdır. SADECE ${alan.label} alanını net şekilde oku. Önceki okumada format hatası vardı (${valid.reason}). Dikkatlice oku.`
+        );
+        if (retry.deger && !hasMarker(retry.deger)) {
+          const retryValid = validateField(alan.type, retry.deger, retry.guven);
+          if (retryValid.valid) valid = retryValid;
+        }
+      } catch (e) {}
+    }
+
+    if (!dogrulanmisAlanlar[alan.arac]) dogrulanmisAlanlar[alan.arac] = {};
+    dogrulanmisAlanlar[alan.arac][alan.key] = valid;
+  }
 
   // PASS 2: Beyan + Kroki + TRAMER kusur analizi
   onProgress && onProgress('2/2 Beyanlar ve kroki analiz ediliyor (TRAMER)...');
@@ -392,11 +473,51 @@ async function anlasmaKTTAnaliz(apiKey, b64, mime, onProgress) {
   const kalitePuan = {yuksek: 3, orta: 2, dusuk: 1};
   const finalKalite = kalitePuan[kalite1] <= kalitePuan[kalite2] ? kalite1 : kalite2;
 
+  // Doğrulanmış alanları aracA/aracB'ye yerleştir (hibrit: AI + regex + Luhn)
+  const dA = dogrulanmisAlanlar.a || {};
+  const dB = dogrulanmisAlanlar.b || {};
+
   return {
     tip: 'anlasma_ktt',
     kazaBilgileri: { tarih: pass1.kaza?.tarih || "", saat: pass1.kaza?.saat || "", il: pass1.kaza?.il || "", ilce: pass1.kaza?.ilce || "", cadde: pass1.kaza?.cadde || "", yolTipi: pass1.kaza?.yolTipi || "" },
-    aracA: { plaka: pass1.a?.plaka || "", marka: pass1.a?.marka || "", surucu: pass1.a?.surucu || "", tc: pass1.a?.tc || "", telefon: pass1.a?.telefon || "", adres: pass1.a?.adres || "", sigortaSirketi: pass1.a?.sigorta || "", policeNo: pass1.a?.policeNo || "", hasarYeri: pass1.a?.hasar || "" },
-    aracB: { plaka: pass1.b?.plaka || "", marka: pass1.b?.marka || "", surucu: pass1.b?.surucu || "", tc: pass1.b?.tc || "", telefon: pass1.b?.telefon || "", adres: pass1.b?.adres || "", sigortaSirketi: pass1.b?.sigorta || "", policeNo: pass1.b?.policeNo || "", hasarYeri: pass1.b?.hasar || "" },
+    aracA: {
+      plaka: dA.plaka?.value || pass1.a?.plaka || "",
+      plaka_guven: dA.plaka?.guven || 'dusuk',
+      plaka_valid: dA.plaka?.valid || false,
+      marka: pass1.a?.marka || "",
+      surucu: dA.surucu?.value || pass1.a?.surucu || "",
+      surucu_guven: dA.surucu?.guven || 'dusuk',
+      surucu_valid: dA.surucu?.valid || false,
+      tc: dA.tc?.value || pass1.a?.tc || "",
+      tc_guven: dA.tc?.guven || 'dusuk',
+      tc_valid: dA.tc?.valid || false,
+      telefon: dA.telefon?.value || pass1.a?.telefon || "",
+      telefon_guven: dA.telefon?.guven || 'dusuk',
+      telefon_valid: dA.telefon?.valid || false,
+      adres: pass1.a?.adres || "",
+      sigortaSirketi: pass1.a?.sigorta || "",
+      policeNo: pass1.a?.policeNo || "",
+      hasarYeri: pass1.a?.hasar || ""
+    },
+    aracB: {
+      plaka: dB.plaka?.value || pass1.b?.plaka || "",
+      plaka_guven: dB.plaka?.guven || 'dusuk',
+      plaka_valid: dB.plaka?.valid || false,
+      marka: pass1.b?.marka || "",
+      surucu: dB.surucu?.value || pass1.b?.surucu || "",
+      surucu_guven: dB.surucu?.guven || 'dusuk',
+      surucu_valid: dB.surucu?.valid || false,
+      tc: dB.tc?.value || pass1.b?.tc || "",
+      tc_guven: dB.tc?.guven || 'dusuk',
+      tc_valid: dB.tc?.valid || false,
+      telefon: dB.telefon?.value || pass1.b?.telefon || "",
+      telefon_guven: dB.telefon?.guven || 'dusuk',
+      telefon_valid: dB.telefon?.valid || false,
+      adres: pass1.b?.adres || "",
+      sigortaSirketi: pass1.b?.sigorta || "",
+      policeNo: pass1.b?.policeNo || "",
+      hasarYeri: pass1.b?.hasar || ""
+    },
     kroKiAnalizi: { yolYapisi: pass2.kroki?.yol || "", aAracPozisyon: pass2.kroki?.aPos || "", bAracPozisyon: pass2.kroki?.bPos || "", carpismaNokta: pass2.kroki?.carpma || "", sinyal: pass2.kroki?.sinyal || "", refuj: pass2.kroki?.refuj || "" },
     beyanAnalizi: { aBeyan: pass2.beyan?.a || "", bBeyan: pass2.beyan?.b || "", celisme: pass2.beyan?.celisme || "", kroKiUyum: pass2.beyan?.uyum || "" },
     eslesenSenaryo: pass2.senaryo || "",
@@ -496,10 +617,24 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
   });
 
   const processItem = async (item) => {
-    upd(item.id, {status:'analyzing', sub:'Claude-Sonnet başlatılıyor...'});
+    upd(item.id, {status:'analyzing', sub:'Görüntü ön işleme (grayscale + kontrast + keskinleştirme)...'});
     const progressCb = (msg) => upd(item.id, {sub: msg});
     try {
-      const { b64, mime } = await fileToB64(item.file);
+      // 1. Orijinal dosyayı dataUrl'e çevir
+      const { dataUrl: origDataUrl, mime: origMime } = await fileToB64(item.file);
+
+      // 2. Görüntü ön işleme (Canvas API ile)
+      let b64, mime;
+      if (origMime.startsWith('image/')) {
+        const enhanced = await enhanceImage(origDataUrl);
+        b64 = enhanced.b64;
+        mime = enhanced.mime;
+      } else {
+        b64 = origDataUrl.split(',')[1];
+        mime = origMime;
+      }
+
+      upd(item.id, {sub: 'Claude-Sonnet analiz ediyor...'});
       let result;
       if (item.tip === 'anlasma_ktt') {
         result = await anlasmaKTTAnaliz(apiKey, b64, mime, progressCb);
