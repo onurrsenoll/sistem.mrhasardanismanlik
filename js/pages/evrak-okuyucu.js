@@ -591,7 +591,7 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
   };
   const tipInfo = TIPLER[tip];
 
-  // Sistem ayarlarından OpenRouter key çek
+  // Sistem ayarlarından OpenRouter key çek + XLSX yükle
   useEffect(() => {
     (async () => {
       try {
@@ -602,6 +602,12 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
       } catch(e) {}
       setApiKeyLoaded(true);
     })();
+    // XLSX kütüphanesi yükle (Excel export için)
+    if (!window.XLSX) {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      document.head.appendChild(script);
+    }
   }, []);
 
   const upd = (id, p) => setItems(x => x.map(i => i.id === id ? {...i, ...p} : i));
@@ -826,16 +832,141 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
    ANLAŞMALI KTT DETAY
 ══════════════════════════════════════════════════════ */
 const AnlasmaKTTDetay = ({r, C, S, LIcon, kc, gc}) => {
+  const [editMode, setEditMode] = useState({});
+  const [editValues, setEditValues] = useState({
+    aracA: { plaka: r.aracA?.plaka || '', surucu: r.aracA?.surucu || '', tc: r.aracA?.tc || '', telefon: r.aracA?.telefon || '' },
+    aracB: { plaka: r.aracB?.plaka || '', surucu: r.aracB?.surucu || '', tc: r.aracB?.tc || '', telefon: r.aracB?.telefon || '' }
+  });
+
+  // Değer değiştirme
+  const updateVal = (arac, key, val) => {
+    setEditValues(p => ({...p, [arac]: {...p[arac], [key]: val}}));
+  };
+
+  // Kopyala
+  const kopyala = (text, label) => {
+    navigator.clipboard.writeText(text);
+    MR.toast && MR.toast((label || 'Kopyalandı') + ': ' + text, 'success');
+  };
+
+  // Araç kopyala (tüm bilgileri sekmeli)
+  const aracKopyala = (arac, harf) => {
+    const v = editValues[arac];
+    const lines = [
+      `ARAÇ ${harf}`,
+      `Plaka: ${v.plaka}`,
+      `Adı Soyadı: ${v.surucu}`,
+      `T.C. Kimlik: ${v.tc}`,
+      `Telefon: ${v.telefon}`
+    ].join('\n');
+    navigator.clipboard.writeText(lines);
+    MR.toast && MR.toast(`ARAÇ ${harf} bilgileri kopyalandı`, 'success');
+  };
+
+  // Toplu kopyala (A + B)
+  const topluKopyala = () => {
+    const a = editValues.aracA;
+    const b = editValues.aracB;
+    const lines = [
+      'ARAÇ A',
+      `Plaka: ${a.plaka}`,
+      `Adı Soyadı: ${a.surucu}`,
+      `T.C. Kimlik: ${a.tc}`,
+      `Telefon: ${a.telefon}`,
+      '',
+      'ARAÇ B',
+      `Plaka: ${b.plaka}`,
+      `Adı Soyadı: ${b.surucu}`,
+      `T.C. Kimlik: ${b.tc}`,
+      `Telefon: ${b.telefon}`
+    ].join('\n');
+    navigator.clipboard.writeText(lines);
+    MR.toast && MR.toast('Tüm bilgiler kopyalandı', 'success');
+  };
+
+  // Excel export
+  const excelExport = () => {
+    if (!window.XLSX) { MR.toast && MR.toast('Excel kütüphanesi yükleniyor...', 'info'); return; }
+    const X = window.XLSX;
+    const headers = ['ARAÇ', 'PLAKA', 'ADI SOYADI', 'T.C. KİMLİK NO', 'TELEFON'];
+    const rows = [
+      headers,
+      ['A', editValues.aracA.plaka, editValues.aracA.surucu, editValues.aracA.tc, editValues.aracA.telefon],
+      ['B', editValues.aracB.plaka, editValues.aracB.surucu, editValues.aracB.tc, editValues.aracB.telefon]
+    ];
+    const ws = X.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:6}, {wch:14}, {wch:22}, {wch:14}, {wch:14}];
+    const wb = X.utils.book_new();
+    X.utils.book_append_sheet(wb, ws, 'Anlasma KTT');
+    X.writeFile(wb, `ANLASMA_KTT_${new Date().toISOString().slice(0,10)}.xlsx`);
+  };
+
   const Row = ({l, v}) => v ? (
     <div style={{display:'flex', justifyContent:'space-between', padding:'4px 0', borderBottom:`1px solid ${C.border}`}}>
       <span style={{fontSize:9, color:C.textMuted, fontWeight:700}}>{l}</span>
       <span style={{fontSize:10, color:C.text, textAlign:'right', maxWidth:'65%'}}>{v}</span>
     </div>
   ) : null;
+
+  // Kritik alan row - güven skoru + kopyala + düzenle + doğrulama rengi
+  const KritikRow = ({arac, field, label, value, guven, valid}) => {
+    const key = arac + '_' + field;
+    const isEditing = editMode[key];
+    const currentVal = editValues[arac][field];
+    // Renk: valid+yuksek=yeşil, valid+orta=sarı, geçersiz=kırmızı, hiç=gri
+    let col = '#64748b';
+    let bgCol = 'rgba(128,128,128,0.05)';
+    if (hasMarker(currentVal)) { col = '#ef4444'; bgCol = '#ef444410'; }
+    else if (valid && guven === 'yuksek') { col = '#22c55e'; bgCol = '#22c55e10'; }
+    else if (valid && guven === 'orta') { col = '#f59e0b'; bgCol = '#f59e0b10'; }
+    else if (!valid && currentVal) { col = '#ef4444'; bgCol = '#ef444410'; }
+    const guvenLabel = {yuksek: 'YÜKSEK', orta: 'ORTA', dusuk: 'DÜŞÜK'}[guven] || 'DÜŞÜK';
+
+    return (
+      <div style={{marginBottom:8, padding:'8px 10px', background: bgCol, borderRadius:6, border:`1px solid ${col}33`, borderLeft:`3px solid ${col}`}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4}}>
+          <span style={{fontSize:9, color:C.textMuted, fontWeight:700}}>{label}</span>
+          <span style={{fontSize:8, color:col, fontWeight:800, padding:'1px 6px', background:col+'20', borderRadius:3}}>{guvenLabel}</span>
+        </div>
+        {isEditing ? (
+          <input
+            autoFocus
+            value={currentVal}
+            onChange={e => updateVal(arac, field, e.target.value)}
+            onBlur={() => setEditMode(p => ({...p, [key]: false}))}
+            onKeyDown={e => e.key === 'Enter' && setEditMode(p => ({...p, [key]: false}))}
+            style={{width:'100%', fontSize:12, fontFamily:'monospace', fontWeight:700, padding:'4px 8px', borderRadius:4, border:`1px solid ${col}`, background:'rgba(0,0,0,0.05)', color:C.text, outline:'none'}}
+          />
+        ) : (
+          <div style={{display:'flex', alignItems:'center', gap:6}}>
+            <span
+              onClick={() => setEditMode(p => ({...p, [key]: true}))}
+              style={{flex:1, fontFamily:'monospace', fontSize:12, fontWeight:700, color:col, cursor:'pointer', wordBreak:'break-all'}}
+              title="Düzenle"
+            >{currentVal || '[BOŞ]'}</span>
+            <button onClick={() => kopyala(currentVal, label)} style={{background:col, color:'#fff', border:'none', borderRadius:4, padding:'3px 8px', cursor:'pointer', fontSize:9, fontWeight:700}} title="Kopyala">📋</button>
+            <button onClick={() => setEditMode(p => ({...p, [key]: true}))} style={{background:'transparent', color:col, border:`1px solid ${col}`, borderRadius:4, padding:'3px 8px', cursor:'pointer', fontSize:9, fontWeight:700}} title="Düzenle">✏️</button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const kt = r.kusurTablosu || [];
 
   return (
     <div style={{display:'flex', flexDirection:'column', gap:11}}>
+      {/* TOPLU İŞLEM BUTONLARI */}
+      <div style={{...S.card, padding:'10px 14px', display:'flex', gap:8, flexWrap:'wrap', alignItems:'center'}}>
+        <span style={{fontSize:10, fontWeight:700, color:C.textMuted}}>HIZLI İŞLEMLER:</span>
+        <button onClick={topluKopyala} style={{background:'#2563eb', color:'#fff', border:'none', borderRadius:6, padding:'6px 14px', cursor:'pointer', fontSize:11, fontWeight:700}}>
+          📋 TÜMÜNÜ KOPYALA
+        </button>
+        <button onClick={excelExport} style={{background:'#22c55e', color:'#fff', border:'none', borderRadius:6, padding:'6px 14px', cursor:'pointer', fontSize:11, fontWeight:700}}>
+          📊 EXCEL İNDİR
+        </button>
+      </div>
+
       {/* SENARYO + GÜVEN */}
       <div style={{...S.card, background:'#ff6b3508', border:'1px solid #ff6b3533', padding:'14px 16px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10}}>
         <div>
@@ -849,7 +980,7 @@ const AnlasmaKTTDetay = ({r, C, S, LIcon, kc, gc}) => {
         </div>
       </div>
 
-      {/* ARAÇ A + B */}
+      {/* ARAÇ A + B - 4 KRİTİK ALAN ODAKLI */}
       <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:11}}>
         {['aracA','aracB'].map((k,i) => {
           const ar = r[k]; if (!ar) return null;
@@ -862,19 +993,29 @@ const AnlasmaKTTDetay = ({r, C, S, LIcon, kc, gc}) => {
               <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
                 <div>
                   <div style={{fontSize:9, color:C.textMuted, fontWeight:700}}>ARAÇ {harf}</div>
-                  <div style={{fontFamily:'monospace', fontSize:15, fontWeight:900, color:col}}>{ar.plaka||'-'}</div>
+                  <div style={{fontSize:20, fontWeight:900, color:col}}>{oran}% KUSUR</div>
                 </div>
-                <div style={{fontSize:22, fontWeight:900, color:col}}>{oran}%</div>
+                <button onClick={() => aracKopyala(k, harf)} style={{background:col, color:'#fff', border:'none', borderRadius:6, padding:'7px 12px', cursor:'pointer', fontSize:10, fontWeight:800}}>
+                  📋 ARAÇ {harf} KOPYALA
+                </button>
               </div>
-              <div style={{height:5, background:'rgba(128,128,128,0.15)', borderRadius:3, marginBottom:10}}>
+              <div style={{height:5, background:'rgba(128,128,128,0.15)', borderRadius:3, marginBottom:12}}>
                 <div style={{height:'100%', width:`${oran}%`, background:col, borderRadius:3}}/>
               </div>
-              <Row l="Sürücü" v={ar.surucu}/>
-              <Row l="TC" v={ar.tc}/>
-              <Row l="Telefon" v={ar.telefon}/>
-              <Row l="Sigorta" v={ar.sigortaSirketi}/>
-              <Row l="Poliçe" v={ar.policeNo}/>
-              <Row l="Hasar" v={ar.hasarYeri}/>
+
+              {/* 4 KRİTİK ALAN */}
+              <KritikRow arac={k} field="plaka" label="PLAKA" value={ar.plaka} guven={ar.plaka_guven} valid={ar.plaka_valid}/>
+              <KritikRow arac={k} field="surucu" label="ADI SOYADI" value={ar.surucu} guven={ar.surucu_guven} valid={ar.surucu_valid}/>
+              <KritikRow arac={k} field="tc" label="T.C. KİMLİK NO" value={ar.tc} guven={ar.tc_guven} valid={ar.tc_valid}/>
+              <KritikRow arac={k} field="telefon" label="TELEFON" value={ar.telefon} guven={ar.telefon_guven} valid={ar.telefon_valid}/>
+
+              {/* EK BİLGİLER */}
+              <div style={{marginTop:10, paddingTop:8, borderTop:`1px solid ${C.border}`}}>
+                <Row l="Marka" v={ar.marka}/>
+                <Row l="Sigorta" v={ar.sigortaSirketi}/>
+                <Row l="Poliçe" v={ar.policeNo}/>
+                <Row l="Hasar" v={ar.hasarYeri}/>
+              </div>
               {ktItem?.kusurNedeni && <div style={{marginTop:7, fontSize:10, color:C.textSec, background:'rgba(128,128,128,0.06)', borderRadius:6, padding:'6px 8px', borderLeft:`2px solid ${col}`}}>{ktItem.kusurNedeni}</div>}
             </div>
           );
