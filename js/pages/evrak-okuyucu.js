@@ -423,3 +423,141 @@ MR.EvrakOkuyucuPage = ({setPage, user}) => {
     </div>
   );
 };
+
+/* ══════════════════════════════════════════════════════
+   ANLAŞMALI KTT DETAY
+══════════════════════════════════════════════════════ */
+const AnlasmaKTTDetay = ({r, C, S, LIcon, kc, gc}) => {
+  const Row = ({l, v}) => v ? (
+    <div style={{display:'flex', justifyContent:'space-between', padding:'4px 0', borderBottom:`1px solid ${C.border}`}}>
+      <span style={{fontSize:9, color:C.textMuted, fontWeight:700}}>{l}</span>
+      <span style={{fontSize:10, color:C.text, textAlign:'right', maxWidth:'65%'}}>{v}</span>
+    </div>
+  ) : null;
+  const kt = r.kusurTablosu || [];
+
+  return (
+    <div style={{display:'flex', flexDirection:'column', gap:11}}>
+      {/* SENARYO + GÜVEN */}
+      <div style={{...S.card, background:'#ff6b3508', border:'1px solid #ff6b3533', padding:'14px 16px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10}}>
+        <div>
+          <div style={{fontSize:9, color:C.textMuted, fontWeight:700}}>TRAMER SENARYO</div>
+          <div style={{fontSize:22, fontWeight:900, color:'#ff6b35'}}>{r.eslesenSenaryo || '-'}</div>
+          {r.senaryoKategori && <div style={{fontSize:10, color:C.textSec, marginTop:2}}>{r.senaryoKategori}</div>}
+        </div>
+        <div style={{textAlign:'right'}}>
+          <div style={{fontSize:9, color:C.textMuted, fontWeight:700}}>GÜVEN</div>
+          <div style={{fontSize:24, fontWeight:900, color:gc(r.guvenSkoru||0)}}>{r.guvenSkoru||'?'}%</div>
+        </div>
+      </div>
+
+      {/* ARAÇ A + B */}
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:11}}>
+        {['aracA','aracB'].map((k,i) => {
+          const ar = r[k]; if (!ar) return null;
+          const harf = i===0?'A':'B';
+          const ktItem = kt.find(x=>x.arac===harf);
+          const oran = ktItem?.kusurOrani ?? 50;
+          const col = kc(oran);
+          return (
+            <div key={k} style={{...S.card, borderTop:`3px solid ${col}`, padding:14}}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
+                <div>
+                  <div style={{fontSize:9, color:C.textMuted, fontWeight:700}}>ARAÇ {harf}</div>
+                  <div style={{fontFamily:'monospace', fontSize:15, fontWeight:900, color:col}}>{ar.plaka||'-'}</div>
+                </div>
+                <div style={{fontSize:22, fontWeight:900, color:col}}>{oran}%</div>
+              </div>
+              <div style={{height:5, background:'rgba(128,128,128,0.15)', borderRadius:3, marginBottom:10}}>
+                <div style={{height:'100%', width:`${oran}%`, background:col, borderRadius:3}}/>
+              </div>
+              <Row l="Sürücü" v={ar.surucu}/>
+              <Row l="TC" v={ar.tc}/>
+              <Row l="Telefon" v={ar.telefon}/>
+              <Row l="Sigorta" v={ar.sigortaSirketi}/>
+              <Row l="Poliçe" v={ar.policeNo}/>
+              <Row l="Hasar" v={ar.hasarYeri}/>
+              {ktItem?.kusurNedeni && <div style={{marginTop:7, fontSize:10, color:C.textSec, background:'rgba(128,128,128,0.06)', borderRadius:6, padding:'6px 8px', borderLeft:`2px solid ${col}`}}>{ktItem.kusurNedeni}</div>}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* KUSUR ANALİZİ */}
+      <div style={{...S.card, background:'#8b5cf608', border:'1px solid #8b5cf633', padding:14}}>
+        <div style={{fontSize:10, fontWeight:800, color:'#8b5cf6', textTransform:'uppercase', marginBottom:10}}>
+          <LIcon name="Scale" size={13} color="#8b5cf6"/> KUSUR ANALİZİ
+        </div>
+        <div style={{fontSize:12, lineHeight:1.85, fontStyle:'italic', color:C.text}}>{r.kusurAnalizi||'-'}</div>
+      </div>
+
+      {/* KROKİ + BEYAN */}
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:11}}>
+        <div style={{...S.card, background:'#3b82f608', border:'1px solid #3b82f633', padding:14}}>
+          <div style={{fontSize:10, fontWeight:800, color:'#3b82f6', textTransform:'uppercase', marginBottom:10}}>
+            <LIcon name="Map" size={13} color="#3b82f6"/> KROKİ ANALİZİ
+          </div>
+          <Row l="Yol" v={r.kroKiAnalizi?.yolYapisi}/>
+          <Row l="Araç A" v={r.kroKiAnalizi?.aAracPozisyon}/>
+          <Row l="Araç B" v={r.kroKiAnalizi?.bAracPozisyon}/>
+          <Row l="Çarpışma" v={r.kroKiAnalizi?.carpismaNokta}/>
+          <Row l="Sinyal" v={r.kroKiAnalizi?.sinyal}/>
+          <Row l="Refüj" v={r.kroKiAnalizi?.refuj}/>
+        </div>
+        <div style={{...S.card, background:'#3b82f608', border:'1px solid #3b82f633', padding:14}}>
+          <div style={{fontSize:10, fontWeight:800, color:'#3b82f6', textTransform:'uppercase', marginBottom:10}}>
+            <LIcon name="MessageSquare" size={13} color="#3b82f6"/> BEYAN ANALİZİ
+          </div>
+          {r.beyanAnalizi?.aBeyan && <div style={{marginBottom:8}}>
+            <div style={{fontSize:8.5, color:'#ff6b35', fontWeight:800, marginBottom:3}}>A SÜRÜCÜSÜ</div>
+            <div style={{fontSize:10, color:C.textSec, lineHeight:1.6, background:'rgba(0,0,0,0.04)', borderRadius:6, padding:'6px 8px'}}>{r.beyanAnalizi.aBeyan}</div>
+          </div>}
+          {r.beyanAnalizi?.bBeyan && <div style={{marginBottom:8}}>
+            <div style={{fontSize:8.5, color:'#3b82f6', fontWeight:800, marginBottom:3}}>B SÜRÜCÜSÜ</div>
+            <div style={{fontSize:10, color:C.textSec, lineHeight:1.6, background:'rgba(0,0,0,0.04)', borderRadius:6, padding:'6px 8px'}}>{r.beyanAnalizi.bBeyan}</div>
+          </div>}
+          {r.beyanAnalizi?.celisme && <div style={{background:'#fbbf2410', border:'1px solid #fbbf2433', borderRadius:6, padding:'6px 8px', marginTop:5}}>
+            <span style={{fontSize:8.5, color:'#fbbf24', fontWeight:800}}>ÇELİŞME: </span>
+            <span style={{fontSize:10, color:C.textSec}}>{r.beyanAnalizi.celisme}</span>
+          </div>}
+          {r.beyanAnalizi?.kroKiUyum && <div style={{background:'#22c55e10', border:'1px solid #22c55e33', borderRadius:6, padding:'6px 8px', marginTop:5}}>
+            <span style={{fontSize:8.5, color:'#22c55e', fontWeight:800}}>KROKİ UYUMU: </span>
+            <span style={{fontSize:10, color:C.textSec}}>{r.beyanAnalizi.kroKiUyum}</span>
+          </div>}
+        </div>
+      </div>
+
+      {/* YASAL + TESPİT */}
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:11}}>
+        <div style={{...S.card, background:'#22c55e08', border:'1px solid #22c55e33', padding:14}}>
+          <div style={{fontSize:10, fontWeight:800, color:'#22c55e', textTransform:'uppercase', marginBottom:10}}>
+            <LIcon name="BookOpen" size={13} color="#22c55e"/> YASAL DAYANAK
+          </div>
+          <div style={{display:'flex', gap:5, flexWrap:'wrap'}}>
+            {(r.yasalDayanak||[]).filter(Boolean).map((m,i)=><span key={i} style={{background:'#22c55e18', color:'#22c55e', border:'1px solid #22c55e44', borderRadius:5, padding:'3px 10px', fontSize:10, fontWeight:700}}>{m}</span>)}
+          </div>
+        </div>
+        <div style={{...S.card, background:'#f59e0b08', border:'1px solid #f59e0b33', padding:14}}>
+          <div style={{fontSize:10, fontWeight:800, color:'#f59e0b', textTransform:'uppercase', marginBottom:10}}>
+            <LIcon name="Search" size={13} color="#f59e0b"/> KRİTİK TESPİTLER
+          </div>
+          {(r.kritikTespitler||[]).filter(Boolean).map((t,i)=>(
+            <div key={i} style={{fontSize:10, color:C.textSec, paddingBottom:4, marginBottom:4, borderBottom:`1px solid ${C.border}`}}>• {t}</div>
+          ))}
+        </div>
+      </div>
+
+      {/* UYARILAR */}
+      {(r.uyarilar||[]).filter(Boolean).length > 0 && (
+        <div style={{...S.card, background:'#ef444408', border:'1px solid #ef444433', padding:14}}>
+          <div style={{fontSize:10, fontWeight:800, color:'#ef4444', textTransform:'uppercase', marginBottom:8}}>
+            <LIcon name="AlertTriangle" size={13} color="#ef4444"/> UYARILAR
+          </div>
+          {r.uyarilar.filter(Boolean).map((u,i)=>(
+            <div key={i} style={{fontSize:10, color:'#ef4444', marginBottom:4}}>• {u}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
