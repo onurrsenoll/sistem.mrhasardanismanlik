@@ -197,54 +197,89 @@ KURALLAR:
 - Belirsiz alanlara "[BELİRSİZ: tahmin]"`;
 
 /* ══════════════════════════════════════════════════════
-   ANA ANALİZ FONKSİYONLARI
+   ANA ANALİZ FONKSİYONLARI - 2 PASS ANALIZ
 ══════════════════════════════════════════════════════ */
-async function anlasmaKTTAnaliz(apiKey, b64, mime) {
-  const txt = await callAI(
+async function anlasmaKTTAnaliz(apiKey, b64, mime, onProgress) {
+  // PASS 1: Yapısal alanlar (plakalar, kişi bilgileri, konum)
+  onProgress && onProgress('1/2 Yapısal alanlar okunuyor (plaka, TC, tarih, konum)...');
+  const pass1Txt = await callAI(
     apiKey,
-    imgContent(b64, mime, "Tutanağı analiz et. SADECE JSON döndür. Tüm string değerleri çift tırnakla kapat."),
-    ANLASMA_SYS,
+    imgContent(b64, mime, "Bu bir Türk trafik kazası tutanağı fotoğrafıdır, Türkçe el yazısıyla doldurulmuş olabilir. Her YAPISAL ALANI (plaka, TC, tarih, saat, konum, kişi bilgileri, sigorta, poliçe) dikkatlice oku, okunaksız harfleri bağlamdan tahmin et. Belirsiz alanları [OKUNAMADI] veya [BELİRSİZ: tahmin] olarak işaretle. SADECE JSON döndür."),
+    ANLASMA_PASS1_SYS,
+    1500
+  );
+  const pass1 = safeParseJSON(pass1Txt);
+
+  // PASS 2: Beyan + Kroki + TRAMER kusur analizi
+  onProgress && onProgress('2/2 Beyanlar ve kroki analiz ediliyor (TRAMER)...');
+  const pass2Txt = await callAI(
+    apiKey,
+    imgContent(b64, mime, "Bu bir Türk trafik kazası tutanağı fotoğrafıdır. BÖLÜM 9-10 (KROKİ) ve BÖLÜM 11 (BEYAN) kısımlarını Türkçe el yazısından oku. Her iki sürücünün beyanını tam metin olarak çıkar, krokiyi yorumla, TRAMER senaryosuyla eşleştir ve kusur oranı belirle. Belirsiz alanları [OKUNAMADI] veya [BELİRSİZ: tahmin] olarak işaretle. SADECE JSON döndür."),
+    ANLASMA_PASS2_SYS,
     2500
   );
-  const parsed = safeParseJSON(txt);
+  const pass2 = safeParseJSON(pass2Txt);
+
+  // İki sonucu birleştir
+  const belirsizAlanlar = [...(pass1._belirsiz_alanlar || []), ...(pass2._belirsiz_alanlar || [])];
+  const kalite1 = pass1._okuma_kalitesi || 'orta';
+  const kalite2 = pass2._okuma_kalitesi || 'orta';
+  // En düşük kalite kazansın
+  const kalitePuan = {yuksek: 3, orta: 2, dusuk: 1};
+  const finalKalite = kalitePuan[kalite1] <= kalitePuan[kalite2] ? kalite1 : kalite2;
+
   return {
     tip: 'anlasma_ktt',
-    kazaBilgileri: { tarih: parsed.kaza?.tarih || "", saat: parsed.kaza?.saat || "", il: parsed.kaza?.il || "", ilce: parsed.kaza?.ilce || "", cadde: parsed.kaza?.cadde || "", yolTipi: parsed.kaza?.yolTipi || "" },
-    aracA: { plaka: parsed.a?.plaka || "", marka: parsed.a?.marka || "", surucu: parsed.a?.surucu || "", tc: parsed.a?.tc || "", telefon: parsed.a?.telefon || "", adres: parsed.a?.adres || "", sigortaSirketi: parsed.a?.sigorta || "", policeNo: parsed.a?.policeNo || "", hasarYeri: parsed.a?.hasar || "" },
-    aracB: { plaka: parsed.b?.plaka || "", marka: parsed.b?.marka || "", surucu: parsed.b?.surucu || "", tc: parsed.b?.tc || "", telefon: parsed.b?.telefon || "", adres: parsed.b?.adres || "", sigortaSirketi: parsed.b?.sigorta || "", policeNo: parsed.b?.policeNo || "", hasarYeri: parsed.b?.hasar || "" },
-    kroKiAnalizi: { yolYapisi: parsed.kroki?.yol || "", aAracPozisyon: parsed.kroki?.aPos || "", bAracPozisyon: parsed.kroki?.bPos || "", carpismaNokta: parsed.kroki?.carpma || "", sinyal: parsed.kroki?.sinyal || "", refuj: parsed.kroki?.refuj || "" },
-    beyanAnalizi: { aBeyan: parsed.beyan?.a || "", bBeyan: parsed.beyan?.b || "", celisme: parsed.beyan?.celisme || "", kroKiUyum: parsed.beyan?.uyum || "" },
-    eslesenSenaryo: parsed.senaryo || "",
-    senaryoKategori: parsed.kategori || "",
-    kusurAnalizi: parsed.analiz || "",
-    kusurTablosu: (parsed.kusur || []).map(k => ({ arac: k.arac, plaka: k.plaka || "", kusurOrani: k.oran ?? 50, kusurNedeni: k.neden || "" })),
-    yasalDayanak: parsed.yasal || [],
-    kritikTespitler: parsed.tespitler || [],
-    guvenSkoru: parsed.guven || 75,
-    uyarilar: parsed.uyarilar || []
+    kazaBilgileri: { tarih: pass1.kaza?.tarih || "", saat: pass1.kaza?.saat || "", il: pass1.kaza?.il || "", ilce: pass1.kaza?.ilce || "", cadde: pass1.kaza?.cadde || "", yolTipi: pass1.kaza?.yolTipi || "" },
+    aracA: { plaka: pass1.a?.plaka || "", marka: pass1.a?.marka || "", surucu: pass1.a?.surucu || "", tc: pass1.a?.tc || "", telefon: pass1.a?.telefon || "", adres: pass1.a?.adres || "", sigortaSirketi: pass1.a?.sigorta || "", policeNo: pass1.a?.policeNo || "", hasarYeri: pass1.a?.hasar || "" },
+    aracB: { plaka: pass1.b?.plaka || "", marka: pass1.b?.marka || "", surucu: pass1.b?.surucu || "", tc: pass1.b?.tc || "", telefon: pass1.b?.telefon || "", adres: pass1.b?.adres || "", sigortaSirketi: pass1.b?.sigorta || "", policeNo: pass1.b?.policeNo || "", hasarYeri: pass1.b?.hasar || "" },
+    kroKiAnalizi: { yolYapisi: pass2.kroki?.yol || "", aAracPozisyon: pass2.kroki?.aPos || "", bAracPozisyon: pass2.kroki?.bPos || "", carpismaNokta: pass2.kroki?.carpma || "", sinyal: pass2.kroki?.sinyal || "", refuj: pass2.kroki?.refuj || "" },
+    beyanAnalizi: { aBeyan: pass2.beyan?.a || "", bBeyan: pass2.beyan?.b || "", celisme: pass2.beyan?.celisme || "", kroKiUyum: pass2.beyan?.uyum || "" },
+    eslesenSenaryo: pass2.senaryo || "",
+    senaryoKategori: pass2.kategori || "",
+    kusurAnalizi: pass2.analiz || "",
+    kusurTablosu: (pass2.kusur || []).map(k => ({ arac: k.arac, plaka: k.plaka || "", kusurOrani: k.oran ?? 50, kusurNedeni: k.neden || "" })),
+    yasalDayanak: pass2.yasal || [],
+    kritikTespitler: pass2.tespitler || [],
+    guvenSkoru: pass2.guven || 75,
+    uyarilar: pass2.uyarilar || [],
+    _okuma_kalitesi: finalKalite,
+    _belirsiz_alanlar: belirsizAlanlar
   };
 }
 
-async function polisKTTAnaliz(apiKey, b64, mime) {
+async function polisKTTAnaliz(apiKey, b64, mime, onProgress) {
+  onProgress && onProgress('Polis tutanağı analiz ediliyor...');
   const txt = await callAI(
     apiKey,
-    imgContent(b64, mime, "Polis kaza tespit tutanağını analiz et. SADECE JSON döndür."),
+    imgContent(b64, mime, "Bu bir Türk POLİS trafik kaza tespit tutanağı fotoğrafıdır. Tüm araçları, sürücüleri, yaralıları ve M.KAZANIN ÖZETİ bölümünü tam olarak oku. Türkçe karakterleri dikkate al. Belirsiz alanları [OKUNAMADI] veya [BELİRSİZ: tahmin] olarak işaretle. SADECE JSON döndür."),
     POLIS_SYS,
     2500
   );
   const parsed = safeParseJSON(txt);
-  return { tip: 'polis_ktt', ...parsed };
+  return {
+    tip: 'polis_ktt',
+    ...parsed,
+    _okuma_kalitesi: parsed._okuma_kalitesi || 'orta',
+    _belirsiz_alanlar: parsed._belirsiz_alanlar || []
+  };
 }
 
-async function hasarIhbarAnaliz(apiKey, b64, mime) {
+async function hasarIhbarAnaliz(apiKey, b64, mime, onProgress) {
+  onProgress && onProgress('Hasar ihbar föyü analiz ediliyor...');
   const txt = await callAI(
     apiKey,
-    imgContent(b64, mime, "Sigorta şirketi hasar ihbar föyünü analiz et. SADECE JSON döndür."),
+    imgContent(b64, mime, "Bu bir Türk sigorta şirketi hasar ihbar föyü / dosya kapağı fotoğrafıdır. Tüm alanları (dosya, poliçe, sigortalı, araç, hasar, eksper, mağdurlar) dikkatlice oku. Her sigorta şirketinin formatı farklı olabilir. Belirsiz alanları [OKUNAMADI] veya [BELİRSİZ: tahmin] olarak işaretle. SADECE JSON döndür."),
     HASAR_SYS,
     2500
   );
   const parsed = safeParseJSON(txt);
-  return { tip: 'hasar_ihbar', ...parsed };
+  return {
+    tip: 'hasar_ihbar',
+    ...parsed,
+    _okuma_kalitesi: parsed._okuma_kalitesi || 'orta',
+    _belirsiz_alanlar: parsed._belirsiz_alanlar || []
+  };
 }
 
 /* ══════════════════════════════════════════════════════
