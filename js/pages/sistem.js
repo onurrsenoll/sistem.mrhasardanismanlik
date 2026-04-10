@@ -1331,6 +1331,21 @@ const AyarlarTab = () => {
                 ZENROWS.COM ADRESINDEN API ANAHTARI ALABİLİRSİNİZ - RAYİÇ ARAŞTIRMADA GERÇEK İLAN VERİSİ ÇEKİLİR
               </div>
             </div>
+
+            <div style={{marginTop: 16}}>
+              <label style={{display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8}}>
+                <LIcon name="Sparkles" size={14} color="#ff6b35"/>
+                <span style={{fontWeight: 700, fontSize: 12}}>OPENROUTER API ANAHTARI</span>
+                <span style={{...S.badge('#ff6b35'), fontSize: 8, padding: '1px 6px'}}>EVRAK OKUYUCU</span>
+              </label>
+              <input style={{...S.input, fontFamily: 'monospace', fontSize: 12, letterSpacing: 0.5}}
+                value={ayarlar.openrouter_api_key || ''}
+                onChange={e => up('openrouter_api_key', e.target.value)}
+                placeholder="sk-or-v1-... (openrouter.ai API anahtarı)"/>
+              <div style={{fontSize: 10, color: C.textMuted, marginTop: 4}}>
+                OPENROUTER.AI ADRESINDEN API ANAHTARI ALIN - EVRAK OKUYUCU MODÜLÜNDE KULLANILIR (KTT + HASAR İHBAR)
+              </div>
+            </div>
           </div>
 
           {/* API TEST SONUCU PANELİ */}
