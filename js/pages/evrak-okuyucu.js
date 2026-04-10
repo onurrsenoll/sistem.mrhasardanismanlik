@@ -144,37 +144,57 @@ DURUM 48: A ters yöne girdi B ile çarpıştı → A %100`;
 /* ══════════════════════════════════════════════════════
    PROMPT'LAR
 ══════════════════════════════════════════════════════ */
-const ANLASMA_SYS = `Türk trafik sigortası kusur analiz uzmanısın. TRAMER:
-${TRAMER}
-
-Anlaşmalı Maddi Hasarlı Kaza Tespit Tutanağı'nı analiz et. EL YAZISI ile doldurulmuş olabilir, dikkatle oku. Önce krokilere (bölüm 9-10), sonra beyanlara (bölüm 11) bak.
-
-SADECE geçerli JSON döndür, başka hiçbir şey yazma:
-{"kaza":{"tarih":"","saat":"","il":"","ilce":"","cadde":"","yolTipi":""},"a":{"plaka":"","marka":"","surucu":"","tc":"","telefon":"","adres":"","sigorta":"","policeNo":"","hasar":""},"b":{"plaka":"","marka":"","surucu":"","tc":"","telefon":"","adres":"","sigorta":"","policeNo":"","hasar":""},"kroki":{"yol":"","aPos":"","bPos":"","carpma":"","sinyal":"","refuj":""},"beyan":{"a":"","b":"","celisme":"","uyum":""},"senaryo":"DURUM X","kategori":"","analiz":"Bu kazanın oluşumunda; [3-4 cümle]","kusur":[{"arac":"A","plaka":"","oran":0,"neden":""},{"arac":"B","plaka":"","oran":100,"neden":""}],"yasal":[""],"tespitler":[""],"guven":85,"uyarilar":[]}`;
-
-const POLIS_SYS = `Sen Türk trafik sigortası evrak analiz uzmanısın. Polis Trafik Kaza Tespit Tutanağı'nı yüksek doğrulukta oku ve tüm bilgileri çıkar.
+// ANLAŞMALI KTT - 1. PASS: YAPISAL ALANLAR (plakalar, tarih, saat, konum, kişi bilgileri)
+const ANLASMA_PASS1_SYS = `Sen Türk trafik kazası tutanağı uzmanısın. Anlaşmalı Maddi Hasarlı Kaza Tespit Tutanağı'nın SADECE YAPISAL ALANLARINI (kimlik, plaka, tarih, saat, konum) okuyacaksın. Bu 1. aşama, sadece net bilgileri çıkar.
+${TURKCE_KURALLAR}
 
 SADECE geçerli JSON döndür:
-{"tutanakNo":"","tarih":"","saat":"","il":"","ilce":"","mahalle":"","cadde":"","yolTipi":"","hava":"","araclar":[{"sira":1,"plaka":"","marka":"","model":"","modelYili":"","renk":"","surucu":"","tc":"","dogumYili":"","ehliyet":"","sigorta":"","policeNo":"","hasar":"","kusurOrani":"","ihlal":"","alkol":""}],"yaralilar":[{"adi":"","tc":"","pozisyon":"","durum":""}],"kazaOzeti":"M.KAZANIN ÖZETİ bölümündeki TAM METİN","kusurTespiti":"","kanunMaddeleri":[""],"guven":90}
+{"kaza":{"tarih":"","saat":"","il":"","ilce":"","cadde":"","yolTipi":""},"a":{"plaka":"","marka":"","surucu":"","tc":"","telefon":"","adres":"","sigorta":"","policeNo":"","hasar":""},"b":{"plaka":"","marka":"","surucu":"","tc":"","telefon":"","adres":"","sigorta":"","policeNo":"","hasar":""},"_okuma_kalitesi":"yuksek|orta|dusuk","_belirsiz_alanlar":[]}
+
+KURALLAR:
+- A aracı SOL taraf, B aracı SAĞ taraf
+- Plaka formatı: 2 rakam + harfler + rakamlar
+- TC 11 hane, telefon 05XX ile başlar
+- Okunamayan alanlara "[OKUNAMADI]"
+- Belirsiz alanlara "[BELİRSİZ: tahmin]"`;
+
+// ANLAŞMALI KTT - 2. PASS: BEYAN + KROKİ + TRAMER KUSUR ANALİZİ
+const ANLASMA_PASS2_SYS = `Sen Türk trafik sigortası kusur analiz uzmanısın. TRAMER senaryoları:
+${TRAMER}
+
+Anlaşmalı KTT'nin KROKİ (bölüm 9-10) ve BEYAN (bölüm 11) kısımlarını analiz et. TRAMER senaryosuyla eşleştir ve kusur oranı belirle.
+${TURKCE_KURALLAR}
+
+SADECE geçerli JSON döndür:
+{"kroki":{"yol":"","aPos":"","bPos":"","carpma":"","sinyal":"","refuj":""},"beyan":{"a":"","b":"","celisme":"","uyum":""},"senaryo":"DURUM X","kategori":"","analiz":"Bu kazanın oluşumunda; [3-4 cümle]","kusur":[{"arac":"A","plaka":"","oran":0,"neden":""},{"arac":"B","plaka":"","oran":100,"neden":""}],"yasal":[""],"tespitler":[""],"guven":85,"uyarilar":[],"_okuma_kalitesi":"yuksek|orta|dusuk","_belirsiz_alanlar":[]}`;
+
+const POLIS_SYS = `Sen Türk trafik sigortası evrak analiz uzmanısın. Polis Trafik Kaza Tespit Tutanağı'nı yüksek doğrulukta oku ve tüm bilgileri çıkar.
+${TURKCE_KURALLAR}
+
+SADECE geçerli JSON döndür:
+{"tutanakNo":"","tarih":"","saat":"","il":"","ilce":"","mahalle":"","cadde":"","yolTipi":"","hava":"","araclar":[{"sira":1,"plaka":"","marka":"","model":"","modelYili":"","renk":"","surucu":"","tc":"","dogumYili":"","ehliyet":"","sigorta":"","policeNo":"","hasar":"","kusurOrani":"","ihlal":"","alkol":""}],"yaralilar":[{"adi":"","tc":"","pozisyon":"","durum":""}],"kazaOzeti":"M.KAZANIN ÖZETİ bölümündeki TAM METİN","kusurTespiti":"","kanunMaddeleri":[""],"guven":90,"_okuma_kalitesi":"yuksek|orta|dusuk","_belirsiz_alanlar":[]}
 
 KURALLAR:
 - Tüm araçları araclar dizisine ekle (1 veya daha fazla)
 - Yaralıları yaralilar dizisine ekle
 - "M.KAZANIN ÖZETİ" bölümündeki metni tam oku
 - Plaka, TC, poliçe no gibi numaraları harf/rakam olarak DOĞRU çıkar
-- null kullan bulamadığın için`;
+- Okunamayan alanlara "[OKUNAMADI]"
+- Belirsiz alanlara "[BELİRSİZ: tahmin]"`;
 
 const HASAR_SYS = `Sen sigorta şirketi hasar dosya analiz uzmanısın. Sigorta şirketi hasar ihbar föyü / dosya kapağını yüksek doğrulukta oku. Her şirketin formatı farklıdır.
+${TURKCE_KURALLAR}
 
 SADECE geçerli JSON döndür:
-{"dosyaNo":"","musteriNo":"","sigortaSirketi":"","acenteAdi":"","policeNo":"","policeTuru":"","urunKodu":"","sigortaBedeli":"","policeBaslangic":"","policeBitis":"","sigortaliAdi":"","sigortaliTc":"","sigortaliTelefon":"","sigortaliEmail":"","sigortaliAdres":"","aracPlaka":"","aracMarka":"","aracModel":"","aracYili":"","aracSase":"","hasarTarihi":"","ihbarTarihi":"","hasarNedeni":"","hasarAltNedeni":"","hasarYeri":"","hasarAciklama":"","tahminiHasar":"","ihbarEden":"","eksperAdi":"","eksperFirma":"","servisAdi":"","magdurlar":[{"adi":"","plaka":"","tutar":""}],"toplamHasar":"","odenenTutar":"","guven":90}
+{"dosyaNo":"","musteriNo":"","sigortaSirketi":"","acenteAdi":"","policeNo":"","policeTuru":"","urunKodu":"","sigortaBedeli":"","policeBaslangic":"","policeBitis":"","sigortaliAdi":"","sigortaliTc":"","sigortaliTelefon":"","sigortaliEmail":"","sigortaliAdres":"","aracPlaka":"","aracMarka":"","aracModel":"","aracYili":"","aracSase":"","hasarTarihi":"","ihbarTarihi":"","hasarNedeni":"","hasarAltNedeni":"","hasarYeri":"","hasarAciklama":"","tahminiHasar":"","ihbarEden":"","eksperAdi":"","eksperFirma":"","servisAdi":"","magdurlar":[{"adi":"","plaka":"","tutar":""}],"toplamHasar":"","odenenTutar":"","guven":90,"_okuma_kalitesi":"yuksek|orta|dusuk","_belirsiz_alanlar":[]}
 
 KURALLAR:
 - Dosya no, müşteri no, poliçe no gibi numaraları tam oku
 - Tarihleri DD.MM.YYYY formatında çıkar
 - Tutarları sayı olarak al (TL işareti olmadan)
 - Birden fazla mağdur varsa hepsini listele
-- Bulamadığın alanlara null yaz`;
+- Okunamayan alanlara "[OKUNAMADI]"
+- Belirsiz alanlara "[BELİRSİZ: tahmin]"`;
 
 /* ══════════════════════════════════════════════════════
    ANA ANALİZ FONKSİYONLARI
