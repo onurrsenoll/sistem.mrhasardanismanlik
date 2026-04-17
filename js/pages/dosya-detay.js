@@ -520,6 +520,13 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <span style={{padding:'2px 8px',borderRadius:4,fontSize:8,fontWeight:600,background:ac+'18',color:ac,border:`1px solid ${ac}33`}}>
                   {dosya.asama}
                 </span>
+                {Number(dosya.eski_sistem) === 1 && (
+                  <span title="ESKİ SİSTEM AKTARIMI — Güncel ay sayısına ve finansal tabloya girmez"
+                    style={{padding:'2px 8px',borderRadius:4,fontSize:8,fontWeight:800,letterSpacing:0.5,
+                      background:'#f59e0b22',color:'#f59e0b',border:'1px solid #f59e0b55'}}>
+                    ESKİ SİSTEM
+                  </span>
+                )}
               </div>
               <div style={{fontSize:14,color:C.text,marginTop:4,fontWeight:700,letterSpacing:0.3}}>
                 {magdur.ad_soyad || '-'} {dosya.sigorta_sirket ? `• ${dosya.sigorta_sirket}` : ''} {dosya.hasar_no ? `• ${dosya.hasar_no}` : ''}
@@ -1815,6 +1822,9 @@ MR.MasrafEkle = ({open, onClose, dosyaId, onOk}) => {
         </FormGroup>
         <FormGroup label="TARİH">
           <MR.DateInput value={f.islem_tarihi} onChange={v => sF({...f,islem_tarihi:v})} style={{padding:'8px 10px',fontSize:11}}/>
+          <div style={{marginTop:4,fontSize:9,color:C.textMuted,lineHeight:1.5}}>
+            GERİYE DÖNÜK TARİH GİRDİĞİNİZDE MASRAF O AYA AİT SAYILIR, GÜNCEL AY FİNANSAL TABLOSUNU ETKİLEMEZ.
+          </div>
         </FormGroup>
         <FormGroup label="AÇIKLAMA">
           <input value={f.aciklama} onChange={e => sF({...f,aciklama:e.target.value})} placeholder="İSTEĞE BAĞLI" style={{...S.input,padding:'8px 10px',fontSize:11}}/>

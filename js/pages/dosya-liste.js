@@ -558,6 +558,14 @@ MR._DosyaListesiInner = ({setPage, onSelect, user}) => {
                       {/* DOSYA NO */}
                       <td style={{...tdS,fontWeight:700}}>
                         <a href={'#/dosya-detay-'+d.id} onClick={e=>{if(!e.ctrlKey&&!e.metaKey){e.preventDefault();onSelect(d.id);}}} style={{color:C.accent,textDecoration:'none',fontSize:'12px'}}>{d.dosya_no}</a>
+                        {Number(d.eski_sistem) === 1 && (
+                          <span title="ESKİ SİSTEM AKTARIMI — Güncel ay sayısına ve finansal tabloya girmez"
+                            style={{display:'inline-block',marginLeft:6,padding:'1px 5px',borderRadius:3,
+                              fontSize:7,fontWeight:800,letterSpacing:0.4,verticalAlign:'middle',
+                              background:'#f59e0b22',color:'#f59e0b',border:'1px solid #f59e0b55'}}>
+                            ESKİ
+                          </span>
+                        )}
                       </td>
                       {/* T.C. NO */}
                       <td style={{...tdTrunc,fontFamily:'monospace',letterSpacing:0.3}} title={d.tc_kimlik||''}>{d.tc_kimlik || '-'}</td>

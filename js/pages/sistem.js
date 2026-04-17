@@ -2834,21 +2834,21 @@ const TopluAktarimTab = () => {
     try {
       const basliklar = [
         'T.C. NO','ADI SOYADI','DOSYA KAYNAĞI','DOSYA TÜRÜ','DAVALI ŞİRKET',
-        'SİGORTA HASAR NO','KAZA TARİHİ','DOSYA AŞAMA DURUMU',
+        'SİGORTA HASAR NO','KAZA TARİHİ','AÇILIŞ TARİHİ','DOSYA AŞAMA DURUMU',
         'TELEFON','TELEFON 2','E-POSTA','POLİÇE NO','KAZA İL','KAZA İLÇE',
         'PLAKA','MARKA','MODEL','MODEL YILI','KARŞI PLAKA','KARŞI SİGORTA','NOTLAR'
       ];
       const ornek1 = [
         '12345678901','Ahmet Yılmaz','OFİS CRM','ADK','Axa Sigorta',
-        'HSR-2026-001','15.01.2026','Dosya Açık',
+        'HSR-2026-001','15.01.2026','20.01.2026','Dosya Açık',
         '0532 111 2233','','ahmet@email.com','POL-123456','İSTANBUL','KADIKÖY',
         '34 ABC 123','TOYOTA','COROLLA','2022','06 DEF 456','Allianz Sigorta','Toplu aktarım ile eklendi'
       ];
       const ornek2 = [
         '98765432109','Fatma Demir','YÖNLENDİREN','BH','Mapfre Sigorta',
-        '','20.02.2026','Dosya Açık',
+        '','10.03.2023','15.05.2023','Dosya Açık',
         '0533 444 5566','','','','ANKARA','ÇANKAYA',
-        '','','','','','',''
+        '','','','','','','Eski sistemden aktarım'
       ];
       const ws = XLSX.utils.aoa_to_sheet([basliklar, ornek1, ornek2]);
       /* Sütun genişlikleri */
@@ -2919,7 +2919,12 @@ const TopluAktarimTab = () => {
               <li><b>ŞABLON İNDİR</b> butonuna tıklayarak Excel şablonunu indirin</li>
               <li>Şablondaki örnek satırları silin, kendi verilerinizi doldurun</li>
               <li><b>DOSYA TÜRÜ</b> (ADK/BH) ve <b>ADI SOYADI</b> zorunlu alanlardır</li>
-              <li>Kaza tarihi formatı: <b>GG.AA.YYYY</b> (örn: 15.01.2026)</li>
+              <li>Tarih formatı: <b>GG.AA.YYYY</b> (örn: 15.01.2026)</li>
+              <li>
+                <b>AÇILIŞ TARİHİ</b> alanı <b>eski sistem dosyaları</b> için kullanılır:
+                doldurduğunuzda dosya o tarihle açılmış kabul edilir ve <b>güncel ay sayısına / finansal tabloya girmez</b>.
+                Boş bırakırsanız bugünün tarihi kullanılır.
+              </li>
               <li>Excel dosyasını <b>YÜKLE</b> butonuyla sisteme aktarın</li>
             </ol>
           </div>
@@ -2929,7 +2934,7 @@ const TopluAktarimTab = () => {
             <div style={{fontSize:10,fontWeight:700,color:C.textMuted,marginBottom:8}}>ŞABLON ALANLARI:</div>
             <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
               {['DOSYA TÜRÜ *','ADI SOYADI *','T.C. KİMLİK','TELEFON','TELEFON 2','E-POSTA',
-                'SİGORTA ŞİRKETİ','HASAR NO','POLİÇE NO','KAZA TARİHİ','KAZA İL','KAZA İLÇE',
+                'SİGORTA ŞİRKETİ','HASAR NO','POLİÇE NO','KAZA TARİHİ','AÇILIŞ TARİHİ','KAZA İL','KAZA İLÇE',
                 'PLAKA','MARKA','MODEL','MODEL YILI','KARŞI PLAKA','KARŞI SİGORTA','DOSYA KAYNAĞI','AŞAMA','NOTLAR'
               ].map((s,i) => (
                 <span key={i} style={{
@@ -3030,6 +3035,8 @@ const TopluAktarimTab = () => {
                         <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:C.textMuted}}>DOSYA NO</th>
                         <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:C.textMuted}}>ADI SOYADI</th>
                         <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:C.textMuted}}>TÜR</th>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:C.textMuted}}>AÇILIŞ</th>
+                        <th style={{padding:'8px 10px',textAlign:'center',fontWeight:700,fontSize:9,color:C.textMuted}}>DURUM</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -3039,6 +3046,14 @@ const TopluAktarimTab = () => {
                           <td style={{padding:'6px 10px',fontSize:11,fontWeight:700,color:C.accent}}>{d.dosya_no}</td>
                           <td style={{padding:'6px 10px',fontSize:11,color:C.text}}>{d.ad_soyad}</td>
                           <td style={{padding:'6px 10px'}}><span style={{fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:4,background:d.dosya_turu==='ADK'?`${C.accent}18`:`${C.gold}18`,color:d.dosya_turu==='ADK'?C.accent:C.gold}}>{d.dosya_turu}</span></td>
+                          <td style={{padding:'6px 10px',fontSize:10,color:C.textMuted,fontFamily:'monospace'}}>{d.acilis_tarihi || '-'}</td>
+                          <td style={{padding:'6px 10px',textAlign:'center'}}>
+                            {d.eski_sistem ? (
+                              <span style={{fontSize:8,fontWeight:800,padding:'2px 6px',borderRadius:4,background:`${C.warning}22`,color:C.warning,letterSpacing:0.3}}>ESKİ SİSTEM</span>
+                            ) : (
+                              <span style={{fontSize:8,fontWeight:700,padding:'2px 6px',borderRadius:4,background:`${C.success}18`,color:C.success,letterSpacing:0.3}}>YENİ</span>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

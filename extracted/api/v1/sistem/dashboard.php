@@ -48,8 +48,9 @@ $stmt = $db->query("SELECT l.islem, l.detay, l.created_at, u.ad_soyad as kullani
     ORDER BY l.id DESC LIMIT 10");
 $sonAktiviteler = $stmt->fetchAll();
 
-// Bu ay açılan dosyalar
-$stmt = $db->prepare("SELECT COUNT(*) as c FROM dosyalar WHERE acilis_tarihi >= ?");
+// Bu ay açılan dosyalar (eski sistem aktarımları hariç)
+try { $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS eski_sistem TINYINT(1) DEFAULT 0"); } catch (\Exception $e) {}
+$stmt = $db->prepare("SELECT COUNT(*) as c FROM dosyalar WHERE acilis_tarihi >= ? AND COALESCE(eski_sistem, 0) = 0");
 $stmt->execute([date('Y-m-01')]);
 $buAyDosya = (int)$stmt->fetch()['c'];
 
