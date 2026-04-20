@@ -66,6 +66,23 @@ const MODUL_YETKILERI = [
     {key: 'crm-sil', label: 'KAYIT SİL'},
     {key: 'crm-toplu-sil', label: 'TOPLU SİLME'},
     {key: 'crm-arama', label: 'ARAMA LİSTESİ'},
+    {key: 'crm-ara', label: 'TELEFON İLE ARAMA YAP'},
+    {key: 'crm-detay', label: 'KİŞİ KARTI GÖRÜNTÜLE'},
+    {key: 'crm-bilgi-duzenle', label: 'KİŞİ BİLGİ BUTONLARINI DÜZENLE (KUSUR/POZİSYON/DURUM)'},
+    {key: 'crm-durum-degistir', label: 'DURUM DEĞİŞTİR (BELİRSİZ/ALINDI/OLUMSUZ)'},
+    {key: 'crm-not-ekle', label: 'GÖRÜŞME NOTU EKLE'},
+    {key: 'crm-excel-yukle', label: 'EXCEL TOPLU LİSTE YÜKLE'},
+    {key: 'crm-atama', label: 'LİSTEYİ KULLANICIYA ATA'},
+    {key: 'crm-dosyaya-donustur', label: 'DOSYAYA DÖNÜŞTÜR'},
+    {key: 'crm-timeline-gor', label: '360° GÖRÜŞME GEÇMİŞİ GÖRÜNTÜLE'},
+    {key: 'crm-takip-plan', label: 'TAKİP TARİHİ BELİRLE'},
+    {key: 'crm-ekler-yukle', label: 'EK DOSYA / FOTOĞRAF YÜKLE'},
+    {key: 'crm-ekler-sil', label: 'EK DOSYA SİL'},
+    {key: 'crm-hizli-wa', label: 'HIZLI WHATSAPP'},
+    {key: 'crm-hizli-sms', label: 'HIZLI SMS'},
+    {key: 'crm-hizli-harita', label: 'HIZLI HARİTA'},
+    {key: 'crm-birlestir', label: 'DUPLICATE KİŞİ BİRLEŞTİR'},
+    {key: 'arama-log-duzenle', label: 'ARAMA LOGU NOT EKLE/DÜZENLE'},
     {key: 'saha-liste', label: 'SAHA DOSYALARI'},
     {key: 'saha-yeni', label: 'YENİ SAHA KAYDI'},
     {key: 'saha-duzenle', label: 'SAHA KAYDI DÜZENLE'},
@@ -140,7 +157,9 @@ const MODUL_YETKILERI = [
     {key: 'evrak-goruntule', label: 'EVRAK GÖRÜNTÜLE'},
     {key: 'evrak-yukle', label: 'EVRAK YÜKLE'},
     {key: 'evrak-sil', label: 'EVRAK SİL'},
-    {key: 'evrak-indir', label: 'EVRAK İNDİR'}
+    {key: 'evrak-indir', label: 'EVRAK İNDİR'},
+    {key: 'evrak-toplu-indir', label: 'EVRAK TOPLU İNDİR'},
+    {key: 'evrak-ara', label: 'EVRAK TÜRÜ ARAMA KUTUSU'}
   ]},
   {modul: 'ajanda', label: 'AJANDA', icon: 'Calendar', islemler: [
     {key: 'goruntule', label: 'AJANDA GÖRÜNTÜLE'},
@@ -165,6 +184,14 @@ const MODUL_YETKILERI = [
     {key: 'ictihat-police-limit', label: 'POLİÇE LİMİT TABLOLARI'},
     {key: 'ictihat-kusur-emsal', label: 'KUSUR EMSAL DOSYALARI'}
   ]},
+  {modul: 'netsantral', label: 'NETSANTRAL / WEBRTC TELEFON', icon: 'Phone', islemler: [
+    {key: 'netsantral-goruntule', label: 'AYARLARI GÖRÜNTÜLE'},
+    {key: 'netsantral-duzenle', label: 'SIP / WSS AYARLARINI DÜZENLE'},
+    {key: 'netsantral-sifre-gor', label: 'SIP ŞİFRESİNİ GÖR'},
+    {key: 'netsantral-api-duzenle', label: 'NETGSM API AYARLARI'},
+    {key: 'netsantral-test', label: 'BAĞLANTI TESTİ YAP'},
+    {key: 'netsantral-yeniden-baslat', label: 'BAĞLANTIYI YENİDEN BAŞLAT'}
+  ]},
   {modul: 'sistem', label: 'SİSTEM', icon: 'Shield', islemler: [
     {key: 'sistem-kullanici', label: 'KULLANICI YÖNETİMİ'},
     {key: 'sistem-yetki', label: 'YETKİ YÖNETİMİ'},
@@ -187,7 +214,14 @@ const MODUL_YETKILERI = [
     {key: 'tanimlamalar-sablon-ekle', label: 'ŞABLON EKLE'},
     {key: 'tanimlamalar-sablon-duzenle', label: 'ŞABLON DÜZENLE'},
     {key: 'sistem-konum', label: 'KONUM TAKİBİ'},
-    {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'}
+    {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'},
+    {key: 'sistem-netsantral', label: 'NETSANTRAL AYARLARI'},
+    {key: 'arama-gecmis', label: 'ARAMA GEÇMİŞİ'},
+    {key: 'arama-gecmis-istatistik', label: 'ARAMA İSTATİSTİKLERİ'},
+    {key: 'arama-gecmis-cevapsiz', label: 'CEVAPSIZ ÇAĞRILAR'},
+    {key: 'arama-gecmis-kayit-dinle', label: 'GÖRÜŞME KAYDI DİNLE'},
+    {key: 'arama-gecmis-not', label: 'GÖRÜŞME NOTU EKLE/DÜZENLE'},
+    {key: 'arama-gecmis-sil', label: 'ARAMA KAYDI SİL'}
   ]},
 ];
 
@@ -347,9 +381,9 @@ const KullaniciTab = () => {
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%', borderCollapse:'collapse', fontSize:11, minWidth:800}}>
               <thead>
-                <tr style={{background:C.bgHover}}>
+                <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['AD SOYAD', 'E-POSTA', 'TELEFON', 'ROL', 'DURUM', 'İŞLEMLER'].map(h =>
-                    <th key={h} style={{padding:'10px 12px', textAlign:'left', color:C.textMuted, fontWeight:600, fontSize:9, borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px', textAlign:'left', color:'#FFFFFF', fontWeight:800, fontSize:'12px', borderBottom:`1px solid ${C.border}`}}>{h}</th>
                   )}
                 </tr>
               </thead>
@@ -358,10 +392,10 @@ const KullaniciTab = () => {
                   const aktif = u.aktif !== 0 && u.aktif !== false;
                   const rolRenk = ROL_RENK[u.rol] || C.textSec;
                   return (
-                    <tr key={u.id || i} style={{borderBottom:`1px solid ${C.border}`}}
-                      onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{padding:'12px', fontWeight:600}}>
+                    <tr key={u.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                      onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                      onMouseLeave={e => {e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                      <td style={{padding:'12px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px'}}>
                         <div style={{display:'flex', alignItems:'center', gap:10}}>
                           <div style={{width:32, height:32, borderRadius:8, background:`${rolRenk}22`,
                             display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:800, color:rolRenk}}>
@@ -370,15 +404,15 @@ const KullaniciTab = () => {
                           {u.ad_soyad}
                         </div>
                       </td>
-                      <td style={{padding:'12px', color:C.textSec}}>{u.email}</td>
-                      <td style={{padding:'12px', color:C.textSec}}>{u.telefon || '-'}</td>
-                      <td style={{padding:'12px'}}>
+                      <td style={{padding:'12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{u.email}</td>
+                      <td style={{padding:'12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{u.telefon || '-'}</td>
+                      <td style={{padding:'12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                         <Badge text={ROL_LABEL[u.rol] || (u.rol || '').toUpperCase()} color={rolRenk}/>
                       </td>
-                      <td style={{padding:'12px'}}>
+                      <td style={{padding:'12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                         <Badge text={aktif ? 'AKTİF' : 'PASİF'} color={aktif ? C.success : C.danger}/>
                       </td>
-                      <td style={{padding:'12px'}}>
+                      <td style={{padding:'12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                         <div style={{display:'flex', gap:6}}>
                           <div onClick={() => duzenle(u)} style={{cursor:'pointer', padding:6, borderRadius:6, transition:'all .2s'}}
                             onMouseEnter={e => e.currentTarget.style.background = `${C.accent}22`}
@@ -1691,9 +1725,9 @@ const LogTab = () => {
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%', borderCollapse:'collapse', fontSize:11, minWidth:900}}>
               <thead>
-                <tr style={{background:C.bgHover}}>
+                <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['TARİH', 'KULLANICI', 'İŞLEM', 'DETAY', 'MODÜL', 'KAYIT ID'].map(h =>
-                    <th key={h} style={{padding:'10px 12px', textAlign:'left', color:C.textMuted, fontWeight:600, fontSize:9, borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px', textAlign:'left', color:'#FFFFFF', fontWeight:800, fontSize:'12px', borderBottom:`1px solid ${C.border}`}}>{h}</th>
                   )}
                 </tr>
               </thead>
@@ -1701,25 +1735,25 @@ const LogTab = () => {
                 {loglar.map((log, i) => {
                   const islemRenk = LOG_ISLEM_RENK(log.islem);
                   return (
-                    <tr key={log.id || i} style={{borderBottom:`1px solid ${C.border}`}}
-                      onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{padding:'10px 12px', color:C.textMuted, fontSize:10, whiteSpace:'nowrap'}}>
+                    <tr key={log.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                      onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                      onMouseLeave={e => {e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                      <td style={{padding:'10px 12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, whiteSpace:'nowrap'}}>
                         {log.created_at || log.tarih || '-'}
                       </td>
-                      <td style={{padding:'10px 12px', fontWeight:600}}>
+                      <td style={{padding:'10px 12px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px'}}>
                         {log.kullanici_adi || log.kullanici || '-'}
                       </td>
-                      <td style={{padding:'10px 12px'}}>
+                      <td style={{padding:'10px 12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                         <Badge text={log.islem || '-'} color={islemRenk}/>
                       </td>
-                      <td style={{padding:'10px 12px', color:C.textSec, maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                      <td style={{padding:'10px 12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
                         {log.detay || '-'}
                       </td>
-                      <td style={{padding:'10px 12px'}}>
+                      <td style={{padding:'10px 12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                         <Badge text={log.modul || '-'} color={C.purple}/>
                       </td>
-                      <td style={{padding:'10px 12px', color:C.textMuted, fontFamily:'monospace', fontSize:10}}>
+                      <td style={{padding:'10px 12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, fontFamily:'monospace'}}>
                         {log.kayit_id || '-'}
                       </td>
                     </tr>
@@ -1792,7 +1826,7 @@ const LogTab = () => {
 const SmsTab = () => {
   const {C, S, LIcon, Badge, FormGroup, Loading, api, fmt} = MR;
   const [smsAltTab, setSmsAltTab] = useState('ayarlar');
-  const [ayarlar, setAyarlar] = useState({sms_aktif:'0',sms_kullanici:'',sms_sifre:'',sms_baslik:'',site_url:''});
+  const [ayarlar, setAyarlar] = useState({sms_aktif:'0',sms_kullanici:'',sms_sifre:'',sms_baslik:''});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [mesaj, setMesaj] = useState(null);
@@ -1809,20 +1843,6 @@ const SmsTab = () => {
   const [gelenTotal, setGelenTotal] = useState(0);
   const [gelenOkunmamis, setGelenOkunmamis] = useState(0);
   const [gelenArama, setGelenArama] = useState('');
-  // TOPLU SMS STATE
-  const [topluTelefonlar, setTopluTelefonlar] = useState('');
-  const [topluMesaj, setTopluMesaj] = useState('');
-  const [topluLoading, setTopluLoading] = useState(false);
-  const [topluSonuc, setTopluSonuc] = useState(null);
-  // KREDİ SORGULAMA STATE
-  const [krediSonuc, setKrediSonuc] = useState(null);
-  const [krediLoading, setKrediLoading] = useState(false);
-  const [basliklar, setBasliklar] = useState([]);
-  const [baslikLoading, setBaslikLoading] = useState(false);
-  // RAPOR SORGULAMA STATE
-  const [raporBulkId, setRaporBulkId] = useState('');
-  const [raporSonuc, setRaporSonuc] = useState(null);
-  const [raporLoading, setRaporLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -1831,11 +1851,11 @@ const SmsTab = () => {
       if (r?.success && r.data) {
         const a = {};
         (Array.isArray(r.data) ? r.data : []).forEach(item => {
-          if (item.anahtar && (item.anahtar.startsWith('sms_') || item.anahtar === 'site_url')) a[item.anahtar] = item.deger || '';
+          if (item.anahtar && item.anahtar.startsWith('sms_')) a[item.anahtar] = item.deger || '';
         });
         if (Object.keys(a).length === 0 && typeof r.data === 'object' && !Array.isArray(r.data)) {
           Object.keys(r.data).forEach(k => {
-            if (k.startsWith('sms_') || k === 'site_url') a[k] = r.data[k] || '';
+            if (k.startsWith('sms_')) a[k] = r.data[k] || '';
           });
         }
         setAyarlar(prev => ({...prev, ...a}));
@@ -1874,52 +1894,6 @@ const SmsTab = () => {
   const gelenOkunduYap = async (id) => {
     const r = await api.smsGelenOkundu(id ? {id} : {hepsi: true});
     if (r?.success) gelenSmsYukle(gelenPage, gelenArama);
-  };
-
-  // TOPLU SMS GÖNDER
-  const topluSmsGonder = async () => {
-    if (!topluMesaj.trim()) { setMesaj({type:'error', text:'MESAJ METNİ GİRİN'}); return; }
-    const numaralar = topluTelefonlar.split(/[\n,;]+/).map(t => t.trim()).filter(t => t.length > 0);
-    if (numaralar.length === 0) { setMesaj({type:'error', text:'EN AZ BİR TELEFON NUMARASI GİRİN'}); return; }
-    if (numaralar.length > 500) { setMesaj({type:'error', text:'TEK SEFERDE EN FAZLA 500 NUMARA GÖNDEREBİLİRSİNİZ'}); return; }
-    setTopluLoading(true); setMesaj(null); setTopluSonuc(null);
-    const r = await api.smsTopluGonder({telefonlar: numaralar, mesaj: topluMesaj});
-    if (r?.success && r.data) {
-      setTopluSonuc(r.data);
-      if (r.data.basarili > 0) setMesaj({type:'success', text:`${r.data.basarili} SMS BAŞARIYLA GÖNDERİLDİ`});
-      else setMesaj({type:'error', text: r.data.hata || 'TOPLU SMS GÖNDERİLEMEDİ'});
-    } else {
-      setMesaj({type:'error', text: r?.error || 'TOPLU SMS GÖNDERİLEMEDİ'});
-    }
-    setTopluLoading(false);
-    smsLoglariYukle(1);
-  };
-
-  // KREDİ SORGULA
-  const krediSorgula = async () => {
-    setKrediLoading(true); setKrediSonuc(null);
-    const r = await api.smsKredi();
-    if (r?.success && r.data) setKrediSonuc(r.data);
-    else setKrediSonuc({basarili: false, mesaj: r?.error || 'KREDİ SORGULANAMADI'});
-    setKrediLoading(false);
-  };
-
-  // BAŞLIKLARI SORGULA
-  const basliklariSorgula = async () => {
-    setBaslikLoading(true); setBasliklar([]);
-    const r = await api.smsBasliklar();
-    if (r?.success && r.data?.basarili) setBasliklar(r.data.basliklar || []);
-    setBaslikLoading(false);
-  };
-
-  // RAPOR SORGULA
-  const raporSorgulama = async () => {
-    if (!raporBulkId.trim()) { setMesaj({type:'error', text:'BULK ID GİRİN'}); return; }
-    setRaporLoading(true); setRaporSonuc(null); setMesaj(null);
-    const r = await api.smsRapor({bulk_id: raporBulkId.trim()});
-    if (r?.success && r.data) setRaporSonuc(r.data);
-    else setRaporSonuc({basarili: false, mesaj: r?.error || 'RAPOR ALINAMADI'});
-    setRaporLoading(false);
   };
 
   const kaydet = async () => {
@@ -1961,10 +1935,7 @@ const SmsTab = () => {
         {[
           {id:'ayarlar', label:'SMS AYARLARI', icon:'Settings', color:C.accent},
           {id:'gelen', label:'GELEN SMS', icon:'MessageCircle', color:C.success, badge: gelenOkunmamis},
-          {id:'gonderilenler', label:'GÖNDERİLEN SMS', icon:'Send', color:C.warning},
-          {id:'toplu', label:'TOPLU SMS', icon:'Users', color:C.purple || '#8b5cf6'},
-          {id:'kredi', label:'KREDİ / BAŞLIK', icon:'Wallet', color:C.cyan || '#06b6d4'},
-          {id:'rapor', label:'İLETİM RAPORU', icon:'BarChart3', color:'#f97316'}
+          {id:'gonderilenler', label:'GÖNDERİLEN SMS', icon:'Send', color:C.warning}
         ].map(t => (
           <div key={t.id} onClick={() => { setSmsAltTab(t.id); if(t.id==='gelen') gelenSmsYukle(1, gelenArama); }}
             style={{flex:1, padding:'10px 16px', borderRadius:8, cursor:'pointer', textAlign:'center',
@@ -2177,29 +2148,31 @@ const SmsTab = () => {
                 <div>
                   <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
                     <thead>
-                      <tr style={{background:C.bgHover}}>
+                      <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['TARİH','TELEFON','DOSYA NO','DURUM','MESAJ','KULLANICI'].map(h =>
-                          <th key={h} style={{padding:'8px 10px', textAlign:'left', color:C.textMuted, fontWeight:600, fontSize:9, borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                          <th key={h} style={{padding:'8px 10px', textAlign:'left', color:'#FFFFFF', fontWeight:800, fontSize:'12px', borderBottom:`1px solid ${C.border}`}}>{h}</th>
                         )}
                       </tr>
                     </thead>
                     <tbody>
                       {loglar.map((log, i) => (
-                        <tr key={i} style={{borderBottom:`1px solid ${C.border}`}}>
-                          <td style={{padding:'8px 10px', fontSize:10, color:C.textMuted, whiteSpace:'nowrap'}}>
+                        <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                          onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                          onMouseLeave={e => {e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                          <td style={{padding:'8px 10px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, whiteSpace:'nowrap'}}>
                             {log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-'}
                           </td>
-                          <td style={{padding:'8px 10px', fontFamily:'monospace', fontSize:11, fontWeight:600}}>{log.telefon || '-'}</td>
-                          <td style={{padding:'8px 10px'}}>
+                          <td style={{padding:'8px 10px', fontFamily:'monospace', fontSize:'12px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{log.telefon || '-'}</td>
+                          <td style={{padding:'8px 10px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             {log.dosya_no ? <Badge text={log.dosya_no} color={C.accent}/> : '-'}
                           </td>
-                          <td style={{padding:'8px 10px'}}>
+                          <td style={{padding:'8px 10px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             <Badge text={log.durum === 'gonderildi' ? 'GÖNDERİLDİ' : log.durum === 'hata' ? 'HATA' : (log.durum || '').toUpperCase()} color={durumRenk(log.durum)}/>
                           </td>
-                          <td style={{padding:'8px 10px', fontSize:10, color:C.textSec, maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                          <td style={{padding:'8px 10px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
                             {log.sonuc_mesaj || log.mesaj || '-'}
                           </td>
-                          <td style={{padding:'8px 10px', fontSize:10, color:C.textMuted}}>{log.kullanici_adi || '-'}</td>
+                          <td style={{padding:'8px 10px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{log.kullanici_adi || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -2287,11 +2260,59 @@ const SmsTab = () => {
               </div>
             </div>
 
+            {/* NETSANTRAL BİLGİLERİNİ OTOMATİK AKTAR - SMS ŞİFRESİ BOŞSA */}
+            {(() => {
+              const nsKullanici = localStorage.getItem('mr_netsantral_kullanici');
+              const nsSifre = localStorage.getItem('mr_netsantral_api_sifre');
+              if (!nsKullanici && !nsSifre) return null;
+
+              // SMS şifresi boşsa NetSantral bilgilerini otomatik aktar
+              if ((!ayarlar.sms_sifre || !ayarlar.sms_kullanici) && (nsKullanici || nsSifre)) {
+                setTimeout(() => {
+                  let degisti = false;
+                  if (!ayarlar.sms_kullanici && nsKullanici) { u('sms_kullanici', nsKullanici); degisti = true; }
+                  if (!ayarlar.sms_sifre && nsSifre) { u('sms_sifre', nsSifre); degisti = true; }
+                  if (degisti) {
+                    setMesaj({type:'success', text:'NETSANTRAL BİLGİLERİ SMS ALANLARINA OTOMATİK AKTARILDI. KAYDET BUTONUNA BASMAYI UNUTMAYIN.'});
+                  }
+                }, 300);
+              }
+
+              const zatenAyni = ayarlar.sms_kullanici === nsKullanici && ayarlar.sms_sifre === nsSifre;
+              return (
+                <div style={{padding:12, background:`${C.info || '#3b82f6'}11`, borderRadius:10,
+                  border:`1px solid ${C.info || '#3b82f6'}33`, display:'flex', alignItems:'center', gap:12}}>
+                  <div style={{width:36, height:36, borderRadius:10, background:`${C.info || '#3b82f6'}22`,
+                    display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+                    <LIcon name="Phone" size={18} color={C.info || '#3b82f6'}/>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:11, fontWeight:700, color:C.text}}>NETSANTRAL HESABI ALGILANDI</div>
+                    <div style={{fontSize:10, color:C.textMuted, marginTop:2}}>
+                      {zatenAyni ? 'SMS AYARLARI NETSANTRAL BİLGİLERİYLE EŞLEŞİYOR' : 'AYNI NETGSM HESAP BİLGİLERİNİ SMS İÇİN DE KULLANABİLİRSİNİZ'}
+                    </div>
+                  </div>
+                  {!zatenAyni && (
+                    <button onClick={() => {
+                      if (nsKullanici) u('sms_kullanici', nsKullanici);
+                      if (nsSifre) u('sms_sifre', nsSifre);
+                      setMesaj({type:'success', text:'NETSANTRAL BİLGİLERİ SMS ALANLARINA AKTARILDI. KAYDET BUTONUNA BASMAYI UNUTMAYIN.'});
+                    }} style={{...S.btn, ...S.btnP, fontSize:10, padding:'8px 14px', whiteSpace:'nowrap'}}>
+                      <LIcon name="Copy" size={12} color="#fff"/> BİLGİLERİ KULLAN
+                    </button>
+                  )}
+                  {zatenAyni && (
+                    <Badge color={C.success} label="EŞLEŞIYOR"/>
+                  )}
+                </div>
+              );
+            })()}
+
             <FormGroup label="NETGSM KULLANICI ADI (USERCODE)">
               <input value={ayarlar.sms_kullanici||''} onChange={e => u('sms_kullanici', e.target.value)}
-                placeholder="5550984254" style={{...S.input, fontSize:12}}/>
+                placeholder="3625026502" style={{...S.input, fontSize:12}}/>
               <div style={{fontSize:9, color:C.textMuted, marginTop:4}}>
-                NETGSM PANELİNDEKİ "KULLANICI ADI" (TELEFON NUMARANIZ). ABONELİK BİLGİLERİ SAYFASINDAN KONTROL EDİN.
+                NETGSM PANELİNDEKİ "KULLANICI ADI" (TELEFON NUMARANIZ). NETSANTRAL İLE AYNI BİLGİLERDİR.
               </div>
             </FormGroup>
 
@@ -2299,7 +2320,7 @@ const SmsTab = () => {
               <input type="password" value={ayarlar.sms_sifre||''} onChange={e => u('sms_sifre', e.target.value)}
                 placeholder="••••••••" style={{...S.input, fontSize:12}}/>
               <div style={{fontSize:9, color:C.textMuted, marginTop:4}}>
-                NETGSM PANELİNE GİRİŞ ŞİFRENİZ
+                NETGSM API ŞİFRENİZ (NETSANTRAL İLE AYNI)
               </div>
             </FormGroup>
 
@@ -2398,305 +2419,6 @@ const SmsTab = () => {
         </div>
       </div>
 
-        </div>
-      )}
-
-      {/* ═══ TOPLU SMS PANELİ ═══ */}
-      {smsAltTab === 'toplu' && (
-        <div style={{display:'flex', flexDirection:'column', gap:16}}>
-          {/* BANNER */}
-          <div style={{padding:16, background:`${(C.purple||'#8b5cf6')}11`, borderRadius:12, border:`1px solid ${(C.purple||'#8b5cf6')}33`, display:'flex', alignItems:'center', gap:12}}>
-            <div style={{width:44, height:44, borderRadius:12, background:`${(C.purple||'#8b5cf6')}22`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
-              <LIcon name="Users" size={22} color={C.purple||'#8b5cf6'}/>
-            </div>
-            <div>
-              <div style={{fontSize:14, fontWeight:800, color:C.purple||'#8b5cf6'}}>TOPLU SMS GÖNDERİMİ</div>
-              <div style={{fontSize:11, color:C.textSec, marginTop:2}}>
-                BİRDEN FAZLA NUMARAYA AYNI MESAJI TOPLU OLARAK GÖNDERİN. TEK SEFERDE EN FAZLA 500 NUMARA.
-              </div>
-            </div>
-          </div>
-
-          {/* MESAJ */}
-          {mesaj && (
-            <div style={{padding:12, background: mesaj.type==='success' ? `${C.success}18` : `${C.danger}18`,
-              borderRadius:8, border:`1px solid ${mesaj.type==='success' ? C.success+'33' : C.danger+'33'}`,
-              color: mesaj.type==='success' ? C.success : C.danger, fontSize:12, fontWeight:600,
-              display:'flex', alignItems:'center', gap:8}}>
-              <LIcon name={mesaj.type==='success' ? 'CheckCircle' : 'AlertCircle'} size={16}
-                color={mesaj.type==='success' ? C.success : C.danger}/>
-              {mesaj.text}
-              <span style={{marginLeft:'auto', cursor:'pointer', opacity:0.6}} onClick={() => setMesaj(null)}>✕</span>
-            </div>
-          )}
-
-          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16}}>
-            {/* SOL: NUMARA GİRİŞ */}
-            <div style={S.card}>
-              <div style={{...S.cardHead}}>
-                <LIcon name="Phone" size={16} color={C.purple||'#8b5cf6'}/>
-                <span style={{fontSize:13, fontWeight:700}}>TELEFON NUMARALARI</span>
-              </div>
-              <div style={{padding:20}}>
-                <textarea value={topluTelefonlar} onChange={e => setTopluTelefonlar(e.target.value)}
-                  placeholder={"HER SATIRA BİR NUMARA YAZIN:\n05321234567\n05339876543\n05441112233\n\nVeya virgülle ayırın:\n0532..., 0533..., 0544..."}
-                  rows={10}
-                  style={{...S.input, fontSize:12, fontFamily:'monospace', resize:'vertical', minHeight:200, lineHeight:1.8}}/>
-                <div style={{fontSize:9, color:C.textMuted, marginTop:6}}>
-                  HER SATIRA BİR NUMARA VEYA VİRGÜL / NOKTALI VİRGÜL İLE AYIRIN. MAX 500 NUMARA.
-                </div>
-                <div style={{fontSize:11, fontWeight:700, color:C.accent, marginTop:8}}>
-                  GİRİLEN NUMARA: {topluTelefonlar.split(/[\n,;]+/).map(t=>t.trim()).filter(t=>t.length>0).length}
-                </div>
-              </div>
-            </div>
-
-            {/* SAĞ: MESAJ + GÖNDER */}
-            <div style={{display:'flex', flexDirection:'column', gap:16}}>
-              <div style={S.card}>
-                <div style={{...S.cardHead}}>
-                  <LIcon name="MessageSquare" size={16} color={C.purple||'#8b5cf6'}/>
-                  <span style={{fontSize:13, fontWeight:700}}>MESAJ METNİ</span>
-                </div>
-                <div style={{padding:20}}>
-                  <textarea value={topluMesaj} onChange={e => setTopluMesaj(e.target.value)}
-                    placeholder="SMS mesajınızı buraya yazın..."
-                    rows={6}
-                    style={{...S.input, fontSize:12, resize:'vertical', minHeight:120, lineHeight:1.8}}/>
-                  <div style={{display:'flex', justifyContent:'space-between', marginTop:6}}>
-                    <div style={{fontSize:9, color:C.textMuted}}>TÜRKÇE KARAKTER DESTEKLİ</div>
-                    <div style={{fontSize:9, color: topluMesaj.length > 160 ? C.warning : C.textMuted}}>
-                      {topluMesaj.length} KARAKTER {topluMesaj.length > 160 ? `(${Math.ceil(topluMesaj.length/153)} SMS)` : '(1 SMS)'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <button onClick={topluSmsGonder} disabled={topluLoading}
-                style={{...S.btn, ...S.btnS, justifyContent:'center', padding:16, fontSize:14, fontWeight:800, borderRadius:12}}>
-                <LIcon name="Send" size={18} color="#fff"/>
-                {topluLoading ? 'GÖNDERİLİYOR...' : 'TOPLU SMS GÖNDER'}
-              </button>
-
-              {/* SONUÇ */}
-              {topluSonuc && (
-                <div style={S.card}>
-                  <div style={{...S.cardHead, background:`${C.success}06`}}>
-                    <LIcon name="CheckCircle" size={16} color={C.success}/>
-                    <span style={{fontSize:13, fontWeight:700}}>GÖNDERİM SONUCU</span>
-                  </div>
-                  <div style={{padding:20}}>
-                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
-                      <div style={{...S.stat, textAlign:'center'}}>
-                        <div style={{fontSize:24, fontWeight:900, color:C.success}}>{topluSonuc.basarili}</div>
-                        <div style={{fontSize:9, color:C.textMuted, marginTop:2}}>BAŞARILI</div>
-                      </div>
-                      <div style={{...S.stat, textAlign:'center'}}>
-                        <div style={{fontSize:24, fontWeight:900, color:C.danger}}>{topluSonuc.basarisiz}</div>
-                        <div style={{fontSize:9, color:C.textMuted, marginTop:2}}>BAŞARISIZ</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ KREDİ / BAŞLIK SORGULAMA PANELİ ═══ */}
-      {smsAltTab === 'kredi' && (
-        <div style={{display:'flex', flexDirection:'column', gap:16}}>
-          {/* BANNER */}
-          <div style={{padding:16, background:`${(C.cyan||'#06b6d4')}11`, borderRadius:12, border:`1px solid ${(C.cyan||'#06b6d4')}33`, display:'flex', alignItems:'center', gap:12}}>
-            <div style={{width:44, height:44, borderRadius:12, background:`${(C.cyan||'#06b6d4')}22`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
-              <LIcon name="Wallet" size={22} color={C.cyan||'#06b6d4'}/>
-            </div>
-            <div>
-              <div style={{fontSize:14, fontWeight:800, color:C.cyan||'#06b6d4'}}>KREDİ & BAŞLIK SORGULAMA</div>
-              <div style={{fontSize:11, color:C.textSec, marginTop:2}}>
-                NETGSM HESABINIZDAKI KALAN SMS KREDİSİNİ VE TANIMLI SMS BAŞLIKLARINI GÖRÜNTÜLEYİN.
-              </div>
-            </div>
-          </div>
-
-          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16}}>
-            {/* SOL: KREDİ */}
-            <div style={S.card}>
-              <div style={{...S.cardHead}}>
-                <LIcon name="CreditCard" size={16} color={C.cyan||'#06b6d4'}/>
-                <span style={{fontSize:13, fontWeight:700}}>SMS KREDİ BAKİYESİ</span>
-              </div>
-              <div style={{padding:30, textAlign:'center'}}>
-                {krediSonuc && krediSonuc.basarili ? (
-                  <div>
-                    <div style={{fontSize:48, fontWeight:900, color:C.success, lineHeight:1}}>{krediSonuc.kredi}</div>
-                    <div style={{fontSize:12, color:C.textMuted, marginTop:8, fontWeight:600}}>KALAN SMS KREDİSİ</div>
-                  </div>
-                ) : krediSonuc ? (
-                  <div>
-                    <LIcon name="AlertCircle" size={36} color={C.danger} style={{opacity:0.3}}/>
-                    <div style={{fontSize:12, color:C.danger, marginTop:8, fontWeight:600}}>{krediSonuc.mesaj}</div>
-                  </div>
-                ) : (
-                  <div>
-                    <LIcon name="Wallet" size={36} color={C.textMuted} style={{opacity:0.2}}/>
-                    <div style={{fontSize:12, color:C.textMuted, marginTop:8}}>SORGULAMAK İÇİN BUTONA TIKLAYIN</div>
-                  </div>
-                )}
-                <button onClick={krediSorgula} disabled={krediLoading}
-                  style={{...S.btn, ...S.btnP, justifyContent:'center', padding:'12px 24px', fontSize:12, fontWeight:700, marginTop:20}}>
-                  <LIcon name="RefreshCw" size={14} color="#fff"/>
-                  {krediLoading ? 'SORGULANYOR...' : 'KREDİ SORGULA'}
-                </button>
-              </div>
-            </div>
-
-            {/* SAĞ: BAŞLIKLAR */}
-            <div style={S.card}>
-              <div style={{...S.cardHead}}>
-                <LIcon name="Tag" size={16} color={C.cyan||'#06b6d4'}/>
-                <span style={{fontSize:13, fontWeight:700}}>TANIMLI SMS BAŞLIKLARI</span>
-              </div>
-              <div style={{padding:20}}>
-                {basliklar.length > 0 ? (
-                  <div style={{display:'flex', flexDirection:'column', gap:8}}>
-                    {basliklar.map((b, i) => (
-                      <div key={i} style={{padding:'10px 16px', background:C.bgHover, borderRadius:8,
-                        border:`1px solid ${C.border}`, display:'flex', alignItems:'center', gap:10}}>
-                        <div style={{width:28, height:28, borderRadius:14, background:`${C.accent}22`,
-                          display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
-                          fontSize:11, fontWeight:800, color:C.accent}}>{i+1}</div>
-                        <span style={{fontSize:13, fontWeight:700, fontFamily:'monospace'}}>{b}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{textAlign:'center', padding:20}}>
-                    <LIcon name="Tag" size={36} color={C.textMuted} style={{opacity:0.2}}/>
-                    <div style={{fontSize:12, color:C.textMuted, marginTop:8}}>SORGULAMAK İÇİN BUTONA TIKLAYIN</div>
-                  </div>
-                )}
-                <button onClick={basliklariSorgula} disabled={baslikLoading}
-                  style={{...S.btn, ...S.btnP, justifyContent:'center', padding:'12px 24px', fontSize:12, fontWeight:700, marginTop:16, width:'100%'}}>
-                  <LIcon name="RefreshCw" size={14} color="#fff"/>
-                  {baslikLoading ? 'SORGULANYOR...' : 'BAŞLIKLARI SORGULA'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ İLETİM RAPORU PANELİ ═══ */}
-      {smsAltTab === 'rapor' && (
-        <div style={{display:'flex', flexDirection:'column', gap:16}}>
-          {/* BANNER */}
-          <div style={{padding:16, background:'#f9731611', borderRadius:12, border:'1px solid #f9731633', display:'flex', alignItems:'center', gap:12}}>
-            <div style={{width:44, height:44, borderRadius:12, background:'#f9731622', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
-              <LIcon name="BarChart3" size={22} color="#f97316"/>
-            </div>
-            <div>
-              <div style={{fontSize:14, fontWeight:800, color:'#f97316'}}>SMS İLETİM RAPORU</div>
-              <div style={{fontSize:11, color:C.textSec, marginTop:2}}>
-                GÖNDERİLEN SMS'LERİN İLETİM DURUMLARINI BULK ID İLE SORGULAYARAK DETAYLI RAPOR ALIN.
-              </div>
-            </div>
-          </div>
-
-          {/* MESAJ */}
-          {mesaj && (
-            <div style={{padding:12, background: mesaj.type==='success' ? `${C.success}18` : `${C.danger}18`,
-              borderRadius:8, border:`1px solid ${mesaj.type==='success' ? C.success+'33' : C.danger+'33'}`,
-              color: mesaj.type==='success' ? C.success : C.danger, fontSize:12, fontWeight:600,
-              display:'flex', alignItems:'center', gap:8}}>
-              <LIcon name={mesaj.type==='success' ? 'CheckCircle' : 'AlertCircle'} size={16}
-                color={mesaj.type==='success' ? C.success : C.danger}/>
-              {mesaj.text}
-              <span style={{marginLeft:'auto', cursor:'pointer', opacity:0.6}} onClick={() => setMesaj(null)}>✕</span>
-            </div>
-          )}
-
-          {/* SORGULAMA FORMU */}
-          <div style={S.card}>
-            <div style={{...S.cardHead}}>
-              <LIcon name="Search" size={16} color="#f97316"/>
-              <span style={{fontSize:13, fontWeight:700}}>RAPOR SORGULA</span>
-            </div>
-            <div style={{padding:20}}>
-              <div style={{display:'flex', gap:10, alignItems:'flex-end'}}>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:10, fontWeight:700, color:C.textMuted, marginBottom:6}}>BULK ID</div>
-                  <input value={raporBulkId} onChange={e => setRaporBulkId(e.target.value)}
-                    placeholder="SMS gönderiminden dönen Bulk ID'yi girin"
-                    style={{...S.input, fontSize:12, fontFamily:'monospace'}}
-                    onKeyDown={e => e.key === 'Enter' && raporSorgulama()}/>
-                </div>
-                <button onClick={raporSorgulama} disabled={raporLoading}
-                  style={{...S.btn, ...S.btnP, fontSize:12, padding:'10px 20px', whiteSpace:'nowrap'}}>
-                  <LIcon name="Search" size={14} color="#fff"/>
-                  {raporLoading ? 'SORGULANYOR...' : 'RAPOR SORGULA'}
-                </button>
-              </div>
-              <div style={{fontSize:9, color:C.textMuted, marginTop:6}}>
-                BULK ID: SMS GÖNDERİMİ SONRASINDA NETGSM TARAFINDAN DÖNEN REFERANS NUMARASIDIR. GÖNDERİLEN SMS SAYFASINDAN BULABİLİRSİNİZ.
-              </div>
-            </div>
-          </div>
-
-          {/* RAPOR SONUÇLARI */}
-          {raporSonuc && (
-            <div style={S.card}>
-              <div style={{...S.cardHead, justifyContent:'space-between'}}>
-                <div style={{display:'flex', alignItems:'center', gap:8}}>
-                  <LIcon name="FileText" size={16} color="#f97316"/>
-                  <span style={{fontSize:13, fontWeight:700}}>RAPOR SONUÇLARI</span>
-                </div>
-                {raporSonuc.basarili && (
-                  <span style={{fontSize:10, color:C.textMuted}}>{raporSonuc.mesaj}</span>
-                )}
-              </div>
-              {raporSonuc.basarili ? (
-                raporSonuc.raporlar && raporSonuc.raporlar.length > 0 ? (
-                  <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
-                    <thead>
-                      <tr style={{background:C.bgHover}}>
-                        {['TELEFON','DURUM','KOD','TARİH','OPERATÖR'].map(h =>
-                          <th key={h} style={{padding:'10px 12px', textAlign:'left', color:C.textMuted, fontWeight:600, fontSize:9, borderBottom:`1px solid ${C.border}`}}>{h}</th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {raporSonuc.raporlar.map((r, i) => (
-                        <tr key={i} style={{borderBottom:`1px solid ${C.border}22`}}>
-                          <td style={{padding:'10px 12px', fontFamily:'monospace', fontWeight:600}}>{r.telefon}</td>
-                          <td style={{padding:'10px 12px'}}>
-                            <span style={{padding:'3px 10px', borderRadius:6, fontSize:10, fontWeight:700,
-                              background: r.durum === 'İletildi' ? `${C.success}18` : `${C.danger}18`,
-                              color: r.durum === 'İletildi' ? C.success : C.danger}}>
-                              {r.durum}
-                            </span>
-                          </td>
-                          <td style={{padding:'10px 12px', fontSize:10, color:C.textMuted, fontFamily:'monospace'}}>{r.kod}</td>
-                          <td style={{padding:'10px 12px', fontSize:10, color:C.textMuted}}>{r.tarih || '-'}</td>
-                          <td style={{padding:'10px 12px', fontSize:10, color:C.textMuted}}>{r.opertor || '-'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <div style={{padding:30, textAlign:'center'}}>
-                    <div style={{fontSize:12, color:C.textMuted}}>BU BULK ID İÇİN RAPOR KAYDI BULUNAMADI</div>
-                  </div>
-                )
-              ) : (
-                <div style={{padding:30, textAlign:'center'}}>
-                  <LIcon name="AlertCircle" size={28} color={C.danger} style={{opacity:0.3}}/>
-                  <div style={{fontSize:12, color:C.danger, marginTop:8, fontWeight:600}}>{raporSonuc.mesaj}</div>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )}
     </div>
@@ -2914,20 +2636,22 @@ const TopluAktarimTab = () => {
                 <div style={{maxHeight:300,overflowY:'auto',borderRadius:8,border:`1px solid ${C.border}`}}>
                   <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                     <thead>
-                      <tr style={{background:C.bgInput}}>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:C.textMuted}}>SATIR</th>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:C.textMuted}}>DOSYA NO</th>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:C.textMuted}}>ADI SOYADI</th>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:C.textMuted}}>TÜR</th>
+                      <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`1px solid ${C.border}`}}>SATIR</th>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`1px solid ${C.border}`}}>DOSYA NO</th>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`1px solid ${C.border}`}}>ADI SOYADI</th>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`1px solid ${C.border}`}}>TÜR</th>
                       </tr>
                     </thead>
                     <tbody>
                       {sonuc.olusturulan.map((d,i) => (
-                        <tr key={i} style={{borderTop:`1px solid ${C.border}`}}>
-                          <td style={{padding:'6px 10px',fontSize:10,color:C.textMuted}}>{d.satir}</td>
-                          <td style={{padding:'6px 10px',fontSize:11,fontWeight:700,color:C.accent}}>{d.dosya_no}</td>
-                          <td style={{padding:'6px 10px',fontSize:11,color:C.text}}>{d.ad_soyad}</td>
-                          <td style={{padding:'6px 10px'}}><span style={{fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:4,background:d.dosya_turu==='ADK'?`${C.accent}18`:`${C.gold}18`,color:d.dosya_turu==='ADK'?C.accent:C.gold}}>{d.dosya_turu}</span></td>
+                        <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                          onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                          onMouseLeave={e => {e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                          <td style={{padding:'6px 10px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.satir}</td>
+                          <td style={{padding:'6px 10px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.dosya_no}</td>
+                          <td style={{padding:'6px 10px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.ad_soyad}</td>
+                          <td style={{padding:'6px 10px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}><span style={{fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:4,background:d.dosya_turu==='ADK'?`${C.accent}18`:`${C.gold}18`,color:d.dosya_turu==='ADK'?C.accent:C.gold}}>{d.dosya_turu}</span></td>
                         </tr>
                       ))}
                     </tbody>
@@ -3249,30 +2973,32 @@ const PortalTab = () => {
                 <div style={{overflowX:'auto'}}>
                   <table style={{width:'100%', borderCollapse:'collapse', fontSize:12}}>
                     <thead>
-                      <tr style={{borderBottom:`2px solid ${C.border}`}}>
+                      <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['DOSYA NO','MÜŞTERİ','TELEFON','GİRİŞ','DURUM','SON GİRİŞ','MESAJ','İŞLEMLER'].map(h => (
-                          <th key={h} style={{padding:'10px 8px', textAlign:'left', fontWeight:700, fontSize:10, color:C.textMuted, letterSpacing:.5}}>{h}</th>
+                          <th key={h} style={{padding:'10px 8px', textAlign:'left', fontWeight:800, fontSize:'12px', color:'#FFFFFF', borderBottom:`1px solid ${C.border}`}}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {erisimler.map(e => (
-                        <tr key={e.id} style={{borderBottom:`1px solid ${C.border}`}}>
-                          <td style={{padding:'10px 8px', fontWeight:700, color:C.accent}}>{e.dosya_no}</td>
-                          <td style={{padding:'10px 8px', fontWeight:600}}>{e.ad_soyad}</td>
-                          <td style={{padding:'10px 8px', color:C.textSec, fontSize:11}}>{e.telefon}</td>
-                          <td style={{padding:'10px 8px'}}>
+                      {erisimler.map((e, i) => (
+                        <tr key={e.id} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                          onMouseEnter={e2 => {if(MR.tema==='koyu'){e2.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e2.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e2.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e2.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e2.currentTarget.style.transform='translateY(-1px)';}}
+                          onMouseLeave={e2 => {e2.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e2.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e2.currentTarget.style.transform='translateY(0)';}}>
+                          <td style={{padding:'10px 8px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px'}}>{e.dosya_no}</td>
+                          <td style={{padding:'10px 8px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px'}}>{e.ad_soyad}</td>
+                          <td style={{padding:'10px 8px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{e.telefon}</td>
+                          <td style={{padding:'10px 8px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             <span style={{...S.badge(e.giris_yontemi === 'sms_otp' ? C.accent : C.purple)}}>
                               {e.giris_yontemi === 'sms_otp' ? 'SMS OTP' : 'LİNK'}
                             </span>
                           </td>
-                          <td style={{padding:'10px 8px'}}>
+                          <td style={{padding:'10px 8px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             <span style={{...S.badge(e.aktif == 1 ? C.success : C.danger)}}>
                               {e.aktif == 1 ? 'AKTİF' : 'PASİF'}
                             </span>
                           </td>
-                          <td style={{padding:'10px 8px', fontSize:11, color:C.textSec}}>{formatTS(e.son_giris)}</td>
-                          <td style={{padding:'10px 8px'}}>
+                          <td style={{padding:'10px 8px', fontSize:'12px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{formatTS(e.son_giris)}</td>
+                          <td style={{padding:'10px 8px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             {e.okunmamis_mesaj > 0 && (
                               <span onClick={() => mesajlariAc(e.dosya_id, e.dosya_no)} style={{background:C.danger, color:'#fff', padding:'2px 8px', borderRadius:10, fontSize:10, fontWeight:700, cursor:'pointer'}}>
                                 {e.okunmamis_mesaj} YENİ
@@ -3282,7 +3008,7 @@ const PortalTab = () => {
                               <span onClick={() => mesajlariAc(e.dosya_id, e.dosya_no)} style={{color:C.textMuted, fontSize:10, cursor:'pointer', textDecoration:'underline'}}>MESAJLAR</span>
                             )}
                           </td>
-                          <td style={{padding:'10px 8px'}}>
+                          <td style={{padding:'10px 8px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             <div style={{display:'flex', gap:4}}>
                               <button onClick={() => smsYenidenGonder(e.id)} title="SMS YENİDEN GÖNDER" style={{...S.btn, padding:'4px 8px', fontSize:10, ...S.btnP}}>
                                 <LIcon name="MessageSquare" size={12}/>
@@ -3321,23 +3047,25 @@ const PortalTab = () => {
                 <div style={{overflowX:'auto'}}>
                   <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
                     <thead>
-                      <tr style={{borderBottom:`2px solid ${C.border}`}}>
+                      <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['TARİH','MÜŞTERİ','DOSYA NO','İŞLEM','DETAY','IP ADRESİ'].map(h => (
-                          <th key={h} style={{padding:'8px 6px', textAlign:'left', fontWeight:700, fontSize:10, color:C.textMuted}}>{h}</th>
+                          <th key={h} style={{padding:'8px 6px', textAlign:'left', fontWeight:800, fontSize:'12px', color:'#FFFFFF', borderBottom:`1px solid ${C.border}`}}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {loglar.map(l => (
-                        <tr key={l.id} style={{borderBottom:`1px solid ${C.border}`}}>
-                          <td style={{padding:'8px 6px', fontSize:10, color:C.textSec}}>{formatTS(l.created_at)}</td>
-                          <td style={{padding:'8px 6px', fontWeight:600}}>{l.ad_soyad || '-'}</td>
-                          <td style={{padding:'8px 6px', color:C.accent, fontWeight:600}}>{l.dosya_no || '-'}</td>
-                          <td style={{padding:'8px 6px'}}>
+                      {loglar.map((l, i) => (
+                        <tr key={l.id} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                          onMouseEnter={e2 => {if(MR.tema==='koyu'){e2.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e2.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e2.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e2.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e2.currentTarget.style.transform='translateY(-1px)';}}
+                          onMouseLeave={e2 => {e2.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e2.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e2.currentTarget.style.transform='translateY(0)';}}>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{formatTS(l.created_at)}</td>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{l.ad_soyad || '-'}</td>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{l.dosya_no || '-'}</td>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             <span style={{...S.badge(LOG_ISLEM_RENK(l.islem))}}>{l.islem}</span>
                           </td>
-                          <td style={{padding:'8px 6px', color:C.textSec, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{l.detay || '-'}</td>
-                          <td style={{padding:'8px 6px', fontSize:10, color:C.textMuted, fontFamily:'monospace'}}>{l.ip_adresi || '-'}</td>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{l.detay || '-'}</td>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, fontFamily:'monospace'}}>{l.ip_adresi || '-'}</td>
                         </tr>
                       ))}
                     </tbody>

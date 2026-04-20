@@ -78,7 +78,6 @@ MR.api = {
   masrafList(p = {}) { return this.req('/masraf/list.php?' + new URLSearchParams(p)); },
   masrafDelete(id) { return this.req('/masraf/delete.php?id=' + id, { method: 'DELETE' }); },
   masrafOde(d) { return this.req('/masraf/ode.php', { method: 'PUT', body: JSON.stringify(d) }); },
-  masrafUpdate(d) { return this.req('/masraf/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
   // EVRAK
   async evrakUpload(did, tur, file) {
     try {
@@ -95,6 +94,10 @@ MR.api = {
   // CRM
   crmList(p = {}) { return this.req('/crm/list.php?' + new URLSearchParams(p)); },
   crmGet(id) { return this.req('/crm/get.php?id=' + id); },
+  /* 360° BÜTÜNLEŞİK KİŞİ KARTI VERİSİ:
+   * crm + ilgili tüm yönlendirmeler + birleşik notlar timeline + arama_loglari + ekler
+   * Çağrı: api.crmUnified({telefon:'05...'}) | {tc:'1234...'} | {crm_id:42} */
+  crmUnified(p = {}) { return this.req('/crm/unified-get.php?' + new URLSearchParams(p)); },
   crmCreate(d) { return this.req('/crm/create.php', { method: 'POST', body: JSON.stringify(d) }); },
   crmUpdate(d) { return this.req('/crm/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
   crmDelete(id) { return this.req('/crm/delete.php?id=' + id, { method: 'DELETE' }); },
@@ -110,6 +113,8 @@ MR.api = {
   aramaLogList(p = {}) { return this.req('/arama-log/list.php?' + new URLSearchParams(p)); },
   aramaLogIstatistik(p = {}) { return this.req('/arama-log/istatistik.php?' + new URLSearchParams(p)); },
   aramaLogCreate(d) { return this.req('/arama-log/create.php', { method: 'POST', body: JSON.stringify(d) }); },
+  aramaLogUpdate(d) { return this.req('/arama-log/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  aramaLogDelete(id) { return this.req('/arama-log/delete.php?id=' + id, { method: 'DELETE' }); },
   // MUHASEBE
   kasaList() { return this.req('/muhasebe/kasa-list.php'); },
   kasaCreate(d) { return this.req('/muhasebe/kasa-create.php', { method: 'POST', body: JSON.stringify(d) }); },
@@ -257,19 +262,6 @@ MR.api = {
   // AI MOTİVASYON
   motivasyonSoz() { return this.req('/ai/motivasyon.php', {}, 12000); },
   claudeTest(d = {}) { return this.req('/ai/motivasyon-test.php', { method: 'POST', body: JSON.stringify(d) }, 20000); },
-  // ÜCRETLENDIRME TARİFE
-  ucretlendirmeTarife(p = {}) { return this.req('/tanim/ucretlendirme.php?' + new URLSearchParams(p)); },
-  ucretlendirmeTarifeGuncelle(d) { return this.req('/tanim/ucretlendirme.php', { method: 'POST', body: JSON.stringify(d) }); },
-  // MUHASEBE SIFIRLA
-  muhasebeSifirla(d) { return this.req('/muhasebe/muhasebe-sifirla.php', { method: 'POST', body: JSON.stringify(d) }); },
-  // SÖZLEŞME
-  sozlesmeList(p = {}) { return this.req('/sozlesme/list.php?' + new URLSearchParams(p)); },
-  sozlesmeGet(id) { return this.req('/sozlesme/get.php?id=' + id); },
-  sozlesmeCreate(d) { return this.req('/sozlesme/create.php', { method: 'POST', body: JSON.stringify(d) }); },
-  sozlesmeUpdate(d) { return this.req('/sozlesme/update.php', { method: 'POST', body: JSON.stringify(d) }); },
-  sozlesmeDelete(id) { return this.req('/sozlesme/delete.php', { method: 'POST', body: JSON.stringify({id}) }); },
-  sozlesmeSettings() { return this.req('/sozlesme/settings.php'); },
-  sozlesmeSettingsUpdate(d) { return this.req('/sozlesme/settings.php', { method: 'POST', body: JSON.stringify(d) }); },
   // PERSONEL
   personelList(p = {}) { return this.req('/personel/list.php?' + new URLSearchParams(p)); },
   personelGet(id) { return this.req('/personel/get.php?id=' + id); },

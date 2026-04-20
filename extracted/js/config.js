@@ -94,6 +94,10 @@ MR.api = {
   // CRM
   crmList(p = {}) { return this.req('/crm/list.php?' + new URLSearchParams(p)); },
   crmGet(id) { return this.req('/crm/get.php?id=' + id); },
+  /* 360° BÜTÜNLEŞİK KİŞİ KARTI VERİSİ:
+   * crm + ilgili tüm yönlendirmeler + birleşik notlar timeline + arama_loglari + ekler
+   * Çağrı: api.crmUnified({telefon:'05...'}) | {tc:'1234...'} | {crm_id:42} */
+  crmUnified(p = {}) { return this.req('/crm/unified-get.php?' + new URLSearchParams(p)); },
   crmCreate(d) { return this.req('/crm/create.php', { method: 'POST', body: JSON.stringify(d) }); },
   crmUpdate(d) { return this.req('/crm/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
   crmDelete(id) { return this.req('/crm/delete.php?id=' + id, { method: 'DELETE' }); },
@@ -109,6 +113,8 @@ MR.api = {
   aramaLogList(p = {}) { return this.req('/arama-log/list.php?' + new URLSearchParams(p)); },
   aramaLogIstatistik(p = {}) { return this.req('/arama-log/istatistik.php?' + new URLSearchParams(p)); },
   aramaLogCreate(d) { return this.req('/arama-log/create.php', { method: 'POST', body: JSON.stringify(d) }); },
+  aramaLogUpdate(d) { return this.req('/arama-log/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  aramaLogDelete(id) { return this.req('/arama-log/delete.php?id=' + id, { method: 'DELETE' }); },
   // MUHASEBE
   kasaList() { return this.req('/muhasebe/kasa-list.php'); },
   kasaCreate(d) { return this.req('/muhasebe/kasa-create.php', { method: 'POST', body: JSON.stringify(d) }); },

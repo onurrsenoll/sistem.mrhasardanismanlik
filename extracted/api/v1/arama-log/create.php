@@ -28,7 +28,9 @@ $yon = in_array($body['yon'] ?? '', ['gelen', 'giden']) ? $body['yon'] : 'giden'
 $durum = in_array($body['durum'] ?? '', ['cevaplandi', 'cevapsiz', 'reddedildi', 'mesgul', 'hata']) ? $body['durum'] : 'cevapsiz';
 
 try {
-    $stmt = $db->prepare('INSERT INTO arama_loglari (kullanici_id, yon, numara, musteri_adi, musteri_kaynak, musteri_kaynak_id, durum, baslangic_zamani, cevaplanma_zamani, bitis_zamani, sure_saniye, notlar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    // crm_id / yonlendirme_id sütunları olmayabilir → ensure
+    ensure_crm_columns();
+    $stmt = $db->prepare('INSERT INTO arama_loglari (kullanici_id, yon, numara, musteri_adi, musteri_kaynak, musteri_kaynak_id, durum, baslangic_zamani, cevaplanma_zamani, bitis_zamani, sure_saniye, notlar, crm_id, yonlendirme_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $stmt->execute([
         $user['id'],
         $yon,
@@ -41,7 +43,9 @@ try {
         $body['cevaplanma_zamani'] ?? null,
         $body['bitis_zamani'] ?? null,
         (int)($body['sure_saniye'] ?? 0),
-        clean($body['notlar'] ?? '')
+        clean($body['notlar'] ?? ''),
+        !empty($body['crm_id']) ? (int)$body['crm_id'] : null,
+        !empty($body['yonlendirme_id']) ? (int)$body['yonlendirme_id'] : null
     ]);
 
     $id = (int)$db->lastInsertId();

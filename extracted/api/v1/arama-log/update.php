@@ -70,6 +70,15 @@ if (isset($body['musteri_adi'])) {
     $updates[] = 'musteri_adi = ?';
     $params[] = clean($body['musteri_adi']);
 }
+/* Bütünleşme: arama logunu CRM ve/veya yönlendirme kaydına bağla */
+if (isset($body['crm_id'])) {
+    $updates[] = 'crm_id = ?';
+    $params[] = !empty($body['crm_id']) ? (int)$body['crm_id'] : null;
+}
+if (isset($body['yonlendirme_id'])) {
+    $updates[] = 'yonlendirme_id = ?';
+    $params[] = !empty($body['yonlendirme_id']) ? (int)$body['yonlendirme_id'] : null;
+}
 
 if (empty($updates)) {
     json_error('Guncellenecek alan bulunamadi', 422);

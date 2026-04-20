@@ -479,7 +479,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
     return () => window.removeEventListener('mr-arama-pbx-sonuc', handler);
   }, []);
 
-  const aramaYap = (item) => {
+  const aramaYap = async (item) => {
     if (!item.magdur_telefon) return;
     /* ARAMA BAŞLAT VE KİŞİ KARTI AÇ - TÜM BİLGİLERİ AKTAR */
     localStorage.setItem('webrtc_new_call_phone', item.magdur_telefon);
@@ -505,7 +505,16 @@ MR.CrmAramaPage = ({setPage, user}) => {
       setAramaMsg('ARAMA SİSTEMİ DEVRE DIŞI');
       setTimeout(() => { setAramaMsg(''); }, 3000);
     }
-    /* KİŞİ KARTI (CRM-YENİ) SAYFASINI AÇ */
+    /* ═══ ÖNCE TELEFONLA MEVCUT CRM KAYDI ARAMA ═══
+     * Varsa doğrudan kişi kartına gidilir (360° bütünleşik ekran).
+     * Yoksa boş form (crm-yeni) açılır, localStorage ile otofill edilir. */
+    try {
+      const r = await api.crmUnified({telefon: item.magdur_telefon});
+      if (r?.success && r.data?.crm?.id) {
+        setPage('crm-detay-' + r.data.crm.id);
+        return;
+      }
+    } catch(e) {}
     setPage('crm-yeni');
   };
 

@@ -397,8 +397,72 @@ function ensure_yonlendirme_columns() {
 }
 
 /**
- * Chunked transfer encoding decode
+ * ═══ CRM + ARAMA_LOGLARI LİNK GARANTİSİ ═══
+ * Aynı kişi için CRM, yönlendirme ve arama_log kayıtlarının birbirine
+ * bağlanması için gerekli sütunları idempotent ekler. Hiçbir kayıt değişmez.
  */
+function ensure_crm_columns() {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        $db = getDB();
+        // crm tablosuna agregat alanlar (UI'da hızlı görünüm için)
+        $db->exec("ALTER TABLE crm ADD COLUMN IF NOT EXISTS gorusme_sayisi INT NOT NULL DEFAULT 0");
+        $db->exec("ALTER TABLE crm ADD COLUMN IF NOT EXISTS son_arama DATETIME DEFAULT NULL");
+        $db->exec("ALTER TABLE crm ADD COLUMN IF NOT EXISTS sonraki_arama DATETIME DEFAULT NULL");
+        $db->exec("ALTER TABLE crm ADD COLUMN IF NOT EXISTS son_gorusme_sonucu VARCHAR(100) DEFAULT NULL");
+        $db->exec("ALTER TABLE crm ADD COLUMN IF NOT EXISTS etiketler VARCHAR(255) DEFAULT NULL");
+        // arama_loglari tablosunu CRM/yönlendirme'ye bağla
+        $db->exec("CREATE TABLE IF NOT EXISTS arama_loglari (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            kullanici_id INT DEFAULT NULL,
+            yon ENUM('giden','gelen') DEFAULT 'giden',
+            numara VARCHAR(20) DEFAULT NULL,
+            musteri_adi VARCHAR(150) DEFAULT NULL,
+            musteri_kaynak VARCHAR(20) DEFAULT NULL,
+            musteri_kaynak_id INT DEFAULT NULL,
+            durum VARCHAR(30) DEFAULT NULL,
+            baslangic_zamani DATETIME DEFAULT NULL,
+            cevaplanma_zamani DATETIME DEFAULT NULL,
+            bitis_zamani DATETIME DEFAULT NULL,
+            sure_saniye INT DEFAULT 0,
+            kayit_url VARCHAR(255) DEFAULT NULL,
+            notlar TEXT DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        $db->exec("ALTER TABLE arama_loglari ADD COLUMN IF NOT EXISTS crm_id INT DEFAULT NULL");
+        $db->exec("ALTER TABLE arama_loglari ADD COLUMN IF NOT EXISTS yonlendirme_id INT DEFAULT NULL");
+        $db->exec("ALTER TABLE arama_loglari ADD COLUMN IF NOT EXISTS kayit_url VARCHAR(255) DEFAULT NULL");
+        // crm_notlari ve crm_ekleri tabloları yoksa oluştur
+        $db->exec("CREATE TABLE IF NOT EXISTS crm_notlari (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            crm_id INT NOT NULL,
+            not_text TEXT NOT NULL,
+            gorusme_sonucu VARCHAR(100) DEFAULT NULL,
+            durum_snapshot TEXT DEFAULT NULL,
+            kullanici_id INT DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_crm (crm_id)
+        )");
+        // crm_notlari'ne snapshot ve sonuç sütunları (idempotent)
+        $db->exec("ALTER TABLE crm_notlari ADD COLUMN IF NOT EXISTS gorusme_sonucu VARCHAR(100) DEFAULT NULL");
+        $db->exec("ALTER TABLE crm_notlari ADD COLUMN IF NOT EXISTS durum_snapshot TEXT DEFAULT NULL");
+        $db->exec("CREATE TABLE IF NOT EXISTS crm_ekleri (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            crm_id INT NOT NULL,
+            tip VARCHAR(20) DEFAULT 'dosya',
+            dosya_adi VARCHAR(255) NOT NULL,
+            dosya_yolu VARCHAR(500) NOT NULL,
+            dosya_boyutu INT DEFAULT 0,
+            yukleyen_id INT DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_crm (crm_id)
+        )");
+    } catch (\Exception $e) {
+        // sessiz geç — migration hatası kullanıcıya yansımasın
+    }
+}
 function http_decode_chunked($data) {
     $decoded = '';
     while (true) {

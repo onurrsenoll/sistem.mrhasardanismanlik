@@ -119,6 +119,31 @@ try {
 
     $id = (int)$db->lastInsertId();
 
+    /* ═══ OTOMATİK YÖNLENDİRME LİNK ═══
+     * Aynı telefon (ya da TC) ile yonlendirme tablosunda kayıt varsa
+     * donusen_crm_id bu yeni CRM ID'sine set edilir. Manuel iş kalmaz.
+     * Birden fazla yonlendirme olabilir → hepsi aynı CRM'e bağlanır.
+     */
+    try {
+        ensure_yonlendirme_columns();
+        $tel = clean($body['telefon'] ?? '');
+        $tcv = clean($body['tc_vergi_no'] ?? '');
+        $telNorm = preg_replace('/\D/', '', $tel);
+        if (strpos($telNorm, '90') === 0 && strlen($telNorm) === 12) $telNorm = substr($telNorm, 2);
+        if (strpos($telNorm, '0') === 0 && strlen($telNorm) === 11) $telNorm = substr($telNorm, 1);
+        if ($telNorm !== '' || $tcv !== '') {
+            $w = []; $matchParams = [];
+            if ($telNorm !== '') {
+                $w[] = "REPLACE(REPLACE(REPLACE(REPLACE(magdur_telefon,' ',''),'-',''),'(',''),')','') LIKE ?";
+                $matchParams[] = '%' . $telNorm;
+            }
+            if ($tcv !== '') { $w[] = 'magdur_tc = ?'; $matchParams[] = $tcv; }
+            $sql = "UPDATE yonlendirme SET donusen_crm_id = ? WHERE (donusen_crm_id IS NULL OR donusen_crm_id = 0) AND (" . implode(' OR ', $w) . ")";
+            $stmt = $db->prepare($sql);
+            $stmt->execute(array_merge([$id], $matchParams));
+        }
+    } catch (\Exception $e) {}
+
     log_action($user['id'], 'crm_ekle', "CRM kaydı: " . clean($body['ad_soyad']), 'crm', $id);
 
     json_success(['id' => $id], 'CRM kaydı oluşturuldu', 201);
