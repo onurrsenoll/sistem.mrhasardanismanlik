@@ -163,6 +163,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const [portalCreating, setPortalCreating] = useState(false);
   const [portalModal, setPortalModal] = useState({open:false, link:'', erisimKodu:'', tc:'', telefon:'', adSoyad:'', mevcut:false});
   const [previewEvrak, setPreviewEvrak] = useState(null);
+  const [evrakTurleri, setEvrakTurleri] = useState(MR.EVRAK_T || []);
 
   // MASRAF ÖDEME MODAL STATE
   const [masrafOdeModal, setMasrafOdeModal] = useState(false);
@@ -210,6 +211,11 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
     api.kasaList().then(r => {
       if (r?.success) setKasalar((r.data || []).filter(k => k.aktif !== false && k.aktif !== 0));
     });
+    api.tanimList({kategori:'evrak_turu', aktif:1}).then(r => {
+      if (r?.success && Array.isArray(r.data) && r.data.length > 0) {
+        setEvrakTurleri(r.data.map(t => t.deger));
+      }
+    }).catch(() => {});
   }, []);
 
   const [smsBildirim, setSmsBildirim] = useState(null);
@@ -794,7 +800,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
               <LIcon name="Folder" size={14} color={C.accent}/>
               <span style={{fontSize:12,fontWeight:700}}>EVRAKLAR</span>
               <span style={{fontSize:10,color:C.textMuted}}>
-                ({dosya.evraklar?.length || 0} / {(MR.EVRAK_T||[]).length} YÜKLÜ)
+                ({dosya.evraklar?.length || 0} / {evrakTurleri.length} YÜKLÜ)
               </span>
             </div>
             {dosya.evraklar?.length > 0 && (
@@ -839,7 +845,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           </div>
           <div style={{maxHeight:600,overflowY:'auto'}}>
             {(() => {
-              const tumTurler = MR.EVRAK_T || [];
+              const tumTurler = evrakTurleri;
               const evraklar = dosya.evraklar || [];
               // Yüklü türleri üste çıkar, yüklenme tarihine göre sırala
               const yukluTurler = [];
@@ -946,7 +952,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                         if (!f) return;
                         const izinli = ['application/pdf','image/jpeg','image/png','image/svg+xml','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
                         if (!izinli.includes(f.type)) { alert('DESTEKLENMEYEN DOSYA TÜRÜ. İZİN VERİLENLER: PDF, JPG, PNG, SVG, DOC, DOCX'); return; }
-                        if (f.size > 20 * 1024 * 1024) { alert('DOSYA BOYUTU EN FAZLA 20MB OLABİLİR'); return; }
+                        if (f.size > 512 * 1024 * 1024) { alert('DOSYA BOYUTU EN FAZLA 512MB OLABİLİR'); return; }
                         const r = await api.evrakUpload(dosya.id, tur, f);
                         if (r?.success) load();
                         else alert(r?.error || 'YÜKLEME HATASI');

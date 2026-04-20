@@ -37,6 +37,40 @@ try {
     $db->exec("UPDATE evraklar SET evrak_turu = 'RUHSAT (MAĞDUR VE KARŞI ARAÇ)' WHERE evrak_turu = 'RUHSAT'");
 } catch (\Exception $e) {}
 
+// Evrak türü tanımlamalarını seed et (tanimlamalar tablosu boşsa doldur)
+try {
+    $stmt = $db->query("SELECT COUNT(*) as c FROM tanimlamalar WHERE kategori = 'evrak_turu'");
+    $evrakTanimSayisi = (int)$stmt->fetch()['c'];
+    if ($evrakTanimSayisi === 0) {
+        $evrakTurleri = [
+            'EHLİYET (İKİ TARAFIN ÖNLÜ ARKALI)','RUHSAT (MAĞDUR VE KARŞI ARAÇ)','POLİÇE (TRAFİK / KASKO)',
+            'SİGORTA POLİÇESİ','EKSPERTİZ RAPORU','ARAÇ HASARI EKSPERTİZ GÖRÜŞÜ','ARAÇ FOTOĞRAFLARI',
+            'ARAÇ KİLOMETRE GÖSTEREN FOTOĞRAF','ONARIM FATURASI','SBM TRAMER SORGUSU','ARAÇ HASAR SMS SORGU EKRANI',
+            'ARAÇ DEĞER - PARÇA ANALİZ BİLİRKİŞİ RAPORU','KUSUR MÜTALAASI','KUSUR BİLİRKİŞİ ONAYI',
+            'BİLİRKİŞİ RAPOR MAKBUZU','KASKO','PERT MUTABAKAT EVRAKI','TEMLİK','NOTER TEMLİĞİ',
+            'NÜFUS KAYIT ÖRNEĞİ','VERASET İLAMI','EPİKRİZ','SAĞLIK KURULU RAPORU','GENEL ADLİ MUAYENE RAPORU',
+            'ADLİ ALKOL RAPORU','KATİ RAPORU','ADLİ KURUL RAPOR MAKBUZU','ADLİ TIPÇI ONAYI','SAKATLIK MÜTALAASI',
+            'RADYOLOJİK GÖRÜNTÜLER','E-NABIZ KAYITLARI','SGK EVRAĞI','GEÇİCİ İŞ GÖREMEZLİK SORGU KAYDI',
+            'GELİR BELGESİ (ÖĞRENCİ BELGESİ)','MESLEK BELGESİ','KTT (KAZA TESPİT TUTANAĞI)','İŞÇİ ALACAKLARI FORMU',
+            'VEKALETNAME','KİMLİK FOTOKOPİSİ','ÜCRET SÖZLEŞMESİ','SÖZLEŞME','RÜCU SÖZLEŞMESİ',
+            'HAK MAHRUMİYETİ RÜCU SÖZLEŞMESİ','DOSYA KAPAĞI','E-DEVLET ŞİFRESİ','İKAMETGAH','AZİLNAME',
+            'İÇ AZİLNAME','AZİLNAME İCRA TAKİP EVRAKLARI','NOTER MAKBUZU','SİGORTA YAZIŞMALARI',
+            'SİGORTA RIZA BEYANI','BEYANLAR','TAHSİLAT DEKONTU','ARABULUCULUK BAŞVURU FORMU',
+            'ARABULUCULUK TUTANAĞI','UZLAŞMA TUTANAKLARI - ADLİ','İPTAL MAİLİ',
+            'KİŞİSEL VERİLERİ KORUMA KANUNU AÇIK RIZA BEYANI','SESLİ ONAY SES KAYDI','TAHKİM REDD KARARI',
+            'TEKLİF ONAY FORMU','BAŞVURU ALINDI DİLEKÇESİ','TEMİNAT MEKTUBU','SENET','AVUKAT ONAYI',
+            'İHTARNAME','FİRMA BİLGİSİ','ŞİRKET İMZA SİRKÜSÜ','İDARİ DAVA FORMU',
+            'KYOK (KOVUŞTURMAYA YER OLMADIĞINA DAİR KARAR)','TAPU KAYDI BİLGİSİ','DASK',
+            'DEPREM HASAR SORGULAMA','DEPREM EV RESİMLERİ','DİĞER - HARİCİ BELGE','DİĞER EVRAKLAR',
+            'SAVCILIK EVRAKLARI (TÜM ADLİ DOSYA)'
+        ];
+        $stmtIns = $db->prepare('INSERT INTO tanimlamalar (kategori, deger, sira, aktif) VALUES (?, ?, ?, 1)');
+        foreach ($evrakTurleri as $i => $tur) {
+            $stmtIns->execute(['evrak_turu', $tur, $i + 1]);
+        }
+    }
+} catch (\Exception $e) {}
+
 // Dosya istatistikleri
 $stmt = $db->query('SELECT COUNT(*) as toplam FROM dosyalar');
 $dosyaToplam = (int)$stmt->fetch()['toplam'];

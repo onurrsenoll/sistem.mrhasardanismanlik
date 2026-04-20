@@ -47,9 +47,9 @@ $mime_type = $file['type'];
 $tmp_path = $file['tmp_name'];
 $orijinal_dosya_adi = $file['name'];
 
-// Dosya boyutu kontrolü (20MB)
+// Dosya boyutu kontrolü (512MB)
 if ($dosya_boyutu > MAX_FILE_SIZE) {
-    json_error('DOSYA BOYUTU ÇOK BÜYÜK (MAX 20MB)', 400);
+    json_error('DOSYA BOYUTU ÇOK BÜYÜK (MAX 512MB)', 400);
 }
 
 // Dosya tipi kontrolü
