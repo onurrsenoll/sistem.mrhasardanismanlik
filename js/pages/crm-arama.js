@@ -31,6 +31,10 @@ MR.CrmAramaPage = ({setPage, user}) => {
   const [excelMsg, setExcelMsg] = useState('');
   const fileRef = useRef(null);
 
+  /* KULLANICI ATAMA — Excel yüklerken seçilecek kullanıcı */
+  const [kullanicilar, setKullanicilar] = useState([]);
+  const [atananId, setAtananId] = useState(''); // '' = seçilmedi (herkes görür), sayı = o kullanıcıya atanır
+
   /* TOPLU İŞLEM */
   const [secili, setSecili] = useState([]);
   const [topluIslem, setTopluIslem] = useState('');
@@ -96,6 +100,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
   /* SİL ONAY */
   const [silConfirm, setSilConfirm] = useState(false);
 
+  const [atananFiltre, setAtananFiltre] = useState('');
   const durumlar = ['', 'Belirsiz', 'Alindi', 'Olumsuz'];
   const durumLabels = {'': 'HEPSİ', 'Belirsiz': 'BELİRSİZ', 'Alindi': 'ALINDI', 'Olumsuz': 'OLUMSUZ'};
   const durumRenk = d => d === 'Alindi' ? C.success : d === 'Olumsuz' ? C.danger : C.warning;
@@ -116,6 +121,7 @@ MR.CrmAramaPage = ({setPage, user}) => {
     if (durumF) p.durum = durumF;
     if (tarihBas) p.tarih_baslangic = tarihBas;
     if (tarihBit) p.tarih_bitis = tarihBit;
+    if (atananFiltre) p.atanan_id = atananFiltre;
     const r = await api.yonlendirmeList(p);
     if (r?.success) {
       setData(r.data?.items || []);
@@ -126,10 +132,18 @@ MR.CrmAramaPage = ({setPage, user}) => {
       }
     }
     setLoading(false);
-  }, [search, durumF, tarihBas, tarihBit, sayfa]);
+  }, [search, durumF, tarihBas, tarihBit, sayfa, atananFiltre]);
 
   useEffect(() => { load(); }, []);
-  useEffect(() => { const t = setTimeout(load, 400); return () => clearTimeout(t); }, [search, durumF, tarihBas, tarihBit, sayfa]);
+  useEffect(() => { const t = setTimeout(load, 400); return () => clearTimeout(t); }, [search, durumF, tarihBas, tarihBit, sayfa, atananFiltre]);
+
+  /* Atanabilir kullanıcıları yükle (sadece Excel yükleme yetkisi olanlar için gerekli) */
+  useEffect(() => {
+    if (!hy('crm-excel-yukle')) return;
+    api.kullaniciAtanabilir().then(r => {
+      if (r?.success && Array.isArray(r.data)) setKullanicilar(r.data);
+    }).catch(() => {});
+  }, []);
 
   /* ── EXCEL DOSYA SEÇ ── */
   const handleFileSelect = (e) => {
@@ -158,6 +172,9 @@ MR.CrmAramaPage = ({setPage, user}) => {
   /* ── EXCEL YÜKLEME ── */
   const excelYukle = async () => {
     if (!excelData || excelData.length === 0) return;
+    if (atananId === '') {
+      if (!confirm('Hiçbir kullanıcı seçmediniz. Liste herkes tarafından görünecek (yetkiye göre). Devam edilsin mi?')) return;
+    }
     setExcelLoading(true);
     setExcelMsg('YÜKLENIYOR...');
 
@@ -212,11 +229,14 @@ MR.CrmAramaPage = ({setPage, user}) => {
     const benzersizKayitlar = Array.from(benzersizMap.values());
 
     const batch_id = 'B' + Date.now();
-    const r = await api.yonlendirmeImport({kayitlar: benzersizKayitlar, batch_id});
+    const payload = {kayitlar: benzersizKayitlar, batch_id};
+    if (atananId !== '' && atananId !== null) payload.atanan_id = Number(atananId);
+    const r = await api.yonlendirmeImport(payload);
     setExcelLoading(false);
     if (r?.success) {
       const elenenInfo = elenenSayisi > 0 ? ` (${elenenSayisi} MÜKERRER ELENDİ)` : '';
-      setExcelMsg((r.data?.count || benzersizKayitlar.length) + ' KAYIT BAŞARIYLA YÜKLENDİ' + elenenInfo);
+      const atamaInfo = atananId ? ' — ATANDI: ' + (kullanicilar.find(k => String(k.id) === String(atananId))?.ad_soyad || ('#'+atananId)) : '';
+      setExcelMsg((r.data?.count || benzersizKayitlar.length) + ' KAYIT BAŞARIYLA YÜKLENDİ' + elenenInfo + atamaInfo);
       setExcelFile(null);
       setExcelData(null);
       if (fileRef.current) fileRef.current.value = '';
@@ -603,15 +623,28 @@ MR.CrmAramaPage = ({setPage, user}) => {
 
       {/* GİZLİ EXCEL INPUT */}
       <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" style={{display:'none'}} onChange={handleFileSelect}/>
-      {/* EXCEL DURUM MESAJI */}
+      {/* EXCEL DURUM MESAJI + KULLANICI ATAMA */}
       {(excelFile || excelMsg) && (
-        <div style={{marginBottom:8, padding:'6px 14px', background:`${excelMsg.includes('BAŞARI') ? C.success : excelMsg.includes('HATA') || excelMsg.includes('BOŞ') ? C.danger : C.accent}10`, borderRadius:8, fontSize:10, fontWeight:600, color: excelMsg.includes('BAŞARI') ? C.success : excelMsg.includes('HATA') || excelMsg.includes('BOŞ') ? C.danger : C.textSec, display:'flex', alignItems:'center', gap:6}}>
+        <div style={{marginBottom:8, padding:'8px 14px', background:`${excelMsg.includes('BAŞARI') ? C.success : excelMsg.includes('HATA') || excelMsg.includes('BOŞ') ? C.danger : C.accent}10`, borderRadius:8, fontSize:10, fontWeight:600, color: excelMsg.includes('BAŞARI') ? C.success : excelMsg.includes('HATA') || excelMsg.includes('BOŞ') ? C.danger : C.textSec, display:'flex', alignItems:'center', gap:8, flexWrap:'wrap'}}>
           <LIcon name="FileSpreadsheet" size={12} color={excelMsg.includes('BAŞARI') ? C.success : C.accent}/>
-          {excelFile ? excelFile.name : ''}{excelMsg ? ' - ' + excelMsg : ''}
+          <span>{excelFile ? excelFile.name : ''}{excelMsg ? ' - ' + excelMsg : ''}</span>
           {excelData && !excelLoading && (
-            <button style={{...S.btn, ...S.btnS, fontSize:8, padding:'3px 8px', marginLeft:6}} onClick={excelYukle}>
-              <LIcon name="Upload" size={10} color="#fff"/> YÜKLE
-            </button>
+            <>
+              <span style={{display:'inline-flex', alignItems:'center', gap:4, marginLeft:8}}>
+                <LIcon name="UserCheck" size={11} color={C.accent}/>
+                <span style={{fontSize:9, color:C.textMuted, fontWeight:700}}>KULLANICIYA ATA:</span>
+                <select value={atananId} onChange={e => setAtananId(e.target.value)}
+                  style={{...S.select, fontSize:10, padding:'4px 8px', minWidth:200}}>
+                  <option value="">— SEÇİLMEDİ (YÖNETİM GÖRÜR) —</option>
+                  {kullanicilar.map(k => (
+                    <option key={k.id} value={k.id}>{k.ad_soyad} ({(k.rol||'').toUpperCase()})</option>
+                  ))}
+                </select>
+              </span>
+              <button style={{...S.btn, ...S.btnS, fontSize:9, padding:'5px 12px', marginLeft:'auto'}} onClick={excelYukle}>
+                <LIcon name="Upload" size={10} color="#fff"/> YÜKLE
+              </button>
+            </>
           )}
         </div>
       )}
@@ -661,6 +694,14 @@ MR.CrmAramaPage = ({setPage, user}) => {
           ))}
 
           <div style={{marginLeft:'auto', display:'flex', gap:6, alignItems:'center'}}>
+            {kullanicilar.length > 0 && (user?.rol === 'admin' || user?.rol === 'uzman' || user?.rol === 'avukat') && <>
+              <span style={{fontSize:9, color:C.textMuted}}>ATANAN:</span>
+              <select value={atananFiltre} onChange={e => {setAtananFiltre(e.target.value); setSayfa(1);}}
+                style={{...S.select, width:160, fontSize:10, padding:'5px 8px'}}>
+                <option value="">HEPSİ</option>
+                {kullanicilar.map(k => <option key={k.id} value={k.id}>{k.ad_soyad}</option>)}
+              </select>
+            </>}
             <span style={{fontSize:9, color:C.textMuted}}>SONUÇ:</span>
             <select value={sonDurumF} onChange={e => {setSonDurumF(e.target.value); setSayfa(1);}}
               style={{...S.select, width:220, fontSize:10, padding:'5px 8px'}}>

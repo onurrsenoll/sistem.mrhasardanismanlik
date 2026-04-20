@@ -22,6 +22,16 @@ if (!is_array($body['kayitlar']) || empty($body['kayitlar'])) {
 $db = getDB();
 $batchId = clean($body['batch_id']);
 
+// Toplu atama için kullanıcı (opsiyonel). 0 / NULL ise atama yapılmaz.
+$atananId = isset($body['atanan_id']) ? (int)$body['atanan_id'] : 0;
+if ($atananId > 0) {
+    $chk = $db->prepare('SELECT id FROM users WHERE id = ? AND aktif = 1');
+    $chk->execute([$atananId]);
+    if (!$chk->fetch()) {
+        json_error('Atanacak kullanıcı bulunamadı veya aktif değil', 422);
+    }
+}
+
 // DDL: Eksik kolonları ekle
 try {
     $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS dosya_turu VARCHAR(10) DEFAULT 'ADK'");
@@ -41,7 +51,7 @@ $siraNo = (int)$stmt->fetch()['max_sira'];
 $imported = 0;
 $errors = [];
 
-$stmt = $db->prepare('INSERT INTO yonlendirme (sira_no, yonlendiren, yonlendirme_tarihi, kaza_turu, magdur_ad_soyad, magdur_telefon, magdur_il, magdur_ilce, magdur_tc, durum, batch_id, created_by, dosya_turu, plaka, sigorta_sirket, kusur_durumu, maluliyet, kaza_pozisyonu, guncel_durum) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+$stmt = $db->prepare('INSERT INTO yonlendirme (sira_no, yonlendiren, yonlendirme_tarihi, kaza_turu, magdur_ad_soyad, magdur_telefon, magdur_il, magdur_ilce, magdur_tc, durum, batch_id, created_by, atanan_id, dosya_turu, plaka, sigorta_sirket, kusur_durumu, maluliyet, kaza_pozisyonu, guncel_durum) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 
 $db->beginTransaction();
 
@@ -68,6 +78,7 @@ try {
             'Belirsiz',
             $batchId,
             $user['id'],
+            $atananId > 0 ? $atananId : null,
             clean($kayit['dosya_turu'] ?? 'ADK'),
             clean($kayit['plaka'] ?? ''),
             clean($kayit['sigorta_sirket'] ?? ''),
@@ -86,7 +97,8 @@ try {
     json_error('İçe aktarma hatası: ' . $e->getMessage(), 500);
 }
 
-log_action($user['id'], 'yonlendirme_import', "Toplu aktarım: $imported kayıt (batch: $batchId)", 'yonlendirme', null);
+$atamaInfo = $atananId > 0 ? " — atanan kullanıcı: $atananId" : '';
+log_action($user['id'], 'yonlendirme_import', "Toplu aktarım: $imported kayıt (batch: $batchId)" . $atamaInfo, 'yonlendirme', null);
 
 json_success([
     'imported' => $imported,
