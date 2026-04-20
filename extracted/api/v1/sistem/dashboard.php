@@ -13,6 +13,30 @@ require_method('GET');
 $user = auth_required();
 $db = getDB();
 
+// Eski evrak türü isimlerini yeni isimlere güncelle (idempotent)
+try {
+    $evrakRenames = [
+        ['EKSPER RAPORU', 'EKSPERTİZ RAPORU'],
+        ['ARAÇ KİLOMETRE BİLGİSİ', 'ARAÇ KİLOMETRE GÖSTEREN FOTOĞRAF'],
+        ['KATI RAPORU', 'KATİ RAPORU'],
+        ['E NABIZ KAYITLARI', 'E-NABIZ KAYITLARI'],
+        ['ARAÇ DEĞER-PARÇA ANALİZ BİLİRKİŞİ RAPORU', 'ARAÇ DEĞER - PARÇA ANALİZ BİLİRKİŞİ RAPORU'],
+        ['UZLAŞMA TUTANAKLARI-ADLİ', 'UZLAŞMA TUTANAKLARI - ADLİ'],
+        ['DİĞER-HARİCİ BELGE', 'DİĞER - HARİCİ BELGE'],
+        ['KTT', 'KTT (KAZA TESPİT TUTANAĞI)'],
+        ['POLİÇE (DOSYA TÜRÜNE GÖRE TRAFİK, KASKO)', 'POLİÇE (TRAFİK / KASKO)'],
+        ['RUHSAT (MAĞDUR VE KARŞI ARAÇ İKİSİDE OLACAK)', 'RUHSAT (MAĞDUR VE KARŞI ARAÇ)'],
+    ];
+    $stmtRename = $db->prepare('UPDATE evraklar SET evrak_turu = ? WHERE evrak_turu = ?');
+    $stmtRenameT = $db->prepare('UPDATE tanimlamalar SET deger = ? WHERE kategori = ? AND deger = ?');
+    foreach ($evrakRenames as $r) {
+        $stmtRename->execute([$r[1], $r[0]]);
+        $stmtRenameT->execute([$r[1], 'evrak_turu', $r[0]]);
+    }
+    $db->exec("UPDATE evraklar SET evrak_turu = 'EHLİYET (İKİ TARAFIN ÖNLÜ ARKALI)' WHERE evrak_turu = 'EHLİYET'");
+    $db->exec("UPDATE evraklar SET evrak_turu = 'RUHSAT (MAĞDUR VE KARŞI ARAÇ)' WHERE evrak_turu = 'RUHSAT'");
+} catch (\Exception $e) {}
+
 // Dosya istatistikleri
 $stmt = $db->query('SELECT COUNT(*) as toplam FROM dosyalar');
 $dosyaToplam = (int)$stmt->fetch()['toplam'];
