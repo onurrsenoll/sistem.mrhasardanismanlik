@@ -66,6 +66,14 @@ const MODUL_YETKILERI = [
     {key: 'crm-sil', label: 'KAYIT SİL'},
     {key: 'crm-toplu-sil', label: 'TOPLU SİLME'},
     {key: 'crm-arama', label: 'ARAMA LİSTESİ'},
+    {key: 'crm-ara', label: 'TELEFON İLE ARAMA YAP'},
+    {key: 'crm-detay', label: 'KİŞİ KARTI GÖRÜNTÜLE'},
+    {key: 'crm-bilgi-duzenle', label: 'KİŞİ BİLGİ BUTONLARINI DÜZENLE (KUSUR/POZİSYON/DURUM)'},
+    {key: 'crm-durum-degistir', label: 'DURUM DEĞİŞTİR (BELİRSİZ/ALINDI/OLUMSUZ)'},
+    {key: 'crm-not-ekle', label: 'GÖRÜŞME NOTU EKLE'},
+    {key: 'crm-excel-yukle', label: 'EXCEL TOPLU LİSTE YÜKLE'},
+    {key: 'crm-atama', label: 'LİSTEYİ KULLANICIYA ATA'},
+    {key: 'crm-dosyaya-donustur', label: 'DOSYAYA DÖNÜŞTÜR'},
     {key: 'saha-liste', label: 'SAHA DOSYALARI'},
     {key: 'saha-yeni', label: 'YENİ SAHA KAYDI'},
     {key: 'saha-duzenle', label: 'SAHA KAYDI DÜZENLE'},
@@ -140,7 +148,9 @@ const MODUL_YETKILERI = [
     {key: 'evrak-goruntule', label: 'EVRAK GÖRÜNTÜLE'},
     {key: 'evrak-yukle', label: 'EVRAK YÜKLE'},
     {key: 'evrak-sil', label: 'EVRAK SİL'},
-    {key: 'evrak-indir', label: 'EVRAK İNDİR'}
+    {key: 'evrak-indir', label: 'EVRAK İNDİR'},
+    {key: 'evrak-toplu-indir', label: 'EVRAK TOPLU İNDİR'},
+    {key: 'evrak-ara', label: 'EVRAK TÜRÜ ARAMA KUTUSU'}
   ]},
   {modul: 'ajanda', label: 'AJANDA', icon: 'Calendar', islemler: [
     {key: 'goruntule', label: 'AJANDA GÖRÜNTÜLE'},

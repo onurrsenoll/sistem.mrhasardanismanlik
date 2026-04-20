@@ -53,7 +53,6 @@ const MODUL_YETKILERI = [
     {key: 'dosya-kapat', label: 'DOSYA KAPAT'},
     {key: 'dosya-masraf-ekle', label: 'MASRAF EKLE'},
     {key: 'dosya-masraf-sil', label: 'MASRAF SİL'},
-    {key: 'dosya-masraf-duzenle', label: 'MASRAF DÜZENLE'},
     {key: 'dosya-masraf-ode', label: 'MASRAF ÖDE'},
     {key: 'dosya-evrak-yukle', label: 'EVRAK YÜKLE'},
     {key: 'dosya-evrak-sil', label: 'EVRAK SİL'},
@@ -61,16 +60,20 @@ const MODUL_YETKILERI = [
     {key: 'dosya-hesap-ozeti', label: 'HESAP ÖZETİ GÖRÜNTÜLE'}
   ]},
   {modul: 'crm', label: 'CRM / SAHA', icon: 'Users', islemler: [
-    {key: 'crm-arama', label: 'CRM LİSTESİ'},
+    {key: 'crm-liste', label: 'CRM LİSTESİ'},
     {key: 'crm-yeni', label: 'YENİ KAYIT'},
     {key: 'crm-duzenle', label: 'KAYIT DÜZENLE'},
     {key: 'crm-sil', label: 'KAYIT SİL'},
     {key: 'crm-toplu-sil', label: 'TOPLU SİLME'},
-    {key: 'crm-excel-yukle', label: 'EXCEL YÜKLE'},
-    {key: 'crm-sablon-indir', label: 'ŞABLON İNDİR'},
-    {key: 'crm-not-ekle', label: 'NOT EKLE / DETAY'},
-    {key: 'crm-ara', label: 'ARAMA YAP'},
-    {key: 'crm-durum-degistir', label: 'DURUM DEĞİŞTİR'},
+    {key: 'crm-arama', label: 'ARAMA LİSTESİ'},
+    {key: 'crm-ara', label: 'TELEFON İLE ARAMA YAP'},
+    {key: 'crm-detay', label: 'KİŞİ KARTI GÖRÜNTÜLE'},
+    {key: 'crm-bilgi-duzenle', label: 'KİŞİ BİLGİ BUTONLARINI DÜZENLE (KUSUR/POZİSYON/DURUM)'},
+    {key: 'crm-durum-degistir', label: 'DURUM DEĞİŞTİR (BELİRSİZ/ALINDI/OLUMSUZ)'},
+    {key: 'crm-not-ekle', label: 'GÖRÜŞME NOTU EKLE'},
+    {key: 'crm-excel-yukle', label: 'EXCEL TOPLU LİSTE YÜKLE'},
+    {key: 'crm-atama', label: 'LİSTEYİ KULLANICIYA ATA'},
+    {key: 'crm-dosyaya-donustur', label: 'DOSYAYA DÖNÜŞTÜR'},
     {key: 'saha-liste', label: 'SAHA DOSYALARI'},
     {key: 'saha-yeni', label: 'YENİ SAHA KAYDI'},
     {key: 'saha-duzenle', label: 'SAHA KAYDI DÜZENLE'},
@@ -79,14 +82,10 @@ const MODUL_YETKILERI = [
     {key: 'saha-red', label: 'SAHA KAYDI REDDET'}
   ]},
   {modul: 'hesaplamalar', label: 'HESAPLAMALAR', icon: 'Calculator', islemler: [
-    {key: 'hesap-adk', label: 'ADK HESAPLAMA'},
-    {key: 'hesap-bh', label: 'BH HESAPLAMA'},
-    {key: 'hesap-rayic', label: 'RAYİÇ ARAŞTIRMA'},
-    {key: 'hesap-emsal', label: 'EMSAL KARAR ARAMA'},
-    {key: 'hesap-ai-analiz', label: 'AI ANALİZ'},
-    {key: 'hesap-adk-rapor', label: 'ADK PDF RAPOR'},
-    {key: 'hesap-bh-rapor', label: 'BH PDF RAPOR'},
-    {key: 'hesap-evrak-okuyucu', label: 'EVRAK OKUYUCU'}
+    {key: 'hesap-adk', label: 'ARAÇ DEĞER KAYBI'},
+    {key: 'hesap-bh', label: 'BEDENİ HASAR'},
+    {key: 'hesap-adk-rapor', label: 'ADK RAPOR OLUŞTUR'},
+    {key: 'hesap-bh-rapor', label: 'BH RAPOR OLUŞTUR'}
   ]},
   {modul: 'paydaslar', label: 'PAYDAŞLAR / ORTAKLAR', icon: 'Handshake', islemler: [
     {key: 'ortaklar-ortaklar', label: 'İŞ ORTAKLARI'},
@@ -97,8 +96,7 @@ const MODUL_YETKILERI = [
     {key: 'ortaklar-sil', label: 'SİL'},
     {key: 'ortaklar-toplu-sil', label: 'ORTAK TOPLU SİLME'},
     {key: 'paydaslar-toplu-sil', label: 'PAYDAŞ TOPLU SİLME'},
-    {key: 'personel-liste', label: 'PERSONEL'},
-    {key: 'sozlesme', label: 'SÖZLEŞMELER'}
+    {key: 'personel-liste', label: 'PERSONEL'}
   ]},
   {modul: 'police', label: 'POLİÇE', icon: 'FileCheck', islemler: [
     {key: 'police-liste', label: 'POLİÇE LİSTESİ'},
@@ -110,8 +108,7 @@ const MODUL_YETKILERI = [
     {key: 'police-yenileme', label: 'YENİLEME TAKİBİ'},
     {key: 'police-tahsilat', label: 'TAHSİLAT / CARİ'},
     {key: 'police-rapor', label: 'RAPORLAR'},
-    {key: 'police-kazanc', label: 'KAZANÇ'},
-    {key: 'police-qr-ruhsat', label: 'QR RUHSAT OKUYUCU'}
+    {key: 'police-kazanc', label: 'KAZANÇ'}
   ]},
   {modul: 'muhasebe', label: 'MUHASEBE', icon: 'Landmark', islemler: [
     {key: 'muhasebe-gelir', label: 'GELİR YÖNETİMİ'},
@@ -140,11 +137,20 @@ const MODUL_YETKILERI = [
     {key: 'personel-hakedis', label: 'HAKEDİŞ TAKİBİ'},
     {key: 'personel-maas-ode', label: 'PERSONEL MAAŞ/HAKEDİŞ ÖDEME'}
   ]},
+  {modul: 'masraf', label: 'MASRAF YÖNETİMİ', icon: 'Receipt', islemler: [
+    {key: 'masraf-goruntule', label: 'MASRAFLARI GÖRÜNTÜLE'},
+    {key: 'masraf-ekle', label: 'MASRAF EKLE'},
+    {key: 'masraf-duzenle', label: 'MASRAF DÜZENLE'},
+    {key: 'masraf-sil', label: 'MASRAF SİL'},
+    {key: 'masraf-ode', label: 'MASRAF ÖDE'}
+  ]},
   {modul: 'evrak', label: 'EVRAK YÖNETİMİ', icon: 'FileUp', islemler: [
     {key: 'evrak-goruntule', label: 'EVRAK GÖRÜNTÜLE'},
     {key: 'evrak-yukle', label: 'EVRAK YÜKLE'},
     {key: 'evrak-sil', label: 'EVRAK SİL'},
-    {key: 'evrak-indir', label: 'EVRAK İNDİR'}
+    {key: 'evrak-indir', label: 'EVRAK İNDİR'},
+    {key: 'evrak-toplu-indir', label: 'EVRAK TOPLU İNDİR'},
+    {key: 'evrak-ara', label: 'EVRAK TÜRÜ ARAMA KUTUSU'}
   ]},
   {modul: 'ajanda', label: 'AJANDA', icon: 'Calendar', islemler: [
     {key: 'goruntule', label: 'AJANDA GÖRÜNTÜLE'},
@@ -169,30 +175,13 @@ const MODUL_YETKILERI = [
     {key: 'ictihat-police-limit', label: 'POLİÇE LİMİT TABLOLARI'},
     {key: 'ictihat-kusur-emsal', label: 'KUSUR EMSAL DOSYALARI'}
   ]},
-  {modul: 'eposta', label: 'E-POSTA', icon: 'Mail', islemler: [
-    {key: 'eposta-goruntule', label: 'E-POSTA GÖRÜNTÜLE'},
-    {key: 'eposta-gonder', label: 'E-POSTA GÖNDER'},
-    {key: 'eposta-sil', label: 'E-POSTA SİL'}
-  ]},
-  {modul: 'crm-analiz', label: 'CRM ANALİZ', icon: 'BarChart3', islemler: [
-    {key: 'crm-analiz-goruntule', label: 'CRM ANALİZ GÖRÜNTÜLE'},
-    {key: 'crm-analiz-arama-gecmisi', label: 'ARAMA GEÇMİŞİ'},
-    {key: 'crm-analiz-istatistik', label: 'İSTATİSTİKLER'},
-    {key: 'crm-analiz-kayitlar', label: 'GÖRÜŞME KAYITLARI'}
-  ]},
-  {modul: 'netsantral', label: 'NETSANTRAL', icon: 'Phone', islemler: [
-    {key: 'netsantral-ayarlar', label: 'NETSANTRAL AYARLARI'},
-    {key: 'netsantral-dahili-atama', label: 'DAHİLİ ATAMA'},
-    {key: 'netsipp-goruntule', label: 'ÇAĞRI PANELİ GÖRÜNTÜLE'}
-  ]},
-  {modul: 'qr-ruhsat', label: 'QR RUHSAT OKUYUCU', icon: 'QrCode', islemler: [
-    {key: 'qr-ruhsat-goruntule', label: 'QR RUHSAT OKUYUCU'},
-    {key: 'qr-ruhsat-tara', label: 'RUHSAT TARA'},
-    {key: 'qr-ruhsat-kaydet', label: 'RUHSAT BİLGİSİ KAYDET'}
-  ]},
-  {modul: 'konum', label: 'KONUM TAKİBİ', icon: 'MapPin', islemler: [
-    {key: 'konum-goruntule', label: 'KONUM TAKİBİ GÖRÜNTÜLE'},
-    {key: 'konum-gecmis', label: 'KONUM GEÇMİŞİ'}
+  {modul: 'netsantral', label: 'NETSANTRAL / WEBRTC TELEFON', icon: 'Phone', islemler: [
+    {key: 'netsantral-goruntule', label: 'AYARLARI GÖRÜNTÜLE'},
+    {key: 'netsantral-duzenle', label: 'SIP / WSS AYARLARINI DÜZENLE'},
+    {key: 'netsantral-sifre-gor', label: 'SIP ŞİFRESİNİ GÖR'},
+    {key: 'netsantral-api-duzenle', label: 'NETGSM API AYARLARI'},
+    {key: 'netsantral-test', label: 'BAĞLANTI TESTİ YAP'},
+    {key: 'netsantral-yeniden-baslat', label: 'BAĞLANTIYI YENİDEN BAŞLAT'}
   ]},
   {modul: 'sistem', label: 'SİSTEM', icon: 'Shield', islemler: [
     {key: 'sistem-kullanici', label: 'KULLANICI YÖNETİMİ'},
@@ -217,9 +206,13 @@ const MODUL_YETKILERI = [
     {key: 'tanimlamalar-sablon-duzenle', label: 'ŞABLON DÜZENLE'},
     {key: 'sistem-konum', label: 'KONUM TAKİBİ'},
     {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'},
-    {key: 'tanimlamalar-ucretlendirme', label: 'ÜCRETLENDIRME TARİFESİ'},
     {key: 'sistem-netsantral', label: 'NETSANTRAL AYARLARI'},
-    {key: 'crm-analiz', label: 'CRM ANALİZ'}
+    {key: 'arama-gecmis', label: 'ARAMA GEÇMİŞİ'},
+    {key: 'arama-gecmis-istatistik', label: 'ARAMA İSTATİSTİKLERİ'},
+    {key: 'arama-gecmis-cevapsiz', label: 'CEVAPSIZ ÇAĞRILAR'},
+    {key: 'arama-gecmis-kayit-dinle', label: 'GÖRÜŞME KAYDI DİNLE'},
+    {key: 'arama-gecmis-not', label: 'GÖRÜŞME NOTU EKLE/DÜZENLE'},
+    {key: 'arama-gecmis-sil', label: 'ARAMA KAYDI SİL'}
   ]},
 ];
 
@@ -379,9 +372,9 @@ const KullaniciTab = () => {
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%', borderCollapse:'collapse', fontSize:11, minWidth:800}}>
               <thead>
-                <tr style={{background:C.bgHover}}>
+                <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['AD SOYAD', 'E-POSTA', 'TELEFON', 'ROL', 'DURUM', 'İŞLEMLER'].map(h =>
-                    <th key={h} style={{padding:'10px 12px', textAlign:'left', color:C.textMuted, fontWeight:600, fontSize:9, borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px', textAlign:'left', color:'#FFFFFF', fontWeight:800, fontSize:'12px', borderBottom:`1px solid ${C.border}`}}>{h}</th>
                   )}
                 </tr>
               </thead>
@@ -390,10 +383,10 @@ const KullaniciTab = () => {
                   const aktif = u.aktif !== 0 && u.aktif !== false;
                   const rolRenk = ROL_RENK[u.rol] || C.textSec;
                   return (
-                    <tr key={u.id || i} style={{borderBottom:`1px solid ${C.border}`}}
-                      onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{padding:'12px', fontWeight:600}}>
+                    <tr key={u.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                      onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                      onMouseLeave={e => {e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                      <td style={{padding:'12px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px'}}>
                         <div style={{display:'flex', alignItems:'center', gap:10}}>
                           <div style={{width:32, height:32, borderRadius:8, background:`${rolRenk}22`,
                             display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:800, color:rolRenk}}>
@@ -402,15 +395,15 @@ const KullaniciTab = () => {
                           {u.ad_soyad}
                         </div>
                       </td>
-                      <td style={{padding:'12px', color:C.textSec}}>{u.email}</td>
-                      <td style={{padding:'12px', color:C.textSec}}>{u.telefon || '-'}</td>
-                      <td style={{padding:'12px'}}>
+                      <td style={{padding:'12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{u.email}</td>
+                      <td style={{padding:'12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{u.telefon || '-'}</td>
+                      <td style={{padding:'12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                         <Badge text={ROL_LABEL[u.rol] || (u.rol || '').toUpperCase()} color={rolRenk}/>
                       </td>
-                      <td style={{padding:'12px'}}>
+                      <td style={{padding:'12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                         <Badge text={aktif ? 'AKTİF' : 'PASİF'} color={aktif ? C.success : C.danger}/>
                       </td>
-                      <td style={{padding:'12px'}}>
+                      <td style={{padding:'12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                         <div style={{display:'flex', gap:6}}>
                           <div onClick={() => duzenle(u)} style={{cursor:'pointer', padding:6, borderRadius:6, transition:'all .2s'}}
                             onMouseEnter={e => e.currentTarget.style.background = `${C.accent}22`}
@@ -1268,7 +1261,7 @@ const AyarlarTab = () => {
         <div style={{...S.cardHead, padding: '12px 16px'}}>
           <LIcon name="Sparkles" size={14} color={C.warning}/>
           <span style={{fontSize: 12, fontWeight: 700}}>AI API AYARLARI</span>
-          <span style={{...S.badge(C.accent), marginLeft: 8, fontSize: 9}}>CLAUDE (ANTHROPIC)</span>
+          <span style={{...S.badge(C.accent), marginLeft: 8, fontSize: 9}}>GEMİNİ / OPENAI / CLAUDE</span>
           {apiTest.sonuc && (
             <span style={{
               ...S.badge(apiTest.sonuc.basarili ? C.success : C.danger),
@@ -1313,37 +1306,6 @@ const AyarlarTab = () => {
               </div>
               <div style={{fontSize: 10, color: C.textMuted, marginTop: 4}}>
                 CONSOLE.ANTHROPIC.COM ADRESINDEN API ANAHTARI ALABİLİRSİNİZ
-              </div>
-            </div>
-
-            {/* ZENROWS API KEY */}
-            <div style={{marginTop: 16}}>
-              <label style={{display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8}}>
-                <LIcon name="Globe" size={14} color={C.success}/>
-                <span style={{fontWeight: 700, fontSize: 12}}>ZENROWS API ANAHTARI</span>
-                <span style={{...S.badge(C.success), fontSize: 8, padding: '1px 6px'}}>GERÇEK RAYİÇ VERİSİ</span>
-              </label>
-              <input style={{...S.input, fontFamily: 'monospace', fontSize: 12, letterSpacing: 0.5}}
-                value={ayarlar.zenrows_api_key || ''}
-                onChange={e => up('zenrows_api_key', e.target.value)}
-                placeholder="ZenRows API anahtarı (sahibinden.com + araban.com gerçek ilan verisi)"/>
-              <div style={{fontSize: 10, color: C.textMuted, marginTop: 4}}>
-                ZENROWS.COM ADRESINDEN API ANAHTARI ALABİLİRSİNİZ - RAYİÇ ARAŞTIRMADA GERÇEK İLAN VERİSİ ÇEKİLİR
-              </div>
-            </div>
-
-            <div style={{marginTop: 16}}>
-              <label style={{display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8}}>
-                <LIcon name="Sparkles" size={14} color="#ff6b35"/>
-                <span style={{fontWeight: 700, fontSize: 12}}>OPENROUTER API ANAHTARI</span>
-                <span style={{...S.badge('#ff6b35'), fontSize: 8, padding: '1px 6px'}}>EVRAK OKUYUCU</span>
-              </label>
-              <input style={{...S.input, fontFamily: 'monospace', fontSize: 12, letterSpacing: 0.5}}
-                value={ayarlar.openrouter_api_key || ''}
-                onChange={e => up('openrouter_api_key', e.target.value)}
-                placeholder="sk-or-v1-... (openrouter.ai API anahtarı)"/>
-              <div style={{fontSize: 10, color: C.textMuted, marginTop: 4}}>
-                OPENROUTER.AI ADRESINDEN API ANAHTARI ALIN - EVRAK OKUYUCU MODÜLÜNDE KULLANILIR (KTT + HASAR İHBAR)
               </div>
             </div>
           </div>
@@ -1754,9 +1716,9 @@ const LogTab = () => {
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%', borderCollapse:'collapse', fontSize:11, minWidth:900}}>
               <thead>
-                <tr style={{background:C.bgHover}}>
+                <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['TARİH', 'KULLANICI', 'İŞLEM', 'DETAY', 'MODÜL', 'KAYIT ID'].map(h =>
-                    <th key={h} style={{padding:'10px 12px', textAlign:'left', color:C.textMuted, fontWeight:600, fontSize:9, borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                    <th key={h} style={{padding:'10px 12px', textAlign:'left', color:'#FFFFFF', fontWeight:800, fontSize:'12px', borderBottom:`1px solid ${C.border}`}}>{h}</th>
                   )}
                 </tr>
               </thead>
@@ -1764,25 +1726,25 @@ const LogTab = () => {
                 {loglar.map((log, i) => {
                   const islemRenk = LOG_ISLEM_RENK(log.islem);
                   return (
-                    <tr key={log.id || i} style={{borderBottom:`1px solid ${C.border}`}}
-                      onMouseEnter={e => e.currentTarget.style.background = C.bgHover}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{padding:'10px 12px', color:C.textMuted, fontSize:10, whiteSpace:'nowrap'}}>
+                    <tr key={log.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                      onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                      onMouseLeave={e => {e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                      <td style={{padding:'10px 12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, whiteSpace:'nowrap'}}>
                         {log.created_at || log.tarih || '-'}
                       </td>
-                      <td style={{padding:'10px 12px', fontWeight:600}}>
+                      <td style={{padding:'10px 12px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px'}}>
                         {log.kullanici_adi || log.kullanici || '-'}
                       </td>
-                      <td style={{padding:'10px 12px'}}>
+                      <td style={{padding:'10px 12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                         <Badge text={log.islem || '-'} color={islemRenk}/>
                       </td>
-                      <td style={{padding:'10px 12px', color:C.textSec, maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                      <td style={{padding:'10px 12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
                         {log.detay || '-'}
                       </td>
-                      <td style={{padding:'10px 12px'}}>
+                      <td style={{padding:'10px 12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                         <Badge text={log.modul || '-'} color={C.purple}/>
                       </td>
-                      <td style={{padding:'10px 12px', color:C.textMuted, fontFamily:'monospace', fontSize:10}}>
+                      <td style={{padding:'10px 12px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, fontFamily:'monospace'}}>
                         {log.kayit_id || '-'}
                       </td>
                     </tr>
@@ -1855,7 +1817,7 @@ const LogTab = () => {
 const SmsTab = () => {
   const {C, S, LIcon, Badge, FormGroup, Loading, api, fmt} = MR;
   const [smsAltTab, setSmsAltTab] = useState('ayarlar');
-  const [ayarlar, setAyarlar] = useState({sms_aktif:'0',sms_kullanici:'',sms_sifre:'',sms_baslik:'',site_url:''});
+  const [ayarlar, setAyarlar] = useState({sms_aktif:'0',sms_kullanici:'',sms_sifre:'',sms_baslik:''});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [mesaj, setMesaj] = useState(null);
@@ -1872,20 +1834,6 @@ const SmsTab = () => {
   const [gelenTotal, setGelenTotal] = useState(0);
   const [gelenOkunmamis, setGelenOkunmamis] = useState(0);
   const [gelenArama, setGelenArama] = useState('');
-  // TOPLU SMS STATE
-  const [topluTelefonlar, setTopluTelefonlar] = useState('');
-  const [topluMesaj, setTopluMesaj] = useState('');
-  const [topluLoading, setTopluLoading] = useState(false);
-  const [topluSonuc, setTopluSonuc] = useState(null);
-  // KREDİ SORGULAMA STATE
-  const [krediSonuc, setKrediSonuc] = useState(null);
-  const [krediLoading, setKrediLoading] = useState(false);
-  const [basliklar, setBasliklar] = useState([]);
-  const [baslikLoading, setBaslikLoading] = useState(false);
-  // RAPOR SORGULAMA STATE
-  const [raporBulkId, setRaporBulkId] = useState('');
-  const [raporSonuc, setRaporSonuc] = useState(null);
-  const [raporLoading, setRaporLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -1894,11 +1842,11 @@ const SmsTab = () => {
       if (r?.success && r.data) {
         const a = {};
         (Array.isArray(r.data) ? r.data : []).forEach(item => {
-          if (item.anahtar && (item.anahtar.startsWith('sms_') || item.anahtar === 'site_url')) a[item.anahtar] = item.deger || '';
+          if (item.anahtar && item.anahtar.startsWith('sms_')) a[item.anahtar] = item.deger || '';
         });
         if (Object.keys(a).length === 0 && typeof r.data === 'object' && !Array.isArray(r.data)) {
           Object.keys(r.data).forEach(k => {
-            if (k.startsWith('sms_') || k === 'site_url') a[k] = r.data[k] || '';
+            if (k.startsWith('sms_')) a[k] = r.data[k] || '';
           });
         }
         setAyarlar(prev => ({...prev, ...a}));
@@ -1937,52 +1885,6 @@ const SmsTab = () => {
   const gelenOkunduYap = async (id) => {
     const r = await api.smsGelenOkundu(id ? {id} : {hepsi: true});
     if (r?.success) gelenSmsYukle(gelenPage, gelenArama);
-  };
-
-  // TOPLU SMS GÖNDER
-  const topluSmsGonder = async () => {
-    if (!topluMesaj.trim()) { setMesaj({type:'error', text:'MESAJ METNİ GİRİN'}); return; }
-    const numaralar = topluTelefonlar.split(/[\n,;]+/).map(t => t.trim()).filter(t => t.length > 0);
-    if (numaralar.length === 0) { setMesaj({type:'error', text:'EN AZ BİR TELEFON NUMARASI GİRİN'}); return; }
-    if (numaralar.length > 500) { setMesaj({type:'error', text:'TEK SEFERDE EN FAZLA 500 NUMARA GÖNDEREBİLİRSİNİZ'}); return; }
-    setTopluLoading(true); setMesaj(null); setTopluSonuc(null);
-    const r = await api.smsTopluGonder({telefonlar: numaralar, mesaj: topluMesaj});
-    if (r?.success && r.data) {
-      setTopluSonuc(r.data);
-      if (r.data.basarili > 0) setMesaj({type:'success', text:`${r.data.basarili} SMS BAŞARIYLA GÖNDERİLDİ`});
-      else setMesaj({type:'error', text: r.data.hata || 'TOPLU SMS GÖNDERİLEMEDİ'});
-    } else {
-      setMesaj({type:'error', text: r?.error || 'TOPLU SMS GÖNDERİLEMEDİ'});
-    }
-    setTopluLoading(false);
-    smsLoglariYukle(1);
-  };
-
-  // KREDİ SORGULA
-  const krediSorgula = async () => {
-    setKrediLoading(true); setKrediSonuc(null);
-    const r = await api.smsKredi();
-    if (r?.success && r.data) setKrediSonuc(r.data);
-    else setKrediSonuc({basarili: false, mesaj: r?.error || 'KREDİ SORGULANAMADI'});
-    setKrediLoading(false);
-  };
-
-  // BAŞLIKLARI SORGULA
-  const basliklariSorgula = async () => {
-    setBaslikLoading(true); setBasliklar([]);
-    const r = await api.smsBasliklar();
-    if (r?.success && r.data?.basarili) setBasliklar(r.data.basliklar || []);
-    setBaslikLoading(false);
-  };
-
-  // RAPOR SORGULA
-  const raporSorgulama = async () => {
-    if (!raporBulkId.trim()) { setMesaj({type:'error', text:'BULK ID GİRİN'}); return; }
-    setRaporLoading(true); setRaporSonuc(null); setMesaj(null);
-    const r = await api.smsRapor({bulk_id: raporBulkId.trim()});
-    if (r?.success && r.data) setRaporSonuc(r.data);
-    else setRaporSonuc({basarili: false, mesaj: r?.error || 'RAPOR ALINAMADI'});
-    setRaporLoading(false);
   };
 
   const kaydet = async () => {
@@ -2024,10 +1926,7 @@ const SmsTab = () => {
         {[
           {id:'ayarlar', label:'SMS AYARLARI', icon:'Settings', color:C.accent},
           {id:'gelen', label:'GELEN SMS', icon:'MessageCircle', color:C.success, badge: gelenOkunmamis},
-          {id:'gonderilenler', label:'GÖNDERİLEN SMS', icon:'Send', color:C.warning},
-          {id:'toplu', label:'TOPLU SMS', icon:'Users', color:C.purple || '#8b5cf6'},
-          {id:'kredi', label:'KREDİ / BAŞLIK', icon:'Wallet', color:C.cyan || '#06b6d4'},
-          {id:'rapor', label:'İLETİM RAPORU', icon:'BarChart3', color:'#f97316'}
+          {id:'gonderilenler', label:'GÖNDERİLEN SMS', icon:'Send', color:C.warning}
         ].map(t => (
           <div key={t.id} onClick={() => { setSmsAltTab(t.id); if(t.id==='gelen') gelenSmsYukle(1, gelenArama); }}
             style={{flex:1, padding:'10px 16px', borderRadius:8, cursor:'pointer', textAlign:'center',
@@ -2240,29 +2139,31 @@ const SmsTab = () => {
                 <div>
                   <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
                     <thead>
-                      <tr style={{background:C.bgHover}}>
+                      <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['TARİH','TELEFON','DOSYA NO','DURUM','MESAJ','KULLANICI'].map(h =>
-                          <th key={h} style={{padding:'8px 10px', textAlign:'left', color:C.textMuted, fontWeight:600, fontSize:9, borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                          <th key={h} style={{padding:'8px 10px', textAlign:'left', color:'#FFFFFF', fontWeight:800, fontSize:'12px', borderBottom:`1px solid ${C.border}`}}>{h}</th>
                         )}
                       </tr>
                     </thead>
                     <tbody>
                       {loglar.map((log, i) => (
-                        <tr key={i} style={{borderBottom:`1px solid ${C.border}`}}>
-                          <td style={{padding:'8px 10px', fontSize:10, color:C.textMuted, whiteSpace:'nowrap'}}>
+                        <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                          onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                          onMouseLeave={e => {e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                          <td style={{padding:'8px 10px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, whiteSpace:'nowrap'}}>
                             {log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-'}
                           </td>
-                          <td style={{padding:'8px 10px', fontFamily:'monospace', fontSize:11, fontWeight:600}}>{log.telefon || '-'}</td>
-                          <td style={{padding:'8px 10px'}}>
+                          <td style={{padding:'8px 10px', fontFamily:'monospace', fontSize:'12px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{log.telefon || '-'}</td>
+                          <td style={{padding:'8px 10px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             {log.dosya_no ? <Badge text={log.dosya_no} color={C.accent}/> : '-'}
                           </td>
-                          <td style={{padding:'8px 10px'}}>
+                          <td style={{padding:'8px 10px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             <Badge text={log.durum === 'gonderildi' ? 'GÖNDERİLDİ' : log.durum === 'hata' ? 'HATA' : (log.durum || '').toUpperCase()} color={durumRenk(log.durum)}/>
                           </td>
-                          <td style={{padding:'8px 10px', fontSize:10, color:C.textSec, maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                          <td style={{padding:'8px 10px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
                             {log.sonuc_mesaj || log.mesaj || '-'}
                           </td>
-                          <td style={{padding:'8px 10px', fontSize:10, color:C.textMuted}}>{log.kullanici_adi || '-'}</td>
+                          <td style={{padding:'8px 10px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{log.kullanici_adi || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -2511,305 +2412,6 @@ const SmsTab = () => {
 
         </div>
       )}
-
-      {/* ═══ TOPLU SMS PANELİ ═══ */}
-      {smsAltTab === 'toplu' && (
-        <div style={{display:'flex', flexDirection:'column', gap:16}}>
-          {/* BANNER */}
-          <div style={{padding:16, background:`${(C.purple||'#8b5cf6')}11`, borderRadius:12, border:`1px solid ${(C.purple||'#8b5cf6')}33`, display:'flex', alignItems:'center', gap:12}}>
-            <div style={{width:44, height:44, borderRadius:12, background:`${(C.purple||'#8b5cf6')}22`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
-              <LIcon name="Users" size={22} color={C.purple||'#8b5cf6'}/>
-            </div>
-            <div>
-              <div style={{fontSize:14, fontWeight:800, color:C.purple||'#8b5cf6'}}>TOPLU SMS GÖNDERİMİ</div>
-              <div style={{fontSize:11, color:C.textSec, marginTop:2}}>
-                BİRDEN FAZLA NUMARAYA AYNI MESAJI TOPLU OLARAK GÖNDERİN. TEK SEFERDE EN FAZLA 500 NUMARA.
-              </div>
-            </div>
-          </div>
-
-          {/* MESAJ */}
-          {mesaj && (
-            <div style={{padding:12, background: mesaj.type==='success' ? `${C.success}18` : `${C.danger}18`,
-              borderRadius:8, border:`1px solid ${mesaj.type==='success' ? C.success+'33' : C.danger+'33'}`,
-              color: mesaj.type==='success' ? C.success : C.danger, fontSize:12, fontWeight:600,
-              display:'flex', alignItems:'center', gap:8}}>
-              <LIcon name={mesaj.type==='success' ? 'CheckCircle' : 'AlertCircle'} size={16}
-                color={mesaj.type==='success' ? C.success : C.danger}/>
-              {mesaj.text}
-              <span style={{marginLeft:'auto', cursor:'pointer', opacity:0.6}} onClick={() => setMesaj(null)}>✕</span>
-            </div>
-          )}
-
-          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16}}>
-            {/* SOL: NUMARA GİRİŞ */}
-            <div style={S.card}>
-              <div style={{...S.cardHead}}>
-                <LIcon name="Phone" size={16} color={C.purple||'#8b5cf6'}/>
-                <span style={{fontSize:13, fontWeight:700}}>TELEFON NUMARALARI</span>
-              </div>
-              <div style={{padding:20}}>
-                <textarea value={topluTelefonlar} onChange={e => setTopluTelefonlar(e.target.value)}
-                  placeholder={"HER SATIRA BİR NUMARA YAZIN:\n05321234567\n05339876543\n05441112233\n\nVeya virgülle ayırın:\n0532..., 0533..., 0544..."}
-                  rows={10}
-                  style={{...S.input, fontSize:12, fontFamily:'monospace', resize:'vertical', minHeight:200, lineHeight:1.8}}/>
-                <div style={{fontSize:9, color:C.textMuted, marginTop:6}}>
-                  HER SATIRA BİR NUMARA VEYA VİRGÜL / NOKTALI VİRGÜL İLE AYIRIN. MAX 500 NUMARA.
-                </div>
-                <div style={{fontSize:11, fontWeight:700, color:C.accent, marginTop:8}}>
-                  GİRİLEN NUMARA: {topluTelefonlar.split(/[\n,;]+/).map(t=>t.trim()).filter(t=>t.length>0).length}
-                </div>
-              </div>
-            </div>
-
-            {/* SAĞ: MESAJ + GÖNDER */}
-            <div style={{display:'flex', flexDirection:'column', gap:16}}>
-              <div style={S.card}>
-                <div style={{...S.cardHead}}>
-                  <LIcon name="MessageSquare" size={16} color={C.purple||'#8b5cf6'}/>
-                  <span style={{fontSize:13, fontWeight:700}}>MESAJ METNİ</span>
-                </div>
-                <div style={{padding:20}}>
-                  <textarea value={topluMesaj} onChange={e => setTopluMesaj(e.target.value)}
-                    placeholder="SMS mesajınızı buraya yazın..."
-                    rows={6}
-                    style={{...S.input, fontSize:12, resize:'vertical', minHeight:120, lineHeight:1.8}}/>
-                  <div style={{display:'flex', justifyContent:'space-between', marginTop:6}}>
-                    <div style={{fontSize:9, color:C.textMuted}}>TÜRKÇE KARAKTER DESTEKLİ</div>
-                    <div style={{fontSize:9, color: topluMesaj.length > 160 ? C.warning : C.textMuted}}>
-                      {topluMesaj.length} KARAKTER {topluMesaj.length > 160 ? `(${Math.ceil(topluMesaj.length/153)} SMS)` : '(1 SMS)'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <button onClick={topluSmsGonder} disabled={topluLoading}
-                style={{...S.btn, ...S.btnS, justifyContent:'center', padding:16, fontSize:14, fontWeight:800, borderRadius:12}}>
-                <LIcon name="Send" size={18} color="#fff"/>
-                {topluLoading ? 'GÖNDERİLİYOR...' : 'TOPLU SMS GÖNDER'}
-              </button>
-
-              {/* SONUÇ */}
-              {topluSonuc && (
-                <div style={S.card}>
-                  <div style={{...S.cardHead, background:`${C.success}06`}}>
-                    <LIcon name="CheckCircle" size={16} color={C.success}/>
-                    <span style={{fontSize:13, fontWeight:700}}>GÖNDERİM SONUCU</span>
-                  </div>
-                  <div style={{padding:20}}>
-                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
-                      <div style={{...S.stat, textAlign:'center'}}>
-                        <div style={{fontSize:24, fontWeight:900, color:C.success}}>{topluSonuc.basarili}</div>
-                        <div style={{fontSize:9, color:C.textMuted, marginTop:2}}>BAŞARILI</div>
-                      </div>
-                      <div style={{...S.stat, textAlign:'center'}}>
-                        <div style={{fontSize:24, fontWeight:900, color:C.danger}}>{topluSonuc.basarisiz}</div>
-                        <div style={{fontSize:9, color:C.textMuted, marginTop:2}}>BAŞARISIZ</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ KREDİ / BAŞLIK SORGULAMA PANELİ ═══ */}
-      {smsAltTab === 'kredi' && (
-        <div style={{display:'flex', flexDirection:'column', gap:16}}>
-          {/* BANNER */}
-          <div style={{padding:16, background:`${(C.cyan||'#06b6d4')}11`, borderRadius:12, border:`1px solid ${(C.cyan||'#06b6d4')}33`, display:'flex', alignItems:'center', gap:12}}>
-            <div style={{width:44, height:44, borderRadius:12, background:`${(C.cyan||'#06b6d4')}22`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
-              <LIcon name="Wallet" size={22} color={C.cyan||'#06b6d4'}/>
-            </div>
-            <div>
-              <div style={{fontSize:14, fontWeight:800, color:C.cyan||'#06b6d4'}}>KREDİ & BAŞLIK SORGULAMA</div>
-              <div style={{fontSize:11, color:C.textSec, marginTop:2}}>
-                NETGSM HESABINIZDAKI KALAN SMS KREDİSİNİ VE TANIMLI SMS BAŞLIKLARINI GÖRÜNTÜLEYİN.
-              </div>
-            </div>
-          </div>
-
-          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16}}>
-            {/* SOL: KREDİ */}
-            <div style={S.card}>
-              <div style={{...S.cardHead}}>
-                <LIcon name="CreditCard" size={16} color={C.cyan||'#06b6d4'}/>
-                <span style={{fontSize:13, fontWeight:700}}>SMS KREDİ BAKİYESİ</span>
-              </div>
-              <div style={{padding:30, textAlign:'center'}}>
-                {krediSonuc && krediSonuc.basarili ? (
-                  <div>
-                    <div style={{fontSize:48, fontWeight:900, color:C.success, lineHeight:1}}>{krediSonuc.kredi}</div>
-                    <div style={{fontSize:12, color:C.textMuted, marginTop:8, fontWeight:600}}>KALAN SMS KREDİSİ</div>
-                  </div>
-                ) : krediSonuc ? (
-                  <div>
-                    <LIcon name="AlertCircle" size={36} color={C.danger} style={{opacity:0.3}}/>
-                    <div style={{fontSize:12, color:C.danger, marginTop:8, fontWeight:600}}>{krediSonuc.mesaj}</div>
-                  </div>
-                ) : (
-                  <div>
-                    <LIcon name="Wallet" size={36} color={C.textMuted} style={{opacity:0.2}}/>
-                    <div style={{fontSize:12, color:C.textMuted, marginTop:8}}>SORGULAMAK İÇİN BUTONA TIKLAYIN</div>
-                  </div>
-                )}
-                <button onClick={krediSorgula} disabled={krediLoading}
-                  style={{...S.btn, ...S.btnP, justifyContent:'center', padding:'12px 24px', fontSize:12, fontWeight:700, marginTop:20}}>
-                  <LIcon name="RefreshCw" size={14} color="#fff"/>
-                  {krediLoading ? 'SORGULANYOR...' : 'KREDİ SORGULA'}
-                </button>
-              </div>
-            </div>
-
-            {/* SAĞ: BAŞLIKLAR */}
-            <div style={S.card}>
-              <div style={{...S.cardHead}}>
-                <LIcon name="Tag" size={16} color={C.cyan||'#06b6d4'}/>
-                <span style={{fontSize:13, fontWeight:700}}>TANIMLI SMS BAŞLIKLARI</span>
-              </div>
-              <div style={{padding:20}}>
-                {basliklar.length > 0 ? (
-                  <div style={{display:'flex', flexDirection:'column', gap:8}}>
-                    {basliklar.map((b, i) => (
-                      <div key={i} style={{padding:'10px 16px', background:C.bgHover, borderRadius:8,
-                        border:`1px solid ${C.border}`, display:'flex', alignItems:'center', gap:10}}>
-                        <div style={{width:28, height:28, borderRadius:14, background:`${C.accent}22`,
-                          display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
-                          fontSize:11, fontWeight:800, color:C.accent}}>{i+1}</div>
-                        <span style={{fontSize:13, fontWeight:700, fontFamily:'monospace'}}>{b}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{textAlign:'center', padding:20}}>
-                    <LIcon name="Tag" size={36} color={C.textMuted} style={{opacity:0.2}}/>
-                    <div style={{fontSize:12, color:C.textMuted, marginTop:8}}>SORGULAMAK İÇİN BUTONA TIKLAYIN</div>
-                  </div>
-                )}
-                <button onClick={basliklariSorgula} disabled={baslikLoading}
-                  style={{...S.btn, ...S.btnP, justifyContent:'center', padding:'12px 24px', fontSize:12, fontWeight:700, marginTop:16, width:'100%'}}>
-                  <LIcon name="RefreshCw" size={14} color="#fff"/>
-                  {baslikLoading ? 'SORGULANYOR...' : 'BAŞLIKLARI SORGULA'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ İLETİM RAPORU PANELİ ═══ */}
-      {smsAltTab === 'rapor' && (
-        <div style={{display:'flex', flexDirection:'column', gap:16}}>
-          {/* BANNER */}
-          <div style={{padding:16, background:'#f9731611', borderRadius:12, border:'1px solid #f9731633', display:'flex', alignItems:'center', gap:12}}>
-            <div style={{width:44, height:44, borderRadius:12, background:'#f9731622', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
-              <LIcon name="BarChart3" size={22} color="#f97316"/>
-            </div>
-            <div>
-              <div style={{fontSize:14, fontWeight:800, color:'#f97316'}}>SMS İLETİM RAPORU</div>
-              <div style={{fontSize:11, color:C.textSec, marginTop:2}}>
-                GÖNDERİLEN SMS'LERİN İLETİM DURUMLARINI BULK ID İLE SORGULAYARAK DETAYLI RAPOR ALIN.
-              </div>
-            </div>
-          </div>
-
-          {/* MESAJ */}
-          {mesaj && (
-            <div style={{padding:12, background: mesaj.type==='success' ? `${C.success}18` : `${C.danger}18`,
-              borderRadius:8, border:`1px solid ${mesaj.type==='success' ? C.success+'33' : C.danger+'33'}`,
-              color: mesaj.type==='success' ? C.success : C.danger, fontSize:12, fontWeight:600,
-              display:'flex', alignItems:'center', gap:8}}>
-              <LIcon name={mesaj.type==='success' ? 'CheckCircle' : 'AlertCircle'} size={16}
-                color={mesaj.type==='success' ? C.success : C.danger}/>
-              {mesaj.text}
-              <span style={{marginLeft:'auto', cursor:'pointer', opacity:0.6}} onClick={() => setMesaj(null)}>✕</span>
-            </div>
-          )}
-
-          {/* SORGULAMA FORMU */}
-          <div style={S.card}>
-            <div style={{...S.cardHead}}>
-              <LIcon name="Search" size={16} color="#f97316"/>
-              <span style={{fontSize:13, fontWeight:700}}>RAPOR SORGULA</span>
-            </div>
-            <div style={{padding:20}}>
-              <div style={{display:'flex', gap:10, alignItems:'flex-end'}}>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:10, fontWeight:700, color:C.textMuted, marginBottom:6}}>BULK ID</div>
-                  <input value={raporBulkId} onChange={e => setRaporBulkId(e.target.value)}
-                    placeholder="SMS gönderiminden dönen Bulk ID'yi girin"
-                    style={{...S.input, fontSize:12, fontFamily:'monospace'}}
-                    onKeyDown={e => e.key === 'Enter' && raporSorgulama()}/>
-                </div>
-                <button onClick={raporSorgulama} disabled={raporLoading}
-                  style={{...S.btn, ...S.btnP, fontSize:12, padding:'10px 20px', whiteSpace:'nowrap'}}>
-                  <LIcon name="Search" size={14} color="#fff"/>
-                  {raporLoading ? 'SORGULANYOR...' : 'RAPOR SORGULA'}
-                </button>
-              </div>
-              <div style={{fontSize:9, color:C.textMuted, marginTop:6}}>
-                BULK ID: SMS GÖNDERİMİ SONRASINDA NETGSM TARAFINDAN DÖNEN REFERANS NUMARASIDIR. GÖNDERİLEN SMS SAYFASINDAN BULABİLİRSİNİZ.
-              </div>
-            </div>
-          </div>
-
-          {/* RAPOR SONUÇLARI */}
-          {raporSonuc && (
-            <div style={S.card}>
-              <div style={{...S.cardHead, justifyContent:'space-between'}}>
-                <div style={{display:'flex', alignItems:'center', gap:8}}>
-                  <LIcon name="FileText" size={16} color="#f97316"/>
-                  <span style={{fontSize:13, fontWeight:700}}>RAPOR SONUÇLARI</span>
-                </div>
-                {raporSonuc.basarili && (
-                  <span style={{fontSize:10, color:C.textMuted}}>{raporSonuc.mesaj}</span>
-                )}
-              </div>
-              {raporSonuc.basarili ? (
-                raporSonuc.raporlar && raporSonuc.raporlar.length > 0 ? (
-                  <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
-                    <thead>
-                      <tr style={{background:C.bgHover}}>
-                        {['TELEFON','DURUM','KOD','TARİH','OPERATÖR'].map(h =>
-                          <th key={h} style={{padding:'10px 12px', textAlign:'left', color:C.textMuted, fontWeight:600, fontSize:9, borderBottom:`1px solid ${C.border}`}}>{h}</th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {raporSonuc.raporlar.map((r, i) => (
-                        <tr key={i} style={{borderBottom:`1px solid ${C.border}22`}}>
-                          <td style={{padding:'10px 12px', fontFamily:'monospace', fontWeight:600}}>{r.telefon}</td>
-                          <td style={{padding:'10px 12px'}}>
-                            <span style={{padding:'3px 10px', borderRadius:6, fontSize:10, fontWeight:700,
-                              background: r.durum === 'İletildi' ? `${C.success}18` : `${C.danger}18`,
-                              color: r.durum === 'İletildi' ? C.success : C.danger}}>
-                              {r.durum}
-                            </span>
-                          </td>
-                          <td style={{padding:'10px 12px', fontSize:10, color:C.textMuted, fontFamily:'monospace'}}>{r.kod}</td>
-                          <td style={{padding:'10px 12px', fontSize:10, color:C.textMuted}}>{r.tarih || '-'}</td>
-                          <td style={{padding:'10px 12px', fontSize:10, color:C.textMuted}}>{r.opertor || '-'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <div style={{padding:30, textAlign:'center'}}>
-                    <div style={{fontSize:12, color:C.textMuted}}>BU BULK ID İÇİN RAPOR KAYDI BULUNAMADI</div>
-                  </div>
-                )
-              ) : (
-                <div style={{padding:30, textAlign:'center'}}>
-                  <LIcon name="AlertCircle" size={28} color={C.danger} style={{opacity:0.3}}/>
-                  <div style={{fontSize:12, color:C.danger, marginTop:8, fontWeight:600}}>{raporSonuc.mesaj}</div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };
@@ -2834,21 +2436,21 @@ const TopluAktarimTab = () => {
     try {
       const basliklar = [
         'T.C. NO','ADI SOYADI','DOSYA KAYNAĞI','DOSYA TÜRÜ','DAVALI ŞİRKET',
-        'SİGORTA HASAR NO','KAZA TARİHİ','AÇILIŞ TARİHİ','DOSYA AŞAMA DURUMU',
+        'SİGORTA HASAR NO','KAZA TARİHİ','DOSYA AŞAMA DURUMU',
         'TELEFON','TELEFON 2','E-POSTA','POLİÇE NO','KAZA İL','KAZA İLÇE',
         'PLAKA','MARKA','MODEL','MODEL YILI','KARŞI PLAKA','KARŞI SİGORTA','NOTLAR'
       ];
       const ornek1 = [
         '12345678901','Ahmet Yılmaz','OFİS CRM','ADK','Axa Sigorta',
-        'HSR-2026-001','15.01.2026','20.01.2026','Dosya Açık',
+        'HSR-2026-001','15.01.2026','Dosya Açık',
         '0532 111 2233','','ahmet@email.com','POL-123456','İSTANBUL','KADIKÖY',
         '34 ABC 123','TOYOTA','COROLLA','2022','06 DEF 456','Allianz Sigorta','Toplu aktarım ile eklendi'
       ];
       const ornek2 = [
         '98765432109','Fatma Demir','YÖNLENDİREN','BH','Mapfre Sigorta',
-        '','10.03.2023','15.05.2023','Dosya Açık',
+        '','20.02.2026','Dosya Açık',
         '0533 444 5566','','','','ANKARA','ÇANKAYA',
-        '','','','','','','Eski sistemden aktarım'
+        '','','','','','',''
       ];
       const ws = XLSX.utils.aoa_to_sheet([basliklar, ornek1, ornek2]);
       /* Sütun genişlikleri */
@@ -2919,12 +2521,7 @@ const TopluAktarimTab = () => {
               <li><b>ŞABLON İNDİR</b> butonuna tıklayarak Excel şablonunu indirin</li>
               <li>Şablondaki örnek satırları silin, kendi verilerinizi doldurun</li>
               <li><b>DOSYA TÜRÜ</b> (ADK/BH) ve <b>ADI SOYADI</b> zorunlu alanlardır</li>
-              <li>Tarih formatı: <b>GG.AA.YYYY</b> (örn: 15.01.2026)</li>
-              <li>
-                <b>AÇILIŞ TARİHİ</b> alanı <b>eski sistem dosyaları</b> için kullanılır:
-                doldurduğunuzda dosya o tarihle açılmış kabul edilir ve <b>güncel ay sayısına / finansal tabloya girmez</b>.
-                Boş bırakırsanız bugünün tarihi kullanılır.
-              </li>
+              <li>Kaza tarihi formatı: <b>GG.AA.YYYY</b> (örn: 15.01.2026)</li>
               <li>Excel dosyasını <b>YÜKLE</b> butonuyla sisteme aktarın</li>
             </ol>
           </div>
@@ -2934,7 +2531,7 @@ const TopluAktarimTab = () => {
             <div style={{fontSize:10,fontWeight:700,color:C.textMuted,marginBottom:8}}>ŞABLON ALANLARI:</div>
             <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
               {['DOSYA TÜRÜ *','ADI SOYADI *','T.C. KİMLİK','TELEFON','TELEFON 2','E-POSTA',
-                'SİGORTA ŞİRKETİ','HASAR NO','POLİÇE NO','KAZA TARİHİ','AÇILIŞ TARİHİ','KAZA İL','KAZA İLÇE',
+                'SİGORTA ŞİRKETİ','HASAR NO','POLİÇE NO','KAZA TARİHİ','KAZA İL','KAZA İLÇE',
                 'PLAKA','MARKA','MODEL','MODEL YILI','KARŞI PLAKA','KARŞI SİGORTA','DOSYA KAYNAĞI','AŞAMA','NOTLAR'
               ].map((s,i) => (
                 <span key={i} style={{
@@ -3030,30 +2627,22 @@ const TopluAktarimTab = () => {
                 <div style={{maxHeight:300,overflowY:'auto',borderRadius:8,border:`1px solid ${C.border}`}}>
                   <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                     <thead>
-                      <tr style={{background:C.bgInput}}>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:C.textMuted}}>SATIR</th>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:C.textMuted}}>DOSYA NO</th>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:C.textMuted}}>ADI SOYADI</th>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:C.textMuted}}>TÜR</th>
-                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:9,color:C.textMuted}}>AÇILIŞ</th>
-                        <th style={{padding:'8px 10px',textAlign:'center',fontWeight:700,fontSize:9,color:C.textMuted}}>DURUM</th>
+                      <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`1px solid ${C.border}`}}>SATIR</th>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`1px solid ${C.border}`}}>DOSYA NO</th>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`1px solid ${C.border}`}}>ADI SOYADI</th>
+                        <th style={{padding:'8px 10px',textAlign:'left',fontWeight:800,fontSize:'12px',color:'#FFFFFF',borderBottom:`1px solid ${C.border}`}}>TÜR</th>
                       </tr>
                     </thead>
                     <tbody>
                       {sonuc.olusturulan.map((d,i) => (
-                        <tr key={i} style={{borderTop:`1px solid ${C.border}`}}>
-                          <td style={{padding:'6px 10px',fontSize:10,color:C.textMuted}}>{d.satir}</td>
-                          <td style={{padding:'6px 10px',fontSize:11,fontWeight:700,color:C.accent}}>{d.dosya_no}</td>
-                          <td style={{padding:'6px 10px',fontSize:11,color:C.text}}>{d.ad_soyad}</td>
-                          <td style={{padding:'6px 10px'}}><span style={{fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:4,background:d.dosya_turu==='ADK'?`${C.accent}18`:`${C.gold}18`,color:d.dosya_turu==='ADK'?C.accent:C.gold}}>{d.dosya_turu}</span></td>
-                          <td style={{padding:'6px 10px',fontSize:10,color:C.textMuted,fontFamily:'monospace'}}>{d.acilis_tarihi || '-'}</td>
-                          <td style={{padding:'6px 10px',textAlign:'center'}}>
-                            {d.eski_sistem ? (
-                              <span style={{fontSize:8,fontWeight:800,padding:'2px 6px',borderRadius:4,background:`${C.warning}22`,color:C.warning,letterSpacing:0.3}}>ESKİ SİSTEM</span>
-                            ) : (
-                              <span style={{fontSize:8,fontWeight:700,padding:'2px 6px',borderRadius:4,background:`${C.success}18`,color:C.success,letterSpacing:0.3}}>YENİ</span>
-                            )}
-                          </td>
+                        <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                          onMouseEnter={e => {if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
+                          onMouseLeave={e => {e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
+                          <td style={{padding:'6px 10px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.satir}</td>
+                          <td style={{padding:'6px 10px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.dosya_no}</td>
+                          <td style={{padding:'6px 10px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.ad_soyad}</td>
+                          <td style={{padding:'6px 10px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}><span style={{fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:4,background:d.dosya_turu==='ADK'?`${C.accent}18`:`${C.gold}18`,color:d.dosya_turu==='ADK'?C.accent:C.gold}}>{d.dosya_turu}</span></td>
                         </tr>
                       ))}
                     </tbody>
@@ -3375,30 +2964,32 @@ const PortalTab = () => {
                 <div style={{overflowX:'auto'}}>
                   <table style={{width:'100%', borderCollapse:'collapse', fontSize:12}}>
                     <thead>
-                      <tr style={{borderBottom:`2px solid ${C.border}`}}>
+                      <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['DOSYA NO','MÜŞTERİ','TELEFON','GİRİŞ','DURUM','SON GİRİŞ','MESAJ','İŞLEMLER'].map(h => (
-                          <th key={h} style={{padding:'10px 8px', textAlign:'left', fontWeight:700, fontSize:10, color:C.textMuted, letterSpacing:.5}}>{h}</th>
+                          <th key={h} style={{padding:'10px 8px', textAlign:'left', fontWeight:800, fontSize:'12px', color:'#FFFFFF', borderBottom:`1px solid ${C.border}`}}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {erisimler.map(e => (
-                        <tr key={e.id} style={{borderBottom:`1px solid ${C.border}`}}>
-                          <td style={{padding:'10px 8px', fontWeight:700, color:C.accent}}>{e.dosya_no}</td>
-                          <td style={{padding:'10px 8px', fontWeight:600}}>{e.ad_soyad}</td>
-                          <td style={{padding:'10px 8px', color:C.textSec, fontSize:11}}>{e.telefon}</td>
-                          <td style={{padding:'10px 8px'}}>
+                      {erisimler.map((e, i) => (
+                        <tr key={e.id} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                          onMouseEnter={e2 => {if(MR.tema==='koyu'){e2.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e2.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e2.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e2.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e2.currentTarget.style.transform='translateY(-1px)';}}
+                          onMouseLeave={e2 => {e2.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e2.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e2.currentTarget.style.transform='translateY(0)';}}>
+                          <td style={{padding:'10px 8px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px'}}>{e.dosya_no}</td>
+                          <td style={{padding:'10px 8px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px'}}>{e.ad_soyad}</td>
+                          <td style={{padding:'10px 8px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{e.telefon}</td>
+                          <td style={{padding:'10px 8px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             <span style={{...S.badge(e.giris_yontemi === 'sms_otp' ? C.accent : C.purple)}}>
                               {e.giris_yontemi === 'sms_otp' ? 'SMS OTP' : 'LİNK'}
                             </span>
                           </td>
-                          <td style={{padding:'10px 8px'}}>
+                          <td style={{padding:'10px 8px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             <span style={{...S.badge(e.aktif == 1 ? C.success : C.danger)}}>
                               {e.aktif == 1 ? 'AKTİF' : 'PASİF'}
                             </span>
                           </td>
-                          <td style={{padding:'10px 8px', fontSize:11, color:C.textSec}}>{formatTS(e.son_giris)}</td>
-                          <td style={{padding:'10px 8px'}}>
+                          <td style={{padding:'10px 8px', fontSize:'12px', fontWeight:600, color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{formatTS(e.son_giris)}</td>
+                          <td style={{padding:'10px 8px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             {e.okunmamis_mesaj > 0 && (
                               <span onClick={() => mesajlariAc(e.dosya_id, e.dosya_no)} style={{background:C.danger, color:'#fff', padding:'2px 8px', borderRadius:10, fontSize:10, fontWeight:700, cursor:'pointer'}}>
                                 {e.okunmamis_mesaj} YENİ
@@ -3408,7 +2999,7 @@ const PortalTab = () => {
                               <span onClick={() => mesajlariAc(e.dosya_id, e.dosya_no)} style={{color:C.textMuted, fontSize:10, cursor:'pointer', textDecoration:'underline'}}>MESAJLAR</span>
                             )}
                           </td>
-                          <td style={{padding:'10px 8px'}}>
+                          <td style={{padding:'10px 8px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             <div style={{display:'flex', gap:4}}>
                               <button onClick={() => smsYenidenGonder(e.id)} title="SMS YENİDEN GÖNDER" style={{...S.btn, padding:'4px 8px', fontSize:10, ...S.btnP}}>
                                 <LIcon name="MessageSquare" size={12}/>
@@ -3447,23 +3038,25 @@ const PortalTab = () => {
                 <div style={{overflowX:'auto'}}>
                   <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
                     <thead>
-                      <tr style={{borderBottom:`2px solid ${C.border}`}}>
+                      <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['TARİH','MÜŞTERİ','DOSYA NO','İŞLEM','DETAY','IP ADRESİ'].map(h => (
-                          <th key={h} style={{padding:'8px 6px', textAlign:'left', fontWeight:700, fontSize:10, color:C.textMuted}}>{h}</th>
+                          <th key={h} style={{padding:'8px 6px', textAlign:'left', fontWeight:800, fontSize:'12px', color:'#FFFFFF', borderBottom:`1px solid ${C.border}`}}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {loglar.map(l => (
-                        <tr key={l.id} style={{borderBottom:`1px solid ${C.border}`}}>
-                          <td style={{padding:'8px 6px', fontSize:10, color:C.textSec}}>{formatTS(l.created_at)}</td>
-                          <td style={{padding:'8px 6px', fontWeight:600}}>{l.ad_soyad || '-'}</td>
-                          <td style={{padding:'8px 6px', color:C.accent, fontWeight:600}}>{l.dosya_no || '-'}</td>
-                          <td style={{padding:'8px 6px'}}>
+                      {loglar.map((l, i) => (
+                        <tr key={l.id} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'), borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)', borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)', boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)', transition:'all .2s', borderRadius:8}}
+                          onMouseEnter={e2 => {if(MR.tema==='koyu'){e2.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e2.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e2.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e2.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e2.currentTarget.style.transform='translateY(-1px)';}}
+                          onMouseLeave={e2 => {e2.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e2.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e2.currentTarget.style.transform='translateY(0)';}}>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{formatTS(l.created_at)}</td>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{l.ad_soyad || '-'}</td>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>{l.dosya_no || '-'}</td>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600}}>
                             <span style={{...S.badge(LOG_ISLEM_RENK(l.islem))}}>{l.islem}</span>
                           </td>
-                          <td style={{padding:'8px 6px', color:C.textSec, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{l.detay || '-'}</td>
-                          <td style={{padding:'8px 6px', fontSize:10, color:C.textMuted, fontFamily:'monospace'}}>{l.ip_adresi || '-'}</td>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{l.detay || '-'}</td>
+                          <td style={{padding:'8px 6px', color:MR.tema==='koyu'?'#e2e8f0':'#1e293b', fontSize:'12px', fontWeight:600, fontFamily:'monospace'}}>{l.ip_adresi || '-'}</td>
                         </tr>
                       ))}
                     </tbody>

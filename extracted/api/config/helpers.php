@@ -367,6 +367,36 @@ function ensure_2fa_columns() {
 }
 
 /**
+ * ═══ YONLENDIRME (CRM ARAMA LİSTESİ) ŞEMA GARANTİSİ ═══
+ * CRM kişi kartında kullanılan tüm alanlar DB'de mevcut olsun diye idempotent.
+ * Hiçbir mevcut veriye dokunmaz, sadece EKSIK sütunları ekler.
+ */
+function ensure_yonlendirme_columns() {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        $db = getDB();
+        // Bilgi butonu + kişi bilgisi alanları
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS dosya_turu VARCHAR(10) DEFAULT 'ADK'");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS plaka VARCHAR(20) DEFAULT NULL");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS sigorta_sirket VARCHAR(100) DEFAULT NULL");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS kusur_durumu VARCHAR(20) DEFAULT NULL");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS maluliyet VARCHAR(200) DEFAULT NULL");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS kaza_pozisyonu VARCHAR(20) DEFAULT NULL");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS guncel_durum VARCHAR(20) DEFAULT NULL");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS dosya_durumu VARCHAR(20) DEFAULT 'AÇIK'");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS kaza_tarihi DATE DEFAULT NULL");
+        // Görüşme sonucu AYRI alan (durum ile karışmasın): durum sadece Belirsiz/Alindi/Olumsuz
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS son_gorusme_sonucu VARCHAR(100) DEFAULT NULL");
+        // yonlendirme_notlar tablosuna o anki bilgi butonları snapshot'ı
+        $db->exec("ALTER TABLE yonlendirme_notlar ADD COLUMN IF NOT EXISTS durum_snapshot TEXT DEFAULT NULL");
+    } catch (\Exception $e) {
+        // Migration hatası sessiz geç
+    }
+}
+
+/**
  * Chunked transfer encoding decode
  */
 function http_decode_chunked($data) {

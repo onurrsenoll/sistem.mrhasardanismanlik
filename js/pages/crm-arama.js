@@ -80,7 +80,19 @@ MR.CrmAramaPage = ({setPage, user}) => {
     setDetayEdit(false);
     setNotlar([]);
     const r = await api.yonlendirmeGet(item.id);
-    if (r?.success && r.data?.notlar) setNotlar(r.data.notlar);
+    if (r?.success && r.data) {
+      // Tam detayı modala yükle (kusur_durumu, kaza_pozisyonu, güncel_durum, dosya_durumu,
+      // kaza_tarihi, plaka, sigorta_sirket, maluliyet, son_gorusme_sonucu vs. hepsi gelsin)
+      setDetayModal(r.data);
+      if (Array.isArray(r.data.notlar)) setNotlar(r.data.notlar);
+    }
+  };
+
+  /* Pill butonu veya form alanı değiştiğinde ANINDA (sessiz) kaydet.
+   * Kullanıcı KAYDET butonuna basmayı unutsa bile kayıp yaşanmaz. */
+  const autoSave = async (id, patch) => {
+    if (!id) return;
+    try { await api.yonlendirmeUpdate({id, ...patch}); } catch(e) {}
   };
 
   /* DURUM DEĞİŞTİR */
@@ -1058,9 +1070,11 @@ MR.CrmAramaPage = ({setPage, user}) => {
         {detayModal && (() => {
           const d = detayModal;
           const dUp = (k,v) => setDetayModal(p=>({...p,[k]:v}));
+          /* Pill/form değiştiğinde hem state güncelle hem backend'e gönder — veri kaybı OLMAZ */
+          const dUpSave = (k,v) => { dUp(k,v); autoSave(d.id, {[k]: v}); };
           const dIsBH = (d.dosya_turu||dosyaTuruTab) === 'BH';
           const dSave = async () => {
-            await api.yonlendirmeUpdate({id:d.id, magdur_ad_soyad:d.magdur_ad_soyad, magdur_tc:d.magdur_tc, magdur_telefon:d.magdur_telefon, magdur_il:d.magdur_il, magdur_ilce:d.magdur_ilce, kaza_turu:d.kaza_turu, son_durum:d.son_durum, durum:d.durum, plaka:d.plaka, sigorta_sirket:d.sigorta_sirket, kusur_durumu:d.kusur_durumu, maluliyet:d.maluliyet, kaza_pozisyonu:d.kaza_pozisyonu, guncel_durum:d.guncel_durum, dosya_turu:d.dosya_turu});
+            await api.yonlendirmeUpdate({id:d.id, magdur_ad_soyad:d.magdur_ad_soyad, magdur_tc:d.magdur_tc, magdur_telefon:d.magdur_telefon, magdur_il:d.magdur_il, magdur_ilce:d.magdur_ilce, kaza_turu:d.kaza_turu, son_durum:d.son_durum, durum:d.durum, plaka:d.plaka, sigorta_sirket:d.sigorta_sirket, kusur_durumu:d.kusur_durumu, maluliyet:d.maluliyet, kaza_pozisyonu:d.kaza_pozisyonu, guncel_durum:d.guncel_durum, dosya_turu:d.dosya_turu, dosya_durumu:d.dosya_durumu, kaza_tarihi:d.kaza_tarihi});
             load();
           };
           const PillBtn = ({label, active, color, onClick}) => (
@@ -1108,52 +1122,52 @@ MR.CrmAramaPage = ({setPage, user}) => {
                   <LIcon name="Info" size={13} color={C.accent}/> KİŞİ BİLGİLERİ
                 </div>
                 <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8}}>
-                  {/* BH: Maluliyet | ADK/MDK: Plaka */}
+                  {/* BH: Maluliyet | ADK/MDK: Plaka — onBlur'da auto-save */}
                   {dIsBH ? (
-                    <FormGroup label="MALULİYET (KIRIK VB.)"><input style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.maluliyet||''} onChange={e => dUp('maluliyet', e.target.value.toUpperCase())} placeholder="SOL KOL KIRIGI VB."/></FormGroup>
+                    <FormGroup label="MALULİYET (KIRIK VB.)"><input style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.maluliyet||''} onChange={e => dUp('maluliyet', e.target.value.toUpperCase())} onBlur={e => autoSave(d.id, {maluliyet: e.target.value.toUpperCase()})} placeholder="SOL KOL KIRIGI VB."/></FormGroup>
                   ) : (
-                    <FormGroup label="PLAKA"><input style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.plaka||''} onChange={e => dUp('plaka', e.target.value.toUpperCase())} placeholder="34 ABC 123"/></FormGroup>
+                    <FormGroup label="PLAKA"><input style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.plaka||''} onChange={e => dUp('plaka', e.target.value.toUpperCase())} onBlur={e => autoSave(d.id, {plaka: e.target.value.toUpperCase()})} placeholder="34 ABC 123"/></FormGroup>
                   )}
-                  <FormGroup label="AD SOYAD *"><input style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.magdur_ad_soyad||''} onChange={e => dUp('magdur_ad_soyad', e.target.value.toUpperCase())}/></FormGroup>
-                  <FormGroup label="TC KİMLİK"><input style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.magdur_tc||''} onChange={e => dUp('magdur_tc', e.target.value.replace(/\D/g,''))} maxLength={11}/></FormGroup>
-                  <FormGroup label="TELEFON *"><input style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.magdur_telefon||''} onChange={e => dUp('magdur_telefon', e.target.value)}/></FormGroup>
-                  <FormGroup label="KAZA TARİHİ"><input type="date" style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.kaza_tarihi||''} onChange={e => dUp('kaza_tarihi', e.target.value)}/></FormGroup>
-                  <FormGroup label="İL"><select style={{...S.select, fontSize:11, padding:'7px 8px'}} value={d.magdur_il||''} onChange={e => dUp('magdur_il', e.target.value)}>
+                  <FormGroup label="AD SOYAD *"><input style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.magdur_ad_soyad||''} onChange={e => dUp('magdur_ad_soyad', e.target.value.toUpperCase())} onBlur={e => autoSave(d.id, {magdur_ad_soyad: e.target.value.toUpperCase()})}/></FormGroup>
+                  <FormGroup label="TC KİMLİK"><input style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.magdur_tc||''} onChange={e => dUp('magdur_tc', e.target.value.replace(/\D/g,''))} onBlur={e => autoSave(d.id, {magdur_tc: e.target.value.replace(/\D/g,'')})} maxLength={11}/></FormGroup>
+                  <FormGroup label="TELEFON *"><input style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.magdur_telefon||''} onChange={e => dUp('magdur_telefon', e.target.value)} onBlur={e => autoSave(d.id, {magdur_telefon: e.target.value})}/></FormGroup>
+                  <FormGroup label="KAZA TARİHİ"><input type="date" style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.kaza_tarihi||''} onChange={e => dUpSave('kaza_tarihi', e.target.value)}/></FormGroup>
+                  <FormGroup label="İL"><select style={{...S.select, fontSize:11, padding:'7px 8px'}} value={d.magdur_il||''} onChange={e => dUpSave('magdur_il', e.target.value)}>
                     <option value="">SEÇİNİZ</option>{ILLER.map(il => <option key={il} value={il}>{il}</option>)}
                   </select></FormGroup>
                   {/* ADK/MDK: Sigorta Şirketi */}
-                  {!dIsBH && <FormGroup label="SİGORTA ŞİRKETİ"><input style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.sigorta_sirket||''} onChange={e => dUp('sigorta_sirket', e.target.value.toUpperCase())}/></FormGroup>}
+                  {!dIsBH && <FormGroup label="SİGORTA ŞİRKETİ"><input style={{...S.input, fontSize:11, padding:'7px 10px'}} value={d.sigorta_sirket||''} onChange={e => dUp('sigorta_sirket', e.target.value.toUpperCase())} onBlur={e => autoSave(d.id, {sigorta_sirket: e.target.value.toUpperCase()})}/></FormGroup>}
                 </div>
 
-                {/* DOSYA DURUMU */}
+                {/* DOSYA DURUMU — auto-save */}
                 <FormGroup label="DOSYA DURUMU">
                   <div style={{display:'flex', gap:4}}>
-                    <PillBtn label="AÇIK" active={d.dosya_durumu==='AÇIK'||(!d.dosya_durumu)} color="#059669" onClick={() => dUp('dosya_durumu', 'AÇIK')}/>
-                    <PillBtn label="KAPALI" active={d.dosya_durumu==='KAPALI'} color="#059669" onClick={() => dUp('dosya_durumu', 'KAPALI')}/>
+                    <PillBtn label="AÇIK" active={d.dosya_durumu==='AÇIK'||(!d.dosya_durumu)} color="#059669" onClick={() => dUpSave('dosya_durumu', 'AÇIK')}/>
+                    <PillBtn label="KAPALI" active={d.dosya_durumu==='KAPALI'} color="#059669" onClick={() => dUpSave('dosya_durumu', 'KAPALI')}/>
                   </div>
                 </FormGroup>
 
-                {/* KUSUR DURUMU */}
+                {/* KUSUR DURUMU — auto-save */}
                 <FormGroup label="KUSUR DURUMU">
                   <div style={{display:'flex', gap:3}}>
                     {['%0','%25','%50','%75','%100'].map(t => {
                       const aktif = d.kusur_durumu === t;
-                      return <PillBtn key={t} label={t} active={aktif} color="#2563eb" onClick={() => dUp('kusur_durumu', t)}/>;
+                      return <PillBtn key={t} label={t} active={aktif} color="#2563eb" onClick={() => dUpSave('kusur_durumu', t)}/>;
                     })}
                   </div>
                 </FormGroup>
 
-                {/* BH: Kaza Pozisyonu + Güncel Durum */}
+                {/* BH: Kaza Pozisyonu + Güncel Durum — auto-save */}
                 {dIsBH && (
                   <>
                     <FormGroup label="KAZA POZİSYONU">
                       <div style={{display:'flex', gap:4}}>
-                        {['SÜRÜCÜ','YOLCU','YAYA'].map(t => <PillBtn key={t} label={t} active={d.kaza_pozisyonu===t} color="#7c3aed" onClick={() => dUp('kaza_pozisyonu', t)}/>)}
+                        {['SÜRÜCÜ','YOLCU','YAYA'].map(t => <PillBtn key={t} label={t} active={d.kaza_pozisyonu===t} color="#7c3aed" onClick={() => dUpSave('kaza_pozisyonu', t)}/>)}
                       </div>
                     </FormGroup>
                     <FormGroup label="GÜNCEL DURUM">
                       <div style={{display:'flex', gap:4}}>
-                        {['HASTAHANE','TABURCU'].map(t => <PillBtn key={t} label={t} active={d.guncel_durum===t} color="#d97706" onClick={() => dUp('guncel_durum', t)}/>)}
+                        {['HASTAHANE','TABURCU'].map(t => <PillBtn key={t} label={t} active={d.guncel_durum===t} color="#d97706" onClick={() => dUpSave('guncel_durum', t)}/>)}
                       </div>
                     </FormGroup>
                   </>
@@ -1194,11 +1208,30 @@ MR.CrmAramaPage = ({setPage, user}) => {
                       <button style={{...S.btn, background:C.success, color:'#fff', fontSize:11, padding:'7px 18px', borderRadius:6, whiteSpace:'nowrap'}} disabled={notLoading || !notText.trim()} onClick={async () => {
                         if (!notText.trim()) return;
                         setNotLoading(true);
-                        await api.yonlendirmeNotEkle({yonlendirme_id:d.id, not_text:notText.trim(), gorusme_durumu:notDurum||d.son_durum||null});
-                        if (notDurum) { await api.yonlendirmeUpdate({id:d.id, son_durum:notDurum}); dUp('son_durum', notDurum); }
+                        /* Bu notun eklendiği ANDAKİ pill butonlarının snapshot'ı — geri gelince "O AN" rozetinde görünür */
+                        const snapshot = {
+                          dosya_turu: d.dosya_turu || null,
+                          dosya_durumu: d.dosya_durumu || null,
+                          kusur_durumu: d.kusur_durumu || null,
+                          kaza_pozisyonu: d.kaza_pozisyonu || null,
+                          guncel_durum: d.guncel_durum || null,
+                          plaka: d.plaka || null,
+                          sigorta_sirket: d.sigorta_sirket || null,
+                          maluliyet: d.maluliyet || null
+                        };
+                        await api.yonlendirmeNotEkle({
+                          yonlendirme_id: d.id,
+                          not_text: notText.trim(),
+                          gorusme_durumu: notDurum || null,
+                          durum: d.durum || null,
+                          durum_snapshot: snapshot
+                        });
                         setNotText(''); setNotDurum('');
                         const r2 = await api.yonlendirmeGet(d.id);
-                        if (r2?.success && r2.data?.notlar) setNotlar(r2.data.notlar);
+                        if (r2?.success && r2.data) {
+                          setDetayModal(r2.data);
+                          if (Array.isArray(r2.data.notlar)) setNotlar(r2.data.notlar);
+                        }
                         setNotLoading(false); load();
                       }}>
                         <LIcon name="Plus" size={13} color="#fff"/> NOT EKLE
@@ -1210,16 +1243,36 @@ MR.CrmAramaPage = ({setPage, user}) => {
                 {/* MEVCUT NOTLAR */}
                 {notlar.length > 0 ? (
                   <div style={{maxHeight:340, overflowY:'auto'}}>
-                    {notlar.map((n, i) => (
+                    {notlar.map((n, i) => {
+                      /* Snapshot: notun eklendiği ANDAKİ bilgi butonları — "O AN" rozeti */
+                      const snap = n.snapshot || null;
+                      const snapParcalari = snap ? [
+                        snap.dosya_turu && `DOSYA: ${snap.dosya_turu}`,
+                        snap.dosya_durumu && `DURUM: ${snap.dosya_durumu}`,
+                        snap.kusur_durumu && `KUSUR: ${snap.kusur_durumu}`,
+                        snap.kaza_pozisyonu && `POZİSYON: ${snap.kaza_pozisyonu}`,
+                        snap.guncel_durum && `GÜNCEL: ${snap.guncel_durum}`,
+                        snap.plaka && `PLAKA: ${snap.plaka}`,
+                        snap.sigorta_sirket && `SİGORTA: ${snap.sigorta_sirket}`,
+                        snap.maluliyet && `MALULİYET: ${snap.maluliyet}`
+                      ].filter(Boolean) : [];
+                      return (
                       <div key={n.id || i} style={{background:isKoyu?'rgba(15,35,66,0.4)':`${C.accent}06`, border:`1px solid ${C.border}`, borderRadius:8, padding:10, marginBottom:6}}>
                         {n.gorusme_durumu && <span style={{padding:'2px 7px', borderRadius:4, fontSize:9, fontWeight:700, background:`${sonucRenk(n.gorusme_durumu)}18`, color:sonucRenk(n.gorusme_durumu), display:'inline-block', marginBottom:4}}>{n.gorusme_durumu}</span>}
                         <div style={{fontSize:11, lineHeight:1.6}}>{n.not_text}</div>
+                        {snapParcalari.length > 0 && (
+                          <div style={{marginTop:6, padding:'5px 8px', background:isKoyu?'rgba(6,182,212,0.08)':`${C.accent}08`, border:`1px dashed ${C.accent}33`, borderRadius:6, fontSize:9, fontWeight:600, color:C.textSec, letterSpacing:.3}}>
+                            <span style={{color:C.accent, marginRight:4}}>O AN:</span>
+                            {snapParcalari.join(' • ')}
+                          </div>
+                        )}
                         <div style={{display:'flex', justifyContent:'space-between', fontSize:9, color:C.textMuted, marginTop:4}}>
                           <span>{n.ekleyen_adi || 'SİSTEM'}</span>
                           <span>{MR.tarihFmt ? MR.tarihFmt(n.created_at) : (n.created_at || '-')}</span>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : <div style={{fontSize:11, color:C.textMuted, textAlign:'center', padding:24}}>HENUZ NOT EKLENMEMIS</div>}
               </div>

@@ -16,6 +16,7 @@ $body = get_json_body();
 require_fields($body, ['yonlendirme_id', 'not_text']);
 
 $db = getDB();
+ensure_yonlendirme_columns();
 $yonlendirmeId = (int)$body['yonlendirme_id'];
 
 // Yönlendirme kaydı var mı
@@ -24,30 +25,52 @@ $stmt->execute([$yonlendirmeId]);
 $kayit = $stmt->fetch();
 if (!$kayit) json_error('Yönlendirme kaydı bulunamadı', 404);
 
-$gorusmeDurumu = clean($body['gorusme_durumu'] ?? '');
+/* ═══ KAVRAMSAL AYRIM ═══
+ * - "gorusme_durumu"  → GORUSME_SONUCLARI listesinden (OLUMLU/RED/ULAŞILAMADI vs.)
+ *                       Not kaydına ve ana kaydın son_gorusme_sonucu alanına gider.
+ * - "durum"           → SADECE Belirsiz/Alindi/Olumsuz (üç ana durum) — ayrı parametre olarak gelir.
+ *                       Eskiden gorusme_durumu bunun yerine yazılıyordu; bu temizlendi.
+ * - "son_durum"       → Artık not metni değil, son görüşme sonucunun etiketi + küçük özet.
+ * - "durum_snapshot"  → O anki pill butonlarının JSON hali (o görüşmede beyan edilen durumlar).
+ */
+$gorusmeSonucu = clean($body['gorusme_durumu'] ?? '');
 $alinmamaNedeni = clean($body['alinmama_nedeni'] ?? '');
+$anaDurum = clean($body['durum'] ?? ''); // Sadece Belirsiz/Alindi/Olumsuz
+$durumSnapshot = isset($body['durum_snapshot']) ? $body['durum_snapshot'] : null;
+if (is_array($durumSnapshot) || is_object($durumSnapshot)) {
+    $durumSnapshot = json_encode($durumSnapshot, JSON_UNESCAPED_UNICODE);
+} elseif ($durumSnapshot !== null) {
+    $durumSnapshot = (string)$durumSnapshot;
+}
 
 $db->beginTransaction();
 
 try {
-    // Not ekle
-    $stmt = $db->prepare('INSERT INTO yonlendirme_notlar (yonlendirme_id, not_text, gorusme_durumu, alinmama_nedeni, ekleyen_id) VALUES (?, ?, ?, ?, ?)');
+    // Not ekle (snapshot'lı)
+    $stmt = $db->prepare('INSERT INTO yonlendirme_notlar (yonlendirme_id, not_text, gorusme_durumu, alinmama_nedeni, ekleyen_id, durum_snapshot) VALUES (?, ?, ?, ?, ?, ?)');
     $stmt->execute([
         $yonlendirmeId,
         clean($body['not_text']),
-        $gorusmeDurumu,
+        $gorusmeSonucu,
         $alinmamaNedeni,
-        $user['id']
+        $user['id'],
+        $durumSnapshot
     ]);
     $notId = (int)$db->lastInsertId();
 
-    // Ana kaydı güncelle
+    // Ana kaydı güncelle — mantıklı format
     $updates = ['gorusme_tarihi = NOW()'];
     $updateParams = [];
 
-    if ($gorusmeDurumu !== '') {
+    // Durum sadece ana değerlerden biriyse güncellenir
+    if ($anaDurum !== '' && in_array($anaDurum, ['Belirsiz', 'Alindi', 'Olumsuz'], true)) {
         $updates[] = 'durum = ?';
-        $updateParams[] = $gorusmeDurumu;
+        $updateParams[] = $anaDurum;
+    }
+
+    if ($gorusmeSonucu !== '') {
+        $updates[] = 'son_gorusme_sonucu = ?';
+        $updateParams[] = $gorusmeSonucu;
     }
 
     if ($alinmamaNedeni !== '') {
@@ -55,8 +78,11 @@ try {
         $updateParams[] = $alinmamaNedeni;
     }
 
-    // Son durumu not metninin ilk 255 karakteri olarak ayarla
-    $sonDurum = mb_substr(clean($body['not_text']), 0, 255, 'UTF-8');
+    // son_durum: "SONUÇ – NOT ÖZETİ" (liste ekranında tutarlı görünsün)
+    $notMetni = clean($body['not_text']);
+    $ozet = mb_substr($notMetni, 0, 180, 'UTF-8');
+    $sonDurum = $gorusmeSonucu !== '' ? ($gorusmeSonucu . ' — ' . $ozet) : $ozet;
+    $sonDurum = mb_substr($sonDurum, 0, 255, 'UTF-8');
     $updates[] = 'son_durum = ?';
     $updateParams[] = $sonDurum;
 
