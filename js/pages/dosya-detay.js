@@ -164,6 +164,7 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const [portalModal, setPortalModal] = useState({open:false, link:'', erisimKodu:'', tc:'', telefon:'', adSoyad:'', mevcut:false});
   const [previewEvrak, setPreviewEvrak] = useState(null);
   const [evrakTurleri, setEvrakTurleri] = useState(MR.EVRAK_T || []);
+  const [aramaEvrak, setAramaEvrak] = useState('');
 
   // MASRAF ÖDEME MODAL STATE
   const [masrafOdeModal, setMasrafOdeModal] = useState(false);
@@ -795,13 +796,30 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
       {/* EVRAKLAR TAB */}
       {tab === 'evrak' && (
         <div style={{...S.card, maxWidth:'66.67%', margin:'0 auto'}}>
-          <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',background:`${C.accent}06`}}>
+          <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',background:`${C.accent}06`,gap:10,flexWrap:'wrap'}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <LIcon name="Folder" size={14} color={C.accent}/>
               <span style={{fontSize:12,fontWeight:700}}>EVRAKLAR</span>
               <span style={{fontSize:10,color:C.textMuted}}>
                 ({dosya.evraklar?.length || 0} / {evrakTurleri.length} YÜKLÜ)
               </span>
+            </div>
+            <div style={{flex:1, display:'flex', justifyContent:'center', minWidth:200}}>
+              <div style={{position:'relative', width:'100%', maxWidth:420}}>
+                <LIcon name="Search" size={12} color={C.textMuted} style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}/>
+                <input type="text" value={aramaEvrak} onChange={e => setAramaEvrak(e.target.value)}
+                  placeholder="EVRAK TÜRÜ ARA... (ÖRN: EH, RUH, KAZA)"
+                  style={{width:'100%',padding:'6px 10px 6px 28px',fontSize:11,fontWeight:600,
+                    border:`1px solid ${C.border}`,borderRadius:8,background:C.bgInput||C.bgCard,
+                    color:C.text,outline:'none',letterSpacing:'.3px'}}/>
+                {aramaEvrak && (
+                  <button onClick={() => setAramaEvrak('')} title="TEMİZLE"
+                    style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',
+                      background:'none',border:'none',cursor:'pointer',padding:2,color:C.textMuted}}>
+                    <LIcon name="X" size={12} color={C.textMuted}/>
+                  </button>
+                )}
+              </div>
             </div>
             {dosya.evraklar?.length > 0 && (
               <button style={{...S.btn,...S.btnP,fontSize:10,padding:'5px 12px'}}
@@ -845,9 +863,28 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           </div>
           <div style={{maxHeight:600,overflowY:'auto'}}>
             {(() => {
-              const tumTurler = evrakTurleri;
+              /* ═══ BİRLEŞİM STRATEJİSİ ═══
+               * 1) tanımlamalar'dan gelen aktif evrak_turu listesi (kullanıcının ana listesi)
+               * 2) dosya.evraklar'daki listede OLMAYAN evrak_turu değerleri (orphan uploads)
+               * Hiçbir yüklü evrak kaybolmaz — liste farklı olsa bile görünür.
+               */
               const evraklar = dosya.evraklar || [];
-              // Yüklü türleri üste çıkar, yüklenme tarihine göre sırala
+              const anaListe = evrakTurleri || [];
+              const anaSet = new Set(anaListe);
+              const orphanSet = new Set();
+              evraklar.forEach(e => {
+                const t = (e.evrak_turu || '').trim();
+                if (t && !anaSet.has(t)) orphanSet.add(t);
+              });
+              const tumTurler = [...anaListe, ...Array.from(orphanSet)];
+
+              /* ═══ TR-DUYARSIZ NORMALİZE (arama için) ═══ */
+              const norm = (s) => (s || '').toLocaleUpperCase('tr-TR')
+                .replace(/İ/g,'I').replace(/Ş/g,'S').replace(/Ç/g,'C')
+                .replace(/Ö/g,'O').replace(/Ü/g,'U').replace(/Ğ/g,'G');
+              const q = norm(aramaEvrak).trim();
+
+              /* ═══ FİLTRE + SIRALAMA ═══ */
               const yukluTurler = [];
               const beklenenTurler = [];
               tumTurler.forEach(tur => {
@@ -855,7 +892,6 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 if (yuklenen.length > 0) yukluTurler.push(tur);
                 else beklenenTurler.push(tur);
               });
-              // Yüklü olanları yüklenme tarihine göre sırala (en yeni önce)
               yukluTurler.sort((a, b) => {
                 const aEvrak = evraklar.find(e => e.evrak_turu === a);
                 const bEvrak = evraklar.find(e => e.evrak_turu === b);
@@ -863,7 +899,25 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 const bDate = bEvrak?.created_at || '';
                 return bDate.localeCompare(aDate);
               });
-              const sirali = [...yukluTurler, ...beklenenTurler];
+
+              let sirali;
+              if (q === '') {
+                sirali = [...yukluTurler, ...beklenenTurler];
+              } else {
+                const baslayan = [], iceren = [];
+                [...yukluTurler, ...beklenenTurler].forEach(tur => {
+                  const n = norm(tur);
+                  if (n.startsWith(q)) baslayan.push(tur);
+                  else if (n.includes(q)) iceren.push(tur);
+                });
+                sirali = [...baslayan, ...iceren];
+              }
+
+              if (sirali.length === 0) {
+                return <div style={{padding:'30px 14px',textAlign:'center',fontSize:11,color:C.textMuted,fontWeight:600}}>
+                  ARAMAYLA EŞLEŞEN EVRAK TÜRÜ BULUNAMADI
+                </div>;
+              }
               return sirali.map((tur, idx) => {
               const yuklenen = (dosya.evraklar||[]).filter(e => e.evrak_turu === tur);
               const yukluMu = yuklenen.length > 0;
