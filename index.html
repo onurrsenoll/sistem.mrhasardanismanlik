@@ -14,10 +14,9 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -34,6 +33,7 @@ select option{background:#1e293b;color:#f1f5f9}
 ::-webkit-scrollbar-thumb:hover{background:rgba(26,86,219,.55)}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.85;transform:scale(1.05)}}
 .fade-in{animation:fadeIn .3s ease}
 
 /* ═══ MR FİNANS BLUE TEMA — HOVER EFEKTLERİ ═══ */
@@ -64,6 +64,9 @@ input:focus,select:focus,textarea:focus{border-color:#1a56db!important;box-shado
 var MR_VERSION = 'v4.' + Date.now();
 </script>
 
+<!-- JSSIP KÜTÜPHANESİ (WEBRTC/SIP) -->
+<script src="js/jssip.bundle.min.js"></script>
+
 <!-- MODÜLER YAPI: HER DOSYA BAĞIMSIZ BİR MODÜL -->
 <!-- ÇEKIRDEK -->
 <script type="text/babel" data-type="module" src="js/config.js"></script>
@@ -71,6 +74,9 @@ var MR_VERSION = 'v4.' + Date.now();
 <script type="text/babel" data-type="module" src="js/data.js"></script>
 <script type="text/babel" data-type="module" src="js/utils.js"></script>
 <script type="text/babel" data-type="module" src="js/components.js"></script>
+<!-- WEBRTC TELEFON MOTORU + WİDGET -->
+<script type="text/babel" data-type="module" src="js/webrtc-phone.js"></script>
+<script type="text/babel" data-type="module" src="js/webrtc-widget.js"></script>
 <!-- SAYFA MODÜLLER -->
 <script type="text/babel" data-type="module" src="js/pages/home.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/dosya-liste.js"></script>
@@ -79,12 +85,11 @@ var MR_VERSION = 'v4.' + Date.now();
 <script type="text/babel" data-type="module" src="js/pages/crm.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/crm-arama.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/arama-gecmis.js"></script>
-<script type="text/babel" data-type="module" src="js/pages/mail.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/gorusme-kayitlari.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/hesap-adk.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/hesap-bh.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/ortaklar.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/personel.js"></script>
-<script type="text/babel" data-type="module" src="js/pages/sozlesme.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/muhasebe.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/tanimlamalar.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/ajanda.js"></script>
@@ -92,16 +97,11 @@ var MR_VERSION = 'v4.' + Date.now();
 <script type="text/babel" data-type="module" src="js/pages/bildirim.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/sistem.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/police.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/qr-ruhsat.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/ihbar-foyu.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/saha.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/konum-takip.js"></script>
 <script type="text/babel" data-type="module" src="js/pages/ictihat.js"></script>
-<script type="text/babel" data-type="module" src="js/pages/qr-ruhsat.js"></script>
-<script type="text/babel" data-type="module" src="js/pages/evrak-okuyucu.js"></script>
-<!-- JSSIP KÜTÜPHANESİ (WEBRTC/SIP) -->
-<script src="js/jssip.bundle.min.js"></script>
-<!-- WEBRTC / NETSANTRAL -->
-<script type="text/babel" data-type="module" src="js/webrtc-phone.js"></script>
-<script type="text/babel" data-type="module" src="js/webrtc-widget.js"></script>
 <!-- ANA UYGULAMA -->
 <script type="text/babel" data-type="module" src="js/app.js"></script>
 
