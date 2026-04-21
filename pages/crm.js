@@ -1395,7 +1395,15 @@ MR._CRMYeniInner = ({setPage}) => {
           </div>
 
           {/* ÇAĞRI PANELİ - YETKİ KONTROLLÜ */}
-          {(MR._currentUser?.rol === 'admin' || MR._currentUser?.yetkiler?.netsipp_goruntule === 1) && <div style={{...S.card, marginBottom:10}}>
+          {/* ÇAĞRI PANELİ — Yetki kontrolü:
+           * Admin HER ZAMAN görür. Admin olmayan: CRM arama yetkisi
+           * (crm-ara) VEYA Netsantral görüntüleme yetkisi (netsantral-goruntule)
+           * olan kullanıcı görür. Bu panel olmadan kullanıcı başlattığı çağrıyı
+           * sonlandıramaz, bu yüzden arama yetkisi olanlar daima görmeli. */}
+          {(MR._currentUser?.rol === 'admin' ||
+            (MR.hasYetki && MR.hasYetki(MR._currentUser, 'crm', 'crm-ara')) ||
+            (MR.hasYetki && MR.hasYetki(MR._currentUser, 'netsantral', 'netsantral-goruntule'))
+          ) && <div style={{...S.card, marginBottom:10}}>
             <div style={{...S.cardHead, padding:'8px 12px'}}>
               <LIcon name="Headphones" size={13} color={C.accent}/>
               <span style={{fontSize:11, fontWeight:700}}>ANLIK ÇAĞRI & ANALİZ</span>

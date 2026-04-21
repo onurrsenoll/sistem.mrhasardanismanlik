@@ -121,7 +121,6 @@ MR.WebrtcWidget = ({user, setPage}) => {
   const [karsiTaraf, setKarsiTaraf] = useState('');
   const [karsiTarafAdi, setKarsiTarafAdi] = useState('');
   const [eslestirme, setEslestirme] = useState(null);
-  const [sessiz, setSessiz] = useState(false);
 
   /* WEBRTC DURUM DİNLEYİCİ */
   useEffect(() => {
@@ -142,24 +141,17 @@ MR.WebrtcWidget = ({user, setPage}) => {
         case 'gorusmede':
           /* Cevaplanınca popup kapansın */
           if (aramaDurumu === 'gelen') setAramaDurumu('bos');
-          setSessiz(false);
           break;
         case 'kapandi':
         case 'reddedildi':
-        case 'hata':
           setAramaDurumu('bos');
           setEslestirme(null);
           setKarsiTarafAdi('');
-          if (sessiz && MR.webrtcTelefon) {
-            MR.webrtcTelefon._sesAyarlari.ringtoneVolume = parseFloat(localStorage.getItem('mr_webrtc_ringtone_vol') || '0.5');
-          }
-          setSessiz(false);
           break;
         case 'baglanti-koptu':
         case 'durduruldu':
         case 'kayit-kaldirildi':
           setAramaDurumu('bos');
-          setSessiz(false);
           break;
       }
     };
@@ -174,12 +166,11 @@ MR.WebrtcWidget = ({user, setPage}) => {
       if (d.bilgi) {
         localStorage.setItem('webrtc_new_call_phone', d.numara || '');
         localStorage.setItem('webrtc_new_call_name', d.bilgi.ad || d.bilgi.ad_soyad || '');
-        if (d.bilgi.il) localStorage.setItem('webrtc_new_call_il', d.bilgi.il);
-        if (d.bilgi.dosya_turu) localStorage.setItem('webrtc_new_call_dosya_turu', d.bilgi.dosya_turu);
-        /* Sayfa yönlendirmesi CRM listesi tarafından yapılıyor, burada tekrar yapma */
+        setPage('crm-yeni');
       } else if (d.numara) {
         localStorage.setItem('webrtc_new_call_phone', d.numara || '');
         localStorage.setItem('webrtc_new_call_name', '');
+        setPage('crm-yeni');
       }
     };
     window.addEventListener('mr-webrtc-arama-basla', handler);
@@ -220,26 +211,7 @@ MR.WebrtcWidget = ({user, setPage}) => {
 
   /* REDDET */
   const reddet = () => {
-    if (!MR.webrtcTelefon) return;
-    /* Sessiz moddan çıkış - ringtoneVolume geri yükle */
-    if (sessiz) {
-      MR.webrtcTelefon._sesAyarlari.ringtoneVolume = parseFloat(localStorage.getItem('mr_webrtc_ringtone_vol') || '0.5');
-      setSessiz(false);
-    }
-    /* webrtc-phone.js reddet() → _zilDurdur + session.terminate(486) + _temizle + _durumBildir('reddedildi')
-       Sonrasında JsSIP 'failed' event tetikler → _durumBildir('hata') → widget 'hata' case ile kapanır */
-    MR.webrtcTelefon.reddet();
-  };
-
-  /* SESSİZE AL */
-  const sessizeAl = () => {
-    setSessiz(true);
-    /* _zilDurdur fonksiyonunu doğrudan çağır - AudioContext kapatır */
-    if (MR.webrtcTelefon) {
-      try { MR.webrtcTelefon._zilDurdur(); } catch(e) {}
-      /* ringtoneVolume'u geçici sıfırla */
-      MR.webrtcTelefon._sesAyarlari.ringtoneVolume = 0;
-    }
+    if (MR.webrtcTelefon) MR.webrtcTelefon.reddet();
   };
 
   const isK = MR.tema === 'koyu';
@@ -247,12 +219,20 @@ MR.WebrtcWidget = ({user, setPage}) => {
   /* ═══════════════════════════════════════
      SADECE GELEN ÇAĞRI POPUP'I - SAĞ ÜST KÖŞE
      Boşta veya aktif görüşmede: HİÇBİR ŞEY RENDER ETME
+     Yetki kontrolü: Admin VEYA CRM arama yetkisi (crm-ara) VEYA
+     Netsantral görüntüleme yetkisi (netsantral-goruntule) olan kullanıcı.
+     Yetki yoksa widget gösterilmez.
      ═══════════════════════════════════════ */
   if (aramaDurumu !== 'gelen') return null;
+  const _u = MR._currentUser;
+  const _yetkiGelenCagri = (_u?.rol === 'admin') ||
+    (MR.hasYetki && MR.hasYetki(_u, 'crm', 'crm-ara')) ||
+    (MR.hasYetki && MR.hasYetki(_u, 'netsantral', 'netsantral-goruntule'));
+  if (!_yetkiGelenCagri) return null;
 
   return (
     <div style={{
-      position: 'fixed', top: 56, right: 20, zIndex: 99999,
+      position: 'fixed', top: 20, right: 20, zIndex: 99999,
       width: 320,
       background: isK ? '#1e293b' : '#fff',
       border: '2px solid #10b981',
@@ -310,45 +290,26 @@ MR.WebrtcWidget = ({user, setPage}) => {
         </div>
       )}
 
-      {/* SESSİZ MOD BİLGİSİ */}
-      {sessiz && (
-        <div style={{padding: '6px 14px', background: 'rgba(245,158,11,0.1)', borderBottom: '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', gap: 6}}>
-          <LIcon name="VolumeX" size={12} color="#f59e0b"/>
-          <span style={{fontSize: 10, fontWeight: 700, color: '#f59e0b', letterSpacing: 0.5}}>SESSİZ MOD - ÇAĞRI DEVAM EDİYOR</span>
-        </div>
-      )}
-
-      {/* BUTONLAR - REDDET + SESSİZ + CEVAPLA */}
-      <div style={{padding: '10px 14px', display: 'flex', gap: 6}}>
+      {/* BUTONLAR - REDDET + CEVAPLA */}
+      <div style={{padding: '10px 14px', display: 'flex', gap: 8}}>
         <button onClick={reddet} style={{
           flex: 1, padding: '10px', borderRadius: 10, border: 'none',
           background: 'linear-gradient(180deg, #f87171, #dc2626)',
-          color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+          color: '#fff', fontSize: 12, fontWeight: 800, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           boxShadow: '0 3px 10px rgba(220,38,38,0.3)'
         }}>
-          <LIcon name="PhoneOff" size={14} color="#fff"/> REDDET
+          <LIcon name="PhoneOff" size={15} color="#fff"/> REDDET
         </button>
-        {!sessiz && (
-          <button onClick={sessizeAl} style={{
-            padding: '10px 12px', borderRadius: 10, border: 'none',
-            background: 'linear-gradient(180deg, #fbbf24, #f59e0b)',
-            color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            boxShadow: '0 3px 10px rgba(245,158,11,0.3)'
-          }}>
-            <LIcon name="VolumeX" size={14} color="#fff"/> SESSİZ
-          </button>
-        )}
         <button onClick={cevapla} style={{
           flex: 1, padding: '10px', borderRadius: 10, border: 'none',
           background: 'linear-gradient(180deg, #34d399, #059669)',
-          color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+          color: '#fff', fontSize: 12, fontWeight: 800, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           boxShadow: '0 3px 10px rgba(5,150,105,0.3)',
-          animation: sessiz ? 'none' : 'pulse 1.5s infinite'
+          animation: 'pulse 1.5s infinite'
         }}>
-          <LIcon name="Phone" size={14} color="#fff"/> CEVAPLA
+          <LIcon name="Phone" size={15} color="#fff"/> CEVAPLA
         </button>
       </div>
     </div>
@@ -475,165 +436,6 @@ MR._SesAyarlariPaneli = () => {
           )}
         </div>
       )}
-    </div>
-  );
-};
-
-/* ═══ KULLANICI DAHİLİ ATAMA PANELİ (SADECE ADMİN) ═══ */
-MR.AdminDahiliAtamaPanel = () => {
-  const [kullanicilar, setKullanicilar] = useState([]);
-  const [atamalar, setAtamalar] = useState({});
-  const [kaydedilen, setKaydedilen] = useState({});
-  const [yukleniyor, setYukleniyor] = useState(true);
-
-  const DAHILILER = [
-    { no: '101', ad: 'ARAC DEGER KAYBI',  sip: 'zK3r7pmRfs' },
-    { no: '102', ad: 'CRM OFIS 102',      sip: 'mayaarHeK4' },
-    { no: '103', ad: 'OPERASYON',          sip: 't4fN73Pem3' },
-    { no: '104', ad: 'BEDENI HASAR',       sip: '9mkE62vnyK' },
-    { no: '105', ad: '105',                sip: 'ZS65mdEYMc' },
-  ];
-  const SANTRAL_NO = '3625026502';
-
-  useEffect(() => {
-    MR.api.kullaniciList().then(res => {
-      if (res.success) {
-        const liste = (res.data?.items || res.data || []).filter(u => u.rol !== 'admin');
-        setKullanicilar(liste);
-        const mevcutAtamalar = {};
-        liste.forEach(u => {
-          mevcutAtamalar[u.id] = {
-            dahili: u.netsantral_dahili || '',
-            sipSifre: u.netsantral_sip_sifre || '',
-            apiSifre: u.netsantral_api_sifre || '',
-          };
-        });
-        setAtamalar(mevcutAtamalar);
-      }
-    }).finally(() => setYukleniyor(false));
-  }, []);
-
-  const handleDahiliChange = (userId, dahiliNo) => {
-    const secilen = DAHILILER.find(d => d.no === dahiliNo);
-    setAtamalar(prev => ({
-      ...prev,
-      [userId]: { ...prev[userId], dahili: dahiliNo, sipSifre: secilen ? secilen.sip : '' }
-    }));
-    setKaydedilen(prev => ({ ...prev, [userId]: false }));
-  };
-
-  const handleApiSifreChange = (userId, val) => {
-    setAtamalar(prev => ({ ...prev, [userId]: { ...prev[userId], apiSifre: val } }));
-    setKaydedilen(prev => ({ ...prev, [userId]: false }));
-  };
-
-  const handleKaydet = (userId) => {
-    const atama = atamalar[userId] || {};
-    const secilen = DAHILILER.find(d => d.no === atama.dahili);
-    if (!secilen) { MR.toast && MR.toast('Lutfen bir dahili secin', 'warning'); return; }
-    MR.api.kullaniciUpdate({
-      id: userId,
-      netsantral_dahili: atama.dahili,
-      netsantral_sip_sifre: secilen.sip,
-      netsantral_api_sifre: atama.apiSifre || '',
-    }).then(res => {
-      if (res.success) {
-        MR.toast && MR.toast('Dahili atandi: ' + atama.dahili, 'success');
-        setKaydedilen(prev => ({ ...prev, [userId]: true }));
-        setKullanicilar(prev => prev.map(u => u.id === userId ? { ...u, netsantral_dahili: atama.dahili } : u));
-      } else {
-        MR.toast && MR.toast(res.error || 'Kayit basarisiz', 'error');
-      }
-    });
-  };
-
-  const handleKaldir = (userId) => {
-    MR.api.kullaniciUpdate({
-      id: userId, netsantral_dahili: '', netsantral_sip_sifre: '', netsantral_api_sifre: '',
-    }).then(res => {
-      if (res.success) {
-        MR.toast && MR.toast('Dahili atamasi kaldirildi', 'success');
-        setAtamalar(prev => ({ ...prev, [userId]: { dahili: '', sipSifre: '', apiSifre: '' } }));
-        setKaydedilen(prev => ({ ...prev, [userId]: false }));
-        setKullanicilar(prev => prev.map(u => u.id === userId ? { ...u, netsantral_dahili: null } : u));
-      } else {
-        MR.toast && MR.toast(res.error || 'Islem basarisiz', 'error');
-      }
-    });
-  };
-
-  if (yukleniyor) return (
-    <div style={{ ...MR.S.card, marginTop: 24, padding: 32, textAlign: 'center', color: MR.C.textMuted }}>
-      Kullanicilar yukleniyor...
-    </div>
-  );
-
-  return (
-    <div style={{ ...MR.S.card, marginTop: 24 }}>
-      <div style={{ ...MR.S.cardHead, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <MR.LIcon name="Users" size={18} color={MR.C.accent}/>
-        <span style={{ fontWeight: 700, fontSize: 13, color: MR.C.accent, letterSpacing: 1 }}>
-          KULLANICI DAHILI ATAMA
-        </span>
-      </div>
-      <div style={{ ...MR.S.cardBody }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid ' + MR.C.border }}>
-                {['KULLANICI', 'ROL', 'DAHILI', 'NETGSM API SIFRESI (OPSIYONEL)', 'DURUM', 'ISLEM'].map(h => (
-                  <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: MR.C.textMuted, fontWeight: 600, fontSize: 11 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {kullanicilar.map(u => {
-                const atama = atamalar[u.id] || {};
-                const kayitli = kaydedilen[u.id];
-                const atanmis = !!u.netsantral_dahili;
-                return (
-                  <tr key={u.id} style={{ borderBottom: '1px solid ' + MR.C.border }}>
-                    <td style={{ padding: '10px 12px' }}>
-                      <div style={{ fontWeight: 600, color: MR.C.text }}>{(u.ad_soyad||'').toUpperCase()}</div>
-                      <div style={{ fontSize: 11, color: MR.C.textMuted }}>{u.email}</div>
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <span style={{ padding:'2px 8px', borderRadius:6, fontSize:11, fontWeight:600, background: MR.C.accent+'18', color: MR.C.accent }}>{(u.rol||'').toUpperCase()}</span>
-                    </td>
-                    <td style={{ padding: '10px 12px', minWidth: 160 }}>
-                      <select value={atama.dahili || ''} onChange={e => handleDahiliChange(u.id, e.target.value)} style={{ ...MR.S.select, fontSize: 13, padding: '6px 10px' }}>
-                        <option value="">-- Seciniz --</option>
-                        {DAHILILER.map(d => (
-                          <option key={d.no} value={d.no}>{d.no} - {d.ad}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td style={{ padding: '10px 12px', minWidth: 200 }}>
-                      <input type="password" value={atama.apiSifre || ''} onChange={e => handleApiSifreChange(u.id, e.target.value)} placeholder="NETGSM API SIFRESI" style={{ ...MR.S.input, fontSize: 13, padding: '6px 10px' }}/>
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>
-                      {atanmis
-                        ? <span style={{ color: MR.C.success, fontSize: 12, fontWeight: 600 }}>DAHILI {u.netsantral_dahili}</span>
-                        : <span style={{ color: MR.C.textMuted, fontSize: 12 }}>ATANMADI</span>
-                      }
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={() => handleKaydet(u.id)} style={{ ...MR.S.btn, ...MR.S.btnP, fontSize:10, padding:'5px 12px' }}>
-                          {kayitli ? 'KAYDEDILDI' : 'KAYDET'}
-                        </button>
-                        {atanmis && (
-                          <button onClick={() => handleKaldir(u.id)} style={{ ...MR.S.btn, ...MR.S.btnD, fontSize:10, padding:'5px 12px' }}>KALDIR</button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
   );
 };
@@ -915,9 +717,6 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
           {MR._webrtcConfig ? 'SON YAPILANDIRMA: DAHİLİ ' + (MR._webrtcConfig.dahili || '-') : 'HENÜZ YAPILANDIRILMAMIŞ'}
         </div>
       </div>
-
-      {/* ═══ KULLANICI DAHİLİ ATAMA (SADECE ADMİN) ═══ */}
-      {user && user.rol === 'admin' && <MR.AdminDahiliAtamaPanel />}
 
       {/* ═══ BİLGİ PANELİ ═══ */}
       <div style={{
