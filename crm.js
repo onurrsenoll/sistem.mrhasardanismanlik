@@ -257,9 +257,7 @@ const _SesAyarlariPaneli_DEVRE_DISI = () => {
    ═══════════════════════════════════════════ */
 MR.CrmPage = ({setPage, user, view, crmId}) => {
   if (view === 'yeni') return <MR._CRMYeniInner setPage={setPage}/>;
-  /* BÜTÜNLEŞİK KİŞİ KARTI: detay view'i de aynı (yeni) sayfayı mevcut kayıt
-   * yüklü olarak açar — böylece tek ekranda 360° bilgi görünür. */
-  if (view === 'detay' && crmId) return <MR._CRMYeniInner setPage={setPage} crmId={crmId}/>;
+  if (view === 'detay' && crmId) return <MR._CRMDetayInner setPage={setPage} crmId={crmId}/>;
   return <MR._CRMListesiInner setPage={setPage} user={user}/>;
 };
 
@@ -1859,7 +1857,7 @@ MR._CRMYeniInner = ({setPage, crmId: crmIdProp}) => {
                   HENÜZ GÖRÜŞME VEYA NOT YOK
                 </div>
               ) : (
-                <>
+                <div>
                   {/* Arama logları */}
                   {unifiedData.arama_loglari.slice(0,5).map(al => (
                     <div key={'al'+al.id} style={{padding:'6px 8px', marginBottom:4, background:`${C.cyan}0A`, border:`1px solid ${C.cyan}22`, borderRadius:6, fontSize:10}}>
@@ -1901,7 +1899,7 @@ MR._CRMYeniInner = ({setPage, crmId: crmIdProp}) => {
                       </div>
                     );
                   })}
-                </>
+                </div>
               )}
             </div>
             {/* NOT EKLE (sadece mevcut kayıt ise) */}
