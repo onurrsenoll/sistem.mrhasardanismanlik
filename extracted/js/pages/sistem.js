@@ -117,7 +117,12 @@ const MODUL_YETKILERI = [
     {key: 'police-yenileme', label: 'YENİLEME TAKİBİ'},
     {key: 'police-tahsilat', label: 'TAHSİLAT / CARİ'},
     {key: 'police-rapor', label: 'RAPORLAR'},
-    {key: 'police-kazanc', label: 'KAZANÇ'}
+    {key: 'police-kazanc', label: 'KAZANÇ'},
+    {key: 'police-qr-ruhsat', label: 'QR RUHSAT OKUYUCU'},
+    {key: 'police-ihbar-foyu', label: 'İHBAR FÖYÜ / HASAR DOSYASI'},
+    {key: 'police-ihbar-foyu-ocr', label: 'İHBAR FÖYÜ RUHSAT OCR'},
+    {key: 'police-ihbar-foyu-excel', label: 'İHBAR FÖYÜ EXCEL ÇIKTI'},
+    {key: 'police-ihbar-foyu-yazdir', label: 'İHBAR FÖYÜ YAZDIRMA'}
   ]},
   {modul: 'muhasebe', label: 'MUHASEBE', icon: 'Landmark', islemler: [
     {key: 'muhasebe-gelir', label: 'GELİR YÖNETİMİ'},

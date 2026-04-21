@@ -15,7 +15,6 @@ const MENU = [
     {id:'crm-liste', label:'CRM LİSTESİ', icon:'List'},
     {id:'crm-yeni', label:'YENİ KAYIT', icon:'UserPlus'},
     {id:'crm-arama', label:'ARAMA LİSTESİ', icon:'PhoneCall'},
-    {id:'crm-analiz', label:'CRM ANALİZ', icon:'BarChart3'},
     {id:'saha-liste', label:'SAHA DOSYALARI', icon:'MapPin'},
     {id:'saha-yeni', label:'YENİ SAHA KAYDI', icon:'PlusCircle'}
   ]},
@@ -35,7 +34,9 @@ const MENU = [
     {id:'police-yenileme', label:'YENİLEME TAKİBİ', icon:'RefreshCw'},
     {id:'police-tahsilat', label:'TAHSİLAT / CARİ', icon:'Wallet'},
     {id:'police-rapor', label:'RAPORLAR', icon:'BarChart3'},
-    {id:'police-kazanc', label:'KAZANÇ', icon:'TrendingUp'}
+    {id:'police-kazanc', label:'KAZANÇ', icon:'TrendingUp'},
+    {id:'police-qr-ruhsat', label:'QR RUHSAT OKUYUCU', icon:'QrCode'},
+    {id:'police-ihbar-foyu', label:'İHBAR FÖYÜ / HASAR DOSYASI', icon:'ClipboardList'}
   ]},
   {id:'muhasebe', label:'MUHASEBE', icon:'Landmark', sub:[
     {id:'muhasebe-gelir', label:'GELİR YÖNETİMİ', icon:'TrendingUp'},
@@ -71,7 +72,9 @@ const MENU = [
     {id:'tanimlamalar-finansal', label:'FİNANSAL TANIMLAMALAR', icon:'Wallet'},
     {id:'tanimlamalar-sablon', label:'MATBU EVRAK / SÖZLEŞME', icon:'FileSignature'},
     {id:'tanimlamalar-genel', label:'GENEL TANIMLAMALAR', icon:'Settings'},
-    {id:'sistem-konum', label:'KONUM TAKİBİ', icon:'MapPin'}
+    {id:'sistem-konum', label:'KONUM TAKİBİ', icon:'MapPin'},
+    {id:'sistem-netsantral', label:'NETSANTRAL AYARLARI', icon:'Phone'},
+    {id:'crm-analiz', label:'CRM ANALİZ', icon:'BarChart3'}
   ]}
 ];
 
@@ -434,10 +437,15 @@ const Breadcrumb = ({page, setPage}) => {
       'sistem-ayarlar': 'FİRMA AYARLARI', 'sistem-sms': 'SMS BİLDİRİM',
       'sistem-portal': 'PORTAL AYARLARI',
       'sistem-guvenlik': 'CİHAZ GÜVENLİĞİ', 'sistem-log': 'LOG KAYITLARI', 'sistem-aktarim': 'TOPLU AKTARIM', 'sistem-veri': 'VERİ YÖNETİMİ',
-      'sistem-konum': 'KONUM TAKİBİ'
+      'sistem-konum': 'KONUM TAKİBİ',
+      'sistem-netsantral': 'NETSANTRAL AYARLARI'
     };
     parts.push({label: 'SİSTEM', id: 'sistem'});
     parts.push({label: sistemLabels[page] || page.replace('sistem-','').toUpperCase(), id: page});
+  }
+  if (page === 'crm-analiz' && parts.length <= 1) {
+    parts.push({label: 'SİSTEM', id: 'sistem'});
+    parts.push({label: 'CRM ANALİZ', id: 'crm-analiz'});
   }
   if (page.startsWith('tanimlamalar-') && parts.length <= 1) {
     const tanimLabels = {
@@ -781,6 +789,12 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     return <MR.PersonelPage setPage={setPage} user={user} subPage={sub === 'personel' ? 'liste' : sub}/>;
   }
 
+  /* QR RUHSAT OKUYUCU */
+  if (page === 'police-qr-ruhsat') return <MR.QrRuhsatPage setPage={setPage} user={user}/>;
+
+  /* İHBAR FÖYÜ / HASAR DOSYASI */
+  if (page === 'police-ihbar-foyu') return <MR.IhbarFoyuPage setPage={setPage} user={user}/>;
+
   /* POLİÇE */
   if (page.startsWith('police')) {
     const sub = page.replace('police-', '') || 'liste';
@@ -814,6 +828,11 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   /* MESAJLAR (sistem bildirimleri artık sistem menüsünde) */
   if (page === 'mesajlar-sistem') {
     return <MR.MesajlarPage setPage={setPage} user={user} subPage="sistem"/>;
+  }
+
+  /* NETSANTRAL AYARLARI */
+  if (page === 'sistem-netsantral') {
+    return <MR.NetsantralAyarlariPage setPage={setPage} user={user}/>;
   }
 
   /* KONUM TAKİBİ (ADMIN ONLY) */

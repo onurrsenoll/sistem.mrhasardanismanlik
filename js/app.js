@@ -12,21 +12,21 @@ const MENU = [
     {id:'dosya-yeni', label:'YENİ DOSYA', icon:'Plus'}
   ]},
   {id:'crm', label:'CRM / SAHA', icon:'Users', sub:[
-    {id:'crm-arama', label:'CRM LİSTESİ', icon:'List'},
+    {id:'crm-liste', label:'CRM LİSTESİ', icon:'List'},
+    {id:'crm-yeni', label:'YENİ KAYIT', icon:'UserPlus'},
+    {id:'crm-arama', label:'ARAMA LİSTESİ', icon:'PhoneCall'},
     {id:'saha-liste', label:'SAHA DOSYALARI', icon:'MapPin'},
     {id:'saha-yeni', label:'YENİ SAHA KAYDI', icon:'PlusCircle'}
   ]},
   {id:'eposta', label:'E-POSTA', icon:'Mail'},
   {id:'hesap', label:'HESAPLAMALAR', icon:'Calculator', sub:[
     {id:'hesap-adk', label:'ARAÇ DEĞER KAYBI', icon:'Car'},
-    {id:'hesap-bh', label:'BEDENİ HASAR', icon:'Heart'},
-    {id:'hesap-evrak-okuyucu', label:'EVRAK OKUYUCU', icon:'FileSearch'}
+    {id:'hesap-bh', label:'BEDENİ HASAR', icon:'Heart'}
   ]},
   {id:'paydaslar', label:'PAYDAŞLAR', icon:'Handshake', sub:[
     {id:'ortaklar-ortaklar', label:'İŞ ORTAKLARI', icon:'Briefcase'},
     {id:'ortaklar-paydaslar', label:'İŞ PAYDAŞLARI', icon:'Network'},
-    {id:'personel-liste', label:'PERSONEL', icon:'Users'},
-    {id:'sozlesme', label:'SÖZLEŞMELER', icon:'FileText'}
+    {id:'personel-liste', label:'PERSONEL', icon:'Users'}
   ]},
   {id:'police', label:'POLİÇE', icon:'FileCheck', sub:[
     {id:'police-liste', label:'POLİÇE LİSTESİ', icon:'List'},
@@ -35,17 +35,19 @@ const MENU = [
     {id:'police-tahsilat', label:'TAHSİLAT / CARİ', icon:'Wallet'},
     {id:'police-rapor', label:'RAPORLAR', icon:'BarChart3'},
     {id:'police-kazanc', label:'KAZANÇ', icon:'TrendingUp'},
-    {id:'police-qr-ruhsat', label:'QR RUHSAT OKUYUCU', icon:'QrCode'}
+    {id:'police-qr-ruhsat', label:'QR RUHSAT OKUYUCU', icon:'QrCode'},
+    {id:'police-ihbar-foyu', label:'İHBAR FÖYÜ / HASAR DOSYASI', icon:'ClipboardList'}
   ]},
   {id:'muhasebe', label:'MUHASEBE', icon:'Landmark', sub:[
-    {id:'muhasebe-gelir', label:'GELİR / GİDER', icon:'TrendingUp'},
-    {id:'muhasebe-kasa', label:'KASALAR', icon:'Wallet'},
+    {id:'muhasebe-gelir', label:'GELİR YÖNETİMİ', icon:'TrendingUp'},
+    {id:'muhasebe-gider', label:'GİDER YÖNETİMİ', icon:'TrendingDown'},
+    {id:'muhasebe-komisyon', label:'KOMİSYON / PRİM', icon:'Percent'},
+    {id:'muhasebe-kasa', label:'KASA / BANKA', icon:'Wallet'},
     {id:'muhasebe-ortakkasa', label:'ORTAK KASA', icon:'Users'},
-    {id:'muhasebe-komisyon', label:'KOMİSYON TAKİBİ', icon:'Percent'},
+    {id:'muhasebe-maliyet', label:'MALİYET ANALİZİ', icon:'PieChart'},
     {id:'muhasebe-rapor', label:'FİNANSAL RAPORLAR', icon:'BarChart3'},
     {id:'muhasebe-kapanis', label:'KAPANIŞ RAPORU', icon:'FileCheck'},
-    {id:'muhasebe-aysonu', label:'AY SONU RAPORU', icon:'CalendarCheck'},
-    {id:'muhasebe-maliyet', label:'MALİYET ANALİZİ', icon:'PieChart'}
+    {id:'muhasebe-aysonu', label:'AY SONU RAPORU', icon:'CalendarCheck'}
   ]},
   {id:'ictihat', label:'İÇTİHAT', icon:'Scale', sub:[
     {id:'ictihat-yargitay', label:'YARGITAY KARARLARI', icon:'Scale'},
@@ -106,32 +108,13 @@ function menuErisim(user) {
     if (!modul) return null;
 
     if (m.sub) {
-      const filteredSub = m.sub.filter(s => {
-        /* Doğrudan yetki: modul_altMenuId */
-        if (yetkiler[modul + '_' + s.id] === 1) return true;
-        /* Alt yetki tarama: modul_ ile başlayan herhangi bir yetki bu alt menüyle ilişkili mi */
-        var altMenuPrefix = s.id.replace(modul + '-', '');
-        for (var key in yetkiler) {
-          if (yetkiler[key] !== 1) continue;
-          if (!key.startsWith(modul + '_')) continue;
-          var islemKismi = key.replace(modul + '_', '');
-          /* muhasebe-rapor alt menüsü için: muhasebe-kapanis, muhasebe-aysonu, muhasebe-maliyet ilişkili */
-          if (s.id === 'muhasebe-rapor' && (islemKismi === 'muhasebe-kapanis' || islemKismi === 'muhasebe-aysonu' || islemKismi === 'muhasebe-maliyet' || islemKismi === 'muhasebe-rapor')) return true;
-          /* muhasebe-kasa alt menüsü için: muhasebe-ortakkasa ilişkili */
-          if (s.id === 'muhasebe-kasa' && (islemKismi === 'muhasebe-kasa' || islemKismi === 'muhasebe-ortakkasa' || islemKismi === 'muhasebe-transfer')) return true;
-          /* muhasebe-gelir alt menüsü için: muhasebe-gelir veya muhasebe-gider ilişkili */
-          if (s.id === 'muhasebe-gelir' && (islemKismi === 'muhasebe-gelir' || islemKismi === 'muhasebe-gider' || islemKismi === 'muhasebe-gelir-ekle' || islemKismi === 'muhasebe-gider-ekle')) return true;
-          /* muhasebe-komisyon */
-          if (s.id === 'muhasebe-komisyon' && islemKismi === 'muhasebe-komisyon') return true;
-          /* Genel eşleşme: alt menü ID'si ile islem aynıysa */
-          if (islemKismi === s.id) return true;
-        }
-        return false;
-      });
+      /* ALT MODÜL BAZLI: SADECE izin === 1 OLANLARI GÖSTER */
+      const filteredSub = m.sub.filter(s => { const v = yetkiler[modul + '_' + s.id]; return v === 1; });
       if (filteredSub.length === 0) return null;
       return {...m, sub: filteredSub};
     }
 
+    /* SUB YOK (AJANDA GİBİ): GENEL GÖRÜNTÜLE İZNİ */
     return yetkiler[modul + '_goruntule'] === 1 ? m : null;
   }).filter(Boolean);
 }
@@ -425,21 +408,21 @@ const Breadcrumb = ({page, setPage}) => {
     }
     if (page === 'crm-arama') {
       if (m.id === 'crm') {
-        parts.push({label: 'CRM', id: 'crm-arama'});
+        parts.push({label: 'CRM', id: 'crm-liste'});
         parts.push({label: 'ARAMA LİSTESİ', id: page});
         break;
       }
     }
     if (page.startsWith('crm-detay-')) {
       if (m.id === 'crm') {
-        parts.push({label: 'CRM / SAHA', id: 'crm-arama'});
+        parts.push({label: 'CRM / SAHA', id: 'crm-liste'});
         parts.push({label: 'CRM DETAY', id: page});
         break;
       }
     }
     if (page.startsWith('saha-')) {
       if (m.id === 'crm') {
-        parts.push({label: 'CRM / SAHA', id: 'crm-arama'});
+        parts.push({label: 'CRM / SAHA', id: 'crm-liste'});
         const sahaLabels = {'saha-liste':'SAHA DOSYALARI','saha-yeni':'YENİ SAHA KAYDI','saha-beklemede':'ONAY İÇİN BEKLEYEN','saha-onaylanan':'ONAYLANAN','saha-dosyaya_donusen':'DOSYAYA DÖNÜŞEN'};
         parts.push({label: sahaLabels[page] || 'SAHA DOSYALARI', id: page});
         break;
@@ -778,7 +761,7 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   if (dosyaIdMatch) return <MR.DosyaDetayPage setPage={setPage} user={user} dosyaId={parseInt(dosyaIdMatch[1])}/>;
 
   /* CRM */
-  if (page === 'crm-liste') return <MR.CrmAramaPage setPage={setPage} user={user}/>;
+  if (page === 'crm-liste') return <MR.CrmPage setPage={setPage} user={user} view="liste"/>;
   if (page === 'crm-yeni') return <MR.CrmPage setPage={setPage} user={user} view="yeni"/>;
   if (page === 'crm-arama') return <MR.CrmAramaPage setPage={setPage} user={user}/>;
   if (page === 'crm-analiz') return <MR.AramaGecmisPage setPage={setPage} user={user}/>;
@@ -806,12 +789,11 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     return <MR.PersonelPage setPage={setPage} user={user} subPage={sub === 'personel' ? 'liste' : sub}/>;
   }
 
-  /* SÖZLEŞMELER */
-  if (page === 'sozlesme') return MR.SozlesmePage ? <MR.SozlesmePage setPage={setPage} user={user}/> : null;
-
   /* QR RUHSAT OKUYUCU */
   if (page === 'police-qr-ruhsat') return <MR.QrRuhsatPage setPage={setPage} user={user}/>;
-  if (page === 'hesap-evrak-okuyucu') return <MR.EvrakOkuyucuPage setPage={setPage} user={user}/>;
+
+  /* İHBAR FÖYÜ / HASAR DOSYASI */
+  if (page === 'police-ihbar-foyu') return <MR.IhbarFoyuPage setPage={setPage} user={user}/>;
 
   /* POLİÇE */
   if (page.startsWith('police')) {
@@ -959,13 +941,9 @@ const App = () => {
     return () => window.removeEventListener('mr-sidebar-logo-degisti', handler);
   }, []);
 
-  /* KULLANICI DEĞİŞTİĞİNDE GLOBAL REFERANSI GÜNCELLE + NETSANTRAL OTO BAĞLAN */
+  /* KULLANICI DEĞİŞTİĞİNDE GLOBAL REFERANSI GÜNCELLE (YETKİ KONTROLÜ İÇİN) */
   useEffect(() => {
     MR._currentUser = user;
-    /* Kullanıcı giriş yaptığında Netsantral otomatik başlat */
-    if (user && MR.webrtcOtoBaslat) {
-      setTimeout(() => MR.webrtcOtoBaslat(user), 1500);
-    }
   }, [user]);
 
   /* ═══ ARAMA LOG — WEBRTC ÇAĞRI BİTTİĞİNDE OTOMATİK KAYIT ═══ */
@@ -1307,33 +1285,9 @@ const App = () => {
   /* LOGIN SONRASI ME.PHP'DEN YETKİLERİ ÇEK */
   const handleLogin = async (u) => {
     setUser(u);
-    /* NETSANTRAL DAHİLİ OTOMATİK DOLDUR */
-    if (u && u.netsantral_dahili) {
-      var no = u.netsantral_dahili;
-      localStorage.setItem('mr_netsantral_wss', 'wss://sip6.netsantral.com:8089/ws');
-      localStorage.setItem('mr_netsantral_domain', 'sip6.netsantral.com');
-      localStorage.setItem('mr_netsantral_dahili', no);
-      localStorage.setItem('mr_netsantral_sip_sifre', u.netsantral_sip_sifre || '');
-      localStorage.setItem('mr_netsantral_no', '3625026502');
-      localStorage.setItem('mr_netsantral_kullanici', no + '-3625026502');
-      localStorage.setItem('mr_netsantral_api_sifre', u.netsantral_api_sifre || '');
-      localStorage.setItem('mr_netsantral_sip_port', '5060');
-      localStorage.setItem('mr_netsantral_kayit_suresi', '300');
-      localStorage.setItem('mr_netsantral_outbound_proxy', '');
-    }
     try {
       const r = await api.me();
-      if (r?.success) {
-        var ud = r.data?.user || r.data;
-        setUser(ud);
-        /* ME endpoint'inden de dahili bilgisi gelirse guncelle */
-        if (ud && ud.netsantral_dahili && !localStorage.getItem('mr_netsantral_dahili')) {
-          localStorage.setItem('mr_netsantral_dahili', ud.netsantral_dahili);
-          localStorage.setItem('mr_netsantral_sip_sifre', ud.netsantral_sip_sifre || '');
-          localStorage.setItem('mr_netsantral_api_sifre', ud.netsantral_api_sifre || '');
-          localStorage.setItem('mr_netsantral_kullanici', ud.netsantral_dahili + '-3625026502');
-        }
-      }
+      if (r?.success) { setUser(r.data?.user || r.data); }
     } catch(e) {}
   };
 
@@ -1381,9 +1335,6 @@ const App = () => {
         <Breadcrumb page={page} setPage={setPage}/>
         <PageRouter page={page} setPage={setPage} user={user} setUser={setUser}/>
       </div>
-
-      {/* GELEN ÇAĞRI WIDGET'I */}
-      {MR.WebrtcWidget && <MR.WebrtcWidget user={user} setPage={setPage}/>}
 
       {/* MOTİVASYON SÖZÜ + SLOGAN - ALT KISIMDA SABİT */}
       <div style={{
