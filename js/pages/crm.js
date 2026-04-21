@@ -1076,140 +1076,24 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
 /* ═══════════════════════════════════════════
    CRM YENİ KAYIT - ZENGİNLEŞTİRİLMİŞ EKRAN
    ═══════════════════════════════════════════ */
-MR._CRMYeniInner = ({setPage, crmId: crmIdProp}) => {
+MR._CRMYeniInner = ({setPage}) => {
   const {C, S, LIcon, FormGroup, Badge, api, ILLER, Confirm} = MR;
-  const hy = (k) => MR.hasYetki ? MR.hasYetki('crm', k) : true;
-  const isKoyu = MR.tema === 'koyu';
 
   /* ── FORM STATE ── */
   const [f, sF] = useState({
     ad_soyad: '', tc_vergi_no: '', telefon: '', telefon2: '',
     il: '', ilce: '', adres: '',
     olay_aciklama: '',
-    plaka: '', marka: '', model_adi: '', arac_yili: '', arac_km: '',
     dosya_turu: 'ADK', kaza_tarihi: '', kaza_turu: 'TEK_TARAFLI', pozisyon: 'SURUCU',
-    durum: 'Yeni', not_text: '', taslak: 0,
-    sonraki_arama: '', son_gorusme_sonucu: '', etiketler: ''
+    durum: 'Yeni', not_text: '', taslak: 0
   });
   const [loading, setLoading] = useState(false);
   const [hangupLoading, setHangupLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [savedId, setSavedId] = useState(crmIdProp || null);
+  const [savedId, setSavedId] = useState(null);
   const [donusturConfirm, setDonusturConfirm] = useState(false);
-
-  /* ── DİRTY GUARD: Kullanıcı kaydetmeden çıkmaya çalışırsa uyar ── */
-  const [isDirty, setIsDirty] = useState(false);
-  const [navConfirm, setNavConfirm] = useState(null); // {target: page-id}
-  const safeNavigate = (targetPage) => {
-    if (isDirty) setNavConfirm({target: targetPage});
-    else setPage(targetPage);
-  };
-
-  const up = (k, v) => { sF(p => ({...p, [k]: v})); setError(''); setSuccess(''); setIsDirty(true); };
-
-  /* ── 360° BÜTÜNLEŞİK VERİ (notlar timeline + arama_loglari + ekler + yonlendirmeler) ── */
-  const [unifiedData, setUnifiedData] = useState({notlar: [], arama_loglari: [], ekler: [], yonlendirmeler: [], ozet: {}});
-  const [activeTimelineId, setActiveTimelineId] = useState(null); // hibrit kart genişletme
-
-  const loadUnified = async (params) => {
-    try {
-      const r = await api.crmUnified(params);
-      if (r?.success && r.data) {
-        setUnifiedData({
-          notlar: r.data.notlar || [],
-          arama_loglari: r.data.arama_loglari || [],
-          ekler: r.data.ekler || [],
-          yonlendirmeler: r.data.yonlendirmeler || [],
-          ozet: r.data.ozet || {}
-        });
-        if (r.data.crm) {
-          // Mevcut CRM verisini forma yükle (ekran direkt detay'a girmişse)
-          const c = r.data.crm;
-          sF(p => ({...p,
-            ad_soyad: c.ad_soyad || p.ad_soyad,
-            tc_vergi_no: c.tc_vergi_no || p.tc_vergi_no,
-            telefon: c.telefon || p.telefon,
-            telefon2: c.telefon2 || p.telefon2,
-            il: c.il || p.il, ilce: c.ilce || p.ilce, adres: c.adres || p.adres,
-            plaka: c.plaka || p.plaka, marka: c.marka || p.marka, model_adi: c.model_adi || p.model_adi,
-            arac_yili: c.arac_yili || p.arac_yili, arac_km: c.arac_km || p.arac_km,
-            olay_aciklama: c.olay_aciklama || p.olay_aciklama,
-            dosya_turu: c.dosya_turu || p.dosya_turu,
-            kaza_turu: c.kaza_turu || p.kaza_turu,
-            kaza_tarihi: c.kaza_tarihi || p.kaza_tarihi,
-            pozisyon: c.pozisyon || p.pozisyon,
-            durum: c.durum || p.durum,
-            sonraki_arama: c.sonraki_arama || p.sonraki_arama,
-            son_gorusme_sonucu: c.son_gorusme_sonucu || p.son_gorusme_sonucu,
-            etiketler: c.etiketler || p.etiketler
-          }));
-          setSavedId(c.id);
-          setIsDirty(false);
-        }
-      }
-    } catch (e) {}
-  };
-  // Mevcut CRM ID prop'u varsa direkt yükle
-  useEffect(() => {
-    if (crmIdProp) loadUnified({crm_id: crmIdProp});
-  }, [crmIdProp]);
-
-  /* Telefon yazılınca debounced lookup → mevcut kayıt varsa toast göster */
-  const [varolanKayitWarn, setVarolanKayitWarn] = useState(null);
-  useEffect(() => {
-    if (savedId || !f.telefon || f.telefon.length < 10) { setVarolanKayitWarn(null); return; }
-    const t = setTimeout(async () => {
-      try {
-        const r = await api.crmUnified({telefon: f.telefon});
-        if (r?.success && r.data?.crm) {
-          setVarolanKayitWarn({id: r.data.crm.id, ad: r.data.crm.ad_soyad, gorusme: (r.data.ozet?.gorusme_sayisi || 0)});
-        } else setVarolanKayitWarn(null);
-      } catch(e) {}
-    }, 600);
-    return () => clearTimeout(t);
-  }, [f.telefon, savedId]);
-
-  /* ── NOT EKLEME (sağ panelden) ── */
-  const [notInput, setNotInput] = useState('');
-  const [notSonuc, setNotSonuc] = useState('');
-  const [notLoading, setNotLoading] = useState(false);
-  const GORUSME_SONUCLARI = [
-    'OLUMLU – TEKRAR ARANACAK','OLUMLU – BELGE / BİLGİ BEKLENİYOR','OLUMLU – ZİYARET OLUŞTURULDU',
-    'OLUMLU – SAHAYA AKTARILDI, TAKİP EDİLİYOR','MALULİYET VAR – TAKİP EDİLECEK',
-    'RED – ARANMAK İSTEMİYOR','RED – MALULİYET YOK','OLUMSUZ – KUSURLU TARAF','ULAŞILAMADI'
-  ];
-  const sonucRenk = s => s?.startsWith('OLUMLU') || s?.startsWith('MALULİYET') ? C.success : (s?.startsWith('RED') || s?.startsWith('OLUMSUZ') ? C.danger : C.warning);
-
-  const notEkle = async () => {
-    if (!savedId) { setError('NOT EKLEMEK İÇİN ÖNCE KAYDET BUTONUNA BASIN'); return; }
-    if (!notInput.trim()) return;
-    setNotLoading(true);
-    try {
-      await api.crmNotEkle({crm_id: savedId, not_text: notInput.trim(), gorusme_sonucu: notSonuc || null});
-      setNotInput(''); setNotSonuc('');
-      await loadUnified({crm_id: savedId});
-    } catch(e) {}
-    setNotLoading(false);
-  };
-
-  /* ── SAYFA KAPAT/YENİLE GUARD ── */
-  useEffect(() => {
-    const handler = (e) => {
-      if (isDirty) { e.preventDefault(); e.returnValue = ''; return ''; }
-    };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [isDirty]);
-
-  /* ── TAKİP TARİHİ HIZLI BUTONLARI ── */
-  const setTakip = (gun) => {
-    const d = new Date();
-    d.setDate(d.getDate() + gun);
-    const iso = d.toISOString().slice(0,10);
-    up('sonraki_arama', iso);
-    if (savedId) api.crmUpdate({id: savedId, sonraki_arama: iso}).catch(() => {});
-  };
+  const up = (k, v) => { sF(p => ({...p, [k]: v})); setError(''); setSuccess(''); };
 
   /* ── DOSYA / FOTOĞRAF STATE ── */
   const [ekler, setEkler] = useState([]);
@@ -1333,22 +1217,10 @@ MR._CRMYeniInner = ({setPage, crmId: crmIdProp}) => {
         const s = callSecondsRef.current % 60;
         const sure = `${m} DK ${s} SN`;
         await api.crmNotEkle({crm_id: newId, not_text: `TELEFON GÖRÜŞMESİ - SÜRE: ${sure}\n${f.olay_aciklama || ''}`}).catch(() => {});
-        // Arama logu kaydı (CRM'e bağlı)
-        try {
-          await api.aramaLogCreate({
-            yon: 'giden', numara: f.telefon,
-            musteri_adi: f.ad_soyad, musteri_kaynak: 'crm', musteri_kaynak_id: newId,
-            durum: 'cevaplandi', baslangic_zamani: new Date().toISOString().slice(0,19).replace('T',' '),
-            sure_saniye: callSecondsRef.current, crm_id: newId
-          });
-        } catch(e) {}
       }
-      setIsDirty(false);
       setLoading(false);
       setSuccess('GÖRÜŞME KAYDI OTOMATİK KAYDEDİLDİ');
-      // Aynı sayfada kal — bütünleşik kişi kartı 360° timeline'ı yenile
-      await loadUnified({crm_id: newId});
-      setTimeout(() => setSuccess(''), 3000);
+      setTimeout(() => setPage('crm-detay-' + newId), 1500);
     } else {
       setLoading(false);
       setError(r?.error || 'OTOMATİK KAYIT SIRASINDA HATA OLUŞTU');
@@ -1404,38 +1276,28 @@ MR._CRMYeniInner = ({setPage, crmId: crmIdProp}) => {
     return r;
   }, [f.telefon, f.dosya_turu, f.kaza_turu, f.pozisyon, f.kaza_tarihi, f.olay_aciklama, ekler.length]);
 
-  /* ── KAYDET (yeni veya mevcut kaydı güncelle) ── */
+  /* ── KAYDET ── */
   const kaydet = async () => {
     if (!f.ad_soyad.trim()) { setError('AD SOYAD ZORUNLU ALAN'); return null; }
     if (!f.telefon.trim()) { setError('TELEFON ZORUNLU ALAN'); return null; }
     setLoading(true); setError(''); setSuccess('');
     const data = {...f, taslak: 0, kaynak: 'TELEFON'};
-    let r, newId = savedId;
-    if (savedId) {
-      r = await api.crmUpdate({id: savedId, ...data});
-    } else {
-      r = await api.crmCreate(data);
-      newId = r?.data?.id;
-    }
+    const r = await api.crmCreate(data);
     if (r?.success) {
-      if (newId) setSavedId(newId);
+      const newId = r.data?.id;
+      setSavedId(newId);
       /* EKLERİ YÜKLE */
       if (ekler.length > 0 && newId) {
         for (const ek of ekler) {
           try { await api.crmDosyaYukle(newId, ek.type, ek.file); } catch(e) {}
         }
-        setEkler([]); // upload edildi, lokal listeyi temizle (server tarafına gitti)
       }
-      setIsDirty(false);
-      setSuccess('KAYIT BAŞARIYLA KAYDEDİLDİ');
       setLoading(false);
-      // Mevcut kayıt zenginleştirilmiş veriyi yeniden yükle
-      if (newId) await loadUnified({crm_id: newId});
-      setTimeout(() => setSuccess(''), 2500);
+      setPage('crm-detay-' + newId);
       return newId;
     } else {
       setLoading(false);
-      setError(r?.error || 'KAYIT İŞLEMİ SIRASINDA HATA OLUŞTU');
+      setError(r?.error || 'KAYIT OLUŞTURULURKEN HATA OLUŞTU');
       return null;
     }
   };
@@ -1520,28 +1382,12 @@ MR._CRMYeniInner = ({setPage, crmId: crmIdProp}) => {
 
           {/* ÜST BAR - KOMPAKT */}
           <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10, flexWrap:'wrap'}}>
-            <button style={{...S.btn, ...S.btnG, fontSize:9, padding:'5px 10px', borderRadius:7}} onClick={() => safeNavigate('crm-liste')}>
+            <button style={{...S.btn, ...S.btnG, fontSize:9, padding:'5px 10px', borderRadius:7}} onClick={() => setPage('crm-liste')}>
               <LIcon name="ArrowLeft" size={11}/> LİSTEYE DÖN
             </button>
             <div style={{display:'flex', alignItems:'center', gap:5, flex:1, minWidth:0}}>
               <LIcon name="UserPlus" size={12} color={C.accent}/>
-              <span style={{fontSize:10, fontWeight:700, whiteSpace:'nowrap'}}>{savedId ? `KİŞİ KARTI #${savedId}` : 'ÇAĞRI / CRM KAYIT'}</span>
-              {unifiedData.ozet?.gorusme_sayisi > 0 && (
-                <span style={{fontSize:9, fontWeight:700, color:C.success, background:`${C.success}18`, padding:'2px 7px', borderRadius:4, whiteSpace:'nowrap'}}>
-                  <LIcon name="Phone" size={9} color={C.success}/> {unifiedData.ozet.gorusme_sayisi} GÖRÜŞME
-                </span>
-              )}
-              {unifiedData.ozet?.yonlendirme_sayisi > 0 && (
-                <span style={{fontSize:9, fontWeight:700, color:C.warning, background:`${C.warning}18`, padding:'2px 7px', borderRadius:4, whiteSpace:'nowrap'}}>
-                  <LIcon name="ListChecks" size={9} color={C.warning}/> {unifiedData.ozet.yonlendirme_sayisi} YÖNLENDİRME
-                </span>
-              )}
-              {isDirty && (
-                <span style={{fontSize:9, fontWeight:800, color:C.danger, background:`${C.danger}18`, padding:'2px 7px', borderRadius:4, whiteSpace:'nowrap', animation:'pulse 2s infinite'}}>
-                  ● KAYDEDİLMEMİŞ
-                </span>
-              )}
-            </div>
+              <span style={{fontSize:10, fontWeight:700, whiteSpace:'nowrap'}}>ÇAĞRI / CRM KAYIT</span>
             </div>
             <span style={{fontSize:9, color:C.textMuted, whiteSpace:'nowrap'}}>
               {new Date().toLocaleDateString('tr-TR')} {new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'})}
@@ -1821,182 +1667,21 @@ MR._CRMYeniInner = ({setPage, crmId: crmIdProp}) => {
           </Fieldset>
 
         </div>
-
-        {/* ═══ SAĞ PANEL — 360° TIMELINE + TAKİP + EKLER ═══ */}
-        <div style={{width:340, minWidth:300, flexShrink:0}}>
-
-          {/* MEVCUT KAYIT UYARI BANDI */}
-          {!savedId && varolanKayitWarn && (
-            <div style={{padding:'10px 12px', background:`${C.warning}15`, border:`1px solid ${C.warning}55`, borderRadius:10, marginBottom:10, fontSize:10.5, display:'flex', alignItems:'center', gap:8}}>
-              <LIcon name="AlertTriangle" size={14} color={C.warning}/>
-              <div style={{flex:1}}>
-                <div style={{fontWeight:700}}>BU TELEFONLA KAYITLI MÜŞTERİ VAR</div>
-                <div style={{color:C.textMuted, marginTop:2}}>{varolanKayitWarn.ad} — {varolanKayitWarn.gorusme} GÖRÜŞME</div>
-              </div>
-              <button style={{...S.btn, fontSize:10, padding:'5px 10px', background:C.warning, color:'#000', borderRadius:6}}
-                onClick={() => setPage('crm-detay-' + varolanKayitWarn.id)}>
-                AÇ
-              </button>
-            </div>
-          )}
-
-          {/* ─── GÖRÜŞME TIMELINE ─── */}
-          <div style={{...S.card, marginBottom:10}}>
-            <div style={{...S.cardHead, padding:'8px 12px', justifyContent:'space-between'}}>
-              <div style={{display:'flex', alignItems:'center', gap:6}}>
-                <LIcon name="History" size={13} color={C.accent}/>
-                <span style={{fontSize:11, fontWeight:700}}>GÖRÜŞME GEÇMİŞİ</span>
-              </div>
-              <span style={{fontSize:9, color:C.textMuted, fontWeight:600}}>
-                {unifiedData.notlar.length + unifiedData.arama_loglari.length} KAYIT
-              </span>
-            </div>
-            <div style={{padding:10, maxHeight:280, overflowY:'auto'}}>
-              {(unifiedData.notlar.length === 0 && unifiedData.arama_loglari.length === 0) ? (
-                <div style={{fontSize:10, color:C.textMuted, textAlign:'center', padding:'20px 6px'}}>
-                  HENÜZ GÖRÜŞME VEYA NOT YOK
-                </div>
-              ) : (
-                <div>
-                  {/* Arama logları */}
-                  {unifiedData.arama_loglari.slice(0,5).map(al => (
-                    <div key={'al'+al.id} style={{padding:'6px 8px', marginBottom:4, background:`${C.cyan}0A`, border:`1px solid ${C.cyan}22`, borderRadius:6, fontSize:10}}>
-                      <div style={{display:'flex', justifyContent:'space-between', marginBottom:2}}>
-                        <span style={{fontWeight:700, color:C.cyan}}>
-                          <LIcon name={al.yon === 'gelen' ? 'PhoneIncoming' : 'PhoneOutgoing'} size={10} color={C.cyan}/> {al.yon === 'gelen' ? 'GELEN' : 'GİDEN'}
-                        </span>
-                        <span style={{color:C.textMuted, fontSize:9}}>{(al.baslangic_zamani || '').slice(0,16).replace('T',' ')}</span>
-                      </div>
-                      <div style={{color:C.textSec, fontSize:9.5}}>
-                        {al.sure_saniye > 0 ? `SÜRE ${Math.floor(al.sure_saniye/60)}:${String(al.sure_saniye%60).padStart(2,'0')}` : al.durum} • {al.kullanici_adi || '-'}
-                      </div>
-                    </div>
-                  ))}
-                  {/* Notlar (CRM + yonlendirme birleşik) */}
-                  {unifiedData.notlar.map(n => {
-                    const acik = activeTimelineId === (n.kaynak+n.id);
-                    const sonuc = n.gorusme_sonucu;
-                    return (
-                      <div key={n.kaynak+n.id} style={{padding:'7px 9px', marginBottom:4, background:isKoyu?`${C.accent}08`:`${C.accent}06`, border:`1px solid ${C.border}`, borderRadius:6, cursor:'pointer'}}
-                        onClick={() => setActiveTimelineId(acik ? null : n.kaynak+n.id)}>
-                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:6}}>
-                          <div style={{flex:1, minWidth:0}}>
-                            {sonuc && <span style={{fontSize:8, fontWeight:800, padding:'1px 6px', borderRadius:3, background:`${sonucRenk(sonuc)}22`, color:sonucRenk(sonuc), marginRight:4}}>{sonuc}</span>}
-                            <span style={{fontSize:8, fontWeight:700, padding:'1px 5px', borderRadius:3, background:n.kaynak === 'crm' ? `${C.accent}22` : `${C.warning}22`, color:n.kaynak === 'crm' ? C.accent : C.warning}}>{n.kaynak === 'crm' ? 'CRM' : 'YÖN'}</span>
-                          </div>
-                          <span style={{fontSize:8, color:C.textMuted, whiteSpace:'nowrap'}}>{(n.created_at || '').slice(0,10)}</span>
-                        </div>
-                        <div style={{fontSize:10, marginTop:3, color:C.text, lineHeight:1.5, overflow:acik?'visible':'hidden', display:acik?'block':'-webkit-box', WebkitLineClamp:acik?'none':2, WebkitBoxOrient:'vertical'}}>
-                          {n.not_text}
-                        </div>
-                        {acik && n.snapshot && (
-                          <div style={{marginTop:5, padding:'4px 6px', background:`${C.accent}0A`, border:`1px dashed ${C.accent}33`, borderRadius:4, fontSize:8.5, color:C.textSec}}>
-                            <span style={{color:C.accent, fontWeight:700}}>O AN:</span>{' '}
-                            {[n.snapshot.dosya_turu && `DOSYA:${n.snapshot.dosya_turu}`, n.snapshot.kusur_durumu && `KUSUR:${n.snapshot.kusur_durumu}`, n.snapshot.kaza_pozisyonu && `POZ:${n.snapshot.kaza_pozisyonu}`, n.snapshot.guncel_durum && `DURUM:${n.snapshot.guncel_durum}`].filter(Boolean).join(' • ')}
-                          </div>
-                        )}
-                        <div style={{fontSize:8, color:C.textMuted, marginTop:2}}>{n.ekleyen_adi || 'SİSTEM'}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-            {/* NOT EKLE (sadece mevcut kayıt ise) */}
-            {savedId && hy('crm-not-ekle') && (
-              <div style={{padding:'8px 10px', borderTop:`1px solid ${C.border}`, background:`${C.success}06`}}>
-                <textarea style={{...S.input, minHeight:50, fontSize:10, padding:'6px 8px', marginBottom:6}} value={notInput} onChange={e => setNotInput(e.target.value)} placeholder="YENİ NOT..."/>
-                <div style={{display:'flex', gap:5}}>
-                  <select style={{...S.select, fontSize:9, padding:'5px 6px', flex:1}} value={notSonuc} onChange={e => setNotSonuc(e.target.value)}>
-                    <option value="">SONUÇ...</option>
-                    {GORUSME_SONUCLARI.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  <button style={{...S.btn, background:C.success, color:'#fff', fontSize:10, padding:'5px 14px', borderRadius:5}} disabled={notLoading || !notInput.trim()} onClick={notEkle}>
-                    <LIcon name="Plus" size={11} color="#fff"/> EKLE
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ─── TAKİP PLANI ─── */}
-          <div style={{...S.card, marginBottom:10}}>
-            <div style={{...S.cardHead, padding:'8px 12px'}}>
-              <LIcon name="Calendar" size={13} color={C.warning}/>
-              <span style={{fontSize:11, fontWeight:700}}>TAKİP PLANI</span>
-            </div>
-            <div style={{padding:10}}>
-              <FormGroup label="SONRAKİ ARAMA TARİHİ">
-                <input type="date" style={{...S.input, fontSize:11, padding:'7px 10px'}} value={(f.sonraki_arama||'').slice(0,10)} onChange={e => up('sonraki_arama', e.target.value)}/>
-              </FormGroup>
-              <div style={{display:'flex', gap:4, marginTop:6}}>
-                {[{l:'+3 GÜN', g:3},{l:'+1 HAFTA', g:7},{l:'+1 AY', g:30}].map(x =>
-                  <button key={x.g} type="button" onClick={() => setTakip(x.g)} style={{flex:1, padding:'6px 4px', fontSize:9, fontWeight:700, borderRadius:5, border:`1px solid ${C.warning}55`, background:'transparent', color:C.warning, cursor:'pointer'}}>{x.l}</button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* ─── EKLER / MEDYA (mevcut kayda yüklenmiş olanlar) ─── */}
-          {unifiedData.ekler.length > 0 && (
-            <div style={{...S.card, marginBottom:10}}>
-              <div style={{...S.cardHead, padding:'8px 12px'}}>
-                <LIcon name="Paperclip" size={13} color={C.purple}/>
-                <span style={{fontSize:11, fontWeight:700}}>EKLİ DOSYALAR ({unifiedData.ekler.length})</span>
-              </div>
-              <div style={{padding:10, display:'grid', gridTemplateColumns:'1fr 1fr', gap:6}}>
-                {unifiedData.ekler.slice(0,6).map(e => (
-                  <div key={e.id} style={{padding:6, background:`${C.purple}08`, border:`1px solid ${C.border}`, borderRadius:6, fontSize:9}}>
-                    <LIcon name={e.tip === 'foto' ? 'Image' : 'File'} size={10} color={C.purple}/>
-                    <div style={{marginTop:3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', fontWeight:600}}>{e.dosya_adi}</div>
-                    <div style={{color:C.textMuted, fontSize:8, marginTop:1}}>{(e.dosya_boyutu/1024).toFixed(0)} KB</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-        </div>
       </div>
 
       {/* ═══ ALT AKSİYON BAR ═══ */}
       <div style={{
         marginTop:12, padding:'12px 0 4px',
-        display:'flex', justifyContent:'center', gap:8, flexWrap:'wrap',
+        display:'flex', justifyContent:'center', gap:10,
         borderTop:`1px solid ${C.border}`
       }}>
-        <button style={{...S.btn, ...S.btnS, fontSize:12, padding:'10px 20px', borderRadius:8}} onClick={() => kaydet()} disabled={loading}>
-          <LIcon name="Save" size={15} color="#fff"/> {loading ? 'KAYDEDİLİYOR...' : (savedId ? 'GÜNCELLE' : 'KAYDET')}
+        <button style={{...S.btn, ...S.btnS, fontSize:12, padding:'10px 24px', borderRadius:8}} onClick={() => kaydet()} disabled={loading}>
+          <LIcon name="Folder" size={15} color="#fff"/> {loading ? 'KAYDEDİLİYOR...' : 'KAYDET'}
         </button>
-        <button style={{...S.btn, background:C.warning, color:'#000', fontSize:12, padding:'10px 20px', borderRadius:8}} onClick={() => setDonusturConfirm(true)} disabled={loading}>
+        <button style={{...S.btn, background:C.warning, color:'#000', fontSize:12, padding:'10px 24px', borderRadius:8}} onClick={() => setDonusturConfirm(true)} disabled={loading}>
           <LIcon name="ArrowRightCircle" size={15} color="#000"/> DOSYAYA DÖNÜŞTÜR
         </button>
-        {/* HIZLI AKSİYONLAR */}
-        {f.telefon && hy('crm-hizli-wa') !== false && (
-          <button style={{...S.btn, background:'#25D36618', color:'#25D366', fontSize:12, padding:'10px 18px', borderRadius:8, border:'1px solid #25D36655'}} onClick={() => {
-            const tel = (f.telefon||'').replace(/\D/g,'').replace(/^0/,'90');
-            const metin = `Merhaba ${f.ad_soyad || ''}, ${MR._currentUser?.ad_soyad || ''} - MR HASAR DANIŞMANLIK`;
-            window.open('https://wa.me/' + tel + '?text=' + encodeURIComponent(metin), '_blank');
-          }}>
-            <LIcon name="Send" size={14} color="#25D366"/> WHATSAPP
-          </button>
-        )}
-        {f.telefon && hy('crm-hizli-sms') !== false && (
-          <button style={{...S.btn, background:`${C.accent}18`, color:C.accent, fontSize:12, padding:'10px 18px', borderRadius:8, border:`1px solid ${C.accent}55`}} onClick={() => {
-            window.location.href = 'sms:' + f.telefon;
-          }}>
-            <LIcon name="MessageSquare" size={14} color={C.accent}/> SMS
-          </button>
-        )}
-        {(f.il || f.adres) && (
-          <button style={{...S.btn, background:`${C.purple}18`, color:C.purple, fontSize:12, padding:'10px 18px', borderRadius:8, border:`1px solid ${C.purple}55`}} onClick={() => {
-            const q = encodeURIComponent([f.adres, f.ilce, f.il].filter(Boolean).join(', '));
-            window.open('https://maps.google.com/maps?q=' + q, '_blank');
-          }}>
-            <LIcon name="MapPin" size={14} color={C.purple}/> HARİTA
-          </button>
-        )}
-        <button style={{...S.btn, ...S.btnD, fontSize:12, padding:'10px 18px', borderRadius:8}} onClick={() => setClearConfirm(true)}>
+        <button style={{...S.btn, ...S.btnD, fontSize:12, padding:'10px 24px', borderRadius:8}} onClick={() => setClearConfirm(true)}>
           <LIcon name="Trash2" size={15} color="#fff"/> TEMİZLE
         </button>
       </div>
@@ -2004,7 +1689,6 @@ MR._CRMYeniInner = ({setPage, crmId: crmIdProp}) => {
       {/* ═══ ONAY DİALOGLARI ═══ */}
       <Confirm open={clearConfirm} message="FORMU TEMİZLEMEK İSTEDİĞİNİZE EMİN MİSİNİZ? TÜM GİRİLEN BİLGİLER SİLİNECEKTİR." onConfirm={resetForm} onCancel={() => setClearConfirm(false)}/>
       <Confirm open={donusturConfirm} message="BU KAYDI DOĞRUDAN DOSYAYA DÖNÜŞTÜRMEK İSTİYOR MUSUNUZ? CRM KAYDI OLUŞTURULUP DOSYAYA DÖNÜŞTÜRÜLECEKTİR." onConfirm={handleDonustur} onCancel={() => setDonusturConfirm(false)}/>
-      <Confirm open={!!navConfirm} message="KAYDEDİLMEMİŞ DEĞİŞİKLİKLER VAR! ÖNCE KAYDET DEMEDEN ÇIKMAK İSTEDİĞİNE EMİN MİSİN?" onConfirm={() => { const t = navConfirm.target; setNavConfirm(null); setIsDirty(false); setPage(t); }} onCancel={() => setNavConfirm(null)}/>
 
       {/* PULSE ANİMASYON CSS */}
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}`}</style>
