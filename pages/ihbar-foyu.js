@@ -80,16 +80,48 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
   const excelInputRef = useRef(null);
   const jsonInputRef = useRef(null);
 
+  /* ═══ SİSTEM İÇİ BİLDİRİM (toast yerine zengin kart) ═══
+   * Tipler: 'success' | 'error' | 'warning' | 'info'
+   * Kullanım: bildirimGoster('success', 'Başlık', 'Detay metin veya çok satırlı');
+   *           bildirimGoster('success', 'Ruhsat Okundu', [{l:'PLAKA', v:'34ABC'}, ...]);
+   */
+  const [bildirim, setBildirim] = useState(null);
+  const bildirimTimerRef = useRef(null);
+
+  const bildirimGoster = (tip, baslik, detay = '', sure = 5000) => {
+    setBildirim({ tip, baslik, detay, ts: Date.now() });
+    if (bildirimTimerRef.current) clearTimeout(bildirimTimerRef.current);
+    if (sure > 0) {
+      bildirimTimerRef.current = setTimeout(() => setBildirim(null), sure);
+    }
+  };
+  const bildirimKapat = () => {
+    if (bildirimTimerRef.current) clearTimeout(bildirimTimerRef.current);
+    setBildirim(null);
+  };
+  /* Kısa yardımcılar */
+  const notifOk = (b, d, s) => bildirimGoster('success', b, d, s);
+  const notifErr = (b, d, s) => bildirimGoster('error', b, d, s);
+  const notifWarn = (b, d, s) => bildirimGoster('warning', b, d, s);
+  const notifInfo = (b, d, s) => bildirimGoster('info', b, d, s);
+
   /* ═══ LOCALSTORAGE KEYS ═══ */
   const LS_PARCA = 'hasarParcaListesi';
   const LS_DOSYALAR = 'hasar_dosyalar';
 
-  /* Sayfa yüklenince localStorage'dan parça listesi yükle */
+  /* Sayfa yüklenince localStorage'dan parça listesi yükle + animasyon CSS'i */
   useEffect(() => {
     try {
       const stored = localStorage.getItem(LS_PARCA);
       if (stored) setPartsList(JSON.parse(stored) || []);
     } catch (e) { /* sessiz geç */ }
+    /* Toast animasyonu CSS'i (sadece 1 kez) */
+    if (!document.getElementById('ihbar-foyu-anim-css')) {
+      const s = document.createElement('style');
+      s.id = 'ihbar-foyu-anim-css';
+      s.textContent = '@keyframes slideInRight{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}';
+      document.head.appendChild(s);
+    }
   }, []);
 
   /* Parça listesi değişince sessiz kaydet */
@@ -128,8 +160,8 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
     const name = (newPart.name || '').trim();
     const original = parseFloat(newPart.original) || 0;
     const quantity = parseInt(newPart.quantity) || 1;
-    if (!name) { alert('⚠️ Parça adı zorunlu!'); return; }
-    if (original <= 0) { alert('⚠️ Geçerli bir fiyat girin!'); return; }
+    if (!name) { notifWarn('PARÇA ADI ZORUNLU'); return; }
+    if (original <= 0) { notifWarn('GEÇERLİ FİYAT GİRİN'); return; }
     setPartsList(prev => [...prev, { name, oem: (newPart.oem || '').trim(), original, quantity }]);
     setNewPart({ name: '', oem: '', original: '', quantity: 1 });
   };
@@ -141,7 +173,7 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
 
   /* ═══ ŞABLON İNDİR ═══ */
   const downloadTemplate = () => {
-    if (!window.XLSX) { alert('Excel kütüphanesi (XLSX) henüz yüklenmedi.'); return; }
+    if (!window.XLSX) { notifErr('XLSX YÜKLENEMEDİ','Sayfayı yenileyin.'); return; }
     const XLSX = window.XLSX;
     const wb = XLSX.utils.book_new();
     const ws_data = [
@@ -171,7 +203,7 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
   const handleExcelImport = (e) => {
     const file = e.target?.files?.[0];
     if (!file) return;
-    if (!window.XLSX) { alert('XLSX kütüphanesi yüklenmedi. Sayfayı yenileyin.'); return; }
+    if (!window.XLSX) { notifErr('XLSX YÜKLENEMEDİ','Sayfayı yenileyin.'); return; }
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
@@ -185,7 +217,7 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
           const cell = rows[i]?.[0]?.toString().toLowerCase() || '';
           if (cell.includes('parça') || cell.includes('parca')) { headerIdx = i; break; }
         }
-        if (headerIdx === -1) { alert('⚠️ Excel\'de "Parça Adı" başlığı bulunamadı!'); return; }
+        if (headerIdx === -1) { notifWarn('EXCEL BAŞLIĞI YOK','"Parça Adı" sütun başlığı bulunamadı.'); return; }
         const imported = [];
         for (let i = headerIdx + 1; i < rows.length; i++) {
           const row = rows[i];
@@ -198,14 +230,14 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
           const quantity = parseInt(row[3]) > 0 ? parseInt(row[3]) : 1;
           if (name && original > 0) imported.push({ name, oem, original, quantity });
         }
-        if (imported.length === 0) { alert('⚠️ Geçerli parça bulunamadı!'); return; }
+        if (imported.length === 0) { notifWarn('GEÇERLİ PARÇA YOK','Excel içinde parça bulunamadı.'); return; }
         if (partsList.length > 0 &&
             !confirm(`Mevcut ${partsList.length} parça silinecek ve ${imported.length} yeni parça eklenecek. Devam?`)) return;
         setPartsList(imported);
         setSekme('parca');
-        alert(`✅ ${imported.length} parça içe aktarıldı!`);
+        notifOk('PARÇALAR AKTARILDI', String(imported.length)+' parça eklendi');
       } catch (err) {
-        alert('❌ Excel okuma hatası: ' + err.message);
+        notifErr('EXCEL HATASI', err.message);
       }
       if (e.target) e.target.value = '';
     };
@@ -256,9 +288,13 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
         if (typeof data.includeKDV !== 'undefined' || typeof data.kdvDahil !== 'undefined') {
           setKdvDahil(Boolean(data.includeKDV || data.kdvDahil));
         }
-        alert(`✅ JSON yüklendi!\nPlaka: ${data.plaka || '-'}\nSahibi: ${data.ruhsat_sahibi || data.sahip_ad || '-'}\nParça: ${(data.partsList || []).length}`);
+        notifOk('JSON YÜKLENDİ', [
+          { l: 'PLAKA', v: data.plaka || '-' },
+          { l: 'SAHİBİ', v: data.ruhsat_sahibi || data.sahip_ad || '-' },
+          { l: 'PARÇA SAYISI', v: String((data.partsList || []).length) }
+        ]);
       } catch (err) {
-        alert('❌ JSON okuma hatası: ' + err.message);
+        notifErr('JSON OKUMA HATASI', err.message);
       }
       if (e.target) e.target.value = '';
     };
@@ -269,7 +305,7 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
   const [yapistirText, setYapistirText] = useState('');
   const processYapistir = () => {
     const text = (yapistirText || '').trim();
-    if (!text) { alert('⚠️ Metin girin!'); return; }
+    if (!text) { notifWarn('METİN GİRİN'); return; }
     // Alan eşleştirme haritası
     const fieldMap = {
       'PLAKA': 'plaka', 'MARKA': 'marka', 'MARKA_MODEL': 'marka',
@@ -332,7 +368,11 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
     if (yeniParcalar.length > 0) setPartsList(yeniParcalar);
     setYapistirModal(false);
     setYapistirText('');
-    alert(`✅ Yüklendi!\nPlaka: ${yeniForm.plaka || '-'}\nSahip: ${yeniForm.sahip_ad || '-'}\nParça: ${yeniParcalar.length}`);
+    notifOk('VERİLER YÜKLENDİ', [
+      { l: 'PLAKA', v: yeniForm.plaka || '-' },
+      { l: 'SAHİP', v: yeniForm.sahip_ad || '-' },
+      { l: 'PARÇA SAYISI', v: String(yeniParcalar.length) }
+    ]);
   };
 
   /* ═══ RUHSAT OCR — qr-ruhsat.js ile BİREBİR AYNI SİSTEM ═══
@@ -342,10 +382,10 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
   const handleRuhsatUpload = async (e) => {
     const file = e.target?.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) { alert('❌ Dosya çok büyük! Max 10MB.'); if (e.target) e.target.value=''; return; }
+    if (file.size > 10 * 1024 * 1024) { notifErr('DOSYA ÇOK BÜYÜK','Maksimum 10MB olmalı.'); if (e.target) e.target.value=''; return; }
     const ocr = MR._ruhsatOcr;
     if (!ocr || !ocr.runClaudeOcr) {
-      alert('Ruhsat OCR modülü yüklenemedi. Lütfen sayfayı yenileyin.');
+      notifErr('OCR MODÜLÜ YÜKLENEMEDİ','Sayfayı yenileyin.');
       if (e.target) e.target.value = '';
       return;
     }
@@ -391,16 +431,22 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
         setForm(yeni);
 
         setOcrLoading(null);
-        const kaynak = data.source === 'claude' ? 'Claude AI' : 'Tesseract OCR';
-        alert(`✅ Ruhsat okundu (${kaynak})!\n\n📋 Plaka: ${data.plaka || '-'}\n🚗 Marka: ${data.marka || '-'} ${data.model || ''}\n🔢 Şasi: ${data.sase || '-'}\n👤 Ad Soyad: ${(data.ad || '') + ' ' + (data.soyad || '')}\n🆔 TC: ${data.tc || '-'}\n\n⚠️ Lütfen bilgileri kontrol edin!`);
+        const kaynak = data.source === 'claude' ? 'CLAUDE AI' : 'TESSERACT OCR';
+        notifOk(`RUHSAT OKUNDU (${kaynak})`, [
+          { l: 'PLAKA', v: data.plaka || '-' },
+          { l: 'MARKA', v: (data.marka || '') + ' ' + (data.model || '') },
+          { l: 'ŞASİ', v: data.sase || '-' },
+          { l: 'AD SOYAD', v: ((data.ad || '') + ' ' + (data.soyad || '')).trim() || '-' },
+          { l: 'TC', v: data.tc || '-' }
+        ], 7000);
       } else {
         setOcrLoading(null);
-        alert('⚠️ Ruhsat bilgileri okunamadı!\n\nLütfen manuel olarak girin veya daha net bir fotoğraf deneyin.');
+        notifWarn('RUHSAT OKUNAMADI', 'Lütfen manuel girin veya daha net bir fotoğraf deneyin.');
       }
     } catch (err) {
       console.error('Ruhsat OCR hatası:', err);
       setOcrLoading(null);
-      alert('❌ Ruhsat okunamadı!\n\nHata: ' + err.message);
+      notifErr('RUHSAT HATASI', err.message);
     }
     if (e.target) e.target.value = '';
   };
@@ -412,9 +458,9 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
   const handleParcaListesiUpload = async (e) => {
     const file = e.target?.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) { alert('❌ Dosya çok büyük! Max 10MB.'); if (e.target) e.target.value=''; return; }
+    if (file.size > 10 * 1024 * 1024) { notifErr('DOSYA ÇOK BÜYÜK','Maksimum 10MB olmalı.'); if (e.target) e.target.value=''; return; }
     if (typeof Tesseract === 'undefined') {
-      alert('Tesseract OCR kütüphanesi yüklenmedi. Lütfen sayfayı yenileyin.');
+      notifErr('TESSERACT YÜKLENEMEDİ','Sayfayı yenileyin.');
       if (e.target) e.target.value = '';
       return;
     }
@@ -459,12 +505,12 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
         setTempParca(parcalar);
         setOnizlemeModal(true);
       } else {
-        alert('⚠️ Parça bulunamadı!\n\n💡 İPUCU: Matbaa çıktısı daha iyi sonuç verir. El yazısı zor okunabilir.');
+        notifWarn('PARÇA BULUNAMADI','İPUCU: Matbaa çıktısı daha iyi sonuç verir. El yazısı zor okunabilir.');
       }
     } catch (err) {
       console.error('Parça OCR hatası:', err);
       setOcrLoading(null);
-      alert('❌ Parça listesi okunamadı!\n\nHata: ' + err.message);
+      notifErr('PARÇA OCR HATASI', err.message);
     }
     if (e.target) e.target.value = '';
   };
@@ -510,8 +556,8 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
   const dosyaKaydet = () => {
     const plaka = (form.plaka || '').trim();
     const sahipAd = (form.sahip_ad || '').trim();
-    if (!plaka) { alert('⚠️ Plaka zorunlu!'); return; }
-    if (!sahipAd) { alert('⚠️ Araç sahibi adı zorunlu!'); return; }
+    if (!plaka) { notifWarn('PLAKA ZORUNLU'); return; }
+    if (!sahipAd) { notifWarn('ARAÇ SAHİBİ ADI ZORUNLU'); return; }
 
     const fileObj = {
       id: Date.now().toString(),
@@ -534,16 +580,16 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
     }
     try {
       writeKaydedilenler(files);
-      alert(`✅ Dosya kaydedildi!\n${sahipAd} — ${plaka}`);
+      notifOk('DOSYA KAYDEDİLDİ', sahipAd + ' — ' + plaka);
       setKaydedilenler(files);
     } catch (e) {
-      alert('❌ Kaydedilemedi! LocalStorage dolu olabilir.');
+      notifErr('KAYIT BAŞARISIZ','LocalStorage dolu olabilir.');
     }
   };
 
   const dosyaYukle = (id) => {
     const file = kaydedilenler.find(f => f.id === id);
-    if (!file) { alert('❌ Dosya bulunamadı!'); return; }
+    if (!file) { notifErr('DOSYA BULUNAMADI'); return; }
     if (!confirm(`${file.sahipAd} — ${file.plaka}\n\nBu dosyayı yüklemek istediğinize emin misiniz?\nMevcut form ve parça listesi silinecek!`)) return;
     setForm({ ...bosForm, ...(file.formData || {}) });
     setPartsList((file.parcaListesi || []).map(p => ({
@@ -556,7 +602,7 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
     setKdvDahil(Boolean(file.kdvDahil));
     setAramaModal(false);
     setSekme('dosya');
-    alert(`✅ Yüklendi: ${file.sahipAd} — ${file.plaka}`);
+    notifOk('DOSYA YÜKLENDİ', file.sahipAd + ' — ' + file.plaka);
   };
 
   const dosyaSil = (id) => {
@@ -590,7 +636,7 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
   };
 
   const exportKompleExcel = () => {
-    if (!window.XLSX) { alert('XLSX kütüphanesi yüklenmedi.'); return; }
+    if (!window.XLSX) { notifErr('XLSX YÜKLENEMEDİ'); return; }
     const XLSX = window.XLSX;
     const wb = XLSX.utils.book_new();
 
@@ -669,8 +715,8 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
   };
 
   const exportParcaExcel = () => {
-    if (!window.XLSX) { alert('XLSX kütüphanesi yüklenmedi.'); return; }
-    if (partsList.length === 0) { alert('⚠️ Parça listesi boş!'); return; }
+    if (!window.XLSX) { notifErr('XLSX YÜKLENEMEDİ'); return; }
+    if (partsList.length === 0) { notifWarn('PARÇA LİSTESİ BOŞ'); return; }
     const XLSX = window.XLSX;
     const wb = XLSX.utils.book_new();
     const ws_data = [
@@ -1248,6 +1294,68 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
           <LIcon name="Trash2" size={14} color="#fff" /> TEMİZLE
         </button>
       </div>
+
+      {/* SİSTEM İÇİ BİLDİRİM KARTI (sağ üst, 5 sn otomatik kapanır) */}
+      {bildirim && (() => {
+        const renkler = {
+          success: { bg: C.success, icon: 'CheckCircle' },
+          error: { bg: C.danger, icon: 'AlertCircle' },
+          warning: { bg: C.warning, icon: 'AlertTriangle' },
+          info: { bg: C.accent, icon: 'Info' }
+        };
+        const r = renkler[bildirim.tip] || renkler.info;
+        const isArr = Array.isArray(bildirim.detay);
+        return (
+          <div style={{
+            position: 'fixed', top: 80, right: 20, zIndex: 100000,
+            width: 360, maxWidth: 'calc(100vw - 40px)',
+            background: isKoyu ? 'rgba(15,23,42,0.97)' : 'rgba(255,255,255,0.98)',
+            border: `2px solid ${r.bg}`,
+            borderRadius: 12,
+            boxShadow: `0 10px 40px rgba(0,0,0,0.25), 0 0 0 4px ${r.bg}22`,
+            animation: 'slideInRight .3s ease',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '12px 14px',
+              background: `${r.bg}18`,
+              borderBottom: `1px solid ${r.bg}33`
+            }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: r.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <LIcon name={r.icon} size={18} color="#fff" />
+              </div>
+              <div style={{ flex: 1, fontSize: 13, fontWeight: 800, color: r.bg, letterSpacing: 0.3 }}>
+                {bildirim.baslik}
+              </div>
+              <button onClick={bildirimKapat}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: C.textMuted }}>
+                <LIcon name="X" size={14} color={C.textMuted} />
+              </button>
+            </div>
+            {bildirim.detay && (
+              <div style={{ padding: '12px 14px', fontSize: 11, color: C.text, lineHeight: 1.5 }}>
+                {isArr ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 12px' }}>
+                    {bildirim.detay.map((d, i) => (
+                      <React.Fragment key={i}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, letterSpacing: 0.3 }}>{d.l}:</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: C.text }}>{d.v || '-'}</div>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ whiteSpace: 'pre-wrap' }}>{bildirim.detay}</div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* OCR LOADING OVERLAY */}
       {ocrLoading && (
