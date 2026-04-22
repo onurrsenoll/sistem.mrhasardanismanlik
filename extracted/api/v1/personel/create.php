@@ -28,36 +28,51 @@ try {
     $telefon = clean($body['telefon'] ?? '');
     $tcKimlik = clean($body['tc_kimlik'] ?? '');
 
-    // ═══ OTOMATİK KULLANICI OLUŞTUR (AKTİF, PERSONEL ROLÜ) ═══
+    // ═══ OTOMATİK KULLANICI OLUŞTUR (BEKLEMEDE=aktif=0 — Admin aktive eder) ═══
+    // v7 DEĞİŞİKLİK:
+    //  - Email yoksa otomatik "tc@mrhasar.local" veya "personel<id>@mrhasar.local" oluştur
+    //  - aktif=0 (pasif) başlar; admin Sistem>Kullanıcılar'dan manuel aktive eder
+    //  - Aktive edilene kadar login engellenir (auth/login.php zaten aktif=0 reddeder)
     $userId = null;
     $kullaniciOlusturuldu = false;
 
-    if (!empty($email)) {
-        $stmtCheck = $db->prepare('SELECT id FROM users WHERE email = ?');
-        $stmtCheck->execute([$email]);
-        $mevcutUser = $stmtCheck->fetch();
-
-        if (!$mevcutUser) {
-            // Varsayılan şifre: TC son 6 hane veya telefon son 6 hane, yoksa "123456"
-            $varsayilanSifre = '123456';
-            if (!empty($tcKimlik) && strlen($tcKimlik) >= 6) {
-                $varsayilanSifre = substr($tcKimlik, -6);
-            } elseif (!empty($telefon) && strlen(preg_replace('/\D/', '', $telefon)) >= 6) {
-                $varsayilanSifre = substr(preg_replace('/\D/', '', $telefon), -6);
-            }
-
-            $sifreHash = password_hash($varsayilanSifre, PASSWORD_BCRYPT);
-
-            $stmtUser = $db->prepare('INSERT INTO users (ad_soyad, email, sifre_hash, rol, telefon, aktif) VALUES (?, ?, ?, ?, ?, 1)');
-            $stmtUser->execute([$adSoyad, $email, $sifreHash, 'personel', $telefon]);
-
-            $userId = (int)$db->lastInsertId();
-            $kullaniciOlusturuldu = true;
-
-            log_action($user['id'], 'kullanici_olustur', "Personel ile otomatik kullanıcı oluşturuldu: $adSoyad (personel)", 'users', $userId);
+    // Eğer email yoksa sistem-içi kullanıcı adı üret
+    $loginEmail = $email;
+    if (empty($loginEmail)) {
+        if (!empty($tcKimlik) && strlen($tcKimlik) >= 10) {
+            $loginEmail = $tcKimlik . '@mrhasar.local';
+        } elseif (!empty($telefon)) {
+            $loginEmail = preg_replace('/\D/', '', $telefon) . '@mrhasar.local';
         } else {
-            $userId = (int)$mevcutUser['id'];
+            $loginEmail = 'personel' . time() . rand(100,999) . '@mrhasar.local';
         }
+    }
+
+    $stmtCheck = $db->prepare('SELECT id FROM users WHERE email = ?');
+    $stmtCheck->execute([$loginEmail]);
+    $mevcutUser = $stmtCheck->fetch();
+
+    if (!$mevcutUser) {
+        // Varsayılan şifre: TC son 6 hane veya telefon son 6 hane, yoksa "123456"
+        $varsayilanSifre = '123456';
+        if (!empty($tcKimlik) && strlen($tcKimlik) >= 6) {
+            $varsayilanSifre = substr($tcKimlik, -6);
+        } elseif (!empty($telefon) && strlen(preg_replace('/\D/', '', $telefon)) >= 6) {
+            $varsayilanSifre = substr(preg_replace('/\D/', '', $telefon), -6);
+        }
+
+        $sifreHash = password_hash($varsayilanSifre, PASSWORD_BCRYPT);
+
+        // aktif=0 → Admin manuel aktive edene kadar giriş yapamaz
+        $stmtUser = $db->prepare('INSERT INTO users (ad_soyad, email, sifre_hash, rol, telefon, aktif) VALUES (?, ?, ?, ?, ?, 0)');
+        $stmtUser->execute([$adSoyad, $loginEmail, $sifreHash, 'personel', $telefon]);
+
+        $userId = (int)$db->lastInsertId();
+        $kullaniciOlusturuldu = true;
+
+        log_action($user['id'], 'kullanici_olustur', "Personel → otomatik kullanıcı (PASİF - admin aktive etmeli): $adSoyad", 'users', $userId);
+    } else {
+        $userId = (int)$mevcutUser['id'];
     }
 
     // PERSONEL KAYDI OLUŞTUR
