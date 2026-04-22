@@ -20,27 +20,43 @@ function ensure_arama_log_table() {
         $tabloVar = $stmt->rowCount() > 0;
 
         if ($tabloVar) {
-            // Tablo var - gerekli kolonlar var mi kontrol et
+            // Tablo var - gerekli kolonları KONTROL ET ve EKSİK OLANLARI EKLE
+            // (Önceki sürüm DROP TABLE kullanıyordu → VERİ KAYBI RİSKİ. Kaldırıldı.)
             $kolonlar = [];
             $cols = $db->query("SHOW COLUMNS FROM arama_loglari")->fetchAll();
             foreach ($cols as $col) {
                 $kolonlar[] = $col['Field'];
             }
 
-            $gerekliKolonlar = ['numara', 'yon', 'durum', 'musteri_adi', 'musteri_kaynak',
-                                'musteri_kaynak_id', 'baslangic_zamani', 'cevaplanma_zamani',
-                                'bitis_zamani', 'sure_saniye', 'kayit_dosya', 'kayit_boyut', 'notlar'];
+            // Her kolon için tip tanımı + ALTER TABLE ADD COLUMN IF NOT EXISTS
+            $kolonTanimlari = [
+                'numara'            => "VARCHAR(20) NOT NULL DEFAULT ''",
+                'yon'               => "ENUM('gelen','giden') NOT NULL DEFAULT 'giden'",
+                'durum'             => "ENUM('cevaplandi','cevapsiz','reddedildi','mesgul','hata') NOT NULL DEFAULT 'cevapsiz'",
+                'musteri_adi'       => "VARCHAR(100) DEFAULT NULL",
+                'musteri_kaynak'    => "VARCHAR(20) DEFAULT NULL",
+                'musteri_kaynak_id' => "INT DEFAULT NULL",
+                'baslangic_zamani'  => "DATETIME DEFAULT NULL",
+                'cevaplanma_zamani' => "DATETIME DEFAULT NULL",
+                'bitis_zamani'      => "DATETIME DEFAULT NULL",
+                'sure_saniye'       => "INT DEFAULT 0",
+                'kayit_dosya'       => "VARCHAR(255) DEFAULT NULL",
+                'kayit_boyut'       => "INT DEFAULT 0",
+                'notlar'            => "TEXT DEFAULT NULL",
+                'kullanici_id'      => "INT DEFAULT NULL"
+            ];
 
-            $eksikKolonlar = array_diff($gerekliKolonlar, $kolonlar);
-
-            if (empty($eksikKolonlar)) {
-                // Tum kolonlar mevcut, sorun yok
-                return;
+            foreach ($kolonTanimlari as $kolon => $tanim) {
+                if (!in_array($kolon, $kolonlar, true)) {
+                    try {
+                        $db->exec("ALTER TABLE arama_loglari ADD COLUMN `{$kolon}` {$tanim}");
+                        error_log("[ARAMA-LOG] Kolon eklendi: {$kolon}");
+                    } catch (\Exception $e) {
+                        error_log("[ARAMA-LOG] Kolon ekleme hatası ({$kolon}): " . $e->getMessage());
+                    }
+                }
             }
-
-            // Eksik kolon var - eski/yanlis tablo, sil ve yeniden olustur
-            error_log('[ARAMA-LOG] Eksik kolonlar tespit edildi: ' . implode(', ', $eksikKolonlar) . ' - Tablo yeniden olusturuluyor');
-            $db->exec("DROP TABLE arama_loglari");
+            return;
         }
 
         // Collation kontrolu - turkish yoksa unicode kullan

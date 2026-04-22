@@ -48,14 +48,18 @@ $dosyaSayisi = isset($body['dosya_sayisi']) ? (int)$body['dosya_sayisi'] : 0;
 $ekPrim = isset($body['ek_prim']) ? (float)$body['ek_prim'] : 0;
 $kesinti = isset($body['kesinti']) ? (float)$body['kesinti'] : 0;
 
-// Eğer dosya sayısı gönderilmediyse, o dönemde açılan dosya sayısına bak
+// Eğer dosya sayısı gönderilmediyse, o dönemde dosya sayısına bak
+// v6 DÜZELTME: Eskiden (sorumlu_id = ? OR created_by = ?) idi → ÇİFT SAYIM/YANLIŞ KİŞİYE PRİM
+// Artık TEK KİŞİYE bağlanır: sorumlu_id varsa onu kullan, yoksa created_by.
+// COALESCE(sorumlu_id, created_by) = her dosya tek personele sayılır, çift ödeme bitti.
+// NOT: Muhasebe modülüne HİÇBİR etkisi yoktur — sadece personel prim hesabı düzeliyor.
 if ($dosyaSayisi === 0 && $personel['user_id']) {
-    $stmtAdk = $db->prepare('SELECT COUNT(*) as sayi FROM dosyalar WHERE (sorumlu_id = ? OR created_by = ?) AND dosya_turu = "ADK" AND acilis_tarihi BETWEEN ? AND ?');
-    $stmtAdk->execute([$personel['user_id'], $personel['user_id'], $donemBaslangic, $donemBitis]);
+    $stmtAdk = $db->prepare('SELECT COUNT(*) as sayi FROM dosyalar WHERE COALESCE(sorumlu_id, created_by) = ? AND dosya_turu = "ADK" AND acilis_tarihi BETWEEN ? AND ?');
+    $stmtAdk->execute([$personel['user_id'], $donemBaslangic, $donemBitis]);
     $adkSayisi = (int)$stmtAdk->fetch()['sayi'];
 
-    $stmtBh = $db->prepare('SELECT COUNT(*) as sayi FROM dosyalar WHERE (sorumlu_id = ? OR created_by = ?) AND dosya_turu = "BH" AND acilis_tarihi BETWEEN ? AND ?');
-    $stmtBh->execute([$personel['user_id'], $personel['user_id'], $donemBaslangic, $donemBitis]);
+    $stmtBh = $db->prepare('SELECT COUNT(*) as sayi FROM dosyalar WHERE COALESCE(sorumlu_id, created_by) = ? AND dosya_turu = "BH" AND acilis_tarihi BETWEEN ? AND ?');
+    $stmtBh->execute([$personel['user_id'], $donemBaslangic, $donemBitis]);
     $bhSayisi = (int)$stmtBh->fetch()['sayi'];
 
     $dosyaSayisi = $adkSayisi + $bhSayisi;

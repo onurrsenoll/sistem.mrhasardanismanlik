@@ -115,6 +115,18 @@ MR.api = {
   aramaLogCreate(d) { return this.req('/arama-log/create.php', { method: 'POST', body: JSON.stringify(d) }); },
   aramaLogUpdate(d) { return this.req('/arama-log/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
   aramaLogDelete(id) { return this.req('/arama-log/delete.php?id=' + id, { method: 'DELETE' }); },
+  // ═══ İHBAR FÖYÜ ═══
+  ihbarList(p = {}) { return this.req('/ihbar-foyu/list.php?' + new URLSearchParams(p)); },
+  ihbarGet(id) { return this.req('/ihbar-foyu/get.php?id=' + id); },
+  ihbarCreate(d) { return this.req('/ihbar-foyu/create.php', { method: 'POST', body: JSON.stringify(d) }); },
+  ihbarUpdate(d) { return this.req('/ihbar-foyu/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  ihbarDelete(id) { return this.req('/ihbar-foyu/delete.php?id=' + id, { method: 'DELETE' }); },
+  // Poliçe → Hasar Dosyası auto-link
+  policeHasarDosyaAc(d) { return this.req('/police/hasar-dosya-ac.php', { method: 'POST', body: JSON.stringify(d) }); },
+  // Hesap (ADK/BH) raporunu dosyaya evrak olarak kaydet
+  hesapDosyayaKaydet(d) { return this.req('/hesap/dosyaya-kaydet.php', { method: 'POST', body: JSON.stringify(d) }); },
+  // Ajanda hatırlatma kontrol
+  ajandaHatirlatmaKontrol() { return this.req('/ajanda/hatirlatma-kontrol.php'); },
   // MUHASEBE
   kasaList() { return this.req('/muhasebe/kasa-list.php'); },
   kasaCreate(d) { return this.req('/muhasebe/kasa-create.php', { method: 'POST', body: JSON.stringify(d) }); },
