@@ -53,6 +53,22 @@ try {
 
     log_action($user['id'], 'mesaj_gonder', "Mesaj gönderildi: $konu → {$alici['ad_soyad']}", 'mesajlar', $mesajId);
 
+    /* v6 EKLEME: Mesaj gönderildiğinde alıcıya OTOMATİK BİLDİRİM üretilir.
+     * Bildirim başarısız olursa mesaj akışı etkilenmez (try/catch izole). */
+    try {
+        $kisaIcerik = mb_substr($icerik, 0, 120, 'UTF-8');
+        if (mb_strlen($icerik, 'UTF-8') > 120) $kisaIcerik .= '…';
+        $bldIns = $db->prepare('INSERT INTO bildirimler (gonderen_id, alici_id, baslik, icerik, tip, okundu, ilgili_dosya_id) VALUES (?, ?, ?, ?, ?, 0, ?)');
+        $bldIns->execute([
+            $user['id'],
+            $aliciId,
+            'YENİ MESAJ: ' . mb_substr($konu, 0, 80, 'UTF-8'),
+            $kisaIcerik,
+            'mesaj',
+            $dosyaId
+        ]);
+    } catch (\Exception $be) { /* sessiz — mesaj akışını bozma */ }
+
     json_success(['id' => $mesajId], 'Mesaj gönderildi', 201);
 
 } catch (\Exception $e) {

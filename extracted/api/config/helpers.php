@@ -397,6 +397,66 @@ function ensure_yonlendirme_columns() {
 }
 
 /**
+ * ═══ HASAR İHBAR FÖYÜ TABLOLARI ═══
+ * İhbar Föyü modülü için ana tablo + parça listesi alt tablosu.
+ * Hiçbir mevcut veriye dokunmaz — idempotent CREATE TABLE IF NOT EXISTS.
+ */
+function ensure_ihbar_foyu_tables() {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        $db = getDB();
+        $db->exec("CREATE TABLE IF NOT EXISTS hasar_ihbar (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            dosya_id INT DEFAULT NULL,
+            plaka VARCHAR(20) DEFAULT NULL,
+            marka VARCHAR(100) DEFAULT NULL,
+            sasi VARCHAR(50) DEFAULT NULL,
+            kilometre VARCHAR(20) DEFAULT NULL,
+            sahip_ad VARCHAR(150) DEFAULT NULL,
+            sahip_tel VARCHAR(50) DEFAULT NULL,
+            iban VARCHAR(40) DEFAULT NULL,
+            sigorta VARCHAR(100) DEFAULT NULL,
+            dosya_no VARCHAR(30) DEFAULT NULL,
+            dosya_turu VARCHAR(20) DEFAULT 'KASKO',
+            police_no VARCHAR(50) DEFAULT NULL,
+            eksper_adi VARCHAR(200) DEFAULT NULL,
+            eksper_iletisim VARCHAR(150) DEFAULT NULL,
+            servis_adi VARCHAR(200) DEFAULT NULL,
+            servis_yetkili VARCHAR(150) DEFAULT NULL,
+            servis_tel VARCHAR(200) DEFAULT NULL,
+            kaza_tarihi DATE DEFAULT NULL,
+            kaza_yeri VARCHAR(200) DEFAULT NULL,
+            kaza_aciklama TEXT DEFAULT NULL,
+            evraklar TEXT DEFAULT NULL,
+            islemler TEXT DEFAULT NULL,
+            iscilik DECIMAL(10,2) DEFAULT 0,
+            kdv_dahil TINYINT(1) DEFAULT 0,
+            notlar TEXT DEFAULT NULL,
+            kullanici_id INT DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_plaka (plaka),
+            INDEX idx_dosya (dosya_id),
+            INDEX idx_sahip (sahip_ad)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS hasar_ihbar_parcalar (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            ihbar_id INT NOT NULL,
+            sira INT DEFAULT 0,
+            ad VARCHAR(255) NOT NULL,
+            oem VARCHAR(100) DEFAULT NULL,
+            fiyat DECIMAL(12,2) DEFAULT 0,
+            miktar INT DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_ihbar (ihbar_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
+    } catch (\Exception $e) { /* sessiz geç */ }
+}
+
+/**
  * ═══ CRM + ARAMA_LOGLARI LİNK GARANTİSİ ═══
  * Aynı kişi için CRM, yönlendirme ve arama_log kayıtlarının birbirine
  * bağlanması için gerekli sütunları idempotent ekler. Hiçbir kayıt değişmez.

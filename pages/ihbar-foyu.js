@@ -537,9 +537,30 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
     try { localStorage.setItem(LS_DOSYALAR, JSON.stringify(list)); } catch (e) {}
   };
 
-  /* Modal açıldığında kayıtları oku */
+  /* Modal açıldığında kayıtları oku — hem sunucudan hem localStorage'dan birleşik */
   useEffect(() => {
-    if (aramaModal) setKaydedilenler(readKaydedilenler());
+    if (!aramaModal) return;
+    const yerel = readKaydedilenler();
+    setKaydedilenler(yerel);
+    /* Sunucudan da çek - hata olursa sessizce yerel kalır */
+    api.ihbarList({ limit: 200 }).then(r => {
+      if (r?.success && Array.isArray(r.data?.items)) {
+        const sunucu = r.data.items.map(it => ({
+          id: 'srv-' + it.id,
+          sunucu_id: it.id,
+          plaka: it.plaka || '',
+          sahipAd: it.sahip_ad || '',
+          kayitTarihi: it.created_at ? new Date(it.created_at.replace(' ', 'T')).toLocaleString('tr-TR') : '',
+          formData: { dosya_turu: it.dosya_turu || 'KASKO', dosya_no: it.dosya_no || '', marka: it.marka || '' },
+          parcaListesi: [], // detay açılınca yüklenir
+          _sunucuOzet: true
+        }));
+        /* Sunucu kayıtlarını üste ekle, yerelde aynı plaka varsa çift gösterme */
+        const yerelPlakalar = new Set(yerel.map(y => (y.plaka || '').toLowerCase()));
+        const birlesik = [...sunucu.filter(s => !yerelPlakalar.has((s.plaka || '').toLowerCase())), ...yerel];
+        setKaydedilenler(birlesik);
+      }
+    }).catch(() => {});
   }, [aramaModal]);
 
   const filtrelenenKayitlar = useMemo(() => {
@@ -553,65 +574,128 @@ MR.IhbarFoyuPage = ({ setPage, user }) => {
     return arr;
   }, [kaydedilenler, aramaText]);
 
-  const dosyaKaydet = () => {
+  /* Sunucu kaydı ID (dosya DB'den yüklendiğinde set edilir); null ise yeni kayıt */
+  const [sunucuId, setSunucuId] = useState(null);
+
+  const dosyaKaydet = async () => {
     const plaka = (form.plaka || '').trim();
     const sahipAd = (form.sahip_ad || '').trim();
     if (!plaka) { notifWarn('PLAKA ZORUNLU'); return; }
     if (!sahipAd) { notifWarn('ARAÇ SAHİBİ ADI ZORUNLU'); return; }
 
+    /* Sunucuya hazır payload */
+    const payload = {
+      ...form,
+      plaka, sahip_ad: sahipAd,
+      iscilik: Number(iscilik) || 0,
+      kdv_dahil: kdvDahil ? 1 : 0,
+      /* Evrak/işlem checkbox durumları JSON olarak gönderilir */
+      evraklar: Object.keys(form).filter(k => k.startsWith('evrak_') && form[k]),
+      islemler: Object.keys(form).filter(k => k.startsWith('islem_') && form[k]),
+      parcalar: partsList.map(p => ({ name: p.name, oem: p.oem, original: p.original, quantity: p.quantity }))
+    };
+
+    /* ═══ 1) SUNUCU (DB) — birincil kayıt — ═══ */
+    let sunucuSonuc = null;
+    try {
+      if (sunucuId) {
+        payload.id = sunucuId;
+        sunucuSonuc = await api.ihbarUpdate(payload);
+      } else {
+        sunucuSonuc = await api.ihbarCreate(payload);
+        if (sunucuSonuc?.success && sunucuSonuc.data?.id) setSunucuId(sunucuSonuc.data.id);
+      }
+    } catch (e) { sunucuSonuc = null; }
+
+    /* ═══ 2) LOCALSTORAGE — yedek/çevrimdışı çalışma için ═══ */
     const fileObj = {
-      id: Date.now().toString(),
-      plaka,
-      sahipAd,
+      id: (sunucuSonuc?.data?.id ? String(sunucuSonuc.data.id) : Date.now().toString()),
+      sunucu_id: sunucuSonuc?.data?.id || sunucuId || null,
+      plaka, sahipAd,
       kayitTarihi: new Date().toLocaleString('tr-TR'),
       formData: { ...form },
       parcaListesi: JSON.parse(JSON.stringify(partsList)),
       iscilik: Number(iscilik) || 0,
       kdvDahil: kdvDahil
     };
-
     let files = readKaydedilenler();
     const exIdx = files.findIndex(f => f.plaka === plaka);
-    if (exIdx !== -1) {
-      if (!confirm(`${plaka} plakalı dosya zaten kayıtlı. Üzerine yazmak istiyor musunuz?`)) return;
-      files[exIdx] = fileObj;
+    if (exIdx !== -1) files[exIdx] = fileObj;
+    else files.push(fileObj);
+    try { writeKaydedilenler(files); setKaydedilenler(files); } catch (e) {}
+
+    if (sunucuSonuc?.success) {
+      notifOk('DOSYA KAYDEDİLDİ', 'Sunucu + yerel: ' + sahipAd + ' — ' + plaka);
     } else {
-      files.push(fileObj);
-    }
-    try {
-      writeKaydedilenler(files);
-      notifOk('DOSYA KAYDEDİLDİ', sahipAd + ' — ' + plaka);
-      setKaydedilenler(files);
-    } catch (e) {
-      notifErr('KAYIT BAŞARISIZ','LocalStorage dolu olabilir.');
+      notifWarn('SADECE YEREL KAYIT', 'Sunucuya bağlanılamadı, veriler yerel tarayıcıda saklandı. Bağlantı düzelince tekrar kaydet.');
     }
   };
 
-  const dosyaYukle = (id) => {
+  const dosyaYukle = async (id) => {
     const file = kaydedilenler.find(f => f.id === id);
     if (!file) { notifErr('DOSYA BULUNAMADI'); return; }
     if (!confirm(`${file.sahipAd} — ${file.plaka}\n\nBu dosyayı yüklemek istediğinize emin misiniz?\nMevcut form ve parça listesi silinecek!`)) return;
+
+    /* Sunucu kayıtları için detayı API'den çek (özet bilgiler eksik) */
+    if (file._sunucuOzet && file.sunucu_id) {
+      try {
+        const r = await api.ihbarGet(file.sunucu_id);
+        if (r?.success && r.data) {
+          const d = r.data;
+          const yeniForm = { ...bosForm };
+          Object.keys(bosForm).forEach(k => {
+            if (d[k] !== undefined && d[k] !== null) yeniForm[k] = d[k];
+          });
+          /* Evraklar / işlemler arrayden checkbox'lara */
+          if (Array.isArray(d.evraklar)) d.evraklar.forEach(k => { if (k in yeniForm) yeniForm[k] = true; });
+          if (Array.isArray(d.islemler)) d.islemler.forEach(k => { if (k in yeniForm) yeniForm[k] = true; });
+          setForm(yeniForm);
+          setPartsList((d.parcalar || []).map(p => ({
+            name: p.ad || p.name || '', oem: p.oem || '',
+            original: Number(p.fiyat || p.original) || 0,
+            quantity: Number(p.miktar || p.quantity) || 1
+          })));
+          setIscilik(Number(d.iscilik) || 0);
+          setKdvDahil(Boolean(d.kdv_dahil));
+          setSunucuId(d.id);
+          setAramaModal(false);
+          setSekme('dosya');
+          notifOk('DOSYA YÜKLENDİ (SUNUCU)', file.sahipAd + ' — ' + file.plaka);
+          return;
+        }
+      } catch (e) {}
+      notifErr('SUNUCUDAN YÜKLEME BAŞARISIZ');
+      return;
+    }
+
+    /* Yerel kayıt yükleme (eski akış) */
     setForm({ ...bosForm, ...(file.formData || {}) });
     setPartsList((file.parcaListesi || []).map(p => ({
-      name: p.name || '',
-      oem: p.oem || '',
-      original: Number(p.original) || 0,
-      quantity: Number(p.quantity) || 1
+      name: p.name || '', oem: p.oem || '',
+      original: Number(p.original) || 0, quantity: Number(p.quantity) || 1
     })));
     setIscilik(Number(file.iscilik) || 0);
     setKdvDahil(Boolean(file.kdvDahil));
+    setSunucuId(file.sunucu_id || null);
     setAramaModal(false);
     setSekme('dosya');
     notifOk('DOSYA YÜKLENDİ', file.sahipAd + ' — ' + file.plaka);
   };
 
-  const dosyaSil = (id) => {
+  const dosyaSil = async (id) => {
     const file = kaydedilenler.find(f => f.id === id);
     if (!file) return;
     if (!confirm(`${file.sahipAd} — ${file.plaka}\n\nBu dosyayı silmek istediğinize emin misiniz?`)) return;
+
+    /* Sunucu kaydı ise API'ye sil isteği at */
+    if (file.sunucu_id) {
+      try { await api.ihbarDelete(file.sunucu_id); } catch (e) {}
+    }
+    /* Yerel listeden de çıkar (sunucu başarısız olsa bile UX'i bozma) */
     const yeni = kaydedilenler.filter(f => f.id !== id);
-    writeKaydedilenler(yeni);
+    writeKaydedilenler(yeni.filter(f => !f._sunucuOzet)); // localStorage'da sadece yerel kalır
     setKaydedilenler(yeni);
+    notifOk('SİLİNDİ', file.sahipAd + ' — ' + file.plaka);
   };
 
   /* ═══ EXCEL EXPORT — KOMPLE (İHBAR FÖYÜ + PARÇA LİSTESİ) ═══
