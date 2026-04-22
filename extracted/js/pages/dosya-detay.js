@@ -1523,11 +1523,14 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           <FormGroup label="DOSYA SORUMLUSU (PERSONEL)">
             <select value={editForm.sorumlu_id || ''} onChange={e => u('sorumlu_id', e.target.value)} style={{...S.select,padding:'8px 10px',fontSize:11}}>
               <option value="">SORUMLU SEÇİNİZ</option>
-              {personeller.map(p => (
-                <option key={p.id} value={p.user_id || p.id}>
-                  {p.ad_soyad}{p.departman ? ` (${p.departman})` : ''}
-                </option>
-              ))}
+              {personeller.map(p => {
+                const hasUser = !!p.user_id;
+                return (
+                  <option key={p.id} value={hasUser ? p.user_id : ''} disabled={!hasUser}>
+                    {p.ad_soyad}{p.departman ? ` (${p.departman})` : ''}{!hasUser ? ' — KULLANICI HESABI YOK' : ''}
+                  </option>
+                );
+              })}
             </select>
           </FormGroup>
           <FormGroup label="PAYDAŞ (YÖNLENDİREN)">

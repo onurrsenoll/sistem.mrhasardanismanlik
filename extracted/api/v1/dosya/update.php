@@ -70,6 +70,44 @@ try {
         'acilis_tarihi', 'sorumlu_sigorta', 'surucu_ad', 'surucu_ehliyet', 'surucu_kusur',
         'sigorta_brans', 'eksper_firma', 'onarim_servisi'];
 
+    /* v7 DÜZELTME: FK doğrulamaları — "Integrity constraint violation 1452"yi önler.
+     * sorumlu_id  → users tablosunda aranır; yoksa personel.user_id üzerinden çözülür;
+     *               hâlâ yoksa "kullanıcı hesabı olmayan personel" hatası.
+     * avukat_id   → ortaklar tablosunda kontrol.
+     * paydas_id   → paydaslar tablosunda kontrol.
+     * Yanlış ID gelirse 422 + anlamlı mesaj (önceden 500 FK hatası dönerdi). */
+    if (!empty($body['sorumlu_id'])) {
+        $sid = (int)$body['sorumlu_id'];
+        $chk = $db->prepare('SELECT id FROM users WHERE id = ?');
+        $chk->execute([$sid]);
+        if (!$chk->fetch()) {
+            // Users'da yok → belki personel.id gönderilmiş, user_id'sine çevirmeyi dene
+            $pChk = $db->prepare('SELECT user_id FROM personel WHERE id = ?');
+            $pChk->execute([$sid]);
+            $pr = $pChk->fetch();
+            if ($pr && !empty($pr['user_id'])) {
+                $body['sorumlu_id'] = (int)$pr['user_id'];
+            } else {
+                json_error('Seçilen personelin KULLANICI HESABI YOK. Önce sistem > kullanıcılar\'dan bu personele hesap açın, sonra sorumlu atayın.', 422);
+            }
+        }
+    }
+    if (!empty($body['avukat_id'])) {
+        $chk = $db->prepare('SELECT id FROM ortaklar WHERE id = ?');
+        $chk->execute([(int)$body['avukat_id']]);
+        if (!$chk->fetch()) json_error('Seçilen avukat/iş ortağı bulunamadı', 422);
+    }
+    if (!empty($body['ortak_id'])) {
+        $chk = $db->prepare('SELECT id FROM ortaklar WHERE id = ?');
+        $chk->execute([(int)$body['ortak_id']]);
+        if (!$chk->fetch()) json_error('Seçilen iş ortağı bulunamadı', 422);
+    }
+    if (!empty($body['paydas_id'])) {
+        $chk = $db->prepare('SELECT id FROM paydaslar WHERE id = ?');
+        $chk->execute([(int)$body['paydas_id']]);
+        if (!$chk->fetch()) json_error('Seçilen paydaş bulunamadı', 422);
+    }
+
     $sets = [];
     $params = [];
 
