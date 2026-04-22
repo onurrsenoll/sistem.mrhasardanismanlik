@@ -268,6 +268,12 @@ MR.api = {
   mailSync(d) { return this.req('/mail/sync.php', { method: 'POST', body: JSON.stringify(d) }, 60000); },
   mailIslem(d) { return this.req('/mail/islem.php', { method: 'PUT', body: JSON.stringify(d) }); },
   mailTest(d) { return this.req('/mail/test.php', { method: 'POST', body: JSON.stringify(d) }, 30000); },
+  // Mail şablonları + otomatik tetikleyici
+  mailSablonlar() { return this.req('/mail/sablonlar.php'); },
+  mailSablonKaydet(d) { return this.req('/mail/sablonlar.php', { method: 'POST', body: JSON.stringify(d) }); },
+  mailSablonGuncelle(d) { return this.req('/mail/sablonlar.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  mailSablonSil(id) { return this.req('/mail/sablonlar.php?id=' + id, { method: 'DELETE' }); },
+  mailTetikle(d) { return this.req('/mail/tetikle.php', { method: 'POST', body: JSON.stringify(d) }); },
   // ARAÇ KATALOG
   aracMarkaList() { return this.req('/tanim/arac-marka-list.php'); },
   aracModelList(marka) { return this.req('/tanim/arac-model-list.php?marka=' + encodeURIComponent(marka)); },
