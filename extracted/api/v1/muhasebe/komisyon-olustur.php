@@ -43,8 +43,12 @@ $paydasId = !empty($body['paydas_id']) ? (int)$body['paydas_id'] : null;
 $personelId = !empty($body['personel_id']) ? (int)$body['personel_id'] : null;
 $oran = isset($body['oran']) ? (float)$body['oran'] : null;
 $aciklama = clean($body['aciklama'] ?? '');
+$beklenenTarih = !empty($body['beklenen_tarih']) ? clean($body['beklenen_tarih']) : null;
 
 if ($tutar <= 0) json_error('Tutar 0\'dan büyük olmalı', 422);
+
+// beklenen_tarih kolonu yoksa ekle (güvenli DDL)
+try { $db->exec("ALTER TABLE komisyonlar ADD COLUMN IF NOT EXISTS beklenen_tarih DATE DEFAULT NULL"); } catch (\Exception $e) {}
 
 // Dosya kontrolü
 if ($dosyaId) {
@@ -85,7 +89,7 @@ if ($personelId) {
 }
 
 try {
-    $stmt = $db->prepare('INSERT INTO komisyonlar (dosya_id, komisyon_turu, tutar, oran, ortak_id, paydas_id, personel_id, aciklama, odendi, kullanici_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)');
+    $stmt = $db->prepare('INSERT INTO komisyonlar (dosya_id, komisyon_turu, tutar, oran, ortak_id, paydas_id, personel_id, aciklama, beklenen_tarih, odendi, kullanici_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)');
     $stmt->execute([
         $dosyaId,
         $komisyonTuru,
@@ -95,6 +99,7 @@ try {
         $paydasId,
         $personelId,
         $aciklama,
+        $beklenenTarih,
         $user['id']
     ]);
     $komisyonId = (int)$db->lastInsertId();

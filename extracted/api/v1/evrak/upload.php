@@ -45,7 +45,7 @@ $file = $_FILES['file'];
 
 // Boyut kontrolü
 if ($file['size'] > MAX_FILE_SIZE) {
-    json_error('Dosya boyutu en fazla 20MB olabilir', 422);
+    json_error('Dosya boyutu en fazla 512MB olabilir', 422);
 }
 
 // MIME type kontrolü (PDF, resim, DOCX)

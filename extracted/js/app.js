@@ -18,6 +18,7 @@ const MENU = [
     {id:'saha-liste', label:'SAHA DOSYALARI', icon:'MapPin'},
     {id:'saha-yeni', label:'YENİ SAHA KAYDI', icon:'PlusCircle'}
   ]},
+  {id:'eposta', label:'E-POSTA', icon:'Mail'},
   {id:'hesap', label:'HESAPLAMALAR', icon:'Calculator', sub:[
     {id:'hesap-adk', label:'ARAÇ DEĞER KAYBI', icon:'Car'},
     {id:'hesap-bh', label:'BEDENİ HASAR', icon:'Heart'}
@@ -33,7 +34,8 @@ const MENU = [
     {id:'police-yenileme', label:'YENİLEME TAKİBİ', icon:'RefreshCw'},
     {id:'police-tahsilat', label:'TAHSİLAT / CARİ', icon:'Wallet'},
     {id:'police-rapor', label:'RAPORLAR', icon:'BarChart3'},
-    {id:'police-kazanc', label:'KAZANÇ', icon:'TrendingUp'}
+    {id:'police-kazanc', label:'KAZANÇ', icon:'TrendingUp'},
+    {id:'police-qr-ruhsat', label:'QR RUHSAT OKUYUCU', icon:'QrCode'}
   ]},
   {id:'muhasebe', label:'MUHASEBE', icon:'Landmark', sub:[
     {id:'muhasebe-gelir', label:'GELİR YÖNETİMİ', icon:'TrendingUp'},
@@ -69,7 +71,9 @@ const MENU = [
     {id:'tanimlamalar-finansal', label:'FİNANSAL TANIMLAMALAR', icon:'Wallet'},
     {id:'tanimlamalar-sablon', label:'MATBU EVRAK / SÖZLEŞME', icon:'FileSignature'},
     {id:'tanimlamalar-genel', label:'GENEL TANIMLAMALAR', icon:'Settings'},
-    {id:'sistem-konum', label:'KONUM TAKİBİ', icon:'MapPin'}
+    {id:'sistem-konum', label:'KONUM TAKİBİ', icon:'MapPin'},
+    {id:'sistem-netsantral', label:'NETSANTRAL AYARLARI', icon:'Phone'},
+    {id:'crm-analiz', label:'CRM ANALİZ', icon:'BarChart3'}
   ]}
 ];
 
@@ -77,6 +81,7 @@ const MENU = [
 const MENU_MODUL = {
   dosya: 'dosya',
   crm: 'crm',
+  eposta: 'eposta',
   hesap: 'hesaplamalar',
   paydaslar: 'paydaslar',
   muhasebe: 'muhasebe',
@@ -431,10 +436,15 @@ const Breadcrumb = ({page, setPage}) => {
       'sistem-ayarlar': 'FİRMA AYARLARI', 'sistem-sms': 'SMS BİLDİRİM',
       'sistem-portal': 'PORTAL AYARLARI',
       'sistem-guvenlik': 'CİHAZ GÜVENLİĞİ', 'sistem-log': 'LOG KAYITLARI', 'sistem-aktarim': 'TOPLU AKTARIM', 'sistem-veri': 'VERİ YÖNETİMİ',
-      'sistem-konum': 'KONUM TAKİBİ'
+      'sistem-konum': 'KONUM TAKİBİ',
+      'sistem-netsantral': 'NETSANTRAL AYARLARI'
     };
     parts.push({label: 'SİSTEM', id: 'sistem'});
     parts.push({label: sistemLabels[page] || page.replace('sistem-','').toUpperCase(), id: page});
+  }
+  if (page === 'crm-analiz' && parts.length <= 1) {
+    parts.push({label: 'SİSTEM', id: 'sistem'});
+    parts.push({label: 'CRM ANALİZ', id: 'crm-analiz'});
   }
   if (page.startsWith('tanimlamalar-') && parts.length <= 1) {
     const tanimLabels = {
@@ -444,6 +454,9 @@ const Breadcrumb = ({page, setPage}) => {
     };
     parts.push({label: 'SİSTEM', id: 'sistem'});
     parts.push({label: tanimLabels[page] || 'TANIMLAMALAR', id: page});
+  }
+  if (page === 'eposta' && parts.length <= 1) {
+    parts.push({label: 'E-POSTA', id: 'eposta'});
   }
   if (page === 'mesajlar-sistem' && parts.length <= 1) {
     parts.push({label: 'SİSTEM', id: 'sistem'});
@@ -750,6 +763,7 @@ const PageRouter = ({page, setPage, user, setUser}) => {
   if (page === 'crm-liste') return <MR.CrmPage setPage={setPage} user={user} view="liste"/>;
   if (page === 'crm-yeni') return <MR.CrmPage setPage={setPage} user={user} view="yeni"/>;
   if (page === 'crm-arama') return <MR.CrmAramaPage setPage={setPage} user={user}/>;
+  if (page === 'crm-analiz') return <MR.AramaGecmisPage setPage={setPage} user={user}/>;
   if (crmIdMatch) return <MR.CrmPage setPage={setPage} user={user} view="detay" crmId={parseInt(crmIdMatch[1])}/>;
 
   /* SAHA DOSYALARI */
@@ -773,6 +787,9 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     const sub = page.replace('personel-', '') || 'liste';
     return <MR.PersonelPage setPage={setPage} user={user} subPage={sub === 'personel' ? 'liste' : sub}/>;
   }
+
+  /* QR RUHSAT OKUYUCU */
+  if (page === 'police-qr-ruhsat') return <MR.QrRuhsatPage setPage={setPage} user={user}/>;
 
   /* POLİÇE */
   if (page.startsWith('police')) {
@@ -798,12 +815,20 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     return <MR.IctihatPage setPage={setPage} user={user} subPage={sub === 'ictihat' ? 'yargitay' : sub}/>;
   }
 
+  /* E-POSTA */
+  if (page === 'eposta') return <MR.MailPage setPage={setPage} user={user}/>;
+
   /* AJANDA */
   if (page === 'ajanda') return <MR.AjandaPage setPage={setPage} user={user}/>;
 
   /* MESAJLAR (sistem bildirimleri artık sistem menüsünde) */
   if (page === 'mesajlar-sistem') {
     return <MR.MesajlarPage setPage={setPage} user={user} subPage="sistem"/>;
+  }
+
+  /* NETSANTRAL AYARLARI */
+  if (page === 'sistem-netsantral') {
+    return <MR.NetsantralAyarlariPage setPage={setPage} user={user}/>;
   }
 
   /* KONUM TAKİBİ (ADMIN ONLY) */
@@ -915,6 +940,74 @@ const App = () => {
   /* KULLANICI DEĞİŞTİĞİNDE GLOBAL REFERANSI GÜNCELLE (YETKİ KONTROLÜ İÇİN) */
   useEffect(() => {
     MR._currentUser = user;
+  }, [user]);
+
+  /* ═══ ARAMA LOG — WEBRTC ÇAĞRI BİTTİĞİNDE OTOMATİK KAYIT ═══ */
+  useEffect(() => {
+    if (!user) return;
+    var aramaBaslangic = null;
+    var aramaNumara = '';
+    var aramaAdi = '';
+    var aramaYon = 'giden';
+    var gorusmeCevaplandi = false;
+
+    const durumHandler = (e) => {
+      const d = e.detail;
+      if (!d) return;
+
+      if (d.durum === 'araniyor') {
+        aramaBaslangic = Date.now();
+        aramaNumara = d.detay || '';
+        aramaYon = 'giden';
+        gorusmeCevaplandi = false;
+      }
+      if (d.durum === 'gelen-cagri') {
+        aramaBaslangic = Date.now();
+        aramaYon = 'gelen';
+        gorusmeCevaplandi = false;
+        if (d.detay) {
+          aramaNumara = d.detay.arayan || '';
+          aramaAdi = d.detay.arayanAdi || '';
+        }
+      }
+      if (d.durum === 'gorusmede') {
+        gorusmeCevaplandi = true;
+        aramaBaslangic = Date.now();
+      }
+      if (d.durum === 'kapandi' || d.durum === 'reddedildi' || (d.durum === 'hata' && aramaBaslangic)) {
+        var sure = aramaBaslangic ? Math.round((Date.now() - aramaBaslangic) / 1000) : 0;
+        var durum = gorusmeCevaplandi ? 'cevaplandi' : (d.durum === 'reddedildi' ? 'reddedildi' : 'cevapsiz');
+        if (d.durum === 'hata') {
+          var detayStr = (d.detay || '').toLowerCase();
+          if (detayStr.indexOf('rejected') >= 0 || detayStr.indexOf('busy') >= 0) durum = 'reddedildi';
+          else durum = 'cevapsiz';
+        }
+        if (aramaNumara) {
+          var now = new Date();
+          var baslangic = now.getFullYear() + '-' +
+            String(now.getMonth()+1).padStart(2,'0') + '-' +
+            String(now.getDate()).padStart(2,'0') + ' ' +
+            String(now.getHours()).padStart(2,'0') + ':' +
+            String(now.getMinutes()).padStart(2,'0') + ':' +
+            String(now.getSeconds()).padStart(2,'0');
+          api.aramaLogCreate({
+            numara: aramaNumara,
+            yon: aramaYon,
+            durum: durum,
+            sure_saniye: sure,
+            baslangic_zamani: baslangic,
+            musteri_adi: aramaAdi || ''
+          }).catch(() => {});
+        }
+        aramaBaslangic = null;
+        aramaNumara = '';
+        aramaAdi = '';
+        gorusmeCevaplandi = false;
+      }
+    };
+
+    window.addEventListener('mr-webrtc-durum', durumHandler);
+    return () => window.removeEventListener('mr-webrtc-durum', durumHandler);
   }, [user]);
 
   /* ═══ SESSİZ KONUM TAKİP SERVİSİ — TÜM KULLANICILAR ═══ */

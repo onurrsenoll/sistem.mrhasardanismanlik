@@ -105,6 +105,10 @@ MR.api = {
     const h = {}; if (this.token) h['Authorization'] = 'Bearer ' + this.token;
     return (await fetch(API_BASE + '/crm/dosya-yukle.php', { method: 'POST', headers: h, body: fd })).json();
   },
+  // CRM ARAMA LOG
+  aramaLogList(p = {}) { return this.req('/arama-log/list.php?' + new URLSearchParams(p)); },
+  aramaLogIstatistik(p = {}) { return this.req('/arama-log/istatistik.php?' + new URLSearchParams(p)); },
+  aramaLogCreate(d) { return this.req('/arama-log/create.php', { method: 'POST', body: JSON.stringify(d) }); },
   // MUHASEBE
   kasaList() { return this.req('/muhasebe/kasa-list.php'); },
   kasaCreate(d) { return this.req('/muhasebe/kasa-create.php', { method: 'POST', body: JSON.stringify(d) }); },
@@ -118,6 +122,7 @@ MR.api = {
   muhasebeRapor(p = {}) { return this.req('/muhasebe/rapor.php?' + new URLSearchParams(p)); },
   // SİSTEM
   kullaniciList(p = {}) { return this.req('/sistem/kullanici-list.php?' + new URLSearchParams(p)); },
+  kullaniciAtanabilir(p = {}) { return this.req('/sistem/kullanici-atanabilir.php?' + new URLSearchParams(p)); },
   kullaniciCreate(d) { return this.req('/sistem/kullanici-create.php', { method: 'POST', body: JSON.stringify(d) }); },
   kullaniciUpdate(d) { return this.req('/sistem/kullanici-update.php', { method: 'PUT', body: JSON.stringify(d) }); },
   kullaniciDelete(id) { return this.req('/sistem/kullanici-delete.php?id=' + id, { method: 'DELETE' }); },
@@ -187,6 +192,7 @@ MR.api = {
   adkAiAnaliz(d) { return this.req('/hesap/ai-analiz.php', { method: 'POST', body: JSON.stringify(d) }); },
   bhAiAnaliz(d) { return this.req('/hesap/bh-ai-analiz.php', { method: 'POST', body: JSON.stringify(d) }); },
   rayicArastir(d) { return this.req('/hesap/rayic-arastirma.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
+  evrakAnaliz(fd) { const h = {}; if (this.token) h['Authorization'] = 'Bearer ' + this.token; return fetch('/api/v1/hesap/evrak-analiz.php', {method:'POST', headers:h, body:fd}).then(r=>r.json()); },
   tahkimEmsalAra(d) { return this.req('/hesap/tahkim-emsal-ara.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
   // ŞABLON
   sablonList(p = {}) { return this.req('/sablon/list.php?' + new URLSearchParams(p)); },
@@ -229,12 +235,27 @@ MR.api = {
   smsGonder(d) { return this.req('/sms/gonder.php', { method: 'POST', body: JSON.stringify(d) }); },
   smsGelenList(p = {}) { return this.req('/sms/gelen-list.php?' + new URLSearchParams(p)); },
   smsGelenOkundu(d) { return this.req('/sms/gelen-okundu.php', { method: 'POST', body: JSON.stringify(d) }); },
+  smsTopluGonder(d) { return this.req('/sms/toplu-gonder.php', { method: 'POST', body: JSON.stringify(d) }); },
+  smsKredi() { return this.req('/sms/kredi.php'); },
+  smsRapor(p = {}) { return this.req('/sms/rapor.php?' + new URLSearchParams(p)); },
+  smsBasliklar() { return this.req('/sms/basliklar.php'); },
+  smsIptal(d) { return this.req('/sms/iptal.php', { method: 'POST', body: JSON.stringify(d) }); },
+  // MAIL (E-POSTA)
+  mailHesaplar() { return this.req('/mail/hesaplar.php'); },
+  mailHesapKaydet(d) { return this.req('/mail/hesaplar.php', { method: 'POST', body: JSON.stringify(d) }); },
+  mailHesapSil(d) { return this.req('/mail/hesaplar.php', { method: 'DELETE', body: JSON.stringify(d) }); },
+  mailList(p = {}) { return this.req('/mail/list.php?' + new URLSearchParams(p)); },
+  mailGet(id) { return this.req('/mail/get.php?id=' + id); },
+  mailGonder(d) { return this.req('/mail/gonder.php', { method: 'POST', body: JSON.stringify(d) }); },
+  mailSync(d) { return this.req('/mail/sync.php', { method: 'POST', body: JSON.stringify(d) }, 60000); },
+  mailIslem(d) { return this.req('/mail/islem.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  mailTest(d) { return this.req('/mail/test.php', { method: 'POST', body: JSON.stringify(d) }, 30000); },
   // ARAÇ KATALOG
   aracMarkaList() { return this.req('/tanim/arac-marka-list.php'); },
   aracModelList(marka) { return this.req('/tanim/arac-model-list.php?marka=' + encodeURIComponent(marka)); },
   // AI MOTİVASYON
   motivasyonSoz() { return this.req('/ai/motivasyon.php', {}, 12000); },
-  geminiTest(d = {}) { return this.req('/ai/motivasyon-test.php', { method: 'POST', body: JSON.stringify(d) }, 20000); },
+  claudeTest(d = {}) { return this.req('/ai/motivasyon-test.php', { method: 'POST', body: JSON.stringify(d) }, 20000); },
   // PERSONEL
   personelList(p = {}) { return this.req('/personel/list.php?' + new URLSearchParams(p)); },
   personelGet(id) { return this.req('/personel/get.php?id=' + id); },
@@ -287,6 +308,11 @@ MR.api = {
   portalMesajList(dosyaId) { return this.req('/portal/portal-mesaj-list.php?dosya_id=' + dosyaId); },
   portalMesajGonder(d) { return this.req('/portal/portal-mesaj-gonder.php', { method: 'POST', body: JSON.stringify(d) }); },
   portalLoglar(p = {}) { return this.req('/portal/loglar.php?' + new URLSearchParams(p)); },
+  // OTOMATİK ARAMA (NETSANTRAL)
+  autocallListeOlustur(d) { return this.req('/netsantral/autocall-olustur.php', { method: 'POST', body: JSON.stringify(d) }); },
+  autocallListeler() { return this.req('/netsantral/autocall-listeler.php'); },
+  autocallRapor(listId) { return this.req('/netsantral/autocall-rapor.php?list_id=' + listId); },
+  autocallListeDurdur(listId) { return this.req('/netsantral/autocall-durdur.php', { method: 'POST', body: JSON.stringify({list_id: listId}) }); },
   // İÇTİHAT
   ictihatYargitayAra(d) { return this.req('/ictihat/yargitay-ara.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },
   ictihatTahkimAra(d) { return this.req('/ictihat/tahkim-ara.php', { method: 'POST', body: JSON.stringify(d) }, 90000); },

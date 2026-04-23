@@ -25,6 +25,16 @@ $stmt->execute([$id]);
 $kayit = $stmt->fetch();
 if (!$kayit) json_error('Yönlendirme kaydı bulunamadı', 404);
 
+// Rol bazlı gizlilik: personel sadece kendine atanmış / kendi yüklediği kaydı görebilir
+$rolGorebilirTumu = in_array($user['rol'], ['admin', 'uzman', 'avukat'], true);
+if (!$rolGorebilirTumu) {
+    $atanan = (int)($kayit['atanan_id'] ?? 0);
+    $olusturan = (int)($kayit['created_by'] ?? 0);
+    if ($atanan !== (int)$user['id'] && $olusturan !== (int)$user['id']) {
+        json_error('Bu kayıt için yetkiniz yok', 403);
+    }
+}
+
 // Notları getir
 $stmt = $db->prepare('SELECT yn.*, u.ad_soyad as ekleyen_adi
     FROM yonlendirme_notlar yn

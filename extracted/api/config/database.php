@@ -8,7 +8,7 @@ define('JWT_SECRET', 'mr-hasar-2025-gizli-anahtar-' . md5(DB_PASS));
 define('JWT_EXPIRE', 86400);
 
 define('UPLOAD_DIR', dirname(__DIR__, 2) . '/uploads/');
-define('MAX_FILE_SIZE', 20 * 1024 * 1024);
+define('MAX_FILE_SIZE', 512 * 1024 * 1024);
 define('ALLOWED_TYPES', array('application/pdf', 'image/jpeg', 'image/png', 'image/svg+xml', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'));
 
 date_default_timezone_set('Europe/Istanbul');

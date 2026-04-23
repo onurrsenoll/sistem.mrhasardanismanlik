@@ -2,7 +2,7 @@
 /**
  * MR HASAR DANIŞMANLIK - POLİÇE LİMİT TABLOLARI
  * Yıllara göre sigorta poliçe limitleri AI destekli arama
- * Gemini AI ile gerçek zamanlı limit araştırması
+ * Claude AI ile limit araştırması
  */
 
 ob_start(); error_reporting(0);
@@ -80,18 +80,18 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER:
 
 $systemPrompt = "Sen bir Türk sigorta uzmanısın. Türkiye'deki tüm sigorta branşlarının poliçe limitleri, teminat tutarları ve yıllara göre değişimleri konusunda derin bilgiye sahipsin. Hazine ve Maliye Bakanlığı, SEDDK (Sigortacılık ve Özel Emeklilik Düzenleme ve Denetleme Kurumu) tarafından belirlenen resmi limitleri biliyorsun. Yanıtını SADECE JSON formatında ver. Tutarları TL cinsinden, sayı olarak (string değil) ver.";
 
-// AI API çağrısı (Gemini/OpenAI/Claude otomatik)
+// AI API çağrısı (Claude API)
 $aiResult = callAIWithDetail($apiKey, $systemPrompt, $prompt, ['temperature' => 0.2, 'maxTokens' => 8192, 'timeout' => 60]);
 $text = $aiResult['text'];
 
-// Başarısızsa fallback key'leri dene
-if (empty($text) && !empty($keys['fallbacks'])) {
-    foreach ($keys['fallbacks'] as $fbKey) {
-        $aiResult = callAIWithDetail($fbKey, $systemPrompt, $prompt, ['temperature' => 0.2, 'maxTokens' => 8192, 'timeout' => 60]);
-        $text = $aiResult['text'];
-        if (!empty($text)) break;
-    }
-}
+
+
+
+
+
+
+
+
 
 if (empty($text)) {
     $errMsg = 'AI YANIT ALINAMADI';

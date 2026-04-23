@@ -22,10 +22,21 @@ $stmt->execute([$id]);
 $kayit = $stmt->fetch();
 if (!$kayit) json_error('Yönlendirme kaydı bulunamadı', 404);
 
+// Rol bazlı erişim: personel sadece kendine atanmış veya kendi yüklediği kaydı güncelleyebilir
+$rolGorebilirTumu = in_array($user['rol'], ['admin', 'uzman', 'avukat'], true);
+if (!$rolGorebilirTumu) {
+    $atanan = (int)($kayit['atanan_id'] ?? 0);
+    $olusturan = (int)($kayit['created_by'] ?? 0);
+    if ($atanan !== (int)$user['id'] && $olusturan !== (int)$user['id']) {
+        json_error('Bu kayıt için yetkiniz yok', 403);
+    }
+}
+
 $fields = ['sira_no', 'yonlendiren', 'yonlendirme_tarihi', 'kaza_turu', 'magdur_ad_soyad',
     'magdur_telefon', 'magdur_il', 'magdur_ilce', 'magdur_tc', 'gorusme_tarihi',
     'durum', 'alinmama_nedeni', 'son_durum', 'sonraki_arama', 'atanan_id',
-    'donusen_crm_id', 'donusen_dosya_id', 'batch_id'];
+    'donusen_crm_id', 'donusen_dosya_id', 'batch_id',
+    'dosya_turu', 'plaka', 'sigorta_sirket', 'kusur_durumu', 'maluliyet', 'kaza_pozisyonu', 'guncel_durum'];
 
 $sets = [];
 $params = [];

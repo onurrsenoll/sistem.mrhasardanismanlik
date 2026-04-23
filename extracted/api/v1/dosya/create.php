@@ -363,6 +363,22 @@ try {
         }
     }
 
+    // ═══ 5d. NOTER VEKALET MASRAFI ═══
+    $noterVekalet = !empty($body['noter_vekalet']) ? (float)$body['noter_vekalet'] : 0;
+    if ($noterVekalet > 0) {
+        $stmtNV = $db->prepare('INSERT INTO masraflar (dosya_id, masraf_kalemi, tutar, kasa_id, aciklama, islem_tarihi, kullanici_id, odeme_durumu) VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?)');
+        $stmtNV->execute([
+            $dosyaId,
+            'NOTER VEKALET MASRAFI',
+            $noterVekalet,
+            null,
+            'DOSYA ACILIS - NOTER VEKALET UCRETI',
+            $user['id'],
+            'odenmedi'
+        ]);
+        $otoPrimBilgi['noter_vekalet'] = $noterVekalet;
+    }
+
     // ═══ DOSYA SÜRECİ: İLK KAYIT ═══
     try {
         $stmtSurec = $db->prepare("INSERT INTO dosya_surecler (dosya_id, baslik, detay, islem_tipi, created_at) VALUES (?, ?, ?, 'sistem', NOW())");
@@ -453,6 +469,44 @@ try {
         // Portal hatası dosya oluşturmayı engellemez
     }
 
+    // ═══ 7. AVUKATA (İŞ ORTAĞI) SMS BİLDİRİMİ ═══
+    $avukatSmsBilgi = null;
+    try {
+        $ortakId = !empty($body['ortak_id']) ? (int)$body['ortak_id'] : null;
+        if ($ortakId) {
+            $stmtAv = $db->prepare("SELECT id, ad_soyad, telefon, firma FROM ortaklar WHERE id = ? AND durum = 'aktif'");
+            $stmtAv->execute([$ortakId]);
+            $avukat = $stmtAv->fetch();
+
+            if ($avukat && !empty($avukat['telefon'])) {
+                require_once __DIR__ . '/../../config/sms_helper.php';
+
+                $firmaAdiAv = 'MR HASAR DANISMANLIK';
+                try {
+                    $stmtFav = $db->query("SELECT deger FROM ayarlar WHERE anahtar = 'firma_adi' LIMIT 1");
+                    $favRow = $stmtFav->fetch();
+                    if ($favRow && !empty($favRow['deger'])) $firmaAdiAv = $favRow['deger'];
+                } catch (\Exception $e) {}
+
+                $musteriAdi = clean($body['ad_soyad']);
+                $dosyaTuruTam = $dosyaTuru === 'ADK' ? 'Arac Deger Kaybi' : ($dosyaTuru === 'BH' ? 'Bedeni Hasar' : $dosyaTuru);
+                $sigortaSirket = clean($body['sigorta_sirket'] ?? '-');
+
+                $avTelNorm = sms_telefon_normalize($avukat['telefon']);
+                $avukatMesaj = "Sayin {$avukat['ad_soyad']}, tarafiniza yeni bir dosya atanmistir. Dosya No: {$dosyaNo} | Tur: {$dosyaTuruTam} | Musteri: {$musteriAdi} | Sigorta: {$sigortaSirket} | Asama: Dosya Acik - {$firmaAdiAv}";
+
+                $avukatSms = sms_gonder($avTelNorm ?: $avukat['telefon'], $avukatMesaj, $dosyaId, $user['id']);
+
+                $avukatSmsBilgi = [
+                    'avukat_adi' => $avukat['ad_soyad'],
+                    'sms_gonderildi' => $avukatSms['basarili'] ?? false
+                ];
+            }
+        }
+    } catch (\Exception $e) {
+        // Avukat SMS hatası dosya oluşturmayı engellemez
+    }
+
     $mesaj = 'Dosya başarıyla oluşturuldu';
     if (!empty($otoPrimBilgi['personel_prim'])) {
         $mesaj .= ' | PERSONEL PRİMİ: ₺' . number_format($otoPrimBilgi['personel_prim'], 2, ',', '.') . ' HAKEDİŞE YAZILDI';
@@ -467,13 +521,17 @@ try {
     if ($portalBilgi) {
         $mesaj .= ' | PORTAL ERİŞİMİ OTOMATİK OLUŞTURULDU';
     }
+    if (!empty($avukatSmsBilgi['sms_gonderildi'])) {
+        $mesaj .= ' | AVUKATA SMS BİLDİRİMİ GÖNDERİLDİ (' . $avukatSmsBilgi['avukat_adi'] . ')';
+    }
 
     json_success([
         'dosya_id' => $dosyaId,
         'dosya_no' => $dosyaNo,
         'hasar_no' => $hasar_no,
         'oto_prim' => $otoPrimBilgi,
-        'portal' => $portalBilgi
+        'portal' => $portalBilgi,
+        'avukat_sms' => $avukatSmsBilgi
     ], $mesaj, 201);
 
 } catch (\Exception $e) {
