@@ -120,7 +120,7 @@ const LocalMedyaZone = ({files, setFiles}) => {
         <div style={{fontSize:13,fontWeight:600,color:C.text,marginBottom:4}}>
           DOSYA YÜKLEMEK İÇİN TIKLAYIN VEYA SÜRÜKLEYİN
         </div>
-        <div style={{fontSize:11,color:C.textMuted}}>JPG, PNG, PDF DOSYALARI DESTEKLENİR (MAX 20MB)</div>
+        <div style={{fontSize:11,color:C.textMuted}}>JPG, PNG, PDF DOSYALARI DESTEKLENİR (MAX 512MB)</div>
         <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,application/pdf"
           onChange={e => {addFiles(e.target.files); e.target.value='';}} style={{display:'none'}}/>
       </div>
@@ -316,7 +316,7 @@ const MedyaUploadZone = ({sahaId, medyalar, setMedyalar}) => {
         <div style={{fontSize:13,fontWeight:600,color:C.text,marginBottom:4}}>
           {yukleniyor ? 'YÜKLENİYOR...' : 'DOSYA YÜKLEMEK İÇİN TIKLAYIN VEYA SÜRÜKLEYİN'}
         </div>
-        <div style={{fontSize:11,color:C.textMuted}}>JPG, PNG, PDF DOSYALARI DESTEKLENİR (MAX 20MB)</div>
+        <div style={{fontSize:11,color:C.textMuted}}>JPG, PNG, PDF DOSYALARI DESTEKLENİR (MAX 512MB)</div>
         <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,application/pdf"
           onChange={e => {yukle(e.target.files); e.target.value='';}} style={{display:'none'}}/>
       </div>
