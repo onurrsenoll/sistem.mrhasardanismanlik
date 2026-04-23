@@ -951,11 +951,30 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                         const f = ev.target.files[0];
                         if (!f) return;
                         const izinli = ['application/pdf','image/jpeg','image/png','image/svg+xml','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-                        if (!izinli.includes(f.type)) { alert('DESTEKLENMEYEN DOSYA TÜRÜ. İZİN VERİLENLER: PDF, JPG, PNG, SVG, DOC, DOCX'); return; }
-                        if (f.size > 512 * 1024 * 1024) { alert('DOSYA BOYUTU EN FAZLA 512MB OLABİLİR'); return; }
-                        const r = await api.evrakUpload(dosya.id, tur, f);
-                        if (r?.success) load();
-                        else alert(r?.error || 'YÜKLEME HATASI');
+                        if (!izinli.includes(f.type)) { alert('DESTEKLENMEYEN DOSYA TÜRÜ. İZİN VERİLENLER: PDF, JPG, PNG, SVG, DOC, DOCX'); ev.target.value=''; return; }
+                        if (f.size > 512 * 1024 * 1024) { alert('DOSYA BOYUTU EN FAZLA 512MB OLABİLİR'); ev.target.value=''; return; }
+                        const boyutMB = (f.size/1024/1024).toFixed(2);
+                        try {
+                          const r = await api.evrakUpload(dosya.id, tur, f);
+                          if (r?.success) load();
+                          else {
+                            const hataMsg = r?.error || 'YÜKLEME HATASI';
+                            // Sunucu limit hatası tespiti
+                            if (hataMsg.includes('PHP limiti') || hataMsg.includes('post_max') || hataMsg.includes('upload_max')) {
+                              alert('SUNUCU PHP LİMİTİ AŞILDI (' + boyutMB + ' MB dosya)\n\n' + hataMsg + '\n\nÇÖZÜM: Admin cPanel → MultiPHP INI Editor\'dan şu değerleri 512M yapmalı:\n- upload_max_filesize\n- post_max_size\n- memory_limit = 1024M');
+                            } else {
+                              alert(hataMsg);
+                            }
+                          }
+                        } catch (e) {
+                          /* HTTP 413 veya network hatası — sunucu ham cevabı */
+                          const msg = (e?.message || '').toString();
+                          if (msg.includes('413') || msg.includes('Request Entity Too Large')) {
+                            alert('SUNUCU DOSYAYI REDDEDİYOR (' + boyutMB + ' MB)\n\nNeden: cPanel PHP INI ayarları düşük kalmış.\nÇözüm: Admin cPanel → MultiPHP INI Editor →\n upload_max_filesize = 512M\n post_max_size = 512M\n memory_limit = 1024M');
+                          } else {
+                            alert('YÜKLEME HATASI: ' + msg);
+                          }
+                        }
                         ev.target.value = '';
                       }}/>
                     </label>

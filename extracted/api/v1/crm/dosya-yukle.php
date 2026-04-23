@@ -29,8 +29,8 @@ if (!$stmt->fetch()) json_error('CRM kaydı bulunamadı', 404);
 $file = $_FILES['file'];
 if ($file['error'] !== UPLOAD_ERR_OK) json_error('Dosya yükleme hatası', 500);
 
-// Dosya boyutu kontrolü (max 50MB)
-if ($file['size'] > 50 * 1024 * 1024) json_error('Dosya boyutu çok büyük (max 50MB)', 422);
+// Dosya boyutu kontrolü (MAX_FILE_SIZE sistem sabiti = 512MB)
+if ($file['size'] > MAX_FILE_SIZE) json_error('Dosya boyutu çok büyük (max ' . round(MAX_FILE_SIZE / 1024 / 1024) . 'MB)', 422);
 
 // Güvenli dosya adı
 $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
