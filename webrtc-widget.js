@@ -219,10 +219,16 @@ MR.WebrtcWidget = ({user, setPage}) => {
   /* ═══════════════════════════════════════
      SADECE GELEN ÇAĞRI POPUP'I - SAĞ ÜST KÖŞE
      Boşta veya aktif görüşmede: HİÇBİR ŞEY RENDER ETME
-     YETKİ KONTROLÜ: Sadece ADMIN görebilir (personel/uzman/avukat YOK).
+
+     YETKİ KONTROLÜ (yetki yönetimine bağlı):
+       - Admin her zaman görür (MR.hasYetki admin için otomatik true)
+       - Diğer kullanıcılar: 'crm-ara' (TELEFON İLE ARAMA YAP) yetkisi varsa görür
+       - Yetki Yönetimi > CRM/SAHA > 'TELEFON İLE ARAMA YAP' ile ayarlanır
      ═══════════════════════════════════════ */
   if (aramaDurumu !== 'gelen') return null;
-  if ((MR._currentUser?.rol || user?.rol) !== 'admin') return null;
+  const _u = MR._currentUser || user;
+  const _yetkiCagri = (_u?.rol === 'admin') || (MR.hasYetki && MR.hasYetki(_u, 'crm', 'crm-ara'));
+  if (!_yetkiCagri) return null;
 
   return (
     <div style={{
