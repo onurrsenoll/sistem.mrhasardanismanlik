@@ -219,8 +219,10 @@ MR.WebrtcWidget = ({user, setPage}) => {
   /* ═══════════════════════════════════════
      SADECE GELEN ÇAĞRI POPUP'I - SAĞ ÜST KÖŞE
      Boşta veya aktif görüşmede: HİÇBİR ŞEY RENDER ETME
+     YETKİ KONTROLÜ: Sadece ADMIN görebilir (personel/uzman/avukat YOK).
      ═══════════════════════════════════════ */
   if (aramaDurumu !== 'gelen') return null;
+  if ((MR._currentUser?.rol || user?.rol) !== 'admin') return null;
 
   return (
     <div style={{

@@ -1400,10 +1400,8 @@ MR._CRMYeniInner = ({setPage}) => {
            * (crm-ara) VEYA Netsantral görüntüleme yetkisi (netsantral-goruntule)
            * olan kullanıcı görür. Bu panel olmadan kullanıcı başlattığı çağrıyı
            * sonlandıramaz, bu yüzden arama yetkisi olanlar daima görmeli. */}
-          {(MR._currentUser?.rol === 'admin' ||
-            (MR.hasYetki && MR.hasYetki(MR._currentUser, 'crm', 'crm-ara')) ||
-            (MR.hasYetki && MR.hasYetki(MR._currentUser, 'netsantral', 'netsantral-goruntule'))
-          ) && <div style={{...S.card, marginBottom:10}}>
+          {/* ÇAĞRI PANELİ — Sadece ADMIN görür. Personel/uzman/avukat GÖRMEZ. */}
+          {MR._currentUser?.rol === 'admin' && <div style={{...S.card, marginBottom:10}}>
             <div style={{...S.cardHead, padding:'8px 12px'}}>
               <LIcon name="Headphones" size={13} color={C.accent}/>
               <span style={{fontSize:11, fontWeight:700}}>ANLIK ÇAĞRI & ANALİZ</span>
