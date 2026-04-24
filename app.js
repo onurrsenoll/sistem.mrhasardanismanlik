@@ -12,7 +12,6 @@ const MENU = [
     {id:'dosya-yeni', label:'YENİ DOSYA', icon:'Plus'}
   ]},
   {id:'crm', label:'CRM / SAHA', icon:'Users', sub:[
-    {id:'crm-liste', label:'CRM LİSTESİ', icon:'List'},
     {id:'crm-yeni', label:'YENİ KAYIT', icon:'UserPlus'},
     {id:'crm-arama', label:'ARAMA LİSTESİ', icon:'PhoneCall'},
     {id:'saha-liste', label:'SAHA DOSYALARI', icon:'MapPin'},

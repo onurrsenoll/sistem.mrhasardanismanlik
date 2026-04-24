@@ -219,16 +219,8 @@ MR.WebrtcWidget = ({user, setPage}) => {
   /* ═══════════════════════════════════════
      SADECE GELEN ÇAĞRI POPUP'I - SAĞ ÜST KÖŞE
      Boşta veya aktif görüşmede: HİÇBİR ŞEY RENDER ETME
-     Yetki kontrolü: Admin VEYA CRM arama yetkisi (crm-ara) VEYA
-     Netsantral görüntüleme yetkisi (netsantral-goruntule) olan kullanıcı.
-     Yetki yoksa widget gösterilmez.
      ═══════════════════════════════════════ */
   if (aramaDurumu !== 'gelen') return null;
-  const _u = MR._currentUser;
-  const _yetkiGelenCagri = (_u?.rol === 'admin') ||
-    (MR.hasYetki && MR.hasYetki(_u, 'crm', 'crm-ara')) ||
-    (MR.hasYetki && MR.hasYetki(_u, 'netsantral', 'netsantral-goruntule'));
-  if (!_yetkiGelenCagri) return null;
 
   return (
     <div style={{
