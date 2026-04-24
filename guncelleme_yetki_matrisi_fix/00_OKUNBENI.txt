@@ -1,0 +1,193 @@
+════════════════════════════════════════════════════════════════════════
+  MR HASAR DANIŞMANLIK — YETKİ MATRİSİ VE ÇAĞRI MERKEZİ GÜNCELLEMESİ
+  Paket Tarihi : 2026-04-24
+  Paket Adı    : mr_hasar_YETKI_MATRISI_FIX_20260424.zip
+════════════════════════════════════════════════════════════════════════
+
+Bu paket AŞAĞIDAKİ SORUNLARI çözmek için hazırlanmıştır:
+
+  1. CRM / SAHA menüsündeki gereksiz "CRM LİSTESİ" kaldırıldı — aynı
+     görevi "ARAMA LİSTESİ" üstlendi.
+
+  2. Gelen Çağrı Widget'ı yetki kontrollü hale getirildi — yetkisiz
+     kullanıcılarda AÇILMAZ.
+
+  3. Çağrı Kontrol Paneli (crm-arama) admin-only olarak korundu —
+     yetki matrisinden izin atanmadıkça personelde GÖRÜNMEZ.
+
+  4. TÜM MODÜL VE ÖZELLİKLER admin yetki matrisine tam entegre edildi.
+     Hard-coded rol kontrolleri kaldırıldı; has_yetki() fonksiyonu
+     üzerinden çalışıyor. Admin bypass korunuyor.
+
+  5. WebRTC/NetSantral bağlantısı SINGLETON yapıldı + sayfa kapanışında
+     düzgün kapatılma (beforeunload). Oturum boyunca BAĞLI KALIR,
+     sayfa geçişinde KOPMAZ. Kullanıcı logout olunca otomatik durdurulur.
+
+════════════════════════════════════════════════════════════════════════
+  🛡️  GÜVENLİK GARANTİLERİ
+════════════════════════════════════════════════════════════════════════
+
+  ✓ Paket AYRI bir isimle gelir — mevcut dosyaların ÜZERİNE YAZMAZ.
+  ✓ `backup_orjinal/` klasöründe değiştirilen dosyaların ORİJİNAL
+    halinin yedeği bulunur.
+  ✓ SQL scripti SADECE INSERT IGNORE kullanır — HİÇBİR VERİ SİLMEZ
+    veya GÜNCELLEMEZ.
+  ✓ Mevcut yetki tablosundaki kayıtlar KORUNUR.
+  ✓ Admin kullanıcılar mevcut davranışlarıyla çalışmaya devam eder.
+
+════════════════════════════════════════════════════════════════════════
+  📦  PAKET İÇERİĞİ
+════════════════════════════════════════════════════════════════════════
+
+  /extracted/                        → Güncellenmiş kaynak dosyalar
+    ├── index.html                   (yeni script'ler eklendi)
+    ├── js/
+    │   ├── app.js                   (menü, breadcrumb, WebRTC entegrasyon)
+    │   ├── webrtc-phone.js          (singleton + beforeunload)
+    │   ├── yetki-kontrol.js         (YENİ — merkezi yetki kütüphanesi)
+    │   ├── call-widget.js           (YENİ — gelen çağrı widget)
+    │   └── pages/
+    │       ├── crm.js               (setPage → crm-arama)
+    │       ├── crm-arama.js         (sayfa yetki kontrolü)
+    │       └── sistem.js            (MODUL_YETKILERI genişletildi)
+    └── api/
+        ├── config/
+        │   └── helpers.php          (YETKI_MAP genişletildi)
+        └── v1/
+            ├── yetki/
+            │   └── migrate.php      (YENİ — migrasyon endpoint'i)
+            ├── yonlendirme/
+            │   └── toplu-islem.php  (has_yetki kullanımı)
+            ├── sistem/
+            │   ├── ayarlar-guncelle.php (hard-coded rol kaldırıldı)
+            │   ├── yetki-guncelle.php   (hard-coded rol kaldırıldı)
+            │   └── yetki-list.php       (hard-coded rol kaldırıldı)
+            └── saha/
+                └── list.php          (yetki matrisine bağlandı)
+
+  /backup_orjinal/                  → Değişen dosyaların orijinal yedeği
+  /sql/yetki_ekle_20260424.sql      → SQL migration (INSERT IGNORE)
+  /00_OKUNBENI.txt                  → Bu dosya
+
+════════════════════════════════════════════════════════════════════════
+  🚀  KURULUM ADIMLARI
+════════════════════════════════════════════════════════════════════════
+
+  ADIM 1 — YEDEKLEME (ZATEN ALINDI AMA GÜVENCE)
+  ---------------------------------------------
+    Sunucuda mevcut sistemi FTP/SSH ile bir kez daha yedekleyin:
+      tar -czvf yedek_20260424.tar.gz /path/to/mrhasar/extracted/
+
+    Veritabanını phpMyAdmin veya komut satırından dışa aktarın:
+      mysqldump -u USER -p DB_ADI > yedek_db_20260424.sql
+
+  ADIM 2 — DOSYALARI KARŞIYA YÜKLEME
+  -----------------------------------
+    `extracted/` klasörünün içindeki TÜM dosyaları sunucunuzdaki
+    mevcut `extracted/` (veya site kök) klasöre yükleyin.
+    → Üzerine yazma işlemi: evet (önceki versiyonları değiştirir).
+    → Mevcut dosya/veri: silinmez.
+
+    Yeni eklenen dosyalar:
+      - extracted/js/yetki-kontrol.js
+      - extracted/js/call-widget.js
+      - extracted/api/v1/yetki/migrate.php
+
+  ADIM 3 — SQL MİGRATİON (İKİ SEÇENEKTEN BİRİ)
+  --------------------------------------------
+    SEÇENEK A (Önerilen — Admin Panel):
+      Sisteme admin olarak girin, tarayıcı konsoluna yapıştırın:
+        fetch('/api/v1/yetki/migrate.php', {
+          method: 'POST',
+          headers: {'Authorization': 'Bearer ' + localStorage.getItem('mr_token')}
+        }).then(r=>r.json()).then(console.log)
+
+    SEÇENEK B (phpMyAdmin):
+      phpMyAdmin > Veritabanınızı seçin > SQL sekmesi >
+      `sql/yetki_ekle_20260424.sql` dosyasının içeriğini yapıştırıp
+      Çalıştır deyin.
+
+    SEÇENEK C (SSH):
+      mysql -u USER -p DB_ADI < sql/yetki_ekle_20260424.sql
+
+  ADIM 4 — TARAYICI CACHE TEMİZLEME
+  ----------------------------------
+    Tarayıcıda CTRL+F5 (veya CMD+SHIFT+R) ile tam yenileme yapın.
+    index.html'de `MR_VERSION` otomatik cache-busting kullanır;
+    yine de zorunlu temiz yenileme önerilir.
+
+  ADIM 5 — YETKİLERİ ADMIN PANELİNDEN DAĞITMA
+  --------------------------------------------
+    SİSTEM > YETKİ YÖNETİMİ ekranında artık şu yeni izinler görünür:
+      • CRM/SAHA > ARAMA LİSTESİ GÖRÜNTÜLE
+      • CRM/SAHA > ARAMA LİSTESİ — EKLE / DÜZENLE / SİL / EXCEL / TOPLU
+      • CRM/SAHA > SAHA — TÜM PERSONEL KAYITLARINI GÖR
+      • ÇAĞRI MERKEZİ > GELEN ÇAĞRI WİDGET
+      • ÇAĞRI MERKEZİ > GİDEN ARAMA YAPMA
+
+    Varsayılan olarak TÜM bu izinler KAPALIDIR (izin=0).
+    Admin olmayan kullanıcılar bu özellikleri ancak admin izin verirse
+    kullanabilir. Admin her zaman tüm izinlere sahiptir (bypass).
+
+════════════════════════════════════════════════════════════════════════
+  ✅  KURULUM SONRASI TEST LİSTESİ
+════════════════════════════════════════════════════════════════════════
+
+  [ ] Admin olarak giriş — menüde CRM / SAHA > sadece "YENİ KAYIT",
+      "ARAMA LİSTESİ", "SAHA DOSYALARI", "YENİ SAHA KAYDI" görünüyor.
+      (CRM LİSTESİ KAYBOLDU.)
+  [ ] Admin, ARAMA LİSTESİ sayfasına girebiliyor.
+  [ ] Personel rolü kullanıcı ile giriş — menüde ARAMA LİSTESİ
+      GÖRÜNMÜYOR (admin yetki vermediyse).
+  [ ] Admin > Yetki Yönetimi > Personel'e ARAMA LİSTESİ GÖRÜNTÜLE
+      izni ver — personel yenileyip listeyi görüyor.
+  [ ] Gelen çağrı geldiğinde widget sadece yetkili kullanıcılarda
+      ekrana geliyor.
+  [ ] Sayfa geçişleri (Dosya Listesi → Ajanda → CRM) sırasında
+      WebRTC bağlantısı KOPMUYOR (konsolda "UA zaten başlatılmış"
+      mesajı görünür — bu doğru davranış).
+  [ ] Logout yapınca WebRTC düzgün kapanıyor.
+
+════════════════════════════════════════════════════════════════════════
+  ↩️  GERİ DÖNÜŞ (Sorun çıkarsa)
+════════════════════════════════════════════════════════════════════════
+
+  Herhangi bir sorun durumunda `backup_orjinal/` klasöründeki orijinal
+  dosyaları geri yükleyin:
+
+    cp backup_orjinal/app.js            extracted/js/app.js
+    cp backup_orjinal/webrtc-phone.js   extracted/js/webrtc-phone.js
+    cp backup_orjinal/crm.js            extracted/js/pages/crm.js
+    cp backup_orjinal/crm-arama.js      extracted/js/pages/crm-arama.js
+    cp backup_orjinal/sistem.js         extracted/js/pages/sistem.js
+    cp backup_orjinal/index.html        extracted/index.html
+    cp backup_orjinal/helpers.php       extracted/api/config/helpers.php
+    cp backup_orjinal/yonlendirme_toplu-islem.php \
+       extracted/api/v1/yonlendirme/toplu-islem.php
+    cp backup_orjinal/sistem_ayarlar-guncelle.php \
+       extracted/api/v1/sistem/ayarlar-guncelle.php
+    cp backup_orjinal/sistem_yetki-guncelle.php \
+       extracted/api/v1/sistem/yetki-guncelle.php
+    cp backup_orjinal/sistem_yetki-list.php \
+       extracted/api/v1/sistem/yetki-list.php
+    cp backup_orjinal/saha_list.php \
+       extracted/api/v1/saha/list.php
+
+  SQL migration geri alma (gerekli değil, veri silmez — ama istenirse):
+    DELETE FROM yetkiler WHERE modul='cagri_merkezi';
+    DELETE FROM yetkiler WHERE modul='crm' AND islem IN (
+      'crm-arama-ekle','crm-arama-duzenle','crm-arama-sil',
+      'crm-arama-excel','crm-arama-toplu-islem','saha-tumunu-gor'
+    );
+
+════════════════════════════════════════════════════════════════════════
+  🆘  DESTEK
+════════════════════════════════════════════════════════════════════════
+
+  Hata durumunda tarayıcı konsolunu (F12) kontrol edin. Log kayıtları:
+    - [YETKI]        → yetki-kontrol.js
+    - [CALL-WIDGET]  → call-widget.js
+    - [WEBRTC]       → webrtc-phone.js
+    - [WEBRTC-AUTO]  → app.js otomatik bağlantı
+
+════════════════════════════════════════════════════════════════════════
