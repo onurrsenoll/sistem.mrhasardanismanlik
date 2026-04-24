@@ -12,6 +12,7 @@ require_method('GET');
 
 $user = auth_required();
 $db = getDB();
+ensure_yonlendirme_columns();
 
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) json_error('Yönlendirme ID gerekli', 422);
@@ -25,14 +26,35 @@ $stmt->execute([$id]);
 $kayit = $stmt->fetch();
 if (!$kayit) json_error('Yönlendirme kaydı bulunamadı', 404);
 
-// Notları getir
+// Rol bazlı gizlilik: personel sadece kendine atanmış / kendi yüklediği kaydı görebilir
+$rolGorebilirTumu = in_array($user['rol'], ['admin', 'uzman', 'avukat'], true);
+if (!$rolGorebilirTumu) {
+    $atanan = (int)($kayit['atanan_id'] ?? 0);
+    $olusturan = (int)($kayit['created_by'] ?? 0);
+    if ($atanan !== (int)$user['id'] && $olusturan !== (int)$user['id']) {
+        json_error('Bu kayıt için yetkiniz yok', 403);
+    }
+}
+
+// Notları getir (her notun o anki durum snapshot'ı dahil)
 $stmt = $db->prepare('SELECT yn.*, u.ad_soyad as ekleyen_adi
     FROM yonlendirme_notlar yn
     LEFT JOIN users u ON u.id = yn.ekleyen_id
     WHERE yn.yonlendirme_id = ?
     ORDER BY yn.created_at DESC');
 $stmt->execute([$id]);
-$kayit['notlar'] = $stmt->fetchAll();
+$notlar = $stmt->fetchAll();
+// durum_snapshot JSON ise parse et; değilse null bırak.
+foreach ($notlar as &$n) {
+    $s = $n['durum_snapshot'] ?? null;
+    $n['snapshot'] = null;
+    if ($s && is_string($s)) {
+        $parsed = json_decode($s, true);
+        if (is_array($parsed)) $n['snapshot'] = $parsed;
+    }
+}
+unset($n);
+$kayit['notlar'] = $notlar;
 
 // Dönüşen CRM bilgisi
 if (!empty($kayit['donusen_crm_id'])) {

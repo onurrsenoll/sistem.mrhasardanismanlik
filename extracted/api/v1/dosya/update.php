@@ -27,6 +27,23 @@ try {
     $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS surucu_tc_kimlik VARCHAR(11) DEFAULT NULL");
     $db->exec("ALTER TABLE araclar ADD COLUMN IF NOT EXISTS ruhsat_sahibi_surucu ENUM('ayni','farkli') DEFAULT NULL");
 } catch (\Exception $e) {}
+
+// DDL Migration: dosyalar tablosu eksik kolonlar
+try {
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS sigorta_brans VARCHAR(50) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS eksper_firma VARCHAR(100) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS onarim_servisi VARCHAR(100) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS bh_kasko TINYINT(1) DEFAULT 0");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_tazminat DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_komisyon DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_noter DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_vekalet DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_faiz DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_stopaj DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_toplam_kazanc DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_mr_kazanc DECIMAL(12,2) DEFAULT NULL");
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS kapanis_mahsup DECIMAL(12,2) DEFAULT NULL");
+} catch (\Exception $e) {}
 $id = (int)$body['id'];
 
 $stmt = $db->prepare('SELECT * FROM dosyalar WHERE id = ?');
@@ -49,7 +66,47 @@ try {
     $dosyaFields = ['asama', 'dosya_turu', 'talep_turu', 'sigorta_sirket', 'police_no', 'sigorta_turu',
         'dosya_kaynagi', 'avukat_id', 'ortak_id', 'sorumlu_id', 'paydas_id', 'haklilik', 'komisyon_orani',
         'kaza_tarihi', 'kaza_il', 'kaza_ilce', 'pozisyon', 'kusur_durumu', 'hasar_no',
-        'sakatlik_aciklama', 'notlar', 'kapanma_tarihi', 'plaka', 'hak_mahrumiyet'];
+        'sakatlik_aciklama', 'notlar', 'kapanma_tarihi', 'plaka', 'hak_mahrumiyet',
+        'acilis_tarihi', 'sorumlu_sigorta', 'surucu_ad', 'surucu_ehliyet', 'surucu_kusur',
+        'sigorta_brans', 'eksper_firma', 'onarim_servisi'];
+
+    /* v7 DÜZELTME: FK doğrulamaları — "Integrity constraint violation 1452"yi önler.
+     * sorumlu_id  → users tablosunda aranır; yoksa personel.user_id üzerinden çözülür;
+     *               hâlâ yoksa "kullanıcı hesabı olmayan personel" hatası.
+     * avukat_id   → ortaklar tablosunda kontrol.
+     * paydas_id   → paydaslar tablosunda kontrol.
+     * Yanlış ID gelirse 422 + anlamlı mesaj (önceden 500 FK hatası dönerdi). */
+    if (!empty($body['sorumlu_id'])) {
+        $sid = (int)$body['sorumlu_id'];
+        $chk = $db->prepare('SELECT id FROM users WHERE id = ?');
+        $chk->execute([$sid]);
+        if (!$chk->fetch()) {
+            // Users'da yok → belki personel.id gönderilmiş, user_id'sine çevirmeyi dene
+            $pChk = $db->prepare('SELECT user_id FROM personel WHERE id = ?');
+            $pChk->execute([$sid]);
+            $pr = $pChk->fetch();
+            if ($pr && !empty($pr['user_id'])) {
+                $body['sorumlu_id'] = (int)$pr['user_id'];
+            } else {
+                json_error('Seçilen personelin KULLANICI HESABI YOK. Önce sistem > kullanıcılar\'dan bu personele hesap açın, sonra sorumlu atayın.', 422);
+            }
+        }
+    }
+    if (!empty($body['avukat_id'])) {
+        $chk = $db->prepare('SELECT id FROM ortaklar WHERE id = ?');
+        $chk->execute([(int)$body['avukat_id']]);
+        if (!$chk->fetch()) json_error('Seçilen avukat/iş ortağı bulunamadı', 422);
+    }
+    if (!empty($body['ortak_id'])) {
+        $chk = $db->prepare('SELECT id FROM ortaklar WHERE id = ?');
+        $chk->execute([(int)$body['ortak_id']]);
+        if (!$chk->fetch()) json_error('Seçilen iş ortağı bulunamadı', 422);
+    }
+    if (!empty($body['paydas_id'])) {
+        $chk = $db->prepare('SELECT id FROM paydaslar WHERE id = ?');
+        $chk->execute([(int)$body['paydas_id']]);
+        if (!$chk->fetch()) json_error('Seçilen paydaş bulunamadı', 422);
+    }
 
     $sets = [];
     $params = [];
@@ -63,7 +120,7 @@ try {
                 $params[] = (int)$body[$field];
             } elseif (in_array($field, ['komisyon_orani'])) {
                 $params[] = (float)$body[$field];
-            } elseif (in_array($field, ['kaza_tarihi', 'kapanma_tarihi'])) {
+            } elseif (in_array($field, ['kaza_tarihi', 'kapanma_tarihi', 'acilis_tarihi'])) {
                 $params[] = !empty($body[$field]) ? $body[$field] : null;
             } else {
                 $params[] = clean($body[$field]);
@@ -110,7 +167,7 @@ try {
 
     // ═══ ARAÇ BİLGİLERİ GÜNCELLE ═══
     // Mağdur araç güncelle
-    $magdurAracFields = ['plaka','ruhsat_sahibi','tc_kimlik','marka','model','model_yili','belge_tescil_no','onarim_gun_suresi','gecmis_hasar'];
+    $magdurAracFields = ['plaka','ruhsat_sahibi','tc_kimlik','marka','model','model_yili','belge_tescil_no','onarim_gun_suresi','gecmis_hasar','kasko'];
     $maPrefix = 'ma_';
     $maSets = [];
     $maParams = [];
@@ -123,6 +180,8 @@ try {
             $maSets[] = "$field = ?";
             if (in_array($field, ['model_yili', 'onarim_gun_suresi'])) {
                 $maParams[] = !empty($body[$key]) ? (int)$body[$key] : null;
+            } elseif ($field === 'kasko') {
+                $maParams[] = !empty($body[$key]) && $body[$key] !== '0' ? 1 : 0;
             } else {
                 $maParams[] = clean($body[$key]);
             }
@@ -183,7 +242,7 @@ try {
             if (in_array($field, ['model_yili'])) {
                 $kaParams[] = !empty($body[$key]) ? (int)$body[$key] : null;
             } elseif ($field === 'kasko') {
-                $kaParams[] = !empty($body[$key]) ? 1 : 0;
+                $kaParams[] = !empty($body[$key]) && $body[$key] !== '0' ? 1 : 0;
             } else {
                 $kaParams[] = clean($body[$key]);
             }
@@ -259,11 +318,60 @@ try {
         }
     }
 
+    // ═══ AVUKAT (İŞ ORTAĞI) DEĞİŞTİĞİNDE SMS BİLDİRİMİ ═══
+    $avukatSmsBilgi = null;
+    if (array_key_exists('ortak_id', $body) && (int)($body['ortak_id'] ?? 0) !== (int)($dosya['ortak_id'] ?? 0) && !empty($body['ortak_id'])) {
+        try {
+            $yeniOrtakId = (int)$body['ortak_id'];
+            $stmtAv = $db->prepare("SELECT id, ad_soyad, telefon, firma FROM ortaklar WHERE id = ? AND durum = 'aktif'");
+            $stmtAv->execute([$yeniOrtakId]);
+            $avukat = $stmtAv->fetch();
+
+            if ($avukat && !empty($avukat['telefon'])) {
+                $firmaAdiAv = 'MR HASAR DANISMANLIK';
+                try {
+                    $stmtFav = $db->query("SELECT deger FROM ayarlar WHERE anahtar = 'firma_adi' LIMIT 1");
+                    $favRow = $stmtFav->fetch();
+                    if ($favRow && !empty($favRow['deger'])) $firmaAdiAv = $favRow['deger'];
+                } catch (\Exception $e) {}
+
+                // Müşteri adını çek
+                $stmtMag = $db->prepare("SELECT ad_soyad FROM magdurlar WHERE dosya_id = ? LIMIT 1");
+                $stmtMag->execute([$id]);
+                $mag = $stmtMag->fetch();
+                $musteriAdi = $mag ? $mag['ad_soyad'] : '-';
+
+                $dosyaTuruKisa = $dosya['dosya_turu'] ?? '';
+                $dosyaTuruTam = $dosyaTuruKisa === 'ADK' ? 'Arac Deger Kaybi' : ($dosyaTuruKisa === 'BH' ? 'Bedeni Hasar' : $dosyaTuruKisa);
+                $sigortaSirket = $dosya['sigorta_sirket'] ?? '-';
+                $mevcutAsama = $body['asama'] ?? $dosya['asama'] ?? 'Dosya Acik';
+
+                $avTelNorm = sms_telefon_normalize($avukat['telefon']);
+                $avukatMesaj = "Sayin {$avukat['ad_soyad']}, tarafiniza yeni bir dosya atanmistir. Dosya No: {$dosya['dosya_no']} | Tur: {$dosyaTuruTam} | Musteri: {$musteriAdi} | Sigorta: {$sigortaSirket} | Asama: {$mevcutAsama} - {$firmaAdiAv}";
+
+                $avukatSms = sms_gonder($avTelNorm ?: $avukat['telefon'], $avukatMesaj, $id, $user['id']);
+
+                $avukatSmsBilgi = [
+                    'avukat_adi' => $avukat['ad_soyad'],
+                    'sms_gonderildi' => $avukatSms['basarili'] ?? false
+                ];
+            }
+        } catch (\Exception $e) {
+            // Avukat SMS hatası güncellemeyi engellemez
+        }
+    }
+
+    $guncMesaj = 'Dosya güncellendi';
+    if (!empty($avukatSmsBilgi['sms_gonderildi'])) {
+        $guncMesaj .= ' | AVUKATA SMS BİLDİRİMİ GÖNDERİLDİ (' . $avukatSmsBilgi['avukat_adi'] . ')';
+    }
+
     json_success([
         'dosya_no' => $dosya['dosya_no'],
         'sms_gonderildi' => $smsGonderildi,
-        'sms_sonuc' => $smsSonuc
-    ], 'Dosya güncellendi');
+        'sms_sonuc' => $smsSonuc,
+        'avukat_sms' => $avukatSmsBilgi
+    ], $guncMesaj);
 
 } catch (\Exception $e) {
     $db->rollBack();

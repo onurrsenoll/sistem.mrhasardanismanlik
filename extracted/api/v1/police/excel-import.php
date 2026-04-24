@@ -22,6 +22,13 @@ $basarili = 0;
 $hatali = 0;
 $hatalar = [];
 
+// DDL: Eksik sütunlar varsa ekle
+try {
+    $db->exec("ALTER TABLE policeler ADD COLUMN IF NOT EXISTS belge_seri VARCHAR(50) DEFAULT ''");
+    $db->exec("ALTER TABLE policeler ADD COLUMN IF NOT EXISTS dogum_tarihi DATE DEFAULT NULL");
+    $db->exec("ALTER TABLE policeler ADD COLUMN IF NOT EXISTS sase_no VARCHAR(50) DEFAULT ''");
+} catch (Exception $e) {}
+
 $db->beginTransaction();
 try {
     $insertStmt = $db->prepare('INSERT INTO policeler (
@@ -30,8 +37,9 @@ try {
         tanzim_tarihi, baslangic_tarihi, bitis_tarihi,
         brut_prim, net_prim, komisyon_orani, komisyon_tutari,
         tahsil_edilen, tahsilat_durumu, durum,
-        hatirlatma_gun, hatirlatma_gonderildi, notlar, olusturan_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, \'beklemede\', \'aktif\', 20, 0, ?, ?)');
+        hatirlatma_gun, hatirlatma_gonderildi, notlar, olusturan_id,
+        belge_seri, dogum_tarihi, sase_no
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, \'beklemede\', \'aktif\', 20, 0, ?, ?, ?, ?, ?)');
 
     $checkStmt = $db->prepare('SELECT id FROM policeler WHERE police_no = ?');
 
@@ -96,7 +104,10 @@ try {
                 $komisyonOrani,
                 $komisyonTutari,
                 clean($p['notlar'] ?? ''),
-                $user['id']
+                $user['id'],
+                clean($p['belge_seri'] ?? ''),
+                !empty($p['dogum_tarihi']) ? $p['dogum_tarihi'] : null,
+                clean($p['sase_no'] ?? '')
             ]);
             $basarili++;
         } catch (Exception $e) {

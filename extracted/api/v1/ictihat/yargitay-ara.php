@@ -2,7 +2,7 @@
 /**
  * MR HASAR DANIŞMANLIK - YARGITAY KARARLARI ARAMA
  * Konu başlığına göre Yargıtay kararları AI destekli arama
- * Gemini AI ile gerçek zamanlı içtihat araştırması
+ * Claude AI ile içtihat araştırması
  */
 
 ob_start(); error_reporting(0);
@@ -81,18 +81,18 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER:
 
 $systemPrompt = "Sen bir Türk hukuk uzmanısın ve Yargıtay kararları konusunda derin bilgi birikimine sahipsin. Görevin Yargıtay kararlarını araştırıp emsal kararları sunmaktır. Sigorta hukuku, borçlar hukuku, trafik hukuku ve tazminat hukuku konularında uzmansın. Gerçekçi ve tutarlı Yargıtay karar numaraları, tarihler ve tutarlar kullan. Yanıtını SADECE JSON formatında ver.";
 
-// AI API çağrısı (Gemini/OpenAI/Claude otomatik)
+// AI API çağrısı (Claude API)
 $aiResult = callAIWithDetail($apiKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 8192, 'timeout' => 60]);
 $text = $aiResult['text'];
 
-// Başarısızsa fallback key'leri dene
-if (empty($text) && !empty($keys['fallbacks'])) {
-    foreach ($keys['fallbacks'] as $fbKey) {
-        $aiResult = callAIWithDetail($fbKey, $systemPrompt, $prompt, ['temperature' => 0.3, 'maxTokens' => 8192, 'timeout' => 60]);
-        $text = $aiResult['text'];
-        if (!empty($text)) break;
-    }
-}
+
+
+
+
+
+
+
+
 
 if (empty($text)) {
     $errMsg = 'AI YANIT ALINAMADI';

@@ -74,6 +74,8 @@ $sutunMap = [
     'SİGORTA HASAR NO'    => 'hasar_no',       // Yeni isim (export formatı)
     'HASAR NO'            => 'hasar_no',        // Eski isim (geriye uyumlu)
     'KAZA TARİHİ'         => 'kaza_tarihi',
+    'AÇILIŞ TARİHİ'       => 'acilis_tarihi',  // Eski sistem dosyaları için orijinal açılış tarihi
+    'DOSYA AÇILIŞ TARİHİ' => 'acilis_tarihi',  // Alternatif isim
     'DOSYA AŞAMA DURUMU'  => 'asama',          // Yeni isim (export formatı)
     'AŞAMA'               => 'asama',           // Eski isim (geriye uyumlu)
     'TELEFON'             => 'telefon',
@@ -117,6 +119,13 @@ $hatali = 0;
 $hatalar = [];
 $olusturulan = [];
 
+// ESKİ SİSTEM DOSYALARI: acilis_tarihi kolonu + eski_sistem flag migrasyonu
+// Bu sayede toplu aktarılan dosyalar orijinal tarihleriyle kayıt altına alınır
+// ve güncel ay dosya sayısı / finansal tabloyu etkilemez
+try {
+    $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS eski_sistem TINYINT(1) DEFAULT 0");
+} catch (\Exception $e) {}
+
 // Dosya türü eşleştirme haritası (Excel'deki uzun isimler → sistem kodu)
 $dosyaTuruMap = [
     'A.D.KAYBI'     => 'ADK',
@@ -128,16 +137,27 @@ $dosyaTuruMap = [
     'BEDENI HASAR'  => 'BH',
 ];
 
-// Mevcut dosyaların en eski created_at değerini bul
-// Toplu aktarılan dosyalar bunun altına yerleşecek (created_at DESC sıralamasında)
-$minCreatedAt = null;
-try {
-    $stmt = $db->query("SELECT MIN(created_at) as min_created FROM dosyalar");
-    $row = $stmt->fetch();
-    if ($row && $row['min_created']) {
-        $minCreatedAt = new \DateTime($row['min_created']);
+// Tarih çözümleyici (GG.AA.YYYY / GG/AA/YYYY / YYYY-MM-DD / Excel serial → Y-m-d)
+$parseTarih = function($raw) {
+    $raw = trim((string)$raw);
+    if ($raw === '') return null;
+    if (preg_match('#^(\d{2})[./](\d{2})[./](\d{4})$#', $raw, $m)) {
+        return $m[3] . '-' . $m[2] . '-' . $m[1];
     }
-} catch (\Exception $e) {}
+    if (preg_match('#^(\d{4})-(\d{2})-(\d{2})$#', $raw)) {
+        return $raw;
+    }
+    if (preg_match('#^(\d{1,2})/(\d{1,2})/(\d{2,4})$#', $raw, $m)) {
+        $yil = (int)$m[3];
+        if ($yil < 100) $yil += ($yil > 50 ? 1900 : 2000);
+        return $yil . '-' . str_pad($m[1], 2, '0', STR_PAD_LEFT) . '-' . str_pad($m[2], 2, '0', STR_PAD_LEFT);
+    }
+    if (is_numeric($raw) && (int)$raw > 30000 && (int)$raw < 60000) {
+        $unixTs = ((int)$raw - 25569) * 86400;
+        return date('Y-m-d', $unixTs);
+    }
+    return null;
+};
 
 // Veri satırlarını işle (başlık satırını atla)
 $dataLines = array_slice(array_values($lines), 1);
@@ -176,29 +196,9 @@ foreach ($dataLines as $lineIdx => $line) {
         continue;
     }
 
-    // Tarih formatını dönüştür → YYYY-MM-DD
-    $kazaTarihi = $getValue('kaza_tarihi');
-    if (!empty($kazaTarihi)) {
-        if (preg_match('#^(\d{2})[./](\d{2})[./](\d{4})$#', $kazaTarihi, $m)) {
-            // GG.AA.YYYY veya GG/AA/YYYY → YYYY-MM-DD
-            $kazaTarihi = $m[3] . '-' . $m[2] . '-' . $m[1];
-        } elseif (preg_match('#^(\d{4})-(\d{2})-(\d{2})$#', $kazaTarihi)) {
-            // Zaten YYYY-MM-DD formatında
-        } elseif (preg_match('#^(\d{1,2})/(\d{1,2})/(\d{2,4})$#', $kazaTarihi, $m)) {
-            // MM/DD/YY veya M/D/YY (Excel CSV çıktısı)
-            $yil = (int)$m[3];
-            if ($yil < 100) $yil += ($yil > 50 ? 1900 : 2000);
-            $kazaTarihi = $yil . '-' . str_pad($m[1], 2, '0', STR_PAD_LEFT) . '-' . str_pad($m[2], 2, '0', STR_PAD_LEFT);
-        } elseif (is_numeric($kazaTarihi) && (int)$kazaTarihi > 30000 && (int)$kazaTarihi < 60000) {
-            // Excel serial number (örn: 46080 = 27.02.2026)
-            $unixTs = ((int)$kazaTarihi - 25569) * 86400;
-            $kazaTarihi = date('Y-m-d', $unixTs);
-        } else {
-            $kazaTarihi = null;
-        }
-    } else {
-        $kazaTarihi = null;
-    }
+    // Tarih formatlarını dönüştür → YYYY-MM-DD
+    $kazaTarihi = $parseTarih($getValue('kaza_tarihi'));
+    $acilisTarihiRaw = $parseTarih($getValue('acilis_tarihi'));
 
     try {
         $db->beginTransaction();
@@ -209,19 +209,27 @@ foreach ($dataLines as $lineIdx => $line) {
         $asama = $getValue('asama');
         if (empty($asama)) $asama = 'Dosya Açık';
 
-        // created_at hesapla: mevcut dosyaların altına yerleşsin
-        // Her satır için 1 saniye geriye giderek sıra korunur
+        // ═══ AÇILIŞ TARİHİ MANTIĞI ═══
+        // Kullanıcı AÇILIŞ TARİHİ girdiyse:
+        //   → Eski sistem dosyası olarak kabul edilir (eski_sistem = 1)
+        //   → acilis_tarihi ve created_at o tarihe ayarlanır
+        //   → Güncel ay dosya sayımına ve finansal tabloya girmez
+        // AÇILIŞ TARİHİ boşsa:
+        //   → Yeni dosya olarak bugün tarihiyle açılır (eski_sistem = 0)
+        $eskiSistem = !empty($acilisTarihiRaw) ? 1 : 0;
+        $acilisTarihiSQL = !empty($acilisTarihiRaw) ? $acilisTarihiRaw : date('Y-m-d');
+
+        // created_at: Eski sistem dosyasıysa açılış tarihi 12:00:00, değilse NOW()
         $createdAtValue = null;
-        if ($minCreatedAt) {
-            $offset = $lineIdx + 1; // 1, 2, 3, ... (ilk satır en az geriye gider)
-            $ts = clone $minCreatedAt;
-            $ts->modify("-{$offset} seconds");
-            $createdAtValue = $ts->format('Y-m-d H:i:s');
+        if ($eskiSistem) {
+            // Satır sırasını korumak için saniye ofseti ekle
+            $offset = $lineIdx;
+            $createdAtValue = $acilisTarihiRaw . ' 12:00:' . str_pad(($offset % 60), 2, '0', STR_PAD_LEFT);
         }
 
-        // 1. Dosya kaydı
+        // 1. Dosya kaydı (AÇILIŞ TARİHİ parametre olarak geçirilir)
         if ($createdAtValue) {
-            $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, asama, sigorta_sirket, police_no, dosya_kaynagi, haklilik, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, notlar, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, 100, ?, ?, ?, ?, CURDATE(), ?, ?, ?)');
+            $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, asama, sigorta_sirket, police_no, dosya_kaynagi, haklilik, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, notlar, eski_sistem, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, 100, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
             $stmt->execute([
                 $dosyaNo,
                 $dosyaTuru,
@@ -233,12 +241,14 @@ foreach ($dataLines as $lineIdx => $line) {
                 clean($getValue('kaza_il')),
                 clean($getValue('kaza_ilce')),
                 clean($getValue('hasar_no')),
+                $acilisTarihiSQL,
                 clean($getValue('notlar')),
+                $eskiSistem,
                 $user['id'],
                 $createdAtValue
             ]);
         } else {
-            $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, asama, sigorta_sirket, police_no, dosya_kaynagi, haklilik, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, notlar, created_by) VALUES (?, ?, ?, ?, ?, ?, 100, ?, ?, ?, ?, CURDATE(), ?, ?)');
+            $stmt = $db->prepare('INSERT INTO dosyalar (dosya_no, dosya_turu, asama, sigorta_sirket, police_no, dosya_kaynagi, haklilik, kaza_tarihi, kaza_il, kaza_ilce, hasar_no, acilis_tarihi, notlar, eski_sistem, created_by) VALUES (?, ?, ?, ?, ?, ?, 100, ?, ?, ?, ?, ?, ?, ?, ?)');
             $stmt->execute([
                 $dosyaNo,
                 $dosyaTuru,
@@ -250,7 +260,9 @@ foreach ($dataLines as $lineIdx => $line) {
                 clean($getValue('kaza_il')),
                 clean($getValue('kaza_ilce')),
                 clean($getValue('hasar_no')),
+                $acilisTarihiSQL,
                 clean($getValue('notlar')),
+                $eskiSistem,
                 $user['id']
             ]);
         }
@@ -300,7 +312,9 @@ foreach ($dataLines as $lineIdx => $line) {
             'satir' => $satirNo,
             'dosya_no' => $dosyaNo,
             'ad_soyad' => $adSoyad,
-            'dosya_turu' => $dosyaTuru
+            'dosya_turu' => $dosyaTuru,
+            'eski_sistem' => $eskiSistem,
+            'acilis_tarihi' => $acilisTarihiSQL
         ];
 
     } catch (\Exception $e) {

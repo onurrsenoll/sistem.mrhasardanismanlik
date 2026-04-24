@@ -29,23 +29,26 @@ if (!$dosya) json_error('Dosya bulunamadı', 404);
 
 // Dosya yüklendi mi
 if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+    // Sunucunun gerçek PHP limitlerini hata mesajına dahil et
+    $gercekUpload = ini_get('upload_max_filesize') ?: 'tanımsız';
+    $gercekPost   = ini_get('post_max_size') ?: 'tanımsız';
     $errors = [
-        UPLOAD_ERR_INI_SIZE   => 'Dosya çok büyük (PHP limiti)',
-        UPLOAD_ERR_FORM_SIZE  => 'Dosya çok büyük (form limiti)',
-        UPLOAD_ERR_PARTIAL    => 'Dosya yarım yüklendi',
-        UPLOAD_ERR_NO_FILE    => 'Dosya seçilmedi',
-        UPLOAD_ERR_NO_TMP_DIR => 'Geçici klasör bulunamadı',
-        UPLOAD_ERR_CANT_WRITE => 'Diske yazılamadı',
+        UPLOAD_ERR_INI_SIZE   => "Dosya çok büyük — SUNUCU PHP limiti aşıldı (upload_max_filesize: $gercekUpload). Admin cPanel → MultiPHP INI Editor'dan upload_max_filesize ve post_max_size değerlerini 512M yapmalı.",
+        UPLOAD_ERR_FORM_SIZE  => "Dosya çok büyük — HTML form limiti aşıldı.",
+        UPLOAD_ERR_PARTIAL    => 'Dosya yarım yüklendi — bağlantı koptu, tekrar deneyin.',
+        UPLOAD_ERR_NO_FILE    => 'Dosya seçilmedi.',
+        UPLOAD_ERR_NO_TMP_DIR => 'Sunucu geçici klasör ayarı hatalı. Admin sistem yöneticisine başvurun.',
+        UPLOAD_ERR_CANT_WRITE => 'Sunucuda diske yazılamadı (disk dolu veya izin hatası).',
     ];
     $errCode = $_FILES['file']['error'] ?? UPLOAD_ERR_NO_FILE;
-    json_error($errors[$errCode] ?? 'Dosya yükleme hatası', 422);
+    json_error($errors[$errCode] ?? "Bilinmeyen yükleme hatası (kod: $errCode). Sunucu upload_max_filesize: $gercekUpload, post_max_size: $gercekPost", 422);
 }
 
 $file = $_FILES['file'];
 
 // Boyut kontrolü
 if ($file['size'] > MAX_FILE_SIZE) {
-    json_error('Dosya boyutu en fazla 20MB olabilir', 422);
+    json_error('Dosya boyutu en fazla 512MB olabilir', 422);
 }
 
 // MIME type kontrolü (PDF, resim, DOCX)

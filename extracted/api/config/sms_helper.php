@@ -307,10 +307,26 @@ function sms_ayarlari_oku($db = null) {
 }
 
 /**
- * SMS log kaydı oluştur
+ * SMS log kaydı oluştur (tablo yoksa otomatik oluşturur)
  */
 function sms_logla($db, $telefon, $mesaj, $dosyaId, $kullaniciId, $durum, $sonucMesaj, $bulkId = null) {
     try {
+        $db->exec("CREATE TABLE IF NOT EXISTS sms_loglari (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            telefon VARCHAR(30) NOT NULL,
+            mesaj TEXT NOT NULL,
+            dosya_id INT DEFAULT NULL,
+            kullanici_id INT DEFAULT NULL,
+            durum VARCHAR(20) NOT NULL DEFAULT 'bekliyor',
+            sonuc_mesaj VARCHAR(500) DEFAULT NULL,
+            bulk_id VARCHAR(100) DEFAULT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_dosya (dosya_id),
+            INDEX idx_durum (durum),
+            INDEX idx_telefon (telefon),
+            INDEX idx_tarih (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
         $stmt = $db->prepare("
             INSERT INTO sms_loglari (telefon, mesaj, dosya_id, kullanici_id, durum, sonuc_mesaj, bulk_id)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -325,6 +341,6 @@ function sms_logla($db, $telefon, $mesaj, $dosyaId, $kullaniciId, $durum, $sonuc
             $bulkId
         ]);
     } catch (Exception $e) {
-        // Log hatası sessizce geçilir
+        error_log('SMS_LOG_HATASI: ' . $e->getMessage());
     }
 }

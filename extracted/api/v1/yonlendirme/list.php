@@ -49,6 +49,19 @@ if ($atanan) {
     $params[] = $atanan;
 }
 
+/*
+ * ROL BAZLI GİZLİLİK:
+ * - admin / uzman / avukat: Tüm listeyi görür (gerekirse atanan_id ile manuel filtreler).
+ * - personel / muhasebe / portal: SADECE kendisine atanan kayıtları görür.
+ *   (Ayrıca kendi yüklediği batch'leri de görsün ki yükleme hatası olursa bulabilsin.)
+ */
+$rolGorebilirTumu = in_array($user['rol'], ['admin', 'uzman', 'avukat'], true);
+if (!$rolGorebilirTumu) {
+    $where[] = '(y.atanan_id = ? OR y.created_by = ?)';
+    $params[] = (int)$user['id'];
+    $params[] = (int)$user['id'];
+}
+
 if ($tarihBas !== '') {
     $where[] = 'y.yonlendirme_tarihi >= ?';
     $params[] = $tarihBas;

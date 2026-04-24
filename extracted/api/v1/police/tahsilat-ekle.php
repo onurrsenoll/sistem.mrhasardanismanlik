@@ -24,6 +24,8 @@ $aciklama = clean($body['aciklama'] ?? '');
 $kasaId = !empty($body['kasa_id']) ? (int)$body['kasa_id'] : null;
 
 if ($tutar <= 0) json_error('Tutar 0\'dan büyük olmalı', 422);
+/* v6 DÜZELTME: Kasa zorunlu — muhasebe defter tutarlılığı için */
+if (!$kasaId) json_error('Tahsilatın kaydedileceği KASA seçimi zorunludur', 422);
 
 // Poliçe kontrolü
 $stmt = $db->prepare('SELECT id, police_no, musteri_adi, brut_prim, tahsil_edilen FROM policeler WHERE id = ?');
@@ -94,6 +96,31 @@ try {
             $kasaAciklama,
             $user['id']
         ]);
+
+        /* v6 EKLEME: Muhasebe defteri gelir kaydı — zincir kopuk değil artık.
+         * "gelirler" tablosu şeması zorunlu alanları düşündürülerek minimal kayıt yapılır.
+         * Tablo yoksa try/catch içinde sessiz geçer; mevcut işleyişi bozmaz. */
+        try {
+            $db->exec("CREATE TABLE IF NOT EXISTS gelirler (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                kasa_id INT DEFAULT NULL,
+                tutar DECIMAL(12,2) NOT NULL DEFAULT 0,
+                islem_tarihi DATE DEFAULT NULL,
+                gelir_turu VARCHAR(60) DEFAULT NULL,
+                aciklama TEXT DEFAULT NULL,
+                kaynak VARCHAR(30) DEFAULT NULL,
+                kaynak_id INT DEFAULT NULL,
+                kullanici_id INT DEFAULT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_kaynak (kaynak, kaynak_id),
+                INDEX idx_tarih (islem_tarihi)
+            )");
+            $gelirIns = $db->prepare('INSERT INTO gelirler (kasa_id, tutar, islem_tarihi, gelir_turu, aciklama, kaynak, kaynak_id, kullanici_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+            $gelirIns->execute([
+                $kasaId, $tutar, $tahsilatTarihi, 'POLİÇE TAHSİLATI',
+                $kasaAciklama, 'police_tahsilat', $tahsilatId, $user['id']
+            ]);
+        } catch (\Exception $ge) { /* muhasebe defteri kaydı başarısız olursa sessiz geç */ }
     }
 
     $db->commit();

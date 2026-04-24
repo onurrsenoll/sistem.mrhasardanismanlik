@@ -45,6 +45,26 @@ $params[] = $id;
 $stmt = $db->prepare('UPDATE tanimlamalar SET ' . implode(', ', $sets) . ' WHERE id = ?');
 $stmt->execute($params);
 
-log_action($user['id'], 'tanim_guncelle', "{$tanim['kategori']}: {$tanim['deger']}", 'tanimlamalar', $id);
+/* ═══ KASKAD RENAME ═══
+ * evrak_turu kategorisinde bir tanımlamanın "deger" alanı değiştirildiğinde,
+ * mevcut yüklü evrakların evrak_turu metnini de otomatik yeni isme UPDATE et.
+ * Böylece liste - upload eşleşmesi bozulmaz. Sadece metin güncellenir, hiçbir
+ * evrak silinmez/taşınmaz. İdempotent: eski isim kalmamışsa 0 satır etkiler.
+ */
+$cascadeCount = 0;
+if ($tanim['kategori'] === 'evrak_turu' && isset($body['deger'])) {
+    $eskiDeger = $tanim['deger'];
+    $yeniDeger = clean($body['deger']);
+    if ($eskiDeger !== '' && $yeniDeger !== '' && $eskiDeger !== $yeniDeger) {
+        try {
+            $casc = $db->prepare('UPDATE evraklar SET evrak_turu = ? WHERE evrak_turu = ?');
+            $casc->execute([$yeniDeger, $eskiDeger]);
+            $cascadeCount = $casc->rowCount();
+        } catch (\Exception $e) { /* tablo yoksa veya başka sebeple sessiz geç */ }
+    }
+}
 
-json_success(null, 'Tanımlama güncellendi');
+$logDetay = "{$tanim['kategori']}: {$tanim['deger']}" . ($cascadeCount > 0 ? " (kaskad: $cascadeCount evrak güncellendi)" : '');
+log_action($user['id'], 'tanim_guncelle', $logDetay, 'tanimlamalar', $id);
+
+json_success(['cascade_updated' => $cascadeCount], 'Tanımlama güncellendi');

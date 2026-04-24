@@ -48,14 +48,19 @@ $dosyaSayisi = isset($body['dosya_sayisi']) ? (int)$body['dosya_sayisi'] : 0;
 $ekPrim = isset($body['ek_prim']) ? (float)$body['ek_prim'] : 0;
 $kesinti = isset($body['kesinti']) ? (float)$body['kesinti'] : 0;
 
-// Eğer dosya sayısı gönderilmediyse, o dönemde açılan dosya sayısına bak
+// Eğer dosya sayısı gönderilmediyse, o dönemde dosya sayısına bak
+// v7 DÜZELTME: İş mantığı netleştirildi.
+// Dosyayı açan kişi ≠ hakedişçi. Operasyon/yönetici dosyayı sistemde AÇAR,
+// ama hakediş SADECE atanan sorumlu_id'ye (dosya sorumlusu) gider.
+// created_by fallback KALDIRILDI — sorumlu atanmamış dosya kimseye prim vermez
+// (admin dosya atamasını yapmalıdır).
 if ($dosyaSayisi === 0 && $personel['user_id']) {
-    $stmtAdk = $db->prepare('SELECT COUNT(*) as sayi FROM dosyalar WHERE (sorumlu_id = ? OR created_by = ?) AND dosya_turu = "ADK" AND acilis_tarihi BETWEEN ? AND ?');
-    $stmtAdk->execute([$personel['user_id'], $personel['user_id'], $donemBaslangic, $donemBitis]);
+    $stmtAdk = $db->prepare('SELECT COUNT(*) as sayi FROM dosyalar WHERE sorumlu_id = ? AND dosya_turu = "ADK" AND acilis_tarihi BETWEEN ? AND ?');
+    $stmtAdk->execute([$personel['user_id'], $donemBaslangic, $donemBitis]);
     $adkSayisi = (int)$stmtAdk->fetch()['sayi'];
 
-    $stmtBh = $db->prepare('SELECT COUNT(*) as sayi FROM dosyalar WHERE (sorumlu_id = ? OR created_by = ?) AND dosya_turu = "BH" AND acilis_tarihi BETWEEN ? AND ?');
-    $stmtBh->execute([$personel['user_id'], $personel['user_id'], $donemBaslangic, $donemBitis]);
+    $stmtBh = $db->prepare('SELECT COUNT(*) as sayi FROM dosyalar WHERE sorumlu_id = ? AND dosya_turu = "BH" AND acilis_tarihi BETWEEN ? AND ?');
+    $stmtBh->execute([$personel['user_id'], $donemBaslangic, $donemBitis]);
     $bhSayisi = (int)$stmtBh->fetch()['sayi'];
 
     $dosyaSayisi = $adkSayisi + $bhSayisi;
@@ -64,16 +69,91 @@ if ($dosyaSayisi === 0 && $personel['user_id']) {
 // HAKEDİŞ HESAPLA
 $maas = (float)$personel['maas'];
 $primOrani = (float)$personel['prim_orani'];
+$departman = strtolower(trim($personel['departman'] ?? ''));
 
 // Gün bazlı maaş hesaplama (aylık 30 gün üzerinden)
 $gunlukMaas = $maas / 30;
 $maasTutar = round($gunlukMaas * $calisanGun, 2);
 
-// Prim hesaplama: dosya türüne göre ayrı prim oranı
-if (isset($adkSayisi) && isset($bhSayisi)) {
-    $primTutar = round($adkSayisi * $primAdk + $bhSayisi * $primBh, 2);
+// Prim hesaplama: departmana göre kademe sistemi
+$primTutar = 0;
+$kademeDetay = null;
+
+if (strpos($departman, 'ofis') !== false || strpos($departman, 'crm') !== false || strpos($departman, 'cagri') !== false) {
+    // ═══ OFİS CRM PERSONELİ — KOTA + KADEME SİSTEMİ ═══
+    $adkKota = 5;
+    $bhKota = 2;
+    $adkSayi = $adkSayisi ?? $dosyaSayisi;
+    $bhSayi = $bhSayisi ?? 0;
+
+    // BH zorunlulugu: 2 BH alinmazsa ADK kotasina sayilir
+    $bhEksik = max(0, $bhKota - $bhSayi);
+    $adkEtkili = max(0, $adkSayi - $adkKota - $bhEksik);
+    $bhEtkili = max(0, $bhSayi - $bhKota);
+
+    // ADK kademe hesapla
+    $adkKademeler = [
+        ['bas' => 0, 'bit' => 4, 'tutar' => 0],
+        ['bas' => 5, 'bit' => 7, 'tutar' => 1500],
+        ['bas' => 8, 'bit' => 10, 'tutar' => 1750],
+        ['bas' => 11, 'bit' => 14, 'tutar' => 2000],
+        ['bas' => 15, 'bit' => 9999, 'tutar' => 2500],
+    ];
+    $bhKademeler = [
+        ['bas' => 0, 'bit' => 1, 'tutar' => 0],
+        ['bas' => 2, 'bit' => 3, 'tutar' => 2500],
+        ['bas' => 4, 'bit' => 5, 'tutar' => 3000],
+        ['bas' => 6, 'bit' => 7, 'tutar' => 3500],
+        ['bas' => 8, 'bit' => 9999, 'tutar' => 4500],
+    ];
+
+    // Kademede tum dosyalar ayni birim fiyattan hesaplanir
+    $adkBirim = 0;
+    foreach ($adkKademeler as $k) { if ($adkSayi >= $k['bas'] && $adkSayi <= $k['bit']) { $adkBirim = $k['tutar']; break; } }
+    $bhBirim = 0;
+    foreach ($bhKademeler as $k) { if ($bhSayi >= $k['bas'] && $bhSayi <= $k['bit']) { $bhBirim = $k['tutar']; break; } }
+
+    $adkPrim = $adkEtkili * $adkBirim;
+    $bhPrim = $bhEtkili * $bhBirim;
+    $primTutar = round($adkPrim + $bhPrim, 2);
+    $kademeDetay = [
+        'tip' => 'ofis_crm',
+        'adk_sayi' => $adkSayi, 'bh_sayi' => $bhSayi,
+        'adk_kota' => $adkKota, 'bh_kota' => $bhKota,
+        'adk_etkili' => $adkEtkili, 'bh_etkili' => $bhEtkili,
+        'adk_birim' => $adkBirim, 'bh_birim' => $bhBirim,
+        'adk_prim' => $adkPrim, 'bh_prim' => $bhPrim
+    ];
+
+} elseif (strpos($departman, 'saha') !== false) {
+    // ═══ SAHA PERSONELİ — KADEMELİ PRİM ═══
+    $toplamDosya = $dosyaSayisi;
+    $sahaKademeler = [
+        ['bas' => 1, 'bit' => 10, 'tutar' => 0],
+        ['bas' => 11, 'bit' => 15, 'tutar' => 2500],
+        ['bas' => 16, 'bit' => 20, 'tutar' => 3500],
+        ['bas' => 21, 'bit' => 9999, 'tutar' => 5000],
+    ];
+
+    $birimPrim = 0;
+    foreach ($sahaKademeler as $k) { if ($toplamDosya >= $k['bas'] && $toplamDosya <= $k['bit']) { $birimPrim = $k['tutar']; break; } }
+
+    $primDosya = max(0, $toplamDosya - 10);
+    $primTutar = round($primDosya * $birimPrim, 2);
+    $kademeDetay = [
+        'tip' => 'saha',
+        'toplam_dosya' => $toplamDosya,
+        'prim_dosya' => $primDosya,
+        'birim_prim' => $birimPrim
+    ];
+
 } else {
-    $primTutar = round($dosyaSayisi * $primAdk, 2);
+    // ═══ DİĞER / YÖNETİM — BASİT PRİM ═══
+    if (isset($adkSayisi) && isset($bhSayisi)) {
+        $primTutar = round($adkSayisi * $primAdk + $bhSayisi * $primBh, 2);
+    } else {
+        $primTutar = round($dosyaSayisi * $primAdk, 2);
+    }
 }
 
 // Toplam hakediş
@@ -123,5 +203,7 @@ json_success([
     'prim_tutar' => $primTutar,
     'ek_prim' => $ekPrim,
     'kesinti' => $kesinti,
-    'toplam_hakedis' => $toplamHakedis
+    'toplam_hakedis' => $toplamHakedis,
+    'departman' => $departman,
+    'kademe_detay' => $kademeDetay
 ], 'HAKEDİŞ BAŞARIYLA HESAPLANDI');

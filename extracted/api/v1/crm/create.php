@@ -72,7 +72,8 @@ $eklenecekKolonlar = [
     'taslak' => "ALTER TABLE crm ADD COLUMN taslak TINYINT DEFAULT 0 AFTER oncelik",
     'not_text' => "ALTER TABLE crm ADD COLUMN not_text TEXT DEFAULT NULL AFTER taslak",
     'donusen_dosya_id' => "ALTER TABLE crm ADD COLUMN donusen_dosya_id INT DEFAULT NULL AFTER son_iletisim",
-    'created_by' => "ALTER TABLE crm ADD COLUMN created_by INT DEFAULT NULL AFTER donusen_dosya_id"
+    'created_by' => "ALTER TABLE crm ADD COLUMN created_by INT DEFAULT NULL AFTER donusen_dosya_id",
+    'gorusme_sonucu' => "ALTER TABLE crm ADD COLUMN gorusme_sonucu VARCHAR(100) DEFAULT NULL AFTER not_text"
 ];
 
 try {
@@ -85,7 +86,7 @@ try {
 } catch (Exception $e) {}
 
 try {
-    $stmt = $db->prepare('INSERT INTO crm (ad_soyad, tc_vergi_no, telefon, telefon2, email, il, ilce, adres, plaka, marka, model_adi, arac_yili, arac_km, olay_aciklama, kaynak, dosya_turu, kaza_turu, kaza_tarihi, pozisyon, durum, oncelik, taslak, not_text, atanan_id, son_iletisim, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt = $db->prepare('INSERT INTO crm (ad_soyad, tc_vergi_no, telefon, telefon2, email, il, ilce, adres, plaka, marka, model_adi, arac_yili, arac_km, olay_aciklama, kaynak, dosya_turu, kaza_turu, kaza_tarihi, pozisyon, durum, oncelik, taslak, not_text, gorusme_sonucu, atanan_id, son_iletisim, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $stmt->execute([
         clean($body['ad_soyad']),
         clean($body['tc_vergi_no'] ?? ''),
@@ -110,12 +111,38 @@ try {
         clean($body['oncelik'] ?? 'NORMAL'),
         !empty($body['taslak']) ? 1 : 0,
         clean($body['not_text'] ?? ''),
+        clean($body['gorusme_sonucu'] ?? ''),
         !empty($body['atanan_id']) ? (int)$body['atanan_id'] : null,
         !empty($body['son_iletisim']) ? $body['son_iletisim'] : date('Y-m-d'),
         $user['id']
     ]);
 
     $id = (int)$db->lastInsertId();
+
+    /* ═══ OTOMATİK YÖNLENDİRME LİNK ═══
+     * Aynı telefon (ya da TC) ile yonlendirme tablosunda kayıt varsa
+     * donusen_crm_id bu yeni CRM ID'sine set edilir. Manuel iş kalmaz.
+     * Birden fazla yonlendirme olabilir → hepsi aynı CRM'e bağlanır.
+     */
+    try {
+        ensure_yonlendirme_columns();
+        $tel = clean($body['telefon'] ?? '');
+        $tcv = clean($body['tc_vergi_no'] ?? '');
+        $telNorm = preg_replace('/\D/', '', $tel);
+        if (strpos($telNorm, '90') === 0 && strlen($telNorm) === 12) $telNorm = substr($telNorm, 2);
+        if (strpos($telNorm, '0') === 0 && strlen($telNorm) === 11) $telNorm = substr($telNorm, 1);
+        if ($telNorm !== '' || $tcv !== '') {
+            $w = []; $matchParams = [];
+            if ($telNorm !== '') {
+                $w[] = "REPLACE(REPLACE(REPLACE(REPLACE(magdur_telefon,' ',''),'-',''),'(',''),')','') LIKE ?";
+                $matchParams[] = '%' . $telNorm;
+            }
+            if ($tcv !== '') { $w[] = 'magdur_tc = ?'; $matchParams[] = $tcv; }
+            $sql = "UPDATE yonlendirme SET donusen_crm_id = ? WHERE (donusen_crm_id IS NULL OR donusen_crm_id = 0) AND (" . implode(' OR ', $w) . ")";
+            $stmt = $db->prepare($sql);
+            $stmt->execute(array_merge([$id], $matchParams));
+        }
+    } catch (\Exception $e) {}
 
     log_action($user['id'], 'crm_ekle', "CRM kaydı: " . clean($body['ad_soyad']), 'crm', $id);
 

@@ -2,6 +2,8 @@
 /**
  * MR HASAR DANIŞMANLIK - OCR EVRAK ANALİZ ENDPOINTİ
  * Google Gemini Vision API ile evrak OCR okuma
+ * GD ile görüntü ön işleme (grayscale, kontrast, keskinleştirme)
+ * Modül bazlı özel API key desteği
  */
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
@@ -33,20 +35,115 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $user = auth_required();
 
-// API Key çek - OCR için Gemini gerekli (Vision API)
-$keys = getAiKeys();
-$apiKey = $keys['gemini'];
+// ═══ API KEY ÇÖZÜMLEME (3 katmanlı) ═══
+// 1. POST parametresinden gelen özel key (modül bazlı)
+// 2. DB'den Claude API key
+// 3. Firma ayarlarındaki genel Gemini key
+
+$apiKey = '';
+$tip = isset($_POST['tip']) ? $_POST['tip'] : 'adk';
+
+// Katman 1: POST'tan gelen özel API key
+$customApiKey = isset($_POST['api_key']) ? trim($_POST['api_key']) : '';
+if (!empty($customApiKey)) {
+    $apiKey = $customApiKey;
+}
+
+// Katman 2: DB'den Claude API key
+if (empty($apiKey)) {
+    $keys = getAiKeys();
+    $apiKey = $keys['active'];
+}
+
+// Katman 3: DB'den modül bazlı key (ruhsat tipi için eski uyumluluk)
+if (empty($apiKey) && $tip === 'ruhsat') {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("SELECT deger FROM ayarlar WHERE anahtar = 'claude_api_key' AND deger != ''");
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row && !empty(trim($row['deger']))) {
+            $apiKey = trim($row['deger']);
+        }
+    } catch (Exception $e) {}
+}
 
 if (empty($apiKey)) {
-    echo json_encode(['success' => false, 'error' => 'GEMİNİ API KEY BULUNAMADI. OCR İÇİN GEMİNİ API ANAHTARI GEREKLİDİR. SİSTEM > FİRMA AYARLARI SAYFASINDAN TANIMLAYIN.']);
+    echo json_encode(['success' => false, 'error' => 'CLAUDE API KEY BULUNAMADI. SİSTEM > FİRMA AYARLARI SAYFASINDAN API ANAHTARI TANIMLAYIN.']);
     exit;
 }
 
-// Dosya tipini belirle (adk veya bh)
-$tip = isset($_POST['tip']) ? $_POST['tip'] : 'adk';
 $dosyaSayisi = intval(isset($_POST['dosya_sayisi']) ? $_POST['dosya_sayisi'] : 1);
 
-// Dosyaları oku ve base64'e çevir
+// ═══ GD İLE GÖRÜNTÜ ÖN İŞLEME FONKSİYONU ═══
+function preprocessImageGD($content, $mime) {
+    // GD kütüphanesi yoksa orijinal içeriği döndür
+    if (!function_exists('imagecreatefromstring')) {
+        return ['content' => $content, 'mime' => $mime];
+    }
+
+    // PDF dosyalarını işleme
+    if ($mime === 'application/pdf') {
+        return ['content' => $content, 'mime' => $mime];
+    }
+
+    try {
+        $img = imagecreatefromstring($content);
+        if (!$img) {
+            return ['content' => $content, 'mime' => $mime];
+        }
+
+        $w = imagesx($img);
+        $h = imagesy($img);
+
+        // Çok küçük görselleri büyüt (OCR doğruluğu için)
+        if ($w < 1200 || $h < 800) {
+            $scale = max(1200 / $w, 800 / $h, 1.5);
+            $nw = intval($w * $scale);
+            $nh = intval($h * $scale);
+            $scaled = imagecreatetruecolor($nw, $nh);
+            imagecopyresampled($scaled, $img, 0, 0, 0, 0, $nw, $nh, $w, $h);
+            imagedestroy($img);
+            $img = $scaled;
+        }
+
+        // 1. Grayscale dönüşümü
+        imagefilter($img, IMG_FILTER_GRAYSCALE);
+
+        // 2. Kontrast artırma (negatif değer = daha fazla kontrast)
+        imagefilter($img, IMG_FILTER_CONTRAST, -35);
+
+        // 3. Parlaklık ayarı (hafif artırma)
+        imagefilter($img, IMG_FILTER_BRIGHTNESS, 10);
+
+        // 4. Keskinleştirme (unsharp mask konvolüsyon matrisi)
+        $sharpen = [
+            [0, -1, 0],
+            [-1, 5, -1],
+            [0, -1, 0]
+        ];
+        imageconvolution($img, $sharpen, 1, 0);
+
+        // 5. İkinci geçiş kontrast (metin netliği için)
+        imagefilter($img, IMG_FILTER_CONTRAST, -15);
+
+        // JPEG olarak yüksek kalitede buffer'a yaz
+        ob_start();
+        imagejpeg($img, null, 95);
+        $processed = ob_get_clean();
+        imagedestroy($img);
+
+        if ($processed && strlen($processed) > 0) {
+            return ['content' => $processed, 'mime' => 'image/jpeg'];
+        }
+    } catch (Exception $e) {
+        // GD hatası - orijinal görseli kullan
+    }
+
+    return ['content' => $content, 'mime' => $mime];
+}
+
+// ═══ DOSYALARI OKU VE İŞLE ═══
 $images = [];
 for ($i = 0; $i < $dosyaSayisi; $i++) {
     $key = 'dosya_' . $i;
@@ -63,11 +160,16 @@ for ($i = 0; $i < $dosyaSayisi; $i++) {
     $content = file_get_contents($file['tmp_name']);
     if ($content === false) continue;
 
-    $mimeType = $mime;
+    // GD ile ön işleme uygula (tüm tipler için)
+    if ($tip === 'ruhsat' || $tip === 'adk' || $tip === 'bh') {
+        $processed = preprocessImageGD($content, $mime);
+        $content = $processed['content'];
+        $mime = $processed['mime'];
+    }
 
     $images[] = [
         'inline_data' => [
-            'mime_type' => $mimeType,
+            'mime_type' => $mime,
             'data' => base64_encode($content)
         ]
     ];
@@ -78,8 +180,28 @@ if (empty($images)) {
     exit;
 }
 
-// Prompt oluştur
-if ($tip === 'bh') {
+// ═══ PROMPT OLUŞTUR ═══
+if ($tip === 'ruhsat') {
+    $prompt = 'Bu görseli analiz et. Bu bir Türk araç tescil belgesi (ruhsat) fotoğrafıdır.
+Belgedeki tüm bilgileri dikkatle oku ve aşağıdaki JSON formatında döndür:
+{
+  "plaka": "araç plaka numarası (Örn: 34ABC1234)",
+  "marka": "araç markası (BÜYÜK HARF, Örn: TOYOTA, FORD, VOLKSWAGEN)",
+  "model": "araç modeli (BÜYÜK HARF, Örn: COROLLA, FOCUS)",
+  "modelYili": model yılı (sayı, Örn: 2020),
+  "sase": "şase/VIN numarası (17 karakter)",
+  "tc": "TC kimlik numarası veya vergi numarası (10-11 haneli sayı)",
+  "soyad": "ruhsat sahibi soyadı veya ticari ünvanı (BÜYÜK HARF)",
+  "ad": "ruhsat sahibi adı (BÜYÜK HARF)",
+  "belgeSeri": "belge seri numarası (Örn: HD 120077)",
+  "motorNo": "motor numarası varsa",
+  "renk": "araç rengi",
+  "yakitTuru": "benzin/dizel/LPG/elektrik",
+  "guven": güven yüzdesi (1-100)
+}
+ÖNEMLİ: Ruhsat belgesinde (A) plaka, (D.1) marka, (D.2) tip/model, (D.4) model yılı, (E) şase numarası, (Y.4) TC/Vergi No, (C.1.1) soyadı/ticari ünvan, (C.1.2) adı, belge seri no gibi alanlar bulunur. Tüm alanları dikkatlice oku.
+Bulamadığın alanları null yap. Sadece JSON döndür, başka metin yazma.';
+} else if ($tip === 'bh') {
     $prompt = 'Bu belgeyi analiz et. Bedeni hasar / sağlık / maluliyet raporu olarak incele.
 Aşağıdaki bilgileri JSON formatında döndür:
 {
@@ -118,26 +240,29 @@ Aşağıdaki bilgileri JSON formatında döndür:
 Bulamadığın alanları null yap. Sadece JSON döndür, başka metin yazma.';
 }
 
-// Gemini Vision API çağrısı
-$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . urlencode($apiKey);
+// ═══ CLAUDE VİSİON API ÇAĞRISI ═══
+$url = 'https://api.anthropic.com/v1/messages';
 
-$parts = [];
+$content = [];
 foreach ($images as $img) {
-    $parts[] = $img;
+    if (isset($img['inline_data'])) {
+        $content[] = [
+            'type' => 'image',
+            'source' => [
+                'type' => 'base64',
+                'media_type' => $img['inline_data']['mime_type'],
+                'data' => $img['inline_data']['data']
+            ]
+        ];
+    }
 }
-$parts[] = ['text' => $prompt];
+$content[] = ['type' => 'text', 'text' => $prompt];
 
 $payload = [
-    'contents' => [
-        [
-            'role' => 'user',
-            'parts' => $parts
-        ]
-    ],
-    'generationConfig' => [
-        'temperature' => 0.1,
-        'maxOutputTokens' => 1024,
-        'topP' => 0.8
+    'model' => 'claude-haiku-4-5-20251001',
+    'max_tokens' => 1024,
+    'messages' => [
+        ['role' => 'user', 'content' => $content]
     ]
 ];
 
@@ -147,53 +272,55 @@ if ($jsonPayload === false) {
     exit;
 }
 
-$res = http_post($url, $jsonPayload, ['Content-Type: application/json'], 60);
+$headers = [
+    'Content-Type: application/json',
+    'x-api-key: ' . $apiKey,
+    'anthropic-version: 2023-06-01'
+];
+
+$res = http_post($url, $jsonPayload, $headers, 60);
 
 if ($res['http_code'] !== 200 || !$res['body']) {
     echo json_encode([
         'success' => false,
-        'error' => 'GEMİNİ API HATASI: HTTP ' . $res['http_code'] . ($res['error'] ? ' - ' . $res['error'] : '') . ' (yontem: ' . $res['method'] . ')'
+        'error' => 'CLAUDE API HATASI: HTTP ' . $res['http_code'] . ($res['error'] ? ' - ' . $res['error'] : '') . ' (yontem: ' . $res['method'] . ')'
     ]);
     exit;
 }
 
 $data = json_decode($res['body'], true);
-// Gemini 2.5 Flash - TÜM parçaları topla
-$allTexts = [];
-$allParts = isset($data['candidates'][0]['content']['parts']) ? $data['candidates'][0]['content']['parts'] : [];
-foreach ($allParts as $part) {
-    if (isset($part['text'])) $allTexts[] = $part['text'];
+// Claude response'dan text çıkar
+$text = '';
+if (isset($data['content'])) {
+    foreach ($data['content'] as $block) {
+        if (isset($block['text'])) $text .= $block['text'];
+    }
 }
-$text = !empty($allTexts) ? end($allTexts) : '';
 
 if (empty($text)) {
-    echo json_encode(['success' => false, 'error' => 'GEMİNİ YANIT ALINAMADI']);
+    echo json_encode(['success' => false, 'error' => 'CLAUDE YANIT ALINAMADI']);
     exit;
 }
 
-// JSON parse - çoklu strateji
+// ═══ JSON PARSE - ÇOKLU STRATEJİ ═══
 $parsed = null;
+$t = trim($text);
 
-// Tüm parçalarda JSON ara
-foreach ($allTexts as $t) {
-    $t = trim($t);
-    // Direkt
-    $r = json_decode($t, true);
+// Direkt
+$r = json_decode($t, true);
+if ($r && is_array($r)) { $parsed = $r; }
+// Markdown code block
+if (!$parsed && preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $t, $m)) {
+    $r = json_decode(trim($m[1]), true);
     if ($r && is_array($r)) { $parsed = $r; }
-    // Markdown code block
-    if (!$parsed && preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $t, $m)) {
-        $r = json_decode(trim($m[1]), true);
+}
+// İlk { son }
+if (!$parsed) {
+    $f = strpos($t, '{'); $l = strrpos($t, '}');
+    if ($f !== false && $l !== false && $l > $f) {
+        $r = json_decode(substr($t, $f, $l - $f + 1), true);
         if ($r && is_array($r)) { $parsed = $r; }
     }
-    // İlk { son }
-    if (!$parsed) {
-        $f = strpos($t, '{'); $l = strrpos($t, '}');
-        if ($f !== false && $l !== false && $l > $f) {
-            $r = json_decode(substr($t, $f, $l - $f + 1), true);
-            if ($r && is_array($r)) { $parsed = $r; }
-        }
-    }
-    if ($parsed) break;
 }
 
 if ($parsed) {

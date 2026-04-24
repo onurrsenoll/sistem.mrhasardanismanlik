@@ -32,6 +32,9 @@ $marka = $input['marka'];
 $model = $input['model'];
 $yil = intval($input['yil']);
 $aracYasi = date('Y') - $yil;
+$hesapTarihi = !empty($input['hesap_tarihi']) ? $input['hesap_tarihi'] : date('Y-m-d');
+$minTarih = date('Y-m-d', strtotime($hesapTarihi . ' -2 years'));
+$minYil = intval(date('Y', strtotime($minTarih)));
 
 // API KEY
 $keys = getAiKeys();
@@ -48,8 +51,12 @@ KRİTİK KURALLAR:
 1. AYNI MARKA ({$marka}) ve MODEL ({$model}) araçların tahkim kararlarını bul
 2. Benzer yaştaki (±2 yıl, yani " . ($yil-2) . "-" . ($yil+2) . " model) araçları kabul et
 3. sigortatahkim.org, lexpera.com, kazanci.com, sonkarar.com gibi hukuk veritabanlarından ara
-4. En yüksek hükmedilen DEĞER KAYBI tutarlı 3 kararı listele
-5. Kararların ortalamasını hesapla
+4. SADECE {$minTarih} ile {$hesapTarihi} arasındaki kararları getir. 2 yıldan eski karar GETIRME.
+5. En yakın tarihli karardan başlayarak LİSTELE (en yeni karar en üstte)
+6. Tam 3 FARKLI karar bul - EN DÜŞÜK ve EN YÜKSEK değer kaybı tutarlarını belirle
+7. Kararların ortalamasını hesapla
+
+TARİH SINIRI: Sadece {$minYil}-" . intval(date('Y', strtotime($hesapTarihi))) . " yılları arasındaki kararlar geçerlidir.
 
 YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER, BAŞKA HİÇBİR ŞEY YAZMA:
 {
@@ -58,25 +65,19 @@ YANITINI SADECE AŞAĞIDAKİ JSON FORMATINDA VER, BAŞKA HİÇBİR ŞEY YAZMA:
   ],
   \"ortalama_dk\": 33000,
   \"en_yuksek_dk\": 38000,
+  \"en_dusuk_dk\": 28000,
   \"toplam_bulunan\": 3,
   \"analiz_notu\": \"Kısa analiz notu\"
 }";
 
-$systemPrompt = "Sen bir Türk sigorta hukuku uzmanısın. Görevin Sigorta Tahkim Komisyonu kararlarını araştırıp araç değer kaybı emsal kararlarını bulmaktır. SADECE gerçek tahkim kararlarını kullan. Yanıtını SADECE JSON formatında ver.";
+$systemPrompt = "Sen Türk sigorta hukuku ve Sigorta Tahkim Komisyonu kararları konusunda 15+ yıl deneyimli bir uzmansın. Araç değer kaybı (ADK) emsal kararlarını çok iyi biliyorsun. KRİTİK KURALLAR: 1) Emin olmadığın karar numarası uydurma. 2) Gerçek bilgin yoksa analiz_notu alanında açıkça 'kesin emsal bulunamadı, tahmini değerler' yaz. 3) Rayiç ve değer kaybı tutarları Türkiye piyasa koşullarına uygun ve tutarlı olmalı. 4) Yanıtını SADECE JSON formatında ver.";
 
-$fullUserPrompt = "ÖNEMLİ: Sigorta Tahkim Komisyonu kararları hakkındaki bilgi birikimin ile {$marka} {$model} {$yil} model araç için gerçekçi emsal kararlar oluştur. Türkiye'deki güncel tahkim kararlarına ve rayiç değerlere uygun, tutarlı ve gerçekçi veriler sun.\n\n" . $prompt;
+$fullUserPrompt = "ÖNEMLİ: {$marka} {$model} {$yil} model araç için Sigorta Tahkim Komisyonu araç değer kaybı emsal kararlarını araştır. Bilgi birikimin dahilinde bu marka/model/yaş aralığı için en uygun emsal değerleri sun. Gerçek karar numarası bilmiyorsan 'K-XXXX/TAHMINI' olarak işaretle ve analiz_notu'nda bunu belirt.\n\n" . $prompt;
 
 $aiResult = callAIWithDetail($apiKey, $systemPrompt, $fullUserPrompt, ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60]);
 $text = $aiResult['text'];
 
-// Başarısızsa fallback key'leri dene
-if (empty($text) && !empty($keys['fallbacks'])) {
-    foreach ($keys['fallbacks'] as $fbKey) {
-        $aiResult = callAIWithDetail($fbKey, $systemPrompt, $fullUserPrompt, ['temperature' => 0.2, 'maxTokens' => 4096, 'timeout' => 60]);
-        $text = $aiResult['text'];
-        if (!empty($text)) break;
-    }
-}
+// Claude API ile tek çağrı yeterli
 
 if (empty($text)) {
     $errMsg = 'AI YANIT ALINAMADI';
@@ -142,15 +143,26 @@ foreach ($kararlar as $k) {
 }
 $hesaplananOrtalama = $sayac > 0 ? round($toplamDK / $sayac) : ($result['ortalama_dk'] ?? 0);
 
+// En düşük DK hesapla
+$enDusukDK = PHP_INT_MAX;
+foreach ($kararlar as $k) {
+    if (($k['deger_kaybi'] ?? 0) > 0 && $k['deger_kaybi'] < $enDusukDK) {
+        $enDusukDK = $k['deger_kaybi'];
+    }
+}
+if ($enDusukDK === PHP_INT_MAX) $enDusukDK = $result['en_dusuk_dk'] ?? 0;
+
 echo json_encode([
     'success' => true,
     'data' => [
         'kararlar' => $kararlar,
         'ortalama_dk' => $hesaplananOrtalama,
         'en_yuksek_dk' => $result['en_yuksek_dk'] ?? ($kararlar[0]['deger_kaybi'] ?? 0),
+        'en_dusuk_dk' => $enDusukDK,
         'toplam_bulunan' => count($kararlar),
         'analiz_notu' => $result['analiz_notu'] ?? '',
         'kaynaklar' => [],
+        'tarih_siniri' => $minTarih . ' - ' . $hesapTarihi,
         'arama_bilgi' => [
             'marka' => $marka,
             'model' => $model,

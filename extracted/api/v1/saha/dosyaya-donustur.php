@@ -89,27 +89,48 @@ try {
         ]);
     }
 
-    // 6. Saha medyalarını SİL (dosyaya dönüştürüldüğünde evraklar AKTARILMAZ)
+    // 6. Saha medyalarını EVRAK TABLOSUNA AKTAR (v6: Eskiden silinirdi → VERİ KAYBI DÜZELTİLDİ)
+    // Fiziksel dosyalar KORUNUR, DB kaydı evraklar tablosuna kopyalanır.
+    // saha_dosya_medya kaydı audit için olduğu gibi bırakılır (silinmez).
     $stmtMediaList = $db->prepare("SELECT * FROM saha_dosya_medya WHERE saha_dosya_id = ?");
     $stmtMediaList->execute([$id]);
     $medyalar = $stmtMediaList->fetchAll();
 
-    // Fiziksel dosyaları sil
+    $aktarilanSayisi = 0;
+    $evrakInsert = $db->prepare('INSERT INTO evraklar (dosya_id, evrak_turu, dosya_adi, sunucu_adi, dosya_yolu, dosya_boyutu, mime_type, kullanici_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
     foreach ($medyalar as $medya) {
-        $dosyaTamYol = UPLOAD_DIR . $medya['dosya_yolu'];
-        if (file_exists($dosyaTamYol)) {
-            @unlink($dosyaTamYol);
-        }
-        // Alternatif yol
-        $altYol = UPLOAD_DIR . '/' . $medya['dosya_yolu'];
-        if (file_exists($altYol)) {
-            @unlink($altYol);
+        try {
+            // Medya tipine göre evrak türü belirle
+            $tip = strtolower($medya['tip'] ?? '');
+            if (strpos($tip, 'image') !== false || preg_match('/\.(jpg|jpeg|png|gif|webp|heic)$/i', $medya['dosya_adi'] ?? '')) {
+                $evrakTuru = 'HASAR FOTOĞRAFLARI';
+            } elseif (strpos($tip, 'video') !== false || preg_match('/\.(mp4|mov|avi|mkv)$/i', $medya['dosya_adi'] ?? '')) {
+                $evrakTuru = 'SAHA VİDEO KAYDI';
+            } elseif (strpos($tip, 'audio') !== false || preg_match('/\.(mp3|wav|m4a|ogg)$/i', $medya['dosya_adi'] ?? '')) {
+                $evrakTuru = 'SAHA SES KAYDI';
+            } else {
+                $evrakTuru = 'DİĞER EVRAKLAR';
+            }
+
+            $evrakInsert->execute([
+                $dosyaId,
+                $evrakTuru,
+                $medya['dosya_adi'] ?? ('saha_' . $medya['id'] . '.bin'),
+                basename($medya['dosya_yolu'] ?? ''),
+                $medya['dosya_yolu'] ?? '',
+                (int)($medya['dosya_boyutu'] ?? 0),
+                $medya['mime_type'] ?? ($medya['tip'] ?? 'application/octet-stream'),
+                $kayit['personel_id']
+            ]);
+            $aktarilanSayisi++;
+        } catch (\Exception $me) {
+            // Tek medya aktarım hatası tüm işlemi bozmasın — logla, devam et
+            error_log('[SAHA→DOSYA] Medya aktarım hatası id=' . $medya['id'] . ': ' . $me->getMessage());
         }
     }
 
-    // Veritabanından medya kayıtlarını sil
-    $stmtDelMedia = $db->prepare("DELETE FROM saha_dosya_medya WHERE saha_dosya_id = ?");
-    $stmtDelMedia->execute([$id]);
+    // saha_dosya_medya kayıtları SİLİNMEZ — audit + referans için kalır.
+    // Fiziksel dosyalar uploads/ klasöründe KALIR — hem saha_dosya_medya hem evraklar aynı dosya_yolu'nu işaret eder.
 
     // 7. Saha dosyasını güncelle - Sigorta bilgilerini kaydet
     $stmt = $db->prepare("UPDATE saha_dosyalar
@@ -134,12 +155,13 @@ try {
         $dosyaId
     ]);
 
-    log_action($user['id'], 'saha_donustur', "Saha dosya dosyaya dönüştürüldü: " . $kayit['musteri_adi'] . " → " . $dosyaNo, 'saha_dosyalar', $id);
+    log_action($user['id'], 'saha_donustur', "Saha dosya dosyaya dönüştürüldü: " . $kayit['musteri_adi'] . " → " . $dosyaNo . " ({$aktarilanSayisi} medya aktarıldı)", 'saha_dosyalar', $id);
 
     json_success([
         'dosya_id' => $dosyaId,
-        'dosya_no' => $dosyaNo
-    ], 'SAHA DOSYASI BAŞARIYLA DOSYAYA DÖNÜŞTÜRÜLDÜ');
+        'dosya_no' => $dosyaNo,
+        'medya_aktarildi' => $aktarilanSayisi
+    ], "SAHA DOSYASI BAŞARIYLA DOSYAYA DÖNÜŞTÜRÜLDÜ ({$aktarilanSayisi} medya evraklara aktarıldı)");
 
 } catch (\Exception $e) {
     $db->rollBack();

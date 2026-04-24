@@ -2,17 +2,9 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
+require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/database.php';
+setup_headers();
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/helpers.php';
 
@@ -79,6 +71,21 @@ try {
 
     unset($user['totp_secret']);
     unset($user['totp_aktif']);
+
+    // Netsantral + yetkiler yukle (sessizce)
+    try {
+        $stmtNS = $db->prepare('SELECT netsantral_dahili, netsantral_sip_sifre, netsantral_api_sifre FROM users WHERE id = ?');
+        $stmtNS->execute([$user['id']]);
+        $nsRow = $stmtNS->fetch();
+        if ($nsRow) { $user = array_merge($user, $nsRow); }
+    } catch (\Exception $e) {}
+    try {
+        $stmtY = $db->prepare('SELECT modul, islem FROM yetkiler WHERE kullanici_id = ? AND izin = 1');
+        $stmtY->execute([$user['id']]);
+        $yetkiObj = array();
+        foreach ($stmtY->fetchAll() as $yr) { $yetkiObj[$yr['modul'] . '_' . $yr['islem']] = 1; }
+        $user['yetkiler'] = $yetkiObj;
+    } catch (\Exception $e) { $user['yetkiler'] = array(); }
 
     echo json_encode([
         'success' => true,

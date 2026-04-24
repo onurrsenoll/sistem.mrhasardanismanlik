@@ -65,6 +65,20 @@ if (isset($body['aktif'])) {
     $params[] = (int)$body['aktif'];
 }
 
+// NETSANTRAL DAHİLİ ATAMA ALANLARI
+if (isset($body['netsantral_dahili'])) {
+    $sets[] = 'netsantral_dahili = ?';
+    $params[] = clean($body['netsantral_dahili']);
+}
+if (isset($body['netsantral_sip_sifre'])) {
+    $sets[] = 'netsantral_sip_sifre = ?';
+    $params[] = clean($body['netsantral_sip_sifre']);
+}
+if (isset($body['netsantral_api_sifre'])) {
+    $sets[] = 'netsantral_api_sifre = ?';
+    $params[] = clean($body['netsantral_api_sifre']);
+}
+
 if (isset($body['sifre']) && $body['sifre'] !== '') {
     if (strlen($body['sifre']) < 6) {
         json_error('Şifre en az 6 karakter olmalı', 422);

@@ -16,6 +16,9 @@ $user = auth_required();
 $db = getDB();
 $pag = get_pagination();
 
+// ESKİ SİSTEM: eski_sistem kolonu migration (yoksa ekle)
+try { $db->exec("ALTER TABLE dosyalar ADD COLUMN IF NOT EXISTS eski_sistem TINYINT(1) DEFAULT 0"); } catch (\Exception $e) {}
+
 // Filtreler
 $q      = clean($_GET['q'] ?? '');
 $tur    = clean($_GET['tur'] ?? '');
@@ -82,7 +85,8 @@ $total = (int)$stmt->fetch()['total'];
 // Veri çek — avukat_adi için ortaklar ve users tablosu açıkça JOIN edilir
 // (v_dosya_ozet görünümü sunucuda eski kalabilir, bu JOIN güvenli çözüm sağlar)
 $dataSQL = "SELECT v.*,
-    COALESCE(ort.ad_soyad, avk.ad_soyad) AS avukat_adi
+    COALESCE(ort.ad_soyad, avk.ad_soyad) AS avukat_adi,
+    COALESCE(d.eski_sistem, 0) AS eski_sistem
     FROM v_dosya_ozet v
     LEFT JOIN dosyalar d ON d.dosya_no = v.dosya_no
     LEFT JOIN ortaklar ort ON ort.id = d.ortak_id

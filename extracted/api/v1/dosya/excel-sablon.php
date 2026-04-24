@@ -26,7 +26,8 @@ $user = auth_required(['admin']);
 
 // Şablon sütunları (dosya listesi excel export sıralamasıyla birebir aynı + ek alanlar)
 // Export sırası: DOSYA NO > T.C. NO > ADI SOYADI > DOSYA KAYNAĞI > AVUKATI > DOSYA TÜRÜ > DAVALI ŞİRKET > SİGORTA HASAR NO > KAZA TARİHİ > AÇILIŞ TARİHİ > DOSYA AŞAMA DURUMU
-// DOSYA NO, AVUKATI, AÇILIŞ TARİHİ sistem tarafından otomatik atanır, şablonda yer almaz
+// DOSYA NO sistem tarafından otomatik atanır, şablonda yer almaz
+// AÇILIŞ TARİHİ boş bırakılırsa bugünün tarihi, doldurulursa eski sistem dosyası olarak kabul edilir
 $sutunlar = [
     // — Dosya Listesi Export ile birebir aynı sıra ve isim —
     'T.C. NO',             // Mağdur TC (export sırası: 2)
@@ -36,6 +37,7 @@ $sutunlar = [
     'DAVALI ŞİRKET',      // Davalı sigorta şirketi (export sırası: 7)
     'SİGORTA HASAR NO',   // Sigorta hasar numarası (export sırası: 8)
     'KAZA TARİHİ',        // GG.AA.YYYY formatında (export sırası: 9)
+    'AÇILIŞ TARİHİ',      // Dosya açılış tarihi (eski sistem dosyaları için orijinal tarih), GG.AA.YYYY - boş ise bugün
     'DOSYA AŞAMA DURUMU', // Dosya aşaması (export sırası: 11)
     // — Ek alanlar (export'ta bulunmayan) —
     'TELEFON',             // Mağdur telefon
@@ -63,6 +65,7 @@ $ornek = [
     'Axa Sigorta',                  // DAVALI ŞİRKET
     'HSR-2026-001',                 // SİGORTA HASAR NO
     '15.01.2026',                   // KAZA TARİHİ (GG.AA.YYYY)
+    '20.01.2026',                   // AÇILIŞ TARİHİ (eski sistem dosyası orijinal tarihi)
     'Dosya Açık',                   // DOSYA AŞAMA DURUMU
     // — Ek alanlar —
     '0532 111 2233',                // TELEFON
@@ -107,7 +110,7 @@ fputcsv($output, $sutunlar, ';');
 // Örnek veri satırı
 fputcsv($output, $ornek, ';');
 
-// Boş ikinci örnek satır (BH türü - aynı sırada)
+// Boş ikinci örnek satır (BH türü - aynı sırada, eski sistem dosyası örneği)
 $ornek2 = [
     // — Dosya Listesi Export sırası —
     '98765432109',                   // T.C. NO
@@ -116,7 +119,8 @@ $ornek2 = [
     'BH',                            // DOSYA TÜRÜ
     'Mapfre Sigorta',                // DAVALI ŞİRKET
     '',                              // SİGORTA HASAR NO
-    '20.02.2026',                    // KAZA TARİHİ
+    '10.03.2023',                    // KAZA TARİHİ
+    '15.05.2023',                    // AÇILIŞ TARİHİ (eski sistemde açılmış, geriye dönük aktarım)
     'Dosya Açık',                    // DOSYA AŞAMA DURUMU
     // — Ek alanlar —
     '0533 444 5566',                 // TELEFON
@@ -131,7 +135,7 @@ $ornek2 = [
     '',                              // MODEL YILI
     '',                              // KARŞI PLAKA
     '',                              // KARŞI SİGORTA
-    ''                               // NOTLAR
+    'Eski sistemden aktarım'         // NOTLAR
 ];
 fputcsv($output, $ornek2, ';');
 
