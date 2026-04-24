@@ -585,9 +585,6 @@ $GLOBALS['YETKI_MAP'] = array(
     'cagri/widget-goruntule.php' => array('cagri_merkezi', 'widget-goruntule'),
     'cagri/cagri-yap.php' => array('cagri_merkezi', 'cagri-yap'),
 
-    // ─── YETKİ MİGRASYON ENDPOINT'İ ───
-    'sistem/yetki-migrate.php' => array('sistem', 'sistem-yetki'),
-
     // ─── AJANDA ───
     'ajanda/list.php' => array('ajanda', 'goruntule'),
     'ajanda/create.php' => array('ajanda', 'ajanda-ekle'),

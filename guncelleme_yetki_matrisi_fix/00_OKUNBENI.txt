@@ -54,8 +54,6 @@ Bu paket AŞAĞIDAKİ SORUNLARI çözmek için hazırlanmıştır:
         ├── config/
         │   └── helpers.php          (YETKI_MAP genişletildi)
         └── v1/
-            ├── yetki/
-            │   └── migrate.php      (YENİ — migrasyon endpoint'i)
             ├── yonlendirme/
             │   └── toplu-islem.php  (has_yetki kullanımı)
             ├── sistem/
@@ -64,6 +62,11 @@ Bu paket AŞAĞIDAKİ SORUNLARI çözmek için hazırlanmıştır:
             │   └── yetki-list.php       (hard-coded rol kaldırıldı)
             └── saha/
                 └── list.php          (yetki matrisine bağlandı)
+
+  NOT: Yetki tablosuna yeni kayıtlar SADECE `sql/yetki_ekle_20260424.sql`
+       çalıştırılarak eklenir. Ayrı bir migrate endpoint'i kullanılmıyor
+       — mevcut `sistem/yetki-list.php` ve `sistem/yetki-guncelle.php`
+       dosyaları dokunulmadan korunuyor.
 
   /backup_orjinal/                  → Değişen dosyaların orijinal yedeği
   /sql/yetki_ekle_20260424.sql      → SQL migration (INSERT IGNORE)
@@ -88,27 +91,24 @@ Bu paket AŞAĞIDAKİ SORUNLARI çözmek için hazırlanmıştır:
     → Üzerine yazma işlemi: evet (önceki versiyonları değiştirir).
     → Mevcut dosya/veri: silinmez.
 
-    Yeni eklenen dosyalar:
+    Yeni eklenen dosyalar (paket içinde - yükleme sırasında otomatik gelir):
       - extracted/js/yetki-kontrol.js
       - extracted/js/call-widget.js
-      - extracted/api/v1/yetki/migrate.php
 
-  ADIM 3 — SQL MİGRATİON (İKİ SEÇENEKTEN BİRİ)
+  ADIM 3 — SQL MİGRATİON (TEK SEFERLİK)
   --------------------------------------------
-    SEÇENEK A (Önerilen — Admin Panel):
-      Sisteme admin olarak girin, tarayıcı konsoluna yapıştırın:
-        fetch('/api/v1/yetki/migrate.php', {
-          method: 'POST',
-          headers: {'Authorization': 'Bearer ' + localStorage.getItem('mr_token')}
-        }).then(r=>r.json()).then(console.log)
-
-    SEÇENEK B (phpMyAdmin):
+    SEÇENEK A (Önerilen — phpMyAdmin):
       phpMyAdmin > Veritabanınızı seçin > SQL sekmesi >
       `sql/yetki_ekle_20260424.sql` dosyasının içeriğini yapıştırıp
       Çalıştır deyin.
 
-    SEÇENEK C (SSH):
+    SEÇENEK B (SSH):
       mysql -u USER -p DB_ADI < sql/yetki_ekle_20260424.sql
+
+    Bu script admin olmayan aktif kullanıcılara yeni yetki anahtarlarını
+    izin=0 (kapalı) olarak ekler. Admin kullanıcılar has_yetki() içinde
+    bypass edildiği için zaten tüm yetkilere sahiptir — SQL çalıştırmak
+    onları etkilemez.
 
   ADIM 4 — TARAYICI CACHE TEMİZLEME
   ----------------------------------
