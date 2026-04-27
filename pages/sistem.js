@@ -52,6 +52,7 @@ const MODUL_YETKILERI = [
     {key: 'dosya-portal', label: 'PORTAL ERİŞİMİ OLUŞTUR'},
     {key: 'dosya-kapat', label: 'DOSYA KAPAT'},
     {key: 'dosya-masraf-ekle', label: 'MASRAF EKLE'},
+    {key: 'dosya-masraf-duzenle', label: 'MASRAF DÜZENLE'},
     {key: 'dosya-masraf-sil', label: 'MASRAF SİL'},
     {key: 'dosya-masraf-ode', label: 'MASRAF ÖDE'},
     {key: 'dosya-evrak-yukle', label: 'EVRAK YÜKLE'},
@@ -73,6 +74,7 @@ const MODUL_YETKILERI = [
     {key: 'crm-not-ekle', label: 'GÖRÜŞME NOTU EKLE (KART)'},
     {key: 'crm-not-canli', label: 'CANLI ÇAĞRI NOTU YAZ (GÖRÜŞME ESNASINDA)'},
     {key: 'crm-excel-yukle', label: 'EXCEL TOPLU LİSTE YÜKLE'},
+    {key: 'crm-sablon-indir', label: 'CRM EXCEL ŞABLON İNDİR'},
     {key: 'crm-atama', label: 'LİSTEYİ KULLANICIYA ATA'},
     {key: 'crm-dosyaya-donustur', label: 'DOSYAYA DÖNÜŞTÜR'},
     {key: 'crm-timeline-gor', label: '360° GÖRÜŞME GEÇMİŞİ GÖRÜNTÜLE'},
@@ -100,7 +102,8 @@ const MODUL_YETKILERI = [
     {key: 'hesap-adk', label: 'ARAÇ DEĞER KAYBI'},
     {key: 'hesap-bh', label: 'BEDENİ HASAR'},
     {key: 'hesap-adk-rapor', label: 'ADK RAPOR OLUŞTUR'},
-    {key: 'hesap-bh-rapor', label: 'BH RAPOR OLUŞTUR'}
+    {key: 'hesap-bh-rapor', label: 'BH RAPOR OLUŞTUR'},
+    {key: 'hesap-rayic', label: 'RAYİÇ ARAŞTIRMA'}
   ]},
   {modul: 'paydaslar', label: 'PAYDAŞLAR / ORTAKLAR', icon: 'Handshake', islemler: [
     {key: 'ortaklar-ortaklar', label: 'İŞ ORTAKLARI'},
@@ -196,6 +199,7 @@ const MODUL_YETKILERI = [
     {key: 'ictihat-kusur-emsal', label: 'KUSUR EMSAL DOSYALARI'}
   ]},
   {modul: 'netsantral', label: 'NETSANTRAL / WEBRTC TELEFON', icon: 'Phone', islemler: [
+    {key: 'netsantral-ayarlar', label: 'NETSANTRAL AYARLARI MENUSU (GORUNTULEME)'},
     {key: 'netsantral-goruntule', label: 'AYARLARI GÖRÜNTÜLE'},
     {key: 'netsantral-duzenle', label: 'SIP / WSS AYARLARINI DÜZENLE'},
     {key: 'netsantral-sifre-gor', label: 'SIP ŞİFRESİNİ GÖR'},
@@ -205,6 +209,16 @@ const MODUL_YETKILERI = [
     {key: 'netsantral-widget-goruntule', label: 'GELEN ÇAĞRI WIDGET GÖRÜNTÜLE'},
     {key: 'netsantral-arama-baslat', label: 'GİDEN ÇAĞRI BAŞLAT (TELEFON AÇMA)'},
     {key: 'netsantral-dahili-atama', label: 'KULLANICILARA DAHİLİ ATAMA (ADMIN PANEL)'}
+  ]},
+  {modul: 'crm-analiz', label: 'CRM ANALİZ', icon: 'BarChart3', islemler: [
+    {key: 'crm-analiz-goruntule', label: 'CRM ANALİZ GÖRÜNTÜLE (ARAMA LOGLARI)'},
+    {key: 'crm-analiz-istatistik', label: 'ARAMA İSTATİSTİKLERİ'},
+    {key: 'crm-analiz-kayitlar', label: 'GÖRÜŞME KAYITLARINI İNDİR / DİNLE'}
+  ]},
+  {modul: 'eposta', label: 'E-POSTA', icon: 'Mail', islemler: [
+    {key: 'eposta-goruntule', label: 'E-POSTA GÖRÜNTÜLE / OKU'},
+    {key: 'eposta-gonder', label: 'E-POSTA GÖNDER'},
+    {key: 'eposta-sil', label: 'E-POSTA SİL'}
   ]},
   {modul: 'sistem', label: 'SİSTEM', icon: 'Shield', islemler: [
     {key: 'sistem-kullanici', label: 'KULLANICI YÖNETİMİ'},
@@ -229,7 +243,8 @@ const MODUL_YETKILERI = [
     {key: 'tanimlamalar-sablon-duzenle', label: 'ŞABLON DÜZENLE'},
     {key: 'sistem-konum', label: 'KONUM TAKİBİ'},
     {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'},
-    {key: 'sistem-netsantral', label: 'NETSANTRAL AYARLARI MENÜSÜNÜ GÖSTER'}
+    {key: 'sistem-netsantral', label: 'NETSANTRAL AYARLARI MENÜSÜNÜ GÖSTER'},
+    {key: 'crm-analiz', label: 'CRM ANALİZ MENÜSÜNÜ GÖSTER'}
   ]},
 ];
 
