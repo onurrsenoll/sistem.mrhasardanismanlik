@@ -693,31 +693,6 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
     return () => window.removeEventListener('mr-webrtc-durum', handler);
   }, []);
 
-  /* DB'den netsantral ayarlarini yukle - localStorage cache. Hata olsa bile sayfa render olur. */
-  useEffect(() => {
-    try {
-      if (!MR.api || !MR.api.netsantralAyarList) return;
-      MR.api.netsantralAyarList().then(function(r){
-        if (!r || !r.success || !r.data) return;
-        var d = r.data;
-        var apply = function(key, setter, lsKey) {
-          if (typeof d[key] !== 'undefined' && d[key] !== null && d[key] !== '••••••••' && d[key] !== '') {
-            setter(d[key]);
-            try { localStorage.setItem('mr_netsantral_' + lsKey, d[key]); } catch(e){}
-          }
-        };
-        apply('wss_url', setWss, 'wss');
-        apply('sip_domain', setDomain, 'domain');
-        apply('sip_dahili', setDahili, 'dahili');
-        apply('sip_sifre', setSipSifre, 'sip_sifre');
-        apply('santral_no', setSantralNo, 'no');
-        apply('outbound_proxy', setOutboundProxy, 'outbound_proxy');
-        apply('netgsm_api_kullanici', setKullanici, 'kullanici');
-        apply('netgsm_api_sifre', setApiSifre, 'api_sifre');
-      }).catch(function(){});
-    } catch(e){ /* sessiz */ }
-  }, []);
-
   /* BAĞLANTI TEST */
   const baglantiTest = async () => {
     setTestYapiliyor(true);
@@ -748,7 +723,7 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
     setTestYapiliyor(false);
   };
 
-  /* KAYDET — localStorage + DB (sistem/ayarlar tablosu, netsantral_* prefix) */
+  /* KAYDET */
   const kaydet = () => {
     localStorage.setItem('mr_netsantral_wss', wss);
     localStorage.setItem('mr_netsantral_domain', domain);
@@ -760,35 +735,8 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
     localStorage.setItem('mr_netsantral_sip_port', sipPort);
     localStorage.setItem('mr_netsantral_kayit_suresi', kayitSuresi);
     localStorage.setItem('mr_netsantral_outbound_proxy', outboundProxy);
-    setKayitDurumu('KAYDEDILIYOR...');
-    /* DB kaydi (asenkron, try-catch). Hata olsa bile localStorage'a yazildi. */
-    try {
-      if (MR.api && MR.api.netsantralAyarKaydet) {
-        MR.api.netsantralAyarKaydet({
-          wss_url: wss,
-          sip_domain: domain,
-          sip_dahili: dahili,
-          sip_sifre: sipSifre,
-          santral_no: santralNo,
-          outbound_proxy: outboundProxy,
-          netgsm_api_kullanici: kullanici,
-          netgsm_api_sifre: apiSifre
-        }).then(function(r){
-          if (r && r.success) setKayitDurumu('KAYDEDILDI (DB + LOCAL)');
-          else setKayitDurumu('KAYDEDILDI (LOCAL) - DB hatasi');
-          setTimeout(function(){ setKayitDurumu(''); }, 4000);
-        }).catch(function(){
-          setKayitDurumu('KAYDEDILDI (LOCAL) - DB baglantisi yok');
-          setTimeout(function(){ setKayitDurumu(''); }, 4000);
-        });
-      } else {
-        setKayitDurumu('KAYDEDILDI (LOCAL)');
-        setTimeout(function(){ setKayitDurumu(''); }, 3000);
-      }
-    } catch(e) {
-      setKayitDurumu('KAYDEDILDI (LOCAL)');
-      setTimeout(function(){ setKayitDurumu(''); }, 3000);
-    }
+    setKayitDurumu('KAYDEDİLDİ');
+    setTimeout(() => setKayitDurumu(''), 3000);
     MR.webrtcYenidenBaslat();
   };
 
