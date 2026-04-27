@@ -640,12 +640,16 @@ MR_Mail.MailPage = ({setPage, user}) => {
       )
     ),
 
-    /* ═══ MAIL LİSTESİ ═══ */
+    /* ═══ MAIL LİSTESİ + DETAY — TAM EKRAN 2 PANEL LAYOUT (Outlook/Gmail tarzi) ═══ */
     (altTab === 'gelen' || altTab === 'giden' || altTab === 'yildizli') && React.createElement('div', {style: {
-      display: 'grid', gridTemplateColumns: seciliMail ? '1fr 1.2fr' : '1fr', gap: 16
+      display: 'grid',
+      gridTemplateColumns: seciliMail ? '380px 1fr' : '1fr',
+      gap: 12,
+      height: 'calc(100vh - 220px)',
+      minHeight: 500
     }},
-      /* SOL: MAIL LİSTESİ */
-      React.createElement('div', {style: {background: C.bgCard, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden'}},
+      /* SOL: MAIL LİSTESİ - sabit panel, kendi içinde scroll */
+      React.createElement('div', {style: {background: C.bgCard, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden', display: 'flex', flexDirection: 'column'}},
         /* ARAMA + TOPLU İŞLEM */
         React.createElement('div', {style: {padding: '12px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', gap: 8, alignItems: 'center'}},
           React.createElement('input', {
@@ -667,7 +671,7 @@ MR_Mail.MailPage = ({setPage, user}) => {
         ),
 
         /* MAIL SATIRLARI */
-        React.createElement('div', {style: {maxHeight: 'calc(100vh - 320px)', overflowY: 'auto'}},
+        React.createElement('div', {style: {flex: 1, overflowY: 'auto', minHeight: 0}},
           loading ? React.createElement('div', {style: {padding: 30, textAlign: 'center', color: C.textMuted, fontSize: 12}}, 'YÜKLENİYOR...') :
           mailler.length === 0 ? React.createElement('div', {style: {padding: 40, textAlign: 'center'}},
             React.createElement(LIcon, {name: 'InboxIcon' in (window.lucide||{}) ? 'Inbox' : 'Mail', size: 36, color: C.textMuted}),
@@ -744,10 +748,10 @@ MR_Mail.MailPage = ({setPage, user}) => {
         )
       ),
 
-      /* SAĞ: MAIL DETAY */
+      /* SAĞ: MAIL DETAY - tam yukseklik, kendi icinde scroll */
       seciliMail && React.createElement('div', {style: {
         background: C.bgCard, borderRadius: 14, border: `1px solid ${C.border}`,
-        overflow: 'hidden', display: 'flex', flexDirection: 'column'
+        overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0
       }},
         /* DETAY HEADER */
         React.createElement('div', {style: {
@@ -784,7 +788,7 @@ MR_Mail.MailPage = ({setPage, user}) => {
         /* DETAY BODY - HTML once, yoksa text, yoksa fallback. EKLER varsa altinda goster. */
         detayLoading ? React.createElement('div', {style: {padding: 30, textAlign: 'center', color: C.textMuted}}, 'YÜKLENİYOR...') :
         React.createElement('div', {style: {
-          padding: 20, flex: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 420px)'
+          padding: 24, flex: 1, overflowY: 'auto', minHeight: 0
         }},
           (seciliMail.govde_html || seciliMail.icerik) ?
             React.createElement('div', {
