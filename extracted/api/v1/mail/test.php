@@ -73,33 +73,58 @@ try {
     $sonuc['imap'] = ['success' => false, 'error' => $e->getMessage()];
 }
 
-// SMTP test (bağlantı + AUTH, gönderim değil)
+// SMTP test (bağlantı + AUTH, gönderim değil) - ROBUST multi-line oku
 try {
     $host = $hesap['smtp_host']; $port = (int)($hesap['smtp_port'] ?: 465);
     $enc = $hesap['smtp_encryption'] ?: 'ssl';
     $transport = $enc === 'ssl' ? 'ssl://' : '';
     $socket = @stream_socket_client($transport . $host . ':' . $port, $errno, $errstr, 10);
     if (!$socket) throw new \Exception("SMTP bağlantı hatası: $errstr ($errno)");
-    fgets($socket, 515);
-    fwrite($socket, 'EHLO test' . "\r\n");
-    while ($line = fgets($socket, 515)) { if (substr($line, 3, 1) === ' ') break; }
+    stream_set_timeout($socket, 10);
+
+    /* Multi-line SMTP yanit okuyucu - "XXX SPACE" satiri sonu kabul eder */
+    $smtp_oku = function($s) {
+        $tum = '';
+        while (!feof($s)) {
+            $line = fgets($s, 1024);
+            if ($line === false) break;
+            $tum .= $line;
+            // SMTP standardi: "XXX " (3 rakam + space) son satirdir, "XXX-" devam ediyor
+            if (preg_match('/^\d{3} /', $line)) break;
+            $info = stream_get_meta_data($s);
+            if (!empty($info['timed_out'])) break;
+        }
+        return $tum;
+    };
+
+    $banner = $smtp_oku($socket);                       // 220 banner
+    fwrite($socket, 'EHLO mrhasar' . "\r\n");
+    $ehlo = $smtp_oku($socket);                          // 250 multi-line
+
     if ($enc === 'tls') {
         fwrite($socket, "STARTTLS\r\n");
-        fgets($socket, 515);
+        $smtp_oku($socket);
         @stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
-        fwrite($socket, 'EHLO test' . "\r\n");
-        while ($line = fgets($socket, 515)) { if (substr($line, 3, 1) === ' ') break; }
+        fwrite($socket, 'EHLO mrhasar' . "\r\n");
+        $smtp_oku($socket);
     }
+
     fwrite($socket, "AUTH LOGIN\r\n");
-    fgets($socket, 515);
+    $authReq = $smtp_oku($socket);                      // 334 VXNlcm5hbWU6 (Username:)
+
     fwrite($socket, base64_encode($hesap['kullanici_adi'] ?: $hesap['email']) . "\r\n");
-    fgets($socket, 515);
+    $userResp = $smtp_oku($socket);                     // 334 UGFzc3dvcmQ6 (Password:)
+
     fwrite($socket, base64_encode(mail_coz($hesap['sifre_sifreli'])) . "\r\n");
-    $auth = fgets($socket, 515);
+    $auth = $smtp_oku($socket);                          // 235 OK veya 535 Auth fail
+
     fwrite($socket, "QUIT\r\n");
     fclose($socket);
-    if (strpos($auth, '235') === false) throw new \Exception('SMTP AUTH: ' . trim($auth));
-    $sonuc['smtp'] = ['success' => true];
+
+    if (strpos($auth, '235') === false) {
+        throw new \Exception('SMTP AUTH BAŞARISIZ: ' . trim($auth));
+    }
+    $sonuc['smtp'] = ['success' => true, 'mesaj' => 'SMTP AUTH başarılı'];
 } catch (\Exception $e) {
     $sonuc['smtp'] = ['success' => false, 'error' => $e->getMessage()];
 }

@@ -150,12 +150,19 @@ function mail_smtp_gonder($hesap, $data) {
     $transport = $enc === 'ssl' ? 'ssl://' : '';
     $socket = @stream_socket_client($transport . $host . ':' . $port, $errno, $errstr, 15);
     if (!$socket) return ['success' => false, 'error' => "SMTP bağlantı hatası: $errstr ($errno)"];
+    stream_set_timeout($socket, 15);
 
+    /* Multi-line SMTP yanit okuyucu - "XXX SPACE" satiri sonu kabul eder
+       Bazi sunucularda EHLO yanitinda 5+ satir olabilir, hepsini topla */
     $read = function() use ($socket) {
         $r = '';
-        while ($line = fgets($socket, 515)) {
+        while (!feof($socket)) {
+            $line = fgets($socket, 1024);
+            if ($line === false) break;
             $r .= $line;
-            if (substr($line, 3, 1) === ' ') break;
+            if (preg_match('/^\d{3} /', $line)) break;
+            $info = stream_get_meta_data($socket);
+            if (!empty($info['timed_out'])) break;
         }
         return $r;
     };
