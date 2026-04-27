@@ -780,7 +780,13 @@ MR.AdminDahiliAtamaPanel = () => {
 /* ═══ NETSANTRAL AYARLARI - TAM SAYFA (SİSTEM MENÜSÜNDEN ERİŞİLİR) ═══ */
 MR.NetsantralAyarlariPage = ({setPage, user}) => {
   const {C, S, LIcon, FormGroup} = MR;
-  const def = MR._netsantralVarsayilan;
+  const def = MR._netsantralVarsayilan || {wssUrl:'',domain:'',dahili:'',sipSifre:'',santralNo:'',kullanici:''};
+
+  /* DEBUG: yeni versiyon yüklendi mi kontrolü — Console'da görünür */
+  if (typeof window !== 'undefined' && !window.__nsv15_loaded) {
+    window.__nsv15_loaded = true;
+    console.log('[NETSANTRAL v15] Yeni versiyon yuklendi - DB persistence aktif');
+  }
 
   /* ═══ YETKİ KONTROL ═══ */
   const yetkiGoruntule = user?.rol === 'admin' || MR.hasYetki(user, 'netsantral', 'netsantral-goruntule');

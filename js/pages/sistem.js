@@ -228,7 +228,8 @@ const MODUL_YETKILERI = [
     {key: 'tanimlamalar-sablon-ekle', label: 'ŞABLON EKLE'},
     {key: 'tanimlamalar-sablon-duzenle', label: 'ŞABLON DÜZENLE'},
     {key: 'sistem-konum', label: 'KONUM TAKİBİ'},
-    {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'}
+    {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'},
+    {key: 'sistem-netsantral', label: 'NETSANTRAL AYARLARI MENÜSÜNÜ GÖSTER'}
   ]},
 ];
 
