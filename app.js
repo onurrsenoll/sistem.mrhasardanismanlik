@@ -135,10 +135,13 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
   const {C, LIcon, api} = MR;
   const [menuOpen, setMenuOpen] = useState(null);
   const [bildirimSayisi, setBildirimSayisi] = useState(0);
+  const [mailSayisi, setMailSayisi] = useState(0);
   const [profilOpen, setProfilOpen] = useState(false);
   const navRef = useRef(null);
   const filteredMenu = menuErisim(user);
+  const sonMailIdRef = useRef(0);
 
+  /* Bildirim/mesaj sayac polling */
   useEffect(() => {
     const sayacGuncelle = async () => {
       try {
@@ -156,6 +159,66 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
     const iv = setInterval(sayacGuncelle, 60000);
     return () => clearInterval(iv);
   }, []);
+
+  /* MAIL sayac polling + ses + browser notification (E-posta yetkili kullanicilar icin) */
+  useEffect(() => {
+    if (!user) return;
+    const yetkili = user?.rol === 'admin' || (MR.hasYetki && MR.hasYetki(user, 'eposta', 'eposta-goruntule'));
+    if (!yetkili) return;
+
+    /* Browser notification izni - kullanici reddetse de fallback ses + badge calisir */
+    if ('Notification' in window && Notification.permission === 'default') {
+      try { Notification.requestPermission(); } catch(e) {}
+    }
+
+    /* Audio context - basit beep (kullanici jest sonrasi calisir, autoplay engelini bypass etmez)
+       Ilk render sirasinda audio init etmeye calismaz; bildirim aninda new Audio cagrilir */
+    const beepSes = () => {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.18, audioCtx.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.45);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+      } catch(e) {}
+    };
+
+    const mailKontrol = async () => {
+      try {
+        const r = await api.mailYeniSayisi();
+        if (!r?.success) return;
+        const yeniSayi = (r.data?.okunmamis || 0);
+        const yeniSonId = (r.data?.son_id || 0);
+        const oncekiSonId = sonMailIdRef.current;
+
+        setMailSayisi(yeniSayi);
+
+        /* Yeni mail geldi mi? (son_id arttıysa) - ilk yuklemede ses cikartma */
+        if (oncekiSonId > 0 && yeniSonId > oncekiSonId && yeniSayi > 0) {
+          beepSes();
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+              new Notification('📧 Yeni Mail', {
+                body: yeniSayi + ' okunmamis mail var',
+                icon: '/favicon.svg',
+                tag: 'mr-mail',
+                requireInteraction: false
+              });
+            } catch(e) {}
+          }
+        }
+        sonMailIdRef.current = yeniSonId;
+      } catch(e) {}
+    };
+
+    mailKontrol();
+    const iv = setInterval(mailKontrol, 30000); /* 30 saniyede bir kontrol */
+    return () => clearInterval(iv);
+  }, [user?.id]);
 
   useEffect(() => {
     const close = (e) => {
@@ -249,6 +312,18 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
                   background: C.danger, color: '#fff', fontSize: 8,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700
                 }}>{bildirimSayisi > 9 ? '9+' : bildirimSayisi}</span>
+              )}
+              {m.id === 'eposta' && mailSayisi > 0 && (
+                <span style={{
+                  position: 'absolute', top: -4, right: -6,
+                  minWidth: 18, height: 18, borderRadius: 9,
+                  background: '#dc2626', color: '#fff', fontSize: 10,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800,
+                  padding: '0 5px',
+                  boxShadow: '0 2px 8px rgba(220,38,38,0.5)',
+                  border: '2px solid ' + (isK ? '#0f172a' : '#fff'),
+                  animation: 'pulse 2s infinite'
+                }}>{mailSayisi > 99 ? '99+' : mailSayisi}</span>
               )}
               {m.sub && <LIcon name="ChevronDown" size={10} color={C.textMuted}/>}
             </div>

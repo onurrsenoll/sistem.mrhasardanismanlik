@@ -385,7 +385,7 @@ MR_Mail.MailPage = ({setPage, user}) => {
   /* ═══ RENDER ═══ */
   if (loading && hesaplar.length === 0) return React.createElement(Loading || 'div', null, 'YÜKLENİYOR...');
 
-  return React.createElement('div', {style: {display: 'flex', flexDirection: 'column', gap: 16}},
+  return React.createElement('div', {style: {display: 'flex', flexDirection: 'column', gap: 12, height: 'calc(100vh - 110px)', margin: '-16px', padding: '16px'}},
 
     /* BAŞLIK */
     React.createElement('div', {style: {
@@ -645,8 +645,8 @@ MR_Mail.MailPage = ({setPage, user}) => {
       display: 'grid',
       gridTemplateColumns: seciliMail ? '380px 1fr' : '1fr',
       gap: 12,
-      height: 'calc(100vh - 220px)',
-      minHeight: 500
+      flex: 1,
+      minHeight: 0
     }},
       /* SOL: MAIL LİSTESİ - sabit panel, kendi içinde scroll */
       React.createElement('div', {style: {background: C.bgCard, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden', display: 'flex', flexDirection: 'column'}},

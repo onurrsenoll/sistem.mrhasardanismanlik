@@ -321,6 +321,8 @@ MR.api = {
     return (await fetch(API_BASE + '/mail/gonder.php', { method: 'POST', headers: h, body: formData, credentials: 'include' })).json();
   },
   /* Ek indir URL (token query string ile - direkt link) */
+  /* Polling - okunmamis sayi + son mail bilgisi (sesli/gorsel bildirim icin) */
+  mailYeniSayisi() { return this.req('/mail/yeni-sayisi.php'); },
   mailEkIndirUrl(mesajId, ekIdx) {
     return API_BASE + '/mail/ek-indir.php?mesaj_id=' + mesajId + '&ek_idx=' + ekIdx + '&auth=' + encodeURIComponent(this.token || '');
   },

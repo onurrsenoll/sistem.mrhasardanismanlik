@@ -792,6 +792,13 @@ $GLOBALS['YETKI_MAP'] = array(
     'mail/get.php' => array('eposta', 'eposta-goruntule'),
     'mail/send.php' => array('eposta', 'eposta-gonder'),
     'mail/delete.php' => array('eposta', 'eposta-sil'),
+    'mail/yeni-sayisi.php' => array('eposta', 'eposta-goruntule'),
+    'mail/hesaplar.php' => array('eposta', 'eposta-goruntule'),
+    'mail/sync.php' => array('eposta', 'eposta-goruntule'),
+    'mail/test.php' => array('eposta', 'eposta-goruntule'),
+    'mail/gonder.php' => array('eposta', 'eposta-gonder'),
+    'mail/ek-indir.php' => array('eposta', 'eposta-goruntule'),
+    'mail/islem.php' => array('eposta', 'eposta-goruntule'),
 
     // ─── CRM ANALİZ ───
     'arama-log/list.php' => array('crm-analiz', 'crm-analiz-goruntule'),
