@@ -65,6 +65,10 @@ function mail_ensure_tables() {
             INDEX idx_okundu (okundu)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
 
+        /* IDEMPOTENT MIGRATIONS - mevcut kayitlara dokunmaz */
+        try { $db->exec("ALTER TABLE mail_hesaplar ADD COLUMN imza_html LONGTEXT DEFAULT NULL"); } catch (\Exception $e) {}
+        try { $db->exec("ALTER TABLE mail_hesaplar ADD COLUMN varsayilan TINYINT(1) DEFAULT 0"); } catch (\Exception $e) {}
+
         $db->exec("CREATE TABLE IF NOT EXISTS mail_sablonlari (
             id INT AUTO_INCREMENT PRIMARY KEY,
             ad VARCHAR(150) NOT NULL,
@@ -104,19 +108,118 @@ function mail_coz($b64) {
 }
 }
 
+/* Mail ekleri icin guvenli upload klasoru */
+if (!function_exists('mail_ek_klasor')) {
+function mail_ek_klasor($hesapId, $mesajId) {
+    $base = __DIR__ . '/../../../uploads/mail-ekler';
+    if (!is_dir($base)) @mkdir($base, 0755, true);
+    $hesapDir = $base . '/' . (int)$hesapId;
+    if (!is_dir($hesapDir)) @mkdir($hesapDir, 0755, true);
+    $mesajDir = $hesapDir . '/' . (int)$mesajId;
+    if (!is_dir($mesajDir)) @mkdir($mesajDir, 0755, true);
+    return $mesajDir;
+}
+}
+
+/* Recursive part walker - tum HTML, plain ve EKLERI cikarir
+   $struct: imap_fetchstructure cikti
+   Return: ['html'=>..., 'text'=>..., 'ekler'=>[{partNum, ad, mime, boyut, encoding}, ...]] */
+if (!function_exists('mail_part_walk')) {
+function mail_part_walk($imap, $msgNum, $struct, $prefix = '') {
+    $sonuc = ['html' => '', 'text' => '', 'ekler' => []];
+    $decode = function($payload, $encoding) {
+        if ($encoding == 3) return base64_decode($payload);
+        if ($encoding == 4) return quoted_printable_decode($payload);
+        return $payload;
+    };
+
+    /* Tek parca mesaj */
+    if (empty($struct->parts)) {
+        $partNum = $prefix === '' ? '1' : $prefix;
+        $data = imap_fetchbody($imap, $msgNum, $partNum ?: '1');
+        $data = $decode($data, $struct->encoding ?? 0);
+        $charset = 'UTF-8';
+        if (!empty($struct->parameters)) {
+            foreach ($struct->parameters as $p) {
+                if (strtolower($p->attribute) === 'charset') $charset = $p->value;
+            }
+        }
+        if (strtolower($charset) !== 'utf-8') $data = @mb_convert_encoding($data, 'UTF-8', $charset);
+        $subtype = strtoupper($struct->subtype ?? '');
+        if ($subtype === 'HTML') $sonuc['html'] = $data;
+        else $sonuc['text'] = $data;
+        return $sonuc;
+    }
+
+    foreach ($struct->parts as $i => $part) {
+        $partNum = $prefix === '' ? (string)($i + 1) : $prefix . '.' . ($i + 1);
+
+        /* Recursive: nested multipart */
+        if (!empty($part->parts) && (strtoupper($part->type === 1 ? 'MULTIPART' : '') || $part->subtype === 'ALTERNATIVE' || $part->subtype === 'MIXED' || $part->subtype === 'RELATED')) {
+            $alt = mail_part_walk($imap, $msgNum, $part, $partNum);
+            if ($alt['html']) $sonuc['html'] .= $alt['html'];
+            if ($alt['text']) $sonuc['text'] .= $alt['text'];
+            $sonuc['ekler'] = array_merge($sonuc['ekler'], $alt['ekler']);
+            continue;
+        }
+
+        /* EK dosya tespit: dispoition=attachment VEYA filename parametresi VEYA content-id (inline image) */
+        $isAttachment = false;
+        $dosyaAdi = '';
+        if (!empty($part->disposition) && strtolower($part->disposition) === 'attachment') $isAttachment = true;
+        if (!empty($part->dparameters)) {
+            foreach ($part->dparameters as $dp) {
+                if (strtolower($dp->attribute) === 'filename') { $dosyaAdi = imap_utf8($dp->value); $isAttachment = true; }
+            }
+        }
+        if (!empty($part->parameters)) {
+            foreach ($part->parameters as $p) {
+                if (strtolower($p->attribute) === 'name') { if (!$dosyaAdi) $dosyaAdi = imap_utf8($p->value); $isAttachment = true; }
+            }
+        }
+
+        if ($isAttachment) {
+            $sonuc['ekler'][] = [
+                'partNum' => $partNum,
+                'ad' => $dosyaAdi ?: ('ek-' . $partNum),
+                'mime' => strtolower(($part->type ? '' : 'TEXT') . '/' . ($part->subtype ?? 'BIN')),
+                'boyut' => (int)($part->bytes ?? 0),
+                'encoding' => (int)($part->encoding ?? 0)
+            ];
+            continue;
+        }
+
+        /* Govde: HTML veya PLAIN */
+        $data = imap_fetchbody($imap, $msgNum, $partNum);
+        $data = $decode($data, $part->encoding ?? 0);
+        $charset = 'UTF-8';
+        if (!empty($part->parameters)) {
+            foreach ($part->parameters as $p) {
+                if (strtolower($p->attribute) === 'charset') $charset = $p->value;
+            }
+        }
+        if (strtolower($charset) !== 'utf-8') $data = @mb_convert_encoding($data, 'UTF-8', $charset);
+        $subtype = strtoupper($part->subtype ?? '');
+        if ($subtype === 'HTML') $sonuc['html'] .= $data;
+        elseif ($subtype === 'PLAIN') $sonuc['text'] .= $data;
+    }
+    return $sonuc;
+}
+}
+
 if (!function_exists('mail_imap_baglan')) {
-function mail_imap_baglan($hesap) {
+function mail_imap_baglan($hesap, $klasor = 'INBOX') {
     if (!function_exists('imap_open')) {
         throw new \Exception('PHP IMAP uzantısı sunucuda yüklü değil. cPanel PHP Selector → imap uzantısını etkinleştirin.');
     }
     $port = (int)$hesap['imap_port'] ?: 993;
     $enc = $hesap['imap_encryption'] ?: 'ssl';
     $flag = $enc === 'tls' ? '/tls' : ($enc === 'ssl' ? '/ssl' : '');
-    $sunucu = '{' . $hesap['imap_host'] . ':' . $port . '/imap' . $flag . '/novalidate-cert}INBOX';
+    $sunucu = '{' . $hesap['imap_host'] . ':' . $port . '/imap' . $flag . '/novalidate-cert}' . $klasor;
     $sifre = mail_coz($hesap['sifre_sifreli']);
     $inbox = @imap_open($sunucu, $hesap['kullanici_adi'] ?: $hesap['email'], $sifre, 0, 1);
     if (!$inbox) {
-        throw new \Exception('IMAP bağlantı hatası: ' . imap_last_error());
+        throw new \Exception('IMAP bağlantı hatası (klasor=' . $klasor . '): ' . imap_last_error());
     }
     return $inbox;
 }
@@ -205,7 +308,20 @@ function mail_smtp_gonder($hesap, $data) {
     $write('DATA');
     $read();
 
-    $boundary = 'mr-' . bin2hex(random_bytes(8));
+    /* IMZA otomatik EKLE (eger hesapta tanimliysa) */
+    if (!empty($hesap['imza_html'])) {
+        $imza = $hesap['imza_html'];
+        if (stripos($html, $imza) === false) {
+            $html = ($html ?: '<div></div>') . '<br/><br/>' . $imza;
+        }
+    }
+    if (!$text && $html) $text = trim(strip_tags($html));
+
+    /* Ekler varsa multipart/mixed sarmalama, yoksa direkt multipart/alternative */
+    $ekler = $data['attachments'] ?? [];
+    $ekler = is_array($ekler) ? $ekler : [];
+    $boundaryAlt = 'mr-alt-' . bin2hex(random_bytes(6));
+    $boundaryMixed = 'mr-mix-' . bin2hex(random_bytes(6));
     $msgId = '<' . bin2hex(random_bytes(10)) . '@' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '>';
     $headers = [];
     $headers[] = 'From: ' . mb_encode_mimeheader($fromAdi, 'UTF-8') . ' <' . $from . '>';
@@ -215,18 +331,46 @@ function mail_smtp_gonder($hesap, $data) {
     $headers[] = 'Date: ' . date('r');
     $headers[] = 'Message-ID: ' . $msgId;
     $headers[] = 'MIME-Version: 1.0';
-    $headers[] = 'Content-Type: multipart/alternative; boundary="' . $boundary . '"';
 
-    $body = '';
-    $body .= '--' . $boundary . "\r\n";
-    $body .= "Content-Type: text/plain; charset=UTF-8\r\n";
-    $body .= "Content-Transfer-Encoding: base64\r\n\r\n";
-    $body .= chunk_split(base64_encode($text)) . "\r\n";
-    $body .= '--' . $boundary . "\r\n";
-    $body .= "Content-Type: text/html; charset=UTF-8\r\n";
-    $body .= "Content-Transfer-Encoding: base64\r\n\r\n";
-    $body .= chunk_split(base64_encode($html)) . "\r\n";
-    $body .= '--' . $boundary . "--\r\n";
+    /* Govde olusturma: alt = HTML+TEXT alternative */
+    $altBody = '';
+    $altBody .= '--' . $boundaryAlt . "\r\n";
+    $altBody .= "Content-Type: text/plain; charset=UTF-8\r\n";
+    $altBody .= "Content-Transfer-Encoding: base64\r\n\r\n";
+    $altBody .= chunk_split(base64_encode($text)) . "\r\n";
+    $altBody .= '--' . $boundaryAlt . "\r\n";
+    $altBody .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $altBody .= "Content-Transfer-Encoding: base64\r\n\r\n";
+    $altBody .= chunk_split(base64_encode($html)) . "\r\n";
+    $altBody .= '--' . $boundaryAlt . "--\r\n";
+
+    if (empty($ekler)) {
+        /* Ek yok - direkt alternative */
+        $headers[] = 'Content-Type: multipart/alternative; boundary="' . $boundaryAlt . '"';
+        $body = $altBody;
+    } else {
+        /* Ek var - mixed sarmala */
+        $headers[] = 'Content-Type: multipart/mixed; boundary="' . $boundaryMixed . '"';
+        $body = '';
+        $body .= '--' . $boundaryMixed . "\r\n";
+        $body .= 'Content-Type: multipart/alternative; boundary="' . $boundaryAlt . '"' . "\r\n\r\n";
+        $body .= $altBody . "\r\n";
+        foreach ($ekler as $ek) {
+            $ekAd = $ek['ad'] ?? 'ek.bin';
+            $ekMime = $ek['mime'] ?? 'application/octet-stream';
+            $ekVeri = $ek['veri'] ?? '';
+            if (!$ekVeri && !empty($ek['path']) && file_exists($ek['path'])) {
+                $ekVeri = file_get_contents($ek['path']);
+            }
+            if (!$ekVeri) continue;
+            $body .= '--' . $boundaryMixed . "\r\n";
+            $body .= 'Content-Type: ' . $ekMime . '; name="' . addslashes($ekAd) . '"' . "\r\n";
+            $body .= 'Content-Transfer-Encoding: base64' . "\r\n";
+            $body .= 'Content-Disposition: attachment; filename="' . addslashes($ekAd) . '"' . "\r\n\r\n";
+            $body .= chunk_split(base64_encode($ekVeri)) . "\r\n";
+        }
+        $body .= '--' . $boundaryMixed . "--\r\n";
+    }
 
     $msg = implode("\r\n", $headers) . "\r\n\r\n" . $body;
     // Satır başı nokta kaçışı

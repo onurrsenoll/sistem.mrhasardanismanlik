@@ -314,6 +314,16 @@ MR.api = {
   mailList(p = {}) { return this.req('/mail/list.php?' + new URLSearchParams(p)); },
   mailGet(id) { return this.req('/mail/get.php?id=' + id); },
   mailGonder(d) { return this.req('/mail/gonder.php', { method: 'POST', body: JSON.stringify(d) }); },
+  /* Ekli mail gonder - multipart/form-data ile (FormData icin Content-Type set ETME) */
+  async mailGonderEkli(formData) {
+    const h = {};
+    if (this.token) h['Authorization'] = 'Bearer ' + this.token;
+    return (await fetch(API_BASE + '/mail/gonder.php', { method: 'POST', headers: h, body: formData, credentials: 'include' })).json();
+  },
+  /* Ek indir URL (token query string ile - direkt link) */
+  mailEkIndirUrl(mesajId, ekIdx) {
+    return API_BASE + '/mail/ek-indir.php?mesaj_id=' + mesajId + '&ek_idx=' + ekIdx + '&auth=' + encodeURIComponent(this.token || '');
+  },
   mailSync(d) { return this.req('/mail/sync.php', { method: 'POST', body: JSON.stringify(d) }, 60000); },
   mailIslem(d) { return this.req('/mail/islem.php', { method: 'PUT', body: JSON.stringify(d) }); },
   mailTest(d) { return this.req('/mail/test.php', { method: 'POST', body: JSON.stringify(d) }, 30000); },

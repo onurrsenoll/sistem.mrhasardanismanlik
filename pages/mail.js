@@ -47,9 +47,12 @@ MR_Mail.MailPage = ({setPage, user}) => {
     }).catch(() => {});
   }, [user?.id]);
 
-  /* YENİ MAIL COMPOSE */
+  /* YENİ MAIL COMPOSE - zengin editor + ekler */
   const [compose, setCompose] = useState(false);
   const [composeData, setComposeData] = useState({alici: '', konu: '', icerik: '', cc: '', bcc: ''});
+  const [composeEkler, setComposeEkler] = useState([]);  // [{file, ad, boyut}]
+  const editorRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [gonderLoading, setGonderLoading] = useState(false);
   const [showCcBcc, setShowCcBcc] = useState(false);
 
@@ -142,21 +145,46 @@ MR_Mail.MailPage = ({setPage, user}) => {
     setSeciliIdler([]);
   };
 
-  /* ═══ MAIL GÖNDER ═══ */
+  /* ═══ MAIL GÖNDER - ekler + zengin HTML + imza otomatik ═══ */
   const mailGonder = async () => {
     if (!composeData.alici || !composeData.konu) {
       setMesaj({type: 'error', text: 'ALICI VE KONU ZORUNLU'});
       return;
     }
+    if (!seciliHesap?.id) {
+      setMesaj({type: 'error', text: 'GÖNDEREN HESAP SEÇİLİ DEĞİL'});
+      return;
+    }
     setGonderLoading(true);
-    const r = await api.mailGonder({
-      hesap_id: seciliHesap.id,
-      ...composeData
-    });
+    /* Editor'den HTML al */
+    const htmlIcerik = editorRef.current ? editorRef.current.innerHTML : (composeData.icerik || '');
+    let r;
+    if (composeEkler.length > 0) {
+      /* Multipart/form-data ile ekli gonder */
+      const fd = new FormData();
+      fd.append('hesap_id', String(seciliHesap.id));
+      fd.append('to', composeData.alici);
+      fd.append('cc', composeData.cc || '');
+      fd.append('bcc', composeData.bcc || '');
+      fd.append('subject', composeData.konu);
+      fd.append('body_html', htmlIcerik);
+      fd.append('body_text', editorRef.current ? editorRef.current.innerText : '');
+      composeEkler.forEach(ek => fd.append('ekler[]', ek.file, ek.ad));
+      r = await api.mailGonderEkli(fd);
+    } else {
+      r = await api.mailGonder({
+        hesap_id: seciliHesap.id,
+        to: composeData.alici, cc: composeData.cc || '', bcc: composeData.bcc || '',
+        subject: composeData.konu,
+        body_html: htmlIcerik,
+        body_text: editorRef.current ? editorRef.current.innerText : ''
+      });
+    }
     if (r?.success) {
-      setMesaj({type: 'success', text: 'MAIL GÖNDERİLDİ'});
+      setMesaj({type: 'success', text: 'MAIL GÖNDERİLDİ' + (composeEkler.length ? ' (' + composeEkler.length + ' ek)' : '')});
       setCompose(false);
       setComposeData({alici: '', konu: '', icerik: '', cc: '', bcc: ''});
+      setComposeEkler([]);
       setShowCcBcc(false);
     } else {
       setMesaj({type: 'error', text: r?.error || 'MAIL GÖNDERİLEMEDİ'});
@@ -190,7 +218,8 @@ MR_Mail.MailPage = ({setPage, user}) => {
       smtp_port: hesapForm.smtp_port || 465,
       smtp_encryption: hesapForm.guvenlik || 'ssl',
       etiket: hesapForm.display_name || hesapForm.email,
-      aktif: hesapForm.aktif !== undefined ? hesapForm.aktif : 1
+      aktif: hesapForm.aktif !== undefined ? hesapForm.aktif : 1,
+      imza_html: hesapForm.imza_html || ''
     };
     /* Admin baska kullaniciya hesap atayabilir */
     if (hesapForm.kullanici_id) payload.kullanici_id = hesapForm.kullanici_id;
@@ -234,7 +263,8 @@ MR_Mail.MailPage = ({setPage, user}) => {
       smtp_port: h.smtp_port || 465,
       guvenlik: h.imap_encryption || 'ssl',
       aktif: h.aktif !== undefined ? h.aktif : 1,
-      kullanici_id: h.kullanici_id
+      kullanici_id: h.kullanici_id,
+      imza_html: h.imza_html || ''
     });
     setMesaj({type: 'info', text: 'DÜZENLEME MODU: Şifre boş bırakılırsa mevcut korunur'});
     /* Form'a scroll */
@@ -446,19 +476,141 @@ MR_Mail.MailPage = ({setPage, user}) => {
             onChange: e => setComposeData(p => ({...p, konu: e.target.value})),
             placeholder: 'Mail konusu'})
         ),
-        React.createElement(FormGroup, {label: 'İÇERİK'},
-          React.createElement('textarea', {style: {...S.input, minHeight: 200, fontFamily: 'inherit', resize: 'vertical'},
-            value: composeData.icerik,
-            onChange: e => setComposeData(p => ({...p, icerik: e.target.value})),
-            placeholder: 'Mail içeriğini yazın...'})
+        /* ═══ ZENGIN EDITOR TOOLBAR + IÇERIK ═══ */
+        React.createElement(FormGroup, {label: 'İÇERİK (Bold/İtalik/Renk/Font/Boyut destekli)'},
+          /* TOOLBAR */
+          React.createElement('div', {style: {
+            display: 'flex', flexWrap: 'wrap', gap: 4, padding: 6,
+            background: C.bgInput || '#1e293b', borderRadius: '8px 8px 0 0',
+            border: '1px solid ' + C.border, borderBottom: 'none'
+          }},
+            /* Font Family */
+            React.createElement('select', {
+              onChange: e => { document.execCommand('fontName', false, e.target.value); editorRef.current && editorRef.current.focus(); },
+              style: {fontSize: 11, padding: '3px 6px', borderRadius: 4, background: C.bgCard, color: C.text, border: '1px solid ' + C.border}
+            },
+              ['Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Tahoma', 'Trebuchet MS', 'Manrope']
+                .map(f => React.createElement('option', {key: f, value: f, style: {fontFamily: f}}, f))
+            ),
+            /* Font Size */
+            React.createElement('select', {
+              onChange: e => { document.execCommand('fontSize', false, e.target.value); editorRef.current && editorRef.current.focus(); },
+              style: {fontSize: 11, padding: '3px 6px', borderRadius: 4, background: C.bgCard, color: C.text, border: '1px solid ' + C.border}
+            },
+              ['1','2','3','4','5','6','7'].map(s => React.createElement('option', {key: s, value: s}, 'Boyut ' + s))
+            ),
+            /* Format butonlari */
+            ['B', 'I', 'U', 'S'].map((ch, idx) => {
+              const cmd = ['bold','italic','underline','strikeThrough'][idx];
+              return React.createElement('button', {
+                key: cmd, type: 'button',
+                title: ['Kalin','İtalik','Alti cizili','Ustu cizili'][idx],
+                onClick: () => { document.execCommand(cmd); editorRef.current && editorRef.current.focus(); },
+                style: {padding: '4px 10px', fontSize: 11, fontWeight: 800, fontStyle: cmd === 'italic' ? 'italic' : 'normal', textDecoration: cmd === 'underline' ? 'underline' : (cmd === 'strikeThrough' ? 'line-through' : 'none'), background: C.bgCard, color: C.text, border: '1px solid ' + C.border, borderRadius: 4, cursor: 'pointer'}
+              }, ch);
+            }),
+            /* Renk */
+            React.createElement('input', {
+              type: 'color',
+              title: 'Yazı rengi',
+              onChange: e => { document.execCommand('foreColor', false, e.target.value); editorRef.current && editorRef.current.focus(); },
+              style: {width: 28, height: 24, border: '1px solid ' + C.border, borderRadius: 4, cursor: 'pointer', background: 'transparent'}
+            }),
+            /* Arka plan rengi */
+            React.createElement('input', {
+              type: 'color',
+              title: 'Arka plan rengi',
+              onChange: e => { document.execCommand('hiliteColor', false, e.target.value); editorRef.current && editorRef.current.focus(); },
+              style: {width: 28, height: 24, border: '1px solid ' + C.border, borderRadius: 4, cursor: 'pointer', background: '#fff'}
+            }),
+            /* Listeler */
+            React.createElement('button', {
+              type: 'button', title: 'Madde işaretli liste',
+              onClick: () => { document.execCommand('insertUnorderedList'); editorRef.current && editorRef.current.focus(); },
+              style: {padding: '4px 10px', fontSize: 11, background: C.bgCard, color: C.text, border: '1px solid ' + C.border, borderRadius: 4, cursor: 'pointer'}
+            }, '• Liste'),
+            React.createElement('button', {
+              type: 'button', title: 'Numaralı liste',
+              onClick: () => { document.execCommand('insertOrderedList'); editorRef.current && editorRef.current.focus(); },
+              style: {padding: '4px 10px', fontSize: 11, background: C.bgCard, color: C.text, border: '1px solid ' + C.border, borderRadius: 4, cursor: 'pointer'}
+            }, '1. Liste'),
+            /* Link */
+            React.createElement('button', {
+              type: 'button', title: 'Bağlantı ekle',
+              onClick: () => { const u = prompt('Link URL:'); if (u) { document.execCommand('createLink', false, u); editorRef.current && editorRef.current.focus(); } },
+              style: {padding: '4px 10px', fontSize: 11, background: C.bgCard, color: C.text, border: '1px solid ' + C.border, borderRadius: 4, cursor: 'pointer'}
+            }, '🔗 Link'),
+            /* Hizala */
+            ['Left','Center','Right','Justify'].map(h => React.createElement('button', {
+              key: h, type: 'button',
+              title: 'Hizala ' + h,
+              onClick: () => { document.execCommand('justify' + h); editorRef.current && editorRef.current.focus(); },
+              style: {padding: '4px 8px', fontSize: 11, background: C.bgCard, color: C.text, border: '1px solid ' + C.border, borderRadius: 4, cursor: 'pointer'}
+            }, h.charAt(0))),
+            /* Format temizle */
+            React.createElement('button', {
+              type: 'button', title: 'Biçimi temizle',
+              onClick: () => { document.execCommand('removeFormat'); editorRef.current && editorRef.current.focus(); },
+              style: {padding: '4px 8px', fontSize: 11, background: C.bgCard, color: C.warning, border: '1px solid ' + C.border, borderRadius: 4, cursor: 'pointer'}
+            }, '✕ Temizle')
+          ),
+          /* CONTENT EDITABLE BODY */
+          React.createElement('div', {
+            ref: editorRef,
+            contentEditable: true,
+            suppressContentEditableWarning: true,
+            style: {
+              ...S.input, minHeight: 200, padding: 12,
+              borderRadius: '0 0 8px 8px',
+              borderTop: 'none',
+              fontFamily: 'inherit', textTransform: 'none',
+              overflowY: 'auto', maxHeight: 400
+            },
+            dangerouslySetInnerHTML: { __html: composeData.icerik || '' },
+            onInput: e => { /* HTML editor.innerHTML'den gonder() icinde alinir */ }
+          })
         ),
-        React.createElement('div', {style: {display: 'flex', gap: 8, justifyContent: 'flex-end'}},
-          React.createElement('button', {onClick: () => setCompose(false), style: {...S.btn, fontSize: 11}}, 'İPTAL'),
+
+        /* ═══ EKLER ═══ */
+        React.createElement(FormGroup, {label: 'EKLER (Dosya, foto, PDF... istediğin kadar)'},
+          React.createElement('div', null,
+            React.createElement('button', {
+              type: 'button',
+              onClick: () => fileInputRef.current && fileInputRef.current.click(),
+              style: {...S.btn, fontSize: 11, padding: '6px 12px'}
+            }, '📎 DOSYA EKLE'),
+            React.createElement('input', {
+              type: 'file', ref: fileInputRef, multiple: true, style: {display: 'none'},
+              onChange: e => {
+                const files = Array.from(e.target.files || []);
+                const yeni = files.map(f => ({file: f, ad: f.name, boyut: f.size}));
+                setComposeEkler(prev => [...prev, ...yeni]);
+                e.target.value = '';
+              }
+            }),
+            composeEkler.length > 0 && React.createElement('div', {style: {marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 6}},
+              composeEkler.map((ek, idx) => React.createElement('div', {
+                key: idx,
+                style: {display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: C.accent + '15', border: '1px solid ' + C.accent + '44', borderRadius: 6, fontSize: 11}
+              },
+                React.createElement('span', null, '📄 ' + ek.ad + ' (' + Math.round(ek.boyut/1024) + ' KB)'),
+                React.createElement('button', {
+                  type: 'button',
+                  onClick: () => setComposeEkler(prev => prev.filter((_, i) => i !== idx)),
+                  style: {background: 'transparent', border: 'none', color: C.danger, cursor: 'pointer', fontSize: 14, padding: 0}
+                }, '✕')
+              ))
+            )
+          )
+        ),
+
+        React.createElement('div', {style: {display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12}},
+          React.createElement('button', {onClick: () => { setCompose(false); setComposeEkler([]); }, style: {...S.btn, fontSize: 11}}, 'İPTAL'),
           React.createElement('button', {
             onClick: mailGonder, disabled: gonderLoading,
             style: {...S.btn, ...S.btnP, fontSize: 11}
           }, React.createElement(LIcon, {name: 'Send', size: 13, color: '#fff'}),
-            gonderLoading ? ' GÖNDERİLİYOR...' : ' GÖNDER')
+            gonderLoading ? ' GÖNDERİLİYOR...' : ' GÖNDER' + (composeEkler.length ? ' (' + composeEkler.length + ' ek)' : ''))
         )
       )
     ),
@@ -604,18 +756,42 @@ MR_Mail.MailPage = ({setPage, user}) => {
             }, React.createElement(LIcon, {name: 'X', size: 12}))
           )
         ),
-        /* DETAY BODY */
+        /* DETAY BODY - HTML once, yoksa text, yoksa fallback. EKLER varsa altinda goster. */
         detayLoading ? React.createElement('div', {style: {padding: 30, textAlign: 'center', color: C.textMuted}}, 'YÜKLENİYOR...') :
         React.createElement('div', {style: {
           padding: 20, flex: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 420px)'
         }},
-          seciliMail.icerik ?
+          (seciliMail.govde_html || seciliMail.icerik) ?
             React.createElement('div', {
               style: {fontSize: 13, lineHeight: 1.7, color: C.text, wordBreak: 'break-word'},
-              dangerouslySetInnerHTML: {__html: seciliMail.icerik}
+              dangerouslySetInnerHTML: {__html: seciliMail.govde_html || seciliMail.icerik}
             }) :
             React.createElement('div', {style: {fontSize: 13, color: C.textSec, whiteSpace: 'pre-wrap'}},
-              seciliMail.icerik_text || '(İÇERİK YOK)')
+              seciliMail.govde_text || seciliMail.icerik_text || '(İÇERİK YOK)'),
+          /* EKLER */
+          seciliMail.ekler && (() => {
+            let ekListesi = [];
+            try { ekListesi = typeof seciliMail.ekler === 'string' ? JSON.parse(seciliMail.ekler) : seciliMail.ekler; } catch(e) {}
+            if (!Array.isArray(ekListesi) || ekListesi.length === 0) return null;
+            return React.createElement('div', {style: {marginTop: 16, padding: 12, background: C.accent + '08', borderRadius: 8, border: '1px solid ' + C.accent + '33'}},
+              React.createElement('div', {style: {fontSize: 11, fontWeight: 800, color: C.accent, marginBottom: 8, letterSpacing: 0.5}},
+                '📎 EKLER (' + ekListesi.length + ')'),
+              React.createElement('div', {style: {display: 'flex', flexWrap: 'wrap', gap: 6}},
+                ekListesi.map((ek, idx) => React.createElement('a', {
+                  key: idx,
+                  href: api.mailEkIndirUrl(seciliMail.id, idx),
+                  target: '_blank',
+                  download: ek.ad || 'ek',
+                  style: {display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: C.bgCard, border: '1px solid ' + C.border, borderRadius: 6, fontSize: 11, color: C.text, textDecoration: 'none'}
+                },
+                  React.createElement('span', {style: {fontSize: 14}}, '📄'),
+                  React.createElement('span', null, ek.ad || ('ek-' + (idx+1))),
+                  ek.boyut && React.createElement('span', {style: {color: C.textMuted, fontSize: 10}}, '(' + Math.round(ek.boyut/1024) + ' KB)'),
+                  React.createElement('span', {style: {color: C.accent, fontWeight: 700}}, '⬇')
+                ))
+              )
+            );
+          })()
         )
       )
     ),
@@ -655,12 +831,15 @@ MR_Mail.MailPage = ({setPage, user}) => {
               onClick: e => { e.stopPropagation(); hesapDuzenle(h); },
               style: {...S.btn, ...S.btnG, padding: '4px 8px', fontSize: 10}
             }, React.createElement(LIcon, {name: 'Edit', size: 12}), ' DÜZENLE'),
-            // AKTİF/PASİF TOGGLE
+            // AKTİF/PASİF TOGGLE (TEXT buton - net gösterim)
             React.createElement('button', {
               title: h.aktif ? 'Pasife al' : 'Aktif et',
               onClick: e => { e.stopPropagation(); hesapToggle(h); },
-              style: {...S.btn, padding: '4px 8px', fontSize: 10, background: h.aktif ? C.warning + '22' : C.success + '22', color: h.aktif ? C.warning : C.success}
-            }, React.createElement(LIcon, {name: h.aktif ? 'PauseCircle' : 'PlayCircle', size: 12})),
+              style: {...S.btn, padding: '4px 10px', fontSize: 10, fontWeight: 700,
+                background: h.aktif ? C.warning + '22' : C.success + '22',
+                color: h.aktif ? C.warning : C.success,
+                border: '1px solid ' + (h.aktif ? C.warning : C.success) + '55'}
+            }, h.aktif ? '⏸ PASİFE AL' : '▶ AKTİF ET'),
             // SİL
             React.createElement('button', {
               title: 'Sil',
@@ -737,8 +916,8 @@ MR_Mail.MailPage = ({setPage, user}) => {
                 onClick: () => setSifreGoster(!sifreGoster),
                 title: sifreGoster ? 'Gizle' : 'Göster',
                 style: {position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)',
-                  background: 'transparent', border: 'none', cursor: 'pointer', color: C.textMuted, padding: 4}
-              }, React.createElement(LIcon, {name: sifreGoster ? 'EyeOff' : 'Eye', size: 14}))
+                  background: 'transparent', border: 'none', cursor: 'pointer', color: C.textMuted, padding: 4, fontSize: 14}
+              }, sifreGoster ? '🙈' : '👁')
             )
           ),
           React.createElement(FormGroup, {label: 'IMAP SUNUCU'},
@@ -767,6 +946,16 @@ MR_Mail.MailPage = ({setPage, user}) => {
               React.createElement('option', {value: 'none'}, 'YOK')
             )
           )
+        ),
+
+        /* ═══ IMZA HTML (her giden mailin sonuna otomatik eklenir) ═══ */
+        React.createElement(FormGroup, {label: 'İMZA HTML (Her giden mailin sonuna otomatik eklenir)'},
+          React.createElement('textarea', {
+            style: {...S.input, minHeight: 100, fontFamily: 'monospace', fontSize: 11, textTransform: 'none', resize: 'vertical'},
+            value: hesapForm.imza_html || '',
+            onChange: e => setHesapForm(p => ({...p, imza_html: e.target.value})),
+            placeholder: 'Örn: <p><strong>Ad Soyad</strong><br/>Pozisyon<br/><a href="https://mrhasardanismanlik.com">mrhasardanismanlik.com</a></p>'
+          })
         ),
 
         React.createElement('div', {style: {display: 'flex', gap: 8, marginTop: 16}},

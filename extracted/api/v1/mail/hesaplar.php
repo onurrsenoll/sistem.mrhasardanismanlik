@@ -37,9 +37,9 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'GET') {
     // Kullanıcının kendi hesapları (admin hepsini)
     if ($user['rol'] === 'admin') {
-        $stmt = $db->query('SELECT id, kullanici_id, etiket, email, gonderen_adi, imap_host, imap_port, imap_encryption, smtp_host, smtp_port, smtp_encryption, kullanici_adi, aktif, son_sync, son_hata, created_at FROM mail_hesaplar ORDER BY id DESC');
+        $stmt = $db->query('SELECT id, kullanici_id, etiket, email, gonderen_adi, imap_host, imap_port, imap_encryption, smtp_host, smtp_port, smtp_encryption, kullanici_adi, aktif, son_sync, son_hata, imza_html, varsayilan, created_at FROM mail_hesaplar ORDER BY id DESC');
     } else {
-        $stmt = $db->prepare('SELECT id, kullanici_id, etiket, email, gonderen_adi, imap_host, imap_port, imap_encryption, smtp_host, smtp_port, smtp_encryption, kullanici_adi, aktif, son_sync, son_hata, created_at FROM mail_hesaplar WHERE kullanici_id = ? ORDER BY id DESC');
+        $stmt = $db->prepare('SELECT id, kullanici_id, etiket, email, gonderen_adi, imap_host, imap_port, imap_encryption, smtp_host, smtp_port, smtp_encryption, kullanici_adi, aktif, son_sync, son_hata, imza_html, varsayilan, created_at FROM mail_hesaplar WHERE kullanici_id = ? ORDER BY id DESC');
         $stmt->execute([(int)$user['id']]);
     }
     $items = $stmt->fetchAll();
@@ -69,7 +69,7 @@ if ($method === 'POST') {
         // UPDATE - duplicate engelle
         $sets = [
             'etiket = ?', 'gonderen_adi = ?', 'imap_host = ?', 'imap_port = ?', 'imap_encryption = ?',
-            'smtp_host = ?', 'smtp_port = ?', 'smtp_encryption = ?', 'kullanici_adi = ?', 'aktif = ?'
+            'smtp_host = ?', 'smtp_port = ?', 'smtp_encryption = ?', 'kullanici_adi = ?', 'aktif = ?', 'imza_html = ?'
         ];
         $params = [
             clean($body['etiket'] ?? ''),
@@ -81,7 +81,8 @@ if ($method === 'POST') {
             (int)($body['smtp_port'] ?? 465),
             clean($body['smtp_encryption'] ?? 'ssl'),
             clean($body['kullanici_adi'] ?? $body['email']),
-            isset($body['aktif']) ? (int)(bool)$body['aktif'] : 1
+            isset($body['aktif']) ? (int)(bool)$body['aktif'] : 1,
+            $body['imza_html'] ?? ''
         ];
         if (!empty($sifreSifreli)) { $sets[] = 'sifre_sifreli = ?'; $params[] = $sifreSifreli; }
         $params[] = $mevcut['id'];
@@ -90,7 +91,7 @@ if ($method === 'POST') {
         json_success(['id' => (int)$mevcut['id'], 'updated' => true], 'Mail hesabı güncellendi');
     }
 
-    $stmt = $db->prepare('INSERT INTO mail_hesaplar (kullanici_id, etiket, email, gonderen_adi, imap_host, imap_port, imap_encryption, smtp_host, smtp_port, smtp_encryption, kullanici_adi, sifre_sifreli, aktif) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt = $db->prepare('INSERT INTO mail_hesaplar (kullanici_id, etiket, email, gonderen_adi, imap_host, imap_port, imap_encryption, smtp_host, smtp_port, smtp_encryption, kullanici_adi, sifre_sifreli, aktif, imza_html) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $stmt->execute([
         $hedefKullaniciId,
         clean($body['etiket'] ?? ''),
@@ -104,7 +105,8 @@ if ($method === 'POST') {
         clean($body['smtp_encryption'] ?? 'ssl'),
         clean($body['kullanici_adi'] ?? $body['email']),
         $sifreSifreli,
-        isset($body['aktif']) ? (int)(bool)$body['aktif'] : 1
+        isset($body['aktif']) ? (int)(bool)$body['aktif'] : 1,
+        $body['imza_html'] ?? ''
     ]);
     $id = (int)$db->lastInsertId();
     log_action($user['id'], 'mail_hesap_ekle', clean($body['email']), 'mail_hesaplar', $id);
@@ -125,7 +127,7 @@ if ($method === 'PUT') {
 
     $sets = [];
     $params = [];
-    $allowed = ['etiket','email','gonderen_adi','imap_host','imap_port','imap_encryption','smtp_host','smtp_port','smtp_encryption','kullanici_adi','aktif'];
+    $allowed = ['etiket','email','gonderen_adi','imap_host','imap_port','imap_encryption','smtp_host','smtp_port','smtp_encryption','kullanici_adi','aktif','imza_html','varsayilan'];
     foreach ($allowed as $f) {
         if (array_key_exists($f, $body)) {
             $sets[] = "$f = ?";
