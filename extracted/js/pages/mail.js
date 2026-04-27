@@ -235,14 +235,29 @@ MR_Mail.MailPage = ({setPage, user}) => {
     }
 
     if (r?.success) {
-      setMesaj({type: 'success', text: isUpdate ? 'HESAP GÜNCELLENDİ' : 'MAIL HESABI KAYDEDİLDİ'});
-      /* Listeyi yenile + form'u temizle (yeni ekleme moduna don) */
+      setMesaj({type: 'success', text: isUpdate ? 'HESAP GÜNCELLENDİ — gelen kutusu açılıyor' : 'MAIL HESABI KAYDEDİLDİ — senkronize ediliyor'});
+      /* Listeyi yenile + form'u temizle */
       const r2 = await api.mailHesaplar();
       if (r2?.success && r2.data?.items) {
         setHesaplar(r2.data.items);
-        if (!seciliHesap && r2.data.items.length > 0) setSeciliHesap(r2.data.items[0]);
+        /* Yeni eklenen hesabi sec (en yeni) - kullanici hemen kullanabilsin */
+        const yeniId = r.data?.id;
+        const secilen = yeniId ? r2.data.items.find(x => x.id == yeniId) : r2.data.items[0];
+        if (secilen) setSeciliHesap(secilen);
       }
       yeniHesapModu();
+      /* OTOMATIK gelen kutusuna gec + 0.5sn sonra sync tetikle */
+      setAltTab('gelen');
+      setTimeout(async () => {
+        const hsp = (r2?.data?.items || []).find(x => x.id == (r.data?.id || seciliHesap?.id));
+        if (hsp && Number(hsp.aktif) === 1) {
+          setMesaj({type: 'info', text: 'Mailler senkronize ediliyor...'});
+          const ss = await api.mailSync({hesap_id: hsp.id});
+          if (ss?.success) {
+            setMesaj({type: 'success', text: (ss.data?.yeni || 0) + ' yeni + ' + (ss.data?.guncellenen || 0) + ' güncellenen mail çekildi'});
+          }
+        }
+      }, 500);
     } else {
       setMesaj({type: 'error', text: r?.error || 'HESAP KAYDEDİLEMEDİ'});
     }
@@ -295,14 +310,24 @@ MR_Mail.MailPage = ({setPage, user}) => {
     }
   };
 
-  /* AKTIF/PASIF TOGGLE */
+  /* AKTIF/PASIF TOGGLE — int casting ile string "0"/"1" sorununu engelle */
   const hesapToggle = async (h) => {
-    const yeni = h.aktif ? 0 : 1;
+    const suankiAktif = Number(h.aktif) === 1;
+    const yeni = suankiAktif ? 0 : 1;
     const r = await api.mailHesapToggle(h.id, yeni);
     if (r?.success) {
       setMesaj({type: 'success', text: yeni ? 'HESAP AKTİF EDİLDİ' : 'HESAP PASİFE ALINDI'});
       const r2 = await api.mailHesaplar();
-      if (r2?.success) setHesaplar(r2.data?.items || []);
+      if (r2?.success) {
+        setHesaplar(r2.data?.items || []);
+        /* Secili hesabi da guncel ile degistir */
+        if (seciliHesap?.id === h.id) {
+          const guncel = (r2.data?.items || []).find(x => x.id === h.id);
+          if (guncel) setSeciliHesap(guncel);
+        }
+      }
+    } else {
+      setMesaj({type: 'error', text: r?.error || 'TOGGLE HATASI'});
     }
   };
 
@@ -811,7 +836,7 @@ MR_Mail.MailPage = ({setPage, user}) => {
             padding: '12px 16px', borderRadius: 10, display: 'flex', justifyContent: 'space-between',
             alignItems: 'center', background: seciliHesap?.id === h.id ? `${C.accent}08` : 'transparent',
             border: `1px solid ${seciliHesap?.id === h.id ? C.accent + '33' : C.border}`,
-            marginBottom: 8, cursor: 'pointer', opacity: h.aktif ? 1 : 0.55
+            marginBottom: 8, cursor: 'pointer', opacity: Number(h.aktif) === 1 ? 1 : 0.55
           },
           onClick: () => setSeciliHesap(h)
         },
@@ -823,8 +848,8 @@ MR_Mail.MailPage = ({setPage, user}) => {
               h.son_hata ? ' | ⚠ ' + h.son_hata.substring(0,40) : ''
             )
           ),
-          React.createElement('div', {style: {display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0}},
-            React.createElement(Badge, {text: h.aktif ? 'AKTİF' : 'PASİF', color: h.aktif ? C.success : C.danger}),
+          (() => { const aktifBool = Number(h.aktif) === 1; return React.createElement('div', {style: {display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0}},
+            React.createElement(Badge, {text: aktifBool ? 'AKTİF' : 'PASİF', color: aktifBool ? C.success : C.danger}),
             // DÜZENLE
             React.createElement('button', {
               title: 'Düzenle',
@@ -833,20 +858,20 @@ MR_Mail.MailPage = ({setPage, user}) => {
             }, React.createElement(LIcon, {name: 'Edit', size: 12}), ' DÜZENLE'),
             // AKTİF/PASİF TOGGLE (TEXT buton - net gösterim)
             React.createElement('button', {
-              title: h.aktif ? 'Pasife al' : 'Aktif et',
+              title: aktifBool ? 'Pasife al' : 'Aktif et',
               onClick: e => { e.stopPropagation(); hesapToggle(h); },
               style: {...S.btn, padding: '4px 10px', fontSize: 10, fontWeight: 700,
-                background: h.aktif ? C.warning + '22' : C.success + '22',
-                color: h.aktif ? C.warning : C.success,
-                border: '1px solid ' + (h.aktif ? C.warning : C.success) + '55'}
-            }, h.aktif ? '⏸ PASİFE AL' : '▶ AKTİF ET'),
+                background: aktifBool ? C.warning + '22' : C.success + '22',
+                color: aktifBool ? C.warning : C.success,
+                border: '1px solid ' + (aktifBool ? C.warning : C.success) + '55'}
+            }, aktifBool ? '⏸ PASİFE AL' : '▶ AKTİF ET'),
             // SİL
             React.createElement('button', {
               title: 'Sil',
               onClick: e => { e.stopPropagation(); hesapSil(h); },
               style: {...S.btn, ...S.btnD, padding: '4px 8px', fontSize: 10}
             }, React.createElement(LIcon, {name: 'Trash2', size: 12}))
-          )
+          ); })()
         )),
         // YENİ HESAP butonu
         React.createElement('button', {

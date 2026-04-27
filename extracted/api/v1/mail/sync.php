@@ -30,18 +30,42 @@ if (!$hesap) json_error('Mail hesabı bulunamadı', 404);
 if ($user['rol'] !== 'admin' && (int)$hesap['kullanici_id'] !== (int)$user['id']) json_error('Yetki yok', 403);
 if (empty($hesap['aktif'])) json_error('HESAP PASİF — önce aktif edin', 400);
 
-/* INBOX (gelen) + Sent variant'lari (giden) */
-$klasorler = [
-    ['adi' => 'INBOX', 'yon' => 'gelen', 'zorunlu' => true],
-    ['adi' => 'INBOX.Sent', 'yon' => 'giden', 'zorunlu' => false],
-    ['adi' => 'Sent', 'yon' => 'giden', 'zorunlu' => false]
-];
+/* INBOX (gelen) + Sent variant'lari (giden) - cPanel/Roundcube/Outlook farkli adlar kullanir
+   Sunucudan tum klasorleri liste, Sent benzeri olanlari otomatik bul */
+$klasorler = [['adi' => 'INBOX', 'yon' => 'gelen', 'zorunlu' => true]];
+
+/* Sunucu klasorlerini tara, Sent benzeri klasoru bul */
+try {
+    $tmpInbox = @mail_imap_baglan($hesap, 'INBOX');
+    if ($tmpInbox) {
+        $list = @imap_list($tmpInbox, '{' . $hesap['imap_host'] . ':' . ($hesap['imap_port'] ?: 993) . '/imap/ssl/novalidate-cert}', '*');
+        imap_close($tmpInbox);
+        if (is_array($list)) {
+            $sentBuldu = null;
+            foreach ($list as $ks) {
+                /* Klasor formati: {host:port/imap/ssl/...}KLASOR_ADI */
+                $kla = preg_replace('/^\{[^}]+\}/', '', $ks);
+                $klaLower = strtolower($kla);
+                if (strpos($klaLower, 'sent') !== false ||
+                    strpos($klaLower, 'gönder') !== false ||
+                    strpos($klaLower, 'gonder') !== false ||
+                    strpos($klaLower, 'giden') !== false) {
+                    $sentBuldu = $kla;
+                    break;
+                }
+            }
+            if ($sentBuldu) {
+                $klasorler[] = ['adi' => $sentBuldu, 'yon' => 'giden', 'zorunlu' => false];
+            }
+        }
+    }
+} catch (\Exception $e) { /* sessiz */ }
 
 $toplamYeni = 0;
 $toplamGuncel = 0;
 $toplamTaranan = 0;
 $hatalar = [];
-$sentBulundu = false;
+/* sentBulundu artik gereksiz - klasor listesi yukarida tek kez bulundu */
 
 /* UPSERT - eski bos icerikli kayitlar guncellenir */
 $ins = $db->prepare('INSERT INTO mail_mesajlar (hesap_id, uid_imap, message_id, yon, klasor, gonderen, alici, cc, konu, govde_text, govde_html, ekler, tarih, okundu)
@@ -61,9 +85,6 @@ $dateSince = date('d-M-Y', strtotime('-' . $sonGun . ' days'));
 foreach ($klasorler as $k) {
     $isInbox = $k['adi'] === 'INBOX';
 
-    /* Sent variant'larindan biri bulunduysa digerini atla */
-    if (!$isInbox && $sentBulundu) continue;
-
     try {
         $imapBox = @mail_imap_baglan($hesap, $k['adi']);
         if (!$imapBox) {
@@ -71,7 +92,6 @@ foreach ($klasorler as $k) {
             $hatalar[] = ['klasor' => $k['adi'], 'hata' => 'klasor bulunamadi'];
             continue;
         }
-        if (!$isInbox) $sentBulundu = true;
 
         $search = imap_search($imapBox, 'SINCE "' . $dateSince . '"');
         if ($search === false) {
