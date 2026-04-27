@@ -114,8 +114,13 @@ function menuErisim(user) {
       return {...m, sub: filteredSub};
     }
 
-    /* SUB YOK (AJANDA GİBİ): GENEL GÖRÜNTÜLE İZNİ */
-    return yetkiler[modul + '_goruntule'] === 1 ? m : null;
+    /* SUB YOK (AJANDA, E-POSTA, KONUM GİBİ): GENEL GÖRÜNTÜLE İZNİ
+       Iki farkli yetki anahtari pattern'i destekleniyor:
+       - <modul>_goruntule (ornek: ajanda_goruntule)
+       - <modul>_<modul>-goruntule (ornek: eposta_eposta-goruntule) */
+    const v1 = yetkiler[modul + '_goruntule'];
+    const v2 = yetkiler[modul + '_' + modul + '-goruntule'];
+    return (v1 === 1 || v2 === 1) ? m : null;
   }).filter(Boolean);
 }
 
