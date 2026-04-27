@@ -116,24 +116,12 @@ MR._musteriEslestir = async (numara) => {
 MR.WebrtcWidget = ({user, setPage}) => {
   const {C, LIcon} = MR;
 
-  /* DURUM STATE'LERİ - GELEN ÇAĞRI + AKTİF GÖRÜŞME */
+  /* DURUM STATE'LERİ - SADECE GELEN ÇAĞRI İÇİN */
   const [aramaDurumu, setAramaDurumu] = useState('bos');
   const [karsiTaraf, setKarsiTaraf] = useState('');
   const [karsiTarafAdi, setKarsiTarafAdi] = useState('');
   const [eslestirme, setEslestirme] = useState(null);
   const [sessiz, setSessiz] = useState(false);
-  /* CANLI NOT — görüşme sırasında yazılır, kapanınca arama_loglari + crm_notlari'ya yazılır */
-  const [canliNot, setCanliNot] = useState('');
-  const [aramaLogId, setAramaLogId] = useState(null);
-  const [notKaydetDurum, setNotKaydetDurum] = useState('');
-  const [aktifEslestirme, setAktifEslestirme] = useState(null);
-
-  /* YETKİ KONTROL — gelen çağrı widget'ı görüntüleme */
-  const _u = MR._currentUser || user;
-  const yetkiWidget = (_u?.rol === 'admin') ||
-    (MR.hasYetki && (MR.hasYetki(_u, 'netsantral', 'netsantral-widget-goruntule') || MR.hasYetki(_u, 'crm', 'crm-ara')));
-  const yetkiCanliNot = (_u?.rol === 'admin') ||
-    (MR.hasYetki && MR.hasYetki(_u, 'crm', 'crm-not-canli'));
 
   /* WEBRTC DURUM DİNLEYİCİ */
   useEffect(() => {
@@ -152,32 +140,16 @@ MR.WebrtcWidget = ({user, setPage}) => {
           }
           break;
         case 'gorusmede':
-          /* Cevaplanınca canlı görüşme moduna geç (popup kapanmaz, mini panel olur) */
-          setAramaDurumu('gorusmede');
+          /* Cevaplanınca popup kapansın */
+          if (aramaDurumu === 'gelen') setAramaDurumu('bos');
           setSessiz(false);
           break;
         case 'kapandi':
         case 'reddedildi':
         case 'hata':
-          /* Canli not varsa final olarak arama-log/update.php'ye kaydet (notlar + crm_notlari'ya kopya) */
-          var finalLogId = aramaLogId || (MR.webrtcTelefon && MR.webrtcTelefon._aktifLogId);
-          if (finalLogId && canliNot && canliNot.trim() && MR.api && MR.api.netsantralCagriNotKaydet) {
-            const payload = {
-              id: finalLogId,
-              not_text: canliNot.trim(),
-              crm_id: aktifEslestirme?.kaynak === 'CRM' ? aktifEslestirme.kayit?.id : null,
-              yonlendirme_id: aktifEslestirme?.kaynak === 'YONLENDIRME' ? aktifEslestirme.kayit?.id : null,
-              canli: false
-            };
-            MR.api.netsantralCagriNotKaydet(payload).catch(() => {});
-          }
           setAramaDurumu('bos');
           setEslestirme(null);
-          setAktifEslestirme(null);
           setKarsiTarafAdi('');
-          setCanliNot('');
-          setAramaLogId(null);
-          setNotKaydetDurum('');
           if (sessiz && MR.webrtcTelefon) {
             MR.webrtcTelefon._sesAyarlari.ringtoneVolume = parseFloat(localStorage.getItem('mr_webrtc_ringtone_vol') || '0.5');
           }
@@ -214,71 +186,36 @@ MR.WebrtcWidget = ({user, setPage}) => {
     return () => window.removeEventListener('mr-webrtc-arama-basla', handler);
   }, [setPage]);
 
-  /* CEVAPLA - SIP cevap + canlı görüşme moduna geç (canlı not açılır) */
+  /* CEVAPLA - CRM'DE ARA + CRM-YENİ AÇ */
   const cevapla = async () => {
     if (!MR.webrtcTelefon) return;
     MR.webrtcTelefon.cevapla();
 
+    /* CRM'de arayan numarayı ara */
     var numara = karsiTaraf || '';
     var ad = karsiTarafAdi || '';
 
-    /* Eşleştirme zaten yapıldıysa oradan al, yoksa tekrar dene */
-    var aktif = null;
-    if (eslestirme && eslestirme.kayitlar && eslestirme.kayitlar.length > 0) {
+    /* Eşleştirme zaten yapıldıysa oradan al */
+    if (!ad && eslestirme && eslestirme.kayitlar && eslestirme.kayitlar.length > 0) {
       var k = eslestirme.kayitlar[0];
-      ad = ad || k.ad_soyad || k.magdur_ad_soyad || '';
-      aktif = { kaynak: eslestirme.kaynak, kayit: k };
-    } else if (numara && MR.api && MR.api.netsantralCagriEslestir) {
+      ad = k.ad_soyad || k.magdur_ad_soyad || '';
+    }
+
+    /* Eşleştirme henüz gelmemişse tekrar dene */
+    if (!ad && numara && MR.api) {
       try {
-        var r = await MR.api.netsantralCagriEslestir(numara);
-        if (r && r.success && r.data && r.data.eslestirme) {
-          aktif = r.data.eslestirme;
-          var kk = aktif.kayit || {};
-          ad = ad || kk.ad_soyad || kk.magdur_ad_soyad || '';
+        var r = await MR._musteriEslestir(numara);
+        if (r && r.kayitlar && r.kayitlar.length > 0) {
+          var kk = r.kayitlar[0];
+          ad = kk.ad_soyad || kk.magdur_ad_soyad || '';
         }
       } catch(e) {}
     }
-    setAktifEslestirme(aktif);
-    if (ad) setKarsiTarafAdi(ad);
 
-    /* CRM-Arama listesini aç (TÜM çağrıları yöneten merkez) */
+    /* localStorage'a yaz - crm-yeni okuyacak */
     localStorage.setItem('webrtc_new_call_phone', numara);
     localStorage.setItem('webrtc_new_call_name', ad);
-    if (typeof setPage === 'function') {
-      setPage('crm-arama');
-    }
-  };
-
-  /* CANLI NOT KAYDET - gorusme devam ederken arama-log/update.php (canli:true) */
-  const canliNotKaydet = async () => {
-    if (!canliNot.trim() || !MR.api || !MR.api.netsantralCagriNotKaydet) return;
-    /* arama_log_id yoksa webrtc-phone'un aktif log id'sini al */
-    const logId = aramaLogId || (MR.webrtcTelefon && MR.webrtcTelefon._aktifLogId) || null;
-    if (!logId) {
-      setNotKaydetDurum('LOG ID YOK - GORUSME BITINCE KAYDET');
-      setTimeout(() => setNotKaydetDurum(''), 3000);
-      return;
-    }
-    if (logId !== aramaLogId) setAramaLogId(logId);
-    setNotKaydetDurum('KAYDEDILIYOR...');
-    try {
-      const payload = {
-        id: logId,
-        not_text: canliNot.trim(),
-        crm_id: aktifEslestirme?.kaynak === 'CRM' ? aktifEslestirme.kayit?.id : null,
-        yonlendirme_id: aktifEslestirme?.kaynak === 'YONLENDIRME' ? aktifEslestirme.kayit?.id : null,
-        canli: true
-      };
-      const r = await MR.api.netsantralCagriNotKaydet(payload);
-      if (r && r.success) {
-        setNotKaydetDurum('KAYDEDILDI ✓');
-        setTimeout(() => setNotKaydetDurum(''), 2500);
-      } else {
-        setNotKaydetDurum('HATA: ' + (r?.error || 'BILINMEYEN'));
-      }
-    } catch(e) {
-      setNotKaydetDurum('BAGLANTI HATASI');
-    }
+    setPage('crm-yeni');
   };
 
   /* REDDET */
@@ -308,88 +245,8 @@ MR.WebrtcWidget = ({user, setPage}) => {
   const isK = MR.tema === 'koyu';
 
   /* ═══════════════════════════════════════
-     YETKİ KONTROL - Widget'ı görme yetkisi yoksa hiç render etme
-     ═══════════════════════════════════════ */
-  if (!yetkiWidget) return null;
-
-  /* ═══════════════════════════════════════
-     AKTİF GÖRÜŞME PANELİ - canlı not yazma
-     ═══════════════════════════════════════ */
-  if (aramaDurumu === 'gorusmede') {
-    if (!yetkiCanliNot) return null;
-    return (
-      <div style={{
-        position: 'fixed', top: 56, right: 20, zIndex: 99999,
-        width: 340,
-        background: isK ? '#1e293b' : '#fff',
-        border: '2px solid ' + C.accent,
-        borderRadius: 14, overflow: 'hidden',
-        boxShadow: '0 8px 28px rgba(0,0,0,0.25)'
-      }}>
-        <div style={{
-          background: 'linear-gradient(135deg, ' + C.accent + '22, ' + C.accent + '08)',
-          padding: '10px 14px', borderBottom: '1px solid ' + C.border,
-          display: 'flex', alignItems: 'center', gap: 8
-        }}>
-          <div style={{width: 10, height: 10, borderRadius: '50%', background: C.success, animation: 'pulse 1.5s infinite'}}/>
-          <div style={{flex: 1}}>
-            <div style={{fontSize: 9, fontWeight: 800, color: C.success, letterSpacing: 1.5}}>GÖRÜŞME AKTİF</div>
-            <div style={{fontSize: 13, fontWeight: 700, color: C.text}}>{karsiTarafAdi || karsiTaraf}</div>
-            {aktifEslestirme && (
-              <div style={{fontSize: 9, color: C.textMuted, marginTop: 1}}>
-                {aktifEslestirme.kaynak} • {aktifEslestirme.kayit?.ad_soyad || aktifEslestirme.kayit?.magdur_ad_soyad}
-              </div>
-            )}
-          </div>
-        </div>
-        <div style={{padding: 12}}>
-          <div style={{fontSize: 9, fontWeight: 700, color: C.textSec, marginBottom: 6, letterSpacing: 1}}>
-            <LIcon name="StickyNote" size={11} color={C.textSec}/> CANLI NOT (kişi kartında görünecek)
-          </div>
-          <textarea
-            value={canliNot}
-            onChange={e => setCanliNot(e.target.value)}
-            placeholder="Görüşme notunuzu yazın..."
-            style={{
-              width: '100%', minHeight: 90, padding: 10,
-              fontSize: 12, fontFamily: 'inherit',
-              background: isK ? '#0f172a' : '#f8fafc',
-              border: '1px solid ' + C.border, borderRadius: 8,
-              color: C.text, resize: 'vertical', boxSizing: 'border-box'
-            }}
-          />
-          <div style={{display: 'flex', gap: 6, marginTop: 8, alignItems: 'center'}}>
-            <button onClick={canliNotKaydet} disabled={!canliNot.trim()} style={{
-              flex: 1, padding: '8px', borderRadius: 8, border: 'none',
-              background: canliNot.trim() ? C.accent : C.border,
-              color: '#fff', fontSize: 10, fontWeight: 800, cursor: canliNot.trim() ? 'pointer' : 'not-allowed',
-              letterSpacing: 1
-            }}>
-              <LIcon name="Save" size={11} color="#fff"/> KAYDET
-            </button>
-            <button onClick={() => {
-              if (MR.webrtcTelefon) MR.webrtcTelefon.kapat();
-            }} style={{
-              padding: '8px 14px', borderRadius: 8, border: 'none',
-              background: 'linear-gradient(180deg, #f87171, #dc2626)',
-              color: '#fff', fontSize: 10, fontWeight: 800, cursor: 'pointer', letterSpacing: 1
-            }}>
-              <LIcon name="PhoneOff" size={11} color="#fff"/> KAPAT
-            </button>
-          </div>
-          {notKaydetDurum && (
-            <div style={{marginTop: 6, fontSize: 10, fontWeight: 700, color: notKaydetDurum.includes('✓') ? C.success : C.textMuted, textAlign: 'center'}}>
-              {notKaydetDurum}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  /* ═══════════════════════════════════════
      SADECE GELEN ÇAĞRI POPUP'I - SAĞ ÜST KÖŞE
-     Boşta: HİÇBİR ŞEY RENDER ETME
+     Boşta veya aktif görüşmede: HİÇBİR ŞEY RENDER ETME
      ═══════════════════════════════════════ */
   if (aramaDurumu !== 'gelen') return null;
 
@@ -784,13 +641,7 @@ MR.AdminDahiliAtamaPanel = () => {
 /* ═══ NETSANTRAL AYARLARI - TAM SAYFA (SİSTEM MENÜSÜNDEN ERİŞİLİR) ═══ */
 MR.NetsantralAyarlariPage = ({setPage, user}) => {
   const {C, S, LIcon, FormGroup} = MR;
-  const def = MR._netsantralVarsayilan || {wssUrl:'',domain:'',dahili:'',sipSifre:'',santralNo:'',kullanici:''};
-
-  /* DEBUG: yeni versiyon yüklendi mi kontrolü — Console'da görünür */
-  if (typeof window !== 'undefined' && !window.__nsv15_loaded) {
-    window.__nsv15_loaded = true;
-    console.log('[NETSANTRAL v15] Yeni versiyon yuklendi - DB persistence aktif');
-  }
+  const def = MR._netsantralVarsayilan;
 
   /* ═══ YETKİ KONTROL ═══ */
   const yetkiGoruntule = user?.rol === 'admin' || MR.hasYetki(user, 'netsantral', 'netsantral-goruntule');
@@ -842,28 +693,29 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
     return () => window.removeEventListener('mr-webrtc-durum', handler);
   }, []);
 
-  /* DB'den ayarlari yukle - sistem/ayarlar tablosundan netsantral_* anahtarlari.
-     Yanit prefix'siz: {wss_url, sip_domain, sip_sifre, ...}. localStorage yedek olarak kalir. */
+  /* DB'den netsantral ayarlarini yukle - localStorage cache. Hata olsa bile sayfa render olur. */
   useEffect(() => {
-    if (!MR.api || !MR.api.netsantralAyarList) return;
-    MR.api.netsantralAyarList().then(r => {
-      if (!r || !r.success || !r.data) return;
-      const d = r.data;
-      const apply = (key, setter, lsKey) => {
-        if (typeof d[key] !== 'undefined' && d[key] !== null && d[key] !== '••••••••' && d[key] !== '') {
-          setter(d[key]);
-          try { localStorage.setItem('mr_netsantral_' + lsKey, d[key]); } catch(e){}
-        }
-      };
-      apply('wss_url', setWss, 'wss');
-      apply('sip_domain', setDomain, 'domain');
-      apply('sip_dahili', setDahili, 'dahili');
-      apply('sip_sifre', setSipSifre, 'sip_sifre');
-      apply('santral_no', setSantralNo, 'no');
-      apply('outbound_proxy', setOutboundProxy, 'outbound_proxy');
-      apply('netgsm_api_kullanici', setKullanici, 'kullanici');
-      apply('netgsm_api_sifre', setApiSifre, 'api_sifre');
-    }).catch(() => {});
+    try {
+      if (!MR.api || !MR.api.netsantralAyarList) return;
+      MR.api.netsantralAyarList().then(function(r){
+        if (!r || !r.success || !r.data) return;
+        var d = r.data;
+        var apply = function(key, setter, lsKey) {
+          if (typeof d[key] !== 'undefined' && d[key] !== null && d[key] !== '••••••••' && d[key] !== '') {
+            setter(d[key]);
+            try { localStorage.setItem('mr_netsantral_' + lsKey, d[key]); } catch(e){}
+          }
+        };
+        apply('wss_url', setWss, 'wss');
+        apply('sip_domain', setDomain, 'domain');
+        apply('sip_dahili', setDahili, 'dahili');
+        apply('sip_sifre', setSipSifre, 'sip_sifre');
+        apply('santral_no', setSantralNo, 'no');
+        apply('outbound_proxy', setOutboundProxy, 'outbound_proxy');
+        apply('netgsm_api_kullanici', setKullanici, 'kullanici');
+        apply('netgsm_api_sifre', setApiSifre, 'api_sifre');
+      }).catch(function(){});
+    } catch(e){ /* sessiz */ }
   }, []);
 
   /* BAĞLANTI TEST */
@@ -896,10 +748,8 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
     setTestYapiliyor(false);
   };
 
-  /* KAYDET — DB + localStorage çift kayıt. DB hata verirse localStorage'da kalır. */
-  const kaydet = async () => {
-    setKayitDurumu('KAYDEDİLİYOR...');
-    /* localStorage cache (her zaman yazılır - bağlantı yoksa bile çalışsın) */
+  /* KAYDET — localStorage + DB (sistem/ayarlar tablosu, netsantral_* prefix) */
+  const kaydet = () => {
     localStorage.setItem('mr_netsantral_wss', wss);
     localStorage.setItem('mr_netsantral_domain', domain);
     localStorage.setItem('mr_netsantral_dahili', dahili);
@@ -910,11 +760,11 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
     localStorage.setItem('mr_netsantral_sip_port', sipPort);
     localStorage.setItem('mr_netsantral_kayit_suresi', kayitSuresi);
     localStorage.setItem('mr_netsantral_outbound_proxy', outboundProxy);
-
-    /* DB kaydı — şifre alanları '••••••••' ise atlanır (auto skip backend) */
-    if (MR.api && MR.api.netsantralAyarKaydet) {
-      try {
-        const payload = {
+    setKayitDurumu('KAYDEDILIYOR...');
+    /* DB kaydi (asenkron, try-catch). Hata olsa bile localStorage'a yazildi. */
+    try {
+      if (MR.api && MR.api.netsantralAyarKaydet) {
+        MR.api.netsantralAyarKaydet({
           wss_url: wss,
           sip_domain: domain,
           sip_dahili: dahili,
@@ -923,20 +773,22 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
           outbound_proxy: outboundProxy,
           netgsm_api_kullanici: kullanici,
           netgsm_api_sifre: apiSifre
-        };
-        const r = await MR.api.netsantralAyarKaydet(payload);
-        if (r && r.success) {
-          setKayitDurumu('KAYDEDİLDİ (DB + LOCAL)');
-        } else {
-          setKayitDurumu('KAYDEDİLDİ (LOCAL) - DB HATA: ' + (r?.error || ''));
-        }
-      } catch (e) {
-        setKayitDurumu('KAYDEDİLDİ (LOCAL) - DB BAĞLANTI YOK');
+        }).then(function(r){
+          if (r && r.success) setKayitDurumu('KAYDEDILDI (DB + LOCAL)');
+          else setKayitDurumu('KAYDEDILDI (LOCAL) - DB hatasi');
+          setTimeout(function(){ setKayitDurumu(''); }, 4000);
+        }).catch(function(){
+          setKayitDurumu('KAYDEDILDI (LOCAL) - DB baglantisi yok');
+          setTimeout(function(){ setKayitDurumu(''); }, 4000);
+        });
+      } else {
+        setKayitDurumu('KAYDEDILDI (LOCAL)');
+        setTimeout(function(){ setKayitDurumu(''); }, 3000);
       }
-    } else {
-      setKayitDurumu('KAYDEDİLDİ (LOCAL)');
+    } catch(e) {
+      setKayitDurumu('KAYDEDILDI (LOCAL)');
+      setTimeout(function(){ setKayitDurumu(''); }, 3000);
     }
-    setTimeout(() => setKayitDurumu(''), 4000);
     MR.webrtcYenidenBaslat();
   };
 
@@ -1117,7 +969,7 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
       </div>
 
       {/* ═══ KULLANICI DAHİLİ ATAMA (SADECE ADMİN) ═══ */}
-      {user && (user.rol === 'admin' || (MR.hasYetki && MR.hasYetki(user, 'netsantral', 'netsantral-dahili-atama'))) && <MR.AdminDahiliAtamaPanel />}
+      {user && user.rol === 'admin' && <MR.AdminDahiliAtamaPanel />}
 
       {/* ═══ BİLGİ PANELİ ═══ */}
       <div style={{
