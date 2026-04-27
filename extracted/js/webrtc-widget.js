@@ -159,12 +159,11 @@ MR.WebrtcWidget = ({user, setPage}) => {
         case 'kapandi':
         case 'reddedildi':
         case 'hata':
-          /* Canlı not varsa final olarak kaydet (arama_loglari.notlar + crm_notlari) */
-          if (canliNot && canliNot.trim() && MR.api && MR.api.netsantralCagriNotKaydet) {
+          /* Canli not varsa final olarak arama-log/update.php'ye kaydet (notlar + crm_notlari'ya kopya) */
+          var finalLogId = aramaLogId || (MR.webrtcTelefon && MR.webrtcTelefon._aktifLogId);
+          if (finalLogId && canliNot && canliNot.trim() && MR.api && MR.api.netsantralCagriNotKaydet) {
             const payload = {
-              arama_log_id: aramaLogId,
-              numara: karsiTaraf,
-              yon: 'gelen',
+              id: finalLogId,
               not_text: canliNot.trim(),
               crm_id: aktifEslestirme?.kaynak === 'CRM' ? aktifEslestirme.kayit?.id : null,
               yonlendirme_id: aktifEslestirme?.kaynak === 'YONLENDIRME' ? aktifEslestirme.kayit?.id : null,
@@ -250,15 +249,21 @@ MR.WebrtcWidget = ({user, setPage}) => {
     }
   };
 
-  /* CANLI NOT KAYDET - görüşme devam ederken */
+  /* CANLI NOT KAYDET - gorusme devam ederken arama-log/update.php (canli:true) */
   const canliNotKaydet = async () => {
     if (!canliNot.trim() || !MR.api || !MR.api.netsantralCagriNotKaydet) return;
-    setNotKaydetDurum('KAYDEDİLİYOR...');
+    /* arama_log_id yoksa webrtc-phone'un aktif log id'sini al */
+    const logId = aramaLogId || (MR.webrtcTelefon && MR.webrtcTelefon._aktifLogId) || null;
+    if (!logId) {
+      setNotKaydetDurum('LOG ID YOK - GORUSME BITINCE KAYDET');
+      setTimeout(() => setNotKaydetDurum(''), 3000);
+      return;
+    }
+    if (logId !== aramaLogId) setAramaLogId(logId);
+    setNotKaydetDurum('KAYDEDILIYOR...');
     try {
       const payload = {
-        arama_log_id: aramaLogId,
-        numara: karsiTaraf,
-        yon: 'gelen',
+        id: logId,
         not_text: canliNot.trim(),
         crm_id: aktifEslestirme?.kaynak === 'CRM' ? aktifEslestirme.kayit?.id : null,
         yonlendirme_id: aktifEslestirme?.kaynak === 'YONLENDIRME' ? aktifEslestirme.kayit?.id : null,
@@ -266,14 +271,13 @@ MR.WebrtcWidget = ({user, setPage}) => {
       };
       const r = await MR.api.netsantralCagriNotKaydet(payload);
       if (r && r.success) {
-        if (r.data && r.data.arama_log_id) setAramaLogId(r.data.arama_log_id);
-        setNotKaydetDurum('KAYDEDİLDİ ✓');
+        setNotKaydetDurum('KAYDEDILDI ✓');
         setTimeout(() => setNotKaydetDurum(''), 2500);
       } else {
-        setNotKaydetDurum('HATA');
+        setNotKaydetDurum('HATA: ' + (r?.error || 'BILINMEYEN'));
       }
     } catch(e) {
-      setNotKaydetDurum('BAĞLANTI HATASI');
+      setNotKaydetDurum('BAGLANTI HATASI');
     }
   };
 
@@ -838,19 +842,17 @@ MR.NetsantralAyarlariPage = ({setPage, user}) => {
     return () => window.removeEventListener('mr-webrtc-durum', handler);
   }, []);
 
-  /* DB'DEN AYARLARI YÜKLE — localStorage cache, DB kaynak. Hata olursa localStorage kullanılmaya devam eder. */
+  /* DB'den ayarlari yukle - sistem/ayarlar tablosundan netsantral_* anahtarlari.
+     Yanit prefix'siz: {wss_url, sip_domain, sip_sifre, ...}. localStorage yedek olarak kalir. */
   useEffect(() => {
     if (!MR.api || !MR.api.netsantralAyarList) return;
     MR.api.netsantralAyarList().then(r => {
       if (!r || !r.success || !r.data) return;
       const d = r.data;
-      const apply = (key, setter, fallback) => {
-        if (d[key] && typeof d[key].deger !== 'undefined') {
-          const v = d[key].deger;
-          if (v !== '••••••••') {
-            setter(v);
-            try { localStorage.setItem('mr_netsantral_' + (fallback || key), v); } catch(e){}
-          }
+      const apply = (key, setter, lsKey) => {
+        if (typeof d[key] !== 'undefined' && d[key] !== null && d[key] !== '••••••••' && d[key] !== '') {
+          setter(d[key]);
+          try { localStorage.setItem('mr_netsantral_' + lsKey, d[key]); } catch(e){}
         }
       };
       apply('wss_url', setWss, 'wss');

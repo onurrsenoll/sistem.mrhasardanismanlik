@@ -54,9 +54,28 @@ if (isset($body['bitis_zamani'])) {
     $updates[] = 'bitis_zamani = ?';
     $params[] = $body['bitis_zamani'];
 }
-if (isset($body['notlar'])) {
-    $updates[] = 'notlar = ?';
-    $params[] = clean($body['notlar']);
+/* CANLI NOT modu: gorusme surerken yazilir, live_not alanina gider.
+   FINAL NOT modu: gorusme bittikten sonra yazilir, notlar alanina gider + crm_notlari'ya kopyalanir. */
+$canliNot = isset($body['canli']) && $body['canli'];
+$notDegeri = isset($body['notlar']) ? clean($body['notlar']) : null;
+if (isset($body['not_text'])) $notDegeri = clean($body['not_text']);
+
+if ($notDegeri !== null) {
+    if ($canliNot) {
+        // live_not + not_sync_durumu kolonlarini idempotent ekle
+        try {
+            $db->exec("ALTER TABLE arama_loglari ADD COLUMN IF NOT EXISTS live_not TEXT DEFAULT NULL");
+            $db->exec("ALTER TABLE arama_loglari ADD COLUMN IF NOT EXISTS not_sync_durumu VARCHAR(20) DEFAULT NULL");
+        } catch (Exception $e) {}
+        $updates[] = 'live_not = ?';
+        $params[] = $notDegeri;
+        $updates[] = "not_sync_durumu = 'canli'";
+    } else {
+        $updates[] = 'notlar = ?';
+        $params[] = $notDegeri;
+        $updates[] = "live_not = NULL";
+        $updates[] = "not_sync_durumu = 'kaydedildi'";
+    }
 }
 if (isset($body['kayit_dosya'])) {
     $updates[] = 'kayit_dosya = ?';
@@ -88,4 +107,32 @@ $params[] = $id;
 $stmt = $db->prepare('UPDATE arama_loglari SET ' . implode(', ', $updates) . ' WHERE id = ?');
 $stmt->execute($params);
 
-json_success(['id' => $id], 'Arama logu guncellendi');
+/* FINAL NOT (canli=false) ve crm_id varsa crm_notlari'ya da kopyala — kisi kartinda gorunsun */
+$crm_not_id = null;
+if (!$canliNot && $notDegeri !== null && $notDegeri !== '') {
+    $crm_id = isset($body['crm_id']) ? (int)$body['crm_id'] : (int)($log['crm_id'] ?? 0);
+    if ($crm_id > 0) {
+        try {
+            $db->exec("CREATE TABLE IF NOT EXISTS crm_notlari (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                crm_id INT NOT NULL,
+                not_text TEXT NOT NULL,
+                gorusme_sonucu VARCHAR(100) DEFAULT NULL,
+                kullanici_id INT DEFAULT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_crm (crm_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
+            $sonuc = isset($body['gorusme_sonucu']) ? clean($body['gorusme_sonucu']) : null;
+            $stmtN = $db->prepare("INSERT INTO crm_notlari (crm_id, not_text, gorusme_sonucu, kullanici_id) VALUES (?, ?, ?, ?)");
+            $stmtN->execute([$crm_id, $notDegeri, $sonuc, $user['id']]);
+            $crm_not_id = $db->lastInsertId();
+            // arama_loglari.crm_not_id ile bag kur
+            try {
+                $db->exec("ALTER TABLE arama_loglari ADD COLUMN IF NOT EXISTS crm_not_id INT DEFAULT NULL");
+                $db->prepare("UPDATE arama_loglari SET crm_not_id = ? WHERE id = ?")->execute([$crm_not_id, $id]);
+            } catch (Exception $e) {}
+        } catch (Exception $e) { /* sessiz */ }
+    }
+}
+
+json_success(['id' => $id, 'crm_not_id' => $crm_not_id, 'canli' => $canliNot], 'Arama logu guncellendi');
