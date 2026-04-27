@@ -159,7 +159,21 @@ MR_Mail.MailPage = ({setPage, user}) => {
       return;
     }
     setHesapSaving(true);
-    const r = await api.mailHesapKaydet(hesapForm);
+    /* Backend field isimleri ile uyumlu payload (imap_host/smtp_host/kullanici_adi/gonderen_adi) */
+    const payload = {
+      email: hesapForm.email,
+      gonderen_adi: hesapForm.display_name || '',
+      kullanici_adi: hesapForm.kullanici,
+      sifre: hesapForm.sifre,
+      imap_host: hesapForm.imap_sunucu || hesapForm.imap_host || '',
+      imap_port: hesapForm.imap_port || 993,
+      imap_encryption: hesapForm.guvenlik || 'ssl',
+      smtp_host: hesapForm.smtp_sunucu || hesapForm.smtp_host || '',
+      smtp_port: hesapForm.smtp_port || 465,
+      smtp_encryption: hesapForm.guvenlik || 'ssl',
+      etiket: hesapForm.display_name || hesapForm.email
+    };
+    const r = await api.mailHesapKaydet(payload);
     if (r?.success) {
       setMesaj({type: 'success', text: 'MAIL HESABI KAYDEDİLDİ'});
       // Hesapları yenile
@@ -178,7 +192,19 @@ MR_Mail.MailPage = ({setPage, user}) => {
   const baglanitiTest = async () => {
     setTestLoading(true);
     setTestSonuc(null);
-    const testData = seciliHesap ? {hesap_id: seciliHesap.id} : hesapForm;
+    /* Eger kayitli hesap varsa ID gonder, yoksa form alanlarini backend formatinda gonder */
+    const testData = seciliHesap ? {hesap_id: seciliHesap.id} : {
+      email: hesapForm.email,
+      gonderen_adi: hesapForm.display_name || '',
+      kullanici_adi: hesapForm.kullanici,
+      sifre: hesapForm.sifre,
+      imap_host: hesapForm.imap_sunucu || '',
+      imap_port: hesapForm.imap_port || 993,
+      imap_encryption: hesapForm.guvenlik || 'ssl',
+      smtp_host: hesapForm.smtp_sunucu || '',
+      smtp_port: hesapForm.smtp_port || 465,
+      smtp_encryption: hesapForm.guvenlik || 'ssl'
+    };
     const r = await api.mailTest(testData);
     if (r?.success && r.data) {
       setTestSonuc(r.data);
