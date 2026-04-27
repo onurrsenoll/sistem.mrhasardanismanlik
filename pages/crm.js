@@ -1459,12 +1459,11 @@ MR._CRMYeniInner = ({setPage}) => {
             </span>
           </div>
 
-          {/* CAGRI PANELI - YETKI KONTROLU + AKTIF CAGRI VARSA HER ZAMAN GORUN
-             (kapat butonu erisilebilir kalsin, kullanici sikismassin) */}
+          {/* CAGRI PANELI - YETKI KONTROLU
+             Cagri yapma yetkisi olan kullanici paneli + kapat butonu gorur.
+             Admin bypass + crm-ara yetkisi yeterli. */}
           {(MR._currentUser?.rol === 'admin'
-            || MR._currentUser?.yetkiler?.netsipp_goruntule === 1
             || (MR.hasYetki && MR.hasYetki(MR._currentUser, 'crm', 'crm-ara'))
-            || callActive
           ) && <div style={{...S.card, marginBottom:10}}>
             <div style={{...S.cardHead, padding:'8px 12px'}}>
               <LIcon name="Headphones" size={13} color={C.accent}/>
