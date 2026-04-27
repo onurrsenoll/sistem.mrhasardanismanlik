@@ -12,7 +12,8 @@ require_once __DIR__ . '/../../config/sms_helper.php';
 setup_headers();
 require_method('POST');
 
-$user = auth_required(['admin']);
+// Yetki kontrolu YETKI_MAP'te (sms/test.php -> [sistem, sistem-sms])
+$user = auth_required();
 $body = get_json_body();
 require_fields($body, ['telefon']);
 

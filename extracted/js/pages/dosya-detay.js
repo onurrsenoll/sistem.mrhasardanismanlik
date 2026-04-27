@@ -1,6 +1,17 @@
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect} = React;
 
+/* MODUL-LEVEL INFO ROW - input focus-loss bug fix */
+MR._DosyaDetayInfoRow = ({label, value, mono, bold, color}) => {
+  const C = MR.C;
+  return (
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderBottom:'1px solid ' + C.border}}>
+      <span style={{fontSize:10,color:C.textMuted,fontWeight:500,minWidth:90}}>{label}</span>
+      <span style={{fontSize:11,fontWeight: bold ? 700 : 500, color: color || C.text, fontFamily: mono ? 'monospace' : 'inherit',textAlign:'right',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{value || '-'}</span>
+    </div>
+  );
+};
+
 const ASAMALAR = MR.ASAMALAR || [];
 const KAYNAKLAR = ['OFİS CRM','PAYDAŞ/YÖNLENDİREN'];
 
@@ -430,13 +441,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
     return user?.yetkiler?.[modul + '_' + islem] === 1 || user?.yetkiler?.[modul + '_' + islem] === true;
   };
 
-  // Bilgi satır bileşeni
-  const InfoRow = ({label, value, mono, bold, color}) => (
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderBottom:`1px solid ${C.border}`}}>
-      <span style={{fontSize:10,color:C.textMuted,fontWeight:500,minWidth:90}}>{label}</span>
-      <span style={{fontSize:11,fontWeight:bold?700:500,color:color||C.text,fontFamily:mono?'monospace':'inherit',textAlign:'right',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{value || '-'}</span>
-    </div>
-  );
+  // Bilgi satir - modul-level (focus-loss bug fix)
+  const InfoRow = MR._DosyaDetayInfoRow;
 
   const tabs = [
     {id:'bilgi', l:'DOSYA BİLGİLERİ', ic:'FileText'},

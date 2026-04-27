@@ -1,6 +1,11 @@
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect, useCallback, useMemo, useRef} = React;
 
+/* MODUL-LEVEL PILL BUTON - parent icinde tanimlanmamali (input focus-loss bug fix) */
+MR._CRMAramaPillBtn = ({label, active, color, onClick}) => (
+  <button type="button" onClick={onClick} style={{flex:1, padding:'7px 4px', borderRadius:6, fontSize:10, fontWeight:700, cursor:'pointer', background: active ? color : 'transparent', color: active ? '#fff' : color, border: '2px solid ' + color}}>{label}</button>
+);
+
 /* ═══════════════════════════════════════════
    CRM ARAMA LİSTESİ / YÖNLENDİRME TAKİP
    EXCEL YÜKLEME + ARAMA TAKİP + TOPLU İŞLEM
@@ -1122,9 +1127,8 @@ MR.CrmAramaPage = ({setPage, user}) => {
             await api.yonlendirmeUpdate({id:d.id, magdur_ad_soyad:d.magdur_ad_soyad, magdur_tc:d.magdur_tc, magdur_telefon:d.magdur_telefon, magdur_il:d.magdur_il, magdur_ilce:d.magdur_ilce, kaza_turu:d.kaza_turu, son_durum:d.son_durum, durum:d.durum, plaka:d.plaka, sigorta_sirket:d.sigorta_sirket, kusur_durumu:d.kusur_durumu, maluliyet:d.maluliyet, kaza_pozisyonu:d.kaza_pozisyonu, guncel_durum:d.guncel_durum, dosya_turu:d.dosya_turu, dosya_durumu:d.dosya_durumu, kaza_tarihi:d.kaza_tarihi});
             load();
           };
-          const PillBtn = ({label, active, color, onClick}) => (
-            <button type="button" onClick={onClick} style={{flex:1, padding:'7px 4px', borderRadius:6, fontSize:10, fontWeight:700, cursor:'pointer', background:active?color:'transparent', color:active?'#fff':color, border:`2px solid ${color}`}}>{label}</button>
-          );
+          // PillBtn modul-level'a tasindi - MR._CRMAramaPillBtn (focus-loss bug fix)
+          const PillBtn = MR._CRMAramaPillBtn;
           return (
           <div>
             {/* HEADER */}

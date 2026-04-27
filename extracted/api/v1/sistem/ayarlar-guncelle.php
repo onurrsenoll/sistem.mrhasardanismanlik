@@ -7,11 +7,17 @@ require_method('POST');
 
 $user = auth_required();
 
-// Yetki: admin TUM ayarlari, netsantral-duzenle yetkili sadece netsantral_* anahtarlari
+// Yetki seviyeleri:
+// - admin: TUM ayarlari guncelleyebilir
+// - netsantral-duzenle: sadece netsantral_* prefix ayarlari
+// - sistem-sms: sadece sms_* prefix ayarlari
+// - sistem-ayarlar: tum genel ayarlar (firma, logo vb)
 $isAdmin = ($user['rol'] === 'admin');
 $nsDuzenle = $isAdmin || (isset($user['yetkiler']['netsantral_netsantral-duzenle']) && $user['yetkiler']['netsantral_netsantral-duzenle'] === 1);
+$smsDuzenle = $isAdmin || (isset($user['yetkiler']['sistem_sistem-sms']) && $user['yetkiler']['sistem_sistem-sms'] === 1);
+$genelAyarlar = $isAdmin || (isset($user['yetkiler']['sistem_sistem-ayarlar']) && $user['yetkiler']['sistem_sistem-ayarlar'] === 1);
 
-if (!$isAdmin && !$nsDuzenle) {
+if (!$isAdmin && !$nsDuzenle && !$smsDuzenle && !$genelAyarlar) {
     json_error('YETKİSİZ İŞLEM', 403);
 }
 
@@ -33,20 +39,23 @@ try {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
 
-    // Sifreli olarak saklanan netsantral anahtarlari
+    // Sifreli olarak saklanan anahtarlar (AES_encrypt ile saklanir)
+    // NOT: sms_sifre AES'lenmez - sms_helper.php plain text bekler.
     $sifreliAnahtarlar = ['netsantral_sip_sifre', 'netsantral_api_sifre', 'netsantral_netgsm_api_sifre'];
-    $netsantralPrefix = 'netsantral_';
 
     $stmt = $db->prepare('INSERT INTO ayarlar (anahtar, deger) VALUES (?, ?) ON DUPLICATE KEY UPDATE deger = VALUES(deger)');
 
     $kayit_sayisi = 0;
     foreach ($data as $anahtar => $deger) {
-        $isNetsantral = strpos($anahtar, $netsantralPrefix) === 0;
+        $isNetsantral = strpos($anahtar, 'netsantral_') === 0;
+        $isSms = strpos($anahtar, 'sms_') === 0;
+        // Diger her sey 'genel ayarlar' grubunda
 
-        // Yetki kontrolu: admin degil VE (netsantral degil VEYA netsantral yetkisi yok) -> atla
+        // Yetki kontrolu prefix bazli:
         if (!$isAdmin) {
-            if (!$isNetsantral) continue;
-            if (!$nsDuzenle) continue;
+            if ($isNetsantral && !$nsDuzenle) continue;
+            if ($isSms && !$smsDuzenle) continue;
+            if (!$isNetsantral && !$isSms && !$genelAyarlar) continue;
         }
 
         // Sifre alani: '••••••••' geliyorsa kullanici degistirmedi -> atla

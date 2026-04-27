@@ -947,6 +947,19 @@ const App = () => {
     MR._currentUser = user;
   }, [user]);
 
+  /* NETSANTRAL OTOMATIK BASLATMA - login sonrasi telefon hazir olsun.
+     Kullanici Netsantral Ayarlari sayfasinda 'KAYDET & BAGLAN' demeden de
+     gelen/giden cagri kullanabilsin. _webrtcBaslatildi flag mukerrer cagriyi engeller. */
+  useEffect(() => {
+    if (!user) return;
+    if (typeof MR.webrtcOtoBaslat !== 'function') return;
+    /* Kucuk gecikme ile baslat (config.js + webrtc-phone yuklendikten sonra) */
+    var t = setTimeout(function(){
+      try { MR.webrtcOtoBaslat(user); } catch(e) { console.warn('[APP] webrtc oto-baslat hatasi:', e); }
+    }, 800);
+    return function() { clearTimeout(t); };
+  }, [user?.id]);
+
   /* ═══ ARAMA LOG — WEBRTC ÇAĞRI BİTTİĞİNDE OTOMATİK KAYIT ═══ */
   useEffect(() => {
     if (!user) return;

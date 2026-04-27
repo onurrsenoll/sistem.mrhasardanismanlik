@@ -1,6 +1,19 @@
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect} = React;
 
+/* MODUL-LEVEL SECTION HEADER - input focus-loss bug fix */
+MR._DosyaYeniSecHead = ({icon, title}) => {
+  const C = MR.C, LIcon = MR.LIcon;
+  return (
+    <div style={{gridColumn:'1 / -1', display:'flex', alignItems:'center', gap:10, margin:'12px 0 4px', paddingBottom:10, borderBottom: '2px solid ' + C.accent + '33'}}>
+      <div style={{width:32,height:32,borderRadius:8,background: C.accent + '22',display:'flex',alignItems:'center',justifyContent:'center'}}>
+        <LIcon name={icon} size={15} color={C.accent}/>
+      </div>
+      <span style={{fontSize:13,fontWeight:800,color:C.accent,letterSpacing:1}}>{title}</span>
+    </div>
+  );
+};
+
 // ─── Bu componentler DIŞARIDA tanımlanmalı (focus kaybı önlenir) ───
 const SecCard = ({icon, title, sub, color, badge, children}) => {
   const {C, LIcon} = MR;
@@ -132,8 +145,10 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     setLoading(false);
   };
 
-  // Section header component
-  const SecHead = ({icon, title}) => (
+  // Section header - modul-level (focus-loss bug fix)
+  const SecHead = MR._DosyaYeniSecHead;
+  // Yedek: eski iniline reference temizleme
+  const _UNUSED_SecHead = ({icon, title}) => (
     <div style={{gridColumn:'1 / -1', display:'flex', alignItems:'center', gap:10, margin:'12px 0 4px', paddingBottom:10, borderBottom:`2px solid ${C.accent}33`}}>
       <div style={{width:32,height:32,borderRadius:8,background:`${C.accent}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
         <LIcon name={icon} size={15} color={C.accent}/>

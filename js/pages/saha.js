@@ -6,6 +6,17 @@
 const MR = window.MR || (window.MR = {});
 const {useState, useEffect, useMemo, useCallback, useRef} = React;
 
+/* MODUL-LEVEL SATIR - input focus-loss bug fix (parent icinde tanimlanmamali) */
+MR._SahaSatir = ({label, value}) => {
+  const C = MR.C;
+  return (
+    <div style={{display:'flex',padding:'8px 0',borderBottom: '1px solid ' + C.border}}>
+      <div style={{width:160,fontSize:11,fontWeight:600,color:C.textMuted}}>{label}</div>
+      <div style={{flex:1,fontSize:12,fontWeight:500,color:C.text}}>{value || '-'}</div>
+    </div>
+  );
+};
+
 /* ═══ SABİT VERİLER ═══ */
 const HASAR_TIPLERI = ['TRAFİK KAZASI','DASK','YANGIN','SU BASKIN','HIRSIZLIK','DİĞER'];
 const HASAR_DURUMLARI = [{v:'dosya_acik',l:'DOSYA AÇIK'},{v:'dosya_kapali',l:'DOSYA KAPALI'},{v:'onarim_devam',l:'ONARIM SÜRECİ DEVAM EDİYOR'}];
@@ -453,12 +464,8 @@ const SahaDetayModal = ({item, onClose, user, onOnayla, onReddet}) => {
     if (item?.id) api.sahaMedyaList(item.id).then(r => { if (r?.success) setMedyalar(r.data || []); });
   }, [item?.id]);
 
-  const Satir = ({label, value}) => (
-    <div style={{display:'flex',padding:'8px 0',borderBottom:`1px solid ${C.border}`}}>
-      <div style={{width:160,fontSize:11,fontWeight:600,color:C.textMuted}}>{label}</div>
-      <div style={{flex:1,fontSize:12,fontWeight:500,color:C.text}}>{value || '-'}</div>
-    </div>
-  );
+  // Satir - modul-level (focus-loss bug fix)
+  const Satir = MR._SahaSatir;
 
   return (
     <Modal open={true} onClose={onClose} title="SAHA DOSYA DETAYI" width="750px">

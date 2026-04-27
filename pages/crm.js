@@ -3,6 +3,27 @@ const {useState, useEffect, useCallback, useMemo, useRef} = React;
 
 /* MR._NetsippDurum ve MR._SesAyarlariPaneli artık webrtc-widget.js'den geliyor */
 
+/* MODUL-LEVEL FIELDSET BILESENI - parent component icinde tanimlanmamali (focus-loss bug fix).
+   Renk ve ikon MR'den okunur, props ile parent state'ine bagli degil -> re-render'da YENIDEN OLUSMAZ. */
+MR._CRMFieldset = ({title, icon, children}) => {
+  const C = MR.C, LIcon = MR.LIcon;
+  return (
+    <fieldset style={{
+      border: '1px solid ' + C.border, borderRadius: 8,
+      padding: '12px 14px 10px', marginBottom: 10, background: 'transparent'
+    }}>
+      <legend style={{
+        padding: '3px 10px', fontSize: 11, fontWeight: 700, color: C.textSec,
+        display: 'flex', alignItems: 'center', gap: 5, letterSpacing: 0.5
+      }}>
+        <LIcon name={icon} size={12} color={C.accent}/>
+        {title}
+      </legend>
+      {children}
+    </fieldset>
+  );
+};
+
 const _SesAyarlariPaneli_DEVRE_DISI = () => {
   const {C, S, LIcon} = MR;
   const [acik, setAcik] = useState(false);
@@ -1399,22 +1420,9 @@ MR._CRMYeniInner = ({setPage}) => {
     setEkler([]);
   };
 
-  /* ── FIELDSET BİLEŞENİ ── */
-  const Fieldset = ({title, icon, children}) => (
-    <fieldset style={{
-      border: `1px solid ${C.border}`, borderRadius: 8,
-      padding: '12px 14px 10px', marginBottom: 10, background: 'transparent'
-    }}>
-      <legend style={{
-        padding: '3px 10px', fontSize: 11, fontWeight: 700, color: C.textSec,
-        display: 'flex', alignItems: 'center', gap: 5, letterSpacing: 0.5
-      }}>
-        <LIcon name={icon} size={12} color={C.accent}/>
-        {title}
-      </legend>
-      {children}
-    </fieldset>
-  );
+  /* ── FIELDSET BİLEŞENİ — MODUL DISI (re-render mount/unmount loop'unu engeller, input focus korur) ── */
+  // Tanim asagida MR._CRMFieldset olarak; burada sadece yerel referans:
+  const Fieldset = MR._CRMFieldset;
 
   /* ── SOL PANEL BUTON STİLİ ── */
   const actionBtn = (color) => ({
