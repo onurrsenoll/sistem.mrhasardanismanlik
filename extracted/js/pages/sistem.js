@@ -1,4 +1,23 @@
 const MR = window.MR || (window.MR = {});
+
+/* MODUL-LEVEL CHECKBOX - Yetki sayfasinda re-render mount/unmount loop'unu engeller */
+MR._SistemYetkiCheckbox = ({checked, onChange, label}) => {
+  const C = MR.C, LIcon = MR.LIcon;
+  return (
+    <div onClick={() => onChange(!checked)} style={{
+      display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', cursor: 'pointer'
+    }}>
+      <div style={{
+        width: 20, height: 20, borderRadius: 4, border: '2px solid ' + (checked ? C.accent : C.borderLight),
+        background: checked ? C.accent : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'all .2s', flexShrink: 0
+      }}>
+        {checked && <LIcon name="Check" size={14} color="#fff"/>}
+      </div>
+      <span style={{fontSize: 12, fontWeight: 500, color: checked ? C.text : C.textMuted}}>{label}</span>
+    </div>
+  );
+};
 const {useState, useEffect, useCallback, useRef} = React;
 
 /* ════════════════════════════════════════════════════════════════
@@ -660,21 +679,8 @@ const YetkiTab = () => {
     });
   });
 
-  /* CHECKBOX BİLEŞENİ */
-  const Checkbox = ({checked, onChange, label}) => (
-    <div onClick={() => onChange(!checked)} style={{
-      display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', cursor: 'pointer'
-    }}>
-      <div style={{
-        width: 20, height: 20, borderRadius: 4, border: `2px solid ${checked ? C.accent : C.borderLight}`,
-        background: checked ? C.accent : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'all .2s', flexShrink: 0
-      }}>
-        {checked && <LIcon name="Check" size={14} color="#fff"/>}
-      </div>
-      <span style={{fontSize: 12, fontWeight: 500, color: checked ? C.text : C.textMuted}}>{label}</span>
-    </div>
-  );
+  /* CHECKBOX - modul-level (focus loss bug fix) */
+  const Checkbox = MR._SistemYetkiCheckbox;
 
   return (
     <div>
