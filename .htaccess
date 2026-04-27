@@ -2,6 +2,8 @@
     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
     Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
     Header always set Access-Control-Allow-Credentials "true"
+    # Babel standalone JSX derlemesi icin unsafe-eval gerekli
+    Header always set Content-Security-Policy "default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval'; img-src 'self' https: data: blob:; connect-src 'self' https: wss: ws:; media-src 'self' https: blob: data:;"
 </IfModule>
 
 <IfModule mod_rewrite.c>
