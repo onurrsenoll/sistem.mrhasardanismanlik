@@ -272,7 +272,7 @@ MR_Mail.MailPage = ({setPage, user}) => {
       [{id:'gelen',label:'GELEN KUTUSU',icon:'Inbox',color:C.accent,badge:okunmamis},
        {id:'giden',label:'GÖNDERİLENLER',icon:'Send',color:C.success},
        {id:'yildizli',label:'YILDIZLI',icon:'Star',color:'#f59e0b'},
-       isAdmin && {id:'ayarlar',label:'HESAP AYARLARI',icon:'Settings',color:C.purple||'#8b5cf6'}
+       (isAdmin || (MR.hasYetki && MR.hasYetki(user,'eposta','eposta-ayarlar'))) && {id:'ayarlar',label:'HESAP AYARLARI',icon:'Settings',color:C.purple||'#8b5cf6'}
       ].filter(Boolean).map(t =>
         React.createElement('div', {
           key: t.id,

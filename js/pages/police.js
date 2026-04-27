@@ -292,7 +292,7 @@ const PoliceListe = ({setPage, user}) => {
                         <button style={{...S.btn,...S.btnP,fontSize:9,padding:'4px 8px'}} onClick={()=>detayAc(p)}>
                           <LIcon name="Eye" size={10} color="#fff"/>
                         </button>
-                        {user?.rol === 'admin' && (
+                        {(user?.rol === 'admin' || (MR.hasYetki && MR.hasYetki(user, 'police', 'police-sil'))) && (
                           <button style={{...S.btn,...S.btnD,fontSize:9,padding:'4px 8px'}} onClick={()=>setSilOnay(p)}>
                             <LIcon name="Trash2" size={10} color="#fff"/>
                           </button>
@@ -462,7 +462,7 @@ const PoliceListe = ({setPage, user}) => {
 
               {/* BUTONLAR */}
               <div style={{display:'flex',gap:8,justifyContent:'flex-end',borderTop:`1px solid ${C.border}`,paddingTop:12}}>
-                {user?.rol === 'admin' && <button style={{...S.btn,...S.btnD,fontSize:11}} onClick={()=>setSilOnay(p)}><LIcon name="Trash2" size={14} color="#fff"/> SİL</button>}
+                {(user?.rol === 'admin' || (MR.hasYetki && MR.hasYetki(user, 'police', 'police-sil'))) && <button style={{...S.btn,...S.btnD,fontSize:11}} onClick={()=>setSilOnay(p)}><LIcon name="Trash2" size={14} color="#fff"/> SİL</button>}
                 <button style={{...S.btn,...S.btnG,fontSize:11}} onClick={()=>{setDetayModal(null);setTahsilatForm(null)}}><LIcon name="X" size={14} color={C.textSec}/> KAPAT</button>
               </div>
             </div>

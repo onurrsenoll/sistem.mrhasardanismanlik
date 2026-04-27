@@ -96,7 +96,9 @@ const MODUL_YETKILERI = [
     {key: 'saha-duzenle', label: 'SAHA KAYDI DÜZENLE'},
     {key: 'saha-sil', label: 'SAHA KAYDI SİL'},
     {key: 'saha-onay', label: 'SAHA KAYDI ONAYLA'},
-    {key: 'saha-red', label: 'SAHA KAYDI REDDET'}
+    {key: 'saha-red', label: 'SAHA KAYDI REDDET'},
+    {key: 'saha-donustur', label: 'SAHA KAYDINI POLİÇE DOSYASINA DÖNÜŞTÜR'},
+    {key: 'saha-detay', label: 'SAHA KAYDI DETAY GÖRÜNTÜLE'}
   ]},
   {modul: 'hesaplamalar', label: 'HESAPLAMALAR', icon: 'Calculator', islemler: [
     {key: 'hesap-adk', label: 'ARAÇ DEĞER KAYBI'},
@@ -152,6 +154,7 @@ const MODUL_YETKILERI = [
     {key: 'muhasebe-kapanis', label: 'KAPANIŞ RAPORU'},
     {key: 'muhasebe-aysonu', label: 'AY SONU RAPORU'},
     {key: 'muhasebe-bakiye-sifirla', label: 'BAKİYE SIFIRLA (SİSTEM YÖNETİCİSİ)'},
+    {key: 'muhasebe-sifirla', label: 'TÜM MUHASEBE VERİLERİNİ SIFIRLA (SİSTEM YÖNETİCİSİ)'},
     {key: 'personel-liste', label: 'PERSONEL LİSTESİ'},
     {key: 'personel-yeni', label: 'YENİ PERSONEL'},
     {key: 'personel-duzenle', label: 'PERSONEL DÜZENLE'},
@@ -190,6 +193,7 @@ const MODUL_YETKILERI = [
   ]},
   {modul: 'bildirim', label: 'BİLDİRİMLER', icon: 'Bell', islemler: [
     {key: 'bildirim-goruntule', label: 'BİLDİRİMLERİ GÖRÜNTÜLE'},
+    {key: 'bildirim-gonder', label: 'BİLDİRİM GÖNDER (ADMIN PANELİNDEN)'},
     {key: 'bildirim-sil', label: 'BİLDİRİM SİL'}
   ]},
   {modul: 'ictihat', label: 'İÇTİHAT', icon: 'Scale', islemler: [
@@ -218,7 +222,11 @@ const MODUL_YETKILERI = [
   {modul: 'eposta', label: 'E-POSTA', icon: 'Mail', islemler: [
     {key: 'eposta-goruntule', label: 'E-POSTA GÖRÜNTÜLE / OKU'},
     {key: 'eposta-gonder', label: 'E-POSTA GÖNDER'},
-    {key: 'eposta-sil', label: 'E-POSTA SİL'}
+    {key: 'eposta-sil', label: 'E-POSTA SİL'},
+    {key: 'eposta-ayarlar', label: 'E-POSTA HESAP AYARLARI'}
+  ]},
+  {modul: 'mail', label: 'MAİL HESABI YÖNETİMİ', icon: 'Mailbox', islemler: [
+    {key: 'mail-ayarlar', label: 'MAİL HESAP AYARLARI'}
   ]},
   {modul: 'sistem', label: 'SİSTEM', icon: 'Shield', islemler: [
     {key: 'sistem-kullanici', label: 'KULLANICI YÖNETİMİ'},
@@ -3623,17 +3631,19 @@ MR.SistemPage = ({setPage, user, subPage}) => {
         </div>
       </div>
 
-      {/* İÇERİK */}
+      {/* ICERIK - YETKI KONTROLU
+          Admin her zaman gorur. Diger kullanicilar 'sistem' modulunde
+          ilgili yetki anahtari ile (sistem-X) erisir. */}
       <div className="fade-in">
-        {subPage === 'kullanici' && isAdmin && <KullaniciTab/>}
-        {subPage === 'yetki' && isAdmin && <YetkiTab/>}
-        {subPage === 'ayarlar' && isAdmin && <AyarlarTab/>}
-        {subPage === 'sms' && isAdmin && <SmsTab/>}
-        {subPage === 'portal' && isAdmin && <PortalTab/>}
-        {subPage === 'guvenlik' && MR.hasYetki(user,'sistem','sistem-guvenlik') && <GuvenlikTab/>}
-        {subPage === 'aktarim' && isAdmin && <TopluAktarimTab/>}
-        {subPage === 'veri' && isAdmin && <VeriYonetimiTab/>}
-        {subPage === 'log' && isAdmin && <LogTab/>}
+        {subPage === 'kullanici' && (isAdmin || MR.hasYetki(user, 'sistem', 'sistem-kullanici')) && <KullaniciTab/>}
+        {subPage === 'yetki'     && (isAdmin || MR.hasYetki(user, 'sistem', 'sistem-yetki'))     && <YetkiTab/>}
+        {subPage === 'ayarlar'   && (isAdmin || MR.hasYetki(user, 'sistem', 'sistem-ayarlar'))   && <AyarlarTab/>}
+        {subPage === 'sms'       && (isAdmin || MR.hasYetki(user, 'sistem', 'sistem-sms'))       && <SmsTab/>}
+        {subPage === 'portal'    && (isAdmin || MR.hasYetki(user, 'sistem', 'sistem-portal'))    && <PortalTab/>}
+        {subPage === 'guvenlik'  && (isAdmin || MR.hasYetki(user, 'sistem', 'sistem-guvenlik'))  && <GuvenlikTab/>}
+        {subPage === 'aktarim'   && (isAdmin || MR.hasYetki(user, 'sistem', 'sistem-aktarim'))   && <TopluAktarimTab/>}
+        {subPage === 'veri'      && (isAdmin || MR.hasYetki(user, 'sistem', 'sistem-veri'))      && <VeriYonetimiTab/>}
+        {subPage === 'log'       && (isAdmin || MR.hasYetki(user, 'sistem', 'sistem-log'))       && <LogTab/>}
       </div>
     </div>
   );

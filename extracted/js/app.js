@@ -835,9 +835,10 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     return <MR.NetsantralAyarlariPage setPage={setPage} user={user}/>;
   }
 
-  /* KONUM TAKİBİ (ADMIN ONLY) */
+  /* KONUM TAKIBI - admin VEYA sistem-konum yetkisi */
   if (page === 'sistem-konum') {
-    if (user?.rol !== 'admin') return <div style={{padding:40,textAlign:'center',color:MR.C.danger,fontWeight:800}}>YETKİSİZ ERİŞİM</div>;
+    const izin = user?.rol === 'admin' || (MR.hasYetki && MR.hasYetki(user, 'sistem', 'sistem-konum'));
+    if (!izin) return <div style={{padding:40,textAlign:'center',color:MR.C.danger,fontWeight:800}}>YETKİSİZ ERİŞİM</div>;
     return <MR.KonumTakipPage setPage={setPage} user={user}/>;
   }
 

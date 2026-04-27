@@ -12,21 +12,20 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
   const {C, S, LIcon} = MR;
 
   const tumSekmeler = [
-    {key:'gelir',    label:'GELİR YÖNETİMİ',     icon:'TrendingUp'},
-    {key:'gider',    label:'GİDER YÖNETİMİ',      icon:'TrendingDown'},
-    {key:'komisyon', label:'KOMİSYON / PRİM',      icon:'Percent'},
-    {key:'kasa',     label:'KASA / BANKA',          icon:'Wallet'},
-    {key:'ortakkasa',label:'ORTAK KASA',             icon:'Users'},
-    {key:'maliyet',  label:'MALİYET ANALİZİ',      icon:'PieChart'},
+    {key:'gelir',    label:'GELİR / GİDER',        icon:'TrendingUp'},
+    {key:'kasa',     label:'KASALAR',               icon:'Wallet'},
+    {key:'ortakkasa',label:'ORTAK KASA',            icon:'Users'},
+    {key:'komisyon', label:'KOMİSYON TAKİBİ',      icon:'Percent'},
     {key:'rapor',    label:'FİNANSAL RAPORLAR',     icon:'BarChart3'},
-    {key:'kapanis',  label:'KAPANIŞ RAPORU',         icon:'FileCheck'},
-    {key:'aysonu',   label:'AY SONU RAPORU',          icon:'CalendarCheck'}
+    {key:'kapanis',  label:'KAPANIŞ RAPORU',        icon:'FileCheck'},
+    {key:'aysonu',   label:'AY SONU RAPORU',        icon:'CalendarCheck'},
+    {key:'maliyet',  label:'MALİYET ANALİZİ',      icon:'PieChart'}
   ];
 
   /* YETKİ BAZLI SEKME FİLTRELEME */
   const sekmeler = useMemo(() => {
     if (user?.rol === 'admin') return tumSekmeler;
-    const yetkiler = user?.yetkiler;
+    const yetkiler = user?.yetkiler || MR._currentUser?.yetkiler;
     if (!yetkiler || Object.keys(yetkiler).length === 0) return tumSekmeler;
     return tumSekmeler.filter(s => { const v = yetkiler['muhasebe_muhasebe-' + s.key]; return v === undefined || v === 1; });
   }, [user?.rol, user?.yetkiler]);
@@ -62,15 +61,33 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
       </div>
 
       {/* SEKME İÇERİKLERİ */}
-      {aktifSekme === 'gelir'    && <GelirYonetimi setPage={setPage} user={user}/>}
-      {aktifSekme === 'gider'    && <GiderYonetimi setPage={setPage} user={user}/>}
-      {aktifSekme === 'komisyon' && <KomisyonPrim  setPage={setPage} user={user}/>}
-      {aktifSekme === 'kasa'     && <KasaBanka     setPage={setPage} user={user}/>}
-      {aktifSekme === 'ortakkasa' && <OrtakKasa    setPage={setPage} user={user}/>}
-      {aktifSekme === 'maliyet'  && <MaliyetAnalizi setPage={setPage} user={user}/>}
-      {aktifSekme === 'rapor'    && <FinansalRaporlar setPage={setPage} user={user}/>}
-      {aktifSekme === 'kapanis'  && <KapanisRaporu setPage={setPage} user={user}/>}
-      {aktifSekme === 'aysonu'   && <AySonuRaporu setPage={setPage} user={user}/>}
+      {aktifSekme === 'gelir'     && <GelirGiderBirlestik setPage={setPage} user={user}/>}
+      {aktifSekme === 'kasa'      && <>
+        <KasaBanka setPage={setPage} user={user}/>
+        {(user?.rol === 'admin' || (MR.hasYetki && MR.hasYetki(user, 'muhasebe', 'muhasebe-sifirla'))) && (
+          <div style={{marginTop:24,padding:16,background:`${C.danger}08`,borderRadius:10,border:`1px solid ${C.danger}20`}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:C.danger}}>MUHASEBE VERİLERİNİ SIFIRLA</div>
+                <div style={{fontSize:10,color:C.textMuted,marginTop:4}}>Tüm gelir, gider, kasa bakiyeleri ve komisyon kayıtları sıfırlanır. Dosya masrafları etkilenmez.</div>
+              </div>
+              <button onClick={async () => {
+                if (!confirm('DİKKAT: Tüm gelir, gider, kasa bakiyeleri ve komisyon kayıtları sıfırlanacak!\nBu işlem GERİ ALINAMAZ!\nDevam?')) return;
+                if (!confirm('SON ONAY: Emin misiniz?')) return;
+                const r = await api.muhasebeSifirla({onay:'MUHASEBE_SIFIRLA_ONAYLI'});
+                if (r?.success) { alert('Muhasebe verileri sıfırlandı.'); window.location.reload(); }
+                else alert(r?.error || 'Hata');
+              }} style={{...S.btn,...S.btnD,fontSize:10,padding:'8px 16px',flexShrink:0}}>SIFIRLA</button>
+            </div>
+          </div>
+        )}
+      </>}
+      {aktifSekme === 'ortakkasa' && <OrtakKasa setPage={setPage} user={user}/>}
+      {aktifSekme === 'komisyon'  && <KomisyonPrim setPage={setPage} user={user}/>}
+      {aktifSekme === 'rapor'     && <FinansalRaporlar setPage={setPage} user={user}/>}
+      {aktifSekme === 'kapanis'   && <KapanisRaporu setPage={setPage} user={user}/>}
+      {aktifSekme === 'aysonu'    && <AySonuRaporu setPage={setPage} user={user}/>}
+      {aktifSekme === 'maliyet'   && <MaliyetAnalizi setPage={setPage} user={user}/>}
     </div>
   );
 };
@@ -263,7 +280,7 @@ const GelirYonetimi = ({setPage, user}) => {
                 <thead>
                   <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                     {['TARİH','KASA','DOSYA NO','TÜR','TUTAR','AÇIKLAMA'].map(h =>
-                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                     )}
                   </tr>
                 </thead>
@@ -272,7 +289,7 @@ const GelirYonetimi = ({setPage, user}) => {
                     <tr key={g.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
                       onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
                       onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
-                      <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{g.tarih || g.created_at?.split(' ')[0] || '-'}</td>
+                      <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{MR.tarihFmt ? MR.tarihFmt(g.tarih || g.created_at) : (g.tarih || g.created_at?.split(' ')[0] || '-')}</td>
                       <td style={{padding:'10px 12px',fontWeight:600}}>{g.kasa_adi || kasaAdi(g.kasa_id)}</td>
                       <td style={{padding:'10px 12px'}}>
                         {g.dosya_no ? (
@@ -440,6 +457,11 @@ const GiderYonetimi = ({setPage, user}) => {
     const tutarNum = parseNum(form.tutar);
     if (tutarNum <= 0) { setHata('TUTAR 0\'DAN BÜYÜK OLMALIDIR'); return; }
     if (!form.kategori) { setHata('KATEGORİ SEÇİMİ ZORUNLUDUR'); return; }
+    /* EKSİ BAKİYE UYARISI */
+    const secKasa = aktifKasalar.find(k => String(k.id) === String(form.kasa_id));
+    if (secKasa && parseFloat(secKasa.bakiye) < tutarNum) {
+      if (!confirm('DİKKAT: Bu işlem "' + secKasa.ad + '" kasasını eksi bakiyeye düşürecek!\n\nMevcut bakiye: ' + fmt(parseFloat(secKasa.bakiye)) + '\nİşlem tutarı: ' + fmt(tutarNum) + '\nİşlem sonrası: ' + fmt(parseFloat(secKasa.bakiye) - tutarNum) + '\n\nDevam etmek istiyor musunuz?')) return;
+    }
     setKayitLoading(true); setHata('');
     const gonder = {
       kasa_id: parseInt(form.kasa_id),
@@ -526,7 +548,7 @@ const GiderYonetimi = ({setPage, user}) => {
                 <thead>
                   <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                     {['TARİH','KASA','DOSYA NO','KATEGORİ','TUTAR','AÇIKLAMA'].map(h =>
-                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                     )}
                   </tr>
                 </thead>
@@ -535,7 +557,7 @@ const GiderYonetimi = ({setPage, user}) => {
                     <tr key={g.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
                       onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
                       onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
-                      <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{g.tarih || g.created_at?.split(' ')[0] || '-'}</td>
+                      <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{MR.tarihFmt ? MR.tarihFmt(g.tarih || g.created_at) : (g.tarih || g.created_at?.split(' ')[0] || '-')}</td>
                       <td style={{padding:'10px 12px',fontWeight:600}}>{g.kasa_adi || kasaAdi(g.kasa_id)}</td>
                       <td style={{padding:'10px 12px'}}>
                         {g.dosya_no ? (
@@ -626,7 +648,7 @@ const KomisyonPrim = ({setPage, user}) => {
   const [modalAcik, setModalAcik] = useState(false);
   const [odeModalAcik, setOdeModalAcik] = useState(false);
   const [secilenKomisyon, setSecilenKomisyon] = useState(null);
-  const [form, setForm] = useState({ilgili_tip:'ortak', ilgili_id:'', dosya_id:'', tutar:'', oran:'', aciklama:''});
+  const [form, setForm] = useState({ilgili_tip:'ortak', ilgili_id:'', dosya_id:'', tutar:'', oran:'', aciklama:'', beklenen_tarih:''});
   const [odeForm, setOdeForm] = useState({kasa_id:''});
   const [kayitLoading, setKayitLoading] = useState(false);
   const [hata, setHata] = useState('');
@@ -680,7 +702,7 @@ const KomisyonPrim = ({setPage, user}) => {
 
   /* YENİ KOMİSYON */
   const yeniKomisyonAc = () => {
-    setForm({ilgili_tip:'ortak', ilgili_id:'', dosya_id:'', tutar:'', oran:'', aciklama:''});
+    setForm({ilgili_tip:'ortak', ilgili_id:'', dosya_id:'', tutar:'', oran:'', aciklama:'', beklenen_tarih:''});
     setHata(''); setBasari('');
     setModalAcik(true);
   };
@@ -698,6 +720,7 @@ const KomisyonPrim = ({setPage, user}) => {
       aciklama: form.aciklama
     };
     if (form.dosya_id) gonder.dosya_id = parseInt(form.dosya_id);
+    if (form.beklenen_tarih) gonder.beklenen_tarih = form.beklenen_tarih;
     const r = await api.komisyonOlustur(gonder);
     if (r?.success) {
       setModalAcik(false);
@@ -805,8 +828,8 @@ const KomisyonPrim = ({setPage, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:900}}>
               <thead>
                 <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                  {['İLGİLİ','TİP','DOSYA NO','TUTAR','ORAN','DURUM','ÖDEME TARİHİ','İŞLEM'].map(h =>
-                    <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                  {['İLGİLİ','TİP','DOSYA NO','TUTAR','ORAN','DURUM','BEKLENEN TARİH','ÖDEME TARİHİ','İŞLEM'].map(h =>
+                    <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                   )}
                 </tr>
               </thead>
@@ -829,7 +852,21 @@ const KomisyonPrim = ({setPage, user}) => {
                     <td style={{padding:'10px 12px',fontWeight:700,fontSize:12}}>{fmt(parseFloat(k.tutar) || 0)}</td>
                     <td style={{padding:'10px 12px',color:C.textSec}}>{k.oran ? `%${k.oran}` : '-'}</td>
                     <td style={{padding:'10px 12px'}}><Badge text={durumLabel(k.durum)} color={durumRenk(k.durum)}/></td>
-                    <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{k.odeme_tarihi || '-'}</td>
+                    <td style={{padding:'10px 12px',fontSize:11}}>
+                      {k.beklenen_tarih ? (() => {
+                        const bugun = new Date(); bugun.setHours(0,0,0,0);
+                        const bt = new Date(k.beklenen_tarih); bt.setHours(0,0,0,0);
+                        const fark = Math.floor((bugun - bt) / 86400000);
+                        const gecikti = k.durum !== 'odendi' && fark > 0;
+                        const yaklasik = k.durum !== 'odendi' && fark >= -7 && fark <= 0;
+                        return <span style={{fontWeight:gecikti?700:500, color: gecikti ? C.danger : yaklasik ? C.warning : C.textSec}}>
+                          {MR.tarihFmt ? MR.tarihFmt(k.beklenen_tarih) : k.beklenen_tarih}
+                          {gecikti && <span style={{fontSize:8,marginLeft:4}}>({fark} GÜN GECİKMİŞ)</span>}
+                          {yaklasik && <span style={{fontSize:8,marginLeft:4}}>(YAKLAŞIYOR)</span>}
+                        </span>;
+                      })() : <span style={{color:C.textMuted}}>-</span>}
+                    </td>
+                    <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{k.odeme_tarihi ? (MR.tarihFmt ? MR.tarihFmt(k.odeme_tarihi) : k.odeme_tarihi) : '-'}</td>
                     <td style={{padding:'10px 12px'}}>
                       <div style={{display:'flex',gap:6}}>
                         {k.durum === 'bekliyor' && (
@@ -851,6 +888,51 @@ const KomisyonPrim = ({setPage, user}) => {
           )}
         </div>
       </div>
+
+      {/* ALACAK YAŞLANDIRMA RAPORU (D8) */}
+      {(() => {
+        const bugun = new Date(); bugun.setHours(0,0,0,0);
+        const bekleyenler = komisyonlar.filter(k => k.durum !== 'odendi');
+        if (bekleyenler.length === 0) return null;
+        const gruplar = {'0-30':[], '30-60':[], '60-90':[], '90+':[]};
+        bekleyenler.forEach(k => {
+          const tarih = new Date(k.created_at || k.tarih || bugun);
+          const gun = Math.floor((bugun - tarih) / 86400000);
+          if (gun <= 30) gruplar['0-30'].push(k);
+          else if (gun <= 60) gruplar['30-60'].push(k);
+          else if (gun <= 90) gruplar['60-90'].push(k);
+          else gruplar['90+'].push(k);
+        });
+        const grupToplam = (arr) => arr.reduce((t,k) => t + (parseFloat(k.tutar)||0), 0);
+        const renkler = {'0-30':C.success, '30-60':C.warning, '60-90':C.accent, '90+':C.danger};
+        return (
+          <div style={{...S.card, marginTop:20}}>
+            <SectionTitle icon="Clock" title="ALACAK YAŞLANDIRMA" sub="BEKLEYEN KOMİSYONLARIN BEKLEME SÜRESİ"/>
+            <div style={{padding:16}}>
+              <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:16}}>
+                {Object.entries(gruplar).map(([key, arr]) => (
+                  <div key={key} style={{background:`${renkler[key]}08`, border:`1px solid ${renkler[key]}20`, borderRadius:10, padding:14, textAlign:'center'}}>
+                    <div style={{fontSize:10, fontWeight:700, color:renkler[key], letterSpacing:1, marginBottom:6}}>{key} GÜN</div>
+                    <div style={{fontSize:22, fontWeight:800, color:renkler[key]}}>{arr.length}</div>
+                    <div style={{fontSize:10, color:C.textMuted, marginTop:4}}>{fmt(grupToplam(arr))}</div>
+                  </div>
+                ))}
+              </div>
+              {gruplar['90+'].length > 0 && (
+                <div style={{background:`${C.danger}08`, border:`1px solid ${C.danger}20`, borderRadius:8, padding:12}}>
+                  <div style={{fontSize:11, fontWeight:700, color:C.danger, marginBottom:8}}>90+ GÜN BEKLEYEN KOMİSYONLAR</div>
+                  {gruplar['90+'].map((k,i) => (
+                    <div key={i} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'6px 0', borderBottom: i < gruplar['90+'].length-1 ? `1px solid ${C.border}` : 'none'}}>
+                      <span style={{fontSize:11, fontWeight:600}}>{k.ilgili_adi || '-'}</span>
+                      <span style={{fontSize:11, fontWeight:700, color:C.danger}}>{fmt(parseFloat(k.tutar)||0)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* YENİ KOMİSYON MODAL */}
       <Modal open={modalAcik} onClose={() => setModalAcik(false)} title="YENİ KOMİSYON OLUŞTUR" width="560px">
@@ -877,6 +959,9 @@ const KomisyonPrim = ({setPage, user}) => {
           </FormGroup>
           <FormGroup label="ORAN (%)">
             <input style={S.input} value={form.oran} onChange={e => setForm(p => ({...p, oran: e.target.value}))} placeholder="ÖRN: 10"/>
+          </FormGroup>
+          <FormGroup label="BEKLENEN ÖDEME TARİHİ">
+            <input type="date" style={S.input} value={form.beklenen_tarih} onChange={e => setForm(p => ({...p, beklenen_tarih: e.target.value}))}/>
           </FormGroup>
           <FormGroup label="AÇIKLAMA" full>
             <textarea style={{...S.input,minHeight:70}} value={form.aciklama} onChange={e => setForm(p => ({...p, aciklama: e.target.value.toUpperCase()}))} placeholder="KOMİSYON AÇIKLAMASI..."/>
@@ -1060,6 +1145,10 @@ const KasaBanka = ({setPage, user}) => {
     if (transferForm.kaynak_id === transferForm.hedef_id) { setHata('KAYNAK VE HEDEF KASA AYNI OLAMAZ'); return; }
     const tutarNum = parseNum(transferForm.tutar);
     if (tutarNum <= 0) { setHata('TUTAR 0\'DAN BÜYÜK OLMALIDIR'); return; }
+    /* EKSİ BAKİYE UYARISI - TRANSFER */
+    if (kaynakKasa && parseFloat(kaynakKasa.bakiye) < tutarNum) {
+      if (!confirm('DİKKAT: Bu transfer "' + kaynakKasa.ad + '" kasasını eksi bakiyeye düşürecek!\n\nMevcut bakiye: ' + fmt(parseFloat(kaynakKasa.bakiye)) + '\nTransfer tutarı: ' + fmt(tutarNum) + '\nİşlem sonrası: ' + fmt(parseFloat(kaynakKasa.bakiye) - tutarNum) + '\n\nDevam etmek istiyor musunuz?')) return;
+    }
     setKayitLoading(true); setHata('');
     const r = await api.kasaTransfer({
       kaynak_id: parseInt(transferForm.kaynak_id),
@@ -1236,7 +1325,7 @@ const KasaBanka = ({setPage, user}) => {
               <thead>
                 <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                   {['TARİH','KASA','TÜR','TUTAR','AÇIKLAMA','DOSYA NO', ...((MR.hasYetki(user,'muhasebe','muhasebe-hareket-duzenle') || MR.hasYetki(user,'muhasebe','muhasebe-hareket-sil')) ? ['İŞLEM'] : [])].map(h =>
-                    <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                    <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                   )}
                 </tr>
               </thead>
@@ -1248,7 +1337,7 @@ const KasaBanka = ({setPage, user}) => {
                     <tr key={h.id || i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
                       onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
                       onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
-                      <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{h.tarih || h.created_at?.split(' ')[0] || '-'}</td>
+                      <td style={{padding:'10px 12px',color:C.textSec,fontSize:11}}>{MR.tarihFmt ? MR.tarihFmt(h.tarih || h.created_at) : (h.tarih || h.created_at?.split(' ')[0] || '-')}</td>
                       <td style={{padding:'10px 12px',fontWeight:600}}>{h.kasa_adi || kasaAdi(h.kasa_id)}</td>
                       <td style={{padding:'10px 12px'}}><Badge text={turLabel(h.tur)} color={turRenk(h.tur)}/></td>
                       <td style={{padding:'10px 12px',fontWeight:700,color: giris ? C.success : C.danger,fontSize:12}}>
@@ -1448,7 +1537,7 @@ const KasaBanka = ({setPage, user}) => {
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <div>
                   <div style={{fontSize:13,fontWeight:700}}>{hareketDuzenleModal.kasa_adi || kasaAdi(hareketDuzenleModal.kasa_id)}</div>
-                  <div style={{fontSize:11,color:C.textSec,marginTop:2}}>{hareketDuzenleModal.tarih || hareketDuzenleModal.created_at?.split(' ')[0] || '-'}</div>
+                  <div style={{fontSize:11,color:C.textSec,marginTop:2}}>{MR.tarihFmt ? MR.tarihFmt(hareketDuzenleModal.tarih || hareketDuzenleModal.created_at) : '-'}</div>
                 </div>
                 <Badge text={turLabel(hareketDuzenleModal.tur)} color={turRenk(hareketDuzenleModal.tur)}/>
               </div>
@@ -1587,6 +1676,51 @@ const MaliyetAnalizi = ({setPage, user}) => {
         </div>
       </div>
 
+      {/* AVUKAT BAZLI KARLILIK ANALİZİ (D9) */}
+      {veriler.length > 0 && (() => {
+        const avukatGrup = {};
+        veriler.forEach(d => {
+          const key = d.avukat_adi || d.ortak_id || 'BELİRSİZ';
+          if (!avukatGrup[key]) avukatGrup[key] = {ad: key, gelir:0, gider:0, komisyon:0, dosya:0};
+          avukatGrup[key].gelir += parseFloat(d.gelir)||0;
+          avukatGrup[key].gider += parseFloat(d.gider)||0;
+          avukatGrup[key].komisyon += parseFloat(d.komisyon)||0;
+          avukatGrup[key].dosya++;
+        });
+        const grupList = Object.values(avukatGrup).sort((a,b) => (b.gelir-b.gider-b.komisyon) - (a.gelir-a.gider-a.komisyon));
+        return (
+          <div style={{...S.card, marginBottom:20}}>
+            <SectionTitle icon="Users" title="AVUKAT BAZLI KARLILIK" sub="ORTAK/AVUKAT PERFORMANS ÖZETİ"/>
+            <div style={{overflowX:'auto'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                <thead>
+                  <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
+                    {['AVUKAT / ORTAK','DOSYA SAYISI','TOPLAM GELİR','TOPLAM GİDER','KOMİSYON','NET KAR'].map(h =>
+                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`}}>{h}</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {grupList.map((g,i) => {
+                    const net = g.gelir - g.gider - g.komisyon;
+                    return (
+                      <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderBottom:`1px solid ${C.border}`}}>
+                        <td style={{padding:'10px 14px',fontWeight:700}}>{g.ad || 'BELİRSİZ'}</td>
+                        <td style={{padding:'10px 14px'}}><Badge text={g.dosya + ' DOSYA'} color={C.accent}/></td>
+                        <td style={{padding:'10px 14px',color:C.success,fontWeight:600}}>{fmt(g.gelir)}</td>
+                        <td style={{padding:'10px 14px',color:C.danger,fontWeight:600}}>{fmt(g.gider)}</td>
+                        <td style={{padding:'10px 14px',color:C.warning,fontWeight:600}}>{fmt(g.komisyon)}</td>
+                        <td style={{padding:'10px 14px',fontWeight:800,color:net>=0?C.success:C.danger}}>{fmt(net)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* MALİYET TABLOSU */}
       <div style={S.card}>
         <SectionTitle icon="PieChart" title="DOSYA BAZLI MALİYET ANALİZİ"
@@ -1606,7 +1740,7 @@ const MaliyetAnalizi = ({setPage, user}) => {
                 <thead>
                   <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                     {['DOSYA NO','MÜŞTERİ','GELİR','GİDER','KOMİSYON','NET KAR','KAR MARJI %'].map(h =>
-                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                      <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                     )}
                   </tr>
                 </thead>
@@ -1714,7 +1848,9 @@ const FinansalRaporlar = ({setPage, user}) => {
           donem: a.ay || a.donem,
           gelir: parseFloat(a.gelir) || 0,
           gider: (parseFloat(a.gider) || 0) + (parseFloat(a.masraf) || 0),
-          komisyon: 0,
+          komisyon: parseFloat(a.komisyon) || 0,
+          komisyon_odenen: parseFloat(a.komisyon_odenen) || 0,
+          komisyon_bekleyen: parseFloat(a.komisyon_bekleyen) || 0,
           dosya_sayisi: a.dosya_sayisi || ''
         })),
         kaynak_analiz: data.kaynak_analiz || [],
@@ -1913,8 +2049,8 @@ const FinansalRaporlar = ({setPage, user}) => {
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                   <thead>
                     <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                      {['DÖNEM','GELİR','GİDER','KOMİSYON','NET','DOSYA SAYISI'].map(h =>
-                        <th key={h} style={{padding:'12px 14px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                      {['DÖNEM','GELİR','GİDER','KOMİSYON (ÖDENEN / BEKLEYEN)','NET','DOSYA SAYISI'].map(h =>
+                        <th key={h} style={{padding:'12px 14px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                       )}
                     </tr>
                   </thead>
@@ -1931,7 +2067,14 @@ const FinansalRaporlar = ({setPage, user}) => {
                           <td style={{padding:'10px 12px',fontWeight:600}}>{d.donem || d.ay || '-'}</td>
                           <td style={{padding:'10px 12px',color:C.success,fontWeight:600}}>{fmt(gelir)}</td>
                           <td style={{padding:'10px 12px',color:C.danger,fontWeight:600}}>{fmt(gider)}</td>
-                          <td style={{padding:'10px 12px',color:C.warning,fontWeight:600}}>{fmt(komisyon)}</td>
+                          <td style={{padding:'10px 12px',fontWeight:600}}>
+                            <span style={{color:C.warning}}>{fmt(komisyon)}</span>
+                            {komisyon > 0 && <div style={{fontSize:9,marginTop:2}}>
+                              <span style={{color:C.success}}>{fmt(parseFloat(d.komisyon_odenen)||0)} ödenen</span>
+                              {' / '}
+                              <span style={{color:C.danger}}>{fmt(parseFloat(d.komisyon_bekleyen)||0)} bekleyen</span>
+                            </div>}
+                          </td>
                           <td style={{padding:'10px 12px',fontWeight:700,color: net >= 0 ? C.success : C.danger}}>{fmt(net)}</td>
                           <td style={{padding:'10px 12px',color:C.textSec}}>{d.dosya_sayisi || '-'}</td>
                         </tr>
@@ -2046,6 +2189,10 @@ const KapanisRaporu = ({setPage, user}) => {
         <EmptyState icon="FileCheck" title="KAPANIŞ RAPORU" desc="DÖNEM SEÇİP 'RAPOR GETİR' BUTONUNA BASIN"/>
       )}
 
+      {rapor && !loading && (genelToplam.dosya_sayisi || 0) === 0 && (
+        <EmptyState icon="FileCheck" title="BU DÖNEMDE KAPANAN DOSYA BULUNMAMAKTADIR" desc="FARKLI BİR DÖNEM SEÇEBİLİRSİNİZ"/>
+      )}
+
       {loading && <Loading/>}
 
       {rapor && !loading && (
@@ -2127,7 +2274,7 @@ const KapanisRaporu = ({setPage, user}) => {
                           <thead>
                             <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                               {['DOSYA NO','MÜVEKKİL','TÜR','TAHSİLAT','MASRAF','YÖN. ÜCRET','NET KAR','PAY (%50)'].map(h =>
-                                <th key={h} style={{padding:'10px 12px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                                <th key={h} style={{padding:'10px 12px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                               )}
                             </tr>
                           </thead>
@@ -2180,7 +2327,7 @@ const KapanisRaporu = ({setPage, user}) => {
                     <thead>
                       <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                         {['#','DOSYA NO','MÜVEKKİL','TÜR','AVUKAT','TAHSİLAT','MASRAF','YÖN. ÜCRET','NET KAR','PAY (%50)'].map(h =>
-                          <th key={h} style={{padding:'10px 12px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
+                          <th key={h} style={{padding:'10px 12px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:`2px solid ${C.border}`,letterSpacing:0.3}}>{h}</th>
                         )}
                       </tr>
                     </thead>
@@ -2448,7 +2595,7 @@ const OrtakKasa = ({setPage, user}) => {
                             <thead>
                               <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                                 {['TARİH','İŞLEM TÜRÜ','TUTAR','BAKİYE SONRASI','AÇIKLAMA'].map(h =>
-                                  <th key={h} style={{padding:'8px 12px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:12,borderBottom:'2px solid '+C.border}}>{h}</th>
+                                  <th key={h} style={{padding:'8px 12px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:12,borderBottom:'2px solid '+C.border}}>{h}</th>
                                 )}
                               </tr>
                             </thead>
@@ -2460,7 +2607,7 @@ const OrtakKasa = ({setPage, user}) => {
                                   <tr key={h.id||i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
                                     onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
                                     onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
-                                    <td style={{padding:'8px 12px',color:C.textSec}}>{h.created_at?.split(' ')[0] || '-'}</td>
+                                    <td style={{padding:'8px 12px',color:C.textSec}}>{MR.tarihFmt ? MR.tarihFmt(h.created_at) : (h.created_at?.split(' ')[0] || '-')}</td>
                                     <td style={{padding:'8px 12px'}}>
                                       <Badge text={(h.islem_turu||'').toUpperCase()} color={isGelir ? C.success : C.danger}/>
                                     </td>
@@ -2714,8 +2861,8 @@ const AySonuRaporu = ({setPage, user}) => {
             React.createElement('table', {style:{width:'100%',borderCollapse:'collapse'}},
               React.createElement('thead', null,
                 React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA'),
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TUTAR')
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA'),
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TUTAR')
                 )
               ),
               React.createElement('tbody', null,
@@ -2742,11 +2889,11 @@ const AySonuRaporu = ({setPage, user}) => {
               React.createElement('table', {style:{width:'100%',borderCollapse:'collapse',minWidth:600}},
                 React.createElement('thead', null,
                   React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
-                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TARİH'),
-                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MAĞDUR ADI SOYADI'),
-                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'center',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'DOSYA TÜRÜ'),
-                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'center',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'KAYNAK'),
-                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MASRAF')
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TARİH'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MAĞDUR ADI SOYADI'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'center',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'DOSYA TÜRÜ'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'center',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'KAYNAK'),
+                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MASRAF')
                   )
                 ),
                 React.createElement('tbody', null,
@@ -2780,8 +2927,8 @@ const AySonuRaporu = ({setPage, user}) => {
             React.createElement('table', {style:{width:'100%',borderCollapse:'collapse',maxWidth:400}},
               React.createElement('thead', null,
                 React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'DOSYA TÜRÜ'),
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'ADET')
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'DOSYA TÜRÜ'),
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'ADET')
                 )
               ),
               React.createElement('tbody', null,
@@ -2839,8 +2986,8 @@ const AySonuRaporu = ({setPage, user}) => {
             React.createElement('table', {style:{width:'100%',borderCollapse:'collapse'}},
               React.createElement('thead', null,
                 React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA'),
-                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TUTAR')
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA'),
+                  React.createElement('th', {style:{padding:'8px 12px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TUTAR')
                 )
               ),
               React.createElement('tbody', null,
@@ -2869,11 +3016,11 @@ const AySonuRaporu = ({setPage, user}) => {
                     React.createElement('table', {style:{width:'100%',borderCollapse:'collapse',minWidth:500}},
                       React.createElement('thead', null,
                         React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
-                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'DOSYA NO'),
-                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MAĞDUR'),
-                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'GELİR'),
-                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MASRAF'),
-                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'NET')
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'DOSYA NO'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MAĞDUR'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'GELİR'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'MASRAF'),
+                          React.createElement('th', {style:{padding:'8px 10px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'NET')
                         )
                       ),
                       React.createElement('tbody', null,
@@ -2965,17 +3112,17 @@ const AySonuRaporu = ({setPage, user}) => {
               ok.hareketler && ok.hareketler.length > 0 && React.createElement('table', {style:{width:'100%',borderCollapse:'collapse'}},
                 React.createElement('thead', null,
                   React.createElement('tr', {style:{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}},
-                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TARİH'),
-                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TÜR'),
-                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'right',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TUTAR'),
-                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:12,color:'#FFFFFF',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA')
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TARİH'),
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TÜR'),
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'right',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'TUTAR'),
+                    React.createElement('th', {style:{padding:'6px 10px',textAlign:'left',fontSize:12,color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,borderBottom:'1px solid '+C.border}}, 'AÇIKLAMA')
                   )
                 ),
                 React.createElement('tbody', null,
                   ok.hareketler.map(function(h,i){
                     var isGelir = h.islem_turu==='gelir'||h.islem_turu==='transfer_giris';
                     return React.createElement('tr', {key:i, style:{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}},
-                      React.createElement('td', {style:{padding:'5px 10px',fontSize:10,borderBottom:'1px solid '+C.border+'22'}}, (h.created_at||'').split(' ')[0]||'-'),
+                      React.createElement('td', {style:{padding:'5px 10px',fontSize:10,borderBottom:'1px solid '+C.border+'22'}}, MR.tarihFmt ? MR.tarihFmt(h.created_at) : ((h.created_at||'').split(' ')[0]||'-')),
                       React.createElement('td', {style:{padding:'5px 10px',fontSize:10,borderBottom:'1px solid '+C.border+'22',color:isGelir?C.success:C.danger,fontWeight:600}}, (h.islem_turu||'').toUpperCase()),
                       React.createElement('td', {style:{padding:'5px 10px',fontSize:11,fontWeight:700,textAlign:'right',borderBottom:'1px solid '+C.border+'22',color:isGelir?C.success:C.danger}}, (isGelir?'+':'-')+fmt(h.tutar)),
                       React.createElement('td', {style:{padding:'5px 10px',fontSize:10,borderBottom:'1px solid '+C.border+'22',color:C.textSec}}, h.aciklama||'-')
@@ -3031,5 +3178,134 @@ const AySonuRaporu = ({setPage, user}) => {
         )
       )
     )
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   BİRLEŞTİRİCİ: GELİR / GİDER TEK SEKMEDE
+   ═══════════════════════════════════════════════════════════ */
+const GelirGiderBirlestik = ({setPage, user}) => {
+  const {C, S, LIcon} = MR;
+  const isAdmin = user?.rol === 'admin';
+  const yt = user?.yetkiler || MR._currentUser?.yetkiler || {};
+  const tumAlt = [{key:'gelir',label:'GELİR',icon:'TrendingUp',c:C.success,yetki:'muhasebe_muhasebe-gelir'},{key:'gider',label:'GİDER',icon:'TrendingDown',c:C.danger,yetki:'muhasebe_muhasebe-gider'}];
+  const altSekmeler = isAdmin ? tumAlt : tumAlt.filter(s => yt[s.yetki] === 1);
+  const [altSekme, setAltSekme] = useState(altSekmeler.length > 0 ? altSekmeler[0].key : '');
+  return (
+    <div>
+      <div style={{display:'flex',gap:6,marginBottom:16}}>
+        {altSekmeler.map(t => (
+          <button key={t.key} onClick={() => setAltSekme(t.key)}
+            style={{...S.btn, fontSize:12, padding:'10px 24px', borderRadius:10,
+              background: altSekme===t.key ? `${t.c}22` : 'transparent',
+              color: altSekme===t.key ? t.c : C.textSec,
+              border: `2px solid ${altSekme===t.key ? t.c+'66' : C.border}`,
+              fontWeight: altSekme===t.key ? 800 : 500, display:'flex', alignItems:'center', gap:6
+            }}>
+            <LIcon name={t.icon} size={14} color={altSekme===t.key ? t.c : C.textSec}/> {t.label}
+          </button>
+        ))}
+      </div>
+      {altSekme === 'gelir' && <GelirYonetimi setPage={setPage} user={user}/>}
+      {altSekme === 'gider' && <GiderYonetimi setPage={setPage} user={user}/>}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   BİRLEŞTİRİCİ: KASA YÖNETİMİ (KASA + ORTAK KASA)
+   ═══════════════════════════════════════════════════════════ */
+const KasaYonetimiBirlestik = ({setPage, user}) => {
+  const {C, S, LIcon, api} = MR;
+  const [altSekme, setAltSekme] = useState('kasa');
+  const [sifirlaLoading, setSifirlaLoading] = useState(false);
+
+  const muhasebeSifirla = async () => {
+    if (!confirm('DİKKAT: Tüm gelir, gider, kasa bakiyeleri ve komisyon kayıtları sıfırlanacak!\n\nDosya masrafları ve diğer veriler etkilenmez.\n\nBu işlem GERİ ALINAMAZ!\n\nDevam etmek istiyor musunuz?')) return;
+    if (!confirm('SON ONAY: Muhasebe verilerini sıfırlamak istediğinizden emin misiniz?')) return;
+    setSifirlaLoading(true);
+    const r = await api.muhasebeSifirla({onay: 'MUHASEBE_SIFIRLA_ONAYLI'});
+    if (r?.success) { alert('Muhasebe verileri sıfırlandı.'); window.location.reload(); }
+    else alert(r?.error || 'Sıfırlama hatası');
+    setSifirlaLoading(false);
+  };
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:6,marginBottom:16}}>
+        {(() => {
+          const isAdmin = user?.rol === 'admin';
+          const yt = user?.yetkiler || MR._currentUser?.yetkiler || {};
+          const tumAlt = [{key:'kasa',label:'KASALAR',icon:'Wallet',c:C.accent,yetki:'muhasebe_muhasebe-kasa'},{key:'ortak',label:'ORTAK KASA',icon:'Users',c:C.purple,yetki:'muhasebe_muhasebe-ortakkasa'}];
+          return (isAdmin ? tumAlt : tumAlt.filter(s => yt[s.yetki] === 1));
+        })().map(t => (
+          <button key={t.key} onClick={() => setAltSekme(t.key)}
+            style={{...S.btn, fontSize:12, padding:'10px 24px', borderRadius:10,
+              background: altSekme===t.key ? `${t.c}22` : 'transparent',
+              color: altSekme===t.key ? t.c : C.textSec,
+              border: `2px solid ${altSekme===t.key ? t.c+'66' : C.border}`,
+              fontWeight: altSekme===t.key ? 800 : 500, display:'flex', alignItems:'center', gap:6
+            }}>
+            <LIcon name={t.icon} size={14} color={altSekme===t.key ? t.c : C.textSec}/> {t.label}
+          </button>
+        ))}
+      </div>
+      {altSekme === 'kasa' && <KasaBanka setPage={setPage} user={user}/>}
+      {altSekme === 'ortak' && <OrtakKasa setPage={setPage} user={user}/>}
+
+      {/* MUHASEBE SIFIRLAMA - SADECE ADMİN */}
+      {(user?.rol === 'admin' || (MR.hasYetki && MR.hasYetki(user, 'muhasebe', 'muhasebe-sifirla'))) && (
+        <div style={{marginTop:24,padding:16,background:`${MR.C.danger}08`,borderRadius:10,border:`1px solid ${MR.C.danger}20`}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <div>
+              <div style={{fontSize:12,fontWeight:700,color:MR.C.danger}}>MUHASEBE VERİLERİNİ SIFIRLA</div>
+              <div style={{fontSize:10,color:MR.C.textMuted,marginTop:4}}>Tüm gelir, gider, kasa bakiyeleri ve komisyon kayıtları sıfırlanır. Dosya masrafları etkilenmez.</div>
+            </div>
+            <button onClick={muhasebeSifirla} disabled={sifirlaLoading}
+              style={{...MR.S.btn,...MR.S.btnD,fontSize:10,padding:'8px 16px',flexShrink:0}}>
+              {sifirlaLoading ? 'SIFIRLANIYOR...' : 'SIFIRLA'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   BİRLEŞTİRİCİ: RAPORLAR (FİNANSAL + KAPANIŞ + AY SONU + MALİYET)
+   ═══════════════════════════════════════════════════════════ */
+const RaporlarBirlestik = ({setPage, user}) => {
+  const {C, S, LIcon} = MR;
+  const isAdmin = user?.rol === 'admin';
+  const yt = user?.yetkiler || MR._currentUser?.yetkiler || {};
+  const tumAltSekmeler = [
+    {key:'finansal',label:'FİNANSAL',icon:'BarChart3',c:C.accent, yetki:'muhasebe_muhasebe-rapor'},
+    {key:'kapanis',label:'KAPANIŞ',icon:'FileCheck',c:C.success, yetki:'muhasebe_muhasebe-kapanis'},
+    {key:'aysonu',label:'AY SONU',icon:'CalendarCheck',c:C.purple, yetki:'muhasebe_muhasebe-aysonu'},
+    {key:'maliyet',label:'MALİYET',icon:'PieChart',c:C.warning, yetki:'muhasebe_muhasebe-maliyet'}
+  ];
+  const altSekmeler = isAdmin ? tumAltSekmeler : tumAltSekmeler.filter(s => yt[s.yetki] === 1);
+  const [altSekme, setAltSekme] = useState(altSekmeler.length > 0 ? altSekmeler[0].key : '');
+  return (
+    <div>
+      <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}>
+        {altSekmeler.map(t => (
+          <button key={t.key} onClick={() => setAltSekme(t.key)}
+            style={{...S.btn, fontSize:11, padding:'8px 18px', borderRadius:10,
+              background: altSekme===t.key ? `${t.c}22` : 'transparent',
+              color: altSekme===t.key ? t.c : C.textSec,
+              border: `2px solid ${altSekme===t.key ? t.c+'66' : C.border}`,
+              fontWeight: altSekme===t.key ? 800 : 500, display:'flex', alignItems:'center', gap:6
+            }}>
+            <LIcon name={t.icon} size={13} color={altSekme===t.key ? t.c : C.textSec}/> {t.label}
+          </button>
+        ))}
+      </div>
+      {altSekme === 'finansal' && <FinansalRaporlar setPage={setPage} user={user}/>}
+      {altSekme === 'kapanis' && <KapanisRaporu setPage={setPage} user={user}/>}
+      {altSekme === 'aysonu' && <AySonuRaporu setPage={setPage} user={user}/>}
+      {altSekme === 'maliyet' && <MaliyetAnalizi setPage={setPage} user={user}/>}
+    </div>
   );
 };

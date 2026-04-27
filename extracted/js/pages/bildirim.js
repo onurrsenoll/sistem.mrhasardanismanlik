@@ -173,7 +173,7 @@ MR.BildirimPage = ({setPage, user}) => {
                 <LIcon name="CheckCheck" size={14} color="#000"/> TÜMÜNÜ OKUNDU İŞARETLE
               </button>
             )}
-            {isAdmin && (
+            {(isAdmin || (MR.hasYetki && MR.hasYetki(user, 'bildirim', 'bildirim-gonder'))) && (
               <button style={{...S.btn,...S.btnP,fontSize:11}} onClick={() => { setError(''); setForm({...bosForm}); setModalAcik(true); }}>
                 <LIcon name="Send" size={14} color="#fff"/> BİLDİRİM GÖNDER
               </button>

@@ -64,7 +64,7 @@ MR.MuhasebePage = ({setPage, user, subPage}) => {
       {aktifSekme === 'gelir'     && <GelirGiderBirlestik setPage={setPage} user={user}/>}
       {aktifSekme === 'kasa'      && <>
         <KasaBanka setPage={setPage} user={user}/>
-        {user?.rol === 'admin' && (
+        {(user?.rol === 'admin' || (MR.hasYetki && MR.hasYetki(user, 'muhasebe', 'muhasebe-sifirla'))) && (
           <div style={{marginTop:24,padding:16,background:`${C.danger}08`,borderRadius:10,border:`1px solid ${C.danger}20`}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
               <div>
@@ -3254,7 +3254,7 @@ const KasaYonetimiBirlestik = ({setPage, user}) => {
       {altSekme === 'ortak' && <OrtakKasa setPage={setPage} user={user}/>}
 
       {/* MUHASEBE SIFIRLAMA - SADECE ADMİN */}
-      {user?.rol === 'admin' && (
+      {(user?.rol === 'admin' || (MR.hasYetki && MR.hasYetki(user, 'muhasebe', 'muhasebe-sifirla'))) && (
         <div style={{marginTop:24,padding:16,background:`${MR.C.danger}08`,borderRadius:10,border:`1px solid ${MR.C.danger}20`}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
             <div>

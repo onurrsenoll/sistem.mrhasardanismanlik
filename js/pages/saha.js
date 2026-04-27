@@ -923,23 +923,23 @@ const SahaOnaylanan = ({setPage, user}) => {
                       </td>
                       <td style={{padding:'10px 12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}} onClick={e=>e.stopPropagation()}>
                         <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                          {isAdmin && (
+                          {(isAdmin || (MR.hasYetki && MR.hasYetki(user, 'crm', 'saha-donustur'))) && (
                             <button style={{...S.btn,background:C.accent,color:'#fff',padding:'6px 12px',fontSize:10}}
                               onClick={()=>{setDonusturItem(item);setDonusturForm({sigorta_sirketi:'',police_no:''});}}>
                               <LIcon name="FolderPlus" size={12}/> DÖNÜŞTÜR
                             </button>
                           )}
-                          {isAdmin && (
+                          {(isAdmin || (MR.hasYetki && MR.hasYetki(user, 'crm', 'saha-duzenle'))) && (
                             <button style={{...S.btn,...S.btnW,padding:'6px 12px',fontSize:10}} onClick={()=>duzenleAc(item)}>
                               <LIcon name="Pencil" size={12}/> DÜZENLE
                             </button>
                           )}
-                          {isAdmin && (
+                          {(isAdmin || (MR.hasYetki && MR.hasYetki(user, 'crm', 'saha-sil'))) && (
                             <button style={{...S.btn,...S.btnD,padding:'6px 12px',fontSize:10}} onClick={()=>sil(item)} disabled={silLoading===item.id}>
                               <LIcon name="Trash2" size={12}/> {silLoading===item.id ? '...' : 'SİL'}
                             </button>
                           )}
-                          {!isAdmin && (
+                          {(!isAdmin || (MR.hasYetki && MR.hasYetki(user, 'crm', 'saha-detay'))) && (
                             <button style={{...S.btn,...S.btnP,padding:'6px 12px',fontSize:10}} onClick={()=>setDetayItem(item)}>
                               <LIcon name="Eye" size={12}/> DETAY
                             </button>
@@ -982,14 +982,14 @@ const SahaOnaylanan = ({setPage, user}) => {
                       <Badge text="SÜRESİ DOLDU" color={C.textMuted}/>
                     </td>
                     <td style={{padding:'10px 12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}} onClick={e=>e.stopPropagation()}>
-                      {isAdmin && (
+                      {(isAdmin || (MR.hasYetki && (MR.hasYetki(user,'crm','saha-duzenle') || MR.hasYetki(user,'crm','saha-sil')))) && (
                         <div style={{display:'flex',gap:6}}>
-                          <button style={{...S.btn,...S.btnW,padding:'6px 12px',fontSize:10}} onClick={()=>duzenleAc(item)}>
+                          {(isAdmin || (MR.hasYetki && MR.hasYetki(user,'crm','saha-duzenle'))) && <button style={{...S.btn,...S.btnW,padding:'6px 12px',fontSize:10}} onClick={()=>duzenleAc(item)}>
                             <LIcon name="Pencil" size={12}/> DÜZENLE
-                          </button>
-                          <button style={{...S.btn,...S.btnD,padding:'6px 12px',fontSize:10}} onClick={()=>sil(item)} disabled={silLoading===item.id}>
+                          </button>}
+                          {(isAdmin || (MR.hasYetki && MR.hasYetki(user,'crm','saha-sil'))) && <button style={{...S.btn,...S.btnD,padding:'6px 12px',fontSize:10}} onClick={()=>sil(item)} disabled={silLoading===item.id}>
                             <LIcon name="Trash2" size={12}/> {silLoading===item.id ? '...' : 'SİL'}
-                          </button>
+                          </button>}
                         </div>
                       )}
                     </td>

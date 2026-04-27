@@ -35,6 +35,7 @@ const parseExcelDate = (v) => {
    ═══════════════════════════════════════════════════════════ */
 MR.PolicePage = ({setPage, user, subPage}) => {
   const {C, S, LIcon, StatCard, Badge, SectionTitle, EmptyState, Loading, Modal, FormGroup, Confirm, api} = MR;
+  const [policePrefill, setPolicePrefill] = useState(null);
 
   const tumSekmeler = [
     {key:'liste',    label:'POLİÇE LİSTESİ',   icon:'List'},
@@ -79,8 +80,8 @@ MR.PolicePage = ({setPage, user, subPage}) => {
       </div>
 
       {aktifSekme === 'liste'    && <PoliceListe setPage={setPage} user={user}/>}
-      {aktifSekme === 'yeni'     && <PoliceYeni setPage={setPage} user={user}/>}
-      {aktifSekme === 'yenileme' && <PoliceYenileme setPage={setPage} user={user}/>}
+      {aktifSekme === 'yeni'     && <PoliceYeni setPage={setPage} user={user} prefill={policePrefill} key={policePrefill ? 'pf-'+Date.now() : 'yeni'}/>}
+      {aktifSekme === 'yenileme' && <PoliceYenileme setPage={setPage} user={user} onPoliceyeDonustur={(data) => { setPolicePrefill(data); setPage('police-yeni'); }}/>}
       {aktifSekme === 'tahsilat' && <PoliceTahsilat setPage={setPage} user={user}/>}
       {aktifSekme === 'rapor'    && <PoliceRapor setPage={setPage} user={user}/>}
       {aktifSekme === 'kazanc'   && <PoliceKazanc setPage={setPage} user={user}/>}
@@ -259,11 +260,11 @@ const PoliceListe = ({setPage, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:1100}}>
               <thead>
                 <tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                  {MR.hasYetki(user,'police','police-toplu-sil') && <th style={{padding:'12px 10px',textAlign:'center',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`2px solid ${C.border}`,width:30}}>
+                  {MR.hasYetki(user,'police','police-toplu-sil') && <th style={{padding:'12px 10px',textAlign:'center',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`2px solid ${C.border}`,width:30}}>
                     <input type="checkbox" checked={policeler.length > 0 && secililer.length === policeler.length} onChange={tumunuSec} style={{cursor:'pointer',width:15,height:15,accentColor:C.accent}}/>
                   </th>}
                   {['POLİÇE NO','MÜŞTERİ','SİGORTA ŞİRKETİ','BRANŞ','BRÜT PRİM','KOMİSYON','BAŞLANGIÇ','BİTİŞ','TAHSİLAT','DURUM','İŞLEM'].map(h=>
-                    <th key={h} style={{padding:'12px 10px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`2px solid ${C.border}`,letterSpacing:.4}}>{h}</th>
+                    <th key={h} style={{padding:'12px 10px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`2px solid ${C.border}`,letterSpacing:.4}}>{h}</th>
                   )}
                 </tr>
               </thead>
@@ -291,7 +292,7 @@ const PoliceListe = ({setPage, user}) => {
                         <button style={{...S.btn,...S.btnP,fontSize:9,padding:'4px 8px'}} onClick={()=>detayAc(p)}>
                           <LIcon name="Eye" size={10} color="#fff"/>
                         </button>
-                        {user?.rol === 'admin' && (
+                        {(user?.rol === 'admin' || (MR.hasYetki && MR.hasYetki(user, 'police', 'police-sil'))) && (
                           <button style={{...S.btn,...S.btnD,fontSize:9,padding:'4px 8px'}} onClick={()=>setSilOnay(p)}>
                             <LIcon name="Trash2" size={10} color="#fff"/>
                           </button>
@@ -399,7 +400,7 @@ const PoliceListe = ({setPage, user}) => {
                 {(p.tahsilatlar && p.tahsilatlar.length > 0) ? (
                   <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
                     <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                      {['TARİH','TUTAR','ÖDEME ŞEKLİ','KASA','AÇIKLAMA'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
+                      {['TARİH','TUTAR','ÖDEME ŞEKLİ','KASA','AÇIKLAMA'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
                     </tr></thead>
                     <tbody>
                       {p.tahsilatlar.map((t,i)=>(
@@ -461,7 +462,7 @@ const PoliceListe = ({setPage, user}) => {
 
               {/* BUTONLAR */}
               <div style={{display:'flex',gap:8,justifyContent:'flex-end',borderTop:`1px solid ${C.border}`,paddingTop:12}}>
-                {user?.rol === 'admin' && <button style={{...S.btn,...S.btnD,fontSize:11}} onClick={()=>setSilOnay(p)}><LIcon name="Trash2" size={14} color="#fff"/> SİL</button>}
+                {(user?.rol === 'admin' || (MR.hasYetki && MR.hasYetki(user, 'police', 'police-sil'))) && <button style={{...S.btn,...S.btnD,fontSize:11}} onClick={()=>setSilOnay(p)}><LIcon name="Trash2" size={14} color="#fff"/> SİL</button>}
                 <button style={{...S.btn,...S.btnG,fontSize:11}} onClick={()=>{setDetayModal(null);setTahsilatForm(null)}}><LIcon name="X" size={14} color={C.textSec}/> KAPAT</button>
               </div>
             </div>
@@ -652,7 +653,7 @@ const PoliceYeni = ({setPage, user, prefill}) => {
 /* ═══════════════════════════════════════════════════════════
    SEKME 3: YENİLEME TAKİBİ (TAM YENİDEN YAZILDI)
    ═══════════════════════════════════════════════════════════ */
-const PoliceYenileme = ({setPage, user}) => {
+const PoliceYenileme = ({setPage, user, onPoliceyeDonustur}) => {
   const {C, S, LIcon, StatCard, SectionTitle, Badge, EmptyState, Loading, api} = MR;
   const [loading, setLoading] = useState(true);
   const [policeler, setPoliceler] = useState([]);
@@ -701,31 +702,22 @@ const PoliceYenileme = ({setPage, user}) => {
 
   // Excel şablon indir / Mevcut listeyi dışa aktar
   const downloadExcel = (policelerData) => {
-    const headers = ['PERSONEL','TRF','KSK','TSS','DSK','KNT','İMM','POLİÇE','MÜŞTERİ','YENİLEME TARİHİ','TC VERGİ NO','DOĞUM TARİHİ','PLAKA','BELGE SERİ','TELEFON','AÇIKLAMA'];
-    const rows = policelerData.map(p => {
-      const b = (p.brans||'').toUpperCase();
-      return [
-        p.olusturan_adi||p.personel||'',
-        b.includes('TRAFİK')||b==='TRF'?'\u2713':'',
-        b.includes('KASKO')||b==='KSK'?'\u2713':'',
-        b.includes('SAĞLIK')||b.includes('TSS')?'\u2713':'',
-        b.includes('DASK')||b==='DSK'?'\u2713':'',
-        b.includes('KONUT')||b==='KNT'?'\u2713':'',
-        b.includes('İMM')||b==='IMM'?'\u2713':'',
-        p.police_no||'',
-        p.musteri_adi||'',
-        fmtTarih(p.bitis_tarihi),
-        p.musteri_tc||'',
-        p.dogum_tarihi ? fmtTarih(p.dogum_tarihi) : '',
-        p.plaka||'',
-        p.belge_seri||'',
-        p.musteri_telefon||'',
-        p.notlar||''
-      ];
-    });
+    const headers = ['YENİLEME TARİHİ','MÜŞTERİ ADI SOYADI','DOĞUM TARİHİ','VERGİ NO / T.C. NO','PLAKA','BELGE SERİ NO','ŞASE NUMARASI','TELEFON','POLİÇE TÜRÜ','AÇIKLAMA'];
+    const rows = policelerData.map(p => [
+      fmtTarih(p.bitis_tarihi),
+      p.musteri_adi||'',
+      p.dogum_tarihi ? fmtTarih(p.dogum_tarihi) : '',
+      p.musteri_tc||'',
+      p.plaka||'',
+      p.belge_seri||'',
+      p.sase_no||'',
+      p.musteri_telefon||'',
+      p.brans||'',
+      p.notlar||''
+    ]);
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-    ws['!cols'] = headers.map(h => ({wch: Math.max(h.length+2, 14)}));
+    ws['!cols'] = headers.map(h => ({wch: Math.max(h.length+2, 16)}));
     XLSX.utils.book_append_sheet(wb, ws, 'YENİLEME LİSTESİ');
     XLSX.writeFile(wb, 'police_yenileme_listesi.xlsx');
   };
@@ -740,29 +732,23 @@ const PoliceYenileme = ({setPage, user}) => {
         const wb = XLSX.read(evt.target.result, {type:'array'});
         const ws = wb.Sheets[wb.SheetNames[0]];
         const data = XLSX.utils.sheet_to_json(ws, {header:1});
-        const rows = data.slice(1).filter(r => r.length > 1 && (r[7]||r[8]));
-        const mapped = rows.map(r => {
-          const branslar = [];
-          if (r[1]) branslar.push('TRAFİK');
-          if (r[2]) branslar.push('KASKO');
-          if (r[3]) branslar.push('TSS');
-          if (r[4]) branslar.push('DASK');
-          if (r[5]) branslar.push('KONUT');
-          if (r[6]) branslar.push('İMM');
-          return {
-            personel: String(r[0]||''),
-            brans: branslar.join(', ') || 'DİĞER',
-            police_no: String(r[7]||''),
-            musteri_adi: String(r[8]||''),
-            bitis_tarihi: parseExcelDate(r[9]),
-            musteri_tc: String(r[10]||''),
-            dogum_tarihi: parseExcelDate(r[11]),
-            plaka: String(r[12]||''),
-            belge_seri: String(r[13]||''),
-            musteri_telefon: String(r[14]||''),
-            notlar: String(r[15]||'')
-          };
-        });
+        // Yeni şablon: YENİLEME TARİHİ | MÜŞTERİ ADI SOYADI | DOĞUM TARİHİ | VERGİ/TC | PLAKA | BELGE SERİ | ŞASE | TELEFON | POLİÇE TÜRÜ | AÇIKLAMA
+        const rows = data.slice(1).filter(r => r.length > 1 && (r[0]||r[1]));
+        const mapped = rows.map((r, ri) => ({
+          police_no: 'IMP-' + Date.now().toString().slice(-6) + '-' + ri,
+          musteri_adi: String(r[1]||''),
+          bitis_tarihi: parseExcelDate(r[0]),
+          dogum_tarihi: parseExcelDate(r[2]),
+          musteri_tc: String(r[3]||''),
+          plaka: String(r[4]||''),
+          belge_seri: String(r[5]||''),
+          sase_no: String(r[6]||''),
+          musteri_telefon: String(r[7]||''),
+          brans: String(r[8]||'TRAFİK'),
+          notlar: String(r[9]||''),
+          personel: '',
+          sigorta_sirketi: '-'
+        }));
         if (mapped.length === 0) {
           setHata('EXCEL DOSYASINDA GEÇERLİ VERİ BULUNAMADI');
           setTimeout(() => setHata(''), 4000);
@@ -809,31 +795,51 @@ const PoliceYenileme = ({setPage, user}) => {
     }
   };
 
+  // Düzenle modal
+  const [editRow, setEditRow] = useState(null);
+  const saveEdit = async () => {
+    if (!editRow) return;
+    const r = await api.policeUpdate({...editRow});
+    if (r?.success) { setBasari('KAYIT GÜNCELLENDİ'); setTimeout(()=>setBasari(''),3000); setEditRow(null); yukle(); }
+    else { setHata(r?.error||'GÜNCELLEME HATASI'); setTimeout(()=>setHata(''),3000); }
+  };
+
+  const tdS = {padding:'8px 6px',fontSize:'11px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'};
+
   // Tablo satırı render
   const renderRow = (p, i, renk) => (
-    <tr key={p.id||i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),backgroundImage:'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
-      onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
-      onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
-      <td style={{padding:'10px 8px',fontWeight:700,color:C.accent,fontSize:'12px'}}>{p.police_no}</td>
-      <td style={{padding:'10px 8px',fontWeight:600,fontSize:'12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{p.musteri_adi}</td>
-      <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}><Badge text={p.brans} color={C.cyan}/></td>
-      <td style={{padding:'10px 8px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{p.sigorta_sirketi}</td>
-      <td style={{padding:'10px 8px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{p.plaka||'-'}</td>
-      <td style={{padding:'10px 8px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{fmtTarih(p.bitis_tarihi)}</td>
-      <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
-        <span style={{padding:'4px 10px',borderRadius:12,fontSize:11,fontWeight:800,
-          background:`${renk}22`,color:renk,border:`1px solid ${renk}44`}}>
-          {p.kalan_gun} GÜN
+    <tr key={p.id||i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),borderBottom:`1px solid ${C.border}22`,borderLeft:`3px solid ${renk}66`,transition:'all .2s ease'}}>
+      <td style={{...tdS,fontWeight:700,color:renk}}>{fmtTarih(p.bitis_tarihi)}</td>
+      <td style={{...tdS,fontWeight:700}}>{p.musteri_adi}</td>
+      <td style={tdS}>{p.dogum_tarihi ? fmtTarih(p.dogum_tarihi) : '-'}</td>
+      <td style={tdS}>{p.musteri_tc||'-'}</td>
+      <td style={{...tdS,fontWeight:700}}>{p.plaka||'-'}</td>
+      <td style={tdS}>{p.belge_seri||'-'}</td>
+      <td style={{...tdS,fontSize:'10px'}}>{p.sase_no||'-'}</td>
+      <td style={tdS}>{p.musteri_telefon||'-'}</td>
+      <td style={tdS}><Badge text={p.brans||'-'} color={C.cyan}/></td>
+      <td style={tdS}>
+        <span style={{padding:'3px 8px',borderRadius:10,fontSize:10,fontWeight:800,background:`${renk}22`,color:renk,border:`1px solid ${renk}44`}}>
+          {p.kalan_gun} GN
         </span>
       </td>
-      <td style={{padding:'10px 8px',fontWeight:600,fontSize:'12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{fmt(p.brut_prim)}</td>
-      <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
-        {p.hatirlatma_gonderildi >= 2 && <Badge text="15 GÜN \u2713" color={C.danger}/>}
-        {p.hatirlatma_gonderildi === 1 && <Badge text="20 GÜN \u2713" color={C.warning}/>}
-      </td>
-      <td style={{padding:'10px 8px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}>
-        <button style={{...S.btn,...S.btnP,fontSize:9,padding:'5px 10px'}} onClick={()=>setPage('police-yeni')}>
-          <LIcon name="RefreshCw" size={10} color="#fff"/> YENİLE
+      <td style={{...tdS,whiteSpace:'nowrap'}}>
+        <button style={{background:C.accent,color:'#fff',border:'none',borderRadius:4,padding:'4px 8px',fontSize:9,fontWeight:700,cursor:'pointer',marginRight:4}} onClick={()=>setEditRow({...p})}>
+          <LIcon name="Edit2" size={10} color="#fff"/>
+        </button>
+        <button title="POLİÇEYE DÖNÜŞTÜR" style={{background:C.success,color:'#fff',border:'none',borderRadius:4,padding:'4px 8px',fontSize:9,fontWeight:700,cursor:'pointer'}} onClick={()=> onPoliceyeDonustur && onPoliceyeDonustur({
+          musteri_adi: p.musteri_adi||'',
+          musteri_tc: p.musteri_tc||'',
+          musteri_telefon: p.musteri_telefon||'',
+          plaka: p.plaka||'',
+          belge_seri: p.belge_seri||'',
+          dogum_tarihi: p.dogum_tarihi||'',
+          brans: p.brans||'',
+          police_turu: 'yenileme',
+          yenileme_no: p.police_no||'',
+          notlar: p.notlar||''
+        })}>
+          <LIcon name="RefreshCw" size={10} color="#fff"/>
         </button>
       </td>
     </tr>
@@ -847,8 +853,8 @@ const PoliceYenileme = ({setPage, user}) => {
         <div style={{overflowX:'auto'}}>
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:1050}}>
             <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-              {['POLİÇE NO','MÜŞTERİ','BRANŞ','ŞİRKET','PLAKA','BİTİŞ','KALAN GÜN','PRİM','HATIRLATMA','İŞLEM'].map(h=>
-                <th key={h} style={{padding:'10px 8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`,letterSpacing:.5}}>{h}</th>
+              {['YENİLEME','MÜŞTERİ','DOĞUM','TC/VERGİ','PLAKA','BELGE SERİ','ŞASE','TELEFON','TÜR','KALAN','İŞLEM'].map(h=>
+                <th key={h} style={{padding:'8px 6px',textAlign:'left',color:'#fff',fontWeight:800,fontSize:'10px',borderBottom:`1px solid ${C.border}`,letterSpacing:.3}}>{h}</th>
               )}
             </tr></thead>
             <tbody>
@@ -898,8 +904,8 @@ const PoliceYenileme = ({setPage, user}) => {
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:10,minWidth:900}}>
               <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                {['PERSONEL','BRANŞ','POLİÇE NO','MÜŞTERİ','YENİLEME TARİHİ','TC VERGİ NO','DOĞUM TARİHİ','PLAKA','BELGE SERİ','TELEFON'].map(h=>
-                  <th key={h} style={{padding:'8px 6px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                {['YENİLEME TARİHİ','MÜŞTERİ','DOĞUM TARİHİ','TC/VERGİ NO','PLAKA','BELGE SERİ','ŞASE','TELEFON','POLİÇE TÜRÜ','AÇIKLAMA'].map(h=>
+                  <th key={h} style={{padding:'8px 6px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'10px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
                 )}
               </tr></thead>
               <tbody>
@@ -907,16 +913,16 @@ const PoliceYenileme = ({setPage, user}) => {
                   <tr key={i} style={{backgroundColor:MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff'),backgroundImage:'none',borderBottom:MR.tema==='koyu'?'1px solid rgba(6,182,212,0.1)':'1px solid rgba(99,102,241,0.1)',borderLeft:MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)',boxShadow:MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)',transition:'all .2s ease',borderRadius:8}}
                     onMouseEnter={e=>{if(MR.tema==='koyu'){e.currentTarget.style.borderLeft='3px solid rgba(6,182,212,0.8)';e.currentTarget.style.boxShadow='0 4px 16px rgba(6,182,212,0.15)';}else{e.currentTarget.style.borderLeft='3px solid rgba(99,102,241,0.6)';e.currentTarget.style.boxShadow='0 4px 12px rgba(99,102,241,0.15)';}e.currentTarget.style.transform='translateY(-1px)';}}
                     onMouseLeave={e=>{e.currentTarget.style.backgroundColor=MR.tema==='koyu'?(i%2===0?'#111827':'#0d1321'):(i%2===0?'#ffffff':'#f0f4ff');e.currentTarget.style.borderLeft=MR.tema==='koyu'?'3px solid rgba(6,182,212,0.5)':'3px solid rgba(99,102,241,0.4)';e.currentTarget.style.boxShadow=MR.tema==='koyu'?'0 2px 8px rgba(0,0,0,0.3)':'0 1px 4px rgba(99,102,241,0.08)';e.currentTarget.style.transform='translateY(0)';}}>
-                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.personel}</td>
-                    <td style={{padding:'6px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b',fontSize:'12px',fontWeight:600}}><Badge text={d.brans} color={C.cyan}/></td>
-                    <td style={{padding:'6px',fontWeight:600,color:C.accent,fontSize:'12px'}}>{d.police_no}</td>
-                    <td style={{padding:'6px',fontWeight:600,fontSize:'12px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.musteri_adi}</td>
-                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.bitis_tarihi ? fmtTarih(d.bitis_tarihi) : '-'}</td>
-                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.musteri_tc||'-'}</td>
-                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.dogum_tarihi ? fmtTarih(d.dogum_tarihi) : '-'}</td>
-                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.plaka||'-'}</td>
-                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.belge_seri||'-'}</td>
-                    <td style={{padding:'6px',fontSize:'12px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.musteri_telefon||'-'}</td>
+                    <td style={{padding:'6px',fontSize:'11px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.bitis_tarihi ? fmtTarih(d.bitis_tarihi) : '-'}</td>
+                    <td style={{padding:'6px',fontWeight:700,fontSize:'11px',color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.musteri_adi}</td>
+                    <td style={{padding:'6px',fontSize:'11px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.dogum_tarihi ? fmtTarih(d.dogum_tarihi) : '-'}</td>
+                    <td style={{padding:'6px',fontSize:'11px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.musteri_tc||'-'}</td>
+                    <td style={{padding:'6px',fontSize:'11px',fontWeight:700,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.plaka||'-'}</td>
+                    <td style={{padding:'6px',fontSize:'11px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.belge_seri||'-'}</td>
+                    <td style={{padding:'6px',fontSize:'10px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.sase_no||'-'}</td>
+                    <td style={{padding:'6px',fontSize:'11px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}>{d.musteri_telefon||'-'}</td>
+                    <td style={{padding:'6px',fontSize:'11px',fontWeight:600,color:MR.tema==='koyu'?'#e2e8f0':'#1e293b'}}><Badge text={d.brans||'-'} color={C.cyan}/></td>
+                    <td style={{padding:'6px',fontSize:'10px',fontWeight:600,color:C.textMuted}}>{(d.notlar||'').substring(0,20)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -944,6 +950,43 @@ const PoliceYenileme = ({setPage, user}) => {
           {renderGrup('YAKLAŞAN - 21-60 GÜN', '', yaklasan, C.cyan, 'Clock', 2)}
           {renderGrup('İLERİ TARİH - 60+ GÜN', '', ileriTarih, C.textMuted, 'Calendar', 3)}
         </>
+      )}
+
+      {/* DÜZENLE MODAL */}
+      {editRow && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,zIndex:10000,display:'flex',justifyContent:'center',alignItems:'center',background:'rgba(0,0,0,0.6)'}}>
+          <div style={{width:500,maxHeight:'80vh',overflowY:'auto',background:C.bgCard||'#fff',borderRadius:12,padding:0,boxShadow:'0 20px 60px rgba(0,0,0,0.4)'}}>
+            <div style={{padding:'14px 20px',background:C.accent,borderRadius:'12px 12px 0 0',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:14,fontWeight:800,color:'#fff'}}>KAYIT DÜZENLE</span>
+              <button onClick={()=>setEditRow(null)} style={{background:'rgba(255,255,255,0.2)',border:'none',borderRadius:6,padding:'4px 10px',color:'#fff',fontSize:11,fontWeight:700,cursor:'pointer'}}>KAPAT</button>
+            </div>
+            <div style={{padding:20,display:'grid',gap:12}}>
+              {[
+                {key:'bitis_tarihi',label:'YENİLEME TARİHİ',type:'date'},
+                {key:'musteri_adi',label:'MÜŞTERİ ADI SOYADI'},
+                {key:'dogum_tarihi',label:'DOĞUM TARİHİ',type:'date'},
+                {key:'musteri_tc',label:'VERGİ NO / T.C. NO'},
+                {key:'plaka',label:'PLAKA'},
+                {key:'belge_seri',label:'BELGE SERİ NO'},
+                {key:'sase_no',label:'ŞASE NUMARASI'},
+                {key:'musteri_telefon',label:'TELEFON'},
+                {key:'brans',label:'POLİÇE TÜRÜ'},
+                {key:'notlar',label:'AÇIKLAMA'}
+              ].map(f => (
+                <div key={f.key}>
+                  <label style={{fontSize:10,fontWeight:700,color:C.textMuted,marginBottom:4,display:'block'}}>{f.label}</label>
+                  {f.type === 'date'
+                    ? <MR.DateInput value={editRow[f.key]||''} onChange={v => setEditRow(prev=>({...prev,[f.key]:v}))}/>
+                    : <input value={editRow[f.key]||''} onChange={e => setEditRow(prev=>({...prev,[f.key]:e.target.value}))} style={S.input}/>
+                  }
+                </div>
+              ))}
+              <button onClick={saveEdit} style={{...S.btn,background:C.success,color:'#fff',border:'none',borderRadius:8,padding:'12px 20px',fontSize:12,fontWeight:800,justifyContent:'center',marginTop:8}}>
+                <LIcon name="Save" size={14} color="#fff"/> KAYDET
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -1132,7 +1175,7 @@ const PoliceTahsilat = ({setPage, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:950}}>
               <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                 {['POLİÇE NO','MÜŞTERİ','BRANŞ','KOMİSYON','TAHSİL EDİLEN','CARİ BAKİYE','TAHSİLAT DURUM','İŞLEM'].map(h=>
-                  <th key={h} style={{padding:'10px 8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                  <th key={h} style={{padding:'10px 8px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
                 )}
               </tr></thead>
               <tbody>
@@ -1368,7 +1411,7 @@ const PoliceRapor = ({setPage, user}) => {
               <div style={{overflowX:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
                   <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                    {['ŞİRKET','POLİÇE','PRİM'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
+                    {['ŞİRKET','POLİÇE','PRİM'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
                   </tr></thead>
                   <tbody>
                     {sirketler.map((s,i)=>(
@@ -1414,7 +1457,7 @@ const PoliceRapor = ({setPage, user}) => {
               <div style={{overflowX:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
                   <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
-                    {['POLİÇE NO','MÜŞTERİ','BRANŞ','BİTİŞ','KALAN GÜN','PRİM'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
+                    {['POLİÇE NO','MÜŞTERİ','BRANŞ','BİTİŞ','KALAN GÜN','PRİM'].map(h=><th key={h} style={{padding:'8px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>)}
                   </tr></thead>
                   <tbody>
                     {yenileme.map((y,i)=>(
@@ -1533,7 +1576,7 @@ const PoliceKazanc = ({setPage, user}) => {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:800}}>
               <thead><tr style={{background:MR.tema==='koyu'?'#0f2342':'#1e40af'}}>
                 {['DÖNEM','ÜRETİM ADEDİ','TOPLAM PRİM','KOMİSYON TUTARI','TAHSİL EDİLEN','CARİ BAKİYE','İŞLEM'].map(h=>
-                  <th key={h} style={{padding:'10px 8px',textAlign:'left',color:'#FFFFFF',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                  <th key={h} style={{padding:'10px 8px',textAlign:'left',color:MR.tema==='koyu'?'#FFFFFF':'#1e293b',fontWeight:800,fontSize:'12px',borderBottom:`1px solid ${C.border}`}}>{h}</th>
                 )}
               </tr></thead>
               <tbody>
