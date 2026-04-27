@@ -3,6 +3,27 @@
  * GET/POST/DELETE/PUT /api/v1/mail/hesaplar.php
  * Mail hesap yönetimi. Şifre AES-256-CBC ile güvenli saklanır.
  */
+
+/* DEBUG MODU - fatal hatalari JSON ile donder */
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+register_shutdown_function(function(){
+    $err = error_get_last();
+    if ($err && in_array($err['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE])) {
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+            http_response_code(500);
+        }
+        echo json_encode([
+            'success' => false,
+            'error' => 'PHP FATAL: ' . $err['message'],
+            'file' => basename($err['file']),
+            'line' => $err['line']
+        ], JSON_UNESCAPED_UNICODE);
+    }
+});
+
+try {
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/helper.php';
@@ -103,3 +124,16 @@ if ($method === 'DELETE') {
 }
 
 json_error('Geçersiz method', 405);
+
+} catch (\Throwable $e) {
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code(500);
+    }
+    echo json_encode([
+        'success' => false,
+        'error' => 'EXCEPTION: ' . $e->getMessage(),
+        'file' => basename($e->getFile()),
+        'line' => $e->getLine()
+    ], JSON_UNESCAPED_UNICODE);
+}

@@ -3,6 +3,30 @@
  * POST /api/v1/mail/test.php
  * IMAP + SMTP bağlantı testi. Body: { hesap_id } veya hesap alanları
  */
+
+/* DEBUG MODU - 500 yerine JSON ile fatal hata mesaji donder */
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+register_shutdown_function(function(){
+    $err = error_get_last();
+    if ($err && in_array($err['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE])) {
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+            http_response_code(500);
+        }
+        echo json_encode([
+            'success' => false,
+            'error' => 'PHP FATAL: ' . $err['message'],
+            'file' => basename($err['file']),
+            'line' => $err['line']
+        ], JSON_UNESCAPED_UNICODE);
+    }
+});
+set_error_handler(function($severity, $message, $file, $line){
+    throw new \ErrorException($message, 0, $severity, $file, $line);
+});
+
+try {
 require_once __DIR__ . '/../../config/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/helper.php';
@@ -82,3 +106,17 @@ try {
 
 $tamBasari = $sonuc['imap']['success'] && $sonuc['smtp']['success'];
 json_success($sonuc, $tamBasari ? 'Her iki bağlantı başarılı' : 'Bağlantıda sorun var');
+
+} catch (\Throwable $e) {
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code(500);
+    }
+    echo json_encode([
+        'success' => false,
+        'error' => 'EXCEPTION: ' . $e->getMessage(),
+        'file' => basename($e->getFile()),
+        'line' => $e->getLine(),
+        'trace_first' => explode("\n", $e->getTraceAsString())[0] ?? ''
+    ], JSON_UNESCAPED_UNICODE);
+}
