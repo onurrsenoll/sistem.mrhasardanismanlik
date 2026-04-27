@@ -1,11 +1,20 @@
 <?php
 function setup_headers() {
-    $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '*';
+    $allowedOrigins = ['https://sistem.mrhasardanismanlik.com', 'http://sistem.mrhasardanismanlik.com', 'http://localhost', 'http://127.0.0.1'];
+    $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+    if (in_array($origin, $allowedOrigins)) {
+        header('Access-Control-Allow-Origin: ' . $origin);
+    } else {
+        header('Access-Control-Allow-Origin: https://sistem.mrhasardanismanlik.com');
+    }
     header('Content-Type: application/json; charset=utf-8');
-    header('Access-Control-Allow-Origin: ' . $origin);
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization');
     header('Access-Control-Allow-Credentials: true');
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: SAMEORIGIN');
+    header('X-XSS-Protection: 1; mode=block');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
         http_response_code(200);
         exit;
@@ -358,8 +367,254 @@ function ensure_2fa_columns() {
 }
 
 /**
- * Chunked transfer encoding decode
+ * ═══ YONLENDIRME (CRM ARAMA LİSTESİ) ŞEMA GARANTİSİ ═══
+ * CRM kişi kartında kullanılan tüm alanlar DB'de mevcut olsun diye idempotent.
+ * Hiçbir mevcut veriye dokunmaz, sadece EKSIK sütunları ekler.
  */
+function ensure_yonlendirme_columns() {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        $db = getDB();
+        // Bilgi butonu + kişi bilgisi alanları
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS dosya_turu VARCHAR(10) DEFAULT 'ADK'");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS plaka VARCHAR(20) DEFAULT NULL");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS sigorta_sirket VARCHAR(100) DEFAULT NULL");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS kusur_durumu VARCHAR(20) DEFAULT NULL");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS maluliyet VARCHAR(200) DEFAULT NULL");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS kaza_pozisyonu VARCHAR(20) DEFAULT NULL");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS guncel_durum VARCHAR(20) DEFAULT NULL");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS dosya_durumu VARCHAR(20) DEFAULT 'AÇIK'");
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS kaza_tarihi DATE DEFAULT NULL");
+        // Görüşme sonucu AYRI alan (durum ile karışmasın): durum sadece Belirsiz/Alindi/Olumsuz
+        $db->exec("ALTER TABLE yonlendirme ADD COLUMN IF NOT EXISTS son_gorusme_sonucu VARCHAR(100) DEFAULT NULL");
+        // yonlendirme_notlar tablosuna o anki bilgi butonları snapshot'ı
+        $db->exec("ALTER TABLE yonlendirme_notlar ADD COLUMN IF NOT EXISTS durum_snapshot TEXT DEFAULT NULL");
+    } catch (\Exception $e) {
+        // Migration hatası sessiz geç
+    }
+}
+
+/**
+ * ═══ HASAR İHBAR FÖYÜ TABLOLARI ═══
+ * İhbar Föyü modülü için ana tablo + parça listesi alt tablosu.
+ * Hiçbir mevcut veriye dokunmaz — idempotent CREATE TABLE IF NOT EXISTS.
+ */
+function ensure_ihbar_foyu_tables() {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        $db = getDB();
+        $db->exec("CREATE TABLE IF NOT EXISTS hasar_ihbar (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            dosya_id INT DEFAULT NULL,
+            plaka VARCHAR(20) DEFAULT NULL,
+            marka VARCHAR(100) DEFAULT NULL,
+            sasi VARCHAR(50) DEFAULT NULL,
+            kilometre VARCHAR(20) DEFAULT NULL,
+            sahip_ad VARCHAR(150) DEFAULT NULL,
+            sahip_tel VARCHAR(50) DEFAULT NULL,
+            iban VARCHAR(40) DEFAULT NULL,
+            sigorta VARCHAR(100) DEFAULT NULL,
+            dosya_no VARCHAR(30) DEFAULT NULL,
+            dosya_turu VARCHAR(20) DEFAULT 'KASKO',
+            police_no VARCHAR(50) DEFAULT NULL,
+            eksper_adi VARCHAR(200) DEFAULT NULL,
+            eksper_iletisim VARCHAR(150) DEFAULT NULL,
+            servis_adi VARCHAR(200) DEFAULT NULL,
+            servis_yetkili VARCHAR(150) DEFAULT NULL,
+            servis_tel VARCHAR(200) DEFAULT NULL,
+            kaza_tarihi DATE DEFAULT NULL,
+            kaza_yeri VARCHAR(200) DEFAULT NULL,
+            kaza_aciklama TEXT DEFAULT NULL,
+            evraklar TEXT DEFAULT NULL,
+            islemler TEXT DEFAULT NULL,
+            iscilik DECIMAL(10,2) DEFAULT 0,
+            kdv_dahil TINYINT(1) DEFAULT 0,
+            notlar TEXT DEFAULT NULL,
+            kullanici_id INT DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_plaka (plaka),
+            INDEX idx_dosya (dosya_id),
+            INDEX idx_sahip (sahip_ad)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS hasar_ihbar_parcalar (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            ihbar_id INT NOT NULL,
+            sira INT DEFAULT 0,
+            ad VARCHAR(255) NOT NULL,
+            oem VARCHAR(100) DEFAULT NULL,
+            fiyat DECIMAL(12,2) DEFAULT 0,
+            miktar INT DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_ihbar (ihbar_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
+    } catch (\Exception $e) { /* sessiz geç */ }
+}
+
+/**
+ * ═══ CRM + ARAMA_LOGLARI LİNK GARANTİSİ ═══
+ * Aynı kişi için CRM, yönlendirme ve arama_log kayıtlarının birbirine
+ * bağlanması için gerekli sütunları idempotent ekler. Hiçbir kayıt değişmez.
+ */
+function ensure_crm_columns() {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        $db = getDB();
+        // crm tablosuna agregat alanlar (UI'da hızlı görünüm için)
+        $db->exec("ALTER TABLE crm ADD COLUMN IF NOT EXISTS gorusme_sayisi INT NOT NULL DEFAULT 0");
+        $db->exec("ALTER TABLE crm ADD COLUMN IF NOT EXISTS son_arama DATETIME DEFAULT NULL");
+        $db->exec("ALTER TABLE crm ADD COLUMN IF NOT EXISTS sonraki_arama DATETIME DEFAULT NULL");
+        $db->exec("ALTER TABLE crm ADD COLUMN IF NOT EXISTS son_gorusme_sonucu VARCHAR(100) DEFAULT NULL");
+        $db->exec("ALTER TABLE crm ADD COLUMN IF NOT EXISTS etiketler VARCHAR(255) DEFAULT NULL");
+        // arama_loglari tablosunu CRM/yönlendirme'ye bağla
+        $db->exec("CREATE TABLE IF NOT EXISTS arama_loglari (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            kullanici_id INT DEFAULT NULL,
+            yon ENUM('giden','gelen') DEFAULT 'giden',
+            numara VARCHAR(20) DEFAULT NULL,
+            musteri_adi VARCHAR(150) DEFAULT NULL,
+            musteri_kaynak VARCHAR(20) DEFAULT NULL,
+            musteri_kaynak_id INT DEFAULT NULL,
+            durum VARCHAR(30) DEFAULT NULL,
+            baslangic_zamani DATETIME DEFAULT NULL,
+            cevaplanma_zamani DATETIME DEFAULT NULL,
+            bitis_zamani DATETIME DEFAULT NULL,
+            sure_saniye INT DEFAULT 0,
+            kayit_url VARCHAR(255) DEFAULT NULL,
+            notlar TEXT DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        $db->exec("ALTER TABLE arama_loglari ADD COLUMN IF NOT EXISTS crm_id INT DEFAULT NULL");
+        $db->exec("ALTER TABLE arama_loglari ADD COLUMN IF NOT EXISTS yonlendirme_id INT DEFAULT NULL");
+        $db->exec("ALTER TABLE arama_loglari ADD COLUMN IF NOT EXISTS kayit_url VARCHAR(255) DEFAULT NULL");
+        // crm_notlari ve crm_ekleri tabloları yoksa oluştur
+        $db->exec("CREATE TABLE IF NOT EXISTS crm_notlari (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            crm_id INT NOT NULL,
+            not_text TEXT NOT NULL,
+            gorusme_sonucu VARCHAR(100) DEFAULT NULL,
+            durum_snapshot TEXT DEFAULT NULL,
+            kullanici_id INT DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_crm (crm_id)
+        )");
+        // crm_notlari'ne snapshot ve sonuç sütunları (idempotent)
+        $db->exec("ALTER TABLE crm_notlari ADD COLUMN IF NOT EXISTS gorusme_sonucu VARCHAR(100) DEFAULT NULL");
+        $db->exec("ALTER TABLE crm_notlari ADD COLUMN IF NOT EXISTS durum_snapshot TEXT DEFAULT NULL");
+        $db->exec("CREATE TABLE IF NOT EXISTS crm_ekleri (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            crm_id INT NOT NULL,
+            tip VARCHAR(20) DEFAULT 'dosya',
+            dosya_adi VARCHAR(255) NOT NULL,
+            dosya_yolu VARCHAR(500) NOT NULL,
+            dosya_boyutu INT DEFAULT 0,
+            yukleyen_id INT DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_crm (crm_id)
+        )");
+    } catch (\Exception $e) {
+        // sessiz geç — migration hatası kullanıcıya yansımasın
+    }
+}
+/**
+ * ═══ NETSANTRAL AYARLARI TABLOSU ═══
+ * SIP/WSS/Outbound ayarları DB'de saklanır. SIP şifresi AES-256-CBC ile şifrelenir.
+ * Idempotent — mevcut veri korunur.
+ */
+function ensure_netsantral_table() {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        $db = getDB();
+        $db->exec("CREATE TABLE IF NOT EXISTS netsantral_ayarlari (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            anahtar VARCHAR(80) NOT NULL UNIQUE,
+            deger TEXT DEFAULT NULL,
+            sifrelenmis TINYINT(1) DEFAULT 0,
+            updated_by INT DEFAULT NULL,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_anahtar (anahtar)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
+    } catch (\Exception $e) { /* sessiz geç */ }
+}
+
+/**
+ * AES-256-CBC ile şifre/sır şifreleme. Anahtar JWT_SECRET'tan türetilir.
+ * Çıktı: base64(iv . ciphertext)
+ */
+function aes_encrypt($plaintext) {
+    if ($plaintext === null || $plaintext === '') return '';
+    $key = hash('sha256', defined('JWT_SECRET') ? JWT_SECRET : 'mr-hasar-default-key-2026', true);
+    $iv = openssl_random_pseudo_bytes(16);
+    $ct = openssl_encrypt($plaintext, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+    return base64_encode($iv . $ct);
+}
+
+function aes_decrypt($ciphertext) {
+    if ($ciphertext === null || $ciphertext === '') return '';
+    $key = hash('sha256', defined('JWT_SECRET') ? JWT_SECRET : 'mr-hasar-default-key-2026', true);
+    $raw = base64_decode($ciphertext, true);
+    if ($raw === false || strlen($raw) < 17) return '';
+    $iv = substr($raw, 0, 16);
+    $ct = substr($raw, 16);
+    $pt = openssl_decrypt($ct, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+    return $pt === false ? '' : $pt;
+}
+
+/**
+ * Netsantral ayar tek alan getir/set
+ * @param string $anahtar (örn: 'wss_url', 'sip_domain', 'sip_dahili', 'sip_sifre', 'outbound_proxy', 'netgsm_api_sifre', 'santral_no')
+ * @param bool $sifrele Şifre alanları için true
+ */
+function netsantral_setting_get($anahtar) {
+    ensure_netsantral_table();
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("SELECT deger, sifrelenmis FROM netsantral_ayarlari WHERE anahtar = ? LIMIT 1");
+        $stmt->execute([$anahtar]);
+        $row = $stmt->fetch();
+        if (!$row) return '';
+        return $row['sifrelenmis'] ? aes_decrypt($row['deger']) : (string)$row['deger'];
+    } catch (\Exception $e) { return ''; }
+}
+
+function netsantral_setting_set($anahtar, $deger, $sifrele = false, $kullanici_id = null) {
+    ensure_netsantral_table();
+    try {
+        $db = getDB();
+        $finalDeger = $sifrele ? aes_encrypt((string)$deger) : (string)$deger;
+        $stmt = $db->prepare("INSERT INTO netsantral_ayarlari (anahtar, deger, sifrelenmis, updated_by) VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE deger = VALUES(deger), sifrelenmis = VALUES(sifrelenmis), updated_by = VALUES(updated_by)");
+        $stmt->execute([$anahtar, $finalDeger, $sifrele ? 1 : 0, $kullanici_id]);
+        return true;
+    } catch (\Exception $e) { return false; }
+}
+
+/**
+ * arama_loglari tablosuna live_not (canlı çağrı notu) kolonu eklenir.
+ * Mevcut notlar alanı korunur — live_not görüşme sırasında yazılır,
+ * görüşme bitince notlar alanına aktarılır.
+ */
+function ensure_arama_log_live_columns() {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        $db = getDB();
+        $db->exec("ALTER TABLE arama_loglari ADD COLUMN IF NOT EXISTS live_not TEXT DEFAULT NULL");
+        $db->exec("ALTER TABLE arama_loglari ADD COLUMN IF NOT EXISTS not_sync_durumu VARCHAR(20) DEFAULT NULL");
+        $db->exec("ALTER TABLE arama_loglari ADD COLUMN IF NOT EXISTS crm_not_id INT DEFAULT NULL");
+    } catch (\Exception $e) { /* sessiz geç */ }
+}
+
 function http_decode_chunked($data) {
     $decoded = '';
     while (true) {
@@ -414,8 +669,8 @@ $GLOBALS['YETKI_MAP'] = array(
     'crm/create.php' => array('crm', 'crm-yeni'),
     'crm/delete.php' => array('crm', 'crm-sil'),
     'crm/update.php' => array('crm', 'crm-duzenle'),
-    'crm/list.php' => array('crm', 'crm-liste'),
-    'crm/get.php' => array('crm', 'crm-liste'),
+    'crm/list.php' => array('crm', 'crm-arama'),
+    'crm/get.php' => array('crm', 'crm-arama'),
     'crm/donustur.php' => array('crm', 'crm-yeni'),
     'crm/dosya-yukle.php' => array('crm', 'crm-duzenle'),
     'crm/not-ekle.php' => array('crm', 'crm-duzenle'),
@@ -495,6 +750,7 @@ $GLOBALS['YETKI_MAP'] = array(
     'masraf/create.php' => array('dosya', 'dosya-masraf-ekle'),
     'masraf/delete.php' => array('dosya', 'dosya-masraf-sil'),
     'masraf/ode.php' => array('dosya', 'dosya-masraf-ode'),
+    'masraf/update.php' => array('dosya', 'dosya-masraf-duzenle'),
 
     // ─── EVRAK ───
     'evrak/upload.php' => array('evrak', 'evrak-yukle'),
@@ -570,15 +826,15 @@ $GLOBALS['YETKI_MAP'] = array(
     'sablon/update.php' => array('sistem', 'tanimlamalar-sablon-duzenle'),
     'sablon/delete.php' => array('sistem', 'tanimlamalar-sil'),
 
-    // ─── YÖNLENDIRME ───
-    'yonlendirme/list.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/get.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/create.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/delete.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/update.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/import.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/not-ekle.php' => array('dosya', 'dosya-detay'),
-    'yonlendirme/toplu-islem.php' => array('dosya', 'dosya-detay'),
+    // ─── YÖNLENDIRME (CRM ARAMA LİSTESİ) ───
+    'yonlendirme/list.php' => array('crm', 'crm-arama'),
+    'yonlendirme/get.php' => array('crm', 'crm-arama'),
+    'yonlendirme/create.php' => array('crm', 'crm-arama'),
+    'yonlendirme/delete.php' => array('crm', 'crm-arama'),
+    'yonlendirme/update.php' => array('crm', 'crm-arama'),
+    'yonlendirme/import.php' => array('crm', 'crm-arama'),
+    'yonlendirme/not-ekle.php' => array('crm', 'crm-arama'),
+    'yonlendirme/toplu-islem.php' => array('crm', 'crm-arama'),
 
     // ─── AJANDA ───
     'ajanda/list.php' => array('ajanda', 'goruntule'),
@@ -593,6 +849,29 @@ $GLOBALS['YETKI_MAP'] = array(
     'ictihat/police-limit.php' => array('ictihat', 'ictihat-police-limit'),
     'ictihat/kusur-emsal-ara.php' => array('ictihat', 'ictihat-kusur-emsal'),
 
+
+    // ─── ARAMA LOG (CRM ANALİZ modülüne taşındı - yukarıda tanımlı) ───
+    'arama-log/delete.php' => array('crm-analiz', 'crm-analiz-goruntule'),
+
+    // ─── NETSANTRAL ───
+    'sozlesme/settings.php' => array('netsantral', 'netsantral-ayarlar'),
+    'netsantral/ayar-list.php' => array('netsantral', 'netsantral-goruntule'),
+    'netsantral/ayar-kaydet.php' => array('netsantral', 'netsantral-duzenle'),
+    'netsantral/ayar-test.php' => array('netsantral', 'netsantral-test'),
+    'netsantral/cagri-not-kaydet.php' => array('crm', 'crm-not-ekle'),
+    'netsantral/cagri-eslestir.php' => array('crm', 'crm-arama'),
+    'netsantral/timeline.php' => array('crm', 'crm-timeline-gor'),
+
+    // ─── E-POSTA ───
+    'mail/list.php' => array('eposta', 'eposta-goruntule'),
+    'mail/get.php' => array('eposta', 'eposta-goruntule'),
+    'mail/send.php' => array('eposta', 'eposta-gonder'),
+    'mail/delete.php' => array('eposta', 'eposta-sil'),
+
+    // ─── CRM ANALİZ ───
+    'arama-log/list.php' => array('crm-analiz', 'crm-analiz-goruntule'),
+    'arama-log/istatistik.php' => array('crm-analiz', 'crm-analiz-istatistik'),
+    'arama-log/kayit-indir.php' => array('crm-analiz', 'crm-analiz-kayitlar'),
 
     // ─── BİLDİRİM ───
     'bildirim/create.php' => array('bildirim', 'bildirim-goruntule'),

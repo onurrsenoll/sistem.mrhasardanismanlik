@@ -65,12 +65,13 @@ const MODUL_YETKILERI = [
     {key: 'crm-duzenle', label: 'KAYIT DÜZENLE'},
     {key: 'crm-sil', label: 'KAYIT SİL'},
     {key: 'crm-toplu-sil', label: 'TOPLU SİLME'},
-    {key: 'crm-arama', label: 'ARAMA LİSTESİ'},
+    {key: 'crm-arama', label: 'ARAMA LİSTESİ (TÜM ÇAĞRI YÖNETİMİ)'},
     {key: 'crm-ara', label: 'TELEFON İLE ARAMA YAP'},
     {key: 'crm-detay', label: 'KİŞİ KARTI GÖRÜNTÜLE'},
     {key: 'crm-bilgi-duzenle', label: 'KİŞİ BİLGİ BUTONLARINI DÜZENLE (KUSUR/POZİSYON/DURUM)'},
     {key: 'crm-durum-degistir', label: 'DURUM DEĞİŞTİR (BELİRSİZ/ALINDI/OLUMSUZ)'},
-    {key: 'crm-not-ekle', label: 'GÖRÜŞME NOTU EKLE'},
+    {key: 'crm-not-ekle', label: 'GÖRÜŞME NOTU EKLE (KART)'},
+    {key: 'crm-not-canli', label: 'CANLI ÇAĞRI NOTU YAZ (GÖRÜŞME ESNASINDA)'},
     {key: 'crm-excel-yukle', label: 'EXCEL TOPLU LİSTE YÜKLE'},
     {key: 'crm-atama', label: 'LİSTEYİ KULLANICIYA ATA'},
     {key: 'crm-dosyaya-donustur', label: 'DOSYAYA DÖNÜŞTÜR'},
@@ -82,7 +83,12 @@ const MODUL_YETKILERI = [
     {key: 'crm-hizli-sms', label: 'HIZLI SMS'},
     {key: 'crm-hizli-harita', label: 'HIZLI HARİTA'},
     {key: 'crm-birlestir', label: 'DUPLICATE KİŞİ BİRLEŞTİR'},
+    {key: 'arama-gecmis', label: 'ARAMA GEÇMİŞİ GÖRÜNTÜLE'},
+    {key: 'arama-gecmis-istatistik', label: 'ARAMA İSTATİSTİKLERİ'},
+    {key: 'arama-gecmis-cevapsiz', label: 'CEVAPSIZ ÇAĞRILAR'},
+    {key: 'arama-gecmis-kayit-dinle', label: 'GÖRÜŞME KAYDI DİNLE'},
     {key: 'arama-log-duzenle', label: 'ARAMA LOGU NOT EKLE/DÜZENLE'},
+    {key: 'arama-gecmis-sil', label: 'ARAMA KAYDI SİL'},
     {key: 'saha-liste', label: 'SAHA DOSYALARI'},
     {key: 'saha-yeni', label: 'YENİ SAHA KAYDI'},
     {key: 'saha-duzenle', label: 'SAHA KAYDI DÜZENLE'},
@@ -195,7 +201,10 @@ const MODUL_YETKILERI = [
     {key: 'netsantral-sifre-gor', label: 'SIP ŞİFRESİNİ GÖR'},
     {key: 'netsantral-api-duzenle', label: 'NETGSM API AYARLARI'},
     {key: 'netsantral-test', label: 'BAĞLANTI TESTİ YAP'},
-    {key: 'netsantral-yeniden-baslat', label: 'BAĞLANTIYI YENİDEN BAŞLAT'}
+    {key: 'netsantral-yeniden-baslat', label: 'BAĞLANTIYI YENİDEN BAŞLAT'},
+    {key: 'netsantral-widget-goruntule', label: 'GELEN ÇAĞRI WIDGET GÖRÜNTÜLE'},
+    {key: 'netsantral-arama-baslat', label: 'GİDEN ÇAĞRI BAŞLAT (TELEFON AÇMA)'},
+    {key: 'netsantral-dahili-atama', label: 'KULLANICILARA DAHİLİ ATAMA (ADMIN PANEL)'}
   ]},
   {modul: 'sistem', label: 'SİSTEM', icon: 'Shield', islemler: [
     {key: 'sistem-kullanici', label: 'KULLANICI YÖNETİMİ'},
@@ -219,14 +228,7 @@ const MODUL_YETKILERI = [
     {key: 'tanimlamalar-sablon-ekle', label: 'ŞABLON EKLE'},
     {key: 'tanimlamalar-sablon-duzenle', label: 'ŞABLON DÜZENLE'},
     {key: 'sistem-konum', label: 'KONUM TAKİBİ'},
-    {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'},
-    {key: 'sistem-netsantral', label: 'NETSANTRAL AYARLARI'},
-    {key: 'arama-gecmis', label: 'ARAMA GEÇMİŞİ'},
-    {key: 'arama-gecmis-istatistik', label: 'ARAMA İSTATİSTİKLERİ'},
-    {key: 'arama-gecmis-cevapsiz', label: 'CEVAPSIZ ÇAĞRILAR'},
-    {key: 'arama-gecmis-kayit-dinle', label: 'GÖRÜŞME KAYDI DİNLE'},
-    {key: 'arama-gecmis-not', label: 'GÖRÜŞME NOTU EKLE/DÜZENLE'},
-    {key: 'arama-gecmis-sil', label: 'ARAMA KAYDI SİL'}
+    {key: 'sistem-aktarim', label: 'TOPLU AKTARIM'}
   ]},
 ];
 

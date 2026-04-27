@@ -523,6 +523,98 @@ function ensure_crm_columns() {
         // sessiz geç — migration hatası kullanıcıya yansımasın
     }
 }
+/**
+ * ═══ NETSANTRAL AYARLARI TABLOSU ═══
+ * SIP/WSS/Outbound ayarları DB'de saklanır. SIP şifresi AES-256-CBC ile şifrelenir.
+ * Idempotent — mevcut veri korunur.
+ */
+function ensure_netsantral_table() {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        $db = getDB();
+        $db->exec("CREATE TABLE IF NOT EXISTS netsantral_ayarlari (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            anahtar VARCHAR(80) NOT NULL UNIQUE,
+            deger TEXT DEFAULT NULL,
+            sifrelenmis TINYINT(1) DEFAULT 0,
+            updated_by INT DEFAULT NULL,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_anahtar (anahtar)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci");
+    } catch (\Exception $e) { /* sessiz geç */ }
+}
+
+/**
+ * AES-256-CBC ile şifre/sır şifreleme. Anahtar JWT_SECRET'tan türetilir.
+ * Çıktı: base64(iv . ciphertext)
+ */
+function aes_encrypt($plaintext) {
+    if ($plaintext === null || $plaintext === '') return '';
+    $key = hash('sha256', defined('JWT_SECRET') ? JWT_SECRET : 'mr-hasar-default-key-2026', true);
+    $iv = openssl_random_pseudo_bytes(16);
+    $ct = openssl_encrypt($plaintext, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+    return base64_encode($iv . $ct);
+}
+
+function aes_decrypt($ciphertext) {
+    if ($ciphertext === null || $ciphertext === '') return '';
+    $key = hash('sha256', defined('JWT_SECRET') ? JWT_SECRET : 'mr-hasar-default-key-2026', true);
+    $raw = base64_decode($ciphertext, true);
+    if ($raw === false || strlen($raw) < 17) return '';
+    $iv = substr($raw, 0, 16);
+    $ct = substr($raw, 16);
+    $pt = openssl_decrypt($ct, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+    return $pt === false ? '' : $pt;
+}
+
+/**
+ * Netsantral ayar tek alan getir/set
+ * @param string $anahtar (örn: 'wss_url', 'sip_domain', 'sip_dahili', 'sip_sifre', 'outbound_proxy', 'netgsm_api_sifre', 'santral_no')
+ * @param bool $sifrele Şifre alanları için true
+ */
+function netsantral_setting_get($anahtar) {
+    ensure_netsantral_table();
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("SELECT deger, sifrelenmis FROM netsantral_ayarlari WHERE anahtar = ? LIMIT 1");
+        $stmt->execute([$anahtar]);
+        $row = $stmt->fetch();
+        if (!$row) return '';
+        return $row['sifrelenmis'] ? aes_decrypt($row['deger']) : (string)$row['deger'];
+    } catch (\Exception $e) { return ''; }
+}
+
+function netsantral_setting_set($anahtar, $deger, $sifrele = false, $kullanici_id = null) {
+    ensure_netsantral_table();
+    try {
+        $db = getDB();
+        $finalDeger = $sifrele ? aes_encrypt((string)$deger) : (string)$deger;
+        $stmt = $db->prepare("INSERT INTO netsantral_ayarlari (anahtar, deger, sifrelenmis, updated_by) VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE deger = VALUES(deger), sifrelenmis = VALUES(sifrelenmis), updated_by = VALUES(updated_by)");
+        $stmt->execute([$anahtar, $finalDeger, $sifrele ? 1 : 0, $kullanici_id]);
+        return true;
+    } catch (\Exception $e) { return false; }
+}
+
+/**
+ * arama_loglari tablosuna live_not (canlı çağrı notu) kolonu eklenir.
+ * Mevcut notlar alanı korunur — live_not görüşme sırasında yazılır,
+ * görüşme bitince notlar alanına aktarılır.
+ */
+function ensure_arama_log_live_columns() {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        $db = getDB();
+        $db->exec("ALTER TABLE arama_loglari ADD COLUMN IF NOT EXISTS live_not TEXT DEFAULT NULL");
+        $db->exec("ALTER TABLE arama_loglari ADD COLUMN IF NOT EXISTS not_sync_durumu VARCHAR(20) DEFAULT NULL");
+        $db->exec("ALTER TABLE arama_loglari ADD COLUMN IF NOT EXISTS crm_not_id INT DEFAULT NULL");
+    } catch (\Exception $e) { /* sessiz geç */ }
+}
+
 function http_decode_chunked($data) {
     $decoded = '';
     while (true) {
@@ -763,6 +855,12 @@ $GLOBALS['YETKI_MAP'] = array(
 
     // ─── NETSANTRAL ───
     'sozlesme/settings.php' => array('netsantral', 'netsantral-ayarlar'),
+    'netsantral/ayar-list.php' => array('netsantral', 'netsantral-goruntule'),
+    'netsantral/ayar-kaydet.php' => array('netsantral', 'netsantral-duzenle'),
+    'netsantral/ayar-test.php' => array('netsantral', 'netsantral-test'),
+    'netsantral/cagri-not-kaydet.php' => array('crm', 'crm-not-ekle'),
+    'netsantral/cagri-eslestir.php' => array('crm', 'crm-arama'),
+    'netsantral/timeline.php' => array('crm', 'crm-timeline-gor'),
 
     // ─── E-POSTA ───
     'mail/list.php' => array('eposta', 'eposta-goruntule'),

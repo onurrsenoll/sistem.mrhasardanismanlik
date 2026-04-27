@@ -149,6 +149,51 @@ MR.CrmAramaPage = ({setPage, user}) => {
   useEffect(() => { load(); }, []);
   useEffect(() => { const t = setTimeout(load, 400); return () => clearTimeout(t); }, [search, durumF, tarihBas, tarihBit, sayfa, atananFiltre]);
 
+  /* GELEN ÇAĞRI OTOMATİK YÖNLENDİRME — webrtc-widget cevapla() bizi buraya yönlendirdiyse,
+     localStorage'da set edilmiş telefon numarasını alıp arama listesinde otomatik bul ve detay aç.
+     Yönlendirme listesinde yoksa CRM'de ara, hiçbiri yoksa numarayı arama kutusuna yaz. */
+  useEffect(() => {
+    const numara = localStorage.getItem('webrtc_new_call_phone');
+    if (!numara) return;
+    /* Bayrağı tüket — sayfa kapanıp tekrar açıldığında tetiklenmesin */
+    localStorage.removeItem('webrtc_new_call_phone');
+
+    const son10 = (numara || '').replace(/[^0-9]/g, '').slice(-10);
+    if (!son10) return;
+
+    /* Önce mevcut listede ara (data zaten yüklenmiş olabilir) */
+    const tryFindAndOpen = () => {
+      const bulundu = data.find(item => {
+        const t = (item.magdur_telefon || '').replace(/[^0-9]/g, '').slice(-10);
+        return t && t === son10;
+      });
+      if (bulundu) {
+        openDetay(bulundu);
+        return true;
+      }
+      return false;
+    };
+
+    if (!tryFindAndOpen()) {
+      /* Listede yoksa: backend'e numara ile sorgu at, eşleşirse detay aç */
+      if (api.netsantralCagriEslestir) {
+        api.netsantralCagriEslestir(numara).then(r => {
+          if (r?.success && r.data?.eslestirme) {
+            const e = r.data.eslestirme;
+            if (e.kaynak === 'YONLENDIRME' && e.kayit?.id) {
+              openDetay(e.kayit);
+              return;
+            }
+          }
+          /* Eşleşme yoksa arama kutusuna yaz */
+          setSearch(son10);
+        }).catch(() => setSearch(son10));
+      } else {
+        setSearch(son10);
+      }
+    }
+  }, [data.length]);
+
   /* Atanabilir kullanıcıları yükle (sadece Excel yükleme yetkisi olanlar için gerekli) */
   useEffect(() => {
     if (!hy('crm-excel-yukle')) return;

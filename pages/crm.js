@@ -684,6 +684,10 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
   const [notText, setNotText] = useState('');
   const [notLoading, setNotLoading] = useState(false);
 
+  // BİRLEŞİK TİMELİNE (CRM notları + Çağrı logları + Yönlendirme notları)
+  const [timeline, setTimeline] = useState([]);
+  const [timelineLoading, setTimelineLoading] = useState(false);
+
   // DÜZENLEME MODAL
   const [editModal, setEditModal] = useState(false);
   const [editData, setEditData] = useState(null);
@@ -707,7 +711,24 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
     setLoading(false);
   }, [crmId]);
 
+  /* BİRLEŞİK TİMELİNE — CRM notları + arama_loglari + yönlendirme notları */
+  const loadTimeline = useCallback(async () => {
+    if (!crmId) return;
+    setTimelineLoading(true);
+    try {
+      if (api.netsantralTimeline) {
+        const numara = crm?.telefon || '';
+        const r = await api.netsantralTimeline({crm_id: crmId, numara});
+        if (r?.success && r.data?.timeline) {
+          setTimeline(r.data.timeline);
+        }
+      }
+    } catch(e) {}
+    setTimelineLoading(false);
+  }, [crmId, crm?.telefon]);
+
   useEffect(() => { load(); }, [crmId]);
+  useEffect(() => { if (crm) loadTimeline(); }, [crm?.id, crm?.telefon]);
 
   // NOT EKLE
   const notEkle = async () => {
@@ -717,6 +738,7 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
     if (r?.success) {
       setNotText('');
       load();
+      loadTimeline();
     }
     setNotLoading(false);
   };
@@ -917,9 +939,9 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
           </div>
         </div>
 
-        {/* NOTLAR */}
+        {/* BİRLEŞİK TİMELİNE — CRM notları + Çağrı geçmişi + Yönlendirme notları */}
         <div style={S.card}>
-          <SectionTitle icon="MessageSquare" title="NOTLAR" sub={`${notlar.length} NOT KAYDI`}/>
+          <SectionTitle icon="History" title="GÖRÜŞME GEÇMİŞİ & NOTLAR" sub={`${(timeline.length || notlar.length)} KAYIT`}/>
           <div style={{padding: 20}}>
             {/* NOT EKLEME FORMU */}
             <div style={{marginBottom: 20}}>
@@ -934,24 +956,67 @@ MR._CRMDetayInner = ({setPage, crmId}) => {
               </button>
             </div>
 
-            {/* NOT LİSTESİ */}
-            <div style={{maxHeight: 400, overflowY: 'auto'}}>
-              {notlar.length === 0 ? (
+            {/* BİRLEŞİK LİSTE — timeline varsa onu, yoksa eski notlar listesini göster */}
+            <div style={{maxHeight: 500, overflowY: 'auto'}}>
+              {timelineLoading && <div style={{textAlign:'center',padding:20,color:C.textMuted,fontSize:11}}>YÜKLENİYOR...</div>}
+              {!timelineLoading && timeline.length === 0 && notlar.length === 0 && (
                 <div style={{textAlign: 'center', padding: 30, color: C.textMuted, fontSize: 12}}>
-                  HENÜZ NOT EKLENMEMİŞ
+                  HENÜZ NOT VEYA ÇAĞRI KAYDI YOK
                 </div>
-              ) : notlar.map((n, i) => (
-                <div key={n.id || i} style={{
-                  padding: 14, marginBottom: 10, background: `${C.accent}08`, borderRadius: 10,
-                  border: `1px solid ${C.border}`
-                }}>
-                  <div style={{fontSize: 12, lineHeight: 1.6, marginBottom: 8}}>{n.not_text || n.icerik || '-'}</div>
-                  <div style={{display: 'flex', justifyContent: 'space-between', fontSize: 10, color: C.textMuted}}>
-                    <span>{n.ekleyen_adi || 'SİSTEM'}</span>
-                    <span>{n.created_at || '-'}</span>
+              )}
+              {!timelineLoading && timeline.length > 0 ? (
+                timeline.map((t, i) => {
+                  const renkMap = {
+                    'crm-not': C.accent,
+                    'arama-gelen': C.success,
+                    'arama-giden': C.cyan,
+                    'yonlendirme-not': C.warning
+                  };
+                  const renk = renkMap[t.tip] || C.textMuted;
+                  return (
+                    <div key={i} style={{
+                      padding: 12, marginBottom: 10,
+                      background: renk + '0a', borderRadius: 10,
+                      border: '1px solid ' + renk + '33',
+                      display: 'flex', gap: 10
+                    }}>
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 8,
+                        background: renk + '22',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                      }}>
+                        <LIcon name={t.icon || 'Circle'} size={14} color={renk}/>
+                      </div>
+                      <div style={{flex: 1, minWidth: 0}}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 4}}>
+                          <span style={{fontSize: 10, fontWeight: 800, color: renk, letterSpacing: 0.5}}>{t.baslik}</span>
+                          <span style={{fontSize: 9, color: C.textMuted, whiteSpace: 'nowrap'}}>{t.tarih || '-'}</span>
+                        </div>
+                        <div style={{fontSize: 12, lineHeight: 1.55, color: C.text, whiteSpace: 'pre-wrap', wordBreak: 'break-word'}}>{t.metin || '-'}</div>
+                        <div style={{display: 'flex', gap: 12, marginTop: 6, fontSize: 9, color: C.textMuted}}>
+                          {t.kullanici && <span>👤 {t.kullanici}</span>}
+                          {t.sonuc && <span>🎯 {t.sonuc}</span>}
+                          {t.kayit_url && <a href={t.kayit_url} target="_blank" style={{color: C.accent}}>🔊 KAYDI DİNLE</a>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                /* Fallback: timeline yüklenemezse eski notlar */
+                notlar.map((n, i) => (
+                  <div key={n.id || i} style={{
+                    padding: 14, marginBottom: 10, background: `${C.accent}08`, borderRadius: 10,
+                    border: `1px solid ${C.border}`
+                  }}>
+                    <div style={{fontSize: 12, lineHeight: 1.6, marginBottom: 8}}>{n.not_text || n.icerik || '-'}</div>
+                    <div style={{display: 'flex', justifyContent: 'space-between', fontSize: 10, color: C.textMuted}}>
+                      <span>{n.ekleyen_adi || 'SİSTEM'}</span>
+                      <span>{n.created_at || '-'}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

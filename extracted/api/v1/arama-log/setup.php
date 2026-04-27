@@ -43,6 +43,12 @@ function ensure_arama_log_table() {
                 'kayit_dosya'       => "VARCHAR(255) DEFAULT NULL",
                 'kayit_boyut'       => "INT DEFAULT 0",
                 'notlar'            => "TEXT DEFAULT NULL",
+                'live_not'          => "TEXT DEFAULT NULL",
+                'not_sync_durumu'   => "VARCHAR(20) DEFAULT NULL",
+                'crm_id'            => "INT DEFAULT NULL",
+                'yonlendirme_id'    => "INT DEFAULT NULL",
+                'crm_not_id'        => "INT DEFAULT NULL",
+                'kayit_url'         => "VARCHAR(255) DEFAULT NULL",
                 'kullanici_id'      => "INT DEFAULT NULL"
             ];
 

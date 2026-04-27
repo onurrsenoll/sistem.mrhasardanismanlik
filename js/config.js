@@ -115,6 +115,18 @@ MR.api = {
   aramaLogCreate(d) { return this.req('/arama-log/create.php', { method: 'POST', body: JSON.stringify(d) }); },
   aramaLogUpdate(d) { return this.req('/arama-log/update.php', { method: 'PUT', body: JSON.stringify(d) }); },
   aramaLogDelete(id) { return this.req('/arama-log/delete.php?id=' + id, { method: 'DELETE' }); },
+  // ═══ NETSANTRAL — Ayarlar (DB), Çağrı eşleştirme, Canlı not, Birleşik timeline ═══
+  netsantralAyarList() { return this.req('/netsantral/ayar-list.php'); },
+  netsantralAyarKaydet(d) { return this.req('/netsantral/ayar-kaydet.php', { method: 'POST', body: JSON.stringify(d) }); },
+  netsantralAyarTest(d) { return this.req('/netsantral/ayar-test.php', { method: 'POST', body: JSON.stringify(d) }); },
+  netsantralCagriEslestir(numara) { return this.req('/netsantral/cagri-eslestir.php?numara=' + encodeURIComponent(numara)); },
+  /* Canlı not: {arama_log_id, numara, yon, not_text, gorusme_sonucu, crm_id, yonlendirme_id, canli:true|false}
+     - canli:true -> live_not alanına yazar (görüşme sürerken)
+     - canli:false -> notlar alanına final yazar + crm_notlari'a kopyalar */
+  netsantralCagriNotKaydet(d) { return this.req('/netsantral/cagri-not-kaydet.php', { method: 'POST', body: JSON.stringify(d) }); },
+  /* Birleşik timeline: CRM notları + arama_loglari + yönlendirme notları tek listede.
+     Parametre: {crm_id} | {yonlendirme_id} | {numara} */
+  netsantralTimeline(p = {}) { return this.req('/netsantral/timeline.php?' + new URLSearchParams(p)); },
   // ═══ İHBAR FÖYÜ ═══
   ihbarList(p = {}) { return this.req('/ihbar-foyu/list.php?' + new URLSearchParams(p)); },
   ihbarGet(id) { return this.req('/ihbar-foyu/get.php?id=' + id); },
