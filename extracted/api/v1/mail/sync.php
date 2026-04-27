@@ -27,6 +27,8 @@ $stmt->execute([$hesapId]);
 $hesap = $stmt->fetch();
 if (!$hesap) json_error('Mail hesabı bulunamadı', 404);
 if ($user['rol'] !== 'admin' && (int)$hesap['kullanici_id'] !== (int)$user['id']) json_error('Yetki yok', 403);
+/* PASIF hesap senkronlanmaz */
+if (empty($hesap['aktif'])) json_error('HESAP PASİF — önce aktif edin', 400);
 
 try {
     $inbox = mail_imap_baglan($hesap);

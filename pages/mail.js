@@ -34,6 +34,18 @@ MR_Mail.MailPage = ({setPage, user}) => {
   const [hesapSaving, setHesapSaving] = useState(false);
   const [testSonuc, setTestSonuc] = useState(null);
   const [testLoading, setTestLoading] = useState(false);
+  /* SIFRE GOZ TOGGLE */
+  const [sifreGoster, setSifreGoster] = useState(false);
+  /* ADMIN icin: kullanici listesi (mail hesabi atayabilmek icin) */
+  const [kullanicilar, setKullanicilar] = useState([]);
+
+  /* Admin ise kullanicilari yukle (mail hesabi atayabilmek icin) */
+  useEffect(() => {
+    if (user?.rol !== 'admin') return;
+    api.kullaniciList && api.kullaniciList().then(r => {
+      if (r?.success) setKullanicilar(r.data?.items || r.data || []);
+    }).catch(() => {});
+  }, [user?.id]);
 
   /* YENİ MAIL COMPOSE */
   const [compose, setCompose] = useState(false);
@@ -154,38 +166,114 @@ MR_Mail.MailPage = ({setPage, user}) => {
 
   /* ═══ HESAP KAYDET ═══ */
   const hesapKaydet = async () => {
-    if (!hesapForm.email || !hesapForm.kullanici || !hesapForm.sifre) {
-      setMesaj({type: 'error', text: 'E-POSTA, KULLANICI VE ŞİFRE ZORUNLU'});
+    /* Validasyon: email + kullanici_adi zorunlu. Sifre yeni hesap icin zorunlu,
+       duzenle modunda (id varsa) opsiyonel - bos kalirsa eski korunur. */
+    const isUpdate = !!hesapForm.id;
+    if (!hesapForm.email || !hesapForm.kullanici) {
+      setMesaj({type: 'error', text: 'E-POSTA VE KULLANICI ADI ZORUNLU'});
+      return;
+    }
+    if (!isUpdate && !hesapForm.sifre) {
+      setMesaj({type: 'error', text: 'YENİ HESAP İÇİN ŞİFRE ZORUNLU'});
       return;
     }
     setHesapSaving(true);
-    /* Backend field isimleri ile uyumlu payload (imap_host/smtp_host/kullanici_adi/gonderen_adi) */
+    /* Backend field isimleri (imap_host/smtp_host/kullanici_adi/gonderen_adi) */
     const payload = {
       email: hesapForm.email,
       gonderen_adi: hesapForm.display_name || '',
       kullanici_adi: hesapForm.kullanici,
-      sifre: hesapForm.sifre,
       imap_host: hesapForm.imap_sunucu || hesapForm.imap_host || '',
       imap_port: hesapForm.imap_port || 993,
       imap_encryption: hesapForm.guvenlik || 'ssl',
       smtp_host: hesapForm.smtp_sunucu || hesapForm.smtp_host || '',
       smtp_port: hesapForm.smtp_port || 465,
       smtp_encryption: hesapForm.guvenlik || 'ssl',
-      etiket: hesapForm.display_name || hesapForm.email
+      etiket: hesapForm.display_name || hesapForm.email,
+      aktif: hesapForm.aktif !== undefined ? hesapForm.aktif : 1
     };
-    const r = await api.mailHesapKaydet(payload);
+    /* Admin baska kullaniciya hesap atayabilir */
+    if (hesapForm.kullanici_id) payload.kullanici_id = hesapForm.kullanici_id;
+    /* Sifre sadece doldurulmussa gonder (update'te bos = eski korunur) */
+    if (hesapForm.sifre) payload.sifre = hesapForm.sifre;
+
+    let r;
+    if (isUpdate) {
+      payload.id = hesapForm.id;
+      r = await api.mailHesapGuncelle(payload);
+    } else {
+      r = await api.mailHesapKaydet(payload);
+    }
+
     if (r?.success) {
-      setMesaj({type: 'success', text: 'MAIL HESABI KAYDEDİLDİ'});
-      // Hesapları yenile
+      setMesaj({type: 'success', text: isUpdate ? 'HESAP GÜNCELLENDİ' : 'MAIL HESABI KAYDEDİLDİ'});
+      /* Listeyi yenile + form'u temizle (yeni ekleme moduna don) */
       const r2 = await api.mailHesaplar();
       if (r2?.success && r2.data?.items) {
         setHesaplar(r2.data.items);
         if (!seciliHesap && r2.data.items.length > 0) setSeciliHesap(r2.data.items[0]);
       }
+      yeniHesapModu();
     } else {
       setMesaj({type: 'error', text: r?.error || 'HESAP KAYDEDİLEMEDİ'});
     }
     setHesapSaving(false);
+  };
+
+  /* HESAP DUZENLE - form'a yukle (sifre HARIC - guvenlik) */
+  const hesapDuzenle = (h) => {
+    setHesapForm({
+      id: h.id,
+      email: h.email || '',
+      display_name: h.gonderen_adi || '',
+      kullanici: h.kullanici_adi || h.email || '',
+      sifre: '',  // Bos - kullanici degistirmek isterse yazsin
+      imap_sunucu: h.imap_host || 'mail.mrhasardanismanlik.com',
+      imap_port: h.imap_port || 993,
+      smtp_sunucu: h.smtp_host || 'mail.mrhasardanismanlik.com',
+      smtp_port: h.smtp_port || 465,
+      guvenlik: h.imap_encryption || 'ssl',
+      aktif: h.aktif !== undefined ? h.aktif : 1,
+      kullanici_id: h.kullanici_id
+    });
+    setMesaj({type: 'info', text: 'DÜZENLEME MODU: Şifre boş bırakılırsa mevcut korunur'});
+    /* Form'a scroll */
+    setTimeout(() => { const el = document.getElementById('mail-hesap-form'); if (el) el.scrollIntoView({behavior:'smooth'}); }, 100);
+  };
+
+  /* YENİ HESAP - form temizle */
+  const yeniHesapModu = () => {
+    setHesapForm({
+      email: '', display_name: '', kullanici: '', sifre: '',
+      imap_sunucu: 'mail.mrhasardanismanlik.com', imap_port: 993,
+      smtp_sunucu: 'mail.mrhasardanismanlik.com', smtp_port: 465,
+      guvenlik: 'ssl', aktif: 1
+    });
+  };
+
+  /* HESAP SIL */
+  const hesapSil = async (h) => {
+    if (!window.confirm(h.email + ' silinecek. Onaylıyor musun?')) return;
+    const r = await api.mailHesapSil({id: h.id});
+    if (r?.success) {
+      setMesaj({type: 'success', text: 'HESAP SİLİNDİ'});
+      const r2 = await api.mailHesaplar();
+      if (r2?.success) setHesaplar(r2.data?.items || []);
+      if (seciliHesap?.id === h.id) setSeciliHesap(null);
+    } else {
+      setMesaj({type: 'error', text: r?.error || 'SİLME HATASI'});
+    }
+  };
+
+  /* AKTIF/PASIF TOGGLE */
+  const hesapToggle = async (h) => {
+    const yeni = h.aktif ? 0 : 1;
+    const r = await api.mailHesapToggle(h.id, yeni);
+    if (r?.success) {
+      setMesaj({type: 'success', text: yeni ? 'HESAP AKTİF EDİLDİ' : 'HESAP PASİFE ALINDI'});
+      const r2 = await api.mailHesaplar();
+      if (r2?.success) setHesaplar(r2.data?.items || []);
+    }
   };
 
   /* ═══ BAĞLANTI TESTİ ═══ */
@@ -532,8 +620,8 @@ MR_Mail.MailPage = ({setPage, user}) => {
       )
     ),
 
-    /* ═══ HESAP AYARLARI ═══ */
-    altTab === 'ayarlar' && isAdmin && React.createElement('div', {style: {display: 'grid', gap: 16}},
+    /* ═══ HESAP AYARLARI - admin VEYA eposta-ayarlar yetkili kullanici ═══ */
+    altTab === 'ayarlar' && (isAdmin || (MR.hasYetki && MR.hasYetki(user, 'eposta', 'eposta-ayarlar'))) && React.createElement('div', {style: {display: 'grid', gap: 16}},
 
       /* MEVCUT HESAPLAR */
       hesaplar.length > 0 && React.createElement('div', {style: {
@@ -547,33 +635,77 @@ MR_Mail.MailPage = ({setPage, user}) => {
             padding: '12px 16px', borderRadius: 10, display: 'flex', justifyContent: 'space-between',
             alignItems: 'center', background: seciliHesap?.id === h.id ? `${C.accent}08` : 'transparent',
             border: `1px solid ${seciliHesap?.id === h.id ? C.accent + '33' : C.border}`,
-            marginBottom: 8, cursor: 'pointer'
+            marginBottom: 8, cursor: 'pointer', opacity: h.aktif ? 1 : 0.55
           },
           onClick: () => setSeciliHesap(h)
         },
-          React.createElement('div', null,
+          React.createElement('div', {style: {minWidth: 0, flex: 1}},
             React.createElement('div', {style: {fontSize: 13, fontWeight: 700, color: C.text}}, h.email),
-            React.createElement('div', {style: {fontSize: 10, color: C.textMuted}},
-              h.display_name || '', ' | Son sync: ', h.son_sync ? fmt(h.son_sync) : 'HİÇ')
+            React.createElement('div', {style: {fontSize: 10, color: C.textMuted, marginTop: 2}},
+              (h.gonderen_adi || h.display_name || '-'),
+              ' | Son sync: ', h.son_sync ? fmt(h.son_sync) : 'HİÇ',
+              h.son_hata ? ' | ⚠ ' + h.son_hata.substring(0,40) : ''
+            )
           ),
-          React.createElement('div', {style: {display: 'flex', gap: 6, alignItems: 'center'}},
+          React.createElement('div', {style: {display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0}},
             React.createElement(Badge, {text: h.aktif ? 'AKTİF' : 'PASİF', color: h.aktif ? C.success : C.danger}),
+            // DÜZENLE
             React.createElement('button', {
-              onClick: e => { e.stopPropagation(); setHesapForm({...h}); },
-              style: {...S.btn, padding: '4px 8px', fontSize: 10}
-            }, React.createElement(LIcon, {name: 'Edit', size: 12}))
+              title: 'Düzenle',
+              onClick: e => { e.stopPropagation(); hesapDuzenle(h); },
+              style: {...S.btn, ...S.btnG, padding: '4px 8px', fontSize: 10}
+            }, React.createElement(LIcon, {name: 'Edit', size: 12}), ' DÜZENLE'),
+            // AKTİF/PASİF TOGGLE
+            React.createElement('button', {
+              title: h.aktif ? 'Pasife al' : 'Aktif et',
+              onClick: e => { e.stopPropagation(); hesapToggle(h); },
+              style: {...S.btn, padding: '4px 8px', fontSize: 10, background: h.aktif ? C.warning + '22' : C.success + '22', color: h.aktif ? C.warning : C.success}
+            }, React.createElement(LIcon, {name: h.aktif ? 'PauseCircle' : 'PlayCircle', size: 12})),
+            // SİL
+            React.createElement('button', {
+              title: 'Sil',
+              onClick: e => { e.stopPropagation(); hesapSil(h); },
+              style: {...S.btn, ...S.btnD, padding: '4px 8px', fontSize: 10}
+            }, React.createElement(LIcon, {name: 'Trash2', size: 12}))
           )
-        ))
+        )),
+        // YENİ HESAP butonu
+        React.createElement('button', {
+          onClick: () => yeniHesapModu(),
+          style: {...S.btn, ...S.btnP, marginTop: 8, fontSize: 11, padding: '6px 14px'}
+        }, React.createElement(LIcon, {name: 'Plus', size: 14}), ' YENİ HESAP EKLE')
       ),
 
       /* HESAP FORMU */
-      React.createElement('div', {style: {
+      React.createElement('div', {id: 'mail-hesap-form', style: {
         background: C.bgCard, borderRadius: 14, padding: 20, border: `1px solid ${C.border}`
       }},
-        React.createElement('div', {style: {fontSize: 14, fontWeight: 800, color: C.accent, marginBottom: 4}},
-          React.createElement(LIcon, {name: 'Mail', size: 16, color: C.accent}), ' MAIL HESABI EKLE / DÜZENLE'),
+        React.createElement('div', {style: {display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 4}},
+          React.createElement('div', {style: {fontSize: 14, fontWeight: 800, color: C.accent}},
+            React.createElement(LIcon, {name: 'Mail', size: 16, color: C.accent}),
+            ' ' + (hesapForm.id ? 'HESAP DÜZENLE (ID: ' + hesapForm.id + ')' : 'YENİ MAIL HESABI EKLE')
+          ),
+          hesapForm.id && React.createElement('button', {
+            onClick: yeniHesapModu,
+            style: {...S.btn, ...S.btnG, fontSize: 10, padding: '4px 10px'}
+          }, 'İPTAL — YENİ HESAP MODUNA DÖN')
+        ),
         React.createElement('div', {style: {fontSize: 10, color: C.textMuted, marginBottom: 16}},
-          'cPanel mail hesabınızın bilgilerini girin. IMAP ile mailler çekilir, SMTP ile gönderilir.'),
+          'cPanel mail hesabınızın bilgilerini girin. IMAP ile mailler çekilir, SMTP ile gönderilir.'
+          + (hesapForm.id ? ' (Düzenleme: şifre boş = mevcut korunur)' : '')),
+
+        /* ADMIN: BAŞKA KULLANICIYA ATA */
+        isAdmin && React.createElement(FormGroup, {label: 'BU HESABI HANGİ KULLANICIYA ATA (Admin için)'},
+          React.createElement('select', {
+            style: S.select,
+            value: hesapForm.kullanici_id || '',
+            onChange: e => setHesapForm(p => ({...p, kullanici_id: e.target.value ? parseInt(e.target.value) : undefined}))
+          },
+            React.createElement('option', {value: ''}, 'KENDIME (varsayılan)'),
+            (kullanicilar || []).map(u => React.createElement('option', {key: u.id, value: u.id},
+              (u.ad_soyad || u.email) + ' (' + (u.rol || 'personel').toUpperCase() + ')'))
+          )
+        ),
 
         React.createElement('div', {style: {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12}},
           React.createElement(FormGroup, {label: 'E-POSTA ADRESİ'},
@@ -591,10 +723,23 @@ MR_Mail.MailPage = ({setPage, user}) => {
               onChange: e => setHesapForm(p => ({...p, kullanici: e.target.value})),
               placeholder: '_mainaccount@mrhasardanismanlik.com'})
           ),
-          React.createElement(FormGroup, {label: 'ŞİFRE'},
-            React.createElement('input', {type: 'password', style: S.input, value: hesapForm.sifre || '',
-              onChange: e => setHesapForm(p => ({...p, sifre: e.target.value})),
-              placeholder: '••••••••'})
+          React.createElement(FormGroup, {label: hesapForm.id ? 'ŞİFRE (Bos = mevcut korunur)' : 'ŞİFRE *'},
+            React.createElement('div', {style: {position: 'relative'}},
+              React.createElement('input', {
+                type: sifreGoster ? 'text' : 'password',
+                style: {...S.input, paddingRight: 38, textTransform: 'none'},
+                value: hesapForm.sifre || '',
+                onChange: e => setHesapForm(p => ({...p, sifre: e.target.value})),
+                placeholder: hesapForm.id ? 'Boş bırak — eski şifre korunur' : 'cPanel email şifrenizi girin'
+              }),
+              React.createElement('button', {
+                type: 'button',
+                onClick: () => setSifreGoster(!sifreGoster),
+                title: sifreGoster ? 'Gizle' : 'Göster',
+                style: {position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)',
+                  background: 'transparent', border: 'none', cursor: 'pointer', color: C.textMuted, padding: 4}
+              }, React.createElement(LIcon, {name: sifreGoster ? 'EyeOff' : 'Eye', size: 14}))
+            )
           ),
           React.createElement(FormGroup, {label: 'IMAP SUNUCU'},
             React.createElement('input', {style: S.input, value: hesapForm.imap_sunucu || '',

@@ -53,9 +53,46 @@ if ($method === 'POST') {
     $sifre = $body['sifre'] ?? '';
     $sifreSifreli = !empty($sifre) ? mail_sifrele($sifre) : '';
 
+    /* Admin baska kullaniciya hesap atayabilir; aksi halde kendisi */
+    $hedefKullaniciId = (int)$user['id'];
+    if ($user['rol'] === 'admin' && !empty($body['kullanici_id'])) {
+        $hedefKullaniciId = (int)$body['kullanici_id'];
+    }
+
+    /* Ayni email + ayni kullanici icin tekrar INSERT yerine UPSERT mantigi
+       (mukerrer hesap engellemek icin) */
+    $stmtChk = $db->prepare('SELECT id FROM mail_hesaplar WHERE email = ? AND kullanici_id = ? LIMIT 1');
+    $stmtChk->execute([clean($body['email']), $hedefKullaniciId]);
+    $mevcut = $stmtChk->fetch();
+
+    if ($mevcut) {
+        // UPDATE - duplicate engelle
+        $sets = [
+            'etiket = ?', 'gonderen_adi = ?', 'imap_host = ?', 'imap_port = ?', 'imap_encryption = ?',
+            'smtp_host = ?', 'smtp_port = ?', 'smtp_encryption = ?', 'kullanici_adi = ?', 'aktif = ?'
+        ];
+        $params = [
+            clean($body['etiket'] ?? ''),
+            clean($body['gonderen_adi'] ?? ''),
+            clean($body['imap_host']),
+            (int)($body['imap_port'] ?? 993),
+            clean($body['imap_encryption'] ?? 'ssl'),
+            clean($body['smtp_host']),
+            (int)($body['smtp_port'] ?? 465),
+            clean($body['smtp_encryption'] ?? 'ssl'),
+            clean($body['kullanici_adi'] ?? $body['email']),
+            isset($body['aktif']) ? (int)(bool)$body['aktif'] : 1
+        ];
+        if (!empty($sifreSifreli)) { $sets[] = 'sifre_sifreli = ?'; $params[] = $sifreSifreli; }
+        $params[] = $mevcut['id'];
+        $db->prepare('UPDATE mail_hesaplar SET ' . implode(', ', $sets) . ' WHERE id = ?')->execute($params);
+        log_action($user['id'], 'mail_hesap_guncelle_upsert', clean($body['email']), 'mail_hesaplar', $mevcut['id']);
+        json_success(['id' => (int)$mevcut['id'], 'updated' => true], 'Mail hesabı güncellendi');
+    }
+
     $stmt = $db->prepare('INSERT INTO mail_hesaplar (kullanici_id, etiket, email, gonderen_adi, imap_host, imap_port, imap_encryption, smtp_host, smtp_port, smtp_encryption, kullanici_adi, sifre_sifreli, aktif) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $stmt->execute([
-        (int)$user['id'],
+        $hedefKullaniciId,
         clean($body['etiket'] ?? ''),
         clean($body['email']),
         clean($body['gonderen_adi'] ?? ''),
@@ -96,6 +133,12 @@ if ($method === 'PUT') {
             else $params[] = clean($body[$f]);
         }
     }
+    /* Admin baska kullaniciya yeniden atayabilir */
+    if ($user['rol'] === 'admin' && array_key_exists('kullanici_id', $body)) {
+        $sets[] = 'kullanici_id = ?';
+        $params[] = (int)$body['kullanici_id'];
+    }
+    /* Sifre opsiyonel - bos gelirse eski korunur */
     if (!empty($body['sifre'])) {
         $sets[] = 'sifre_sifreli = ?';
         $params[] = mail_sifrele($body['sifre']);

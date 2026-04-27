@@ -306,6 +306,10 @@ MR.api = {
   // MAIL (E-POSTA)
   mailHesaplar() { return this.req('/mail/hesaplar.php'); },
   mailHesapKaydet(d) { return this.req('/mail/hesaplar.php', { method: 'POST', body: JSON.stringify(d) }); },
+  /* Guncelle - sifre bos gelirse eski sifre korunur (backend handle) */
+  mailHesapGuncelle(d) { return this.req('/mail/hesaplar.php', { method: 'PUT', body: JSON.stringify(d) }); },
+  /* Aktif/Pasif tek tikla toggle */
+  mailHesapToggle(id, aktif) { return this.req('/mail/hesaplar.php', { method: 'PUT', body: JSON.stringify({id, aktif: aktif ? 1 : 0}) }); },
   mailHesapSil(d) { return this.req('/mail/hesaplar.php', { method: 'DELETE', body: JSON.stringify(d) }); },
   mailList(p = {}) { return this.req('/mail/list.php?' + new URLSearchParams(p)); },
   mailGet(id) { return this.req('/mail/get.php?id=' + id); },
