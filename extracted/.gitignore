@@ -1,0 +1,8 @@
+# MR HASAR — git ignore
+api/config/.env
+api/config/.env.local
+api/config/.env.production
+api/v1/**/error_log
+*.log
+.DS_Store
+node_modules/

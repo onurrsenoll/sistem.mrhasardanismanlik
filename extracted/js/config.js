@@ -8,17 +8,74 @@ const MR = window.MR || (window.MR = {});
 const API_BASE = '/api/v1';
 MR.api = {
   token: localStorage.getItem('mr_token'),
-  setToken(t) { this.token = t; if (t) localStorage.setItem('mr_token', t); else localStorage.removeItem('mr_token'); },
-  async req(ep, o = {}) {
+  refreshToken: localStorage.getItem('mr_refresh'),
+  _refreshing: null,
+  setToken(t, rt) {
+    this.token = t || null;
+    if (t) localStorage.setItem('mr_token', t); else localStorage.removeItem('mr_token');
+    if (rt !== undefined) {
+      this.refreshToken = rt || null;
+      if (rt) localStorage.setItem('mr_refresh', rt); else localStorage.removeItem('mr_refresh');
+    }
+  },
+  async _doRefresh() {
+    if (!this.refreshToken) return false;
+    if (this._refreshing) return this._refreshing;
+    this._refreshing = (async () => {
+      try {
+        const r = await fetch(API_BASE + '/auth/refresh.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: this.refreshToken })
+        });
+        if (!r.ok) return false;
+        const j = await r.json();
+        if (j?.success && j.data?.token) {
+          this.setToken(j.data.token, j.data.refresh_token);
+          return true;
+        }
+        return false;
+      } catch (e) { return false; }
+      finally { this._refreshing = null; }
+    })();
+    return this._refreshing;
+  },
+  async req(ep, o = {}, _retry = false) {
     const h = { 'Content-Type': 'application/json' };
     if (this.token) h['Authorization'] = 'Bearer ' + this.token;
-    const r = await fetch(API_BASE + ep, { ...o, headers: { ...h, ...o.headers } });
-    if (r.status === 401) { this.setToken(null); location.reload(); return null; }
+    let r;
+    try {
+      r = await fetch(API_BASE + ep, { ...o, headers: { ...h, ...o.headers } });
+    } catch (netErr) {
+      return { success: false, error: 'AĞ HATASI — BAĞLANTI YOK' };
+    }
+    if (r.status === 401 && !_retry && this.refreshToken && !ep.includes('/auth/refresh.php') && !ep.includes('/auth/login.php')) {
+      const ok = await this._doRefresh();
+      if (ok) return this.req(ep, o, true);
+      this.setToken(null, null);
+      location.reload();
+      return null;
+    }
+    if (r.status === 401) {
+      this.setToken(null, null);
+      if (!ep.includes('/auth/login.php')) location.reload();
+      return null;
+    }
     const t = await r.text();
-    try { return JSON.parse(t); } catch (e) { return { success: false, error: 'SUNUCU YANIT HATASI' }; }
+    try {
+      const j = JSON.parse(t);
+      if (j && j.success === undefined && r.ok) j.success = true;
+      return j;
+    } catch (e) {
+      return { success: false, error: r.ok ? 'SUNUCU YANIT HATASI' : ('SUNUCU HATASI ' + r.status) };
+    }
   },
   // AUTH
   login(e, s) { return this.req('/auth/login.php', { method: 'POST', body: JSON.stringify({ email: e, sifre: s }) }); },
+  logout() {
+    const rt = this.refreshToken;
+    return this.req('/auth/logout.php', { method: 'POST', body: JSON.stringify({ refresh_token: rt }) });
+  },
   me() { return this.req('/auth/me.php'); },
   changePw(d) { return this.req('/auth/change-password.php', { method: 'POST', body: JSON.stringify(d) }); },
   // DOSYA

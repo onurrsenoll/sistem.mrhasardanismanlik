@@ -1,13 +1,38 @@
 <?php
+require_once __DIR__ . '/bootstrap.php';
+
+function mr_allowed_origins() {
+    static $list = null;
+    if ($list !== null) return $list;
+    $raw = mr_env('ALLOWED_ORIGINS', '');
+    $list = array();
+    if ($raw !== '') {
+        foreach (explode(',', $raw) as $o) {
+            $o = trim($o);
+            if ($o !== '') $list[] = rtrim($o, '/');
+        }
+    }
+    return $list;
+}
+
 function setup_headers() {
-    $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '*';
     header('Content-Type: application/json; charset=utf-8');
-    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Vary: Origin');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: same-origin');
+    $origin = isset($_SERVER['HTTP_ORIGIN']) ? rtrim($_SERVER['HTTP_ORIGIN'], '/') : '';
+    $allowed = mr_allowed_origins();
+    if ($origin !== '' && (in_array($origin, $allowed, true) || empty($allowed))) {
+        // Eğer ALLOWED_ORIGINS boşsa (canlı henüz .env'e geçmedi) eski davranışı koru.
+        // .env tanımlandığında yalnız izinli origin yansıtılır.
+        header('Access-Control-Allow-Origin: ' . $origin);
+        header('Access-Control-Allow-Credentials: true');
+    }
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization');
-    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Max-Age: 86400');
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-        http_response_code(200);
+        http_response_code(204);
         exit;
     }
 }
@@ -27,7 +52,14 @@ function json_success($data = null, $message = 'Basarili', $code = 200) {
 function json_error($message, $code = 400, $detail = null) {
     http_response_code($code);
     $response = array('success' => false, 'error' => $message);
-    if ($detail !== null) $response['detail'] = $detail;
+    // Production'da iç hata detayı yalnız log'a yazılır, response'a düşmez.
+    if ($detail !== null) {
+        if (defined('MR_IS_PROD') && MR_IS_PROD) {
+            error_log('[mr_hasar] ' . $message . ' :: ' . (is_string($detail) ? $detail : json_encode($detail)));
+        } else {
+            $response['detail'] = $detail;
+        }
+    }
     echo json_encode($response, JSON_UNESCAPED_UNICODE);
     exit;
 }

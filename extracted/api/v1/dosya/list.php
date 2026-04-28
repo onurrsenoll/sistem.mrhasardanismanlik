@@ -26,6 +26,12 @@ $kaynak = clean($_GET['kaynak'] ?? '');
 $where = [];
 $params = [];
 
+// Soft-delete filtresi (varsayılan: yalnız aktif dosyalar)
+$includeSilinen = isset($_GET['silinen']) && $_GET['silinen'] === '1' && $user['rol'] === 'admin';
+if (!$includeSilinen) {
+    $where[] = '(v.silindi = 0 OR v.silindi IS NULL)';
+}
+
 if ($q !== '') {
     $search = "%$q%";
     $searchUpper = "%" . mb_strtoupper(preg_replace('/\s+/', '', $q), 'UTF-8') . "%";

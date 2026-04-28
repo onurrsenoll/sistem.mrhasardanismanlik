@@ -25,6 +25,9 @@ $stmt->execute([$id ?: $no]);
 $dosya = $stmt->fetch();
 
 if (!$dosya) json_error('Dosya bulunamadı', 404);
+if (!empty($dosya['silindi']) && (int)$dosya['silindi'] === 1 && $user['rol'] !== 'admin') {
+    json_error('Dosya bulunamadı', 404);
+}
 
 // Mağdur
 $stmt = $db->prepare('SELECT * FROM magdurlar WHERE dosya_id = ?');

@@ -1,33 +1,18 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/helpers.php';
+require_once __DIR__ . '/../../config/auth.php';
+
+setup_headers();
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    echo json_encode(['status' => 'API aktif', 'endpoint' => 'login']);
-    exit;
+    json_success(array('status' => 'API aktif', 'endpoint' => 'login'));
 }
 
-$raw = file_get_contents('php://input');
-$body = json_decode($raw, true);
+require_method('POST');
 
-if (!$body || empty($body['email']) || empty($body['sifre'])) {
-    http_response_code(422);
-    echo json_encode(['success' => false, 'error' => 'Email ve sifre gerekli']);
-    exit;
+$body = get_json_body();
+if (empty($body['email']) || empty($body['sifre'])) {
+    json_error('Email ve sifre gerekli', 422);
 }
 
 try {
@@ -37,45 +22,37 @@ try {
     $user = $stmt->fetch();
 
     if (!$user) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'Email veya sifre hatali']);
-        exit;
+        json_error('Email veya sifre hatali', 401);
     }
-
     if (!$user['aktif']) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'Hesap devre disi']);
-        exit;
+        json_error('Hesap devre disi', 403);
     }
-
     if (!password_verify($body['sifre'], $user['sifre_hash'])) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'Email veya sifre hatali']);
-        exit;
+        json_error('Email veya sifre hatali', 401);
     }
 
     $token = jwt_create([
-        'user_id' => $user['id'],
-        'email' => $user['email'],
-        'rol' => $user['rol']
+        'user_id' => (int)$user['id'],
+        'email'   => $user['email'],
+        'rol'     => $user['rol']
     ]);
+
+    session_register((int)$user['id'], $token);
+    $refreshToken = refresh_token_issue((int)$user['id']);
 
     $stmt = $db->prepare('UPDATE users SET son_giris = NOW() WHERE id = ?');
     $stmt->execute([$user['id']]);
 
     unset($user['sifre_hash']);
+    log_action((int)$user['id'], 'giris', 'Sisteme giris yapti');
 
-    echo json_encode([
-        'success' => true,
-        'message' => 'Giris basarili',
-        'data' => [
-            'token' => $token,
-            'user' => $user
-        ]
-    ]);
+    json_success(array(
+        'token'         => $token,
+        'refresh_token' => $refreshToken,
+        'expires_in'    => JWT_EXPIRE,
+        'user'          => $user
+    ), 'Giris basarili');
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Sunucu hatasi', 'detail' => $e->getMessage()]);
+    json_error('Sunucu hatasi', 500, $e->getMessage());
 }
-?>

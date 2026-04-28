@@ -100,7 +100,7 @@ MR.LoginScreen = ({onLogin}) => {
     setLoading(true); setError('');
     try {
       const r = await MR.api.login(email, sifre);
-      if (r && r.success) { MR.api.setToken(r.data.token); onLogin(r.data.user); }
+      if (r && r.success) { MR.api.setToken(r.data.token, r.data.refresh_token || null); onLogin(r.data.user); }
       else setError(r?.error || 'GİRİŞ BAŞARISIZ');
     } catch (e) { setError('BAĞLANTI HATASI'); }
     setLoading(false);

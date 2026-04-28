@@ -53,26 +53,37 @@ function menuErisim(user) {
   return MENU.filter(m => izin.some(i => m.id === i || m.id.startsWith(i)));
 }
 
+/* ═══ İZOLE BİLDİRİM BADGE — kendi başına poll eder, TopNav'ı re-render etmez ═══ */
+const BildirimBadge = React.memo(function BildirimBadge() {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    const fetchCount = async () => {
+      const r = await MR.api.bildirimList({okunmamis: 1, limit: 1});
+      if (alive && r?.success) setCount(r.data?.total || 0);
+    };
+    fetchCount();
+    const iv = setInterval(fetchCount, 60000);
+    return () => { alive = false; clearInterval(iv); };
+  }, []);
+  if (count <= 0) return null;
+  return (
+    <span style={{
+      position: 'absolute', top: 2, right: 2,
+      width: 16, height: 16, borderRadius: '50%',
+      background: MR.C.danger, color: '#fff', fontSize: 9,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700
+    }}>{count > 9 ? '9+' : count}</span>
+  );
+});
+
 /* ═══ ÜST NAVİGASYON ═══ */
 const TopNav = ({user, page, setPage, onLogout}) => {
   const {C, LIcon, api} = MR;
   const [menuOpen, setMenuOpen] = useState(null);
-  const [bildirimSayisi, setBildirimSayisi] = useState(0);
   const [profilOpen, setProfilOpen] = useState(false);
   const navRef = useRef(null);
   const filteredMenu = menuErisim(user);
-
-  useEffect(() => {
-    (async () => {
-      const r = await api.bildirimList({okunmamis: 1, limit: 1});
-      if (r?.success) setBildirimSayisi(r.data?.total || 0);
-    })();
-    const iv = setInterval(async () => {
-      const r = await api.bildirimList({okunmamis: 1, limit: 1});
-      if (r?.success) setBildirimSayisi(r.data?.total || 0);
-    }, 60000);
-    return () => clearInterval(iv);
-  }, []);
 
   useEffect(() => {
     const close = (e) => {
@@ -129,14 +140,7 @@ const TopNav = ({user, page, setPage, onLogout}) => {
             >
               <LIcon name={m.icon} size={14} color={isActive(m) ? C.accent : C.textMuted}/>
               <span>{m.label}</span>
-              {m.id === 'bildirim' && bildirimSayisi > 0 && (
-                <span style={{
-                  position: 'absolute', top: 2, right: 2,
-                  width: 16, height: 16, borderRadius: '50%',
-                  background: C.danger, color: '#fff', fontSize: 9,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700
-                }}>{bildirimSayisi > 9 ? '9+' : bildirimSayisi}</span>
-              )}
+              {m.id === 'bildirim' && <BildirimBadge/>}
               {m.sub && <LIcon name="ChevronDown" size={12} color={C.textMuted}/>}
             </div>
 
@@ -408,15 +412,16 @@ const App = () => {
     (async () => {
       if (api.token) {
         const r = await api.me();
-        if (r?.success) { setUser(r.data); }
-        else { api.setToken(null); }
+        if (r?.success) { setUser(r.data?.user || r.data); }
+        else { api.setToken(null, null); }
       }
       setLoading(false);
     })();
   }, []);
 
-  const logout = () => {
-    api.setToken(null);
+  const logout = async () => {
+    try { await api.logout(); } catch (e) {}
+    api.setToken(null, null);
     setUser(null);
     setPage('home');
   };

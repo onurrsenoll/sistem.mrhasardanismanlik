@@ -1,7 +1,10 @@
 <?php
 /**
  * DELETE /api/v1/dosya/delete.php?id=1
- * Dosya sil (CASCADE ile mağdur, araç, masraf, evrak da silinir)
+ * SOFT DELETE — Dosya `silindi=1` olarak işaretlenir, fiziksel silme yapılmaz.
+ * Mağdur, araç, masraf ve evraklar KORUNUR.
+ *
+ * Sadece admin role bu işlemi yapabilir.
  */
 
 require_once __DIR__ . '/../../config/helpers.php';
@@ -16,27 +19,21 @@ $db = getDB();
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) json_error('Dosya ID gerekli', 422);
 
-$stmt = $db->prepare('SELECT id, dosya_no FROM dosyalar WHERE id = ?');
+$stmt = $db->prepare('SELECT id, dosya_no, silindi FROM dosyalar WHERE id = ?');
 $stmt->execute([$id]);
 $dosya = $stmt->fetch();
 if (!$dosya) json_error('Dosya bulunamadı', 404);
+if ((int)$dosya['silindi'] === 1) json_error('Dosya zaten silinmiş', 409);
 
-// İlişkili evrak dosyalarını sunucudan sil
-$stmt = $db->prepare('SELECT dosya_yolu FROM evraklar WHERE dosya_id = ?');
-$stmt->execute([$id]);
-$evraklar = $stmt->fetchAll();
-
-foreach ($evraklar as $evrak) {
-    $filePath = UPLOAD_DIR . $evrak['dosya_yolu'];
-    if (file_exists($filePath)) {
-        unlink($filePath);
-    }
+$db->beginTransaction();
+try {
+    $stmt = $db->prepare('UPDATE dosyalar SET silindi = 1, silinme_tarihi = NOW(), silen_kullanici_id = ? WHERE id = ?');
+    $stmt->execute([$user['id'], $id]);
+    $db->commit();
+} catch (Exception $e) {
+    $db->rollBack();
+    json_error('Silme islemi basarisiz', 500, $e->getMessage());
 }
 
-// Dosyayı sil (CASCADE ile tüm ilişkili kayıtlar silinir)
-$stmt = $db->prepare('DELETE FROM dosyalar WHERE id = ?');
-$stmt->execute([$id]);
-
-log_action($user['id'], 'dosya_sil', "Dosya silindi: {$dosya['dosya_no']}", 'dosyalar', $id);
-
-json_success(null, 'Dosya ve tüm ilişkili kayıtlar silindi');
+log_action($user['id'], 'dosya_sil', "Dosya silindi (soft): {$dosya['dosya_no']}", 'dosyalar', $id);
+json_success(null, 'Dosya silindi olarak işaretlendi (geri alınabilir)');

@@ -1,0 +1,5 @@
+extracted/node_modules/
+extracted/api/config/.env
+extracted/api/v1/**/error_log
+*.log
+.DS_Store
