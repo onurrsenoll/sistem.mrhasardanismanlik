@@ -1,0 +1,72 @@
+# ═══ PHP UPLOAD LİMİTLERİ ═══
+php_value upload_max_filesize 512M
+php_value post_max_size 512M
+php_value memory_limit 1024M
+php_value max_execution_time 600
+php_value max_input_time 600
+
+RewriteEngine On
+
+# API isteklerini olduğu gibi bırak
+RewriteCond %{REQUEST_URI} ^/api/ [NC]
+RewriteRule ^ - [L]
+
+# Gerçek dosyalar varsa sun
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Diğer her şeyi index.html'e yönlendir (React SPA)
+RewriteRule ^ index.html [L]
+
+# ═══ CACHE KONTROL ═══
+# JS dosyalarını cache'leme (her zaman güncel versiyon)
+<FilesMatch "\.(js|jsx)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</FilesMatch>
+
+# HTML dosyalarını cache'leme
+<FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</FilesMatch>
+
+# API yanıtlarını cache'leme
+<FilesMatch "\.php$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</FilesMatch>
+
+# Görseller ve statik dosyalar 1 gün cache
+<FilesMatch "\.(png|jpg|jpeg|gif|svg|ico|css|woff|woff2|ttf)$">
+    Header set Cache-Control "public, max-age=86400"
+</FilesMatch>
+
+# ═══ PERFORMANS VE GÜVENLİK ═══
+# Gzip sıkıştırma
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css application/json application/javascript text/javascript
+</IfModule>
+
+# Güvenlik başlıkları
+Header set X-Content-Type-Options "nosniff"
+Header set X-Frame-Options "SAMEORIGIN"
+Header set X-XSS-Protection "1; mode=block"
+
+# uploads klasöründe PHP çalıştırmayı engelle
+<Directory "uploads">
+    <FilesMatch "\.php$">
+        Deny from all
+    </FilesMatch>
+</Directory>
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the “ea-php73” package as the default “PHP” programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php73 .php .php7 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MR HASAR DANIŞMANLIK - MÜŞTERİ PORTALI</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  body { font-family:'Inter',system-ui,-apple-system,sans-serif; background:#f0f4f8; color:#1e293b; min-height:100vh; }
+
+  /* HEADER */
+  .portal-header { background:#fff; color:#1e293b; padding:16px 0; box-shadow:0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04); border-bottom:2px solid #2563eb; }
+  .portal-header .inner { max-width:960px; margin:0 auto; padding:0 24px; display:flex; align-items:center; justify-content:space-between; }
+  .portal-header h1 { font-size:17px; font-weight:800; letter-spacing:.3px; color:#1e40af; }
+  .portal-header .sub { font-size:11px; color:#64748b; margin-top:2px; font-weight:500; }
+  .portal-header .user-info { text-align:right; font-size:12px; }
+  .portal-header .user-info .name { font-weight:700; font-size:14px; color:#1e293b; }
+  .portal-header .logout-btn { background:#f1f5f9; border:1px solid #e2e8f0; color:#475569; padding:6px 14px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:600; margin-top:6px; transition:all .2s; }
+  .portal-header .logout-btn:hover { background:#e2e8f0; border-color:#cbd5e1; color:#1e293b; }
+
+  /* CONTAINER */
+  .container { max-width:960px; margin:0 auto; padding:20px 24px; }
+
+  /* CARD */
+  .card { background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04); margin-bottom:16px; overflow:hidden; border:1px solid #e2e8f0; animation:fadeIn .4s ease; }
+  .card-head { padding:14px 20px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; gap:10px; background:#fafbfc; }
+  .card-head .icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .card-head h2 { font-size:14px; font-weight:700; color:#1e293b; }
+  .card-head .desc { font-size:11px; color:#64748b; }
+  .card-body { padding:20px; }
+
+  /* STAT GRID */
+  .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:20px; }
+  .stat-card { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:18px 16px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.04); transition:all .2s ease; }
+  .stat-card:hover { box-shadow:0 4px 12px rgba(0,0,0,.08); transform:translateY(-1px); border-color:#cbd5e1; }
+  .stat-card .label { font-size:10px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.8px; }
+  .stat-card .value { font-size:18px; font-weight:800; margin-top:6px; color:#1e293b; }
+
+  /* BADGE */
+  .badge { display:inline-block; padding:5px 14px; border-radius:20px; font-size:11px; font-weight:700; }
+  .badge-blue { background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; }
+  .badge-green { background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; }
+  .badge-amber { background:#fffbeb; color:#d97706; border:1px solid #fde68a; }
+  .badge-red { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+
+  /* INFO ROWS */
+  .info-row { display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid #f1f5f9; font-size:13px; }
+  .info-row:last-child { border-bottom:none; }
+  .info-row .lbl { color:#64748b; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.3px; }
+  .info-row .val { font-weight:600; text-align:right; color:#1e293b; }
+
+  /* SECTION HEADER */
+  .section-title { font-size:12px; font-weight:700; color:#1e293b; margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid #2563eb; display:inline-block; text-transform:uppercase; letter-spacing:.5px; }
+  .section-title-wrap { margin-top:24px; margin-bottom:4px; }
+
+  /* EVRAK */
+  .evrak-item { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:#fafbfc; border-radius:8px; margin-bottom:8px; border:1px solid #e2e8f0; transition:all .2s; }
+  .evrak-item:hover { border-color:#cbd5e1; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+  .evrak-item .name { font-size:13px; font-weight:600; color:#1e293b; }
+  .evrak-item .meta { font-size:11px; color:#64748b; margin-top:3px; }
+  .evrak-item .btn-dl { background:#2563eb; color:#fff; padding:7px 16px; border-radius:6px; font-size:11px; cursor:pointer; border:none; font-weight:600; text-decoration:none; transition:all .2s; }
+  .evrak-item .btn-dl:hover { background:#1d4ed8; box-shadow:0 2px 8px rgba(37,99,235,.3); }
+
+  /* TIMELINE */
+  .timeline { position:relative; padding-left:28px; }
+  .timeline::before { content:''; position:absolute; left:9px; top:4px; bottom:4px; width:2px; background:#e2e8f0; border-radius:2px; }
+  .timeline-item { position:relative; margin-bottom:18px; animation:fadeIn .4s ease; }
+  .timeline-item::before { content:''; position:absolute; left:-23px; top:5px; width:10px; height:10px; border-radius:50%; background:var(--dot-color, #2563eb); border:2px solid #fff; box-shadow:0 0 0 2px var(--dot-color, #2563eb); }
+  .timeline-item .date { font-size:11px; color:#64748b; font-weight:500; }
+  .timeline-item .text { font-size:13px; font-weight:600; margin-top:2px; color:#1e293b; }
+
+  /* LOGIN */
+  .login-page { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#f0f4f8 0%,#e2e8f0 100%); padding:20px; }
+  .login-box { background:#fff; border-radius:14px; padding:40px 32px; width:100%; max-width:420px; box-shadow:0 4px 24px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.04); border:1px solid #e2e8f0; animation:fadeIn .5s ease; }
+  .login-box .logo { text-align:center; margin-bottom:28px; }
+  .login-box .logo h1 { font-size:20px; font-weight:800; color:#1e40af; }
+  .login-box .logo .sub { font-size:12px; color:#64748b; margin-top:4px; font-weight:500; }
+  .login-box .title { font-size:15px; font-weight:700; text-align:center; margin-bottom:24px; color:#1e293b; }
+  .login-box label { display:block; font-size:11px; font-weight:700; color:#475569; margin-bottom:6px; letter-spacing:.5px; text-transform:uppercase; }
+  .login-box input { width:100%; padding:12px 14px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; outline:none; margin-bottom:16px; font-family:inherit; background:#fff; color:#1e293b; transition:all .2s; }
+  .login-box input:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+  .login-box .btn-primary { width:100%; background:#2563eb; color:#fff; border:none; padding:14px; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; letter-spacing:.3px; transition:all .2s; }
+  .login-box .btn-primary:hover { background:#1d4ed8; box-shadow:0 4px 12px rgba(37,99,235,.3); }
+  .login-box .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+  .login-box .error { background:#fef2f2; color:#dc2626; padding:10px 14px; border-radius:8px; font-size:12px; font-weight:500; margin-bottom:12px; border:1px solid #fecaca; }
+  .login-box .info { background:#eff6ff; color:#2563eb; padding:10px 14px; border-radius:8px; font-size:12px; font-weight:500; margin-bottom:12px; border:1px solid #bfdbfe; }
+  .login-box .step-info { text-align:center; font-size:11px; color:#64748b; margin-top:16px; line-height:1.6; }
+  .kvkk-notice { text-align:center; font-size:10px; color:#94a3b8; margin-top:16px; line-height:1.5; }
+
+  /* TABS */
+  .tabs { display:flex; border-bottom:1px solid #e2e8f0; margin-bottom:0; background:#fafbfc; }
+  .tab { padding:13px 20px; cursor:pointer; font-size:12px; font-weight:600; color:#64748b; border-bottom:2px solid transparent; transition:all .2s; }
+  .tab.active { color:#2563eb; border-bottom-color:#2563eb; background:#fff; }
+  .tab:hover { color:#1e293b; background:#f8fafc; }
+
+  /* FOOTER */
+  .footer { text-align:center; padding:24px 20px; font-size:11px; color:#64748b; border-top:1px solid #e2e8f0; margin-top:20px; background:#fafbfc; border-radius:0 0 10px 10px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width:5px; }
+  ::-webkit-scrollbar-track { background:#f1f5f9; }
+  ::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:4px; }
+  ::-webkit-scrollbar-thumb:hover { background:#94a3b8; }
+
+  /* WELCOME BANNER */
+  .welcome-banner { background:linear-gradient(135deg,#eff6ff,#f0f4f8); border:1px solid #bfdbfe; border-radius:10px; padding:14px 20px; margin-bottom:16px; font-size:13px; color:#1e40af; line-height:1.6; }
+
+  @media(max-width:600px) {
+    .stat-grid { grid-template-columns:1fr 1fr; gap:8px; }
+    .portal-header .inner { flex-direction:column; text-align:center; gap:12px; }
+    .portal-header .user-info { text-align:center; }
+    .tabs { overflow-x:auto; }
+    .tab { white-space:nowrap; padding:12px 14px; font-size:11px; }
+    .container { padding:16px; }
+  }
+</style>
+</head>
+<body>
+<div id="portal-root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+const {useState, useEffect, useCallback, useRef} = React;
+
+/* ═══ PORTAL API ═══ */
+const API = '/api/v1';
+const portalApi = {
+  token: null,
+  setToken(t) { this.token = t; if(t) sessionStorage.setItem('portal_token',t); else sessionStorage.removeItem('portal_token'); },
+  getToken() { if(!this.token) this.token = sessionStorage.getItem('portal_token'); return this.token; },
+  async req(ep, o={}) {
+    const h = {'Content-Type':'application/json'};
+    const t = this.getToken();
+    if(t) h['Authorization'] = 'Portal ' + t;
+    try {
+      const r = await fetch(API+ep, {...o, headers:{...h,...o.headers}});
+      if(r.status===401) { this.setToken(null); return {success:false, error:'OTURUM SÜRESİ DOLMUŞ'}; }
+      const txt = await r.text();
+      try { return JSON.parse(txt); } catch(e) { return {success:false, error:'SUNUCU HATASI'}; }
+    } catch(e) { return {success:false, error:'BAĞLANTI HATASI'}; }
+  },
+  tcGiris(tc_kimlik,telefon) { return this.req('/portal/tc-giris.php',{method:'POST',body:JSON.stringify({tc_kimlik,telefon})}); },
+  otpGonder(telefon) { return this.req('/portal/otp-gonder.php',{method:'POST',body:JSON.stringify({telefon})}); },
+  otpDogrula(telefon,otp) { return this.req('/portal/otp-dogrula.php',{method:'POST',body:JSON.stringify({telefon,otp})}); },
+  linkGiris(kod) { return this.req('/portal/link-giris.php',{method:'POST',body:JSON.stringify({erisim_kodu:kod})}); },
+  dosya() { return this.req('/portal/dosya.php'); },
+  mesajlar() { return this.req('/portal/mesajlar.php'); },
+  mesajGonder(mesaj) { return this.req('/portal/mesajlar.php',{method:'POST',body:JSON.stringify({mesaj})}); },
+  evrakUrl(id) { return API+'/portal/evrak-indir.php?id='+id+'&mode=inline'; },
+  evrakDownUrl(id) { return API+'/portal/evrak-indir.php?id='+id; }
+};
+
+/* ═══ LOGIN SAYFASI ═══ */
+const LoginPage = ({onLogin}) => {
+  const [tcKimlik, setTcKimlik] = useState('');
+  const [telefon, setTelefon] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [linkLoading, setLinkLoading] = useState(false);
+
+  // Link ile giriş kontrolü (URL'de #kod=xxx varsa)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if(hash && hash.includes('kod=')) {
+      const kod = hash.split('kod=')[1];
+      if(kod) {
+        setLinkLoading(true);
+        portalApi.linkGiris(kod).then(r => {
+          setLinkLoading(false);
+          if(r?.success) {
+            portalApi.setToken(r.data.token);
+            onLogin(r.data.erisim);
+          } else {
+            setError(r?.error || 'GEÇERSİZ ERİŞİM LİNKİ');
+          }
+        });
+      }
+    }
+  }, []);
+
+  const girisYap = async () => {
+    if(!tcKimlik || tcKimlik.length !== 11) { setError('GEÇERLİ BİR TC KİMLİK NUMARASI GİRİN (11 HANELİ)'); return; }
+    if(!telefon || telefon.length < 10) { setError('GEÇERLİ BİR TELEFON NUMARASI GİRİN'); return; }
+    setLoading(true); setError('');
+    const r = await portalApi.tcGiris(tcKimlik, telefon);
+    setLoading(false);
+    if(r?.success) {
+      portalApi.setToken(r.data.token);
+      onLogin(r.data.erisim);
+    } else {
+      setError(r?.error || 'GİRİŞ BAŞARISIZ');
+    }
+  };
+
+  if(linkLoading) return (
+    <div className="login-page">
+      <div className="login-box" style={{textAlign:'center'}}>
+        <div className="logo">
+          <h1>MR HASAR DANIŞMANLIK</h1>
+          <div className="sub">MÜŞTERİ / MAĞDUR PORTALI</div>
+        </div>
+        <div style={{padding:30, color:'#2563eb', fontSize:14}}>PORTAL ERİŞİMİ DOĞRULANIYOR...</div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="login-page">
+      <div className="login-box">
+        <div className="logo">
+          <h1>MR HASAR DANIŞMANLIK</h1>
+          <div className="sub">DOSYA TAKİP SİSTEMİ - MÜŞTERİ PORTALI</div>
+        </div>
+
+        <div className="title">PORTALA GİRİŞ YAP</div>
+
+        {error && <div className="error">{error}</div>}
+
+        <label>TC KİMLİK NUMARANIZ</label>
+        <input
+          type="text"
+          placeholder="TC KİMLİK NO (11 HANELİ)"
+          value={tcKimlik}
+          onChange={e => setTcKimlik(e.target.value.replace(/[^0-9]/g,''))}
+          maxLength={11}
+          autoFocus
+          style={{letterSpacing:1}}
+        />
+
+        <label>TELEFON NUMARANIZ</label>
+        <input
+          type="tel"
+          placeholder="05XX XXX XX XX"
+          value={telefon}
+          onChange={e => setTelefon(e.target.value.replace(/[^0-9]/g,''))}
+          maxLength={11}
+          onKeyDown={e => e.key === 'Enter' && girisYap()}
+        />
+
+        <button className="btn-primary" onClick={girisYap} disabled={loading}>
+          {loading ? 'GİRİŞ YAPILIYOR...' : 'GİRİŞ YAP'}
+        </button>
+
+        <div className="step-info">
+          DOSYANIZA KAYITLI TC KİMLİK VE TELEFON NUMARANIZ<br/>
+          İLE GİRİŞ YAPABİLİRSİNİZ.
+        </div>
+
+        <div className="kvkk-notice">
+          Bu portala giriş yaparak 6698 sayılı KVKK kapsamında<br/>
+          kişisel verilerinizin işlenmesini kabul etmiş olursunuz.
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ═══ DOSYA DURUM BADGE ═══ */
+const AsamaBadge = ({asama}) => {
+  if(!asama) return null;
+  const s = asama.toUpperCase();
+  let cls = 'badge-blue';
+  if(s.includes('KAPAN') || s.includes('TAHSİL') || s.includes('TAMAMLAN')) cls = 'badge-green';
+  else if(s.includes('BEKLİYOR') || s.includes('DEĞERLEND')) cls = 'badge-amber';
+  else if(s.includes('İPTAL') || s.includes('RED')) cls = 'badge-red';
+  return <span className={`badge ${cls}`}>{asama}</span>;
+};
+
+/* ═══ PORTAL DASHBOARD ═══ */
+const Dashboard = ({erisim}) => {
+  const [tab, setTab] = useState('ozet');
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    const r = await portalApi.dosya();
+    if(r?.success) setData(r.data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { loadData(); }, []);
+
+  const cikis = () => {
+    portalApi.setToken(null);
+    sessionStorage.clear();
+    if(window.location.hash) {
+      window.location.hash = '';
+      history.replaceState(null, '', window.location.pathname);
+    }
+    window.location.reload();
+  };
+
+  const formatTarih = (t) => {
+    if(!t) return '-';
+    try { const d = new Date(t); return d.toLocaleDateString('tr-TR'); } catch(e) { return t; }
+  };
+  const formatTarihSaat = (t) => {
+    if(!t) return '-';
+    try { const d = new Date(t); return d.toLocaleDateString('tr-TR') + ' ' + d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}); } catch(e) { return t; }
+  };
+
+  if(loading) return (
+    <>
+      <header className="portal-header">
+        <div className="inner">
+          <div><h1>MR HASAR DANIŞMANLIK</h1><div className="sub">DOSYA TAKİP SİSTEMİ</div></div>
+        </div>
+      </header>
+      <div className="container" style={{textAlign:'center', padding:60}}>
+        <div style={{fontSize:14, color:'#64748b'}}>YÜKLENİYOR...</div>
+      </div>
+    </>
+  );
+
+  const dosya = data?.dosya;
+  const magdur = data?.magdur;
+  const evraklar = data?.evraklar || [];
+  const surecler = data?.surecler || [];
+  const firma = data?.firma || {};
+  const evrakIndirIzin = data?.evrak_indir_izin === '1' || data?.evrak_indir_izin === 1 || data?.evrak_indir_izin === true || data?.evrak_indir_izin === 'true' || data?.evrak_indir_izin === 'evet';
+
+  const TABS = [
+    {key:'ozet', label:'DOSYA ÖZETİ', icon:''},
+    {key:'evrak', label:'EVRAKLAR', icon:'', count: evraklar.length},
+    {key:'surecler', label:'AŞAMALAR / DOSYA SÜREÇLERİ', icon:''}
+  ];
+
+  return (
+    <>
+      <header className="portal-header">
+        <div className="inner">
+          <div>
+            <h1>{firma.firma_adi || 'MR HASAR DANIŞMANLIK'}</h1>
+            <div className="sub">DOSYA TAKİP SİSTEMİ - MÜŞTERİ PORTALI</div>
+          </div>
+          <div className="user-info">
+            <div className="name">{erisim.ad_soyad}</div>
+            <div style={{fontSize:11, color:'#64748b'}}>DOSYA: {erisim.dosya_no}</div>
+            <button className="logout-btn" onClick={cikis}>ÇIKIŞ YAP</button>
+          </div>
+        </div>
+      </header>
+
+      <div className="container">
+        {/* KARŞILAMA */}
+        {firma.portal_karsilama && (
+          <div className="welcome-banner">
+            {firma.portal_karsilama}
+          </div>
+        )}
+
+        {/* STAT CARDS */}
+        <div className="stat-grid">
+          <div className="stat-card">
+            <div className="label">DOSYA NO</div>
+            <div className="value" style={{color:'#2563eb', fontSize:16}}>{dosya?.dosya_no}</div>
+          </div>
+          <div className="stat-card">
+            <div className="label">DOSYA TÜRÜ</div>
+            <div className="value" style={{fontSize:15}}>{dosya?.dosya_turu === 'ADK' ? 'ARAÇ DEĞER KAYBI' : dosya?.dosya_turu === 'BH' ? 'BEDENİ HASAR' : dosya?.dosya_turu}</div>
+          </div>
+          <div className="stat-card">
+            <div className="label">GÜNCEL AŞAMA</div>
+            <div style={{marginTop:8}}><AsamaBadge asama={dosya?.asama}/></div>
+          </div>
+          <div className="stat-card">
+            <div className="label">SİGORTA ŞİRKETİ</div>
+            <div className="value" style={{fontSize:14}}>{dosya?.sigorta_sirket || '-'}</div>
+          </div>
+        </div>
+
+        {/* TAB MENU */}
+        <div className="card">
+          <div className="tabs" style={{padding:'0 8px'}}>
+            {TABS.map(t => (
+              <div key={t.key} className={`tab ${tab===t.key?'active':''}`} onClick={() => setTab(t.key)}>
+                {t.label}
+                {t.count > 0 && <span style={{background:'#2563eb', color:'#fff', fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:10, marginLeft:6}}>{t.count}</span>}
+              </div>
+            ))}
+          </div>
+
+          <div className="card-body">
+            {/* DOSYA ÖZETİ */}
+            {tab === 'ozet' && (
+              <div>
+                <div className="section-title-wrap"><span className="section-title">DOSYA BİLGİLERİ</span></div>
+                <div className="info-row"><span className="lbl">DOSYA NO</span><span className="val">{dosya?.dosya_no}</span></div>
+                <div className="info-row"><span className="lbl">DOSYA TÜRÜ</span><span className="val">{dosya?.dosya_turu}</span></div>
+                <div className="info-row"><span className="lbl">DURUM</span><span className="val"><AsamaBadge asama={dosya?.asama}/></span></div>
+                <div className="info-row"><span className="lbl">SİGORTA ŞİRKETİ</span><span className="val">{dosya?.sigorta_sirket || '-'}</span></div>
+                <div className="info-row"><span className="lbl">SİGORTA HASAR DOSYA NO</span><span className="val">{dosya?.hasar_no || '-'}</span></div>
+                <div className="info-row"><span className="lbl">KAZA TARİHİ</span><span className="val">{formatTarih(dosya?.kaza_tarihi)}</span></div>
+                <div className="info-row"><span className="lbl">KAZA İLİ</span><span className="val">{dosya?.kaza_il || '-'}</span></div>
+                <div className="info-row"><span className="lbl">DOSYA AÇILIŞ TARİHİ</span><span className="val">{formatTarih(dosya?.acilis_tarihi)}</span></div>
+
+                {magdur && (
+                  <>
+                    <div className="section-title-wrap" style={{marginTop:28}}><span className="section-title">MÜŞTERİ BİLGİLERİ</span></div>
+                    <div className="info-row"><span className="lbl">AD SOYAD</span><span className="val">{magdur.ad_soyad}</span></div>
+                    <div className="info-row"><span className="lbl">İL / İLÇE</span><span className="val">{[magdur.il, magdur.ilce].filter(Boolean).join(' / ') || '-'}</span></div>
+                  </>
+                )}
+
+                {/* FİRMA İLETİŞİM */}
+                <div className="section-title-wrap" style={{marginTop:28}}><span className="section-title">FİRMA İLETİŞİM</span></div>
+                {firma.firma_telefon && <div className="info-row"><span className="lbl">TELEFON</span><span className="val">{firma.firma_telefon}</span></div>}
+                {firma.firma_email && <div className="info-row"><span className="lbl">E-POSTA</span><span className="val">{firma.firma_email}</span></div>}
+                <div className="info-row"><span className="lbl">ADRES</span><span className="val" style={{maxWidth:'60%', fontSize:12, lineHeight:1.5}}>KUZEY YILDIZI MAH. ŞEHİT MESUT BİRİNCİ CAD. NO:3/6 CANİK / SAMSUN</span></div>
+              </div>
+            )}
+
+            {/* EVRAKLAR */}
+            {tab === 'evrak' && (
+              <div>
+                {evraklar.length === 0 ? (
+                  <div style={{textAlign:'center', padding:40, color:'#94a3b8', fontSize:13}}>
+                    HENÜZ EVRAK YÜKLENMEMİŞ
+                  </div>
+                ) : (
+                  <>
+                    <div style={{fontSize:11, color:'#64748b', marginBottom:12, fontWeight:600}}>
+                      DOSYANIZA YÜKLENEN EVRAKLAR ({evraklar.length} ADET)
+                    </div>
+                    {evraklar.map(e => (
+                      <div key={e.id} className="evrak-item">
+                        <div style={{flex:1}}>
+                          <div className="name">{e.evrak_turu || e.dosya_adi}</div>
+                          <div className="meta">{e.dosya_adi} - {formatTarihSaat(e.created_at)}</div>
+                        </div>
+                        {evrakIndirIzin && (
+                          <button className="btn-dl" onClick={() => {
+                            const h = {}; if(portalApi.getToken()) h['Authorization'] = 'Portal ' + portalApi.getToken();
+                            fetch(portalApi.evrakDownUrl(e.id), {headers:h}).then(r => {
+                              if(!r.ok) { alert('İNDİRME YETKİSİ KAPATILMIŞ'); return; }
+                              return r.blob();
+                            }).then(b => {
+                              if(!b) return;
+                              const url = URL.createObjectURL(b);
+                              const link = document.createElement('a');
+                              link.href = url; link.download = e.dosya_adi; link.click();
+                              URL.revokeObjectURL(url);
+                            }).catch(() => alert('İNDİRME HATASI'));
+                          }}>
+                            İNDİR
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* AŞAMALAR / DOSYA SÜREÇLERİ */}
+            {tab === 'surecler' && (
+              <div>
+                {surecler.length === 0 ? (
+                  <div style={{textAlign:'center', padding:40, color:'#94a3b8', fontSize:13}}>
+                    DOSYA SÜRECİ BULUNAMADI
+                  </div>
+                ) : (
+                  <div className="timeline">
+                    {surecler.map((s, i) => {
+                      const tipRenk = s.islem_tipi === 'asama_degisikligi' ? '#2563eb' : s.islem_tipi === 'sistem' ? '#16a34a' : '#64748b';
+                      return (
+                        <div key={i} className="timeline-item" style={{'--dot-color': tipRenk}}>
+                          <div className="date">{formatTarihSaat(s.created_at)}</div>
+                          <div className="text" style={{fontWeight:600}}>{s.baslik}</div>
+                          {s.detay && <div style={{fontSize:11, color:'#64748b', marginTop:3}}>{s.detay}</div>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="footer">
+          <div style={{marginBottom:8, fontSize:13, fontWeight:700, color:'#1e293b'}}>
+            {firma.firma_adi || 'MR HASAR DANIŞMANLIK'}
+          </div>
+          <div style={{marginBottom:8, fontSize:12, color:'#475569'}}>
+            İLETİŞİM: <a href="tel:03625026502" style={{color:'#2563eb', textDecoration:'none'}}>0362 502 65 02</a> - <a href="tel:05550984254" style={{color:'#2563eb', textDecoration:'none'}}>0555 098 42 54</a>
+          </div>
+          <div style={{marginBottom:6, fontSize:10, color:'#94a3b8'}}>
+            6698 SAYILI KVK KANUNU KAPSAMINDA KİŞİSEL VERİLERİNİZ KORUNMAKTADIR.
+          </div>
+          <div style={{fontSize:10, color:'#94a3b8'}}>
+            {firma.firma_adi || 'MR HASAR DANIŞMANLIK'} &copy; {new Date().getFullYear()}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ═══ ANA UYGULAMA ═══ */
+const PortalApp = () => {
+  const [erisim, setErisim] = useState(null);
+
+  // Mevcut oturumu kontrol et
+  useEffect(() => {
+    const token = sessionStorage.getItem('portal_token');
+    if(token) {
+      portalApi.setToken(token);
+      portalApi.dosya().then(r => {
+        if(r?.success) {
+          const d = r.data?.dosya;
+          setErisim({
+            dosya_no: d?.dosya_no,
+            dosya_turu: d?.dosya_turu,
+            asama: d?.asama,
+            ad_soyad: r.data?.magdur?.ad_soyad || ''
+          });
+        } else {
+          portalApi.setToken(null);
+        }
+      });
+    }
+  }, []);
+
+  if(!erisim) return <LoginPage onLogin={setErisim}/>;
+  return <Dashboard erisim={erisim}/>;
+};
+
+ReactDOM.createRoot(document.getElementById('portal-root')).render(<PortalApp/>);
+</script>
+</body>
+</html>

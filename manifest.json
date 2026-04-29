@@ -1,0 +1,24 @@
+{
+  "name": "MR HASAR DANIŞMANLIK - DOSYA TAKİP SİSTEMİ",
+  "short_name": "MR HASAR",
+  "description": "MR HASAR DANIŞMANLIK DOSYA TAKİP VE YÖNETİM SİSTEMİ",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f172a",
+  "theme_color": "#1a56db",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "permissions": [
+    "geolocation",
+    "background-sync",
+    "periodic-background-sync",
+    "notifications"
+  ]
+}
