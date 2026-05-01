@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Protokol Uyum ve Niyet Beyanı — Mayıs 2026</title>
+<style>
+@page { size: A4; margin: 1.5cm 1.2cm; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  color: #2c3e50;
+  background: #f5f6f8;
+  font-size: 10pt;
+  line-height: 1.55;
+}
+.container { max-width: 100%; background: #fff; padding: 0; }
+
+/* HEADER */
+.header {
+  background: #2c3e50;
+  color: #fff;
+  padding: 24px 28px;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.header h1 { font-size: 17pt; font-weight: 600; line-height: 1.25; }
+.header .subtitle { font-size: 10pt; opacity: 0.85; margin-top: 6px; font-weight: 300; }
+.header .period { font-size: 22pt; font-weight: 700; color: #f39c12; text-align: right; line-height: 1; }
+.header .period small { display: block; font-size: 9pt; font-weight: 400; color: #ecf0f1; margin-top: 4px; }
+
+/* BOXES */
+.info-box, .warning-box, .danger-box, .success-box {
+  padding: 16px 20px;
+  margin: 0 28px 22px;
+  border-radius: 4px;
+}
+.info-box { background: #ecf6fc; border-left: 4px solid #3498db; }
+.warning-box { background: #fef5e7; border-left: 4px solid #f39c12; }
+.danger-box { background: #fdedec; border-left: 4px solid #e74c3c; }
+.success-box { background: #eafaf1; border-left: 4px solid #27ae60; }
+.info-box h3, .warning-box h3, .danger-box h3, .success-box h3 {
+  font-size: 11pt; margin-bottom: 10px; font-weight: 600;
+}
+.info-box h3 { color: #2c3e50; }
+.warning-box h3 { color: #9a6709; }
+.danger-box h3 { color: #922b21; }
+.success-box h3 { color: #196f3d; }
+.info-box p, .warning-box p, .danger-box p, .success-box p {
+  margin-bottom: 8px; font-size: 10pt; text-align: justify;
+}
+.info-box p:last-child, .warning-box p:last-child,
+.danger-box p:last-child, .success-box p:last-child { margin-bottom: 0; }
+.quote {
+  font-style: italic;
+  color: #2c3e50;
+  border-left: 3px solid #95a5a6;
+  padding: 4px 12px;
+  margin: 8px 0;
+  font-size: 10pt;
+}
+
+/* SECTION */
+.section-title {
+  font-size: 13pt;
+  color: #2c3e50;
+  font-weight: 600;
+  margin: 24px 28px 14px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #ecf0f1;
+}
+.section-title .icon { display: inline-block; margin-right: 8px; }
+.section-content { margin: 0 28px 18px; font-size: 10pt; }
+.section-content p { margin-bottom: 10px; text-align: justify; }
+.section-content strong { color: #2c3e50; }
+
+/* HIGHLIGHT NUMBER */
+.amount-row {
+  display: flex;
+  gap: 14px;
+  margin: 0 28px 18px;
+}
+.amount-card {
+  flex: 1;
+  padding: 16px 18px;
+  border-radius: 6px;
+  background: #f8f9fa;
+  border-left: 4px solid #95a5a6;
+}
+.amount-card.red { border-left-color: #e74c3c; background: #fdedec; }
+.amount-card.green { border-left-color: #27ae60; background: #eafaf1; }
+.amount-card.blue { border-left-color: #3498db; background: #ecf6fc; }
+.amount-card .label {
+  font-size: 9pt;
+  color: #7f8c8d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.amount-card .value {
+  font-size: 18pt;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-top: 6px;
+  line-height: 1;
+}
+.amount-card.red .value { color: #c0392b; }
+.amount-card.green .value { color: #196f3d; }
+.amount-card .desc {
+  font-size: 8.5pt;
+  color: #7f8c8d;
+  margin-top: 6px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* MILAT BOX */
+.milat-box {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  color: #fff;
+  padding: 32px 28px;
+  margin: 24px 28px;
+  border-radius: 8px;
+  text-align: center;
+}
+.milat-box .label {
+  font-size: 11pt;
+  opacity: 0.85;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 300;
+}
+.milat-box .date {
+  font-size: 32pt;
+  font-weight: 800;
+  margin: 10px 0 6px;
+  color: #f39c12;
+  letter-spacing: -1px;
+}
+.milat-box .desc {
+  font-size: 11pt;
+  opacity: 0.95;
+  font-weight: 400;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* SIGNATURE / CLOSING */
+.closing {
+  margin: 30px 28px 18px;
+  padding: 18px 0;
+  border-top: 1px solid #ecf0f1;
+  text-align: right;
+}
+.closing .name {
+  font-size: 12pt;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-top: 30px;
+}
+.closing .title {
+  font-size: 9.5pt;
+  color: #7f8c8d;
+  margin-top: 2px;
+}
+
+.footer {
+  text-align: center;
+  font-size: 8.5pt;
+  color: #95a5a6;
+  margin-top: 18px;
+  padding: 18px 28px 24px;
+  border-top: 1px solid #ecf0f1;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5pt;
+  margin-bottom: 12px;
+}
+thead { background: #2c3e50; color: #fff; }
+th { padding: 9px 10px; text-align: left; font-weight: 500; font-size: 9pt; }
+th.right { text-align: right; }
+td { padding: 8px 10px; border-bottom: 1px solid #ecf0f1; }
+td.right { text-align: right; font-variant-numeric: tabular-nums; }
+td.bold { font-weight: 600; }
+tr.total-row { background: #ecf0f1; font-weight: 600; }
+
+.section-content, .info-box, .warning-box, .danger-box, .success-box,
+.amount-card, .milat-box { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <h1>Protokol Uyum ve Niyet Beyanı</h1>
+    <div class="subtitle">MR Hasar Danışmanlık × Av. Demirhan Emir — Aylık Mutabakat Toplantısı</div>
+  </div>
+  <div class="period">
+    MAYIS 2026
+    <small>Niyet Beyanı · Karşılıklı Mutabakat</small>
+  </div>
+</div>
+
+<!-- ACILIS -->
+<div class="info-box">
+  <h3>📌 Bu Belgenin Amacı</h3>
+  <p>Sayın Av. Demirhan Emir, Sayın Emre Bey,</p>
+  <p>Aylık ödeme ve mutabakat görüşmemiz öncesinde, son 15 ayda birlikte yürüttüğümüz iş ortaklığını <strong>geçmişi açma niyeti taşımadan, ileriye dönük net ve sağlıklı bir zemin kurmak amacıyla</strong> bir araya getirmek istiyorum. Bu belge, hem son durumun bir özeti hem de bundan sonrası için niyet beyanımdır.</p>
+  <p>Türkiye'de bu sektörde sıfırdan, sahada ayağı sağlam, organize ve güvenilir bir yapı kurmanın ne kadar zor olduğunu ikimiz de biliyoruz. Bu yapıyı birlikte kurduk; hâlâ ayakta tutmak, büyütmek ve <strong>karşılıklı emeğe saygı içinde</strong> sürdürmek ortak isteğimiz olmalı.</p>
+</div>
+
+<!-- BOLUM 1 - ZEMIN -->
+<div class="section-title"><span class="icon">📜</span>BÖLÜM 1: Mevcut Mutabakat — 8 Temmuz 2025 Protokolü</div>
+<div class="section-content">
+  <p>3-8 Temmuz 2025 tarihleri arasında karşılıklı kabul ve imza ile yürürlüğe giren <strong>"Değer Kaybı ve Bedeni Hasar Dosyaları İş Birliği Protokolü"</strong> bugün hâlâ taraflarımızı bağlayan tek geçerli yazılı düzendir. Protokolün özünü yeniden hatırlamak isterim:</p>
+</div>
+
+<div class="warning-box">
+  <h3>📋 Protokol Özet — Tarafların Yükümlülükleri</h3>
+  <p><strong>Madde 3 — Dosya Türü ve Ücret:</strong></p>
+  <ul style="margin-left:18px;font-size:9.5pt;line-height:1.7;">
+    <li>ADK (Araç Değer Kaybı) — Ofis CRM: <strong>10.000 TL</strong> · Yönlendirme: <strong>15.000 TL</strong></li>
+    <li>BH (Bedeni Hasar) — Ofis CRM: <strong>7.500 TL</strong> · Yönlendirme: <strong>10.000 TL</strong></li>
+    <li>Motosiklet Değer Kaybı: 5.000 TL</li>
+    <li>Yönlendirme tutarının içinden yönlendirenüceretine ödenir, kalanı operasyona kayıt edilir.</li>
+  </ul>
+  <p style="margin-top:8px;"><strong>Madde 5.4:</strong></p>
+  <div class="quote">"Yönlendirme kaynaklı dosyalarda, yönlendiren kişiye yapılmış ödeme <strong>kazançtan düşülür</strong> ve kalan üzerinden <strong>%50 – %50 paylaşım</strong> yapılır."</div>
+</div>
+
+<!-- BOLUM 2 - TESPIT -->
+<div class="section-title"><span class="icon">🔍</span>BÖLÜM 2: Mevcut Durum Tespiti</div>
+<div class="section-content">
+  <p>Şubat 2025 — Nisan 2026 arası 15 aylık dönemde Onur Şenol Kazanç Tablosu, ay sonu raporları ve hesap tabloları çapraz incelendiğinde aşağıdaki tablo ortaya çıkmaktadır:</p>
+</div>
+
+<div class="section-content">
+<table>
+<thead>
+<tr>
+  <th>Dönem</th>
+  <th class="right">ADK</th>
+  <th class="right">BH</th>
+  <th class="right">Mahrumiyet</th>
+  <th class="right">Toplam</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>2025 (Şubat-Aralık, 11 ay)</td><td class="right">164</td><td class="right">7</td><td class="right">6</td><td class="right">177</td></tr>
+<tr><td>2026 (Ocak-Nisan, 4 ay)</td><td class="right">89</td><td class="right">3</td><td class="right">10</td><td class="right">102</td></tr>
+<tr class="total-row"><td>15 AY TOPLAMI</td><td class="right">253</td><td class="right">10</td><td class="right">16</td><td class="right">279</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="danger-box">
+  <h3>⚠️ Tespit — Madde 5.4 Uygulanmadığı İçin Oluşan Orantısızlık</h3>
+  <p>Protokol madde 5.4, yönlendiren ücretinin (DBO) <strong>kazançtan düşüldükten sonra</strong> kalan tutarın %50/%50 paylaşılmasını öngörmektedir. Mevcut uygulamada DBO <strong>tek başına Onur'un payından</strong> mahsup edilmekte; yani her dosyada DBO'nun yarısı kadar haksız kayıp doğmaktadır.</p>
+  <p><strong>Hesap (15 ay, 263 ana dosya, %41,6 Yönlendirme + %58,4 Ofis CRM oranıyla):</strong></p>
+  <ul style="margin-left:18px;font-size:9.5pt;line-height:1.7;">
+    <li>2025 dönemi DBO toplamı: 2.044.250 TL → kayıp <strong>1.022.125 TL</strong></li>
+    <li>2026 dönemi DBO toplamı (yeni tarife): 1.321.400 TL → kayıp <strong>660.700 TL</strong></li>
+  </ul>
+</div>
+
+<div class="amount-row">
+  <div class="amount-card red">
+    <div class="label">Onur Şenol — Haksız Kayıp</div>
+    <div class="value">1.682.825 TL</div>
+    <div class="desc">15 ay boyunca DBO'nun haksız mahsubu</div>
+  </div>
+  <div class="amount-card blue">
+    <div class="label">Mevcut Oran</div>
+    <div class="value">%66,8 / %33,2</div>
+    <div class="desc">Demirhan / Onur (olması gereken: %50/%50)</div>
+  </div>
+</div>
+
+<div class="section-content">
+  <p style="font-size:9.5pt;color:#7f8c8d;font-style:italic;">Detaylı hesaplama, ay-ay dosya dağılımı ve örnek dosya analizi <strong>"PROTOKOL_TUTARSIZLIK_RAPORU.pdf"</strong> belgesinde yer almaktadır.</p>
+</div>
+
+<!-- BOLUM 3 - GECMIS BAGLAM -->
+<div class="section-title"><span class="icon">🤝</span>BÖLÜM 3: Geçmiş Dönemin Diğer Yüzü — Karşılıklı Anlayış</div>
+<div class="section-content">
+  <p>Bu süreçte sizler de, tarafınızdan eksiksiz şekilde teslim alınan ancak başvurusu zamanında yapılamayan ya da süreçte aksaklık yaşayan dosyalarda ciddi <strong>operasyonel masraf yükü</strong> ile karşı karşıya kaldınız. Sahadaki müşteri ilişkilerinde yaşanan gerilim, mağdurlarla yüzleşme ve dosyaların azilname ile başka avukata devredilmesi sürecinde benim de tarafımdan üzücü ama zaruri kararlar alındı.</p>
+  <p>Bu tercihler, hiçbir zaman size karşı kötü bir niyet taşımadı. Aksine; <strong>müvekkil benim için veli nimettir</strong> bakış açısıyla, mağdurların hak kaybına uğramaması için aldığım kararlardı. Ancak takdir edersiniz ki bu tercihler tarafınızda da bir zarar yarattı — bu zararı reddetmiyorum, görüyorum.</p>
+  <p>Burada önemli olan, ne sizlerin uğradığı zararı görmezden gelmek ne de benim haksız kaybımı pazarlık konusu yapmaktır. Ortada karşılıklı ve birbirini doğrudan etkileyen iki kalem mevcuttur. <strong>Niyet beyanım, bu iki kalemi birbirine mahsup ederek ileriye dönük temiz bir sayfa açmaktır.</strong></p>
+</div>
+
+<!-- BOLUM 4 - NIYET BEYANI -->
+<div class="section-title"><span class="icon">💎</span>BÖLÜM 4: Niyet Beyanı — Karşılıklı Mahsuplaşma Önerisi</div>
+
+<div class="success-box">
+  <h3>🎯 Önerim — Tek Cümlede</h3>
+  <p>Geçmiş dönemde benim tarafımdan azilname işlemi yapılan dosyalarda sizlerin uğradığı zarar ile, son 15 ayda DBO'nun benim payımdan haksız mahsup edilmesi nedeniyle benim uğradığım <strong>1.682.825 TL'lik haksız kayıp birbirini götürsün, mahsuplaşma yoluyla sıfırlansın.</strong></p>
+  <p>Bu öneri, tarafların hangisi daha çok zarar etti tartışmasından çok, <strong>birlikte kurduğumuz yapıyı sürdürmenin kıymetini</strong> esas alan bir yaklaşımdır. Ben yaptığım azilname işlemlerinin hiçbirinden pişman değilim — çünkü o noktada yapılması gereken doğru olduğuna inandığım buydu. Sizler de o dönem yaşanan operasyonel zorlukların gerçek olduğunu ifade ediyorsunuz. Karşılıklı haklılık iddialarını derinleştirmek yerine, <strong>her iki tarafın iddiasını birbirine kapatıp ileriye yönelmek</strong> bence en sağlıklı yol.</p>
+</div>
+
+<div class="amount-row">
+  <div class="amount-card red">
+    <div class="label">Onur'un haksız kaybı</div>
+    <div class="value">−1.682.825</div>
+    <div class="desc">DBO'nun protokol dışı mahsubu</div>
+  </div>
+  <div class="amount-card red">
+    <div class="label">Demirhan tarafının zararı</div>
+    <div class="value">≈ aynı tutar</div>
+    <div class="desc">Azilname dönemi operasyonel masraflar</div>
+  </div>
+  <div class="amount-card green">
+    <div class="label">Mahsuplaşma sonucu</div>
+    <div class="value">SIFIR</div>
+    <div class="desc">İki taraf da geçmişi kapatır</div>
+  </div>
+</div>
+
+<!-- BOLUM 5 - MILAT -->
+<div class="section-title"><span class="icon">🚩</span>BÖLÜM 5: Bugünden İtibaren Milat — Protokolün Tam Uygulanması</div>
+<div class="section-content">
+  <p>Mahsuplaşma kabulüyle birlikte <strong>bugünün tarihinden itibaren</strong> imzaladığımız 8 Temmuz 2025 protokolünün <strong>özellikle 5.4 maddesinin tam ve eksiksiz uygulanmasını</strong> esas alalım. Bu maddenin doğru uygulanması, her ay yapılacak mutabakatta net ve şeffaf bir tablo doğuracaktır:</p>
+  <ul style="margin-left:18px;line-height:1.8;">
+    <li>Her dosyada DBO (yönlendirenüceretine ödenen tutar) <strong>paylaşımdan ÖNCE kazançtan düşülür</strong>.</li>
+    <li>Kalan net üzerinden %50 / %50 paylaşım yapılır.</li>
+    <li>Zarar dosyalarında zarar her iki tarafa da %50 yansır — tek başına bana yüklenmez.</li>
+    <li>Her dosyada kaynak (Ofis CRM / Yönlendirme) açıkça belirtilir, sistem üzerinden kayıt altına alınır.</li>
+    <li>Aylık mutabakat raporlarında protokol uyumu otomatik gösterilir.</li>
+  </ul>
+</div>
+
+<div class="milat-box">
+  <div class="label">Karşılıklı Niyet — Yeni Başlangıç</div>
+  <div class="date">MAYIS 2026</div>
+  <div class="desc">Bugünden itibaren 8 Temmuz 2025 Protokolü, özellikle Madde 5.4 olmak üzere, eksiksiz uygulanır. Geçmiş dönemin karşılıklı kalemleri mahsuplaşma yoluyla sıfırlanır. İleriye dönük tek esas: yazılı protokol.</div>
+</div>
+
+<!-- BOLUM 6 - KAPANIS -->
+<div class="section-title"><span class="icon">🤝</span>BÖLÜM 6: Devam İsteği</div>
+<div class="section-content">
+  <p>Açıkça ifade etmek isterim ki; bu süreçte birlikte kurduğumuz yapı yalnızca rakamsal bir iş ortaklığı değil, <strong>sahada güven, hız ve organizasyon temelli</strong> bir yapıdır. Bu yapıyı bozmak, yeniden kurmak değil korumak ve büyütmek ortak çıkarımızdır.</p>
+  <p>Mağdurlarımıza karşı sorumluluğumuz, ekibimize karşı taahhüdümüz ve birbirimize karşı verdiğimiz emek; bu masada bir araya geldiğimizde her zaman ön planda olmalı. Sizler de aynı kanaatte olduğunuzu defalarca ifade ettiniz; ben de aynı niyetle bu masaya geliyorum.</p>
+  <p>Bu belgeyi <strong>kırgınlık değil, ileriye dönük netlik beyanı</strong> olarak kabul etmenizi rica ediyor; aylık ödeme ve mutabakat görüşmemizde bu çerçeve üzerinden ilerlememizi öneriyorum.</p>
+</div>
+
+<!-- KAPANIS -->
+<div class="closing">
+  <div style="font-size:10pt;color:#34495e;margin-bottom:8px;">Saygı ve iyi niyetle,</div>
+  <div class="name">Onur Şenol</div>
+  <div class="title">MR Hasar Danışmanlık ve Filo Yönetimi Tic. Ltd. Şti.</div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  Bu belge, 8 Temmuz 2025 tarihli "Değer Kaybı ve Bedeni Hasar Dosyaları İş Birliği Protokolü" çerçevesinde<br>
+  karşılıklı mutabakat ve ileriye dönük netlik amacıyla hazırlanmıştır.<br>
+  Ek belge: PROTOKOL_TUTARSIZLIK_RAPORU.pdf (detaylı hesaplama ve ay-ay dosya dağılımı)
+</div>
+
+</div>
+</body>
+</html>
