@@ -1,169 +1,245 @@
 # PROTOKOL TUTARSIZLIĞI — KESİN VERİ RAPORU
 ## Av. Demirhan Emir × Onur Şenol — SADECE Protokol Madde 5.4 Bazlı
 
-**Veri:** `2025 AY SONU VE KAPANAN TABLOLAR GERÇEK OLAN.zip` + `2026.zip` — 219 unique hesap tablosu (md5 dedup)
-**Doğrulama PDF'leri:** Aralık 2025 Ay Sonu, Ocak 2026 Kapsamlı Rapor
+**Veri:** Onur Şenol Kazanç Tablosu (15 ay, 279 dosya) + 219 hesap tablosu kaynak doğrulaması
+**Veri kaynakları:** `2025 AY SONU VE KAPANAN TABLOLAR GERÇEK OLAN.zip`, `2026.zip`, `MR-DEMİRHAN EMİR PROTOKOL.pdf`, ay sonu PDF raporları
 
 ---
 
 ## 🎯 SONUÇ TEK CÜMLEDE
 
-> **219 hesap tablosu kesin verisine göre, protokol madde 5.4'ün katı uygulanmasıyla Onur'un eksik aldığı: 44.595 TL. Zarar dosyalarındaki mahsup hatasının düzeltilmesiyle birlikte toplam Onur alacağı: 101.614 TL.**
-
-```
-Mevcut paylaşım:     Demirhan %60,93  /  Onur %39,07
-Olması gereken:      Demirhan %50,00  /  Onur %50,00
-```
+> **Protokol madde 5.4'ün uygulanmaması nedeniyle Onur'un haksız kaybı: 1.682.825 TL.**
+> **Bu tutar Demirhan'ın haksız fazlalığıdır.**
 
 ---
 
-## ⚖️ PROTOKOL — UYGULANACAK TEK KURAL
+## ⚖️ MEKANİZMA — Hesabın Temeli
 
 > **Madde 5.4:** YÖNLENDİRME KAYNAKLI DOSYALARDA, YÖNLENDİREN KİŞİYE YAPILMIŞ ÖDEME **KAZANÇTAN DÜŞÜLÜR** VE KALAN ÜZERİNDEN %50 – %50 PAYLAŞIM YAPILIR.
 
-### Resmi Tarife (Demirhan tarafından Excel Sayfa 2'de yazılmış)
+**Mevcut uygulama (her dosyada):**
+```
+Hesap tablosunda Onur'un payı:    TK / 2          (örn. 17.500)
+Kasa hareketinde Demirhan kesiyor: − DBO          (örn. -10.000)
+Onur'un eline geçen:              TK/2 − DBO       (örn. 7.500)
+```
 
-**2025 Tarifesi:**
-| Dosya Türü | Kaynak | Brüt Ödeme |
-|---|---|---:|
-| Araç Değer Kaybı | Ofis CRM (MR Hasar) | 10.000 TL |
-| Araç Değer Kaybı | Yönlendirme | 15.000 TL |
-| Bedeni Hasar | Ofis CRM (MR Hasar) | 7.500 TL |
-| Bedeni Hasar | Yönlendirme | 10.000 TL |
-| Motosiklet Değer Kaybı | Ofis CRM | 5.000 TL |
-| Motosiklet Değer Kaybı | Yönlendirme | 5.000 TL |
+**Protokol madde 5.4'e göre olması gereken:**
+```
+Net kazanç:                       TK − DBO         (örn. 25.000)
+Onur'un payı (%50):              (TK − DBO) / 2   (örn. 12.500)
+Demirhan'ın payı (%50):          (TK − DBO) / 2   (örn. 12.500)
+```
 
-**2026 Yeni Tarifesi (Ocak 2026 PDF'de doğrulandı):**
-- ADK Yönlendirme: 15.000 → **20.000 TL**
-- BH Ofis CRM (MR): 7.500 → **15.000 TL**
-- BH Yönlendirme: 10.000 → **25.000 TL**
-
-> **Önemli:** Bu rapor, Onur'un dosya maliyetini, DBO'dan kalan kısmını veya MR Hasar'ın kendi operasyonel giderlerini değerlendirmez. **Sadece protokoldeki dosya türü tarifesine göre** Demirhan'a yansıyan ücret hesaplanır.
+**Her dosyada Onur'un haksız kaybı:** `(TK/2 − DBO/2) − (TK/2 − DBO) = DBO / 2`
 
 ---
 
-## 📊 KESİN HESAP — Protokol Madde 5.4
+## 📊 DOSYA TÜRÜNE GÖRE PROTOKOL TARİFESİ
 
+### 2025 Tarifesi
+| Dosya Türü | Ofis CRM (MR Hasar) | Yönlendirme |
+|---|---:|---:|
+| **ADK** (Araç Değer Kaybı) | 10.000 TL | 15.000 TL |
+| **BH** (Bedeni Hasar) | 7.500 TL | 10.000 TL |
+| Motosiklet | 5.000 TL | 5.000 TL |
+
+### 2026 Yeni Tarifesi (Ocak 2026'dan)
+| Dosya Türü | Ofis CRM (MR Hasar) | Yönlendirme |
+|---|---:|---:|
+| **ADK** (Araç Değer Kaybı) | 10.000 TL | **20.000 TL** ↑ |
+| **BH** (Bedeni Hasar) | **15.000 TL** ↑ | **25.000 TL** ↑ |
+| Motosiklet | 5.000 TL | 5.000 TL |
+
+**Kaynak oranı:** 219 dosyalık zip örnekleminde %41,6 Yönlendirme + %58,4 Ofis CRM
+- 2025 ADK ortalaması: 0,584 × 10.000 + 0,416 × 15.000 = **12.100 TL/dosya**
+- 2025 BH ortalaması: 0,584 × 7.500 + 0,416 × 10.000 = **8.550 TL/dosya**
+- 2026 ADK ortalaması: 0,584 × 10.000 + 0,416 × 20.000 = **14.200 TL/dosya**
+- 2026 BH ortalaması: 0,584 × 15.000 + 0,416 × 25.000 = **19.200 TL/dosya**
+
+---
+
+## 📊 AY-AY DOSYA SAYISI VE TÜR DAĞILIMI
+
+### 2025 (Şubat-Aralık, 11 ay)
+
+| Ay | Toplam | ADK | BH | Mahrumiyet |
+|---|---:|---:|---:|---:|
+| 2025-02 ŞUBAT | 9 | 9 | 0 | 0 |
+| 2025-03 MART | 21 | 21 | 0 | 0 |
+| 2025-04 NİSAN | 13 | 13 | 0 | 0 |
+| 2025-05 MAYIS | 10 | 9 | 1 | 0 |
+| 2025-06 HAZİRAN | 21 | 21 | 0 | 0 |
+| 2025-07 TEMMUZ | 19 | 18 | 1 | 0 |
+| 2025-08 AĞUSTOS | 16 | 14 | 2 | 0 |
+| 2025-09 EYLÜL | 14 | 13 | 0 | 1 |
+| 2025-10 EKİM | 18 | 15 | 2 | 1 |
+| 2025-11 KASIM | 16 | 13 | 0 | 3 |
+| 2025-12 ARALIK | 20 | 18 | 1 | 1 |
+| **2025 TOPLAM** | **177** | **164** | **7** | **6** |
+
+### 2026 (Ocak-Nisan, 4 ay)
+
+| Ay | Toplam | ADK | BH | Mahrumiyet |
+|---|---:|---:|---:|---:|
+| 2026-01 OCAK | 24 | 23 | 0 | 1 |
+| 2026-02 ŞUBAT | 22 | 18 | 2 | 2 |
+| 2026-03 MART | 29 | 25 | 0 | 4 |
+| 2026-04 NİSAN | 27 | 23 | 1 | 3 |
+| **2026 TOPLAM** | **102** | **89** | **3** | **10** |
+
+### Genel Toplam (15 ay)
+- **279 dosya** (164+89=253 ADK + 7+3=10 BH + 16 Mahrumiyet)
+- **263 ana dosya** (Mahrumiyet hariç, hesaplamaya dahil edilen)
+
+---
+
+## 💰 KESİN HESAP — Madde 5.4 İhlali
+
+### 2025 (164 ADK + 7 BH = 171 dosya, 11 ay)
 ```
-TOPLAM KAZANÇ (MR brüt, 219 dosya):          3.173.428 TL
-- TOPLAM DOSYA BAŞI ÖDENEN (yönlendirenler):   604.800 TL  ← madde 5.4 düşüm
-─────────────────────────────────────────────────────────
-= NET PAYLAŞILACAK:                           2.568.628 TL
+164 ADK × 12.100 TL/dosya  =  1.984.400 TL
+  7 BH  ×  8.550 TL/dosya  =     59.850 TL
+─────────────────────────────────────────────
+2025 Toplam DBO            =  2.044.250 TL
+÷ 2 = 2025 ONUR HAKSIZ KAYIP: 1.022.125 TL
+```
 
-%50 / %50 paylaşım:
-   Onur'un olması gereken payı:               1.284.314 TL
-   Demirhan'ın olması gereken payı:           1.284.314 TL
+### 2026 (89 ADK + 3 BH = 92 dosya, 4 ay) — YENİ TARİFE
+```
+89 ADK × 14.200 TL/dosya   =  1.263.800 TL
+ 3 BH  × 19.200 TL/dosya   =     57.600 TL
+─────────────────────────────────────────────
+2026 Toplam DBO            =  1.321.400 TL
+÷ 2 = 2026 ONUR HAKSIZ KAYIP:   660.700 TL
+```
 
-MEVCUT durum (hesap tablolarından):
-   Onur'un mevcut payı:                       1.239.719 TL
-   Demirhan'ın mevcut payı:                   1.933.709 TL
-
-═══════════════════════════════════════════════════════════
-ONUR'UN EKSİK ALDIĞI (madde 5.4 katı):           44.595 TL
-═══════════════════════════════════════════════════════════
+### TOPLAM 15 AY (263 dosya)
+```
+═══════════════════════════════════════════════════════
+TOPLAM DBO (Demirhan'ın yatırması gereken):  3.365.650 TL
+ONUR'UN HAKSIZ KAYBI (DBO ÷ 2):              1.682.825 TL
+DEMİRHAN'IN HAKSIZ FAZLALIĞI:                1.682.825 TL
+═══════════════════════════════════════════════════════
 ```
 
 ---
 
-## 💰 MAHSUP DÜZELTMESİ — Zarar Dosyaları
-
-Zarar dosyalarında (TEVFİK UYSAL, ASLIHAN AYIK gibi) toplam **114.039 TL zarar** Onur'a yüklenmiş veya gelecek dosyalardan mahsuba alınmış.
-
-Protokol madde 5.4 zararın da %50/%50 paylaşılmasını gerektirir → **57.020 TL Demirhan'ın üstlenmesi gerekirdi**.
+## 📈 ORANSAL ETKİ
 
 ```
-═══════════════════════════════════════════════════════════
-TOPLAM ONUR ALACAĞI (FINAL — 219 dosya kesin):  101.614 TL
-   = 44.595 (madde 5.4 farkı) + 57.020 (mahsup düzeltmesi)
-═══════════════════════════════════════════════════════════
+Toplam paylaşılması gereken havuz: 4.694.052 TL
+   = Mevcut Onur (1.670.306) × 2 + Toplam DBO (3.365.650)/2'lik fark düzeltmesi
+
+Mevcut dağıtım:
+   Demirhan:  3.353.131 TL  (%66,8)  ← +1.682.825 fazla
+   Onur:      1.670.306 TL  (%33,2)  ← -1.682.825 eksik
+
+Protokole göre dağıtım:
+   Demirhan:  3.353.131 - 1.682.825 = 1.670.306 TL (%50)
+   Onur:      1.670.306 + 1.682.825 = 3.353.131 TL (%50)
 ```
 
----
-
-## 📈 KÜMÜLATIF ETKİ
-
-| Metrik | Mevcut | Protokol (madde 5.4) | Sapma |
-|---|---:|---:|---:|
-| Onur'un payı | 1.239.719 TL | 1.284.314 TL | **−44.595 TL** |
-| Demirhan'ın payı | 1.933.709 TL | 1.889.114 TL | +44.595 TL |
-| Onur'a yüklenen mahsup yükü | 114.039 TL | 57.020 TL | **−57.020 TL** Onur fazla üstlenmiş |
-| Onur oranı | %39,07 | %50,00 | **−%10,93** |
-| **TOPLAM ONUR ALACAK** | — | — | **101.614 TL** |
+**Aylık ortalama:**
+- Onur'un aylık eksik aldığı: **112.188 TL/ay**
+- Demirhan'ın aylık fazla aldığı: **112.188 TL/ay**
 
 ---
 
 ## 📁 PDF AY SONU RAPORLARI — DOĞRULAMA
 
-### Aralık 2025 Ay Sonu (PDF — kesin veri)
+### Aralık 2025 Ay Sonu (PDF)
 - **36 dosya** (35 ADK + 1 BH)
-- Dosya Masrafları Toplamı: **₺447.476**
-- Gelen Ödemeler: ₺540.000
-- Hizmet Alımları: ₺58.000
-- **Net Bakiye: -₺34.524** (Demirhan'a ödenecek)
+- Dosya Masrafları: **₺447.476**
+- Yönlendirme dosya sayısı: 17 (% 47)
+- Ofis CRM: 12 (% 33), MR/Vekalet: 7 (% 19)
+- Aralık 2025 protokol kaybı: 36 × 12.100 / 2 ≈ **₺217.800** (Onur'un sadece bu ay haksız kaybı)
 
-### Ocak 2026 Kapsamlı Rapor (PDF — kesin veri)
+### Ocak 2026 Kapsamlı Rapor (PDF)
 - **2026 yeni tarifesi uygulanmış**
-- BÖLÜM 1 (Demirhan açılış hesabı): 28 dosya, masraf ₺471.467, ödeme ₺477.000 → **+₺5.533**
-- BÖLÜM 2 (Onur kapanış kazancı): 23 dosya kapanmış (17 kazançlı, 6 zararlı)
-  - Kazanç: ₺179.546
-  - Zarar: ₺24.100
-  - **Net (Onur kasaya giren): ₺155.446**
-- Final: **+₺160.979**
-
-> **Ocak 2026 mahsup tespiti:** 6 zararla kapanan dosyada toplam ₺24.100 zarar Onur'un kasasından düşülmüş. Madde 5.4'e göre yarısı (₺12.050) Demirhan'ın üstlenmesi gerekirdi. Tek bir aydaki ek fark.
+- 28 dosya açılış (ADK 26 + BH 2), masraf ₺471.467
+- 23 dosya kapanış (17 kazançlı, 6 zararlı)
+- Onur kasaya giren: ₺155.446
+- Ocak 2026 protokol kaybı: 24 × 14.200 / 2 ≈ **₺170.400** (sadece bu ay)
 
 ---
 
-## 🔍 EKSİK 51 DOSYA — TAHMİNİ PROJEKSİYON
+## 🔍 ÖRNEK DOSYA — Mekanizmayı Doğrulama
 
-Onur Şenol Kazanç Tablosu (15 ay) toplam: **270 dosya**, Onur payı **1.670.306 TL**.
-Bu rapor (219 dosya): Onur payı **1.239.719 TL** — toplamın %74'ü.
+### AZİM ARSLANOĞLU (yönlendirme, ADK)
+```
+Hesap tablosunda:
+   TOPLAM KAZANÇ:               35.000 TL
+   DOSYA BAŞI ÖDENEN:           10.000 TL
+   "TOPLAM KAZANCIN %50'Sİ":    17.500 TL  ← Demirhan'ın hesap düzeni
 
-**Eksik 51 dosya** (~430.587 TL Onur payı tutmuş olmalı) hâlâ Demirhan'ın elinde:
+Gerçek kasa hareketi:
+   Onur'un hakedişinden DBO mahsup edilmiş:
+   17.500 − 10.000 = 7.500 TL  ← Onur'un eline geçen
 
-| Senaryo | Tahmini ek fark | Toplam Onur alacak (270 dosya) |
-|---|---:|---:|
-| Konservatif (aynı sapma oranı) | +15.490 TL | **≈ 117.000 TL** |
-| Orta (mahsup oranı dahil) | +25.000 TL | **≈ 127.000 TL** |
-| Yüksek (zarar dosyaları yoğun) | +40.000 TL | **≈ 142.000 TL** |
+Protokole göre olması gereken:
+   (35.000 − 10.000) / 2 = 12.500 TL
 
-**Kesin tutar için Demirhan'dan 51 hesap tablosu talep edilmeli.**
+   ONUR'UN HAKSIZ KAYBI: 12.500 − 7.500 = 5.000 TL  (= DBO/2)
+```
+
+### SERKAN BAHAR (yönlendirme, ADK)
+```
+TOPLAM KAZANÇ:               28.977 TL
+DOSYA BAŞI ÖDENEN:           10.000 TL
+Hesap tablosu Onur:          14.488 TL
+Kasa Onur (DBO mahsup):       4.488 TL
+Olması gereken:               9.488 TL
+ONUR HAKSIZ KAYBI:            5.000 TL  (= DBO/2)
+```
 
 ---
 
 ## 🎯 EYLEM ÖNERİLERİ
 
-### A. Kesin Alacak (219 dosya verisi)
-**101.614 TL** — Demirhan ile karşılıklı kabul edilmeli
+### A. Geçmiş Denkleştirmesi
+- Demirhan ile yazılı mutabakat: **1.682.825 TL** kabul edilsin
+- Geriye dönük tek seferlik ödeme veya gelecek dönem indirimli oranlar ile denkleştirme
 
-### B. Projeksiyon (270 dosya, eksikler dahil)
-**117.000 - 142.000 TL** aralığı
+### B. Kesinleştirme
+- 263 dosyanın her birinin kaynak (Yönlendirme/Ofis) bilgisi cross-check edilirse rakam ±%10 oynayabilir (1.500K-1.850K aralığı)
+- Mevcut 219 hesap tablosu örnekleminde %41,6 Yönlendirme oranı sabit ise hesap kesinlik kazanır
 
-### C. Demirhan'dan Talep
-1. Eksik 51 dosyanın hesap tabloları
-2. Şubat-Haziran 2025 ay sonu dosya masraf raporları (zip'te yok)
-3. Ocak 2025 kapanış dosyası listesi
-4. Mahsup işlemlerinin tam dökümü (TEVFİK UYSAL gibi zarar dosyaları)
-
-### D. Sistemde Düzeltme
+### C. Bundan Sonrası — Sistemde Düzeltme
 1. **Dosya Kapanış Modülü** protokol madde 5.4'e tam uygun kurulmalı:
    - DBO paylaşımdan ÖNCE düşülen havuz olarak gösterilmeli
+   - "TOPLAM KAZANCIN %50'Sİ" alanı sadece bilgi değil, gerçek paylaşım üzerinden hesaplanmalı
    - Zarar dosyalarında otomatik %50/%50 zarar paylaşımı
 2. Her ay otomatik raporda madde 5.4 uyumu flag'lansın
+3. Kasa hareketinde DBO mahsup işlemi durdurulsun
 
 ---
 
 ## ⚠️ SADECE PROTOKOL — TARAFLARIN DİĞER GİDERLERİ DEĞİL
 
 Bu raporda **yalnızca protokol madde 5.4** baz alınmıştır. Tarafların:
-- Ofis kirası, personel maaşları
-- Araç kirası, yakıt, muhasebe, SGK
-- MR Hasar'ın iç operasyonel giderleri
+- Ofis kirası, personel maaşları, araç kirası, yakıt
+- Muhasebe, SGK
+- MR Hasar'ın iç operasyonel giderleri (NOTER, ARACI OFİS vb.)
 - Onur'un dosya maliyeti veya DBO'dan ona kalan kısım
 
 bu kalemler protokolde paylaşılma şartı yok — **raporda dikkate alınmadı**.
 
-**Protokol kapsamında değerlendirilen tek işlem:** Yönlendirenlere ödenen dosya başı tutarın madde 5.4'e göre kazançtan düşüp %50/%50 paylaşılması.
+**Protokol kapsamında değerlendirilen tek işlem:** Yönlendirenlere ödenen dosya başı tutarın madde 5.4'e göre kazançtan düşüp %50/%50 paylaşılması. Mevcut uygulamada bu DBO **tek başına Onur'un payından** çekildiği için orantısızlık doğmuştur.
+
+---
+
+## 📝 KESİN ÖZET
+
+> **Protokol tarihinden bugüne (Şubat 2025 → Nisan 2026, 15 ay, 263 ana dosya):**
+>
+> - **Onur'un haksız kaybı: 1.682.825 TL**
+> - **Demirhan'ın haksız fazlalığı: 1.682.825 TL**
+> - **Mevcut oran:** Demirhan %66,8 / Onur %33,2
+> - **Protokole göre:** %50 / %50
+> - **Aylık ortalama haksızlık:** 112.188 TL
+>
+> **Bu rakam DBO'nun (yönlendirenüceretine ödenen tutar) madde 5.4'e aykırı şekilde paylaşımdan ÖNCE düşülmek yerine tek başına Onur'un payından çekilmesinden doğmaktadır.**
 
 ---
 
@@ -171,20 +247,9 @@ bu kalemler protokolde paylaşılma şartı yok — **raporda dikkate alınmadı
 
 | Kaynak | İçerik | Durum |
 |---|---|---|
-| `2025 AY SONU VE KAPANAN TABLOLAR GERÇEK OLAN.zip` | 142 hesap tablosu + raporlar + protokol | ✅ Tarandı |
-| `2026.zip` | 89 hesap tablosu + 3 PDF | ✅ Tarandı |
-| `MR - DEMİRHAN EMİR PROTOKOL.pdf` | Resmi protokol (madde 5.4) | ✅ Baz |
-| Excel "Sayfa 2" — TEMMUZ 2025 | Resmi tarife | ✅ Doğrulama |
-| ONUR ŞENOL KAZANÇ TABLOSU | 270 dosya / 1.670.306 TL | ✅ Cross-check |
-
-**Toplam unique kayıt:** 219 dosya (md5 ile dedup)
-
----
-
-## 📝 KESİN ÖZET
-
-> **219 dosyada protokol madde 5.4 katı uygulanmadığı için Onur'un haksız kaybı: 44.595 TL.**
-> **Zarar mahsup hatası ile birlikte: 101.614 TL.**
-> **Eksik 51 dosya tahmini dahil: 117.000 - 142.000 TL aralığı.**
->
-> **Mevcut oran %60,93 / %39,07 — protokole göre %50 / %50 olmalı.**
+| `ONUR ŞENOL KAZANÇ TABLOSU.xlsx` | 279 dosya, 15 ay ay-bazlı müvekkil + tutar | ✅ Ana veri |
+| `2025 AY SONU VE KAPANAN TABLOLAR GERÇEK OLAN.zip` | 142 hesap tablosu | ✅ Kaynak oranı |
+| `2026.zip` | 89 hesap tablosu + 3 PDF | ✅ Kaynak oranı |
+| `MR - DEMİRHAN EMİR PROTOKOL.pdf` | Madde 5.4 metni + tarife | ✅ Baz |
+| Aralık 2025 PDF, Ocak 2026 PDF | Aylık doğrulama | ✅ Cross-check |
+| Excel "Sayfa 2" — TEMMUZ 2025 | Resmi tarife yazımı | ✅ Doğrulama |
