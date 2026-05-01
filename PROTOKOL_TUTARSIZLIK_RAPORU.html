@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Protokol Tutarsızlık Raporu — Şubat 2025 → Nisan 2026</title>
+<style>
+@page {
+  size: A4;
+  margin: 1.5cm 1.2cm;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  color: #2c3e50;
+  background: #f5f6f8;
+  font-size: 10pt;
+  line-height: 1.45;
+}
+.container {
+  max-width: 100%;
+  background: #fff;
+  padding: 0;
+}
+
+/* HEADER */
+.header {
+  background: #2c3e50;
+  color: #fff;
+  padding: 22px 28px;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.header h1 {
+  font-size: 18pt;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.header .subtitle {
+  font-size: 10pt;
+  opacity: 0.85;
+  margin-top: 4px;
+  font-weight: 300;
+}
+.header .period {
+  font-size: 22pt;
+  font-weight: 700;
+  color: #f39c12;
+  text-align: right;
+  line-height: 1;
+}
+.header .period small {
+  display: block;
+  font-size: 9pt;
+  font-weight: 400;
+  color: #ecf0f1;
+  margin-top: 4px;
+}
+
+/* INFO BOX */
+.info-box {
+  background: #ecf6fc;
+  border-left: 4px solid #3498db;
+  padding: 14px 18px;
+  margin: 0 28px 22px;
+  border-radius: 4px;
+}
+.info-box h3 {
+  color: #2c3e50;
+  font-size: 11pt;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.info-box p { margin-bottom: 5px; font-size: 9.5pt; }
+.info-box strong { color: #2c3e50; }
+
+/* WARNING / TARIFE BOX */
+.warning-box {
+  background: #fef5e7;
+  border-left: 4px solid #f39c12;
+  padding: 14px 18px;
+  margin: 0 28px 22px;
+  border-radius: 4px;
+}
+.warning-box h3 {
+  color: #9a6709;
+  font-size: 11pt;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.warning-box p { margin-bottom: 6px; font-size: 9.5pt; }
+.warning-box ul { margin-left: 18px; font-size: 9.5pt; }
+.warning-box li { margin-bottom: 3px; }
+
+/* DANGER BOX (protokol madde) */
+.danger-box {
+  background: #fdedec;
+  border-left: 4px solid #e74c3c;
+  padding: 14px 18px;
+  margin: 0 28px 22px;
+  border-radius: 4px;
+}
+.danger-box h3 {
+  color: #922b21;
+  font-size: 11pt;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.danger-box .quote {
+  font-style: italic;
+  font-size: 10pt;
+  color: #2c3e50;
+  border-left: 3px solid #e74c3c;
+  padding-left: 12px;
+  margin-top: 6px;
+}
+
+/* SECTION TITLE */
+.section-title {
+  font-size: 13pt;
+  color: #2c3e50;
+  font-weight: 600;
+  margin: 20px 28px 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #ecf0f1;
+}
+.section-title .icon {
+  display: inline-block;
+  margin-right: 6px;
+}
+.subsection-title {
+  font-size: 11pt;
+  color: #34495e;
+  font-weight: 600;
+  margin: 14px 28px 8px;
+}
+
+/* TABLE */
+.section-content { margin: 0 28px 18px; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5pt;
+  margin-bottom: 10px;
+  background: #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+thead {
+  background: #2c3e50;
+  color: #fff;
+}
+th {
+  padding: 9px 10px;
+  text-align: left;
+  font-weight: 500;
+  font-size: 9pt;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+th.right { text-align: right; }
+th.center { text-align: center; }
+td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #ecf0f1;
+}
+td.right { text-align: right; font-variant-numeric: tabular-nums; }
+td.center { text-align: center; }
+td.bold { font-weight: 600; }
+td.red { color: #c0392b; font-weight: 600; }
+td.green { color: #27ae60; font-weight: 600; }
+tr:last-child td { border-bottom: none; }
+tr.total-row {
+  background: #ecf0f1;
+  font-weight: 600;
+}
+tr.total-row td { padding: 9px 10px; }
+
+/* HIGHLIGHT BOXES */
+.summary-row {
+  display: flex;
+  gap: 12px;
+  margin: 0 28px 18px;
+}
+.summary-card {
+  flex: 1;
+  padding: 14px;
+  border-radius: 4px;
+  background: #f8f9fa;
+  border-left: 4px solid #3498db;
+}
+.summary-card.green { border-left-color: #27ae60; }
+.summary-card.red { border-left-color: #e74c3c; }
+.summary-card.orange { border-left-color: #f39c12; }
+.summary-card .label { font-size: 9pt; color: #7f8c8d; text-transform: uppercase; }
+.summary-card .value {
+  font-size: 16pt;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-top: 4px;
+}
+.summary-card.red .value { color: #c0392b; }
+.summary-card.green .value { color: #27ae60; }
+
+/* FINAL BOX */
+.final-box {
+  background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+  color: #fff;
+  padding: 28px;
+  margin: 24px 28px;
+  border-radius: 8px;
+  text-align: center;
+}
+.final-box .label {
+  font-size: 11pt;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.final-box .amount {
+  font-size: 36pt;
+  font-weight: 800;
+  margin: 8px 0;
+  letter-spacing: -1px;
+}
+.final-box .desc {
+  font-size: 10pt;
+  opacity: 0.9;
+  font-weight: 300;
+}
+
+/* EXAMPLE BOX */
+.example-box {
+  background: #f8f9fa;
+  border: 1px solid #dfe6e9;
+  border-radius: 6px;
+  padding: 16px;
+  margin: 0 28px 18px;
+}
+.example-box h4 {
+  font-size: 10pt;
+  color: #2c3e50;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.example-table {
+  width: 100%;
+  font-size: 9.5pt;
+}
+.example-table td {
+  padding: 5px 0;
+  border: none;
+}
+.example-table td:first-child { color: #7f8c8d; }
+.example-table td:last-child {
+  text-align: right;
+  font-weight: 600;
+  color: #2c3e50;
+}
+.example-table .highlight {
+  background: #fef5e7;
+  padding: 6px 8px !important;
+  border-radius: 3px;
+  color: #c0392b !important;
+}
+.example-table .highlight-row td {
+  background: #fef5e7;
+  padding: 6px 8px !important;
+  border-radius: 3px;
+}
+.example-table .highlight-row td:last-child { color: #c0392b !important; }
+
+.formula {
+  font-family: "SF Mono", Consolas, Menlo, monospace;
+  background: #2c3e50;
+  color: #ecf0f1;
+  padding: 12px 14px;
+  border-radius: 4px;
+  font-size: 9pt;
+  line-height: 1.6;
+  margin: 8px 0;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* FOOTER */
+.footer {
+  text-align: center;
+  font-size: 8.5pt;
+  color: #95a5a6;
+  margin-top: 30px;
+  padding: 18px 28px 24px;
+  border-top: 1px solid #ecf0f1;
+}
+
+/* Two-col layout for cards */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 0 28px 18px;
+}
+
+.page-break { page-break-before: always; }
+table { page-break-inside: avoid; }
+.example-box, .info-box, .warning-box, .danger-box, .final-box { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- ============== HEADER ============== -->
+<div class="header">
+  <div>
+    <h1>MR Hasar Danışmanlık<br>Protokol Tutarsızlık Raporu</h1>
+    <div class="subtitle">Av. Demirhan Emir × Onur Şenol — Madde 5.4 Uyum Analizi</div>
+  </div>
+  <div class="period">
+    ŞUBAT 2025<br>NİSAN 2026
+    <small>15 ay · 263 ana dosya</small>
+  </div>
+</div>
+
+<!-- ============== INFO ============== -->
+<div class="info-box">
+  <h3>📌 Rapor Açıklaması</h3>
+  <p>Bu rapor, <strong>Av. Demirhan Emir ile imzalanan iş ortaklığı protokolünün 5.4 maddesinin</strong> protokol tarihinden bugüne kadar uygulanma durumunu denetler.</p>
+  <p>Onur Şenol Kazanç Tablosu (15 ay, 279 müvekkil), ay sonu raporları, 219 hesap tablosu ve protokol PDF'i çapraz incelendi. Sadece protokol baz alındı; tarafların diğer giderleri (kira, maaş, yakıt vb.) analize katılmadı.</p>
+  <p><strong>Sonuç:</strong> Dosya başı yönlendiren ücretinin (DBO) madde 5.4'e aykırı şekilde tek başına Onur'un payından mahsup edilmesi, 15 ay boyunca <strong style="color:#c0392b;">1.682.825 TL</strong> haksız orantısızlık doğurmuştur.</p>
+</div>
+
+<!-- ============== PROTOKOL MADDE 5.4 ============== -->
+<div class="danger-box">
+  <h3>⚖️ PROTOKOL MADDE 5.4 — Uygulanması Gereken Tek Kural</h3>
+  <div class="quote">"YÖNLENDİRME KAYNAKLI DOSYALARDA, YÖNLENDİREN KİŞİYE YAPILMIŞ ÖDEME <strong>KAZANÇTAN DÜŞÜLÜR</strong> VE KALAN ÜZERİNDEN <strong>%50 – %50 PAYLAŞIM</strong> YAPILIR."</div>
+</div>
+
+<!-- ============== TARİFE ============== -->
+<div class="warning-box">
+  <h3>📋 Resmi Dosya Türü Tarifesi (Excel Sayfa 2 + Protokol Madde 3)</h3>
+  <p><strong>2025 Tarifesi (Şubat-Aralık 2025)</strong></p>
+  <ul>
+    <li>Araç Değer Kaybı (ADK) — Ofis CRM: <strong>10.000 TL</strong> / Yönlendirme: <strong>15.000 TL</strong></li>
+    <li>Bedeni Hasar (BH) — Ofis CRM: <strong>7.500 TL</strong> / Yönlendirme: <strong>10.000 TL</strong></li>
+    <li>Motosiklet Değer Kaybı: 5.000 TL (her iki kaynak)</li>
+  </ul>
+  <p style="margin-top: 8px;"><strong>2026 Yeni Tarifesi (Ocak 2026'dan itibaren)</strong></p>
+  <ul>
+    <li>Araç Değer Kaybı (ADK) — Ofis CRM: <strong>10.000 TL</strong> / Yönlendirme: <strong>20.000 TL</strong> ↑</li>
+    <li>Bedeni Hasar (BH) — Ofis CRM: <strong>15.000 TL</strong> ↑ / Yönlendirme: <strong>25.000 TL</strong> ↑</li>
+  </ul>
+</div>
+
+<!-- ============== BÖLÜM 1: MEKANİZMA ============== -->
+<div class="section-title"><span class="icon">🔍</span>BÖLÜM 1: Tutarsızlık Mekanizması — Nasıl Oluştu?</div>
+<div class="section-content">
+  <p style="font-size:10pt;margin-bottom:10px;">Protokol madde 5.4 doğru uygulansaydı, yönlendirenüceretine ödenen tutar (DBO) <strong>kazançtan düşüldükten sonra</strong> kalan miktar her iki taraf arasında %50/%50 paylaşılması gerekirdi. Mevcut uygulamada DBO <strong>tek başına Onur'un payından</strong> mahsup edildiği için her dosyada DBO'nun yarısı kadar haksız kayıp doğmaktadır.</p>
+</div>
+
+<div class="example-box">
+  <h4>Örnek Dosya — AZİM ARSLANOĞLU (ADK Yönlendirme)</h4>
+  <table class="example-table">
+    <tr><td>Toplam Kazanç (MR brüt)</td><td>35.000 TL</td></tr>
+    <tr><td>Dosya Başı Ödenen (yönlendirene)</td><td>10.000 TL</td></tr>
+    <tr><td>Hesap tablosunda "Toplam Kazancın %50'si"</td><td>17.500 TL</td></tr>
+  </table>
+  <div class="formula">MEVCUT UYGULAMA (kasa hareketi):
+  Onur'un eline geçen   = 17.500 − 10.000 = <strong>7.500 TL</strong>
+  Demirhan'ın aldığı    = 17.500 + 10.000 = <strong>27.500 TL</strong>
+
+PROTOKOL MADDE 5.4 (olması gereken):
+  Net kazanç            = 35.000 − 10.000 = 25.000 TL
+  Onur'un payı (%50)    = <strong>12.500 TL</strong>
+  Demirhan'ın payı (%50)= <strong>12.500 TL</strong>
+
+ONUR'UN HAKSIZ KAYBI    = 12.500 − 7.500 = <strong>5.000 TL</strong>  ( = DBO ÷ 2 )</div>
+</div>
+
+<div class="section-content">
+  <p style="font-size:10pt;"><strong>Genel formül:</strong> Her dosyada Onur'un haksız kaybı = DBO ÷ 2. Bu nedenle 15 aylık toplam haksız kayıp = (Tüm dosyalardaki DBO toplamı) ÷ 2.</p>
+</div>
+
+<!-- ============== BÖLÜM 2: AY-AY DOSYA SAYILARI ============== -->
+<div class="section-title"><span class="icon">📅</span>BÖLÜM 2: Ay-Ay Dosya Sayıları ve Tür Dağılımı</div>
+
+<div class="subsection-title">2025 — Şubat-Aralık (11 ay)</div>
+<div class="section-content">
+<table>
+<thead>
+<tr>
+  <th>Dönem</th>
+  <th class="right">Toplam</th>
+  <th class="right">ADK</th>
+  <th class="right">BH</th>
+  <th class="right">Mahrumiyet</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>2025-02 ŞUBAT</td><td class="right">9</td><td class="right">9</td><td class="right">0</td><td class="right">0</td></tr>
+<tr><td>2025-03 MART</td><td class="right">21</td><td class="right">21</td><td class="right">0</td><td class="right">0</td></tr>
+<tr><td>2025-04 NİSAN</td><td class="right">13</td><td class="right">13</td><td class="right">0</td><td class="right">0</td></tr>
+<tr><td>2025-05 MAYIS</td><td class="right">10</td><td class="right">9</td><td class="right">1</td><td class="right">0</td></tr>
+<tr><td>2025-06 HAZİRAN</td><td class="right">21</td><td class="right">21</td><td class="right">0</td><td class="right">0</td></tr>
+<tr><td>2025-07 TEMMUZ</td><td class="right">19</td><td class="right">18</td><td class="right">1</td><td class="right">0</td></tr>
+<tr><td>2025-08 AĞUSTOS</td><td class="right">16</td><td class="right">14</td><td class="right">2</td><td class="right">0</td></tr>
+<tr><td>2025-09 EYLÜL</td><td class="right">14</td><td class="right">13</td><td class="right">0</td><td class="right">1</td></tr>
+<tr><td>2025-10 EKİM</td><td class="right">18</td><td class="right">15</td><td class="right">2</td><td class="right">1</td></tr>
+<tr><td>2025-11 KASIM</td><td class="right">16</td><td class="right">13</td><td class="right">0</td><td class="right">3</td></tr>
+<tr><td>2025-12 ARALIK</td><td class="right">20</td><td class="right">18</td><td class="right">1</td><td class="right">1</td></tr>
+<tr class="total-row"><td>2025 TOPLAM</td><td class="right">177</td><td class="right">164</td><td class="right">7</td><td class="right">6</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="subsection-title">2026 — Ocak-Nisan (4 ay)</div>
+<div class="section-content">
+<table>
+<thead>
+<tr>
+  <th>Dönem</th>
+  <th class="right">Toplam</th>
+  <th class="right">ADK</th>
+  <th class="right">BH</th>
+  <th class="right">Mahrumiyet</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>2026-01 OCAK</td><td class="right">24</td><td class="right">23</td><td class="right">0</td><td class="right">1</td></tr>
+<tr><td>2026-02 ŞUBAT</td><td class="right">22</td><td class="right">18</td><td class="right">2</td><td class="right">2</td></tr>
+<tr><td>2026-03 MART</td><td class="right">29</td><td class="right">25</td><td class="right">0</td><td class="right">4</td></tr>
+<tr><td>2026-04 NİSAN</td><td class="right">27</td><td class="right">23</td><td class="right">1</td><td class="right">3</td></tr>
+<tr class="total-row"><td>2026 TOPLAM</td><td class="right">102</td><td class="right">89</td><td class="right">3</td><td class="right">10</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="summary-row">
+  <div class="summary-card">
+    <div class="label">Toplam Kapanış</div>
+    <div class="value">279 dosya</div>
+  </div>
+  <div class="summary-card green">
+    <div class="label">ADK (Araç Değer Kaybı)</div>
+    <div class="value">253 dosya</div>
+  </div>
+  <div class="summary-card orange">
+    <div class="label">BH (Bedeni Hasar)</div>
+    <div class="value">10 dosya</div>
+  </div>
+  <div class="summary-card red">
+    <div class="label">Hesaplamaya Dahil</div>
+    <div class="value">263 ana dosya</div>
+  </div>
+</div>
+
+<!-- ============== BÖLÜM 3: KESİN HESAP ============== -->
+<div class="section-title"><span class="icon">💰</span>BÖLÜM 3: Madde 5.4 İhlal Hesabı — Dosya Türü × Tarife / 2</div>
+
+<div class="section-content">
+  <p style="font-size:9.5pt;margin-bottom:10px;color:#7f8c8d;">Kaynak oranı 219 dosyalık örneklemden çıkarılmıştır: <strong>%41,6 Yönlendirme</strong> + <strong>%58,4 Ofis CRM</strong>. Ortalama tarife = (Ofis CRM × 0,584) + (Yönlendirme × 0,416).</p>
+</div>
+
+<div class="subsection-title">2025 Hesabı (171 dosya — 11 ay)</div>
+<div class="section-content">
+<table>
+<thead>
+<tr>
+  <th>Dosya Türü</th>
+  <th class="right">Adet</th>
+  <th class="right">Ortalama Tarife</th>
+  <th class="right">Toplam DBO</th>
+  <th class="right">Onur Kaybı (DBO ÷ 2)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>ADK (Araç Değer Kaybı)</td>
+  <td class="right">164</td>
+  <td class="right">12.100 TL</td>
+  <td class="right">1.984.400 TL</td>
+  <td class="right red">992.200 TL</td>
+</tr>
+<tr>
+  <td>BH (Bedeni Hasar)</td>
+  <td class="right">7</td>
+  <td class="right">8.550 TL</td>
+  <td class="right">59.850 TL</td>
+  <td class="right red">29.925 TL</td>
+</tr>
+<tr class="total-row">
+  <td>2025 TOPLAM</td>
+  <td class="right">171</td>
+  <td class="right">—</td>
+  <td class="right">2.044.250 TL</td>
+  <td class="right red">1.022.125 TL</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="subsection-title">2026 Hesabı (92 dosya — 4 ay, YENİ TARİFE)</div>
+<div class="section-content">
+<table>
+<thead>
+<tr>
+  <th>Dosya Türü</th>
+  <th class="right">Adet</th>
+  <th class="right">Ortalama Tarife</th>
+  <th class="right">Toplam DBO</th>
+  <th class="right">Onur Kaybı (DBO ÷ 2)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>ADK (Araç Değer Kaybı)</td>
+  <td class="right">89</td>
+  <td class="right">14.200 TL</td>
+  <td class="right">1.263.800 TL</td>
+  <td class="right red">631.900 TL</td>
+</tr>
+<tr>
+  <td>BH (Bedeni Hasar)</td>
+  <td class="right">3</td>
+  <td class="right">19.200 TL</td>
+  <td class="right">57.600 TL</td>
+  <td class="right red">28.800 TL</td>
+</tr>
+<tr class="total-row">
+  <td>2026 TOPLAM</td>
+  <td class="right">92</td>
+  <td class="right">—</td>
+  <td class="right">1.321.400 TL</td>
+  <td class="right red">660.700 TL</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============== BÖLÜM 4: ORANSAL ETKİ ============== -->
+<div class="section-title"><span class="icon">📊</span>BÖLÜM 4: Oransal Etki — Mevcut vs Olması Gereken</div>
+
+<div class="section-content">
+<table>
+<thead>
+<tr>
+  <th>Taraf</th>
+  <th class="right">Mevcut Pay</th>
+  <th class="right">Mevcut Oran</th>
+  <th class="right">Olması Gereken</th>
+  <th class="right">Olması Gereken Oran</th>
+  <th class="right">Sapma</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>Av. Demirhan Emir</strong></td>
+  <td class="right">3.353.131 TL</td>
+  <td class="right">%66,8</td>
+  <td class="right">1.670.306 TL</td>
+  <td class="right">%50,0</td>
+  <td class="right green">+1.682.825 TL</td>
+</tr>
+<tr>
+  <td><strong>Onur Şenol</strong></td>
+  <td class="right">1.670.306 TL</td>
+  <td class="right">%33,2</td>
+  <td class="right">3.353.131 TL</td>
+  <td class="right">%50,0</td>
+  <td class="right red">−1.682.825 TL</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="summary-row">
+  <div class="summary-card red">
+    <div class="label">Onur'un aylık eksik aldığı</div>
+    <div class="value">112.188 TL/ay</div>
+  </div>
+  <div class="summary-card orange">
+    <div class="label">15 ay boyunca</div>
+    <div class="value">1.682.825 TL</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">Sapma oranı</div>
+    <div class="value">%16,8</div>
+  </div>
+</div>
+
+<!-- ============== BÖLÜM 5: VERİ KAYNAKLARI ============== -->
+<div class="section-title"><span class="icon">📁</span>BÖLÜM 5: Veri Kaynakları ve Dayanak</div>
+
+<div class="section-content">
+<table>
+<thead>
+<tr>
+  <th>Belge / Dosya</th>
+  <th>İçerik</th>
+  <th class="center">Kullanım</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>MR — DEMİRHAN EMİR PROTOKOL.pdf</td>
+  <td>İmzalı protokol metni — Madde 3.1, 3.2, 3.3, 5.4</td>
+  <td class="center">Hukuki dayanak</td>
+</tr>
+<tr>
+  <td>ONUR ŞENOL KAZANÇ TABLOSU.xlsx</td>
+  <td>15 ay × 279 müvekkil + tutar — ay-ay dosya sayısı kaynağı</td>
+  <td class="center">Ana veri</td>
+</tr>
+<tr>
+  <td>2025 AY SONU VE KAPANAN TABLOLAR GERÇEK OLAN.zip</td>
+  <td>142 hesap tablosu + Şubat-Aralık 2025 ay sonu raporları</td>
+  <td class="center">Kaynak oranı</td>
+</tr>
+<tr>
+  <td>2026.zip</td>
+  <td>89 hesap tablosu + Aralık 2025, Ocak 2026 ay sonu PDF</td>
+  <td class="center">Kaynak oranı + 2026 tarife</td>
+</tr>
+<tr>
+  <td>Excel "Sayfa 2" — TEMMUZ 2025 raporu</td>
+  <td>Demirhan tarafından yazılmış resmi dosya başı tarifesi</td>
+  <td class="center">Tarife teyidi</td>
+</tr>
+<tr>
+  <td>Aralık 2025 Ay Sonu PDF</td>
+  <td>36 dosya, dosya masrafı 447.476 TL — kaynak/tür dağılımı</td>
+  <td class="center">Cross-check</td>
+</tr>
+<tr>
+  <td>Ocak 2026 Kapsamlı Rapor PDF</td>
+  <td>2026 yeni tarifesinin uygulandığının kanıtı (BÖLÜM 1: ₺471.467 dosya masrafı)</td>
+  <td class="center">2026 tarifesi teyidi</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============== HASSASİYET ============== -->
+<div class="info-box">
+  <h3>🎯 Hassasiyet Notu</h3>
+  <p><strong>KESİN OLAN:</strong> 263 ana dosyanın türü (ADK/BH) Onur Şenol Kazanç Tablosu'nda etiketlenmiştir. Protokol tarifesi PDF'te ve Excel Sayfa 2'de yazılıdır. 2026 yeni tarifesi Ocak 2026 PDF'inde uygulanmıştır.</p>
+  <p><strong>YAKLAŞIK (±%10):</strong> Her dosyanın Yönlendirme/Ofis CRM kaynağı 219 dosyalık zip örnekleminden çıkan oran (%41,6/%58,4) ile uygulanmıştır. Demirhan'ın elindeki tüm dosya kaynaklarına bakılırsa rakam <strong>1.500.000 - 1.850.000 TL</strong> aralığında nihai bir değere oturur.</p>
+</div>
+
+<!-- ============== EYLEM ============== -->
+<div class="warning-box">
+  <h3>🎯 Eylem Önerileri</h3>
+  <p><strong>A. Geçmişin Denkleştirmesi:</strong> Demirhan ile yazılı mutabakat — <strong>1.682.825 TL</strong> kabul edilsin. Geriye dönük tek seferlik ödeme veya gelecek dönem indirimli oranlarla denkleştirilsin.</p>
+  <p><strong>B. Sistemde Düzeltme:</strong> Dosya Kapanış Modülü protokol madde 5.4'e tam uygun kurulmalı. DBO paylaşımdan ÖNCE düşülen havuz olarak gösterilmeli, kasa hareketinde Onur'un payından mahsup işlemi durdurulmalı.</p>
+  <p><strong>C. Bundan sonrası:</strong> Her ay otomatik raporda madde 5.4 uyumu flag'lansın; uyumsuzluk varsa anında uyarı versin.</p>
+</div>
+
+<!-- ============== FİNAL ============== -->
+<div class="final-box">
+  <div class="label">PROTOKOL MADDE 5.4 İHLAL — ONUR ŞENOL ALACAĞI</div>
+  <div class="amount">−₺1.682.825</div>
+  <div class="desc">15 ay boyunca DBO'nun haksız mahsubu nedeniyle oluşan haksız kayıp<br>(263 ana dosya × ortalama tarife ÷ 2)</div>
+</div>
+
+<!-- ============== FOOTER ============== -->
+<div class="footer">
+  Bu rapor MR Hasar Danışmanlık tarafından hazırlanmıştır · Sadece protokol madde 5.4 baz alınmıştır<br>
+  Tarafların diğer giderleri (kira, maaş, yakıt, muhasebe vb.) analize dahil edilmemiştir<br>
+  Veri kaynakları: Onur Şenol Kazanç Tablosu, ay sonu PDF raporları, 219 hesap tablosu, protokol PDF
+</div>
+
+</div>
+
+</body>
+</html>
