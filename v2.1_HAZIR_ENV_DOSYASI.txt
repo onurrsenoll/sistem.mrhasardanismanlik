@@ -1,0 +1,18 @@
+# MR HASAR — ENV (CANLI ÜRETİM)
+# Bu dosya .env adıyla api/config/ altına yüklenecek.
+# ASLA git'e commit edilmez, herkesle paylaşılmaz.
+
+# === VERİTABANI ===
+DB_HOST=localhost
+DB_NAME=mrhasard_dosyatakip
+DB_USER=mrhasard_dtuser
+DB_PASS=MrHasar2025!
+
+# === JWT ===
+JWT_SECRET=d75937e9c805c3342063dad2ed3f1e6985db1691d240dd4bdf6c892715baae3902c94fee1bf5a8ad18a9aaf5079db5f1491c8d72e8c821b5ecae35bdf95193dc
+JWT_EXPIRE=86400
+JWT_REFRESH_EXPIRE=2592000
+
+# === ORTAM ===
+APP_ENV=production
+ERROR_LOG_PATH=
