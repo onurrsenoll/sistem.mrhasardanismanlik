@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Aylık Mutabakat Raporu — Erişim</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: #ECEFF1; color: #2C3E50; padding: 40px 20px; min-height: 100vh; }
+.box { max-width: 520px; margin: 40px auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,0.08); }
+.head { background: #2C3E50; color: #fff; padding: 24px 28px; }
+.head h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.head p { font-size: 13px; opacity: 0.85; }
+.body { padding: 28px; }
+.field { margin-bottom: 16px; }
+label { display: block; font-size: 11px; font-weight: 700; color: #7F8C8D; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+select, input { width: 100%; padding: 10px 12px; border: 1px solid #BDC3C7; border-radius: 6px; font-size: 14px; font-family: inherit; }
+select:focus, input:focus { outline: none; border-color: #3498DB; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+button { width: 100%; padding: 14px; background: #F39C12; color: #fff; border: 0; border-radius: 6px; font-size: 14px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 10px; }
+button:hover { background: #E67E22; }
+button:disabled { background: #BDC3C7; cursor: not-allowed; }
+.error { padding: 10px 14px; background: #FDECEA; border-left: 4px solid #C0392B; color: #C0392B; border-radius: 4px; font-size: 13px; margin-bottom: 16px; }
+.tip { background: #FEF6E0; border-left: 4px solid #F39C12; padding: 12px 16px; border-radius: 6px; font-size: 12px; color: #6E5223; margin-top: 18px; }
+.tip strong { color: #B7791F; }
+</style>
+</head>
+<body>
+
+<div class="box">
+  <div class="head">
+    <h1>📊 AYLIK MUTABAKAT RAPORU</h1>
+    <p>Avukat ve dönem seçerek raporu üret</p>
+  </div>
+  <div class="body">
+
+    <div id="err" class="error" style="display:none"></div>
+
+    <div class="row">
+      <div class="field">
+        <label>YIL</label>
+        <select id="yil"></select>
+      </div>
+      <div class="field">
+        <label>AY</label>
+        <select id="ay">
+          <option value="01">OCAK</option><option value="02">ŞUBAT</option><option value="03">MART</option>
+          <option value="04">NİSAN</option><option value="05">MAYIS</option><option value="06">HAZİRAN</option>
+          <option value="07">TEMMUZ</option><option value="08">AĞUSTOS</option><option value="09">EYLÜL</option>
+          <option value="10">EKİM</option><option value="11">KASIM</option><option value="12">ARALIK</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>AVUKAT (İŞ ORTAĞI)</label>
+      <select id="avukat"><option value="">YÜKLENİYOR...</option></select>
+    </div>
+
+    <button id="ac" onclick="raporAc()">📄 RAPORU YENİ SEKMEDE AÇ</button>
+
+    <div class="tip">
+      <strong>📌 NASIL ÇALIŞIR:</strong> Buton basınca rapor yeni sekmede açılır. Form alanlarına devir/ödemeler/SBM gibi manuel kalemleri gir, rapor canlı güncellenir. <strong>YAZDIR/PDF</strong> butonu ile çıktı al.
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Yıl listesi (son 5 yıl + bu yıl + 1 yıl ileri)
+(function() {
+  const yilSel = document.getElementById('yil');
+  const buYil = new Date().getFullYear();
+  const buAy = String(new Date().getMonth() + 1).padStart(2, '0');
+  for (let y = buYil + 1; y >= buYil - 5; y--) {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    if (y === buYil) opt.selected = true;
+    yilSel.appendChild(opt);
+  }
+  // Default: önceki ay (mantıklı — geçen ayın raporu)
+  const onAy = new Date(); onAy.setDate(1); onAy.setMonth(onAy.getMonth() - 1);
+  document.getElementById('ay').value = String(onAy.getMonth() + 1).padStart(2, '0');
+  document.getElementById('yil').value = onAy.getFullYear();
+})();
+
+// Token al (sistem ne kullanıyorsa)
+function getToken() {
+  return localStorage.getItem('mr_token') || localStorage.getItem('token') || localStorage.getItem('jwt') || '';
+}
+
+// Avukat listesi
+async function avukatlariYukle() {
+  const tok = getToken();
+  const sel = document.getElementById('avukat');
+  const errBox = document.getElementById('err');
+  try {
+    const r = await fetch('/api/v1/ortak/list.php?durum=aktif&limit=200', {
+      headers: tok ? {'Authorization': 'Bearer ' + tok} : {},
+      credentials: 'include'
+    });
+    const j = await r.json();
+    if (!j.success) { throw new Error(j.error || 'Yetki hatası'); }
+    const items = j.data?.items || j.data || [];
+    sel.innerHTML = '<option value="">SEÇİNİZ</option>';
+    items.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.id;
+      opt.textContent = o.ad_soyad + (o.firma ? ' — ' + o.firma : '');
+      sel.appendChild(opt);
+    });
+    if (items.length === 1) sel.value = items[0].id;
+  } catch (e) {
+    errBox.textContent = 'Avukat listesi yüklenemedi: ' + e.message + ' — sisteme giriş yaptığınızdan emin olun.';
+    errBox.style.display = 'block';
+    sel.innerHTML = '<option value="">YÜKLENEMEDİ</option>';
+  }
+}
+avukatlariYukle();
+
+function raporAc() {
+  const yil = document.getElementById('yil').value;
+  const ay = document.getElementById('ay').value;
+  const avukatId = document.getElementById('avukat').value;
+  const errBox = document.getElementById('err');
+  errBox.style.display = 'none';
+  if (!avukatId) { errBox.textContent = 'AVUKAT SEÇMENİZ GEREKLİ'; errBox.style.display = 'block'; return; }
+  const url = `/api/v1/muhasebe/ay-sonu-rapor-html.php?donem=${yil}-${ay}&avukat_ortak_id=${avukatId}`;
+  window.open(url, '_blank');
+}
+</script>
+
+</body>
+</html>
