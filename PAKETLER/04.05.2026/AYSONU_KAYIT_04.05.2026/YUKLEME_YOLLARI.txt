@@ -1,0 +1,37 @@
+═══════════════════════════════════════════════════════════════════
+AY SONU RAPORU — KAYDET / LİSTE / DÜZENLE / SİL — 04.05.2026
+═══════════════════════════════════════════════════════════════════
+
+YÜKLEME SIRASI:
+
+1) SQL CALISTIR (cPanel > phpMyAdmin):
+   SQL/03_aysonu_kayit_tablosu.sql       → SOURCE komutu ile çalıştır
+                                            (yeni tablo + admin yetkileri)
+
+2) BACKEND DOSYALARI (cPanel File Manager):
+
+   api/v1/muhasebe/aysonu-kaydet.php     → public_html/api/v1/muhasebe/aysonu-kaydet.php
+   api/v1/muhasebe/aysonu-list.php       → public_html/api/v1/muhasebe/aysonu-list.php
+   api/v1/muhasebe/aysonu-getir.php      → public_html/api/v1/muhasebe/aysonu-getir.php
+   api/v1/muhasebe/aysonu-sil.php        → public_html/api/v1/muhasebe/aysonu-sil.php
+
+3) FRONTEND (cPanel File Manager):
+
+   js/pages/muhasebe.js                  → public_html/js/pages/muhasebe.js  (ÜZERİNE YAZ)
+
+4) Tarayıcıda Ctrl + F5
+
+═══════════════════════════════════════════════════════════════════
+
+YENİ ÖZELLİKLER:
+
+  AY SONU RAPORU sayfasına eklenenler:
+  ✓ KAYDET butonu - mevcut raporu snapshot olarak DB'ye kaydeder
+  ✓ KESİNLEŞTİR butonu - taslak raporu kilitler (silme/düzenleme)
+  ✓ KAYITLI RAPORLAR butonu (sayaç ile) - tüm kayıtlı raporları listeler
+  ✓ DÜZENLE - kayıtlı raporu yükler, üzerine canlı veri çekilir
+  ✓ SİL - taslak raporları siler (admin only, KESİN silinemez)
+  ✓ NOT alanı - rapora not eklenebilir
+
+NOT: Mevcut AY SONU RAPORU sayfasının canlı render davranışı korundu.
+     Sadece üstüne snapshot/liste/düzenle özellikleri eklendi.
