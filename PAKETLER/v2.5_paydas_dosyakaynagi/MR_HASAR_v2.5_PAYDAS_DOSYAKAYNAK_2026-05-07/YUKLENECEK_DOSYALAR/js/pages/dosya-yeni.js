@@ -69,6 +69,9 @@ MR.DosyaYeniPage = ({setPage, user}) => {
   const [personeller, setPersoneller] = useState([]);
   const [paydaslar, setPaydaslar] = useState([]);
   const [kullanicilar, setKullanicilar] = useState([]);
+  /* PAYDAŞLAR > EKSPER & SİGORTA tanımları (DB'den) */
+  const [eksperler, setEksperler] = useState([]);
+  const [sigortaSirketleri, setSigortaSirketleri] = useState([]);
   const [form, setForm] = useState({
     // Mağdur bilgileri
     ad_soyad:'', tc_kimlik:'', telefon:'', iban:'', adres:'', il:'', ilce:'', dogum_tarihi:'',
@@ -77,7 +80,7 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     dosya_kaynak:'', sorumlu_id:'', ortak_id:'', paydas_id:'', noter_vekalet:'',
     sakatlik_aciklama:'', gelir_durumu:'',
     // Sigorta bilgileri
-    sigorta_sirket:'', hasar_no:'', police_no:'', sorumlu_sigorta:'', eksper_firma:'', onarim_servisi:'',
+    sigorta_sirket:'', sigorta_id:'', hasar_no:'', police_no:'', sorumlu_sigorta:'', eksper_firma:'', eksper_id:'', onarim_servisi:'',
     // ADK araç bilgileri - mağdur
     ma_plaka:'', ma_marka:'', ma_model:'', ma_yil:'',
     ma_ruhsat:'', ma_tc:'', ma_belge_tescil:'', ma_onarim_gun:'', ma_gecmis_hasar:'', ma_kasko:'',
@@ -106,6 +109,14 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     api.kullaniciList({limit:200}).then(r => {
       if (r?.success) setKullanicilar((r.data?.items || r.data || []).filter(k => k.aktif));
     });
+    /* EKSPER FİRMA listesini yükle (dropdown için) */
+    if (api.eksperList) api.eksperList({durum:'aktif'}).then(r => {
+      if (r?.success) setEksperler(r.data?.items || []);
+    });
+    /* SİGORTA ŞİRKETİ listesini yükle (dropdown için) */
+    if (api.sigortaList) api.sigortaList({durum:'aktif'}).then(r => {
+      if (r?.success) setSigortaSirketleri(r.data?.items || []);
+    });
   }, []);
 
   const validate = () => {
@@ -120,7 +131,15 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     if (!form.noter_vekalet || parseFloat(form.noter_vekalet) <= 0) return 'NOTER VEKALET UCRETI GEREKLİ';
     if (!form.sorumlu_id) return 'DOSYA SORUMLUSU SEÇİMİ GEREKLİ';
     if (!form.dosya_kaynak) return 'DOSYA KAYNAĞI SEÇİMİ GEREKLİ';
-    if (!form.paydas_id) return 'PAYDAŞ SEÇİMİ GEREKLİ';
+    // v2.5 mantığı:
+    //   SERVİS / KAPORTACI → ONARIM SERVİSİ dropdown'ından paydaş seçilir (paydas_id otomatik atanır)
+    //   ACENTE / PASİF TEMSİLCİ / DİĞER → PAYDAŞ KAYNAĞI section'undan paydas_id seçilir
+    if ((form.dosya_kaynak === 'SERVİS' || form.dosya_kaynak === 'KAPORTACI') && !form.paydas_id) {
+      return form.dosya_kaynak + ' SEÇİMİ GEREKLİ (ONARIM SERVİSİ alanından)';
+    }
+    if (['ACENTE','PASİF TEMSİLCİ','DİĞER'].includes(form.dosya_kaynak) && !form.paydas_id) {
+      return 'PAYDAŞ KAYNAĞI SEÇİMİ GEREKLİ';
+    }
     if (!form.sigorta_sirket) return 'SİGORTA ŞİRKETİ SEÇİMİ GEREKLİ';
     if (!form.hasar_no.trim()) return 'HASAR DOSYA NO GEREKLİ';
     if ((form.dosya_turu === 'ADK' || form.dosya_turu === 'MDK') && !form.ma_plaka.trim()) return 'MAĞDUR ARACI PLAKASI GEREKLİ';
@@ -132,7 +151,9 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     if (eksik) { setError(eksik); window.scrollTo({top:0,behavior:'smooth'}); return; }
     setLoading(true); setError('');
     const gonder = {...form};
-    if (gonder.ortak_id) gonder.ortak_id = parseInt(gonder.ortak_id);
+    // v2.5: AVUKAT otomatik atanır (otoAvukat computed value)
+    if (otoAvukat) gonder.ortak_id = otoAvukat.id;
+    else if (gonder.ortak_id) gonder.ortak_id = parseInt(gonder.ortak_id);
     else delete gonder.ortak_id;
     if (gonder.sorumlu_id) gonder.sorumlu_id = parseInt(gonder.sorumlu_id);
     else delete gonder.sorumlu_id;
@@ -160,8 +181,9 @@ MR.DosyaYeniPage = ({setPage, user}) => {
   // Computed values
   const isADK = form.dosya_turu === 'ADK' || form.dosya_turu === 'MDK';
   const isBH = form.dosya_turu === 'BH';
-  // v2.5: Dosya kaynağı 5 değer alır (SERVİS/KAPORTACI/ACENTE/PASİF TEMSİLCİ/DİĞER).
-  // Hepsi paydaş seçimi gerektirir; tur eşlemesi:
+  // v2.5: Dosya kaynağı 5 değer (SERVİS/KAPORTACI/ACENTE/PASİF TEMSİLCİ/DİĞER)
+  //   SERVİS/KAPORTACI → ONARIM SERVİSİ dropdown otomatik paydaş atar (PAYDAŞ KAYNAĞI section'ı GİZLİ)
+  //   ACENTE/PASİF TEMSİLCİ/DİĞER → ayrı PAYDAŞ KAYNAĞI section görünür
   const KAYNAK_TUR_MAP = {
     'SERVİS': 'servis',
     'KAPORTACI': 'kaportaci',
@@ -169,11 +191,33 @@ MR.DosyaYeniPage = ({setPage, user}) => {
     'PASİF TEMSİLCİ': 'pasif_temsilci',
     'DİĞER': 'diger'
   };
-  const isPaydas = !!form.dosya_kaynak;
-  const filtreliPaydaslar = form.dosya_kaynak
+  const isSrcServisKaport = form.dosya_kaynak === 'SERVİS' || form.dosya_kaynak === 'KAPORTACI';
+  const isSrcAcentePasifDiger = ['ACENTE','PASİF TEMSİLCİ','DİĞER'].includes(form.dosya_kaynak);
+  // PAYDAŞ KAYNAĞI section sadece ACENTE/PASİF TEMSİLCİ/DİĞER seçildiğinde görünür
+  const isPaydas = isSrcAcentePasifDiger;
+  // ACENTE/PASİF/DİĞER paydaş listesi (ilgili tur'a göre filtrelenmiş)
+  const filtreliPaydaslar = isSrcAcentePasifDiger
     ? paydaslar.filter(p => String(p.tur || '').toLowerCase() === KAYNAK_TUR_MAP[form.dosya_kaynak])
     : [];
-  const seciliOrtak = ortaklar.find(o => String(o.id) === String(form.ortak_id));
+  // ONARIM SERVİSİ dropdown listesi (DOSYA KAYNAĞI = SERVİS veya KAPORTACI ise filtreli)
+  const onarimServisListesi = isSrcServisKaport
+    ? paydaslar.filter(p => String(p.tur || '').toLowerCase() === KAYNAK_TUR_MAP[form.dosya_kaynak])
+    : [];
+  /* v2.5: AVUKAT artık dosya türüne göre OTOMATİK atanır.
+     ÖNEMLİ — isim eşlemesi:
+       · ADK / MDK → 'DEMİRHAN' içeren avukat (Av. Demirhan Emir)
+       · BH       → 'EMRE' içeren avukat       (Av. Emre Ca Kabadayı)
+     Avukat ad_soyad'ı değişirse aşağıdaki regex'leri güncelleyin. */
+  const otoAvukat = (() => {
+    if (form.dosya_turu === 'ADK' || form.dosya_turu === 'MDK') {
+      return ortaklar.find(o => /demirhan/i.test(o.ad_soyad || ''));
+    }
+    if (form.dosya_turu === 'BH') {
+      return ortaklar.find(o => /emre/i.test(o.ad_soyad || ''));
+    }
+    return null;
+  })();
+  const seciliOrtak = otoAvukat || ortaklar.find(o => String(o.id) === String(form.ortak_id));
   const seciliSorumlu = personeller.find(p => String(p.user_id || p.id) === String(form.sorumlu_id));
   const seciliPaydas = paydaslar.find(p => String(p.id) === String(form.paydas_id));
   const paydasPrimTutar = seciliPaydas ? parseFloat(isBH ? seciliPaydas.prim_bh : seciliPaydas.prim_adk) || 0 : 0;
@@ -267,7 +311,10 @@ MR.DosyaYeniPage = ({setPage, user}) => {
           <FormGroup label="KOMİSYON (%) *"><input type="number" style={S.input} value={form.komisyon} onChange={e=>u('komisyon',e.target.value)} placeholder="20"/></FormGroup>
           <FormGroup label="NOTER VEKALET (TL) *"><input type="number" style={S.input} value={form.noter_vekalet} onChange={e=>u('noter_vekalet',e.target.value)} placeholder="1596"/></FormGroup>
           <FormGroup label="DOSYA KAYNAĞI *">
-            <select style={S.select} value={form.dosya_kaynak} onChange={e=>{u('dosya_kaynak',e.target.value);u('paydas_id','');}}>
+            <select style={S.select} value={form.dosya_kaynak} onChange={e=>{
+              const v = e.target.value;
+              setForm(p => ({...p, dosya_kaynak: v, paydas_id: '', onarim_servisi: ''}));
+            }}>
               <option value="">SEÇİNİZ</option>
               <option value="SERVİS">SERVİS</option>
               <option value="KAPORTACI">KAPORTACI</option>
@@ -283,12 +330,8 @@ MR.DosyaYeniPage = ({setPage, user}) => {
               {personeller.length === 0 && kullanicilar.map(k => <option key={'k-'+k.id} value={k.id}>{k.ad_soyad}{k.rol?` (${k.rol.toUpperCase()})`:''}</option>)}
             </select>
           </FormGroup>
-          <FormGroup label="AVUKAT (İŞ ORTAĞI)">
-            <select style={S.select} value={form.ortak_id} onChange={e=>u('ortak_id',e.target.value)}>
-              <option value="">AVUKAT SEÇİNİZ</option>
-              {ortaklar.map(o => <option key={o.id} value={o.id}>{o.ad_soyad}{o.firma?` - ${o.firma}`:''} — %{o.odeme_orani||0}</option>)}
-            </select>
-          </FormGroup>
+          {/* v2.5: AVUKAT seçimi UI'dan kaldırıldı.
+              Dosya türüne göre otomatik atanır (computed values'taki otoAvukat) — aşağıda kart olarak gösterilir. */}
         </div>
         {/* HAKLILIK ORANI */}
         <div style={{marginTop:8}}>
@@ -308,16 +351,29 @@ MR.DosyaYeniPage = ({setPage, user}) => {
             {(parseFloat(isBH?seciliSorumlu.prim_bh:seciliSorumlu.prim_adk)>0) && <div style={{padding:'6px 12px',background:`${C.success}18`,borderRadius:8,textAlign:'center'}}><div style={{fontSize:8,color:C.textMuted}}>{form.dosya_turu} PRİMİ</div><div style={{fontSize:16,fontWeight:900,color:C.success}}>₺{isBH?seciliSorumlu.prim_bh:seciliSorumlu.prim_adk}</div></div>}
           </div>
         )}
-        {seciliOrtak && (
+        {/* v2.5: AVUKAT otomatik atandı bilgi kartı (dosya türüne göre) */}
+        {seciliOrtak ? (
           <div style={{marginTop:8,padding:12,background:`${C.purple}08`,borderRadius:10,border:`1px solid ${C.purple}22`,display:'flex',alignItems:'center',gap:12}}>
             <div style={{width:32,height:32,borderRadius:8,background:`${C.purple}22`,display:'flex',alignItems:'center',justifyContent:'center'}}><LIcon name="Scale" size={18} color={C.purple}/></div>
-            <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700}}>{seciliOrtak.ad_soyad}</div><div style={{fontSize:9,color:C.textSec}}>{seciliOrtak.firma||''} {seciliOrtak.baro?'• '+seciliOrtak.baro:''}</div></div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:9,fontWeight:700,color:C.purple,letterSpacing:1,marginBottom:2}}>AVUKAT (OTOMATİK — {form.dosya_turu})</div>
+              <div style={{fontSize:12,fontWeight:700}}>{seciliOrtak.ad_soyad}</div>
+              <div style={{fontSize:9,color:C.textSec}}>{seciliOrtak.firma||''} {seciliOrtak.baro?'• '+seciliOrtak.baro:''}</div>
+            </div>
             <div style={{padding:'6px 12px',background:`${C.purple}18`,borderRadius:8,textAlign:'center'}}><div style={{fontSize:8,color:C.textMuted}}>ODEME ORANI</div><div style={{fontSize:18,fontWeight:900,color:C.purple}}>%{seciliOrtak.odeme_orani||0}</div></div>
+          </div>
+        ) : (
+          <div style={{marginTop:8,padding:10,background:`${C.warning}10`,borderRadius:10,border:`1px solid ${C.warning}33`,fontSize:11,color:C.warning,fontWeight:600}}>
+            ⚠ {form.dosya_turu} dosya türü için varsayılan avukat bulunamadı.
+            <strong style={{marginLeft:6}}>İŞ ORTAKLARI &gt; AVUKAT</strong> sayfasından kontrol edin
+            (ADK/MDK için "Demirhan", BH için "Emre" isimli avukat olmalı).
           </div>
         )}
       </SecCard>
 
-      {/* ═══ 3. PAYDAŞ KAYNAĞI ═══ */}
+      {/* ═══ 3. PAYDAŞ KAYNAĞI ═══ (sadece ACENTE/PASİF TEMSİLCİ/DİĞER seçildiğinde görünür)
+           v2.5 mantığı: SERVİS/KAPORTACI seçildiğinde bu section gizlenir,
+           bunun yerine ONARIM SERVİSİ alanından paydaş seçimi yapılır. */}
       {isPaydas && (
         <SecCard icon="Handshake" title={`PAYDAŞ KAYNAĞI — ${form.dosya_kaynak}`} sub="Dosyayı yönlendiren paydaş bilgileri" color="#8b5cf6" badge="ZORUNLU">
           <FormGroup label={`${form.dosya_kaynak} SEÇ *`}>
@@ -345,16 +401,68 @@ MR.DosyaYeniPage = ({setPage, user}) => {
       <SecCard icon="Shield" title="SİGORTA BİLGİLERİ" sub="Sigorta ve hasar dosya bilgileri" color="#10b981" badge="ZORUNLU">
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
           <FormGroup label="SİGORTA ŞİRKETİ *">
-            <select style={S.select} value={form.sigorta_sirket} onChange={e=>u('sigorta_sirket',e.target.value)}>
-              <option value="">SEÇİNİZ</option>{SIGORTA.map(s=><option key={s} value={s}>{s}</option>)}
+            <select style={S.select} value={form.sigorta_sirket} onChange={e=>{
+              const ad = e.target.value;
+              setForm(p => {
+                const sec = sigortaSirketleri.find(s => s.sirket_adi === ad);
+                return {...p, sigorta_sirket: ad, sigorta_id: sec ? String(sec.id) : ''};
+              });
+            }}>
+              <option value="">SEÇİNİZ</option>
+              {/* DB'deki tanımlı sigorta şirketleri (PAYDAŞLAR > EKSPER & SİGORTA modülünde yönetilir) */}
+              {(sigortaSirketleri.length > 0 ? sigortaSirketleri.map(s=>s.sirket_adi) : SIGORTA).map(s=><option key={s} value={s}>{s}</option>)}
             </select>
           </FormGroup>
           <FormGroup label="HASAR DOSYA NO *"><input style={S.input} value={form.hasar_no} onChange={e=>u('hasar_no',e.target.value)}/></FormGroup>
           {/* v2.5: SİGORTA BRANŞI ve DOSYA TALEP TÜRÜ alanları UI'dan kaldırıldı.
               DB kolonları korundu — eski dosyalar değer göstermeye devam eder. */}
           {isADK && <>
-            <FormGroup label="EKSPER FİRMASI"><input style={S.input} value={form.eksper_firma||''} onChange={e=>u('eksper_firma',e.target.value)}/></FormGroup>
-            <FormGroup label="ONARIM SERVİSİ"><input style={S.input} value={form.onarim_servisi||''} onChange={e=>u('onarim_servisi',e.target.value)}/></FormGroup>
+            <FormGroup label="EKSPER FİRMASI">
+              <select style={S.select} value={form.eksper_firma||''} onChange={e=>{
+                const ad = e.target.value;
+                setForm(p => {
+                  const sec = eksperler.find(x => x.eksper_adi === ad);
+                  return {...p, eksper_firma: ad, eksper_id: sec ? String(sec.id) : ''};
+                });
+              }}>
+                <option value="">SEÇİNİZ</option>
+                {/* PAYDAŞLAR > EKSPER & SİGORTA'dan tanımlı eksperler — SADECE eksper_adi gösterilir */}
+                {eksperler.map(ex => <option key={ex.id} value={ex.eksper_adi}>{ex.eksper_adi}</option>)}
+              </select>
+            </FormGroup>
+            {/* v2.5 ONARIM SERVİSİ:
+                · DOSYA KAYNAĞI = SERVİS veya KAPORTACI ise → tanımlı SERVİS/KAPORTACI paydaşları dropdown
+                  Seçim yapıldığında form.paydas_id de otomatik atanır (PAYDAŞ KAYNAĞI section'ı gizli)
+                · Diğer durumlarda → serbest metin input */}
+            <FormGroup label={'ONARIM SERVİSİ' + (isSrcServisKaport ? ' *' : '')}>
+              {isSrcServisKaport ? (
+                <select style={S.select} value={form.paydas_id || ''} onChange={e=>{
+                  const id = e.target.value;
+                  setForm(p => {
+                    const sec = paydaslar.find(x => String(x.id) === String(id));
+                    return {...p, paydas_id: id, onarim_servisi: sec ? sec.ad : ''};
+                  });
+                }}>
+                  <option value="">{form.dosya_kaynak} SEÇİNİZ</option>
+                  {onarimServisListesi.map(p => (
+                    <option key={p.id} value={p.id}>{p.ad}{p.yetkili?` - ${p.yetkili}`:''}</option>
+                  ))}
+                </select>
+              ) : (
+                <input style={S.input} value={form.onarim_servisi||''} onChange={e=>u('onarim_servisi',e.target.value)}/>
+              )}
+              {isSrcServisKaport && onarimServisListesi.length === 0 && (
+                <div style={{marginTop:6,fontSize:10,color:C.warning,fontWeight:600}}>
+                  ⚠ Bu türde aktif paydaş yok. Önce <strong>İŞ PAYDAŞLARI</strong> sayfasından kayıt ekleyin.
+                </div>
+              )}
+              {isSrcServisKaport && seciliPaydas && (
+                <div style={{marginTop:6,padding:'6px 10px',background:`${C.warning}10`,borderRadius:6,fontSize:10,color:C.textSec}}>
+                  ✓ Aynı zamanda <strong>{form.dosya_kaynak}</strong> paydaş kaynağı olarak da kaydedildi.
+                  {paydasPrimTutar > 0 && <span> Dosya başı ücret: <strong>₺{paydasPrimTutar}</strong></span>}
+                </div>
+              )}
+            </FormGroup>
           </>}
           {isBH && <>
             <FormGroup label="POLİÇE NO"><input style={S.input} value={form.police_no} onChange={e=>u('police_no',e.target.value)}/></FormGroup>
