@@ -54,21 +54,11 @@ js/pages/ortaklar.js
 | `YUKLENECEK_DOSYALAR/js/pages/ortaklar.js` | `<root>/js/pages/ortaklar.js` |
 | `YUKLENECEK_DOSYALAR/js/pages/is-ortaklari.js` | `<root>/js/pages/is-ortaklari.js` (YENİ) |
 | `YUKLENECEK_DOSYALAR/js/pages/is-paydaslari.js` | `<root>/js/pages/is-paydaslari.js` (YENİ) |
+| `YUKLENECEK_DOSYALAR/index.html` | `<root>/index.html` |
 
-### 4) `index.html` script etiketleri
+> **NOT:** `index.html` zaten `is-ortaklari.js` ve `is-paydaslari.js` script etiketleri eklenmiş halde geliyor. Manuel düzenleme YAPMAYIN — sadece dosyayı kopyalayıp üzerine yazın. Bu dosya `TUM_YENI_MODULLER_04.05.2026` paketindeki son sürüme dayanır (eksper-sigorta + mahsup-zinciri script'leri korunur).
 
-`<root>/index.html` dosyasında `<script>` yüklemelerinin arasına 2 yeni satır ekleyin. **Sıra önemli — `ortaklar.js` ve `personel.js`'ten SONRA gelmeli:**
-
-```html
-<script src="js/pages/ortaklar.js"></script>
-<script src="js/pages/personel.js"></script>
-<!-- ↓ v2.5 yeni dosyalar -->
-<script src="js/pages/is-ortaklari.js"></script>
-<script src="js/pages/is-paydaslari.js"></script>
-<!-- ↑ -->
-```
-
-### 5) Tarayıcı önbelleğini temizle
+### 4) Tarayıcı önbelleğini temizle
 
 Hard reload (Ctrl+Shift+R / Cmd+Shift+R).
 
