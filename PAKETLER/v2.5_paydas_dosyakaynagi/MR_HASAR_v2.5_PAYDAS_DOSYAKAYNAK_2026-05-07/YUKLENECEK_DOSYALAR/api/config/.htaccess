@@ -1,0 +1,26 @@
+# MR HASAR — API KORUMA
+# Bu dizindeki .env, .env.example gibi dosyalar web üzerinden okunamaz.
+# Sadece PHP dosyaları çalıştırılır.
+
+# .env dosyalarını engelle
+<FilesMatch "^\.env">
+    Require all denied
+</FilesMatch>
+
+# .env.example dosyasını da engelle
+<FilesMatch "\.env\.example$">
+    Require all denied
+</FilesMatch>
+
+# .htaccess kendi de okunamaz
+<Files ".htaccess">
+    Require all denied
+</Files>
+
+# Backup veya geçici dosyaları engelle (.bak, .old, ~)
+<FilesMatch "\.(bak|old|tmp|swp|swo)$|~$">
+    Require all denied
+</FilesMatch>
+
+# Directory listing kapat
+Options -Indexes

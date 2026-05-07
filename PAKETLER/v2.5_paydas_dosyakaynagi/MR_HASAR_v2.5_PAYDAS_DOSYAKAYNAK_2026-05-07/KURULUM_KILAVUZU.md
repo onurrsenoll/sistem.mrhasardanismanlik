@@ -1,120 +1,151 @@
-# MR HASAR — v2.5 PAYDAŞ TÜR + DOSYA KAYNAĞI Yaması
+# MR HASAR — v2.5.6 BÜTÜNLEŞİK PAKET
 
-**Tarih:** 2026-05-07
+**Tarih:** 2026-05-08
 **Branch:** `claude/view-all-branches-qZ0JW`
-**Kapsam:** PAYDAŞLAR menüsünün İŞ ORTAKLARI / İŞ PAYDAŞLARI / EKSPER & SİGORTA olarak yeniden düzenlenmesi + DOSYA KAYNAĞI alanının 5 yeni değer ile genişletilmesi
+**Kapsam:**
+- Güvenlik altyapısı (v2.1) — auth, helpers, soft-delete, FK CASCADE→RESTRICT
+- KASA bütünlüğü (Madde 11+12+13) — atomik kasa-bakiyesi koruması
+- v2.5 PAYDAŞ TÜR + DOSYA KAYNAĞI (5 yeni tip)
+- KAPANIŞ MODÜLÜ (Madde 5.4) — DOSYA KAPAT modal hesaplamaları
+- MAHSUP ZİNCİRİ (Madde 4) — menü item + route
+- AVUKAT otomatik atama (Türkçe karakter destekli)
+- KAZA İLÇE dropdown
+- ÇAĞRI WIDGET fix — admin/uzman/personel rolleri otomatik görür
+- Yetki matrisi — yeni modüller için izin kayıtları
 
 ---
 
-## ALTIN KURALLAR (DEĞİŞMEDİ)
+## ALTIN KURALLAR
 
-- **HİÇBİR MEVCUT VERİ SİLİNMEZ.** SQL sadece kolon genişletir, eski tüm değerler korunur.
-- **KASA / ÖDEME / MAHSUP / KOMİSYON / HAKEDIŞ / EKSPER & SİGORTA mantığı tamamen aynı.**
-- **DB kolonları (sigorta_brans, talep_turu) korunur** — sadece UI'dan kaldırıldı. Eski dosyalar değer göstermeye devam eder.
-- Eski paydaşların `tur` değerleri (sigorta_acentesi, oto_galeri, oto_kiralama, tamirci) **dokunulmaz** — kullanıcı isterse paydaş kartından tek tek günceller.
+- **HİÇBİR MEVCUT VERİ SİLİNMEZ.** Tüm SQL'ler additive — `IF NOT EXISTS` / `NOT EXISTS` kontrolleri var.
+- **KASA / ÖDEME / MAHSUP / KOMİSYON / HAKEDIŞ mantığı dokunulmadı.**
+- Tüm dosyalar **statik olarak parse-test edildi** (JSX + PHP).
 
 ---
 
 ## YÜKLEME SIRASI
 
-### 1) SQL Migration
+### 1) SQL Migration — phpMyAdmin > İçe Aktar
 
-```bash
-mysql -u <kullanici> -p <db_adi> < SQL/01_paydas_dosyakaynagi_genisletme.sql
-```
+**Sırayla çalıştırın** (her biri tekrar çalıştırılabilir, hata vermez):
 
-Yapılan tek değişiklik:
-- `paydaslar.tur` kolonu **VARCHAR(40) NOT NULL DEFAULT 'sigorta_acentesi'** olarak ayarlanır (ENUM ise genişletilir; zaten VARCHAR ise yan etkisi yok).
-- `idx_paydaslar_tur` indexi eklenir (varsa atlanır).
+| # | Dosya | Açıklama |
+|---|---|---|
+| 0 | `SQL/00_v21_guvenlik_yamasi_OPSIYONEL.sql` | **Sadece daha önce yüklenmediyse.** Soft-delete + FK güvenliği. |
+| 1 | `SQL/01_paydas_dosyakaynagi_genisletme.sql` | `paydaslar.tur` VARCHAR(40) (zaten yüklü olabilir) |
+| 2 | `SQL/02_v25_yetki_matrisi.sql` | Yeni modüllere admin yetki kayıtları |
 
-**Hiçbir tablo silinmez. Hiçbir veri güncellenmez.**
+> **NOT:** Daha önce v2.5'i yüklediyseniz `01` zaten uygulanmış. `02` mutlaka çalıştırılmalı (yeni yetkiler için). `00` sadece güvenlik altyapısı eksikse gerekir.
 
-### 2) Yedek
-
-`YUKLENECEK_DOSYALAR/` içindeki dosyaları yüklemeden önce mevcut sistemde aşağıdaki dosyaların yedeğini alın:
+### 2) Yedek (önerilir)
 
 ```
 api/v1/paydas/list.php
+api/v1/paydas/komisyon-ode.php
+api/v1/masraf/ode.php
+api/v1/masraf/update.php
+api/v1/dosya/get.php
+api/v1/dosya/list.php
+api/v1/dosya/delete.php
+api/v1/dosya/restore.php
+api/v1/auth/*.php
+api/config/*.php
 js/app.js
+js/webrtc-widget.js
 js/pages/dosya-yeni.js
 js/pages/dosya-detay.js
 js/pages/ortaklar.js
+index.html
 ```
 
 ### 3) Dosyaları Yükle
 
-`YUKLENECEK_DOSYALAR/` klasörünün içeriğini sunucuya, ilgili konumlara kopyalayın:
+`YUKLENECEK_DOSYALAR/` klasörünün içeriğini sunucuya kopyalayın (klasör yapısını koruyarak):
 
-| Kaynak | Hedef |
+| Klasör | Açıklama |
 |---|---|
-| `YUKLENECEK_DOSYALAR/api/v1/paydas/list.php` | `<root>/api/v1/paydas/list.php` |
-| `YUKLENECEK_DOSYALAR/js/app.js` | `<root>/js/app.js` |
-| `YUKLENECEK_DOSYALAR/js/pages/dosya-yeni.js` | `<root>/js/pages/dosya-yeni.js` |
-| `YUKLENECEK_DOSYALAR/js/pages/dosya-detay.js` | `<root>/js/pages/dosya-detay.js` |
-| `YUKLENECEK_DOSYALAR/js/pages/ortaklar.js` | `<root>/js/pages/ortaklar.js` |
-| `YUKLENECEK_DOSYALAR/js/pages/is-ortaklari.js` | `<root>/js/pages/is-ortaklari.js` (YENİ) |
-| `YUKLENECEK_DOSYALAR/js/pages/is-paydaslari.js` | `<root>/js/pages/is-paydaslari.js` (YENİ) |
-| `YUKLENECEK_DOSYALAR/index.html` | `<root>/index.html` |
+| `api/config/` | Güvenlik altyapısı (zaten yüklü olabilir, üzerine yazmak güvenli) |
+| `api/v1/auth/` | Login/logout/refresh (zaten yüklü) |
+| `api/v1/dosya/` | Soft-delete + güvenli list/get (zaten yüklü) |
+| `api/v1/masraf/` | KASA bütünlüğü (zaten yüklü olabilir) |
+| `api/v1/paydas/list.php` | v2.5 — çoklu tur filtresi |
+| `api/v1/paydas/komisyon-ode.php` | KASA bütünlüğü |
+| `index.html` | v2.5 — is-ortaklari.js + is-paydaslari.js script'leri |
+| `js/app.js` | v2.5 — menü + route'lar |
+| `js/webrtc-widget.js` | **v2.5.6 fix** — admin/uzman/personel görür |
+| `js/pages/dosya-yeni.js` | v2.5 — DOSYA KAYNAĞI 5 değer + AVUKAT otomatik + KAZA İLÇE dropdown |
+| `js/pages/dosya-detay.js` | v2.5 — KAPANIŞ MODÜLÜ + DOSYA KAYNAĞI 5 değer |
+| `js/pages/ortaklar.js` | v2.5 — turMap + IsOrtaklariView/IsPaydaslariView expose |
+| `js/pages/is-ortaklari.js` | YENİ — Personel + Avukat 2 sekme |
+| `js/pages/is-paydaslari.js` | YENİ — 5 tur chip-bar + filter |
 
-> **NOT:** `index.html` zaten `is-ortaklari.js` ve `is-paydaslari.js` script etiketleri eklenmiş halde geliyor. Manuel düzenleme YAPMAYIN — sadece dosyayı kopyalayıp üzerine yazın. Bu dosya `TUM_YENI_MODULLER_04.05.2026` paketindeki son sürüme dayanır (eksper-sigorta + mahsup-zinciri script'leri korunur).
+### 4) Hard reload
 
-### 4) Tarayıcı önbelleğini temizle
-
-Hard reload (Ctrl+Shift+R / Cmd+Shift+R).
+**Ctrl+Shift+R** (tarayıcı cache temizle).
 
 ---
 
-## YAPILAN DEĞİŞİKLİKLER
+## YENİ DAVRANIŞLAR
 
-### DB
-- `paydaslar.tur` kolonu artık **VARCHAR(40)**. 5 yeni değeri kabul eder: `servis`, `kaportaci`, `acente`, `pasif_temsilci`, `diger`. Eski 4 değer (sigorta_acentesi, oto_galeri, oto_kiralama, tamirci) korunur.
-- `dosyalar` tablosu DOKUNULMAZ. `sigorta_brans`, `talep_turu`, `dosya_kaynagi`, `paydas_id` kolonları aynen kalır.
+### Çağrı Widget (gelen arama)
+- **Önceki sürüm:** Sadece `admin` rolü direkt görüyordu; diğer roller `netsantral_*` veya `cagri_*` yetkisi gerektiriyordu (DB'de tanımlı değildi).
+- **v2.5.6:** `admin`, `uzman`, `personel` rolleri otomatik görür. Diğer roller için yetki kontrolü devam eder.
+- **Sonuç:** Ses + görüntü artık birlikte gelir.
 
-### Backend
-- `api/v1/paydas/list.php` — `?tur=servis,kaportaci,acente` gibi virgülle ayrılmış çoklu tur filtresi destekler. Eski tek tur filtreleri çalışmaya devam eder.
+### DOSYA KAYNAĞI (yeni dosya açma)
+- 5 değer: SERVİS / KAPORTACI / ACENTE / PASİF TEMSİLCİ / DİĞER
+- **SERVİS / KAPORTACI** → ONARIM SERVİSİ alanı dropdown (paydaslar.tur=servis|kaportaci); seçim paydas_id'yi otomatik atar; PAYDAŞ KAYNAĞI section gizli
+- **ACENTE / PASİF TEMSİLCİ / DİĞER** → ayrı PAYDAŞ KAYNAĞI section, filtreli dropdown
 
-### Frontend
-- **`app.js`** — PAYDAŞLAR menüsü 3 alt menüye ayarlandı:
-  - İŞ ORTAKLARI → `is-ortaklari` (Personel + Avukat 2 sekmeli)
-  - İŞ PAYDAŞLARI → `is-paydaslari` (5 türden filtreleme)
-  - EKSPER & SİGORTA → `paydaslar-eksper-sigorta` (Madde 1 paketinde tanımlı)
-  - Eski `ortaklar-*` ve `personel-*` route'ları **geri uyumluluk için korundu** (eski linkler kırılmaz).
+### AVUKAT — otomatik atama
+- ADK / MDK → ad_soyad'ında "DEMİRHAN" geçen avukat (Türkçe karakter destekli)
+- BH → "EMRE" geçen avukat
+- Bulunamazsa sarı uyarı banner: İŞ ORTAKLARI > AVUKAT'tan kontrol edin.
 
-- **`dosya-yeni.js`** — DOSYA KAYNAĞI dropdown 5 değerli oldu: SERVİS / KAPORTACI / ACENTE / PASİF TEMSİLCİ / DİĞER. Seçilen değere göre PAYDAŞ dropdown'ı otomatik filtrelenir (örn: SERVİS seçilince sadece `tur='servis'` paydaşlar listelenir). SİGORTA BRANŞI ve DOSYA TALEP TÜRÜ alanları UI'dan kaldırıldı (DB kolonları kalır, eski dosyalar değer göstermeye devam eder).
+### Menü
+```
+PAYDAŞLAR
+ ├─ İŞ ORTAKLARI       (PERSONEL | AVUKAT 2 sekme)
+ ├─ İŞ PAYDAŞLARI      (5 tip filtre)
+ └─ EKSPER & SİGORTA   (Madde 1)
 
-- **`dosya-detay.js`** — DOSYA KAYNAĞI dropdown'ında 5 yeni değer + eski 2 değer (geri uyumluluk). Avukat görünümünde yeni 5 değer otomatik "YÖNLENDİRME" olarak gösterilir.
-
-- **`ortaklar.js`** — `turMap`'e 4 yeni değer eklendi (`servis`, `kaportaci`, `acente`, `pasif_temsilci`). Tur dropdown'ları yeni/eski tipler olarak `<optgroup>` ile ayrıldı. Yeni paydaş eklerken default tur `servis` (eski default `sigorta_acentesi`'di). Component'ler `MR.IsOrtaklariView` / `MR.IsPaydaslariView` olarak expose edildi.
-
-- **`is-ortaklari.js` (YENİ)** — 2 sekmeli wrapper (PERSONEL | AVUKAT). Sekmeler mevcut `MR.PersonelPage` ve `MR.IsOrtaklariView`'i render eder.
-
-- **`is-paydaslari.js` (YENİ)** — 5 tur'lu chip-bar bilgi banner'ı + mevcut `MR.IsPaydaslariView` component. Kullanıcı tur dropdown'ından filtreleyebilir.
+MUHASEBE
+ └─ MAHSUP ZİNCİRİ     (yeni — Madde 4)
+```
 
 ---
 
 ## DOĞRULAMA TESTLERİ
 
-1. ✅ PAYDAŞLAR menüsünde 3 alt menü görünüyor mu?
-2. ✅ İŞ ORTAKLARI'nda PERSONEL ve AVUKAT sekmeleri çalışıyor mu?
-3. ✅ İŞ PAYDAŞLARI'nda yeni tipler (SERVİS/KAPORTACI/ACENTE/PASİF TEMSİLCİ/DİĞER) için chip-bar görünüyor mu?
-4. ✅ Yeni paydaş eklerken TÜR dropdown'ında 9 değer (5 yeni + 4 eski) görünüyor mu?
-5. ✅ Yeni dosya açılışında DOSYA KAYNAĞI 5 değerli mi? Seçilen değere göre PAYDAŞ dropdown filtreleniyor mu?
-6. ✅ SİGORTA BRANŞI ve DOSYA TALEP TÜRÜ alanları yeni dosya formunda yok, ama eski dosya detayında varsa görünüyor mu?
-7. ✅ Eski dosyalardaki paydas_id korunuyor mu?
-8. ✅ EKSPER & SİGORTA menüsü Madde 1 paketi yüklüyse hâlâ çalışıyor mu?
+1. ✅ DOSYA KAPAT modal — Tazminat girince Hesap Özeti tüm satırları otomatik dolar mı?
+2. ✅ MUHASEBE > MAHSUP ZİNCİRİ menüde görünüyor mu?
+3. ✅ Telefonun zilini çal — sağ üst köşede gelen arama widget'ı görünüyor mu?
+4. ✅ Yeni dosya: ADK seçince "AVUKAT (OTOMATİK — ADK)" mor kart DEMİRHAN EMİR ile dolu mu?
+5. ✅ Yeni dosya: KAZA İLİ değiştir → KAZA İLÇE dropdown otomatik filtrelenip sıfırlanıyor mu?
+6. ✅ Yeni dosya: DOSYA KAYNAĞI=SERVİS → ONARIM SERVİSİ dropdown'ı paydas_id'yi atıyor mu?
+7. ✅ PAYDAŞLAR > İŞ PAYDAŞLARI yeni paydaş ekleme — TÜR dropdown 9 değer (5 yeni + 4 eski) gösteriyor mu?
+
+---
+
+## STATİK DOĞRULAMA (geliştirici notu)
+
+Pakete dahil edilen **tüm dosyalar parse test'inden geçti**:
+- 7 JS/JSX dosyası (`@babel/parser` ile JSX modunda)
+- 16 PHP dosyası (`php -l` ile)
+
+Eğer paketi yükledikten sonra runtime hatası alırsan **konsol screenshot'ı ile bildir** — fix edilebilir.
 
 ---
 
 ## ROLLBACK
 
-Bu yama geri alınabilir bir yamadır:
-
-1. **Frontend rollback:** Yedeklediğiniz `app.js`, `dosya-yeni.js`, `dosya-detay.js`, `ortaklar.js` dosyalarını geri yükleyin. `is-ortaklari.js` ve `is-paydaslari.js` dosyalarını silin. `index.html`'de eklediğiniz 2 script satırını kaldırın.
-2. **Backend rollback:** Yedeklediğiniz `api/v1/paydas/list.php` dosyasını geri yükleyin.
-3. **DB rollback:** `paydaslar.tur` zaten VARCHAR ise hiçbir değişiklik gerekmez. ENUM'a geri çevirmek zorunda değilseniz (gerekli değil).
+1. **Frontend:** Yedeklediğin eski JS/HTML dosyalarını geri yükle.
+2. **Backend:** Yedeklediğin eski PHP'leri geri yükle.
+3. **DB:** SQL migration'lar additive — geri alınması gerekmez (yetki kayıtları siliniyorsa: `DELETE FROM yetkiler WHERE modul='paydaslar' AND islem IN ('is-ortaklari','is-paydaslari','paydaslar-eksper-sigorta');`)
 
 ---
 
 **Hazırlayan:** Claude (Onur Şenol için)
-**Önceki paketler:** v2.4 (PERSONEL + PAYDAŞ), v3.0 (KAPSAMLI), MASTER v3.0.11
-**Sonraki paketler:** —
+**Tarih:** 2026-05-08
+**Önceki paketler:** v2.5.5 → v2.5.6 BÜTÜNLEŞIK
+**Sonraki paket:** v2.6 — para formatı (1.000,00 binlik ayraç) — kullanıcı isteğiyle ayrı round'da
