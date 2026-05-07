@@ -24,9 +24,10 @@ const MENU = [
     {id:'hesap-bh', label:'BEDENİ HASAR', icon:'Heart'}
   ]},
   {id:'paydaslar', label:'PAYDAŞLAR', icon:'Handshake', sub:[
-    {id:'is-ortaklari', label:'İŞ ORTAKLARI', icon:'Briefcase'},
-    {id:'is-paydaslari', label:'İŞ PAYDAŞLARI', icon:'Network'},
-    {id:'paydaslar-eksper-sigorta', label:'EKSPER & SİGORTA', icon:'Shield'}
+    {id:'personel-liste',           label:'PERSONEL',          icon:'Users'},
+    {id:'ortaklar-ortaklar',        label:'AVUKAT',            icon:'Scale'},
+    {id:'is-paydaslari',            label:'İŞ PAYDAŞLARI',     icon:'Network'},
+    {id:'paydaslar-eksper-sigorta', label:'EKSPER & SİGORTA',  icon:'Shield'}
   ]},
   {id:'police', label:'POLİÇE', icon:'FileCheck', sub:[
     {id:'police-liste', label:'POLİÇE LİSTESİ', icon:'List'},
