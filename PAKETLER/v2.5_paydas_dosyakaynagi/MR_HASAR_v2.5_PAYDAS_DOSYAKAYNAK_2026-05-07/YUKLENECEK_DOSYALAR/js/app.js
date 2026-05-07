@@ -47,7 +47,8 @@ const MENU = [
     {id:'muhasebe-maliyet', label:'MALİYET ANALİZİ', icon:'PieChart'},
     {id:'muhasebe-rapor', label:'FİNANSAL RAPORLAR', icon:'BarChart3'},
     {id:'muhasebe-kapanis', label:'KAPANIŞ RAPORU', icon:'FileCheck'},
-    {id:'muhasebe-aysonu', label:'AY SONU RAPORU', icon:'CalendarCheck'}
+    {id:'muhasebe-aysonu', label:'AY SONU RAPORU', icon:'CalendarCheck'},
+    {id:'muhasebe-mahsup', label:'MAHSUP ZİNCİRİ', icon:'ArrowLeftRight'}
   ]},
   {id:'ictihat', label:'İÇTİHAT', icon:'Scale', sub:[
     {id:'ictihat-yargitay', label:'YARGITAY KARARLARI', icon:'Scale'},
@@ -875,6 +876,13 @@ const PageRouter = ({page, setPage, user, setUser}) => {
     return MR.EksperSigortaPage
       ? <MR.EksperSigortaPage setPage={setPage} user={user}/>
       : <div style={{padding:40,textAlign:'center'}}>EKSPER & SİGORTA modülü yüklenmemiş — Madde 1 paketini uygulayın.</div>;
+  }
+
+  /* MUHASEBE > MAHSUP ZİNCİRİ (Madde 4 paketinde tanımlı) */
+  if (page === 'muhasebe-mahsup') {
+    return MR.MahsupZinciriPage
+      ? <MR.MahsupZinciriPage setPage={setPage} user={user}/>
+      : <div style={{padding:40,textAlign:'center'}}>MAHSUP ZİNCİRİ modülü yüklenmemiş — Madde 4 paketini uygulayın.</div>;
   }
 
   /* ORTAKLAR (geriye dönük uyumluluk — eski linkler için) */

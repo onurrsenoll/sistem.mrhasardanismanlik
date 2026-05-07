@@ -188,7 +188,11 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
   const [kapatModal, setKapatModal] = useState(false);
   const [kapatForm, setKapatForm] = useState({
     tazminat: '', vekalet_ucreti: '', faiz: '', stopaj: '', kdv_oran: '20',
-    dosya_basi_odenen: '0', kasa_id: 1, pay_orani: '50'
+    dosya_basi_odenen: '0', kasa_id: 1, pay_orani: '50',
+    /* MADDE 5.4 EK KALEMLER (kazançtan ÖNCE düşülür) */
+    yonlendiren_ucreti: '0', noter_masrafi: '0',
+    /* MAHSUP ZİNCİRİ */
+    mahsup_edilecek: '0', mahsup_kaynak_dosya_id: '', not_metni: ''
   });
   const [kapatLoading, setKapatLoading] = useState(false);
   const [kasalar, setKasalar] = useState([]);
@@ -1057,8 +1061,8 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
         </div>
       )}
 
-      {/* DOSYA KAPAT MODAL */}
-      <Modal open={kapatModal} onClose={() => setKapatModal(false)} title="DOSYA KAPAT - HESAP ÖZETİ" width="700px">
+      {/* DOSYA KAPAT MODAL — Madde 5.4 entegre */}
+      <Modal open={kapatModal} onClose={() => setKapatModal(false)} title="DOSYA KAPAT - MADDE 5.4 HESAP ÖZETİ" width="780px">
         {(() => {
           const t = parseFloat(kapatForm.tazminat) || 0;
           const sozlesmeOran = parseFloat(kapatForm.pay_orani) || 0;
@@ -1069,16 +1073,29 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
           const stopaj = parseFloat(kapatForm.stopaj) || 0;
           const kdvOran = parseFloat(kapatForm.kdv_oran) || 0;
           const kdv = sozlesme * kdvOran / 100;
-          const toplamKazanc = sozlesme + vekalet + faiz;
+          /* MADDE 5.4 — Yönlendiren ücreti + noter masrafı KAZANÇTAN ÖNCE düşer */
+          const yonlendirenUcreti = parseFloat(kapatForm.yonlendiren_ucreti) || 0;
+          const noterMasrafi = parseFloat(kapatForm.noter_masrafi) || 0;
+          const mahsupEdilecek = parseFloat(kapatForm.mahsup_edilecek) || 0;
+
+          /* Toplam kazanç = tahsilat - havale - yönlendiren - noter */
+          const toplamKazanc = t - muvekkileHavale - yonlendirenUcreti - noterMasrafi;
           const dosyaBasi = parseFloat(kapatForm.dosya_basi_odenen) || 0;
           const dosyaMasraflari = dosya.toplam_masraf || 0;
-          const netKazanc = toplamKazanc - dosyaMasraflari;
+          /* Net kazanç = toplam - dosya masrafları + faiz - stopaj */
+          const netKazanc = toplamKazanc - dosyaMasraflari + faiz - stopaj;
 
           /* PAY BÖLÜŞÜMÜ: SABİT %50 - %50 */
-          const avukatPayYuzde = 50;
-          const mrPayYuzde = 50;
-          const avukatHakedis = netKazanc * 50 / 100;
-          const mrHakedis = netKazanc * 50 / 100;
+          const avukatHakedisRaw = netKazanc * 0.5;
+          let onurPayi = netKazanc - avukatHakedisRaw;
+          /* Mahsup uygulanırsa onur payından düşer */
+          let mahsupUygulanan = 0;
+          if (mahsupEdilecek > 0 && onurPayi > 0) {
+            mahsupUygulanan = Math.min(mahsupEdilecek, onurPayi);
+            onurPayi = onurPayi - mahsupUygulanan;
+          }
+          const avukatHakedis = avukatHakedisRaw;
+          const mrHakedis = onurPayi;
           const kasayaAktarilacak = netKazanc;
           const kF = (k,v) => setKapatForm(p=>({...p,[k]:v}));
 
@@ -1092,22 +1109,50 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
             </div>
           );
 
+          /* MADDE 5.4 — Yeni v3.0 endpoint çağrısı (kapanis-olustur.php)
+             Snapshot, gelir, dosya kapatma, mahsup zinciri tek istekte yapılır */
           const dosyaKapat = async () => {
-            if (!t || t <= 0) { alert('TAZMİNAT TUTARI GİRMENİZ GEREKLİ'); return; }
+            if (!t || t <= 0) { alert('SİGORTA TAHSİLATI TUTARI GEREKLİ'); return; }
             setKapatLoading(true);
-            const gelirR = await api.gelirCreate({
-              dosya_id: dosya.id, gelir_turu: 'TAZMİNAT ÖDEMESİ',
-              tutar: kasayaAktarilacak,
-              kasa_id: parseInt(kapatForm.kasa_id),
-              aciklama: `${dosya.dosya_no} DOSYA KAPATMA - TAZMİNAT: ${fmt(t)}, NET KAZANÇ: ${fmt(netKazanc)}, AVUKAT HAKEDİŞ (%50): ${fmt(avukatHakedis)}, MR HAKEDİŞ (%50): ${fmt(mrHakedis)}`,
-              tahsilat_durumu: 'tahsil_edildi'
-            });
-            const kapatR = await api.dosyaUpdate({
-              id: dosya.id, asama: 'DOSYA KAPANDI',
-              kapanma_tarihi: new Date().toISOString().split('T')[0]
-            });
-            if (kapatR?.success) { load(); setKapatModal(false); }
-            else alert(kapatR?.error || 'DOSYA KAPATMA HATASI');
+            const tok = localStorage.getItem('mr_token') || localStorage.getItem('token') || localStorage.getItem('jwt') || '';
+            try {
+              const r = await fetch('/api/v1/dosya/kapanis-olustur.php', {
+                method: 'POST',
+                headers: Object.assign({'Content-Type':'application/json'}, tok ? {'Authorization':'Bearer ' + tok} : {}),
+                credentials: 'include',
+                body: JSON.stringify({
+                  id: dosya.id,
+                  sigorta_tahsilat: t,
+                  sozlesme_orani: sozlesmeOran,
+                  noter_masrafi: noterMasrafi,
+                  vekalet_masrafi: vekalet,
+                  muvekkile_havale: muvekkileHavale,
+                  yonlendiren_ucreti: yonlendirenUcreti,
+                  yonlendiren_paydas_id: dosya.paydas_id || null,
+                  yonlendiren_kaynak: dosya.dosya_kaynagi || '',
+                  net_vekalet_ucreti: vekalet - stopaj,
+                  faiz: faiz,
+                  stopaj: stopaj,
+                  kdv_orani: kdvOran,
+                  kdv_tutar: kdv,
+                  yari_pay_yuzde: 50,
+                  dosya_basi_odenen: dosyaBasi,
+                  mahsup_edilecek: mahsupEdilecek,
+                  mahsup_kaynak_dosya_id: kapatForm.mahsup_kaynak_dosya_id ? parseInt(kapatForm.mahsup_kaynak_dosya_id) : null,
+                  not_metni: kapatForm.not_metni || '',
+                  kasa_id: parseInt(kapatForm.kasa_id) || null
+                })
+              });
+              const j = await r.json();
+              if (j?.success) {
+                setKapatModal(false);
+                load();
+              } else {
+                alert(j?.error || 'DOSYA KAPATMA HATASI');
+              }
+            } catch (e) {
+              alert('Bağlantı hatası: ' + e.message);
+            }
             setKapatLoading(false);
           };
 
@@ -1135,6 +1180,55 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 </FormGroup>
               </div>
 
+              {/* MADDE 5.4 EK KALEMLER — Kazançtan ÖNCE düşülenler */}
+              <div style={{padding:12,background:`${C.warning}08`,borderRadius:8,border:`1px solid ${C.warning}33`,marginBottom:14}}>
+                <div style={{fontSize:11,fontWeight:800,color:C.warning,marginBottom:8,letterSpacing:0.5,display:'flex',alignItems:'center',gap:6}}>
+                  <LIcon name="AlertTriangle" size={12} color={C.warning}/>
+                  MADDE 5.4 — KAZANÇTAN ÖNCE DÜŞÜLENLER
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
+                  <FormGroup label="YÖNLENDİREN ÜCRETİ">
+                    <input type="number" value={kapatForm.yonlendiren_ucreti} onChange={e=>kF('yonlendiren_ucreti',e.target.value)}
+                      style={{...S.input,padding:'7px 9px',fontSize:11}}/>
+                  </FormGroup>
+                  <FormGroup label="NOTER MASRAFI">
+                    <input type="number" value={kapatForm.noter_masrafi} onChange={e=>kF('noter_masrafi',e.target.value)}
+                      style={{...S.input,padding:'7px 9px',fontSize:11}}/>
+                  </FormGroup>
+                  <FormGroup label="DOSYA BAŞI ÖDENEN">
+                    <input type="number" value={kapatForm.dosya_basi_odenen} onChange={e=>kF('dosya_basi_odenen',e.target.value)}
+                      style={{...S.input,padding:'7px 9px',fontSize:11}}/>
+                  </FormGroup>
+                </div>
+                <div style={{fontSize:9,color:C.textMuted,marginTop:4,fontStyle:'italic'}}>
+                  Bu kalemler kazançtan önce düşer, paylaşım sonra %50/%50 yapılır.
+                </div>
+              </div>
+
+              {/* MAHSUP ZİNCİRİ — Önceki dosyalardan kalan */}
+              <div style={{padding:12,background:`${C.purple}08`,borderRadius:8,border:`1px solid ${C.purple}33`,marginBottom:14}}>
+                <div style={{fontSize:11,fontWeight:800,color:C.purple,marginBottom:8,letterSpacing:0.5,display:'flex',alignItems:'center',gap:6}}>
+                  <LIcon name="ArrowLeftRight" size={12} color={C.purple}/>
+                  MAHSUP ZİNCİRİ (önceki dosyalardan kalan tutarın bu dosyadan düşülmesi)
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:8}}>
+                  <FormGroup label="MAHSUP EDİLECEK TUTAR">
+                    <input type="number" value={kapatForm.mahsup_edilecek} onChange={e=>kF('mahsup_edilecek',e.target.value)}
+                      style={{...S.input,padding:'7px 9px',fontSize:11}}/>
+                  </FormGroup>
+                  <FormGroup label="KAYNAK DOSYA ID">
+                    <input type="number" value={kapatForm.mahsup_kaynak_dosya_id} onChange={e=>kF('mahsup_kaynak_dosya_id',e.target.value)}
+                      placeholder="örn: 123" style={{...S.input,padding:'7px 9px',fontSize:11}}/>
+                  </FormGroup>
+                </div>
+              </div>
+
+              {/* NOT METNİ */}
+              <FormGroup label="NOT (opsiyonel — kapanış kaydına dahil edilir)">
+                <textarea value={kapatForm.not_metni} onChange={e=>kF('not_metni',e.target.value)} rows={2}
+                  style={{...S.input,padding:'8px 10px',fontSize:11,resize:'vertical',width:'100%',marginBottom:14}}/>
+              </FormGroup>
+
               {/* AVUKAT BİLGİ BANNER */}
               {hasYetki('dosya','dosya-kapat') && dosya.avukat_adi && (
                 <div style={{padding:10,background:`${C.purple}11`,borderRadius:8,marginBottom:16,display:'flex',alignItems:'center',gap:12,border:`1px solid ${C.purple}33`}}>
@@ -1157,30 +1251,34 @@ MR.DosyaDetayPage = ({dosyaId, setPage, user}) => {
                 <div style={{fontSize:12,fontWeight:800,color:C.accent,marginBottom:10,display:'flex',alignItems:'center',gap:6}}>
                   <LIcon name="Calculator" size={14} color={C.accent}/> HESAP ÖZETİ
                 </div>
-                {hesapRow('SİGORTA ÖDEMESİ (TAZMİNAT)', t, {bold:true,color:C.accent})}
+                {hesapRow('SİGORTA ÖDEMESİ (TAHSİLAT)', t, {bold:true,color:C.accent})}
                 {hesapRow(`SÖZLEŞME (%${sozlesmeOran})`, sozlesme)}
-                {hesapRow('MÜVEKKİLE HAVALE', muvekkileHavale, {bold:true,border:true})}
+                {hesapRow('MÜVEKKİLE HAVALE (-)', muvekkileHavale, {color:C.danger})}
+                {/* MADDE 5.4 — Kazançtan ÖNCE düşülenler */}
+                {yonlendirenUcreti > 0 && hesapRow('YÖNLENDİREN ÜCRETİ (-) [Madde 5.4]', yonlendirenUcreti, {color:C.warning})}
+                {noterMasrafi > 0 && hesapRow('NOTER MASRAFI (-)', noterMasrafi, {color:C.danger})}
 
                 <div style={{marginTop:10}}/>
                 {hesapRow('NET VEKALET ÜCRETİ', vekalet)}
-                {hesapRow('FAİZ', faiz)}
-                {hesapRow('STOPAJ', stopaj, {color:C.danger})}
+                {hesapRow('FAİZ (+)', faiz, {color:C.success})}
+                {hesapRow('STOPAJ (-)', stopaj, {color:C.danger})}
                 <div style={{marginTop:6}}/>
                 {hesapRow(`KDV %${kdvOran}`, kdv)}
 
                 <div style={{marginTop:10,paddingTop:10,borderTop:`2px solid ${C.accent}44`}}/>
-                {hesapRow('TOPLAM KAZANÇ', toplamKazanc, {bold:true,color:C.success})}
-                {hesapRow('DOSYA MASRAFLARI (SİSTEMDEN)', dosyaMasraflari, {bold:true,color:C.danger})}
+                {hesapRow('TOPLAM KAZANÇ (Madde 5.4)', toplamKazanc, {bold:true,color:C.success})}
+                {hesapRow('DOSYA MASRAFLARI (-)', dosyaMasraflari, {bold:true,color:C.danger})}
                 <div style={{marginTop:6,paddingTop:6,borderTop:`2px solid ${C.success}66`}}/>
-                {hesapRow('NET KAZANÇ', netKazanc, {bold:true,color:C.success,big:true})}
+                {hesapRow('NET TOPLAM KAZANÇ', netKazanc, {bold:true,color:C.success,big:true})}
 
                 {hasYetki('dosya','dosya-kapat') && <>
                 <div style={{marginTop:10,paddingTop:10,borderTop:`2px solid ${C.purple}44`}}/>
                 <div style={{fontSize:10,fontWeight:700,color:C.purple,marginBottom:6,display:'flex',alignItems:'center',gap:4}}>
                   PAY BÖLÜŞÜMÜ (%50 - %50)
                 </div>
-                {hesapRow('AVUKAT HAKEDİŞİ (%50)', avukatHakedis, {bold:true,color:'#8b5cf6'})}
-                {hesapRow('MR HASAR HAKEDİŞİ (%50)', mrHakedis, {bold:true,color:C.success,big:true,border:true})}
+                {hesapRow('AVUKAT PAYI (%50)', avukatHakedis, {bold:true,color:'#8b5cf6'})}
+                {mahsupUygulanan > 0 && hesapRow('MAHSUP UYGULANAN (-) [zincir]', mahsupUygulanan, {color:C.warning})}
+                {hesapRow('ONUR PAYI (NET)', mrHakedis, {bold:true,color:C.success,big:true,border:true})}
                 </>}
               </div>
 
