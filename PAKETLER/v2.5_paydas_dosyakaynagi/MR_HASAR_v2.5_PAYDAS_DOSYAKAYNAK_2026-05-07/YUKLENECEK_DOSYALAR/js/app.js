@@ -861,8 +861,8 @@ const PageRouter = ({page, setPage, user, setUser}) => {
 
   /* v2.5: İŞ ORTAKLARI (Personel + Avukat 2 sekmeli sayfa) */
   if (page === 'is-ortaklari' || page.startsWith('is-ortaklari-')) {
-    const sub = page.replace('is-ortaklari-', '');
-    return <MR.IsOrtaklariPage setPage={setPage} user={user} subPage={sub || 'personel'}/>;
+    const sub = page === 'is-ortaklari' ? 'personel' : page.replace('is-ortaklari-', '');
+    return <MR.IsOrtaklariPage setPage={setPage} user={user} subPage={sub}/>;
   }
 
   /* v2.5: İŞ PAYDAŞLARI (Servis/Kaportaci/Acente/Pasif Temsilci/Diğer) */

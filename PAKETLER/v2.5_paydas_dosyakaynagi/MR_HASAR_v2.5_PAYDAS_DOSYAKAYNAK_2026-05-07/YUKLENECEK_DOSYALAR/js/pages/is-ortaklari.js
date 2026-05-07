@@ -10,7 +10,8 @@ const {useState} = React;
 
 MR.IsOrtaklariPage = ({setPage, user, subPage}) => {
   const {C, S, LIcon} = MR;
-  const aktifSekme = subPage || 'personel';
+  // Sadece tanımlı sekme key'leri kabul et — beklenmeyen değer gelirse PERSONEL'e düş
+  const aktifSekme = (subPage === 'avukat') ? 'avukat' : 'personel';
 
   const sekmeler = [
     {key:'personel', label:'PERSONEL',  icon:'Users'},
