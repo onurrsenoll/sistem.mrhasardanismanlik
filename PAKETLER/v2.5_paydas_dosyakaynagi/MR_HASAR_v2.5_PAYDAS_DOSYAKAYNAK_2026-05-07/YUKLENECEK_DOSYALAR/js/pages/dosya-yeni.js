@@ -317,8 +317,21 @@ MR.DosyaYeniPage = ({setPage, user}) => {
         </div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
           <FormGroup label="KAZA TARİHİ *"><DateInput value={form.kaza_tarihi} onChange={v=>u('kaza_tarihi',v)}/></FormGroup>
-          <FormGroup label="KAZA İLİ"><select style={S.select} value={form.kaza_il} onChange={e=>u('kaza_il',e.target.value)}><option value="">SEÇİNİZ</option>{ILLER.map(i=><option key={i} value={i}>{i}</option>)}</select></FormGroup>
-          <FormGroup label="KAZA İLÇE"><input style={S.input} value={form.kaza_ilce} onChange={e=>u('kaza_ilce',e.target.value)}/></FormGroup>
+          <FormGroup label="KAZA İLİ">
+            <select style={S.select} value={form.kaza_il} onChange={e=>{
+              const v = e.target.value;
+              setForm(p => ({...p, kaza_il: v, kaza_ilce: ''}));
+            }}>
+              <option value="">SEÇİNİZ</option>
+              {ILLER.map(i=><option key={i} value={i}>{i}</option>)}
+            </select>
+          </FormGroup>
+          <FormGroup label="KAZA İLÇE">
+            <select style={S.select} value={form.kaza_ilce} onChange={e=>u('kaza_ilce',e.target.value)} disabled={!form.kaza_il}>
+              <option value="">{form.kaza_il ? 'SEÇİNİZ' : 'ÖNCE KAZA İLİ SEÇİN'}</option>
+              {(ILCELER[form.kaza_il]||[]).map(i=><option key={i} value={i}>{i}</option>)}
+            </select>
+          </FormGroup>
           <FormGroup label="KOMİSYON (%) *"><input type="number" style={S.input} value={form.komisyon} onChange={e=>u('komisyon',e.target.value)} placeholder="20"/></FormGroup>
           <FormGroup label="NOTER VEKALET (TL) *"><input type="number" style={S.input} value={form.noter_vekalet} onChange={e=>u('noter_vekalet',e.target.value)} placeholder="1596"/></FormGroup>
           <FormGroup label="DOSYA KAYNAĞI *">
