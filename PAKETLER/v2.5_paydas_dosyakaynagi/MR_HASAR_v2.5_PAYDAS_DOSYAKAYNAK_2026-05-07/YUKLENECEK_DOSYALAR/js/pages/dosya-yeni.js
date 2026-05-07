@@ -207,13 +207,24 @@ MR.DosyaYeniPage = ({setPage, user}) => {
      ÖNEMLİ — isim eşlemesi:
        · ADK / MDK → 'DEMİRHAN' içeren avukat (Av. Demirhan Emir)
        · BH       → 'EMRE' içeren avukat       (Av. Emre Ca Kabadayı)
-     Avukat ad_soyad'ı değişirse aşağıdaki regex'leri güncelleyin. */
+     Avukat ad_soyad'ı değişirse aşağıdaki regex'leri güncelleyin.
+     Türkçe karakter notu: JS'te 'İ'.toLowerCase() → 'i̇' (combining dot),
+     bu yüzden [iIıİ] sınıfı kullanıyoruz; aynı zamanda küçük harfe
+     çevirip Türkçe karakterleri normalize ediyoruz. */
+  const trNorm = (s) => (s || '').toString()
+    .replace(/İ/g, 'I').replace(/I/g, 'i')
+    .replace(/ı/g, 'i').replace(/Ş/g, 's').replace(/ş/g, 's')
+    .replace(/Ğ/g, 'g').replace(/ğ/g, 'g')
+    .replace(/Ü/g, 'u').replace(/ü/g, 'u')
+    .replace(/Ö/g, 'o').replace(/ö/g, 'o')
+    .replace(/Ç/g, 'c').replace(/ç/g, 'c')
+    .toLowerCase();
   const otoAvukat = (() => {
     if (form.dosya_turu === 'ADK' || form.dosya_turu === 'MDK') {
-      return ortaklar.find(o => /demirhan/i.test(o.ad_soyad || ''));
+      return ortaklar.find(o => trNorm(o.ad_soyad).includes('demirhan'));
     }
     if (form.dosya_turu === 'BH') {
-      return ortaklar.find(o => /emre/i.test(o.ad_soyad || ''));
+      return ortaklar.find(o => trNorm(o.ad_soyad).includes('emre'));
     }
     return null;
   })();
