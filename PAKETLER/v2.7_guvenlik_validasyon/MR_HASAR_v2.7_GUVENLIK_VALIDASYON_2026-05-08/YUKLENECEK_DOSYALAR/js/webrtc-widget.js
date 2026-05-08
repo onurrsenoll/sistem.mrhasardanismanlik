@@ -118,10 +118,12 @@ MR._musteriEslestir = async (numara) => {
 */
 MR.cagriWidgetYetkili = function(user) {
   if (!user) return false;
-  // v2.7 fix: ses çalıyor ama widget görünmüyor sorunu — santral kullanan
-  // tüm temel rollerin (admin/uzman/personel) widget'ı görmesi sağlanır.
+  // v2.5.6 fix: santral kullanan tüm temel rollerin (admin/uzman/personel)
+  // widget'ı görmesi sağlanır. Önceki sürümde sadece admin direkt görüyor,
+  // diğer roller netsantral_*/cagri_* yetkisinin tanımlı olmasını
+  // gerektiriyordu — bu yetkiler sistem tarafından kullanıcılara
+  // verilmediği için widget gözükmüyordu.
   if (['admin','uzman','personel'].indexOf(user.rol) !== -1) return true;
-  // Diğer roller için açık yetki kontrolü (geri uyumluluk)
   var y = user.yetkiler;
   if (!y || typeof y !== 'object') return false;
   var anahtarlar = Object.keys(y);
@@ -145,14 +147,12 @@ MR.cagriWidgetYetkili = function(user) {
 MR.WebrtcWidget = ({user, setPage}) => {
   const {C, LIcon} = MR;
 
-  /* DURUM STATE'LERI — v2.7: GELEN + GİDEN + GÖRÜŞMEDE
-     bos | gelen | araniyor | caliyor | gorusmede */
+  /* DURUM STATE'LERI - SADECE GELEN CAGRI ICIN */
   const [aramaDurumu, setAramaDurumu] = useState('bos');
   const [karsiTaraf, setKarsiTaraf] = useState('');
   const [karsiTarafAdi, setKarsiTarafAdi] = useState('');
   const [eslestirme, setEslestirme] = useState(null);
   const [sessiz, setSessiz] = useState(false);
-  const [gorusmeBaslangic, setGorusmeBaslangic] = useState(null);
 
   /* WEBRTC DURUM DINLEYICI */
   useEffect(() => {
@@ -170,25 +170,9 @@ MR.WebrtcWidget = ({user, setPage}) => {
             MR._musteriEslestir(d.detay.arayan).then(r => { if (r) setEslestirme(r); });
           }
           break;
-        /* v2.7: GİDEN ARAMA — numara çevrildiğinde başlar */
-        case 'araniyor':
-          setAramaDurumu('araniyor');
-          // _durumBildir('araniyor', cleanNum) — d.detay = numara string
-          if (typeof d.detay === 'string' && d.detay) {
-            setKarsiTaraf(d.detay);
-            // Müşteri eşleştirme giden aramada da yararlı
-            if (MR._musteriEslestir) {
-              MR._musteriEslestir(d.detay).then(r => { if (r) setEslestirme(r); });
-            }
-          }
-          break;
-        /* v2.7: GİDEN ARAMA — uzak taraf çalıyor */
-        case 'caliyor':
-          setAramaDurumu('caliyor');
-          break;
         case 'gorusmede':
-          setAramaDurumu('gorusmede');
-          setGorusmeBaslangic(Date.now());
+          /* Cevaplaninca popup kapansin */
+          if (aramaDurumu === 'gelen') setAramaDurumu('bos');
           setSessiz(false);
           break;
         case 'kapandi':
@@ -196,9 +180,7 @@ MR.WebrtcWidget = ({user, setPage}) => {
         case 'hata':
           setAramaDurumu('bos');
           setEslestirme(null);
-          setKarsiTaraf('');
           setKarsiTarafAdi('');
-          setGorusmeBaslangic(null);
           if (sessiz && MR.webrtcTelefon) {
             MR.webrtcTelefon._sesAyarlari.ringtoneVolume = parseFloat(localStorage.getItem('mr_webrtc_ringtone_vol') || '0.5');
           }
@@ -208,48 +190,13 @@ MR.WebrtcWidget = ({user, setPage}) => {
         case 'durduruldu':
         case 'kayit-kaldirildi':
           setAramaDurumu('bos');
-          setKarsiTaraf('');
-          setKarsiTarafAdi('');
-          setEslestirme(null);
-          setGorusmeBaslangic(null);
           setSessiz(false);
           break;
       }
     };
     window.addEventListener('mr-webrtc-durum', handler);
-    /* v2.7: 'mr-arama-sonlandi' event'ini de dinle */
-    const sonlandiHandler = () => {
-      setAramaDurumu('bos');
-      setKarsiTaraf('');
-      setKarsiTarafAdi('');
-      setEslestirme(null);
-      setGorusmeBaslangic(null);
-      setSessiz(false);
-    };
-    window.addEventListener('mr-arama-sonlandi', sonlandiHandler);
-    return () => {
-      window.removeEventListener('mr-webrtc-durum', handler);
-      window.removeEventListener('mr-arama-sonlandi', sonlandiHandler);
-    };
-  }, [aramaDurumu, sessiz]);
-
-  /* v2.7: Görüşme süresi sayacı */
-  const [gorusmeSure, setGorusmeSure] = useState('00:00');
-  useEffect(() => {
-    if (aramaDurumu !== 'gorusmede' || !gorusmeBaslangic) {
-      setGorusmeSure('00:00');
-      return;
-    }
-    const tick = () => {
-      const sn = Math.floor((Date.now() - gorusmeBaslangic) / 1000);
-      const dk = Math.floor(sn / 60);
-      const ks = sn % 60;
-      setGorusmeSure(String(dk).padStart(2,'0') + ':' + String(ks).padStart(2,'0'));
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [aramaDurumu, gorusmeBaslangic]);
+    return () => window.removeEventListener('mr-webrtc-durum', handler);
+  }, [aramaDurumu]);
 
   /* GIDEN ARAMA BASLATMA DINLEYICI - crm-yeni sayfasina yonlendir */
   useEffect(() => {
@@ -329,53 +276,40 @@ MR.WebrtcWidget = ({user, setPage}) => {
   const isK = MR.tema === 'koyu';
 
   /* ═══════════════════════════════════════
-     v2.7 WIDGET — GELEN + GİDEN + GÖRÜŞMEDE durumlarını render eder
-     Yetki kontrolü gevşek (admin/uzman/personel otomatik)
-     'bos' durumda hiç render edilmez.
+     SADECE GELEN CAGRI POPUP'I - SAG UST KOSE
+     v2.1.1: yetki kontrolü — kullanıcı yetkisizse hiç render etme
      ═══════════════════════════════════════ */
   if (!MR.cagriWidgetYetkili(user)) return null;
-  if (aramaDurumu === 'bos') return null;
-
-  /* v2.7: Duruma göre renk/etiket/ikon */
-  const isGelen = aramaDurumu === 'gelen';
-  const isGiden = aramaDurumu === 'araniyor' || aramaDurumu === 'caliyor';
-  const isGorusmede = aramaDurumu === 'gorusmede';
-
-  const headerColor = isGelen ? '#10b981' : (isGiden ? '#3b82f6' : '#a855f7');
-  const headerLabel = isGelen ? 'GELEN ÇAĞRI'
-    : aramaDurumu === 'araniyor' ? 'ARANIYOR…'
-    : aramaDurumu === 'caliyor' ? 'ÇALIYOR…'
-    : 'GÖRÜŞMEDE  ' + gorusmeSure;
-  const headerIcon = isGelen ? 'PhoneIncoming' : (isGiden ? 'PhoneOutgoing' : 'PhoneCall');
+  if (aramaDurumu !== 'gelen') return null;
 
   return (
     <div style={{
       position: 'fixed', top: 56, right: 20, zIndex: 99999,
       width: 320,
       background: isK ? '#1e293b' : '#fff',
-      border: '2px solid ' + headerColor,
+      border: '2px solid #10b981',
       borderRadius: 16, overflow: 'hidden',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.25), 0 0 40px ' + headerColor + '26',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.25), 0 0 40px rgba(16,185,129,0.15)',
       animation: 'fadeIn .3s ease'
     }}>
-      {/* HEADER — duruma göre dinamik */}
+      {/* HEADER - GELEN CAGRI */}
       <div style={{
-        background: 'linear-gradient(135deg, ' + headerColor + '26, ' + headerColor + '0d)',
+        background: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05))',
         padding: '12px 16px',
-        borderBottom: '1px solid ' + headerColor + '33',
+        borderBottom: '1px solid rgba(16,185,129,0.2)',
         display: 'flex', alignItems: 'center', gap: 10
       }}>
         <div style={{
           width: 36, height: 36, borderRadius: '50%',
-          background: headerColor + '26', border: '2px solid ' + headerColor,
+          background: 'rgba(16,185,129,0.15)', border: '2px solid #10b981',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          animation: isGorusmede ? 'none' : 'pulse 1.5s infinite', flexShrink: 0
+          animation: 'pulse 1.5s infinite', flexShrink: 0
         }}>
-          <LIcon name={headerIcon} size={18} color={headerColor}/>
+          <LIcon name="PhoneIncoming" size={18} color="#10b981"/>
         </div>
         <div style={{flex: 1, minWidth: 0}}>
-          <div style={{fontSize: 10, fontWeight: 700, color: headerColor, letterSpacing: 1.5, marginBottom: 2}}>
-            {headerLabel}
+          <div style={{fontSize: 10, fontWeight: 700, color: '#10b981', letterSpacing: 1.5, marginBottom: 2}}>
+            GELEN CAGRI
           </div>
           <div style={{fontSize: 18, fontWeight: 800, color: C.text, letterSpacing: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
             {karsiTaraf || 'BILINMEYEN'}
@@ -416,53 +350,38 @@ MR.WebrtcWidget = ({user, setPage}) => {
         </div>
       )}
 
-      {/* BUTONLAR — duruma göre dinamik */}
+      {/* BUTONLAR - REDDET + SESSIZ + CEVAPLA */}
       <div style={{padding: '10px 14px', display: 'flex', gap: 6}}>
-        {isGelen && <>
-          {/* GELEN: REDDET + SESSİZ + CEVAPLA */}
-          <button onClick={reddet} style={{
-            flex: 1, padding: '10px', borderRadius: 10, border: 'none',
-            background: 'linear-gradient(180deg, #f87171, #dc2626)',
+        <button onClick={reddet} style={{
+          flex: 1, padding: '10px', borderRadius: 10, border: 'none',
+          background: 'linear-gradient(180deg, #f87171, #dc2626)',
+          color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+          boxShadow: '0 3px 10px rgba(220,38,38,0.3)'
+        }}>
+          <LIcon name="PhoneOff" size={14} color="#fff"/> REDDET
+        </button>
+        {!sessiz && (
+          <button onClick={sessizeAl} style={{
+            padding: '10px 12px', borderRadius: 10, border: 'none',
+            background: 'linear-gradient(180deg, #fbbf24, #f59e0b)',
             color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            boxShadow: '0 3px 10px rgba(220,38,38,0.3)'
+            boxShadow: '0 3px 10px rgba(245,158,11,0.3)'
           }}>
-            <LIcon name="PhoneOff" size={14} color="#fff"/> REDDET
+            <LIcon name="VolumeX" size={14} color="#fff"/> SESSIZ
           </button>
-          {!sessiz && (
-            <button onClick={sessizeAl} style={{
-              padding: '10px 12px', borderRadius: 10, border: 'none',
-              background: 'linear-gradient(180deg, #fbbf24, #f59e0b)',
-              color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-              boxShadow: '0 3px 10px rgba(245,158,11,0.3)'
-            }}>
-              <LIcon name="VolumeX" size={14} color="#fff"/> SESSIZ
-            </button>
-          )}
-          <button onClick={cevapla} style={{
-            flex: 1, padding: '10px', borderRadius: 10, border: 'none',
-            background: 'linear-gradient(180deg, #34d399, #059669)',
-            color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            boxShadow: '0 3px 10px rgba(5,150,105,0.3)',
-            animation: sessiz ? 'none' : 'pulse 1.5s infinite'
-          }}>
-            <LIcon name="Phone" size={14} color="#fff"/> CEVAPLA
-          </button>
-        </>}
-        {(isGiden || isGorusmede) && <>
-          {/* GİDEN / GÖRÜŞMEDE: tek buton — KAPAT */}
-          <button onClick={() => { try { if (MR.webrtcTelefon) MR.webrtcTelefon.kapat(); } catch(_) {} }} style={{
-            flex: 1, padding: '12px', borderRadius: 10, border: 'none',
-            background: 'linear-gradient(180deg, #f87171, #dc2626)',
-            color: '#fff', fontSize: 12, fontWeight: 800, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            boxShadow: '0 3px 10px rgba(220,38,38,0.3)'
-          }}>
-            <LIcon name="PhoneOff" size={16} color="#fff"/> {isGorusmede ? 'GÖRÜŞMEYİ BİTİR' : 'İPTAL'}
-          </button>
-        </>}
+        )}
+        <button onClick={cevapla} style={{
+          flex: 1, padding: '10px', borderRadius: 10, border: 'none',
+          background: 'linear-gradient(180deg, #34d399, #059669)',
+          color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+          boxShadow: '0 3px 10px rgba(5,150,105,0.3)',
+          animation: sessiz ? 'none' : 'pulse 1.5s infinite'
+        }}>
+          <LIcon name="Phone" size={14} color="#fff"/> CEVAPLA
+        </button>
       </div>
     </div>
   );
