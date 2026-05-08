@@ -118,12 +118,7 @@ MR._musteriEslestir = async (numara) => {
 */
 MR.cagriWidgetYetkili = function(user) {
   if (!user) return false;
-  // v2.5.6 fix: santral kullanan tüm temel rollerin (admin/uzman/personel)
-  // widget'ı görmesi sağlanır. Önceki sürümde sadece admin direkt görüyor,
-  // diğer roller netsantral_*/cagri_* yetkisinin tanımlı olmasını
-  // gerektiriyordu — bu yetkiler sistem tarafından kullanıcılara
-  // verilmediği için widget gözükmüyordu.
-  if (['admin','uzman','personel'].indexOf(user.rol) !== -1) return true;
+  if (user.rol === 'admin') return true;
   var y = user.yetkiler;
   if (!y || typeof y !== 'object') return false;
   var anahtarlar = Object.keys(y);
