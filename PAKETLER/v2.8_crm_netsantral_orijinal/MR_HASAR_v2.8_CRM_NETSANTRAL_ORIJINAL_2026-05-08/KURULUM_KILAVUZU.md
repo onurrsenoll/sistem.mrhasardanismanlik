@@ -1,29 +1,38 @@
-# MR HASAR — v2.8 CRM + NETSANTRAL ORİJİNAL Yaması
+# MR HASAR — v2.8.1 CRM + NETSANTRAL ORİJİNAL Yaması
 
-**Tarih:** 2026-05-08
+**Tarih:** 2026-05-08 (düzeltme: netsantral klasörü kaldırıldı)
 **Branch:** `claude/view-all-branches-qZ0JW`
-**Amaç:** CRM ve NETSANTRAL sistemini **önceki sağlıklı çalışır haline** geri döndür.
 
 ---
 
-## NE İÇERİYOR
+## ÖNEMLİ — NETSANTRAL KLASÖRÜ HAKKINDA
 
-Bu paket, CRM ve NETSANTRAL ile ilgili **tüm dosyaların ORİJİNAL sürümlerini** içerir. **Hiçbir kafadan değişiklik YOKTUR.** Sadece:
-- v2.1 GUVENLIK (29 Nisan 08:53) — CRM frontend + CRM/arama-log/yonlendirme backend
-- v2.1.1 ÇAĞRI SES (29 Nisan 09:27) — webrtc-phone + webrtc-widget (en yeni orijinal)
-- api.zip (Şubat 2026) — Netsantral backend (proxy/webhook/test-webhook/bekleyen/arama-list/arama-log)
+**v2.1 sürümünden itibaren `/api/v1/netsantral/` klasörü KULLANILMIYOR.**
 
-## DOSYA LİSTESİ (37 dosya)
+config.js'in 165. satırında açık yorum var:
+> `// NETSANTRAL — Mevcut endpoint'leri kullanir, yeni klasor YOK`
+
+Tüm Netsantral işleri başka endpoint'lere taşındı:
+- **Çağrı eşleştirme** → `/api/v1/crm/list.php`
+- **Çağrı notu** → `/api/v1/arama-log/update.php`
+- **Timeline** → `/api/v1/crm/get.php`
+- **Ayarlar** → `/api/v1/sistem/ayarlar-list.php` (`netsantral_*` prefix'li anahtarlar)
+
+Yani sunucuda `/api/v1/netsantral/` klasörü **olmaması NORMAL ve DOĞRU**. Klasör oluşturmana gerek YOK.
+
+---
+
+## DOSYA LİSTESİ (31 dosya)
 
 ### Frontend (6 dosya)
 | Dosya | Boyut | Kaynak |
 |---|---|---|
-| `js/pages/crm.js` | 90040 B | v2.1 GUVENLIK |
+| `js/pages/crm.js` | 90040 B | v2.1 GUVENLIK (29 Nisan) |
 | `js/pages/crm-arama.js` | 80965 B | v2.1 GUVENLIK |
 | `js/pages/arama-gecmis.js` | 42170 B | v2.1 GUVENLIK |
 | `js/pages/gorusme-kayitlari.js` | 18936 B | v2.1 GUVENLIK |
 | `js/webrtc-phone.js` | 46007 B | **v2.1.1 ÇAĞRI SES** |
-| `js/webrtc-widget.js` | 45187 B | **v2.1.1 ÇAĞRI SES** |
+| `js/webrtc-widget.js` | 45187 B | **v2.1.1 ÇAĞRI SES** ⭐ kritik |
 
 ### Backend — CRM (10 dosya)
 `api/v1/crm/`: list, get, create, update, delete, bulk-delete, donustur, dosya-yukle, not-ekle, unified-get
@@ -34,54 +43,25 @@ Bu paket, CRM ve NETSANTRAL ile ilgili **tüm dosyaların ORİJİNAL sürümleri
 ### Backend — Yönlendirme (8 dosya)
 `api/v1/yonlendirme/`: list, get, create, update, delete, import, toplu-islem, not-ekle
 
-### Backend — Netsantral (6 dosya)
-`api/v1/netsantral/`: arama-list, arama-log, bekleyen, proxy, webhook, test-webhook
-
----
-
-## STATİK TEST ✅
-- 32/32 PHP dosyası `php -l` syntax check geçti
-- 6/6 JS/JSX dosyası `@babel/parser` parse geçti
+> **NOT:** `/api/v1/netsantral/` klasörü pakete dahil DEĞİL — bilinçli olarak kaldırıldı (yukarıdaki açıklamaya göre).
 
 ---
 
 ## YÜKLEME
 
-**Yedekleme önerilir** (kendi sürümünü korumak için).
-Sonra `YUKLENECEK_DOSYALAR/` içindeki tüm dosyaları sunucuya kopyala (klasör yapısını koru).
+1. `YUKLENECEK_DOSYALAR/` içindeki dosyaları sunucuya kopyala (klasör yapısını koruyarak)
+2. **Hard reload** (Ctrl+Shift+R)
+3. SQL gerekmiyor
 
-**Hard reload** (Ctrl+Shift+R).
-
-**SQL gerekmiyor.**
-
----
-
-## DAVRANIŞ — OLMASI GEREKEN ŞEKİL
-
-### CRM — kişi kartı akışı
-- Listeden tıklanır → kişi kartına geçilir
-- Sol panelde çağrı kontrolü (callActive)
-- Görüşme esnasında not alınır
-- Bitince kaydet → kişi kartında saklanır
-
-### NETSANTRAL — gelen çağrı widget
-- Sağ üstte popup açılır (sadece **gelen** arama)
-- REDDET / SESSİZ / CEVAPLA butonları
-- CEVAPLA → `setPage('crm-yeni')` → kişi kartına geçer + widget kapanır
-- Yetki: admin doğrudan görür; diğer roller için **SİSTEM > YETKİ YÖNETİMİ**'nden `netsantral_*` veya `cagri_*` izin ver
-
-### NETSANTRAL — giden arama
-- Kişi kartından "ARA" butonu → arama başlar
-- Görüşme UI'ı sol panelde (callActive)
-- **Widget AÇILMAZ** (giden arama için yok)
+### En kritik dosya
+**`js/webrtc-widget.js`** (v2.1.1 orijinal) — bu dosya bizim son müdahalelerimizin geri alınmasını sağlar. Diğer 30 dosya muhtemelen sunucuda zaten var, üzerine yazsa da bozmaz (sigorta gibi).
 
 ---
 
 ## ROLLBACK
-
-Yedeklediğin sürümleri geri yükle. SQL değişikliği yok — geri alma gerekmez.
+Yedeklediğin sürümleri geri yükle.
 
 ---
 
 **Hazırlayan:** Claude (Onur Şenol için)
-**Önemli:** Bu paket **yalnızca orijinal sürümleri içerir**. Ben hiçbir özelleştirme/iyileştirme/varsayım eklemedim.
+**Önemli:** Bu paket **yalnızca orijinal v2.1 + v2.1.1 sürümlerini** içerir. Hiçbir kafadan değişiklik yok.
