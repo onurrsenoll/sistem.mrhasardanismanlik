@@ -1305,8 +1305,9 @@ MR._CRMYeniInner = ({setPage}) => {
         await api.crmNotEkle({crm_id: newId, not_text: `TELEFON GÖRÜŞMESİ - SÜRE: ${sure}\n${f.olay_aciklama || ''}`}).catch(() => {});
       }
       setLoading(false);
-      setSuccess('GÖRÜŞME KAYDI OTOMATİK KAYDEDİLDİ');
-      setTimeout(() => setPage('crm-detay-' + newId), 1500);
+      setSuccess('GÖRÜŞME KAYDI OTOMATİK KAYDEDİLDİ — sayfada kalabilirsiniz, notlarınızı yazıp tekrar KAYDET diyerek güncelleyebilirsiniz.');
+      // v2.8.4: Otomatik sayfa değişikliği KALDIRILDI — kullanıcı notlarını
+      // yazana kadar sayfada kalmalı. Çıkmak için manuel olarak başka sayfaya geçer.
     } else {
       setLoading(false);
       setError(r?.error || 'OTOMATİK KAYIT SIRASINDA HATA OLUŞTU');
@@ -1368,18 +1369,40 @@ MR._CRMYeniInner = ({setPage}) => {
     if (!f.telefon.trim()) { setError('TELEFON ZORUNLU ALAN'); return null; }
     setLoading(true); setError(''); setSuccess('');
     const data = {...f, taslak: 0, kaynak: 'TELEFON'};
+
+    // v2.8.4: savedId varsa GÜNCELLE (otomatik kaydedildi sonrası ek notlar için).
+    // Yoksa yeni kayıt oluştur. Her iki durumda da setPage YAPILMAZ — kullanıcı sayfada kalır.
+    if (savedId && api.crmUpdate) {
+      const r = await api.crmUpdate({...data, id: savedId});
+      if (r?.success) {
+        if (ekler.length > 0) {
+          for (const ek of ekler) {
+            try { await api.crmDosyaYukle(savedId, ek.type, ek.file); } catch(e) {}
+          }
+          setEkler([]);
+        }
+        setLoading(false);
+        setSuccess('KAYIT GÜNCELLENDİ — sayfada kalmaya devam edebilirsiniz.');
+        return savedId;
+      } else {
+        setLoading(false);
+        setError(r?.error || 'GÜNCELLEME HATASI');
+        return null;
+      }
+    }
+
     const r = await api.crmCreate(data);
     if (r?.success) {
       const newId = r.data?.id;
       setSavedId(newId);
-      /* EKLERİ YÜKLE */
       if (ekler.length > 0 && newId) {
         for (const ek of ekler) {
           try { await api.crmDosyaYukle(newId, ek.type, ek.file); } catch(e) {}
         }
       }
       setLoading(false);
-      setPage('crm-detay-' + newId);
+      setSuccess('KAYDEDİLDİ — sayfada kalabilirsiniz, ek notlar için tekrar KAYDET diyerek güncelleyebilirsiniz.');
+      // v2.8.4: setPage KALDIRILDI — kullanıcı notlarını yazana kadar sayfada kalmalı.
       return newId;
     } else {
       setLoading(false);
