@@ -504,7 +504,7 @@ MR._CRMListesiInner = ({setPage, user}) => {
                       {c.telefon || '-'}
                       {c.telefon && (
                         <button style={{...iconBtn(C.success), width:24, height:24}} title="ARA"
-                          onClick={(e) => { e.stopPropagation(); if (MR.webrtcAra) { MR.webrtcAra(c.telefon, {ad: c.ad_soyad || ''}); } else { MR._gelenCagriTelefon = c.telefon; MR._gelenCagriAdi = c.ad_soyad || ''; setPage('crm-yeni'); } }}>
+                          onClick={(e) => { e.stopPropagation(); MR._gelenCagriTelefon = c.telefon; MR._gelenCagriAdi = c.ad_soyad || ''; setPage('crm-yeni'); if (MR.webrtcAra) { setTimeout(() => MR.webrtcAra(c.telefon, {ad: c.ad_soyad || ''}), 150); } }}>
                           <LIcon name="Phone" size={12} color={C.success}/>
                         </button>
                       )}
