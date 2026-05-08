@@ -53,7 +53,23 @@ tbody tr{transition:all 0.15s ease}
 /* INPUT: Focus */
 input:focus,select:focus,textarea:focus{border-color:#1a56db!important;box-shadow:0 0 0 3px rgba(26,86,219,.15)!important;outline:none!important}
 
-@media print{body{background:#fff!important;color:#000!important;text-transform:none!important}.no-print{display:none!important}}
+@media print {
+  body { background: #fff !important; color: #000 !important; text-transform: none !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .no-print, [data-no-print] { display: none !important; }
+  /* Üst gezinti barı, sidebar, dropdown, footer — print'te gizli */
+  nav, header, footer, [data-topnav], [data-sidebar], [data-dropdown] { display: none !important; }
+  /* Sabit köşe widget'lar (gelen çağrı, mail bildirim) */
+  [data-widget], .webrtc-widget, .mail-badge { display: none !important; }
+  /* Sayfa bütünlüğü */
+  * { box-shadow: none !important; text-shadow: none !important; }
+  @page { size: A4; margin: 1.2cm; }
+  /* Zorunlu sayfa kesimi — föy / rapor için */
+  .page-break { page-break-before: always; }
+  .page-break-after { page-break-after: always; }
+  .avoid-break, table, tr, td, th { page-break-inside: avoid !important; }
+  /* Görüntü/img max-width */
+  img { max-width: 100% !important; height: auto !important; }
+}
 </style>
 </head>
 <body class="tema-koyu">

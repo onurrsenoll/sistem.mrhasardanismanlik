@@ -19,6 +19,7 @@ const MENU = [
     {id:'saha-yeni', label:'YENİ SAHA KAYDI', icon:'PlusCircle'}
   ]},
   {id:'eposta', label:'E-POSTA', icon:'Mail'},
+  {id:'mesajlar', label:'BİLDİRİMLER', icon:'Bell'},
   {id:'hesap', label:'HESAPLAMALAR', icon:'Calculator', sub:[
     {id:'hesap-adk', label:'ARAÇ DEĞER KAYBI', icon:'Car'},
     {id:'hesap-bh', label:'BEDENİ HASAR', icon:'Heart'}
@@ -67,7 +68,6 @@ const MENU = [
     {id:'sistem-aktarim', label:'TOPLU AKTARIM', icon:'FileSpreadsheet'},
     {id:'sistem-veri', label:'VERİ YÖNETİMİ', icon:'DatabaseBackup'},
     {id:'sistem-log', label:'LOG KAYITLARI', icon:'FileText'},
-    {id:'mesajlar-sistem', label:'SİSTEM BİLDİRİMLERİ', icon:'Bell'},
     {id:'tanimlamalar-dosya', label:'DOSYA TANIMLAMALARI', icon:'Folder'},
     {id:'tanimlamalar-evrak', label:'EVRAK TANIMLAMALARI', icon:'FileText'},
     {id:'tanimlamalar-finansal', label:'FİNANSAL TANIMLAMALAR', icon:'Wallet'},
@@ -90,7 +90,8 @@ const MENU_MODUL = {
   ictihat: 'ictihat',
   ajanda: 'ajanda',
   police: 'police',
-  sistem: 'sistem'
+  sistem: 'sistem',
+  mesajlar: 'mesajlar'
 };
 
 function menuErisim(user) {
@@ -316,7 +317,7 @@ const TopNav = ({user, page, setPage, onLogout, sidebarLogoUrl}) => {
             >
               <LIcon name={m.icon} size={13} color={isActive(m) ? C.accent : C.textSec}/>
               <span>{m.label}</span>
-              {m.id === 'sistem' && <BildirimBadge/>}
+              {m.id === 'mesajlar' && <BildirimBadge/>}
               {m.id === 'eposta' && <MailBadge user={user} isK={isK}/>}
               {m.sub && <LIcon name="ChevronDown" size={10} color={C.textMuted}/>}
             </div>
