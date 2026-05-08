@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MR HASAR DANIŞMANLIK - DOSYA TAKİP SİSTEMİ</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTIiIGZpbGw9IiMyNTYzZWIiLz4KICA8dGV4dCB4PSIzMiIgeT0iNDIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSxBcmlhbCxzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iODAwIiBmb250LXNpemU9IjI4IiBmaWxsPSIjZmZmZmZmIiBsZXR0ZXItc3BhY2luZz0iLTEiPk1SPC90ZXh0Pgo8L3N2Zz4=">
+<meta name="theme-color" content="#1a56db">
+<link rel="manifest" href="manifest.json">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Manrope','Segoe UI','Roboto',sans-serif;background:#0f172a;color:#f1f5f9;overflow-x:hidden;text-transform:uppercase;-webkit-font-smoothing:antialiased;letter-spacing:-0.01em}
+input,select,textarea{text-transform:uppercase;font-family:inherit}
+input[type="password"]{text-transform:none}
+select option{background:#1e293b;color:#f1f5f9}
+</style>
+<style id="mr-select-style">select option{background:#1e293b;color:#f1f5f9}</style>
+<style>
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:rgba(15,23,42,.8)}
+::-webkit-scrollbar-thumb{background:rgba(26,86,219,.35);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:rgba(26,86,219,.55)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.85;transform:scale(1.05)}}
+.fade-in{animation:fadeIn .3s ease}
+
+/* ═══ MR FİNANS BLUE TEMA — HOVER EFEKTLERİ ═══ */
+
+/* BUTON */
+button{transition:all 0.2s ease}
+button:hover:not(:disabled){filter:brightness(1.08)}
+button:active:not(:disabled){transform:scale(0.97)!important;filter:brightness(0.95)}
+
+/* TABLO SATIRI */
+tbody tr{transition:all 0.15s ease}
+.tema-koyu tbody tr:hover{background:#334155!important}
+.tema-acik tbody tr:hover{background:#e2e8f0!important}
+.tema-koyu thead th{background:#334155!important}
+.tema-acik thead th{background:#f1f5f9!important}
+
+/* INPUT: Focus */
+input:focus,select:focus,textarea:focus{border-color:#1a56db!important;box-shadow:0 0 0 3px rgba(26,86,219,.15)!important;outline:none!important}
+
+@media print {
+  body { background: #fff !important; color: #000 !important; text-transform: none !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .no-print, [data-no-print] { display: none !important; }
+  /* Üst gezinti barı, sidebar, dropdown, footer — print'te gizli */
+  nav, header, footer, [data-topnav], [data-sidebar], [data-dropdown] { display: none !important; }
+  /* Sabit köşe widget'lar (gelen çağrı, mail bildirim) */
+  [data-widget], .webrtc-widget, .mail-badge { display: none !important; }
+  /* Sayfa bütünlüğü */
+  * { box-shadow: none !important; text-shadow: none !important; }
+  @page { size: A4; margin: 1.2cm; }
+  /* Zorunlu sayfa kesimi — föy / rapor için */
+  .page-break { page-break-before: always; }
+  .page-break-after { page-break-after: always; }
+  .avoid-break, table, tr, td, th { page-break-inside: avoid !important; }
+  /* Görüntü/img max-width */
+  img { max-width: 100% !important; height: auto !important; }
+}
+</style>
+</head>
+<body class="tema-koyu">
+<div id="root"></div>
+
+<script>
+/* VERSİYON - CACHE BUSTING */
+var MR_VERSION = 'v4.' + Date.now();
+</script>
+
+<!-- JSSIP KÜTÜPHANESİ (WEBRTC/SIP) -->
+<script src="js/jssip.bundle.min.js"></script>
+
+<!-- MODÜLER YAPI: HER DOSYA BAĞIMSIZ BİR MODÜL -->
+<!-- ÇEKIRDEK -->
+<script type="text/babel" data-type="module" src="js/config.js"></script>
+<script type="text/babel" data-type="module" src="js/icons.js"></script>
+<script type="text/babel" data-type="module" src="js/data.js"></script>
+<script type="text/babel" data-type="module" src="js/utils.js"></script>
+<script type="text/babel" data-type="module" src="js/components.js"></script>
+<!-- WEBRTC TELEFON MOTORU + WİDGET -->
+<script type="text/babel" data-type="module" src="js/webrtc-phone.js"></script>
+<script type="text/babel" data-type="module" src="js/webrtc-widget.js"></script>
+<!-- SAYFA MODÜLLER -->
+<script type="text/babel" data-type="module" src="js/pages/home.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/dosya-liste.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/dosya-detay.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/dosya-yeni.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/crm.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/crm-arama.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/arama-gecmis.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/gorusme-kayitlari.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/hesap-adk.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/hesap-bh.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/kart-modulleri.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/ortaklar.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/personel.js"></script>
+<!-- 07.05.2026 v2.5 PAYDAŞ TÜR + DOSYA KAYNAĞI -->
+<script type="text/babel" data-type="module" src="js/pages/is-ortaklari.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/is-paydaslari.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/muhasebe.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/tanimlamalar.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/ajanda.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/mesajlar.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/bildirim.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/sistem.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/police.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/qr-ruhsat.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/ihbar-foyu.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/saha.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/konum-takip.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/ictihat.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/mail.js"></script>
+<!-- 04.05.2026 YENİ MODÜLLER -->
+<script type="text/babel" data-type="module" src="js/pages/eksper-sigorta.js"></script>
+<script type="text/babel" data-type="module" src="js/pages/mahsup-zinciri.js"></script>
+<!-- ANA UYGULAMA -->
+<script type="text/babel" data-type="module" src="js/app.js"></script>
+
+<!-- CACHE BUSTING: Script'lere versiyon ekle -->
+<script>
+(function() {
+  var scripts = document.querySelectorAll('script[type="text/babel"][src]');
+  scripts.forEach(function(s) {
+    if (s.src && s.src.indexOf('?') === -1) {
+      s.setAttribute('src', s.getAttribute('src') + '?v=' + MR_VERSION);
+    }
+  });
+})();
+</script>
+</body>
+</html>
