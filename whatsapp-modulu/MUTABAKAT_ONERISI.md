@@ -1,69 +1,62 @@
-# 📱 MR HASAR DANIŞMANLIK — İŞLETME WHATSAPP MODÜLÜ
-## Mutabakat / Öneri Metni
-*Tarih: 04.06.2026 · Teknik dil yok — karar vermen için sade anlatım*
+# 📱 MR HASAR DANIŞMANLIK — DOSYA WHATSAPP BİLDİRİM MODÜLÜ
+## Mutabakat / Öneri Metni (Güncel — Odaklı Kapsam)
+*Tarih: 04.06.2026 · Teknik dil yok*
 
 ---
 
-## 1) Bu modül nedir?
-İşletme WhatsApp numaranı **doğrudan kendi sisteminin içine** taşıyan, **tamamen bağımsız** bir modüldür. Müşterilerinle (mağdurlarla) WhatsApp yazışmalarını; **tek ekrandan**, **dosyalara bağlı**, **kayıtlı** ve **ekipçe görülebilir** şekilde yönetirsin.
+## 1) Kapsam (net)
+WhatsApp **yalnız DOSYALARA** bağlı, **olay tabanlı otomatik bildirim** modülüdür.
+- **Gelen kutusu / CRM yok.** Sadece **dosya olaylarında** müşteriye otomatik WhatsApp gider.
+- **Genişletilebilir:** Yeni olaylar / fonksiyonlar sonradan kolayca eklenebilir.
 
-Tıpkı mevcut **SMS modülün gibi**, kendi köşesinde **ayrı** durur — SMS'e, Netsantral'e, CRM'e, aramaya **hiç karışmaz**.
+## 2) Ne yapar? (olaylar)
+- **① Dosya açılışı:** Dosyada **Kaydet** denip dosya sisteme kaydolunca →
+  müşteriye otomatik WhatsApp: *"Sayın {ad_soyad}, {dosya_no} numaralı dosyanız sistemimizde açılmıştır…"* (metin senin, düzenlenebilir).
+- **② Dosya durumu değişince (opsiyonel, onayınla):** Aşama/durum değişince →
+  *"Sayın {ad_soyad}, {dosya_no} dosyanızın durumu güncellendi: {yeni_durum}"*.
+- **③ İleride eklenebilir:** evrak yüklendi, ödeme alındı, randevu/eksik evrak hatırlatma… (mimari buna hazır).
 
-## 2) Sana ne kazandırır? (Faydalar)
-- **Tek merkez:** Tüm WhatsApp yazışmaları tek ekranda; kişisel telefonlarda dağılmaz.
-- **Dosyaya bağlı geçmiş:** Her müşterinin mesajları kendi dosyasının altında. "Bu kişiyle ne konuşmuştuk?" anında görünür.
-- **Hiçbir mesaj kaçmaz:** Yeni mesaj gelince **anında bildirim**.
-- **Kurumsal hafıza:** Personel ayrılsa bile yazışmalar **sistemde kalır**.
-- **Hız:** Hazır **şablon/metinlerle** saniyede yanıt.
-- **Güven & denetim:** Kim, kime, ne zaman, ne yazdı — **iletildi / okundu** bilgisiyle.
-- **Profesyonel görünüm:** Tek işletme numarası, kurumsal kimlik.
-- **Yasal koruma:** Tüm iletişim kayıt altında, geriye dönük bulunur.
+## 3) Dosya ile eşleşme
+- Mesajın gideceği numara = dosyadaki **iletişim numarası** (telefon).
+- Hitap = dosyadaki **ad-soyad**.
+- Mesaj metnindeki `{ad_soyad}`, `{dosya_no}`, `{yeni_durum}` alanları **otomatik** doldurulur.
 
-## 3) Tamamen bağımsız & güvenli (Sınırlar)
-**KESİNLİKLE DOKUNULMAYACAKLAR:**
-- Netsantral (ayarlar, panel, çağrı)
-- CRM menüsü ve sayfaları
-- Arama / telefon özellikleri
-- SMS modülü
-- Mevcut dosya akışı ve hiçbir mevcut dosya/veri
+## 4) Genişletilebilir mimari (önemli)
+İki yeni dosya + sistemin kendi deseni:
+- **`whatsapp_helper.php`** — WhatsApp gönderme motoru (Meta Cloud API) + ayar + kayıt. *(SMS'teki `sms_helper.php` gibi.)*
+- **`_dosya_whatsapp_hook.php`** — tüm dosya-WhatsApp mantığı burada; her olay bir **fonksiyon**. Yeni özellik = bu dosyaya yeni fonksiyon (create.php'ye tekrar dokunmadan).
+- Olaylar **aç/kapa** edilebilir, metinler ayarlardan **düzenlenebilir**.
 
-Modül **yalnız yeni dosyalar ekler**, mevcut yapının hiçbir zerresini değiştirmez (ALTIN KURAL).
+## 5) Sisteme nasıl bağlanır? (mevcut desenle, tek satır)
+Sistem zaten `_dosya_prim_hook.php`'yi şöyle çağırıyor:
+```
+require_once '.../_dosya_prim_hook.php';
+if (function_exists('sync_dosya_prim')) sync_dosya_prim($db, $dosyaId, 'create');
+```
+WhatsApp da **aynı şekilde**, `create.php` (ve opsiyonel `update.php`) sonuna **tek satır**:
+```
+require_once '_dosya_whatsapp_hook.php';
+if (function_exists('wa_dosya_acildi')) wa_dosya_acildi($db, $dosyaId);
+```
+- `try/catch` korumalı → WhatsApp hata verse bile **dosya açılışı asla bozulmaz**.
+- **Tek satır ekleme**, mevcut hiçbir davranış değişmez, istenirse o satır silinince eski hâline döner.
 
-## 4) Hangi modüllerle bağlanır? (ne zaman, ne amaçla)
-Hepsi ya **sadece okuma** ya **ekleme** — mevcut kod asla değişmez:
+## 6) WhatsApp'ın şablon kuralı (bilinmesi gereken)
+Müşteri sana **ilk yazmadıysa**, işletme tarafından başlatılan mesaj **Meta onaylı "şablon"** olmalıdır (WhatsApp kuralı). Dolayısıyla "dosya açıldı" mesajı bir **onaylı şablon** olarak gönderilir; metni birlikte hazırlarız, sen onaylatırsın, sistem `{ad_soyad}`/`{dosya_no}` alanlarını doldurup gönderir.
 
-| Modül | Ne zaman | Ne yapar | Amaç | Sınır |
-|---|---|---|---|---|
-| **Dosya + Müşteri (Mağdur)** | Mesaj gelince / gönderirken | Gelen numarayı dosya telefonlarıyla eşleştirir; dosyadan mesaj gönderilir | Mesajı doğru dosyaya bağlamak | Sadece **okur** |
-| **Bildirim** | Yeni mesaj gelince | İlgili kullanıcıya "yeni WhatsApp mesajı" uyarısı | Mesaj kaçmasın | Sadece **ekler** |
-| **Kayıt (Log)** | Her gelen/giden mesajda | Kendi WhatsApp defterine yazar | Geçmiş + denetim | Sadece **ekler** |
-| **CRM** *(opsiyonel, onayınla)* | Numara dosyada yoksa | İsim için CRM'de **sadece bakar** | Göndereni tanımak | Sadece **okur**; menü/aramaya dokunmaz |
+## 7) Kesinlikle dokunulmayacaklar
+🚫 **Netsantral · CRM menüsü · Arama · SMS · mevcut dosya akışının davranışı.** Yalnız 1 satır eklenir; gerisi yeni dosyalardır.
 
-## 5) Nasıl çalışır? (Basit)
-- **Gelen mesaj:** Müşteri yazar → sistem kimden geldiğini bulur → **"Gelen Kutusu"** nda görünür + bildirim düşer.
-- **Giden mesaj:** Sen panelden yazarsın → müşteriye WhatsApp'tan gider → **iletildi / okundu** bilgisini görürsün.
-- **24 saat kuralı (WhatsApp'ın kuralı):** Müşteri sana son 24 saatte yazdıysa **serbest** yazışırsın. Yazmadıysa, ilk mesajı **onaylı bir "şablon"** ile başlatırsın (örn. *"Sayın {ad}, {dosya_no} dosyanız hakkında..."*). Sistem hangi durumda ne kullanacağını sana **otomatik** gösterir.
+## 8) Aşamalar
+- **Aşama 1:** WhatsApp motoru + ayar ekranı + **dosya açılışında otomatik mesaj** + kayıt (log). *(Çekirdek.)*
+- **Aşama 2:** **Durum değişiminde** otomatik mesaj (opsiyonel, onayınla).
+- **Aşama 3:** Metin/şablon yönetimi, olay aç-kapa, yeni olaylar (evrak/ödeme/hatırlatma).
+- **Aşama 4:** Raporlama (kaç mesaj gitti, iletildi/okundu).
 
-## 6) Aşamalar (her biri tek başına işe yarar)
-- **Aşama 1 — Temel İletişim Merkezi:** Gönder + Gelen Kutusu + bildirim + kayıt. *(Çekirdek, hemen kullanılır.)*
-- **Aşama 2 — Dosya/Müşteri Bağlantısı:** Gelen mesaj otomatik dosyaya/müşteriye bağlanır; dosya ekranından yazışma geçmişi.
-- **Aşama 3 — Hazır Şablonlar & Hızlı Yanıtlar:** Onaylı şablonlarla ilk temas; sık kullanılan hazır metinler.
-- **Aşama 4 — Medya & Belge:** Fotoğraf, PDF, evrak gönder/al; gelen belgeleri dosyaya kaydet.
-- **Aşama 5 — Otomasyon (opsiyonel):** Dosya durumu değişince otomatik bilgilendirme; randevu / eksik evrak hatırlatma. *(Mevcut dosya akışına küçük, isteğe bağlı ekleme — yalnız onayınla.)*
-- **Aşama 6 — Raporlama:** Kaç mesaj, kaç yanıt, ortalama yanıt süresi, en yoğun saatler.
-
-## 7) Senden gerekenler
-- İşletme WhatsApp bağlantı bilgileri (Netgsm/Meta'dan zaten aldın).
-- En az **1 onaylı şablon** (birlikte hazırlarız).
-- Hangi kullanıcılar erişecek (yetki).
-
-## 8) Güvenlik
-- Bağlantı anahtarı **kod içine yazılmaz**, sistemde gizli saklanır (sen kendi ekranından girersin).
-- Erişim **yetkiye** bağlı.
-- Tüm işlemler **loglanır**.
-
-## 9) Mutabakat
-Bu metni onaylarsan **Aşama 1'den** başlarız. Her aşama bitince sen görüp onaylarsın, sonra devam ederiz. Hiçbir aşama mevcut sistemini bozmaz; her şey **ayrı modül** olarak, **ekleme** şeklinde ilerler.
+## 9) Senden gerekenler / Mutabakat
+- İşletme WhatsApp bağlantı bilgileri (var).
+- **1 onaylı şablon** ("dosya açıldı" metni — birlikte hazırlarız).
+- Onay → **Aşama 1**'i kurarım; ayrı modül, tek satır ekleme, mevcut sistem korunur.
 
 ---
-*Bu belge bir öneridir; detaylı mutabakatta birlikte kesinleştirilecektir.*
+*Genişletilebilir: tüm fonksiyonlar `_dosya_whatsapp_hook.php` + `whatsapp_helper.php` içinde büyür; sistemin geri kalanına dokunulmaz.*
