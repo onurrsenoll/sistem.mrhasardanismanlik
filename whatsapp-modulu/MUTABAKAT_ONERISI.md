@@ -47,11 +47,24 @@ Müşteri sana **ilk yazmadıysa**, işletme tarafından başlatılan mesaj **Me
 ## 7) Kesinlikle dokunulmayacaklar
 🚫 **Netsantral · CRM menüsü · Arama · SMS · mevcut dosya akışının davranışı.** Yalnız 1 satır eklenir; gerisi yeni dosyalardır.
 
+## 🔟 Toplu / Manuel Gönderim Ekranı (tek ekranda)
+Modül içinde, **tek ekrandan**:
+- **Numara listesi:** Numaraları **kopyala-yapıştır** ile topluca gir (alt alta veya virgüllü).
+- **Mesaj:** Hazır **şablon** seç + alanları doldur **veya** serbest metin yaz.
+- **Medya:** Görsel / PDF / video **ekle**.
+- **GÖNDER:** Her numara için **sonuç** (gitti / hata) + otomatik **kayıt (log)**.
+
+### ⚠️ WhatsApp toplu gönderim kuralı (önemli — SMS'ten farklı)
+- Sana **son 24 saatte yazmamış** kişilere **serbest metin/medya gönderilemez** → **Meta onaylı şablon** gerekir (şablon başlığına medya, gövdesine değişken metin konabilir).
+- **Hacim & kalite:** Çok sayıda izinsiz/"soğuk" numaraya gönderim, işletme numaranın **kalite puanını düşürür ve engellenmeye** yol açabilir; günlük limitler vardır (kademeli artar).
+- **En güvenlisi:** Kendi **izinli müşterilerine, onaylı şablonla** göndermek. Modül uygun olmayan gönderimde **uyarır**.
+
 ## 8) Aşamalar
 - **Aşama 1:** WhatsApp motoru + ayar ekranı + **dosya açılışında otomatik mesaj** + kayıt (log). *(Çekirdek.)*
-- **Aşama 2:** **Durum değişiminde** otomatik mesaj (opsiyonel, onayınla).
-- **Aşama 3:** Metin/şablon yönetimi, olay aç-kapa, yeni olaylar (evrak/ödeme/hatırlatma).
-- **Aşama 4:** Raporlama (kaç mesaj gitti, iletildi/okundu).
+- **Aşama 2:** **Toplu / Manuel Gönderim ekranı** (tek ekran — madde 10): numara yapıştır + şablon/metin + medya + gönder + sonuç.
+- **Aşama 3:** **Durum değişiminde** otomatik mesaj (opsiyonel, onayınla).
+- **Aşama 4:** Metin/şablon yönetimi, olay aç-kapa, yeni olaylar (evrak/ödeme/hatırlatma).
+- **Aşama 5:** Raporlama (kaç mesaj gitti, iletildi/okundu).
 
 ## 9) Senden gerekenler / Mutabakat
 - İşletme WhatsApp bağlantı bilgileri (var).
