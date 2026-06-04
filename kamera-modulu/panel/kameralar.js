@@ -116,6 +116,8 @@
       '.mr-kamera-hucre{position:relative;background:#000;border:1px solid rgba(255,255,255,.10);border-radius:12px;overflow:hidden;min-height:200px}',
       '.mr-kamera-hucre iframe{width:100%;height:100%;border:0;display:block;background:#000}',
       '.mr-kamera-etiket{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.55);color:#fff;font:800 11px Manrope,sans-serif;letter-spacing:.5px;padding:4px 10px;border-radius:7px;text-transform:uppercase;pointer-events:none}',
+      '.mr-kamera-foto{position:absolute;right:10px;top:10px;z-index:3;width:36px;height:36px;border-radius:9px;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}',
+      '.mr-kamera-foto:hover{background:rgba(0,0,0,.85)}',
       '.mr-kamera-bos{display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font:700 14px Manrope,sans-serif;text-align:center;padding:30px}',
       '.mr-kamera-ayar{position:absolute;inset:0;z-index:5;display:none;align-items:flex-start;justify-content:center;padding:24px;overflow:auto}',
       '.mr-kamera-ayar.acik{display:flex}',
@@ -149,6 +151,7 @@
     }
 
     var aktifler = c.kameralar.filter(function (k) { return k.aktif; });
+    var kopru = (c.kopru || '').replace(/\/+$/, '');
     var grid = el('div');
     grid.className = 'mr-kamera-grid ' + (durum.secim === 'hepsi' ? 'dort' : 'tek');
 
@@ -171,6 +174,17 @@
       hucre.appendChild(ifr);
       hucre.appendChild(el('div', null, k.ad));
       hucre.lastChild.className = 'mr-kamera-etiket';
+      // FOTO ÇEK (anlık görüntü) — go2rtc frame.jpeg
+      var foto = el('button', null, '📷');
+      foto.className = 'mr-kamera-foto'; foto.title = 'FOTO ÇEK';
+      foto.onclick = (function (kid) {
+        return function (e) {
+          e.stopPropagation();
+          if (!kopru) { if (window.MR && MR.toast) MR.toast('ÖNCE KÖPRÜ ADRESİNİ GİRİN', 'warning'); return; }
+          window.open(kopru + '/api/frame.jpeg?src=' + encodeURIComponent(kid), '_blank');
+        };
+      })(k.id);
+      hucre.appendChild(foto);
       grid.appendChild(hucre);
     });
     govde.appendChild(grid);
