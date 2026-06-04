@@ -1,0 +1,44 @@
+# ============================================================================
+# MR HASAR DANIŞMANLIK — KAMERA KÖPRÜ AYARI (go2rtc)
+# ============================================================================
+# Bu dosya YALNIZCA ofisteki bilgisayarda kalır. Buluta / sisteme GİTMEZ.
+# Aşağıdaki 3 değeri KENDİ bilgilerinizle değiştirin:
+#   DVR_IP    -> Kayıt cihazının yerel IP'si (örn: 192.168.1.64)
+#   KULLANICI -> DVR kullanıcı adı (örn: admin)
+#   SIFRE     -> DVR şifresi
+#
+# NOT: Cihazınız DS-7104HGHI-K1. RTSP yolları Hikvision standardıdır:
+#   Kanal 1 ana akış = 101, alt akış = 102
+#   Kanal 2 = 201/202, Kanal 3 = 301/302, Kanal 4 = 401/402
+# ============================================================================
+
+streams:
+  # ── ANA AKIŞ (yüksek kalite) — tek kamerayı tam ekran izlerken kullanılır ──
+  kamera01: rtsp://KULLANICI:SIFRE@DVR_IP:554/Streaming/Channels/101
+  kamera02: rtsp://KULLANICI:SIFRE@DVR_IP:554/Streaming/Channels/201
+  kamera03: rtsp://KULLANICI:SIFRE@DVR_IP:554/Streaming/Channels/301
+  kamera04: rtsp://KULLANICI:SIFRE@DVR_IP:554/Streaming/Channels/401
+
+  # ── ALT AKIŞ (düşük kalite, daha akıcı) — 2x2 hepsi-bir-arada için önerilir ──
+  kamera01_alt: rtsp://KULLANICI:SIFRE@DVR_IP:554/Streaming/Channels/102
+  kamera02_alt: rtsp://KULLANICI:SIFRE@DVR_IP:554/Streaming/Channels/202
+  kamera03_alt: rtsp://KULLANICI:SIFRE@DVR_IP:554/Streaming/Channels/302
+  kamera04_alt: rtsp://KULLANICI:SIFRE@DVR_IP:554/Streaming/Channels/402
+
+# Cloudflare Tunnel bu adrese bağlanır (yalnız bilgisayarın içinden erişilir):
+api:
+  listen: "127.0.0.1:1984"
+
+# Yerel RTSP (gerekirse):
+rtsp:
+  listen: ":8554"
+
+# Gerçek zamanlı WebRTC. Cloudflare Tunnel kullanınca otomatik MSE'ye düşer.
+# Statik IP + port yönlendirme kullanacaksanız 8555 (TCP+UDP) yönlendirilmelidir:
+webrtc:
+  listen: ":8555"
+  # candidates:
+  #   - "STATIK_IP:8555"   # yalnızca port-yönlendirme yöntemini seçerseniz açın
+
+log:
+  level: info
