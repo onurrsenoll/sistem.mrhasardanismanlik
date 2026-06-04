@@ -27,6 +27,7 @@
     return {
       kopru: '',                                  // örn: https://kamera.mrhasardanismanlik.com
       sablon: '{KOPRU}/stream.html?src={KAMERA}', // go2rtc evrensel oynatıcı
+      dolgu: 1.4,                                 // 1.0=sığdır, >1=doldur (Hikvision gibi tam alan)
       kameralar: [
         { id: 'kamera01', ad: 'KAMERA 1', aktif: true },
         { id: 'kamera02', ad: 'KAMERA 2', aktif: true },
@@ -46,6 +47,7 @@
       c.kopru = (c.kopru || '').trim();
       c.sablon = (c.sablon || d.sablon).trim();
       if (!Array.isArray(c.kameralar) || !c.kameralar.length) c.kameralar = d.kameralar;
+      c.dolgu = parseFloat(c.dolgu); if (!(c.dolgu >= 1)) c.dolgu = 1.4; if (c.dolgu > 3) c.dolgu = 3;
       return c;
     } catch (e) { return varsayilanConfig(); }
   }
@@ -114,7 +116,7 @@
       '.mr-kamera-grid.tek{grid-template-columns:1fr}',
       '.mr-kamera-grid.dort{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}',
       '.mr-kamera-hucre{position:relative;background:#000;border:1px solid rgba(255,255,255,.10);border-radius:12px;overflow:hidden;min-height:200px}',
-      '.mr-kamera-hucre iframe{width:100%;height:100%;border:0;display:block;background:#000}',
+      '.mr-kamera-hucre iframe{width:100%;height:100%;border:0;display:block;background:#000;transform-origin:center center;transition:transform .15s}',
       '.mr-kamera-etiket{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.55);color:#fff;font:800 11px Manrope,sans-serif;letter-spacing:.5px;padding:4px 10px;border-radius:7px;text-transform:uppercase;pointer-events:none}',
       '.mr-kamera-foto{position:absolute;right:10px;top:10px;z-index:3;width:36px;height:36px;border-radius:9px;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}',
       '.mr-kamera-foto:hover{background:rgba(0,0,0,.85)}',
@@ -171,6 +173,7 @@
       ifr.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture');
       ifr.setAttribute('allowfullscreen', 'true');
       ifr.loading = 'eager';
+      ifr.style.transform = 'scale(' + (c.dolgu || 1.4) + ')';
       hucre.appendChild(ifr);
       hucre.appendChild(el('div', null, k.ad));
       hucre.lastChild.className = 'mr-kamera-etiket';
@@ -288,6 +291,16 @@
   function ayarAc() { var a = document.getElementById('mr-kamera-ayar'); if (a) { ayarlariCiz(); a.classList.add('acik'); } }
   function ayarKapat() { var a = document.getElementById('mr-kamera-ayar'); if (a) a.classList.remove('acik'); }
 
+  /* ════════════════════ DOLGU (ZOOM — Hikvision gibi tam doldur) ════════════════════ */
+  function dolguDegistir(delta) {
+    var c = configOku();
+    var v = Math.round(((c.dolgu || 1.4) + delta) * 100) / 100;
+    if (v < 1) v = 1; if (v > 3) v = 3;
+    c.dolgu = v; configYaz(c);
+    var lbl = document.getElementById('mr-kamera-dolgu-val'); if (lbl) lbl.textContent = Math.round(v * 100) + '%';
+    govdeCiz();
+  }
+
   /* ════════════════════ OVERLAY KUR ════════════════════ */
   function overlayKur() {
     if (document.getElementById('mr-kamera-overlay')) return;
@@ -303,6 +316,15 @@
     var cipler = el('div', { display: 'flex', gap: '8px', flexWrap: 'wrap', flex: '1' });
     cipler.id = 'mr-kamera-cipler';
     bar.appendChild(cipler);
+
+    /* DOLGU (Hikvision gibi tam doldur) — canlı ayar */
+    var dolguGrup = el('div', { display: 'flex', alignItems: 'center', gap: '4px', marginRight: '4px' });
+    dolguGrup.appendChild(el('span', { font: '800 10px Manrope,sans-serif', color: '#64748b', letterSpacing: '.5px' }, 'DOLGU'));
+    var dEksi = el('button', null, '−'); dEksi.className = 'mr-kamera-ikonbtn'; dEksi.style.width = '30px'; dEksi.style.height = '30px'; dEksi.title = 'KÜÇÜLT (SIĞDIR)'; dEksi.onclick = function () { dolguDegistir(-0.1); };
+    var dVal = el('div', { font: '800 11px Manrope,sans-serif', color: '#cbd5e1', minWidth: '40px', textAlign: 'center' }, Math.round((configOku().dolgu || 1.4) * 100) + '%'); dVal.id = 'mr-kamera-dolgu-val';
+    var dArti = el('button', null, '+'); dArti.className = 'mr-kamera-ikonbtn'; dArti.style.width = '30px'; dArti.style.height = '30px'; dArti.title = 'BÜYÜT (TAM DOLDUR)'; dArti.onclick = function () { dolguDegistir(0.1); };
+    dolguGrup.appendChild(dEksi); dolguGrup.appendChild(dVal); dolguGrup.appendChild(dArti);
+    bar.appendChild(dolguGrup);
 
     var tamekran = el('button', { title: 'TAM EKRAN' }, kameraSvg.gen('M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3'));
     tamekran.className = 'mr-kamera-ikonbtn'; tamekran.title = 'TAM EKRAN';
