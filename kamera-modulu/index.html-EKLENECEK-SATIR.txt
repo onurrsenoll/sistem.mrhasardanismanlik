@@ -1,0 +1,23 @@
+============================================================
+ index.html'E EKLENECEK TEK SATIR
+============================================================
+
+Aşağıdaki satırı, index.html içinde ANA UYGULAMA satırından
+(yani  src="js/app.js"  satırından) HEMEN ÖNCE ekleyin:
+
+<script type="text/babel" data-type="module" src="js/pages/kameralar.js"></script>
+
+------------------------------------------------------------
+ÖRNEK (nasıl görünmeli):
+
+    <script type="text/babel" data-type="module" src="js/pages/kameralar.js"></script>
+    <!-- ANA UYGULAMA -->
+    <script type="text/babel" data-type="module" src="js/app.js"></script>
+------------------------------------------------------------
+
+NOT:
+- Mevcut hiçbir satır SİLİNMEZ/DEĞİŞTİRİLMEZ; sadece 1 satır EKLENİR.
+- kameralar.js dosyasını sunucuda  js/pages/  klasörüne yükleyin.
+- Tarayıcıda Ctrl+F5 ile sayfayı yenileyin.
+- Giriş yaptıktan sonra sağ-altta yuvarlak "KAMERALAR" butonu çıkar.
+============================================================
