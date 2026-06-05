@@ -233,7 +233,12 @@
     var bar = el('div'); bar.className = 'mr-wa-bar';
     var baslik = el('div', { font: '800 14px Manrope', color: WA_YESIL, textTransform: 'uppercase', marginRight: '6px' }, 'WHATSAPP');
     bar.appendChild(baslik);
-    [['toplu', 'TOPLU GÖNDERİM'], ['loglar', 'LOGLAR'], ['ayarlar', 'AYARLAR']].forEach(function (t) {
+    var sekmeler = [];
+    if (izinli('whatsapp_gonder')) sekmeler.push(['toplu', 'TOPLU GÖNDERİM']);
+    sekmeler.push(['loglar', 'LOGLAR']);
+    if (izinli('whatsapp_ayarlar')) sekmeler.push(['ayarlar', 'AYARLAR']);
+    _waSekmeler = sekmeler;
+    sekmeler.forEach(function (t) {
       var b = el('button', null, t[1]); b.className = 'mr-wa-tab'; b.id = 'mr-wa-tab-' + t[0]; b.onclick = function () { tabAc(t[0]); }; bar.appendChild(b);
     });
     var x = el('button', null, '✕'); x.className = 'mr-wa-x'; x.onclick = function () { ov.classList.remove('acik'); }; bar.appendChild(x);
@@ -241,7 +246,7 @@
     var govde = el('div'); govde.id = 'mr-wa-govde'; govde.className = 'mr-wa-govde'; ov.appendChild(govde);
     document.body.appendChild(ov);
   }
-  function ac() { stil(); overlayKur(); document.getElementById('mr-wa-ov').classList.add('acik'); tabAc('toplu'); }
+  function ac() { stil(); overlayKur(); document.getElementById('mr-wa-ov').classList.add('acik'); tabAc((_waSekmeler[0] || ['loglar'])[0]); }
 
   function butonKur() {
     if (document.getElementById('mr-wa-btn')) return;
@@ -250,11 +255,31 @@
     b.onclick = ac;
     document.body.appendChild(b);
   }
+  /* ════ YETKİ: sadece izinli kullanıcılar görür (admin her zaman) ════ */
+  var _user = null, _userTok = null, _waSekmeler = [];
+  function userTazele() {
+    var tok = null; try { tok = localStorage.getItem('mr_token'); } catch (e) {}
+    if (tok === _userTok) return;
+    _userTok = tok; _user = null;
+    if (!tok) { gorunur(); return; }
+    fetch('/api/v1/auth/me.php', { headers: { 'Authorization': 'Bearer ' + tok } })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { _user = (j && j.data && j.data.user) ? j.data.user : ((j && j.data) ? j.data : null); gorunur(); })
+      .catch(function () {});
+  }
+  function izinli(key) { if (!_user) return false; if (_user.rol === 'admin') return true; var y = _user.yetkiler || {}; return y[key] === 1 || y[key] === '1'; }
+
   function gorunur() {
-    var b = document.getElementById('mr-wa-btn'); var g = girisVar();
-    if (g && !b) { stil(); butonKur(); } else if (b) b.style.display = g ? 'flex' : 'none';
+    var goster = girisVar() && izinli('whatsapp_goruntule');
+    var b = document.getElementById('mr-wa-btn');
+    if (goster && !b) { stil(); butonKur(); } else if (b) b.style.display = goster ? 'flex' : 'none';
   }
 
-  function baslat() { stil(); gorunur(); setInterval(gorunur, 1500); window.addEventListener('storage', gorunur); document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var ov = document.getElementById('mr-wa-ov'); if (ov) ov.classList.remove('acik'); } }); }
+  function baslat() {
+    stil(); userTazele(); gorunur();
+    setInterval(function () { userTazele(); gorunur(); }, 1500);
+    window.addEventListener('storage', function () { userTazele(); gorunur(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var ov = document.getElementById('mr-wa-ov'); if (ov) ov.classList.remove('acik'); } });
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', baslat); else baslat();
 })();

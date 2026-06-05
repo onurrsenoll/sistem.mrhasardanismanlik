@@ -286,12 +286,31 @@
   function overlayKapat() { var ov = document.getElementById('mr-kamera-overlay'); if (ov) ov.classList.remove('acik'); ayarKapat(); var g = document.getElementById('mr-kamera-govde'); if (g) g.innerHTML = ''; }
 
   function butonKur() { if (document.getElementById('mr-kamera-btn')) return; var b = document.createElement('button'); b.id = 'mr-kamera-btn'; b.title = 'KAMERALAR'; b.setAttribute('data-widget', '1'); b.setAttribute('data-no-print', '1'); b.style.background = renk().grad; b.innerHTML = kameraSvg('#fff', 24); b.onclick = overlayAc; document.body.appendChild(b); }
-  function gorunur() { var b = document.getElementById('mr-kamera-btn'); var g = girisVar(); if (g && !b) { stilEkle(); butonKur(); } else if (b) b.style.display = g ? 'flex' : 'none'; }
+  /* ════ YETKİ: sadece izinli kullanıcılar görür (admin her zaman) ════ */
+  var _user = null, _userTok = null;
+  function userTazele() {
+    var tok = null; try { tok = localStorage.getItem('mr_token'); } catch (e) {}
+    if (tok === _userTok) return;
+    _userTok = tok; _user = null;
+    if (!tok) { gorunur(); return; }
+    fetch('/api/v1/auth/me.php', { headers: { 'Authorization': 'Bearer ' + tok } })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { _user = (j && j.data && j.data.user) ? j.data.user : ((j && j.data) ? j.data : null); gorunur(); })
+      .catch(function () {});
+  }
+  function izinli(key) { if (!_user) return false; if (_user.rol === 'admin') return true; var y = _user.yetkiler || {}; return y[key] === 1 || y[key] === '1'; }
+
+  function gorunur() {
+    var goster = girisVar() && izinli('kamera_goruntule');
+    var b = document.getElementById('mr-kamera-btn');
+    if (goster && !b) { stilEkle(); butonKur(); }
+    else if (b) b.style.display = goster ? 'flex' : 'none';
+  }
 
   function baslat() {
-    stilEkle(); gorunur();
-    setInterval(gorunur, 1500);
-    window.addEventListener('storage', gorunur);
+    stilEkle(); userTazele(); gorunur();
+    setInterval(function () { userTazele(); gorunur(); }, 1500);
+    window.addEventListener('storage', function () { userTazele(); gorunur(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var a = document.getElementById('mr-kamera-ayar'); if (a && a.classList.contains('acik')) { ayarKapat(); return; } var ov = document.getElementById('mr-kamera-overlay'); if (ov && ov.classList.contains('acik')) overlayKapat(); } });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', baslat); else baslat();
